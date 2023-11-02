@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"google.golang.org/protobuf/proto"
 )
 
-const username = "mainflux-mqtt"
+const username = "magistrala-mqtt"
 
 var (
 	// ErrConnect indicates that connection to MQTT broker failed.
@@ -51,7 +51,7 @@ type subscription struct {
 
 type pubsub struct {
 	publisher
-	logger        mflog.Logger
+	logger        mglog.Logger
 	mu            sync.RWMutex
 	address       string
 	timeout       time.Duration
@@ -59,7 +59,7 @@ type pubsub struct {
 }
 
 // NewPubSub returns MQTT message publisher/subscriber.
-func NewPubSub(url string, qos uint8, timeout time.Duration, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url string, qos uint8, timeout time.Duration, logger mglog.Logger) (messaging.PubSub, error) {
 	client, err := newClient(url, "mqtt-publisher", timeout)
 	if err != nil {
 		return nil, err

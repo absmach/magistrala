@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/coap"
 	"github.com/absmach/magistrala/coap/api"
 	"github.com/absmach/magistrala/coap/tracing"
@@ -21,7 +21,7 @@ import (
 	"github.com/absmach/magistrala/internal/server"
 	coapserver "github.com/absmach/magistrala/internal/server/coap"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -55,13 +55,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -131,7 +131,7 @@ func main() {
 	cs := coapserver.New(ctx, cancel, svcName, coapServerConfig, api.MakeCoAPHandler(svc, logger), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

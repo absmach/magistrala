@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/oklog/ulid/v2"
 )
@@ -16,14 +16,14 @@ import (
 // ErrGeneratingID indicates error in generating ULID.
 var ErrGeneratingID = errors.New("generating id failed")
 
-var _ mainflux.IDProvider = (*ulidProvider)(nil)
+var _ magistrala.IDProvider = (*ulidProvider)(nil)
 
 type ulidProvider struct {
 	entropy *rand.Rand
 }
 
 // New instantiates a ULID provider.
-func New() mainflux.IDProvider {
+func New() magistrala.IDProvider {
 	seed := time.Now().UnixNano()
 	source := rand.NewSource(seed)
 	return &ulidProvider{

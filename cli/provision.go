@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"time"
 
-	mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/spf13/cobra"
 )
@@ -114,8 +114,8 @@ var cmdProvision = []cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
 			numThings := 2
 			numChan := 2
-			things := []mfxsdk.Thing{}
-			channels := []mfxsdk.Channel{}
+			things := []mgxsdk.Thing{}
+			channels := []mgxsdk.Channel{}
 
 			if len(args) != 0 {
 				logUsage(cmd.Use)
@@ -125,13 +125,13 @@ var cmdProvision = []cobra.Command{
 			rand.Seed(time.Now().UnixNano())
 			name := namesgenerator.GetRandomName(0)
 			// Create test user
-			user := mfxsdk.User{
+			user := mgxsdk.User{
 				Name: name,
-				Credentials: mfxsdk.Credentials{
+				Credentials: mgxsdk.Credentials{
 					Identity: fmt.Sprintf("%s@email.com", name),
 					Secret:   "12345678",
 				},
-				Status: mfxsdk.EnabledStatus,
+				Status: mgxsdk.EnabledStatus,
 			}
 			user, err := sdk.CreateUser(user, "")
 			if err != nil {
@@ -149,9 +149,9 @@ var cmdProvision = []cobra.Command{
 			// Create things
 			for i := 0; i < numThings; i++ {
 				n := fmt.Sprintf("d%d", i)
-				t := mfxsdk.Thing{
+				t := mgxsdk.Thing{
 					Name:   n,
-					Status: mfxsdk.EnabledStatus,
+					Status: mgxsdk.EnabledStatus,
 				}
 
 				things = append(things, t)
@@ -166,9 +166,9 @@ var cmdProvision = []cobra.Command{
 			for i := 0; i < numChan; i++ {
 				n := fmt.Sprintf("c%d", i)
 
-				c := mfxsdk.Channel{
+				c := mgxsdk.Channel{
 					Name:   n,
-					Status: mfxsdk.EnabledStatus,
+					Status: mgxsdk.EnabledStatus,
 				}
 
 				channels = append(channels, c)
@@ -180,7 +180,7 @@ var cmdProvision = []cobra.Command{
 			}
 
 			// Connect things to channels - first thing to both channels, second only to first
-			conIDs := mfxsdk.Connection{
+			conIDs := mgxsdk.Connection{
 				ChannelID: channels[0].ID,
 				ThingID:   things[0].ID,
 			}
@@ -189,7 +189,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			conIDs = mfxsdk.Connection{
+			conIDs = mgxsdk.Connection{
 				ChannelID: channels[1].ID,
 				ThingID:   things[0].ID,
 			}
@@ -198,7 +198,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			conIDs = mfxsdk.Connection{
+			conIDs = mgxsdk.Connection{
 				ChannelID: channels[0].ID,
 				ThingID:   things[1].ID,
 			}
@@ -227,18 +227,18 @@ func NewProvisionCmd() *cobra.Command {
 	return &cmd
 }
 
-func thingsFromFile(path string) ([]mfxsdk.Thing, error) {
+func thingsFromFile(path string) ([]mgxsdk.Thing, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return []mfxsdk.Thing{}, err
+		return []mgxsdk.Thing{}, err
 	}
 
 	file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		return []mfxsdk.Thing{}, err
+		return []mgxsdk.Thing{}, err
 	}
 	defer file.Close()
 
-	things := []mfxsdk.Thing{}
+	things := []mgxsdk.Thing{}
 	switch filepath.Ext(path) {
 	case csvExt:
 		reader := csv.NewReader(file)
@@ -249,14 +249,14 @@ func thingsFromFile(path string) ([]mfxsdk.Thing, error) {
 				break
 			}
 			if err != nil {
-				return []mfxsdk.Thing{}, err
+				return []mgxsdk.Thing{}, err
 			}
 
 			if len(l) < 1 {
-				return []mfxsdk.Thing{}, errors.New("empty line found in file")
+				return []mgxsdk.Thing{}, errors.New("empty line found in file")
 			}
 
-			thing := mfxsdk.Thing{
+			thing := mgxsdk.Thing{
 				Name: l[0],
 			}
 
@@ -265,27 +265,27 @@ func thingsFromFile(path string) ([]mfxsdk.Thing, error) {
 	case jsonExt:
 		err := json.NewDecoder(file).Decode(&things)
 		if err != nil {
-			return []mfxsdk.Thing{}, err
+			return []mgxsdk.Thing{}, err
 		}
 	default:
-		return []mfxsdk.Thing{}, err
+		return []mgxsdk.Thing{}, err
 	}
 
 	return things, nil
 }
 
-func channelsFromFile(path string) ([]mfxsdk.Channel, error) {
+func channelsFromFile(path string) ([]mgxsdk.Channel, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return []mfxsdk.Channel{}, err
+		return []mgxsdk.Channel{}, err
 	}
 
 	file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		return []mfxsdk.Channel{}, err
+		return []mgxsdk.Channel{}, err
 	}
 	defer file.Close()
 
-	channels := []mfxsdk.Channel{}
+	channels := []mgxsdk.Channel{}
 	switch filepath.Ext(path) {
 	case csvExt:
 		reader := csv.NewReader(file)
@@ -296,14 +296,14 @@ func channelsFromFile(path string) ([]mfxsdk.Channel, error) {
 				break
 			}
 			if err != nil {
-				return []mfxsdk.Channel{}, err
+				return []mgxsdk.Channel{}, err
 			}
 
 			if len(l) < 1 {
-				return []mfxsdk.Channel{}, errors.New("empty line found in file")
+				return []mgxsdk.Channel{}, errors.New("empty line found in file")
 			}
 
-			channel := mfxsdk.Channel{
+			channel := mgxsdk.Channel{
 				Name: l[0],
 			}
 
@@ -312,27 +312,27 @@ func channelsFromFile(path string) ([]mfxsdk.Channel, error) {
 	case jsonExt:
 		err := json.NewDecoder(file).Decode(&channels)
 		if err != nil {
-			return []mfxsdk.Channel{}, err
+			return []mgxsdk.Channel{}, err
 		}
 	default:
-		return []mfxsdk.Channel{}, err
+		return []mgxsdk.Channel{}, err
 	}
 
 	return channels, nil
 }
 
-func connectionsFromFile(path string) ([]mfxsdk.Connection, error) {
+func connectionsFromFile(path string) ([]mgxsdk.Connection, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return []mfxsdk.Connection{}, err
+		return []mgxsdk.Connection{}, err
 	}
 
 	file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		return []mfxsdk.Connection{}, err
+		return []mgxsdk.Connection{}, err
 	}
 	defer file.Close()
 
-	connections := []mfxsdk.Connection{}
+	connections := []mgxsdk.Connection{}
 	switch filepath.Ext(path) {
 	case csvExt:
 		reader := csv.NewReader(file)
@@ -343,13 +343,13 @@ func connectionsFromFile(path string) ([]mfxsdk.Connection, error) {
 				break
 			}
 			if err != nil {
-				return []mfxsdk.Connection{}, err
+				return []mgxsdk.Connection{}, err
 			}
 
 			if len(l) < 1 {
-				return []mfxsdk.Connection{}, errors.New("empty line found in file")
+				return []mgxsdk.Connection{}, errors.New("empty line found in file")
 			}
-			connections = append(connections, mfxsdk.Connection{
+			connections = append(connections, mgxsdk.Connection{
 				ThingID:   l[0],
 				ChannelID: l[1],
 			})
@@ -357,10 +357,10 @@ func connectionsFromFile(path string) ([]mfxsdk.Connection, error) {
 	case jsonExt:
 		err := json.NewDecoder(file).Decode(&connections)
 		if err != nil {
-			return []mfxsdk.Connection{}, err
+			return []mgxsdk.Connection{}, err
 		}
 	default:
-		return []mfxsdk.Connection{}, err
+		return []mgxsdk.Connection{}, err
 	}
 
 	return connections, nil

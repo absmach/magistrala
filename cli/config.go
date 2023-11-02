@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/absmach/magistrala/pkg/errors"
-	mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
 )
@@ -74,7 +74,7 @@ func read(file string) (config, error) {
 }
 
 // ParseConfig - parses the config file.
-func ParseConfig(sdkConf mfxsdk.Config) (mfxsdk.Config, error) {
+func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 	if ConfigPath == "" {
 		ConfigPath = defaultConfigPath
 	}

@@ -30,76 +30,76 @@ func MetricsMiddleware(svc opcua.Service, counter metrics.Counter, latency metri
 	}
 }
 
-func (mm *metricsMiddleware) CreateThing(ctx context.Context, mfxDevID, opcuaNodeID string) error {
+func (mm *metricsMiddleware) CreateThing(ctx context.Context, mgxDevID, opcuaNodeID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_thing").Add(1)
 		mm.latency.With("method", "create_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateThing(ctx, mfxDevID, opcuaNodeID)
+	return mm.svc.CreateThing(ctx, mgxDevID, opcuaNodeID)
 }
 
-func (mm *metricsMiddleware) UpdateThing(ctx context.Context, mfxDevID, opcuaNodeID string) error {
+func (mm *metricsMiddleware) UpdateThing(ctx context.Context, mgxDevID, opcuaNodeID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_thing").Add(1)
 		mm.latency.With("method", "update_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateThing(ctx, mfxDevID, opcuaNodeID)
+	return mm.svc.UpdateThing(ctx, mgxDevID, opcuaNodeID)
 }
 
-func (mm *metricsMiddleware) RemoveThing(ctx context.Context, mfxDevID string) error {
+func (mm *metricsMiddleware) RemoveThing(ctx context.Context, mgxDevID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove_thing").Add(1)
 		mm.latency.With("method", "remove_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.RemoveThing(ctx, mfxDevID)
+	return mm.svc.RemoveThing(ctx, mgxDevID)
 }
 
-func (mm *metricsMiddleware) CreateChannel(ctx context.Context, mfxChanID, opcuaServerURI string) error {
+func (mm *metricsMiddleware) CreateChannel(ctx context.Context, mgxChanID, opcuaServerURI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_channel").Add(1)
 		mm.latency.With("method", "create_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateChannel(ctx, mfxChanID, opcuaServerURI)
+	return mm.svc.CreateChannel(ctx, mgxChanID, opcuaServerURI)
 }
 
-func (mm *metricsMiddleware) UpdateChannel(ctx context.Context, mfxChanID, opcuaServerURI string) error {
+func (mm *metricsMiddleware) UpdateChannel(ctx context.Context, mgxChanID, opcuaServerURI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_channel").Add(1)
 		mm.latency.With("method", "update_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateChannel(ctx, mfxChanID, opcuaServerURI)
+	return mm.svc.UpdateChannel(ctx, mgxChanID, opcuaServerURI)
 }
 
-func (mm *metricsMiddleware) RemoveChannel(ctx context.Context, mfxChanID string) error {
+func (mm *metricsMiddleware) RemoveChannel(ctx context.Context, mgxChanID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove_channel").Add(1)
 		mm.latency.With("method", "remove_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.RemoveChannel(ctx, mfxChanID)
+	return mm.svc.RemoveChannel(ctx, mgxChanID)
 }
 
-func (mm *metricsMiddleware) ConnectThing(ctx context.Context, mfxChanID, mfxThingID string) error {
+func (mm *metricsMiddleware) ConnectThing(ctx context.Context, mgxChanID, mgxThingID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "connect_thing").Add(1)
 		mm.latency.With("method", "connect_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ConnectThing(ctx, mfxChanID, mfxThingID)
+	return mm.svc.ConnectThing(ctx, mgxChanID, mgxThingID)
 }
 
-func (mm *metricsMiddleware) DisconnectThing(ctx context.Context, mfxChanID, mfxThingID string) error {
+func (mm *metricsMiddleware) DisconnectThing(ctx context.Context, mgxChanID, mgxThingID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "disconnect_thing").Add(1)
 		mm.latency.With("method", "disconnect_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.DisconnectThing(ctx, mfxChanID, mfxThingID)
+	return mm.svc.DisconnectThing(ctx, mgxChanID, mgxThingID)
 }
 
 func (mm *metricsMiddleware) Browse(ctx context.Context, serverURI, namespace, identifier string) ([]opcua.BrowsedNode, error) {

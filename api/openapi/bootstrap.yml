@@ -263,7 +263,7 @@ components:
           type: string
           format: uuid
           description: Corresponding Magistrala Thing ID.
-        mainflux_key:
+        magistrala_key:
           type: string
           format: uuid
           description: Corresponding Magistrala Thing key.

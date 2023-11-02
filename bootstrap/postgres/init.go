@@ -75,6 +75,14 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS status SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0)`,
 				},
 			},
+			{
+				Id: "configs_4",
+				Up: []string{
+					`ALTER TABLE IF EXISTS configs RENAME COLUMN mainflux_thing TO magistrala_thing`,
+					`ALTER TABLE IF EXISTS configs RENAME COLUMN mainflux_key TO magistrala_key`,
+					`ALTER TABLE IF EXISTS channels RENAME COLUMN mainflux_channel TO magistrala_channel`,
+				},
+			},
 		},
 	}
 }

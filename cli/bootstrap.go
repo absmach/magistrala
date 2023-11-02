@@ -6,7 +6,7 @@ package cli
 import (
 	"encoding/json"
 
-	mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			var cfg mfxsdk.BootstrapConfig
+			var cfg mgxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
 				logError(err)
 				return
@@ -47,7 +47,7 @@ var cmdBootstrap = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-			pageMetadata := mfxsdk.PageMetadata{
+			pageMetadata := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
 				State:  State,
@@ -86,7 +86,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 			if args[0] == "config" {
-				var cfg mfxsdk.BootstrapConfig
+				var cfg mgxsdk.BootstrapConfig
 				if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
 					logError(err)
 					return
@@ -184,7 +184,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			var cfg mfxsdk.BootstrapConfig
+			var cfg mgxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
 				logError(err)
 				return

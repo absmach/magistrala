@@ -28,8 +28,8 @@ const (
 	defReaderURL = "http://localhost:9005"
 )
 
-// MfConn - structure describing Magistrala connection set.
-type MfConn struct {
+// MgConn - structure describing Magistrala connection set.
+type MgConn struct {
 	ChannelID string
 	ThingID   string
 	ThingKey  string

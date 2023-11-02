@@ -8,9 +8,9 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/things/postgres"
 )
 
@@ -35,11 +35,11 @@ type service struct {
 	clients     postgres.Repository
 	clientCache Cache
 	idProvider  magistrala.IDProvider
-	grepo       mfgroups.Repository
+	grepo       mggroups.Repository
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo mfgroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
+func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
 	return service{
 		auth:        uauth,
 		clients:     c,
@@ -73,32 +73,32 @@ func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) 
 	return thingID, nil
 }
 
-func (svc service) CreateThings(ctx context.Context, token string, cls ...mfclients.Client) ([]mfclients.Client, error) {
+func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclients.Client) ([]mgclients.Client, error) {
 	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return []mfclients.Client{}, errors.Wrap(errors.ErrAuthorization, err)
+		return []mgclients.Client{}, errors.Wrap(errors.ErrAuthorization, err)
 	}
-	var clients []mfclients.Client
+	var clients []mgclients.Client
 	for _, c := range cls {
 		if c.ID == "" {
 			clientID, err := svc.idProvider.ID()
 			if err != nil {
-				return []mfclients.Client{}, err
+				return []mgclients.Client{}, err
 			}
 			c.ID = clientID
 		}
 		if c.Credentials.Secret == "" {
 			key, err := svc.idProvider.ID()
 			if err != nil {
-				return []mfclients.Client{}, err
+				return []mgclients.Client{}, err
 			}
 			c.Credentials.Secret = key
 		}
 		if c.Owner == "" {
 			c.Owner = user.GetId()
 		}
-		if c.Status != mfclients.DisabledStatus && c.Status != mfclients.EnabledStatus {
-			return []mfclients.Client{}, apiutil.ErrInvalidStatus
+		if c.Status != mgclients.DisabledStatus && c.Status != mgclients.EnabledStatus {
+			return []mgclients.Client{}, apiutil.ErrInvalidStatus
 		}
 		c.CreatedAt = time.Now()
 		clients = append(clients, c)
@@ -125,46 +125,46 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mfclie
 	return saved, nil
 }
 
-func (svc service) ViewClient(ctx context.Context, token string, id string) (mfclients.Client, error) {
+func (svc service) ViewClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
 	_, err := svc.authorize(ctx, userType, tokenKind, token, viewPermission, thingType, id)
 	if err != nil {
-		return mfclients.Client{}, err
+		return mgclients.Client{}, err
 	}
 
 	return svc.clients.RetrieveByID(ctx, id)
 }
 
-func (svc service) ListClients(ctx context.Context, token string, reqUserID string, pm mfclients.Page) (mfclients.ClientsPage, error) {
+func (svc service) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	var ids []string
 
 	userID, err := svc.identify(ctx, token)
 	if err != nil {
-		return mfclients.ClientsPage{}, err
+		return mgclients.ClientsPage{}, err
 	}
 
 	switch {
 	case (reqUserID != "" && reqUserID != userID):
 		if _, err := svc.authorize(ctx, userType, userKind, userID, ownerRelation, userType, reqUserID); err != nil {
-			return mfclients.ClientsPage{}, err
+			return mgclients.ClientsPage{}, err
 		}
 		rtids, err := svc.listClientIDs(ctx, reqUserID, pm.Permission)
 		if err != nil {
-			return mfclients.ClientsPage{}, err
+			return mgclients.ClientsPage{}, err
 		}
 		ids, err = svc.filterAllowedThingIDs(ctx, userID, pm.Permission, rtids)
 		if err != nil {
-			return mfclients.ClientsPage{}, err
+			return mgclients.ClientsPage{}, err
 		}
 	default:
 		ids, err = svc.listClientIDs(ctx, userID, pm.Permission)
 		if err != nil {
-			return mfclients.ClientsPage{}, err
+			return mgclients.ClientsPage{}, err
 		}
 	}
 
 	if len(ids) == 0 {
-		return mfclients.ClientsPage{
-			Page: mfclients.Page{Total: 0, Limit: pm.Limit, Offset: pm.Offset},
+		return mgclients.ClientsPage{
+			Page: mgclients.Page{Total: 0, Limit: pm.Limit, Offset: pm.Offset},
 		}, nil
 	}
 
@@ -207,13 +207,13 @@ func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission
 	return ids, nil
 }
 
-func (svc service) UpdateClient(ctx context.Context, token string, cli mfclients.Client) (mfclients.Client, error) {
+func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
 	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
 	if err != nil {
-		return mfclients.Client{}, err
+		return mgclients.Client{}, err
 	}
 
-	client := mfclients.Client{
+	client := mgclients.Client{
 		ID:        cli.ID,
 		Name:      cli.Name,
 		Metadata:  cli.Metadata,
@@ -223,13 +223,13 @@ func (svc service) UpdateClient(ctx context.Context, token string, cli mfclients
 	return svc.clients.Update(ctx, client)
 }
 
-func (svc service) UpdateClientTags(ctx context.Context, token string, cli mfclients.Client) (mfclients.Client, error) {
+func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
 	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
 	if err != nil {
-		return mfclients.Client{}, err
+		return mgclients.Client{}, err
 	}
 
-	client := mfclients.Client{
+	client := mgclients.Client{
 		ID:        cli.ID,
 		Tags:      cli.Tags,
 		UpdatedAt: time.Now(),
@@ -238,63 +238,63 @@ func (svc service) UpdateClientTags(ctx context.Context, token string, cli mfcli
 	return svc.clients.UpdateTags(ctx, client)
 }
 
-func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string) (mfclients.Client, error) {
+func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string) (mgclients.Client, error) {
 	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, id)
 	if err != nil {
-		return mfclients.Client{}, err
+		return mgclients.Client{}, err
 	}
 
-	client := mfclients.Client{
+	client := mgclients.Client{
 		ID: id,
-		Credentials: mfclients.Credentials{
+		Credentials: mgclients.Credentials{
 			Secret: key,
 		},
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
-		Status:    mfclients.EnabledStatus,
+		Status:    mgclients.EnabledStatus,
 	}
 	return svc.clients.UpdateSecret(ctx, client)
 }
 
-func (svc service) UpdateClientOwner(ctx context.Context, token string, cli mfclients.Client) (mfclients.Client, error) {
+func (svc service) UpdateClientOwner(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
 	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
 	if err != nil {
-		return mfclients.Client{}, err
+		return mgclients.Client{}, err
 	}
 
-	client := mfclients.Client{
+	client := mgclients.Client{
 		ID:        cli.ID,
 		Owner:     cli.Owner,
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
-		Status:    mfclients.EnabledStatus,
+		Status:    mgclients.EnabledStatus,
 	}
 	return svc.clients.UpdateOwner(ctx, client)
 }
 
-func (svc service) EnableClient(ctx context.Context, token, id string) (mfclients.Client, error) {
-	client := mfclients.Client{
+func (svc service) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
+	client := mgclients.Client{
 		ID:        id,
-		Status:    mfclients.EnabledStatus,
+		Status:    mgclients.EnabledStatus,
 		UpdatedAt: time.Now(),
 	}
 	client, err := svc.changeClientStatus(ctx, token, client)
 	if err != nil {
-		return mfclients.Client{}, errors.Wrap(mfclients.ErrEnableClient, err)
+		return mgclients.Client{}, errors.Wrap(mgclients.ErrEnableClient, err)
 	}
 
 	return client, nil
 }
 
-func (svc service) DisableClient(ctx context.Context, token, id string) (mfclients.Client, error) {
-	client := mfclients.Client{
+func (svc service) DisableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
+	client := mgclients.Client{
 		ID:        id,
-		Status:    mfclients.DisabledStatus,
+		Status:    mgclients.DisabledStatus,
 		UpdatedAt: time.Now(),
 	}
 	client, err := svc.changeClientStatus(ctx, token, client)
 	if err != nil {
-		return mfclients.Client{}, errors.Wrap(mfclients.ErrDisableClient, err)
+		return mgclients.Client{}, errors.Wrap(mgclients.ErrDisableClient, err)
 	}
 
 	if err := svc.clientCache.Remove(ctx, client.ID); err != nil {
@@ -356,26 +356,26 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 	return nil
 }
 
-func (svc service) changeClientStatus(ctx context.Context, token string, client mfclients.Client) (mfclients.Client, error) {
+func (svc service) changeClientStatus(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
 	userID, err := svc.authorize(ctx, userType, tokenKind, token, deletePermission, thingType, client.ID)
 	if err != nil {
-		return mfclients.Client{}, err
+		return mgclients.Client{}, err
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
-		return mfclients.Client{}, err
+		return mgclients.Client{}, err
 	}
 	if dbClient.Status == client.Status {
-		return mfclients.Client{}, mfclients.ErrStatusAlreadyAssigned
+		return mgclients.Client{}, mgclients.ErrStatusAlreadyAssigned
 	}
 
 	client.UpdatedBy = userID
 	return svc.clients.ChangeStatus(ctx, client)
 }
 
-func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string, pm mfclients.Page) (mfclients.MembersPage, error) {
+func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string, pm mgclients.Page) (mgclients.MembersPage, error) {
 	if _, err := svc.authorize(ctx, userType, tokenKind, token, pm.Permission, groupType, groupID); err != nil {
-		return mfclients.MembersPage{}, err
+		return mgclients.MembersPage{}, err
 	}
 
 	tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
@@ -385,17 +385,17 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 		ObjectType:  thingType,
 	})
 	if err != nil {
-		return mfclients.MembersPage{}, err
+		return mgclients.MembersPage{}, err
 	}
 
 	pm.IDs = tids.Policies
 
 	cp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
 	if err != nil {
-		return mfclients.MembersPage{}, err
+		return mgclients.MembersPage{}, err
 	}
 
-	return mfclients.MembersPage{
+	return mgclients.MembersPage{
 		Page:    cp.Page,
 		Members: cp.Clients,
 	}, nil

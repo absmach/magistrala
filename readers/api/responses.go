@@ -6,11 +6,11 @@ package api
 import (
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/readers"
 )
 
-var _ mainflux.Response = (*pageRes)(nil)
+var _ magistrala.Response = (*pageRes)(nil)
 
 type pageRes struct {
 	readers.PageMetadata

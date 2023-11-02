@@ -8,19 +8,19 @@ import (
 	"fmt"
 	"time"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/groups"
 )
 
 var _ groups.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mflog.Logger
+	logger mglog.Logger
 	svc    groups.Service
 }
 
 // LoggingMiddleware adds logging facilities to the groups service.
-func LoggingMiddleware(svc groups.Service, logger mflog.Logger) groups.Service {
+func LoggingMiddleware(svc groups.Service, logger mglog.Logger) groups.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

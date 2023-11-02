@@ -20,10 +20,10 @@ import (
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/groups"
 	chmocks "github.com/absmach/magistrala/internal/groups/mocks"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfgroups "github.com/absmach/magistrala/pkg/groups"
-	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
 	thapi "github.com/absmach/magistrala/things/api/http"
@@ -35,7 +35,7 @@ import (
 )
 
 const (
-	streamID      = "mainflux.bootstrap"
+	streamID      = "magistrala.bootstrap"
 	email         = "user@example.com"
 	validToken    = "validToken"
 	channelsNum   = 3
@@ -82,15 +82,15 @@ var (
 
 func newService(url string, auth magistrala.AuthServiceClient) bootstrap.Service {
 	configs := mocks.NewConfigsRepository()
-	config := mfsdk.Config{
+	config := mgsdk.Config{
 		ThingsURL: url,
 	}
 
-	sdk := mfsdk.NewSDK(config)
+	sdk := mgsdk.NewSDK(config)
 	return bootstrap.New(auth, configs, sdk, encKey)
 }
 
-func newThingsService() (things.Service, mfgroups.Service, magistrala.AuthServiceClient) {
+func newThingsService() (things.Service, mggroups.Service, magistrala.AuthServiceClient) {
 	auth := new(authmocks.Service)
 	thingCache := thmocks.NewCache()
 	idProvider := uuid.NewMock()
@@ -100,8 +100,8 @@ func newThingsService() (things.Service, mfgroups.Service, magistrala.AuthServic
 	return things.NewService(auth, cRepo, gRepo, thingCache, idProvider), groups.NewService(gRepo, idProvider, auth), auth
 }
 
-func newThingsServer(tsvc things.Service, gsvc mfgroups.Service) *httptest.Server {
-	logger := mflog.NewMock()
+func newThingsServer(tsvc things.Service, gsvc mggroups.Service) *httptest.Server {
+	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	thapi.MakeHandler(tsvc, gsvc, mux, logger, instanceID)
 

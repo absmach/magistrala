@@ -17,13 +17,13 @@ default values.
 | MG_CASSANDRA_WRITER_HTTP_SERVER_CERT | Cassandra service HTTP server certificate path                          |                                |
 | MG_CASSANDRA_WRITER_HTTP_SERVER_KEY  | Cassandra service HTTP server key path                                  |                                |
 | MG_CASSANDRA_CLUSTER                 | Cassandra cluster comma separated addresses                             | 127.0.0.1                      |
-| MG_CASSANDRA_KEYSPACE                | Cassandra keyspace name                                                 | mainflux                       |
-| MG_CASSANDRA_USER                    | Cassandra DB username                                                   | mainflux                       |
-| MG_CASSANDRA_PASS                    | Cassandra DB password                                                   | mainflux                       |
+| MG_CASSANDRA_KEYSPACE                | Cassandra keyspace name                                                 | magistrala                     |
+| MG_CASSANDRA_USER                    | Cassandra DB username                                                   | magistrala                     |
+| MG_CASSANDRA_PASS                    | Cassandra DB password                                                   | magistrala                     |
 | MG_CASSANDRA_PORT                    | Cassandra DB port                                                       | 9042                           |
 | MG_MESSAGE_BROKER_URL                | Message broker instance URL                                             | nats://localhost:4222          |
 | MG_JAEGER_URL                        | Jaeger server URL                                                       | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                    | Send telemetry to mainflux call home server                             | true                           |
+| MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server                           | true                           |
 | MG_CASSANDRA_WRITER_INSANCE_ID       | Cassandra writer instance ID                                            |                                |
 
 ## Deployment
@@ -36,7 +36,7 @@ To start the service, execute the following shell script:
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the cassandra writer
 make cassandra-writer
@@ -58,9 +58,9 @@ MG_CASSANDRA_PASS=[Cassandra DB password] \
 MG_CASSANDRA_PORT=[Cassandra DB port] \
 MG_MESSAGE_BROKER_URL=[Message Broker instance URL] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_CASSANDRA_WRITER_INSANCE_ID=[Cassandra writer instance ID] \
-$GOBIN/mainflux-cassandra-writer
+$GOBIN/magistrala-cassandra-writer
 ```
 
 ### Using docker-compose

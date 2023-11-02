@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
@@ -26,14 +26,14 @@ func GenerateUUID(t *testing.T) string {
 }
 
 func GenerateValidToken(t *testing.T, clientID string, svc users.Service, cRepo *cmocks.Repository, phasher users.Hasher) string {
-	client := mfclients.Client{
+	client := mgclients.Client{
 		ID:   clientID,
 		Name: "validtoken",
-		Credentials: mfclients.Credentials{
+		Credentials: mgclients.Credentials{
 			Identity: "validtoken",
 			Secret:   "secret",
 		},
-		Status: mfclients.EnabledStatus,
+		Status: mgclients.EnabledStatus,
 	}
 	rClient := client
 	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)

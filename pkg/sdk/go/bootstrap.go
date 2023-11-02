@@ -24,9 +24,9 @@ const (
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Magistrala entities.
-// MFThing represents corresponding Magistrala Thing ID.
-// MFKey is key of corresponding Magistrala Thing.
-// MFChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
+// MGThing represents corresponding Magistrala Thing ID.
+// MGKey is key of corresponding Magistrala Thing.
+// MGChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
 type BootstrapConfig struct {
 	Channels    interface{} `json:"channels,omitempty"`
 	ExternalID  string      `json:"external_id,omitempty"`
@@ -90,7 +90,7 @@ func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (sdk mfSDK) AddBootstrap(cfg BootstrapConfig, token string) (string, errors.SDKError) {
+func (sdk mgSDK) AddBootstrap(cfg BootstrapConfig, token string) (string, errors.SDKError) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return "", errors.NewSDKError(err)
@@ -108,7 +108,7 @@ func (sdk mfSDK) AddBootstrap(cfg BootstrapConfig, token string) (string, errors
 	return id, nil
 }
 
-func (sdk mfSDK) Bootstraps(pm PageMetadata, token string) (BootstrapPage, errors.SDKError) {
+func (sdk mgSDK) Bootstraps(pm PageMetadata, token string) (BootstrapPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.bootstrapURL, configsEndpoint, pm)
 	if err != nil {
 		return BootstrapPage{}, errors.NewSDKError(err)
@@ -127,7 +127,7 @@ func (sdk mfSDK) Bootstraps(pm PageMetadata, token string) (BootstrapPage, error
 	return bb, nil
 }
 
-func (sdk mfSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
+func (sdk mgSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
 	data, err := json.Marshal(BootstrapConfig{State: cfg.State})
 	if err != nil {
 		return errors.NewSDKError(err)
@@ -144,7 +144,7 @@ func (sdk mfSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
 	return sdkerr
 }
 
-func (sdk mfSDK) ViewBootstrap(id, token string) (BootstrapConfig, errors.SDKError) {
+func (sdk mgSDK) ViewBootstrap(id, token string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -160,7 +160,7 @@ func (sdk mfSDK) ViewBootstrap(id, token string) (BootstrapConfig, errors.SDKErr
 	return bc, nil
 }
 
-func (sdk mfSDK) UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKError {
+func (sdk mgSDK) UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKError {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return errors.NewSDKError(err)
@@ -173,7 +173,7 @@ func (sdk mfSDK) UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKEr
 	return sdkerr
 }
 
-func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token string) (BootstrapConfig, errors.SDKError) {
+func (sdk mgSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapCertsEndpoint, id)
 	request := BootstrapConfig{
 		ClientCert: clientCert,
@@ -196,7 +196,7 @@ func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token strin
 	return bc, sdkerr
 }
 
-func (sdk mfSDK) UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError {
+func (sdk mgSDK) UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapConnEndpoint, id)
 	request := map[string][]string{
 		"channels": channels,
@@ -210,14 +210,14 @@ func (sdk mfSDK) UpdateBootstrapConnection(id string, channels []string, token s
 	return sdkerr
 }
 
-func (sdk mfSDK) RemoveBootstrap(id, token string) errors.SDKError {
+func (sdk mgSDK) RemoveBootstrap(id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 
 	_, _, err := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return err
 }
 
-func (sdk mfSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
+func (sdk mgSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, ThingPrefix+externalKey, nil, nil, http.StatusOK)
@@ -233,7 +233,7 @@ func (sdk mfSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, err
 	return bc, nil
 }
 
-func (sdk mfSDK) BootstrapSecure(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
+func (sdk mgSDK) BootstrapSecure(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, secureEndpoint, externalID)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, ThingPrefix+externalKey, nil, nil, http.StatusOK)

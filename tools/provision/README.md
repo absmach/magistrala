@@ -24,23 +24,23 @@ Flags:
       --ca string         CA for creating and signing things certificate (default "ca.crt")
       --cakey string      ca.key for creating and signing things certificate (default "ca.key")
   -h, --help              help for provision
-      --host string       address for mainflux instance (default "https://localhost")
+      --host string       address for magistrala instance (default "https://localhost")
       --num int           number of channels and things to create and connect (default 10)
-  -p, --password string   mainflux users password
+  -p, --password string   magistrala users password
       --ssl               create certificates for mTLS access
-  -u, --username string   mainflux user
+  -u, --username string   magistrala user
       --prefix string     name prefix for things and channels
 ```
 
 Example:
 ```
-go run tools/provision/cmd/main.go -u test@mainflux.com -p test1234 --host https://142.93.118.47
+go run tools/provision/cmd/main.go -u test@magistrala.com -p test1234 --host https://142.93.118.47
 ```
 
 If you want to create a list of channels with certificates:
 
 ```
-go run tools/provision/cmd/main.go  --host http://localhost --num 10 -u test@mainflux.com -p test1234 --ssl true --ca docker/ssl/certs/ca.crt --cakey docker/ssl/certs/ca.key
+go run tools/provision/cmd/main.go  --host http://localhost --num 10 -u test@magistrala.com -p test1234 --ssl true --ca docker/ssl/certs/ca.crt --cakey docker/ssl/certs/ca.key
 
 ```
 

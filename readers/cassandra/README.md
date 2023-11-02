@@ -16,8 +16,8 @@ default values.
 | MG_CASSANDRA_READER_HTTP_SERVER_CERT | Cassandra service HTTP server cert                  | ""                             |
 | MG_CASSANDRA_READER_HTTP_SERVER_KEY  | Cassandra service HTTP server key                   | ""                             |
 | MG_CASSANDRA_CLUSTER                 | Cassandra cluster comma separated addresses         | localhost                      |
-| MG_CASSANDRA_USER                    | Cassandra DB username                               | mainflux                       |
-| MG_CASSANDRA_PASS                    | Cassandra DB password                               | mainflux                       |
+| MG_CASSANDRA_USER                    | Cassandra DB username                               | magistrala                     |
+| MG_CASSANDRA_PASS                    | Cassandra DB password                               | magistrala                     |
 | MG_CASSANDRA_KEYSPACE                | Cassandra keyspace name                             | messages                       |
 | MG_CASSANDRA_PORT                    | Cassandra DB port                                   | 9042                           |
 | MG_THINGS_AUTH_GRPC_URL              | Things service Auth gRPC URL                        | localhost:7000                 |
@@ -29,7 +29,7 @@ default values.
 | MG_AUTH_GRPC_CLIENT_TLS              | Users service gRPC TLS enabled                      | false                          |
 | MG_AUTH_GRPC_CA_CERT                 | Users service gRPC CA certificates                  | ""                             |
 | MG_JAEGER_URL                        | Jaeger server URL                                   | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                    | Send telemetry to mainflux call home server         | true                           |
+| MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server       | true                           |
 | MG_CASSANDRA_READER_INSTANCE_ID      | Cassandra Reader instance ID                        | ""                             |
 
 ## Deployment
@@ -43,7 +43,7 @@ To start the service, execute the following shell script:
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the cassandra
 make cassandra-reader
@@ -71,9 +71,9 @@ MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Users service gRPC TLS enabled] \
 MG_AUTH_GRPC_CA_CERT=[Users service gRPC CA certificates] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_CASSANDRA_READER_INSTANCE_ID=[Cassandra Reader instance ID] \
-$GOBIN/mainflux-cassandra-reader
+$GOBIN/magistrala-cassandra-reader
 ```
 
 ### Using docker-compose

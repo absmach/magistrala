@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/consumers/writers/mongodb"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/gofrs/uuid"
@@ -25,7 +25,7 @@ import (
 var (
 	port        string
 	addr        string
-	testLog, _  = mflog.New(os.Stdout, mflog.Info.String())
+	testLog, _  = mglog.New(os.Stdout, mglog.Info.String())
 	testDB      = "test"
 	collection  = "messages"
 	msgsNum     = 100

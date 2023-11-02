@@ -15,10 +15,10 @@ import (
 	"github.com/absmach/magistrala/internal/groups"
 	gmocks "github.com/absmach/magistrala/internal/groups/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
-	mflog "github.com/absmach/magistrala/logger"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mglog "github.com/absmach/magistrala/logger"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/things"
 	api "github.com/absmach/magistrala/things/api/http"
@@ -37,7 +37,7 @@ func newChannelsServer() (*httptest.Server, *mocks.Repository, *gmocks.Repositor
 	csvc := things.NewService(auth, cRepo, gRepo, thingCache, idProvider)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 
-	logger := mflog.NewMock()
+	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	api.MakeHandler(csvc, gsvc, mux, logger, "")
 
@@ -51,13 +51,13 @@ func TestCreateChannel(t *testing.T) {
 	channel := sdk.Channel{
 		Name:     "channelName",
 		Metadata: validMetadata,
-		Status:   mfclients.EnabledStatus.String(),
+		Status:   mgclients.EnabledStatus.String(),
 	}
 
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 	cases := []struct {
 		desc    string
 		channel sdk.Channel
@@ -91,7 +91,7 @@ func TestCreateChannel(t *testing.T) {
 			channel: sdk.Channel{
 				Name:     gName,
 				ParentID: testsutil.GenerateUUID(t),
-				Status:   mfclients.EnabledStatus.String(),
+				Status:   mgclients.EnabledStatus.String(),
 			},
 			err: nil,
 		},
@@ -100,7 +100,7 @@ func TestCreateChannel(t *testing.T) {
 			channel: sdk.Channel{
 				Name:     gName,
 				ParentID: gmocks.WrongID,
-				Status:   mfclients.EnabledStatus.String(),
+				Status:   mgclients.EnabledStatus.String(),
 			},
 			err: errors.NewSDKErrorWithStatus(errors.ErrCreateEntity, http.StatusInternalServerError),
 		},
@@ -109,14 +109,14 @@ func TestCreateChannel(t *testing.T) {
 			channel: sdk.Channel{
 				Name:    gName,
 				OwnerID: gmocks.WrongID,
-				Status:  mfclients.EnabledStatus.String(),
+				Status:  mgclients.EnabledStatus.String(),
 			},
 			err: errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
 		},
 		{
 			desc: "create channel with missing name",
 			channel: sdk.Channel{
-				Status: mfclients.EnabledStatus.String(),
+				Status: mgclients.EnabledStatus.String(),
 			},
 			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
 		},
@@ -131,7 +131,7 @@ func TestCreateChannel(t *testing.T) {
 				Metadata:    validMetadata,
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
-				Status:      mfclients.EnabledStatus.String(),
+				Status:      mgclients.EnabledStatus.String(),
 			},
 			token: token,
 			err:   nil,
@@ -139,7 +139,7 @@ func TestCreateChannel(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := gRepo.On("Save", mock.Anything, mock.Anything).Return(convertChannel(sdk.Channel{}), tc.err)
-		rChannel, err := mfsdk.CreateChannel(tc.channel, adminToken)
+		rChannel, err := mgsdk.CreateChannel(tc.channel, adminToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		if err == nil {
 			assert.NotEmpty(t, rChannel, fmt.Sprintf("%s: expected not nil on client ID", tc.desc))
@@ -158,19 +158,19 @@ func TestCreateChannels(t *testing.T) {
 		{
 			Name:     "channelName",
 			Metadata: validMetadata,
-			Status:   mfclients.EnabledStatus.String(),
+			Status:   mgclients.EnabledStatus.String(),
 		},
 		{
 			Name:     "channelName2",
 			Metadata: validMetadata,
-			Status:   mfclients.EnabledStatus.String(),
+			Status:   mgclients.EnabledStatus.String(),
 		},
 	}
 
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 	cases := []struct {
 		desc     string
 		channels []sdk.Channel
@@ -209,7 +209,7 @@ func TestCreateChannels(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := gRepo.On("Save", mock.Anything, mock.Anything).Return(convertChannels(tc.response), tc.err)
-		rChannel, err := mfsdk.CreateChannels(tc.channels, adminToken)
+		rChannel, err := mgsdk.CreateChannels(tc.channels, adminToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		if err == nil {
 			assert.NotEmpty(t, rChannel, fmt.Sprintf("%s: expected not nil on client ID", tc.desc))
@@ -228,14 +228,14 @@ func TestListChannels(t *testing.T) {
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	for i := 10; i < 100; i++ {
 		gr := sdk.Channel{
 			ID:       generateUUID(t),
 			Name:     fmt.Sprintf("channel_%d", i),
 			Metadata: sdk.Metadata{"name": fmt.Sprintf("thing_%d", i)},
-			Status:   mfclients.EnabledStatus.String(),
+			Status:   mgclients.EnabledStatus.String(),
 		}
 		chs = append(chs, gr)
 	}
@@ -243,7 +243,7 @@ func TestListChannels(t *testing.T) {
 	cases := []struct {
 		desc     string
 		token    string
-		status   mfclients.Status
+		status   mgclients.Status
 		total    uint64
 		offset   uint64
 		limit    uint64
@@ -325,9 +325,9 @@ func TestListChannels(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall1 := gRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(mfgroups.Page{Groups: convertChannels(tc.response)}, tc.err)
+		repoCall1 := gRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
 		pm := sdk.PageMetadata{}
-		page, err := mfsdk.Channels(pm, adminToken)
+		page, err := mgsdk.Channels(pm, adminToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, len(tc.response), len(page.Channels), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		if tc.err == nil {
@@ -347,13 +347,13 @@ func TestViewChannel(t *testing.T) {
 		Description: description,
 		Metadata:    validMetadata,
 		Children:    []*sdk.Channel{},
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 	}
 
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 	channel.ID = generateUUID(t)
 
 	cases := []struct {
@@ -388,7 +388,7 @@ func TestViewChannel(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall1 := gRepo.On("RetrieveByID", mock.Anything, tc.channelID).Return(convertChannel(tc.response), tc.err)
-		grp, err := mfsdk.Channel(tc.channelID, tc.token)
+		grp, err := mgsdk.Channel(tc.channelID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if len(tc.response.Children) == 0 {
 			tc.response.Children = nil
@@ -419,7 +419,7 @@ func TestUpdateChannel(t *testing.T) {
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	channel.ID = generateUUID(t)
 
@@ -553,7 +553,7 @@ func TestUpdateChannel(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall1 := gRepo.On("Update", mock.Anything, mock.Anything).Return(convertChannel(tc.response), tc.err)
-		_, err := mfsdk.UpdateChannel(tc.channel, tc.token)
+		_, err := mgsdk.UpdateChannel(tc.channel, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
 			ok := repoCall1.Parent.AssertCalled(t, "Update", mock.Anything, mock.Anything)
@@ -571,7 +571,7 @@ func TestListChannelsByThing(t *testing.T) {
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	nChannels := uint64(100)
 	aChannels := []sdk.Channel{}
@@ -580,7 +580,7 @@ func TestListChannelsByThing(t *testing.T) {
 		channel := sdk.Channel{
 			Name:     fmt.Sprintf("membership_%d@example.com", i),
 			Metadata: sdk.Metadata{"role": "channel"},
-			Status:   mfclients.EnabledStatus.String(),
+			Status:   mgclients.EnabledStatus.String(),
 		}
 		aChannels = append(aChannels, channel)
 	}
@@ -609,7 +609,7 @@ func TestListChannelsByThing(t *testing.T) {
 				Offset: 6,
 				Total:  nChannels,
 				Limit:  nChannels,
-				Status: mfclients.AllStatus.String(),
+				Status: mgclients.AllStatus.String(),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
@@ -623,7 +623,7 @@ func TestListChannelsByThing(t *testing.T) {
 				Offset: 6,
 				Total:  nChannels,
 				Limit:  nChannels,
-				Status: mfclients.AllStatus.String(),
+				Status: mgclients.AllStatus.String(),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
@@ -637,7 +637,7 @@ func TestListChannelsByThing(t *testing.T) {
 				Offset: 6,
 				Total:  nChannels,
 				Limit:  nChannels,
-				Status: mfclients.AllStatus.String(),
+				Status: mgclients.AllStatus.String(),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
@@ -651,7 +651,7 @@ func TestListChannelsByThing(t *testing.T) {
 				Offset:   6,
 				Total:    nChannels,
 				Limit:    nChannels,
-				Status:   mfclients.AllStatus.String(),
+				Status:   mgclients.AllStatus.String(),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
@@ -675,7 +675,7 @@ func TestListChannelsByThing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		page, err := mfsdk.ChannelsByThing(tc.clientID, tc.page, tc.token)
+		page, err := mgsdk.ChannelsByThing(tc.clientID, tc.page, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page.Channels))
 	}
@@ -688,7 +688,7 @@ func TestEnableChannel(t *testing.T) {
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	creationTime := time.Now().UTC()
 	channel := sdk.Channel{
@@ -697,30 +697,30 @@ func TestEnableChannel(t *testing.T) {
 		OwnerID:   generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
-		Status:    mfclients.Disabled,
+		Status:    mgclients.Disabled,
 	}
 
 	repoCall1 := gRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
 	repoCall2 := gRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
-	_, err := mfsdk.EnableChannel("wrongID", adminToken)
-	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mfgroups.ErrEnableGroup, errors.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Enable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
+	_, err := mgsdk.EnableChannel("wrongID", adminToken)
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mggroups.ErrEnableGroup, errors.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Enable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
 	ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")
 	assert.True(t, ok, "RetrieveByID was not called on enabling channel")
 	repoCall1.Unset()
 	repoCall2.Unset()
 
-	ch := mfgroups.Group{
+	ch := mggroups.Group{
 		ID:        channel.ID,
 		Name:      channel.Name,
 		Owner:     channel.OwnerID,
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
-		Status:    mfclients.DisabledStatus,
+		Status:    mgclients.DisabledStatus,
 	}
 
 	repoCall1 = gRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(ch, nil)
 	repoCall2 = gRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(ch, nil)
-	res, err := mfsdk.EnableChannel(channel.ID, adminToken)
+	res, err := mgsdk.EnableChannel(channel.ID, adminToken)
 	assert.Nil(t, err, fmt.Sprintf("Enable channel with correct id: expected %v got %v", nil, err))
 	assert.Equal(t, channel, res, fmt.Sprintf("Enable channel with correct id: expected %v got %v", channel, res))
 	ok = repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, channel.ID)
@@ -738,7 +738,7 @@ func TestDisableChannel(t *testing.T) {
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	creationTime := time.Now().UTC()
 	channel := sdk.Channel{
@@ -747,30 +747,30 @@ func TestDisableChannel(t *testing.T) {
 		OwnerID:   generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
-		Status:    mfclients.Enabled,
+		Status:    mgclients.Enabled,
 	}
 
 	repoCall1 := gRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(sdk.ErrFailedRemoval)
 	repoCall2 := gRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
-	_, err := mfsdk.DisableChannel("wrongID", adminToken)
-	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mfgroups.ErrDisableGroup, errors.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
+	_, err := mgsdk.DisableChannel("wrongID", adminToken)
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mggroups.ErrDisableGroup, errors.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
 	ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")
 	assert.True(t, ok, "Memberships was not called on disabling channel with wrong id")
 	repoCall1.Unset()
 	repoCall2.Unset()
 
-	ch := mfgroups.Group{
+	ch := mggroups.Group{
 		ID:        channel.ID,
 		Name:      channel.Name,
 		Owner:     channel.OwnerID,
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
-		Status:    mfclients.EnabledStatus,
+		Status:    mgclients.EnabledStatus,
 	}
 
 	repoCall1 = gRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(ch, nil)
 	repoCall2 = gRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(ch, nil)
-	res, err := mfsdk.DisableChannel(channel.ID, adminToken)
+	res, err := mgsdk.DisableChannel(channel.ID, adminToken)
 	assert.Nil(t, err, fmt.Sprintf("Disable channel with correct id: expected %v got %v", nil, err))
 	assert.Equal(t, channel, res, fmt.Sprintf("Disable channel with correct id: expected %v got %v", channel, res))
 	ok = repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, channel.ID)

@@ -28,7 +28,7 @@ default values.
 | MG_THINGS_ES_DB                  | Things service event source DB              | 0                               |
 | MG_LORA_ADAPTER_EVENT_CONSUMER   | Service event consumer name                 | lora                            |
 | MG_JAEGER_URL                    | Jaeger server URL                           | http://jaeger:14268/api/traces  |
-| MG_SEND_TELEMETRY                | Send telemetry to mainflux call home server | true                            |
+| MG_SEND_TELEMETRY                | Send telemetry to magistrala call home server | true                            |
 
 ## Deployment
 
@@ -41,7 +41,7 @@ To start the service outside of the container, execute the following shell scrip
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the lora adapter
 make lora
@@ -62,7 +62,7 @@ MG_THINGS_ES_URL=[Things service event source URL] \
 MG_THINGS_ES_PASS=[Things service event source password] \
 MG_THINGS_ES_DB=[Things service event source password] \
 MG_OPCUA_ADAPTER_EVENT_CONSUMER=[LoRa adapter instance name] \
-$GOBIN/mainflux-lora
+$GOBIN/magistrala-lora
 ```
 
 ### Using docker-compose

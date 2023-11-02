@@ -12,9 +12,9 @@ import (
 
 // Config represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Magistrala entities.
-// MFThing represents corresponding Magistrala Thing ID.
-// MFKey is key of corresponding Magistrala Thing.
-// MFChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
+// MGThing represents corresponding Magistrala Thing ID.
+// MGKey is key of corresponding Magistrala Thing.
+// MGChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
 type Config struct {
 	ThingID     string    `json:"thing_id"`
 	Owner       string    `json:"owner,omitempty"`

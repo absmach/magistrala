@@ -30,7 +30,7 @@ var (
 	data    = []byte("payload")
 )
 
-var errFailedHandleMessage = errors.New("failed to handle mainflux message")
+var errFailedHandleMessage = errors.New("failed to handle magistrala message")
 
 func TestPublisher(t *testing.T) {
 	// Subscribing with topic, and with subtopic, so that we can publish messages.
@@ -196,7 +196,7 @@ func TestSubscribe(t *testing.T) {
 				amqp.Publishing{
 					Headers:     amqp.Table{},
 					ContentType: "application/octet-stream",
-					AppId:       "mainflux-publisher",
+					AppId:       "magistrala-publisher",
 					Body:        data,
 				})
 			assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))

@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers"
 	consumertracing "github.com/absmach/magistrala/consumers/tracing"
 	"github.com/absmach/magistrala/consumers/writers/api"
@@ -21,7 +21,7 @@ import (
 	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -57,13 +57,13 @@ func main() {
 		log.Fatalf("failed to load %s service configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -123,7 +123,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -140,7 +140,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, logger mflog.Logger) consumers.BlockingConsumer {
+func newService(db *sqlx.DB, logger mglog.Logger) consumers.BlockingConsumer {
 	svc := timescale.New(db)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("timescale", "message_writer")

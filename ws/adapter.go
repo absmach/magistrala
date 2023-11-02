@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
@@ -51,12 +51,12 @@ type Service interface {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	auth   mainflux.AuthzServiceClient
+	auth   magistrala.AuthzServiceClient
 	pubsub messaging.PubSub
 }
 
 // New instantiates the WS adapter implementation.
-func New(auth mainflux.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(auth magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	return &adapterService{
 		auth:   auth,
 		pubsub: pubsub,
@@ -95,7 +95,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 // authorize checks if the thingKey is authorized to access the channel
 // and returns the thingID if it is.
 func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, action string) (string, error) {
-	ar := &mainflux.AuthorizeReq{
+	ar := &magistrala.AuthorizeReq{
 		Namespace:   "",
 		SubjectType: "thing",
 		Permission:  action,

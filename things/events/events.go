@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/events"
 )
 
@@ -38,7 +38,7 @@ var (
 )
 
 type createClientEvent struct {
-	mfclients.Client
+	mgclients.Client
 }
 
 func (cce createClientEvent) Encode() (map[string]interface{}, error) {
@@ -75,7 +75,7 @@ func (cce createClientEvent) Encode() (map[string]interface{}, error) {
 }
 
 type updateClientEvent struct {
-	mfclients.Client
+	mgclients.Client
 	operation string
 }
 
@@ -141,7 +141,7 @@ func (rce removeClientEvent) Encode() (map[string]interface{}, error) {
 }
 
 type viewClientEvent struct {
-	mfclients.Client
+	mgclients.Client
 }
 
 func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
@@ -189,7 +189,7 @@ func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
 
 type listClientEvent struct {
 	reqUserID string
-	mfclients.Page
+	mgclients.Page
 }
 
 func (lce listClientEvent) Encode() (map[string]interface{}, error) {
@@ -242,7 +242,7 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 }
 
 type listClientByGroupEvent struct {
-	mfclients.Page
+	mgclients.Page
 	channelID string
 }
 

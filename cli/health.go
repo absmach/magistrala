@@ -12,7 +12,7 @@ func NewHealthCmd() *cobra.Command {
 		Short: "Health Check",
 		Long: "Magistrala service Health Check\n" +
 			"usage:\n" +
-			"\tmainflux-cli health <service>",
+			"\tmagistrala-cli health <service>",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
 				logUsage(cmd.Use)

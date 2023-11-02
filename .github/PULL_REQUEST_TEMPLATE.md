@@ -1,4 +1,4 @@
-Pull request title should be `MF-XXX - description` or `NOISSUE - description` where XXX is ID of issue that this PR relate to.
+Pull request title should be `MG-XXX - description` or `NOISSUE - description` where XXX is ID of issue that this PR relate to.
 Please review the [CONTRIBUTING.md](https://github.com/absmach/magistrala/blob/master/CONTRIBUTING.md) file for detailed contributing guidelines.
 
 ### What does this do?

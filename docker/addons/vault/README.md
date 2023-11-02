@@ -6,23 +6,23 @@ When the Vault service is started, some initialization steps need to be done to 
 
 ## Configuration
 
-| Variable              | Description                                             | Default        |
-| --------------------- | ------------------------------------------------------- | -------------- |
-| MG_VAULT_HOST         | Vault service address                                   | vault          |
-| MG_VAULT_PORT         | Vault service port                                      | 8200           |
-| MG_VAULT_UNSEAL_KEY_1 | Vault unseal key                                        | ""             |
-| MG_VAULT_UNSEAL_KEY_2 | Vault unseal key                                        | ""             |
-| MG_VAULT_UNSEAL_KEY_3 | Vault unseal key                                        | ""             |
-| MG_VAULT_TOKEN        | Vault cli access token                                  | ""             |
-| MG_VAULT_PKI_PATH     | Vault secrets engine path for CA                        | pki            |
-| MG_VAULT_PKI_INT_PATH | Vault secrets engine path for intermediate CA           | pki_int        |
-| MG_VAULT_CA_ROLE_NAME | Vault secrets engine role                               | mainflux       |
-| MG_VAULT_CA_NAME      | Certificates name used by `vault-set-pki.sh`            | mainflux       |
-| MG_VAULT_CA_CN        | Common name used for CA creation by `vault-set-pki.sh`  | mainflux.com   |
+| Variable              | Description                                             | Default          |
+| --------------------- | ------------------------------------------------------- | ---------------- |
+| MG_VAULT_HOST         | Vault service address                                   | vault            |
+| MG_VAULT_PORT         | Vault service port                                      | 8200             |
+| MG_VAULT_UNSEAL_KEY_1 | Vault unseal key                                        | ""               |
+| MG_VAULT_UNSEAL_KEY_2 | Vault unseal key                                        | ""               |
+| MG_VAULT_UNSEAL_KEY_3 | Vault unseal key                                        | ""               |
+| MG_VAULT_TOKEN        | Vault cli access token                                  | ""               |
+| MG_VAULT_PKI_PATH     | Vault secrets engine path for CA                        | pki              |
+| MG_VAULT_PKI_INT_PATH | Vault secrets engine path for intermediate CA           | pki_int          |
+| MG_VAULT_CA_ROLE_NAME | Vault secrets engine role                               | magistrala       |
+| MG_VAULT_CA_NAME      | Certificates name used by `vault-set-pki.sh`            | magistrala       |
+| MG_VAULT_CA_CN        | Common name used for CA creation by `vault-set-pki.sh`  | magistrala.com   |
 | MG_VAULT_CA_OU        | Org unit used for CA creation by `vault-set-pki.sh`     | Magistrala Cloud |
 | MG_VAULT_CA_O         | Organization used for CA creation by `vault-set-pki.sh` | Magistrala Labs  |
-| MG_VAULT_CA_C         | Country used for CA creation by `vault-set-pki.sh`      | Serbia         |
-| MG_VAULT_CA_L         | Location used for CA creation by `vault-set-pki.sh`     | Belgrade       |
+| MG_VAULT_CA_C         | Country used for CA creation by `vault-set-pki.sh`      | Serbia           |
+| MG_VAULT_CA_L         | Location used for CA creation by `vault-set-pki.sh`     | Belgrade         |
 
 ## Setup
 
@@ -84,7 +84,7 @@ The CA parameters are obtained from the environment variables starting with `MG_
 
 It can also be useful to run the Vault CLI for inspection and administration work.
 
-This can be done directly using the Vault image in Docker: `docker run -it mainflux/vault:latest vault`
+This can be done directly using the Vault image in Docker: `docker run -it magistrala/vault:latest vault`
 
 ```bash
 Usage: vault <command> [args]

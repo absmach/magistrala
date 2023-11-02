@@ -11,7 +11,7 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 )
 
-const streamID = "mainflux.bootstrap"
+const streamID = "magistrala.bootstrap"
 
 var _ bootstrap.Service = (*eventStore)(nil)
 
@@ -105,8 +105,8 @@ func (es *eventStore) UpdateConnections(ctx context.Context, token, id string, c
 	}
 
 	ev := updateConnectionsEvent{
-		mfThing:    id,
-		mfChannels: connections,
+		mgThing:    id,
+		mgChannels: connections,
 	}
 
 	return es.Publish(ctx, ev)
@@ -138,7 +138,7 @@ func (es *eventStore) Remove(ctx context.Context, token, id string) error {
 	}
 
 	ev := removeConfigEvent{
-		mfThing: id,
+		mgThing: id,
 	}
 
 	return es.Publish(ctx, ev)
@@ -170,7 +170,7 @@ func (es *eventStore) ChangeState(ctx context.Context, token, id string, state b
 	}
 
 	ev := changeStateEvent{
-		mfThing: id,
+		mgThing: id,
 		state:   state,
 	}
 

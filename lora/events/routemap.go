@@ -26,14 +26,14 @@ func NewRouteMapRepository(client *redis.Client, prefix string) lora.RouteMapRep
 	}
 }
 
-func (mr *routerMap) Save(ctx context.Context, mfxID, loraID string) error {
-	tkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
+func (mr *routerMap) Save(ctx context.Context, mgxID, loraID string) error {
+	tkey := fmt.Sprintf("%s:%s", mr.prefix, mgxID)
 	if err := mr.client.Set(ctx, tkey, loraID, 0).Err(); err != nil {
 		return err
 	}
 
 	lkey := fmt.Sprintf("%s:%s", mr.prefix, loraID)
-	return mr.client.Set(ctx, lkey, mfxID, 0).Err()
+	return mr.client.Set(ctx, lkey, mgxID, 0).Err()
 }
 
 func (mr *routerMap) Get(ctx context.Context, id string) (string, error) {
@@ -46,8 +46,8 @@ func (mr *routerMap) Get(ctx context.Context, id string) (string, error) {
 	return mval, nil
 }
 
-func (mr *routerMap) Remove(ctx context.Context, mfxID string) error {
-	mkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
+func (mr *routerMap) Remove(ctx context.Context, mgxID string) error {
+	mkey := fmt.Sprintf("%s:%s", mr.prefix, mgxID)
 	lval, err := mr.client.Get(ctx, mkey).Result()
 	if err != nil {
 		return err

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -59,7 +59,7 @@ func TestAddTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		_, err := svc.AddTwin(context.Background(), tc.token, tc.twin, def)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -73,7 +73,7 @@ func TestUpdateTwin(t *testing.T) {
 	def := twins.Definition{}
 
 	other.ID = wrongID
-	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	saved, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	repoCall.Unset()
@@ -107,7 +107,7 @@ func TestUpdateTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		err := svc.UpdateTwin(context.Background(), tc.token, tc.twin, def)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -118,7 +118,7 @@ func TestViewTwin(t *testing.T) {
 	svc, auth := mocks.NewService()
 	twin := twins.Twin{}
 	def := twins.Definition{}
-	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	saved, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	repoCall.Unset()
@@ -150,7 +150,7 @@ func TestViewTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		_, err := svc.ViewTwin(context.Background(), tc.token, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -167,7 +167,7 @@ func TestListTwins(t *testing.T) {
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		_, err := svc.AddTwin(context.Background(), token, twin, def)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 		repoCall.Unset()
@@ -216,7 +216,7 @@ func TestListTwins(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		_, err := svc.ListTwins(context.Background(), tc.token, tc.offset, tc.limit, twinName, tc.metadata)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -227,7 +227,7 @@ func TestRemoveTwin(t *testing.T) {
 	svc, auth := mocks.NewService()
 	twin := twins.Twin{}
 	def := twins.Definition{}
-	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	saved, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	repoCall.Unset()
@@ -265,7 +265,7 @@ func TestRemoveTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		err := svc.RemoveTwin(context.Background(), tc.token, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -279,13 +279,13 @@ func TestSaveStates(t *testing.T) {
 	def := mocks.CreateDefinition(channels[0:2], subtopics[0:2])
 	attr := def.Attributes[0]
 	attrSansTwin := mocks.CreateDefinition(channels[2:3], subtopics[2:3]).Attributes[0]
-	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	tw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	repoCall.Unset()
 
 	defWildcard := mocks.CreateDefinition(channels[0:2], []string{twins.SubtopicWildcard, twins.SubtopicWildcard})
-	repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	twWildcard, err := svc.AddTwin(context.Background(), token, twin, defWildcard)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	repoCall.Unset()
@@ -333,7 +333,7 @@ func TestSaveStates(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		message, err := mocks.CreateMessage(tc.attr, tc.recs)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
@@ -358,12 +358,12 @@ func TestListStates(t *testing.T) {
 	twin := twins.Twin{Owner: email}
 	def := mocks.CreateDefinition(channels[0:2], subtopics[0:2])
 	attr := def.Attributes[0]
-	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	tw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	repoCall.Unset()
 
-	repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	tw2, err := svc.AddTwin(context.Background(), token,
 		twins.Twin{Owner: email},
 		mocks.CreateDefinition(channels[2:3], subtopics[2:3]))
@@ -374,7 +374,7 @@ func TestListStates(t *testing.T) {
 	mocks.CreateSenML(recs)
 	message, err := mocks.CreateMessage(attr, recs)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	err = svc.SaveStates(context.Background(), message)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	repoCall.Unset()
@@ -454,7 +454,7 @@ func TestListStates(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		page, err := svc.ListStates(context.TODO(), tc.token, tc.offset, tc.limit, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.size, len(page.States), fmt.Sprintf("%s: expected %d total got %d total\n", tc.desc, tc.size, len(page.States)))

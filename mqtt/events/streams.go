@@ -10,7 +10,7 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 )
 
-const streamID = "mainflux.mqtt"
+const streamID = "magistrala.mqtt"
 
 type EventStore interface {
 	Connect(ctx context.Context, clientID string) error

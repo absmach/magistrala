@@ -22,9 +22,9 @@ Thing Configuration consists of two logical parts: the custom configuration that
 
 Enabling and disabling Thing (adding Thing to/from whitelist) is as simple as connecting corresponding Magistrala Thing to the given list of Channels. Configuration keeps _state_ of the Thing:
 
-| State    | What it means                               |
-| -------- | ------------------------------------------- |
-| Inactive | Thing is created, but isn't enabled         |
+| State    | What it means                                 |
+| -------- | --------------------------------------------- |
+| Inactive | Thing is created, but isn't enabled           |
 | Active   | Thing is able to communicate using Magistrala |
 
 Switching between states `Active` and `Inactive` enables and disables Thing, respectively.
@@ -40,8 +40,8 @@ The service is configured using the environment variables presented in the follo
 | MG_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                      | info                                               |
 | MG_BOOTSTRAP_DB_HOST          | Database host address                                                   | localhost                                          |
 | MG_BOOTSTRAP_DB_PORT          | Database host port                                                      | 5432                                               |
-| MG_BOOTSTRAP_DB_USER          | Database user                                                           | mainflux                                           |
-| MG_BOOTSTRAP_DB_PASS          | Database password                                                       | mainflux                                           |
+| MG_BOOTSTRAP_DB_USER          | Database user                                                           | magistrala                                         |
+| MG_BOOTSTRAP_DB_PASS          | Database password                                                       | magistrala                                         |
 | MG_BOOTSTRAP_DB_NAME          | Name of the database used by the service                                | bootstrap                                          |
 | MG_BOOTSTRAP_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                                            |
 | MG_BOOTSTRAP_DB_SSL_CERT      | Path to the PEM encoded certificate file                                |                                                    |
@@ -60,9 +60,9 @@ The service is configured using the environment variables presented in the follo
 | MG_AUTH_GRPC_TIMEOUT          | Users service gRPC request timeout in seconds                           | 1s                                                 |
 | MG_AUTH_GRPC_CLIENT_TLS       | Enable TLS for gRPC client                                              | false                                              |
 | MG_AUTH_GRPC_CA_CERTS         | CA certificates for gRPC client                                         |                                                    |
-| MG_THINGS_URL                 | Base url for Magistrala Things                                            | http://localhost:9000                              |
+| MG_THINGS_URL                 | Base url for Magistrala Things                                          | http://localhost:9000                              |
 | MG_JAEGER_URL                 | Jaeger server URL                                                       | http://jaeger:14268/api/traces                     |
-| MG_SEND_TELEMETRY             | Send telemetry to mainflux call home server                             | true                                               |
+| MG_SEND_TELEMETRY             | Send telemetry to magistrala call home server                           | true                                               |
 | MG_BOOTSTRAP_INSTANCE_ID      | Bootstrap service instance ID                                           |                                                    |
 
 ## Deployment
@@ -76,7 +76,7 @@ To start the service outside of the container, execute the following shell scrip
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the service
 make bootstrap
@@ -110,9 +110,9 @@ MG_AUTH_GRPC_CLIENT_TLS=[Boolean value to enable/disable client TLS] \
 MG_AUTH_GRPC_CA_CERT=[Path to trusted CAs in PEM format] \
 MG_THINGS_URL=[Base url for Magistrala Things] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_BOOTSTRAP_INSTANCE_ID=[Bootstrap instance ID] \
-$GOBIN/mainflux-bootstrap
+$GOBIN/magistrala-bootstrap
 ```
 
 Setting `MG_BOOTSTRAP_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Users gRPC endpoint trusting only those CAs that are provided.

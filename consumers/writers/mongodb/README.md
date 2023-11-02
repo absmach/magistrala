@@ -21,7 +21,7 @@ default values.
 | MG_MONGO_PORT                    | Default MongoDB database port                                                     | 27017                          |
 | MG_MESSAGE_BROKER_URL            | Message broker instance URL                                                       | nats://localhost:4222          |
 | MG_JAEGER_URL                    | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                | Send telemetry to mainflux call home server                                       | true                           |
+| MG_SEND_TELEMETRY                | Send telemetry to magistrala call home server                                     | true                           |
 | MG_MONGO_WRITER_INSTANCE_ID      | MongoDB writer instance ID                                                        | ""                             |
 
 ## Deployment
@@ -34,7 +34,7 @@ To start the service, execute the following shell script:
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the mongodb writer
 make mongodb-writer
@@ -54,10 +54,10 @@ MG_MONGO_HOST=[MongoDB database host] \
 MG_MONGO_PORT=[MongoDB database port] \
 MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_MONGO_WRITER_INSTANCE_ID=[MongoDB writer instance ID] \
 
-$GOBIN/mainflux-mongodb-writer
+$GOBIN/magistrala-mongodb-writer
 ```
 
 ## Usage

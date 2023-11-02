@@ -26,10 +26,10 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/groups"
 	chmocks "github.com/absmach/magistrala/internal/groups/mocks"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfgroups "github.com/absmach/magistrala/pkg/groups"
-	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
 	thapi "github.com/absmach/magistrala/things/api/http"
@@ -170,19 +170,19 @@ func dec(in []byte) ([]byte, error) {
 
 func newService(url string, auth magistrala.AuthServiceClient) bootstrap.Service {
 	things := mocks.NewConfigsRepository()
-	config := mfsdk.Config{
+	config := mgsdk.Config{
 		ThingsURL: url,
 	}
 
-	sdk := mfsdk.NewSDK(config)
+	sdk := mgsdk.NewSDK(config)
 	return bootstrap.New(auth, things, sdk, encKey)
 }
 
-func generateChannels() map[string]mfgroups.Group {
-	channels := make(map[string]mfgroups.Group, channelsNum)
+func generateChannels() map[string]mggroups.Group {
+	channels := make(map[string]mggroups.Group, channelsNum)
 	for i := 0; i < channelsNum; i++ {
 		id := strconv.Itoa(i + 1)
-		channels[id] = mfgroups.Group{
+		channels[id] = mggroups.Group{
 			ID:       id,
 			Owner:    email,
 			Metadata: metadata,
@@ -191,7 +191,7 @@ func generateChannels() map[string]mfgroups.Group {
 	return channels
 }
 
-func newThingsService() (things.Service, mfgroups.Service, magistrala.AuthServiceClient) {
+func newThingsService() (things.Service, mggroups.Service, magistrala.AuthServiceClient) {
 	auth := new(authmocks.Service)
 	thingCache := thmocks.NewCache()
 	idProvider := uuid.NewMock()
@@ -201,8 +201,8 @@ func newThingsService() (things.Service, mfgroups.Service, magistrala.AuthServic
 	return things.NewService(auth, cRepo, gRepo, thingCache, idProvider), groups.NewService(gRepo, idProvider, auth), auth
 }
 
-func newThingsServer(tsvc things.Service, gsvc mfgroups.Service) *httptest.Server {
-	logger := mflog.NewMock()
+func newThingsServer(tsvc things.Service, gsvc mggroups.Service) *httptest.Server {
+	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	thapi.MakeHandler(tsvc, gsvc, mux, logger, instanceID)
 
@@ -210,7 +210,7 @@ func newThingsServer(tsvc things.Service, gsvc mfgroups.Service) *httptest.Serve
 }
 
 func newBootstrapServer(svc bootstrap.Service) *httptest.Server {
-	logger := mflog.NewMock()
+	logger := mglog.NewMock()
 	mux := bsapi.MakeHandler(svc, bootstrap.NewConfigReader(encKey), logger, instanceID)
 	return httptest.NewServer(mux)
 }
@@ -354,8 +354,8 @@ func TestView(t *testing.T) {
 	bs := newBootstrapServer(svc)
 	c := newConfig([]bootstrap.Channel{})
 
-	mfChs := generateChannels()
-	for id, ch := range mfChs {
+	mgChs := generateChannels()
+	for id, ch := range mgChs {
 		c.Channels = append(c.Channels, bootstrap.Channel{
 			ID:       ch.ID,
 			Name:     fmt.Sprintf("%s%s", "name ", id),

@@ -2,16 +2,16 @@
 set -euo pipefail
 
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export MAINFLUX_DIR=$scriptdir/../../../
+export MAGISTRALA_DIR=$scriptdir/../../../
 
 readDotEnv() {
     set -o allexport
-    source $MAINFLUX_DIR/docker/.env
+    source $MAGISTRALA_DIR/docker/.env
     set +o allexport
 }
 
 vault() {
-    docker exec -it mainflux-vault vault "$@"
+    docker exec -it magistrala-vault vault "$@"
 }
 
 readDotEnv

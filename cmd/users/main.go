@@ -19,7 +19,7 @@ import (
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/internal/env"
-	mfgroups "github.com/absmach/magistrala/internal/groups"
+	mggroups "github.com/absmach/magistrala/internal/groups"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
 	gevents "github.com/absmach/magistrala/internal/groups/events"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
@@ -27,8 +27,8 @@ import (
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mglog "github.com/absmach/magistrala/logger"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
@@ -86,13 +86,13 @@ func main() {
 	}
 	cfg.PassRegex = passRegex
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init logger: %s", err.Error()))
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -184,7 +184,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (users.Service, groups.Service, error) {
+func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger mglog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := clientspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -198,7 +198,7 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 	}
 
 	csvc := users.NewService(cRepo, auth, emailer, hsr, idp, c.PassRegex)
-	gsvc := mfgroups.NewService(gRepo, idp, auth)
+	gsvc := mggroups.NewService(gRepo, idp, auth)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
 	if err != nil {
@@ -236,20 +236,20 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 		return err
 	}
 
-	client := mfclients.Client{
+	client := mgclients.Client{
 		ID:   id,
 		Name: "admin",
-		Credentials: mfclients.Credentials{
+		Credentials: mgclients.Credentials{
 			Identity: c.AdminEmail,
 			Secret:   hash,
 		},
-		Metadata: mfclients.Metadata{
+		Metadata: mgclients.Metadata{
 			"role": "admin",
 		},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Role:      mfclients.AdminRole,
-		Status:    mfclients.EnabledStatus,
+		Role:      mgclients.AdminRole,
+		Status:    mgclients.EnabledStatus,
 	}
 
 	if _, err := crepo.RetrieveByIdentity(ctx, client.Credentials.Identity); err == nil {

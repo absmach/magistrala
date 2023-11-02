@@ -11,18 +11,18 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/consumers"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 )
 
 var _ consumers.BlockingConsumer = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger   mflog.Logger
+	logger   mglog.Logger
 	consumer consumers.BlockingConsumer
 }
 
 // LoggingMiddleware adds logging facilities to the adapter.
-func LoggingMiddleware(consumer consumers.BlockingConsumer, logger mflog.Logger) consumers.BlockingConsumer {
+func LoggingMiddleware(consumer consumers.BlockingConsumer, logger mglog.Logger) consumers.BlockingConsumer {
 	return &loggingMiddleware{
 		logger:   logger,
 		consumer: consumer,

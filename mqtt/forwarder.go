@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
@@ -21,11 +21,11 @@ type Forwarder interface {
 
 type forwarder struct {
 	topic  string
-	logger mflog.Logger
+	logger mglog.Logger
 }
 
 // NewForwarder returns new Forwarder implementation.
-func NewForwarder(topic string, logger mflog.Logger) Forwarder {
+func NewForwarder(topic string, logger mglog.Logger) Forwarder {
 	return forwarder{
 		topic:  topic,
 		logger: logger,
@@ -42,7 +42,7 @@ func (f forwarder) Forward(ctx context.Context, id string, sub messaging.Subscri
 	return sub.Subscribe(ctx, subCfg)
 }
 
-func handle(ctx context.Context, pub messaging.Publisher, logger mflog.Logger) handleFunc {
+func handle(ctx context.Context, pub messaging.Publisher, logger mglog.Logger) handleFunc {
 	return func(msg *messaging.Message) error {
 		if msg.Protocol == protocol {
 			return nil

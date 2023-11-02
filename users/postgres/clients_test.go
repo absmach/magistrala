@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/internal/testsutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	cpostgres "github.com/absmach/magistrala/users/postgres"
 	"github.com/stretchr/testify/assert"
@@ -39,129 +39,129 @@ func TestClientsSave(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		client mfclients.Client
+		client mgclients.Client
 		err    error
 	}{
 		{
 			desc: "add new client successfully",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:   uid,
 				Name: clientName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: nil,
 		},
 		{
 			desc: "add new client with an owner",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:    testsutil.GenerateUUID(t),
 				Owner: uid,
 				Name:  clientName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "withowner-client@example.com",
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: nil,
 		},
 		{
 			desc: "add client with duplicate client identity",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrConflict,
 		},
 		{
 			desc: "add client with invalid client id",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:   invalidName,
 				Name: clientName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "invalidid-client@example.com",
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "add client with invalid client name",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: invalidName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "invalidname-client@example.com",
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "add client with invalid client owner",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:    testsutil.GenerateUUID(t),
 				Owner: invalidName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "invalidowner-client@example.com",
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "add client with invalid client identity",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: invalidName,
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "add client with a missing client identity",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID: testsutil.GenerateUUID(t),
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "",
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
+				Metadata: mgclients.Metadata{},
 			},
 			err: nil,
 		},
 		{
 			desc: "add client with a missing client secret",
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID: testsutil.GenerateUUID(t),
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "missing-client-secret@example.com",
 					Secret:   "",
 				},
-				Metadata: mfclients.Metadata{},
+				Metadata: mgclients.Metadata{},
 			},
 			err: nil,
 		},
@@ -183,15 +183,15 @@ func TestIsOwner(t *testing.T) {
 	})
 	repo := cpostgres.NewRepository(database)
 
-	owner := mfclients.Client{
+	owner := mgclients.Client{
 		ID:   testsutil.GenerateUUID(t),
 		Name: "owner",
-		Credentials: mfclients.Credentials{
+		Credentials: mgclients.Credentials{
 			Identity: "owner@example.com",
 			Secret:   password,
 		},
-		Metadata: mfclients.Metadata{},
-		Status:   mfclients.EnabledStatus,
+		Metadata: mgclients.Metadata{},
+		Status:   mgclients.EnabledStatus,
 	}
 	owner, err := repo.Save(context.Background(), owner)
 	require.Nil(t, err, fmt.Sprintf("save owner unexpected error: %s", err))
@@ -199,37 +199,37 @@ func TestIsOwner(t *testing.T) {
 	cases := []struct {
 		desc    string
 		ownerID string
-		client  mfclients.Client
+		client  mgclients.Client
 		err     error
 	}{
 		{
 			desc:    "add new client successfully with an owner",
 			ownerID: owner.ID,
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "withowner@example.com",
 					Secret:   password,
 				},
 				Owner:    owner.ID,
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: nil,
 		},
 		{
 			desc:    "add new client successfully without an owner",
 			ownerID: owner.ID,
-			client: mfclients.Client{
+			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
-				Credentials: mfclients.Credentials{
+				Credentials: mgclients.Credentials{
 					Identity: "withoutowner@example.com",
 					Secret:   password,
 				},
-				Metadata: mfclients.Metadata{},
-				Status:   mfclients.EnabledStatus,
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrAuthorization,
 		},

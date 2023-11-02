@@ -94,12 +94,12 @@ func (ce configEvent) Encode() (map[string]interface{}, error) {
 }
 
 type removeConfigEvent struct {
-	mfThing string
+	mgThing string
 }
 
 func (rce removeConfigEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"thing_id":  rce.mfThing,
+		"thing_id":  rce.mgThing,
 		"operation": configRemove,
 	}, nil
 }
@@ -188,27 +188,27 @@ func (be bootstrapEvent) Encode() (map[string]interface{}, error) {
 }
 
 type changeStateEvent struct {
-	mfThing string
+	mgThing string
 	state   bootstrap.State
 }
 
 func (cse changeStateEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"thing_id":  cse.mfThing,
+		"thing_id":  cse.mgThing,
 		"state":     cse.state.String(),
 		"operation": thingStateChange,
 	}, nil
 }
 
 type updateConnectionsEvent struct {
-	mfThing    string
-	mfChannels []string
+	mgThing    string
+	mgChannels []string
 }
 
 func (uce updateConnectionsEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"thing_id":  uce.mfThing,
-		"channels":  fmt.Sprintf("[%s]", strings.Join(uce.mfChannels, ", ")),
+		"thing_id":  uce.mgThing,
+		"channels":  fmt.Sprintf("[%s]", strings.Join(uce.mgChannels, ", ")),
 		"operation": thingUpdateConnections,
 	}, nil
 }

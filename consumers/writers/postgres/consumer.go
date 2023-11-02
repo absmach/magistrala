@@ -10,7 +10,7 @@ import (
 
 	"github.com/absmach/magistrala/consumers"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfjson "github.com/absmach/magistrala/pkg/transformers/json"
+	mgjson "github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgerrcode"
@@ -38,7 +38,7 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 
 func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
-	case mfjson.Messages:
+	case mgjson.Messages:
 		return pr.saveJSON(ctx, m)
 	default:
 		return pr.saveSenml(ctx, m)
@@ -94,7 +94,7 @@ func (pr postgresRepo) saveSenml(ctx context.Context, messages interface{}) (err
 	return err
 }
 
-func (pr postgresRepo) saveJSON(ctx context.Context, msgs mfjson.Messages) error {
+func (pr postgresRepo) saveJSON(ctx context.Context, msgs mgjson.Messages) error {
 	if err := pr.insertJSON(ctx, msgs); err != nil {
 		if err == errNoTable {
 			if err := pr.createTable(msgs.Format); err != nil {
@@ -107,7 +107,7 @@ func (pr postgresRepo) saveJSON(ctx context.Context, msgs mfjson.Messages) error
 	return nil
 }
 
-func (pr postgresRepo) insertJSON(ctx context.Context, msgs mfjson.Messages) error {
+func (pr postgresRepo) insertJSON(ctx context.Context, msgs mgjson.Messages) error {
 	tx, err := pr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
@@ -184,7 +184,7 @@ type jsonMessage struct {
 	Payload   []byte `db:"payload"`
 }
 
-func toJSONMessage(msg mfjson.Message) (jsonMessage, error) {
+func toJSONMessage(msg mgjson.Message) (jsonMessage, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return jsonMessage{}, err

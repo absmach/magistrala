@@ -17,21 +17,21 @@ default values.
 | MG_INFLUX_WRITER_HTTP_SERVER_CERT | Path to server certificate in pem format                                          |                                |
 | MG_INFLUX_WRITER_HTTP_SERVER_KEY  | Path to server key in pem format                                                  |                                |
 | MG_INFLUXDB_PROTOCOL              | InfluxDB protocol                                                                 | http                           |
-| MG_INFLUXDB_HOST                  | InfluxDB host name                                                                | mainflux-influxdb              |
+| MG_INFLUXDB_HOST                  | InfluxDB host name                                                                | magistrala-influxdb            |
 | MG_INFLUXDB_PORT                  | Default port of InfluxDB database                                                 | 8086                           |
-| MG_INFLUXDB_ADMIN_USER            | Default user of InfluxDB database                                                 | mainflux                       |
-| MG_INFLUXDB_ADMIN_PASSWORD        | Default password of InfluxDB user                                                 | mainflux                       |
-| MG_INFLUXDB_NAME                  | InfluxDB database name                                                            | mainflux                       |
-| MG_INFLUXDB_BUCKET                | InfluxDB bucket name                                                              | mainflux-bucket                |
-| MG_INFLUXDB_ORG                   | InfluxDB organization name                                                        | mainflux                       |
-| MG_INFLUXDB_TOKEN                 | InfluxDB API token                                                                | mainflux-token                 |
+| MG_INFLUXDB_ADMIN_USER            | Default user of InfluxDB database                                                 | magistrala                     |
+| MG_INFLUXDB_ADMIN_PASSWORD        | Default password of InfluxDB user                                                 | magistrala                     |
+| MG_INFLUXDB_NAME                  | InfluxDB database name                                                            | magistrala                     |
+| MG_INFLUXDB_BUCKET                | InfluxDB bucket name                                                              | magistrala-bucket              |
+| MG_INFLUXDB_ORG                   | InfluxDB organization name                                                        | magistrala                     |
+| MG_INFLUXDB_TOKEN                 | InfluxDB API token                                                                | magistrala-token               |
 | MG_INFLUXDB_DBURL                 | InfluxDB database URL                                                             |                                |
 | MG_INFLUXDB_USER_AGENT            | InfluxDB user agent                                                               |                                |
 | MG_INFLUXDB_TIMEOUT               | InfluxDB client connection readiness timeout                                      | 1s                             |
 | MG_INFLUXDB_INSECURE_SKIP_VERIFY  | InfluxDB client connection insecure skip verify                                   | false                          |
 | MG_MESSAGE_BROKER_URL             | Message broker instance URL                                                       | nats://localhost:4222          |
 | MG_JAEGER_URL                     | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                 | Send telemetry to mainflux call home server                                       | true                           |
+| MG_SEND_TELEMETRY                 | Send telemetry to magistrala call home server                                     | true                           |
 | MG_INFLUX_WRITER_INSTANCE_ID      | InfluxDB writer instance ID                                                       |                                |
 
 ## Deployment
@@ -44,7 +44,7 @@ To start the service, execute the following shell script:
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the influxdb
 make influxdb
@@ -74,9 +74,9 @@ MG_INFLUXDB_TIMEOUT=[InfluxDB timeout] \
 MG_INFLUXDB_INSECURE_SKIP_VERIFY=[InfluxDB insecure skip verify] \
 MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_INFLUX_WRITER_INSTANCE_ID=[Influx writer instance ID] \
-$GOBIN/mainflux-influxdb
+$GOBIN/magistrala-influxdb
 ```
 
 ### Using docker-compose

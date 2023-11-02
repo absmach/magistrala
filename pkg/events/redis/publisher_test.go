@@ -16,18 +16,18 @@ import (
 	"testing"
 	"time"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/redis"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	streamName  = "mainflux.eventstest"
+	streamName  = "magistrala.eventstest"
 	consumer    = "test-consumer"
 	streamTopic = "test-topic"
 	eventsChan  = make(chan map[string]interface{})
-	logger      = mflog.NewMock()
+	logger      = mglog.NewMock()
 	errFailed   = errors.New("failed")
 	ctx         = context.TODO()
 )

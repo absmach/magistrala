@@ -37,7 +37,7 @@ func newCertService() (certs.Service, error) {
 		ThingsURL: server.URL,
 	}
 
-	mfsdk := sdk.NewSDK(config)
+	mgsdk := sdk.NewSDK(config)
 	repo := mocks.NewCertsRepository()
 
 	tlsCert, caCert, err := certs.LoadCertificates(caPath, caKeyPath)
@@ -52,7 +52,7 @@ func newCertService() (certs.Service, error) {
 
 	pki := mocks.NewPkiAgent(tlsCert, caCert, cfgSignHoursValid, authTimeout)
 
-	return certs.New(auth, repo, mfsdk, pki), nil
+	return certs.New(auth, repo, mgsdk, pki), nil
 }
 
 func newCertServer(svc certs.Service) *httptest.Server {
@@ -73,7 +73,7 @@ func TestIssueCert(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mfsdk := sdk.NewSDK(sdkConf)
+	mgsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
 		desc     string
@@ -141,7 +141,7 @@ func TestIssueCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		cert, err := mfsdk.IssueCert(tc.thingID, tc.duration, tc.token)
+		cert, err := mgsdk.IssueCert(tc.thingID, tc.duration, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, cert, fmt.Sprintf("%s: got empty cert", tc.desc))
@@ -161,9 +161,9 @@ func TestViewCert(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mfsdk := sdk.NewSDK(sdkConf)
+	mgsdk := sdk.NewSDK(sdkConf)
 
-	cert, err := mfsdk.IssueCert(thingID, "10h", token)
+	cert, err := mgsdk.IssueCert(thingID, "10h", token)
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating cert: %s", err))
 
 	cases := []struct {
@@ -197,7 +197,7 @@ func TestViewCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		cert, err := mfsdk.ViewCert(tc.certID, tc.token)
+		cert, err := mgsdk.ViewCert(tc.certID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, cert, fmt.Sprintf("%s: got empty cert", tc.desc))
@@ -217,9 +217,9 @@ func TestViewCertByThing(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mfsdk := sdk.NewSDK(sdkConf)
+	mgsdk := sdk.NewSDK(sdkConf)
 
-	_, err = mfsdk.IssueCert(thingID, "10h", token)
+	_, err = mgsdk.IssueCert(thingID, "10h", token)
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating cert: %s", err))
 
 	cases := []struct {
@@ -253,7 +253,7 @@ func TestViewCertByThing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		cert, err := mfsdk.ViewCertByThing(tc.thingID, tc.token)
+		cert, err := mgsdk.ViewCertByThing(tc.thingID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, cert, fmt.Sprintf("%s: got empty cert", tc.desc))
@@ -273,9 +273,9 @@ func TestRevokeCert(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mfsdk := sdk.NewSDK(sdkConf)
+	mgsdk := sdk.NewSDK(sdkConf)
 
-	_, err = mfsdk.IssueCert(thingID, "10h", adminToken)
+	_, err = mgsdk.IssueCert(thingID, "10h", adminToken)
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating cert: %s", err))
 
 	cases := []struct {
@@ -323,7 +323,7 @@ func TestRevokeCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		response, err := mfsdk.RevokeCert(tc.thingID, tc.token)
+		response, err := mgsdk.RevokeCert(tc.thingID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, response, fmt.Sprintf("%s: got empty revocation time", tc.desc))

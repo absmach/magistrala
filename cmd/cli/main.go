@@ -37,8 +37,8 @@ func main() {
 
 	// Root
 	rootCmd := &cobra.Command{
-		Use: "mainflux-cli",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		Use: "magistrala-cli",
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
 			cliConf, err := cli.ParseConfig(sdkConf)
 			if err != nil {
 				log.Fatalf("Failed to parse config: %s", err)

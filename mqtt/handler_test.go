@@ -10,7 +10,7 @@ import (
 	"log"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/logger"
@@ -156,7 +156,7 @@ func TestAuthPublish(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
@@ -209,7 +209,7 @@ func TestAuthSubscribe(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)

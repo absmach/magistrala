@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 )
 
 // MailSent message response when link is sent.
 const MailSent = "Email with reset link is sent"
 
 var (
-	_ mainflux.Response = (*tokenRes)(nil)
-	_ mainflux.Response = (*viewClientRes)(nil)
-	_ mainflux.Response = (*createClientRes)(nil)
-	_ mainflux.Response = (*deleteClientRes)(nil)
-	_ mainflux.Response = (*clientsPageRes)(nil)
-	_ mainflux.Response = (*viewMembersRes)(nil)
+	_ magistrala.Response = (*tokenRes)(nil)
+	_ magistrala.Response = (*viewClientRes)(nil)
+	_ magistrala.Response = (*createClientRes)(nil)
+	_ magistrala.Response = (*deleteClientRes)(nil)
+	_ magistrala.Response = (*clientsPageRes)(nil)
+	_ magistrala.Response = (*viewMembersRes)(nil)
 )
 
 type pageRes struct {
@@ -30,7 +30,7 @@ type pageRes struct {
 }
 
 type createClientRes struct {
-	mfclients.Client `json:",inline"`
+	mgclients.Client `json:",inline"`
 	created          bool
 }
 
@@ -75,7 +75,7 @@ func (res tokenRes) Empty() bool {
 }
 
 type updateClientRes struct {
-	mfclients.Client `json:",inline"`
+	mgclients.Client `json:",inline"`
 }
 
 func (res updateClientRes) Code() int {
@@ -91,7 +91,7 @@ func (res updateClientRes) Empty() bool {
 }
 
 type viewClientRes struct {
-	mfclients.Client `json:",inline"`
+	mgclients.Client `json:",inline"`
 }
 
 func (res viewClientRes) Code() int {
@@ -124,7 +124,7 @@ func (res clientsPageRes) Empty() bool {
 }
 
 type viewMembersRes struct {
-	mfclients.Client `json:",inline"`
+	mgclients.Client `json:",inline"`
 }
 
 func (res viewMembersRes) Code() int {
@@ -140,7 +140,7 @@ func (res viewMembersRes) Empty() bool {
 }
 
 type deleteClientRes struct {
-	mfclients.Client `json:",inline"`
+	mgclients.Client `json:",inline"`
 }
 
 func (res deleteClientRes) Code() int {

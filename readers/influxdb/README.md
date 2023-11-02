@@ -18,12 +18,12 @@ default values.
 | MG_INFLUXDB_PROTOCOL             | InfluxDB protocol                                   | http                           |
 | MG_INFLUXDB_HOST                 | InfluxDB host name                                  | localhost                      |
 | MG_INFLUXDB_PORT                 | Default port of InfluxDB database                   | 8086                           |
-| MG_INFLUXDB_ADMIN_USER           | Default user of InfluxDB database                   | mainflux                       |
-| MG_INFLUXDB_ADMIN_PASSWORD       | Default password of InfluxDB user                   | mainflux                       |
-| MG_INFLUXDB_NAME                 | InfluxDB database name                              | mainflux                       |
-| MG_INFLUXDB_BUCKET               | InfluxDB bucket name                                | mainflux-bucket                |
-| MG_INFLUXDB_ORG                  | InfluxDB organization name                          | mainflux                       |
-| MG_INFLUXDB_TOKEN                | InfluxDB API token                                  | mainflux-token                 |
+| MG_INFLUXDB_ADMIN_USER           | Default user of InfluxDB database                   | magistrala                     |
+| MG_INFLUXDB_ADMIN_PASSWORD       | Default password of InfluxDB user                   | magistrala                     |
+| MG_INFLUXDB_NAME                 | InfluxDB database name                              | magistrala                     |
+| MG_INFLUXDB_BUCKET               | InfluxDB bucket name                                | magistrala-bucket              |
+| MG_INFLUXDB_ORG                  | InfluxDB organization name                          | magistrala                     |
+| MG_INFLUXDB_TOKEN                | InfluxDB API token                                  | magistrala-token               |
 | MG_INFLUXDB_DBURL                | InfluxDB database URL                               | ""                             |
 | MG_INFLUXDB_USER_AGENT           | InfluxDB user agent                                 | ""                             |
 | MG_INFLUXDB_TIMEOUT              | InfluxDB client connection readiness timeout        | 1s                             |
@@ -37,7 +37,7 @@ default values.
 | MG_AUTH_GRPC_CLIENT_TLS          | Flag that indicates if TLS should be turned on      | false                          |
 | MG_AUTH_GRPC_CA_CERTS            | Path to trusted CAs in PEM format                   | ""                             |
 | MG_JAEGER_URL                    | Jaeger server URL                                   | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                | Send telemetry to mainflux call home server         | true                           |
+| MG_SEND_TELEMETRY                | Send telemetry to magistrala call home server       | true                           |
 | MG_INFLUX_READER_INSTANCE_ID     | InfluxDB reader instance ID                         |                                |
 
 ## Deployment
@@ -50,7 +50,7 @@ To start the service, execute the following shell script:
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the influxdb-reader
 make influxdb-reader
@@ -86,9 +86,9 @@ MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
 MG_AUTH_GRPC_CA_CERTS=[Path to trusted CAs in PEM format] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_INFLUX_READER_INSTANCE_ID=[InfluxDB reader instance ID] \
-$GOBIN/mainflux-influxdb
+$GOBIN/magistrala-influxdb
 
 ```
 

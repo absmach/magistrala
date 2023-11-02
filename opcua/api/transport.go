@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/opcua"
 	"github.com/absmach/magistrala/pkg/errors"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -28,7 +28,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc opcua.Service, logger mflog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc opcua.Service, logger mglog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
@@ -42,7 +42,7 @@ func MakeHandler(svc opcua.Service, logger mflog.Logger, instanceID string) http
 		opts...,
 	))
 
-	r.GetFunc("/health", mainflux.Health("opcua-adapter", instanceID))
+	r.GetFunc("/health", magistrala.Health("opcua-adapter", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r
@@ -81,7 +81,7 @@ func decodeBrowse(_ context.Context, r *http.Request) (interface{}, error) {
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
-	if ar, ok := response.(mainflux.Response); ok {
+	if ar, ok := response.(magistrala.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}

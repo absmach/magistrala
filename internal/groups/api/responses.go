@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/groups"
 )
 
 var (
-	_ mainflux.Response = (*viewMembershipRes)(nil)
-	_ mainflux.Response = (*membershipPageRes)(nil)
-	_ mainflux.Response = (*createGroupRes)(nil)
-	_ mainflux.Response = (*groupPageRes)(nil)
-	_ mainflux.Response = (*changeStatusRes)(nil)
-	_ mainflux.Response = (*viewGroupRes)(nil)
-	_ mainflux.Response = (*updateGroupRes)(nil)
-	_ mainflux.Response = (*assignRes)(nil)
-	_ mainflux.Response = (*unassignRes)(nil)
+	_ magistrala.Response = (*viewMembershipRes)(nil)
+	_ magistrala.Response = (*membershipPageRes)(nil)
+	_ magistrala.Response = (*createGroupRes)(nil)
+	_ magistrala.Response = (*groupPageRes)(nil)
+	_ magistrala.Response = (*changeStatusRes)(nil)
+	_ magistrala.Response = (*viewGroupRes)(nil)
+	_ magistrala.Response = (*updateGroupRes)(nil)
+	_ magistrala.Response = (*assignRes)(nil)
+	_ magistrala.Response = (*unassignRes)(nil)
 )
 
 type viewMembershipRes struct {

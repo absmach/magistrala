@@ -33,7 +33,7 @@ default values.
 | MG_MQTT_ADAPTER_ES_DB                    | Event sourcing database                                | "0"                              |
 | MG_MESSAGE_BROKER_URL                    | Message broker broker URL                              | nats://127.0.0.1:4222            |
 | MG_JAEGER_URL                            | URL of Jaeger tracing service                          | "http://jaeger:14268/api/traces" |
-| MG_SEND_TELEMETRY                        | Send telemetry to mainflux call home server            | true                             |
+| MG_SEND_TELEMETRY                        | Send telemetry to magistrala call home server          | true                             |
 | MG_MQTT_ADAPTER_INSTANCE_ID              | Instance ID for telemetry                              | ""                               |
 
 ## Deployment
@@ -47,7 +47,7 @@ To start the service outside of the container, execute the following shell scrip
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the mqtt
 make mqtt
@@ -79,9 +79,9 @@ MG_MQTT_ADAPTER_ES_PASS=[Event sourcing pass] \
 MG_MQTT_ADAPTER_ES_DB=[Event sourcing database] \
 MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MG_JAEGER_URL=[Jaeger service URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_MQTT_ADAPTER_INSTANCE_ID=[Instance ID] \
-$GOBIN/mainflux-mqtt
+$GOBIN/magistrala-mqtt
 ```
 
 For more information about service capabilities and its usage, please check out the API documentation [API](https://github.com/absmach/magistrala/blob/master/api/mqtt.yml).

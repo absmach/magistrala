@@ -8,19 +8,19 @@ import (
 	"fmt"
 	"time"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/ws"
 )
 
 var _ ws.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mflog.Logger
+	logger mglog.Logger
 	svc    ws.Service
 }
 
 // LoggingMiddleware adds logging facilities to the websocket service.
-func LoggingMiddleware(svc ws.Service, logger mflog.Logger) ws.Service {
+func LoggingMiddleware(svc ws.Service, logger mglog.Logger) ws.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

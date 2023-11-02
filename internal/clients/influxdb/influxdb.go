@@ -24,9 +24,9 @@ type Config struct {
 	Username           string        `env:"ADMIN_USER"            envDefault:"magistrala"`
 	Password           string        `env:"ADMIN_PASSWORD"        envDefault:"magistrala"`
 	DBName             string        `env:"NAME"                  envDefault:"magistrala"`
-	Bucket             string        `env:"BUCKET"                envDefault:"mainflux-bucket"`
+	Bucket             string        `env:"BUCKET"                envDefault:"magistrala-bucket"`
 	Org                string        `env:"ORG"                   envDefault:"magistrala"`
-	Token              string        `env:"TOKEN"                 envDefault:"mainflux-token"`
+	Token              string        `env:"TOKEN"                 envDefault:"magistrala-token"`
 	DBUrl              string        `env:"DBURL"                 envDefault:""`
 	UserAgent          string        `env:"USER_AGENT"            envDefault:"InfluxDBClient"`
 	Timeout            time.Duration `env:"TIMEOUT"` // Influxdb client configuration by default has no timeout duration , this field will not have a fallback default timeout duration. Reference: https://pkg.go.dev/github.com/influxdata/influxdb@v1.10.0/client/v2#HTTPConfig

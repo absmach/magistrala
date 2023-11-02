@@ -11,8 +11,8 @@ import (
 
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mflog "github.com/absmach/magistrala/logger"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mglog "github.com/absmach/magistrala/logger"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/users"
 	"github.com/go-chi/chi/v5"
@@ -21,7 +21,7 @@ import (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func clientsHandler(svc users.Service, r *chi.Mux, logger mflog.Logger) http.Handler {
+func clientsHandler(svc users.Service, r *chi.Mux, logger mglog.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -231,7 +231,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if oid != "" {
 		ownerID = oid
 	}
-	st, err := mfclients.ToStatus(s)
+	st, err := mgclients.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -381,7 +381,7 @@ func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, err
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var c mfclients.Client
+	var c mgclients.Client
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -444,48 +444,48 @@ func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, 
 	return req, nil
 }
 
-func queryPageParams(r *http.Request) (mfclients.Page, error) {
+func queryPageParams(r *http.Request) (mgclients.Page, error) {
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	m, err := apiutil.ReadMetadataQuery(r, api.MetadataKey, nil)
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	i, err := apiutil.ReadStringQuery(r, api.IdentityKey, "")
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	t, err := apiutil.ReadStringQuery(r, api.TagKey, "")
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	st, err := mfclients.ToStatus(s)
+	st, err := mgclients.ToStatus(s)
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
 	if err != nil {
-		return mfclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	return mfclients.Page{
+	return mgclients.Page{
 		Status:     st,
 		Offset:     o,
 		Limit:      l,

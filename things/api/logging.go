@@ -8,24 +8,24 @@ import (
 	"fmt"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
-	mflog "github.com/absmach/magistrala/logger"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala"
+	mglog "github.com/absmach/magistrala/logger"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/things"
 )
 
 var _ things.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mflog.Logger
+	logger mglog.Logger
 	svc    things.Service
 }
 
-func LoggingMiddleware(svc things.Service, logger mflog.Logger) things.Service {
+func LoggingMiddleware(svc things.Service, logger mglog.Logger) things.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) CreateThings(ctx context.Context, token string, clients ...mfclients.Client) (cs []mfclients.Client, err error) {
+func (lm *loggingMiddleware) CreateThings(ctx context.Context, token string, clients ...mgclients.Client) (cs []mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method create_things %d things using token %s took %s to complete", len(cs), token, time.Since(begin))
 		if err != nil {
@@ -37,7 +37,7 @@ func (lm *loggingMiddleware) CreateThings(ctx context.Context, token string, cli
 	return lm.svc.CreateThings(ctx, token, clients...)
 }
 
-func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (c mfclients.Client, err error) {
+func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method view_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
 		if err != nil {
@@ -49,7 +49,7 @@ func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (
 	return lm.svc.ViewClient(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mfclients.Page) (cp mfclients.ClientsPage, err error) {
+func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things using token %s took %s to complete", token, time.Since(begin))
 		if err != nil {
@@ -61,7 +61,7 @@ func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, reqU
 	return lm.svc.ListClients(ctx, token, reqUserID, pm)
 }
 
-func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, client mfclients.Client) (c mfclients.Client, err error) {
+func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_thing_name_and_metadata for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
 		if err != nil {
@@ -73,7 +73,7 @@ func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, cli
 	return lm.svc.UpdateClient(ctx, token, client)
 }
 
-func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, token string, client mfclients.Client) (c mfclients.Client, err error) {
+func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_thing_tags for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
 		if err != nil {
@@ -85,7 +85,7 @@ func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, token string,
 	return lm.svc.UpdateClientTags(ctx, token, client)
 }
 
-func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldSecret, newSecret string) (c mfclients.Client, err error) {
+func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldSecret, newSecret string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_thing_secret for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
 		if err != nil {
@@ -97,7 +97,7 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 	return lm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
 
-func (lm *loggingMiddleware) UpdateClientOwner(ctx context.Context, token string, client mfclients.Client) (c mfclients.Client, err error) {
+func (lm *loggingMiddleware) UpdateClientOwner(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_thing_owner for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
 		if err != nil {
@@ -109,7 +109,7 @@ func (lm *loggingMiddleware) UpdateClientOwner(ctx context.Context, token string
 	return lm.svc.UpdateClientOwner(ctx, token, client)
 }
 
-func (lm *loggingMiddleware) EnableClient(ctx context.Context, token string, id string) (c mfclients.Client, err error) {
+func (lm *loggingMiddleware) EnableClient(ctx context.Context, token string, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method enable_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
 		if err != nil {
@@ -121,7 +121,7 @@ func (lm *loggingMiddleware) EnableClient(ctx context.Context, token string, id 
 	return lm.svc.EnableClient(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) DisableClient(ctx context.Context, token string, id string) (c mfclients.Client, err error) {
+func (lm *loggingMiddleware) DisableClient(ctx context.Context, token string, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method disable_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
 		if err != nil {
@@ -133,7 +133,7 @@ func (lm *loggingMiddleware) DisableClient(ctx context.Context, token string, id
 	return lm.svc.DisableClient(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListClientsByGroup(ctx context.Context, token, channelID string, cp mfclients.Page) (mp mfclients.MembersPage, err error) {
+func (lm *loggingMiddleware) ListClientsByGroup(ctx context.Context, token, channelID string, cp mgclients.Page) (mp mgclients.MembersPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things_by_channel for channel with id %s using token %s took %s to complete", channelID, token, time.Since(begin))
 		if err != nil {
@@ -157,7 +157,7 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id strin
 	return lm.svc.Identify(ctx, key)
 }
 
-func (lm *loggingMiddleware) Authorize(ctx context.Context, req *mainflux.AuthorizeReq) (id string, err error) {
+func (lm *loggingMiddleware) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) (id string, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method authorize for thing key %s and channnel %s took %s to complete", req.Subject, req.Object, time.Since(begin))
 		if err != nil {

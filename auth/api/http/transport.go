@@ -5,7 +5,7 @@ package http
 import (
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/auth/api/http/keys"
 	"github.com/absmach/magistrala/auth/api/http/policies"
@@ -21,7 +21,7 @@ func MakeHandler(svc auth.Service, logger logger.Logger, instanceID string) http
 	mux = keys.MakeHandler(svc, mux, logger)
 	mux = policies.MakeHandler(svc, mux, logger)
 
-	mux.GetFunc("/health", mainflux.Health("auth", instanceID))
+	mux.GetFunc("/health", magistrala.Health("auth", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

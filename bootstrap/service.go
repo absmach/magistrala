@@ -12,7 +12,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
 var (
@@ -105,12 +105,12 @@ type ConfigReader interface {
 type bootstrapService struct {
 	auth    magistrala.AuthServiceClient
 	configs ConfigRepository
-	sdk     mfsdk.SDK
+	sdk     mgsdk.SDK
 	encKey  []byte
 }
 
 // New returns new Bootstrap service.
-func New(auth magistrala.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
+func New(auth magistrala.AuthServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte) Service {
 	return &bootstrapService{
 		configs: configs,
 		sdk:     sdk,
@@ -140,15 +140,15 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	}
 
 	id := cfg.ThingID
-	mfThing, err := bs.thing(id, token)
+	mgThing, err := bs.thing(id, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errThingNotFound, err)
 	}
 
-	cfg.ThingID = mfThing.ID
+	cfg.ThingID = mgThing.ID
 	cfg.Owner = owner
 	cfg.State = Inactive
-	cfg.ThingKey = mfThing.Credentials.Secret
+	cfg.ThingKey = mgThing.Credentials.Secret
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
@@ -240,7 +240,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	}
 
 	for _, c := range connect {
-		conIDs := mfsdk.Connection{
+		conIDs := mgsdk.Connection{
 			ChannelID: c,
 			ThingID:   id,
 		}
@@ -309,7 +309,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 	switch state {
 	case Active:
 		for _, c := range cfg.Channels {
-			conIDs := mfsdk.Connection{
+			conIDs := mgsdk.Connection{
 				ChannelID: c.ID,
 				ThingID:   cfg.ThingID,
 			}
@@ -374,16 +374,16 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (string, 
 }
 
 // Method thing retrieves Magistrala Thing creating one if an empty ID is passed.
-func (bs bootstrapService) thing(id, token string) (mfsdk.Thing, error) {
-	var thing mfsdk.Thing
+func (bs bootstrapService) thing(id, token string) (mgsdk.Thing, error) {
+	var thing mgsdk.Thing
 	var err error
 	var sdkErr errors.SDKError
 
 	thing.ID = id
 	if id == "" {
-		thing, sdkErr = bs.sdk.CreateThing(mfsdk.Thing{}, token)
+		thing, sdkErr = bs.sdk.CreateThing(mgsdk.Thing{}, token)
 		if err != nil {
-			return mfsdk.Thing{}, errors.Wrap(errCreateThing, errors.New(sdkErr.Err().Msg()))
+			return mgsdk.Thing{}, errors.Wrap(errCreateThing, errors.New(sdkErr.Err().Msg()))
 		}
 	}
 
@@ -395,7 +395,7 @@ func (bs bootstrapService) thing(id, token string) (mfsdk.Thing, error) {
 				err = errors.Wrap(errors.New(sdkErr.Msg()), errors.New(sdkErr2.Msg()))
 			}
 		}
-		return mfsdk.Thing{}, errors.Wrap(ErrThings, err)
+		return mgsdk.Thing{}, errors.Wrap(ErrThings, err)
 	}
 
 	return thing, nil

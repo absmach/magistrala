@@ -8,17 +8,17 @@ import (
 	"net/http"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/twins"
 )
 
 var (
-	_ mainflux.Response = (*twinRes)(nil)
-	_ mainflux.Response = (*viewTwinRes)(nil)
-	_ mainflux.Response = (*viewStateRes)(nil)
-	_ mainflux.Response = (*twinsPageRes)(nil)
-	_ mainflux.Response = (*statesPageRes)(nil)
-	_ mainflux.Response = (*removeRes)(nil)
+	_ magistrala.Response = (*twinRes)(nil)
+	_ magistrala.Response = (*viewTwinRes)(nil)
+	_ magistrala.Response = (*viewStateRes)(nil)
+	_ magistrala.Response = (*twinsPageRes)(nil)
+	_ magistrala.Response = (*statesPageRes)(nil)
+	_ magistrala.Response = (*removeRes)(nil)
 )
 
 type twinRes struct {

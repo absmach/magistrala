@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/coap"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-zoo/bone"
@@ -44,21 +44,21 @@ var (
 )
 
 var (
-	logger  mflog.Logger
+	logger  mglog.Logger
 	service coap.Service
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(instanceID string) http.Handler {
 	b := bone.New()
-	b.GetFunc("/health", mainflux.Health(protocol, instanceID))
+	b.GetFunc("/health", magistrala.Health(protocol, instanceID))
 	b.Handle("/metrics", promhttp.Handler())
 
 	return b
 }
 
 // MakeCoAPHandler creates handler for CoAP messages.
-func MakeCoAPHandler(svc coap.Service, l mflog.Logger) mux.HandlerFunc {
+func MakeCoAPHandler(svc coap.Service, l mglog.Logger) mux.HandlerFunc {
 	logger = l
 	service = svc
 

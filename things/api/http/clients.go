@@ -11,8 +11,8 @@ import (
 
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mflog "github.com/absmach/magistrala/logger"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mglog "github.com/absmach/magistrala/logger"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/things"
 	"github.com/go-chi/chi/v5"
@@ -20,7 +20,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func clientsHandler(svc things.Service, r *chi.Mux, logger mflog.Logger) http.Handler {
+func clientsHandler(svc things.Service, r *chi.Mux, logger mglog.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -178,7 +178,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if oid != "" {
 		ownerID = oid
 	}
-	st, err := mfclients.ToStatus(s)
+	st, err := mgclients.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -266,7 +266,7 @@ func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, err
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var c mfclients.Client
+	var c mgclients.Client
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
@@ -317,7 +317,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	st, err := mfclients.ToStatus(s)
+	st, err := mgclients.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -327,7 +327,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 	}
 	req := listMembersReq{
 		token: apiutil.ExtractBearerToken(r),
-		Page: mfclients.Page{
+		Page: mgclients.Page{
 			Status:     st,
 			Offset:     o,
 			Limit:      l,

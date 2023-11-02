@@ -13,13 +13,13 @@ import (
 	"testing"
 	"time"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	influxdata "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/ory/dockertest/v3"
 )
 
 var (
-	testLog, _ = mflog.New(os.Stdout, mflog.Info.String())
+	testLog, _ = mglog.New(os.Stdout, mglog.Info.String())
 	address    string
 )
 

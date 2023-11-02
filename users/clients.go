@@ -6,7 +6,7 @@ package users
 import (
 	"context"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/clients"
 )
 
@@ -65,10 +65,10 @@ type Service interface {
 	Identify(ctx context.Context, tkn string) (string, error)
 
 	// IssueToken issues a new access and refresh token.
-	IssueToken(ctx context.Context, identity, secret string) (*mainflux.Token, error)
+	IssueToken(ctx context.Context, identity, secret string) (*magistrala.Token, error)
 
 	// RefreshToken refreshes expired access tokens.
 	// After an access token expires, the refresh token is used to get
 	// a new pair of access and refresh tokens.
-	RefreshToken(ctx context.Context, accessToken string) (*mainflux.Token, error)
+	RefreshToken(ctx context.Context, accessToken string) (*magistrala.Token, error)
 }

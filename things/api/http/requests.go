@@ -6,12 +6,12 @@ package http
 import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
 type createClientReq struct {
-	client mfclients.Client
+	client mgclients.Client
 	token  string
 }
 
@@ -31,7 +31,7 @@ func (req createClientReq) validate() error {
 
 type createClientsReq struct {
 	token   string
-	Clients []mfclients.Client
+	Clients []mgclients.Client
 }
 
 func (req createClientsReq) validate() error {
@@ -66,7 +66,7 @@ func (req viewClientReq) validate() error {
 
 type listClientsReq struct {
 	token      string
-	status     mfclients.Status
+	status     mgclients.Status
 	offset     uint64
 	limit      uint64
 	name       string
@@ -75,7 +75,7 @@ type listClientsReq struct {
 	permission string
 	visibility string
 	userID     string
-	metadata   mfclients.Metadata
+	metadata   mgclients.Metadata
 }
 
 func (req listClientsReq) validate() error {
@@ -99,7 +99,7 @@ func (req listClientsReq) validate() error {
 }
 
 type listMembersReq struct {
-	mfclients.Page
+	mgclients.Page
 	token   string
 	groupID string
 }

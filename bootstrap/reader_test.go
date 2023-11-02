@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -50,27 +50,27 @@ func dec(in []byte) ([]byte, error) {
 
 func TestReadConfig(t *testing.T) {
 	cfg := bootstrap.Config{
-		ThingID:    "mf_id",
+		ThingID:    "mg_id",
 		ClientCert: "client_cert",
 		ClientKey:  "client_key",
 		CACert:     "ca_cert",
-		ThingKey:   "mf_key",
+		ThingKey:   "mg_key",
 		Channels: []bootstrap.Channel{
 			{
-				ID:       "mf_id",
-				Name:     "mf_name",
+				ID:       "mg_id",
+				Name:     "mg_name",
 				Metadata: map[string]interface{}{"key": "value}"},
 			},
 		},
 		Content: "content",
 	}
 	ret := readResp{
-		ThingID:  "mf_id",
-		ThingKey: "mf_key",
+		ThingID:  "mg_id",
+		ThingKey: "mg_key",
 		Channels: []readChan{
 			{
-				ID:       "mf_id",
-				Name:     "mf_name",
+				ID:       "mg_id",
+				Name:     "mg_name",
 				Metadata: map[string]interface{}{"key": "value}"},
 			},
 		},
@@ -118,7 +118,7 @@ func TestReadConfig(t *testing.T) {
 		b, err := json.Marshal(res)
 		assert.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
 		assert.Equal(t, tc.enc, b, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.enc, b))
-		resp, ok := res.(mainflux.Response)
+		resp, ok := res.(magistrala.Response)
 		assert.True(t, ok, "If not encrypted, reader should return response.")
 		assert.False(t, resp.Empty(), fmt.Sprintf("Response should not be empty %s.", err))
 		assert.Equal(t, http.StatusOK, resp.Code(), "Default config response code should be 200.")

@@ -18,8 +18,8 @@ default values.
 | MG_POSTGRES_WRITER_HTTP_SERVER_KEY  | Service HTTP server key                                                           | ""                             |
 | MG_POSTGRES_HOST                    | Postgres DB host                                                                  | postgres                       |
 | MG_POSTGRES_PORT                    | Postgres DB port                                                                  | 5432                           |
-| MG_POSTGRES_USER                    | Postgres user                                                                     | mainflux                       |
-| MG_POSTGRES_PASS                    | Postgres password                                                                 | mainflux                       |
+| MG_POSTGRES_USER                    | Postgres user                                                                     | magistrala                     |
+| MG_POSTGRES_PASS                    | Postgres password                                                                 | magistrala                     |
 | MG_POSTGRES_NAME                    | Postgres database name                                                            | messages                       |
 | MG_POSTGRES_SSL_MODE                | Postgres SSL mode                                                                 | disabled                       |
 | MG_POSTGRES_SSL_CERT                | Postgres SSL certificate path                                                     | ""                             |
@@ -27,7 +27,7 @@ default values.
 | MG_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path                                                | ""                             |
 | MG_MESSAGE_BROKER_URL               | Message broker instance URL                                                       | nats://localhost:4222          |
 | MG_JAEGER_URL                       | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                   | Send telemetry to mainflux call home server                                       | true                           |
+| MG_SEND_TELEMETRY                   | Send telemetry to magistrala call home server                                     | true                           |
 | MG_POSTGRES_WRITER_INSTANCE_ID      | Service instance ID                                                               | ""                             |
 
 ## Deployment
@@ -40,7 +40,7 @@ To start the service, execute the following shell script:
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the postgres writer
 make postgres-writer
@@ -66,10 +66,10 @@ MG_POSTGRES_SSL_KEY=[Postgres SSL key] \
 MG_POSTGRES_SSL_ROOT_CERT=[Postgres SSL Root cert] \
 MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_POSTGRES_WRITER_INSTANCE_ID=[Service instance ID] \
 
-$GOBIN/mainflux-postgres-writer
+$GOBIN/magistrala-postgres-writer
 ```
 
 ## Usage

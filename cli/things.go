@@ -6,8 +6,8 @@ package cli
 import (
 	"encoding/json"
 
-	mfclients "github.com/absmach/magistrala/pkg/clients"
-	mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
+	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/spf13/cobra"
 )
 
@@ -17,19 +17,19 @@ var cmdThings = []cobra.Command{
 		Short: "Create thing",
 		Long: "Creates new thing with provided name and metadata\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things create '{\"name\":\"new thing\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
+			"\tmagistrala-cli things create '{\"name\":\"new thing\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
 
-			var thing mfxsdk.Thing
+			var thing mgxsdk.Thing
 			if err := json.Unmarshal([]byte(args[0]), &thing); err != nil {
 				logError(err)
 				return
 			}
-			thing.Status = mfclients.EnabledStatus.String()
+			thing.Status = mgclients.EnabledStatus.String()
 			thing, err := sdk.CreateThing(thing, args[1])
 			if err != nil {
 				logError(err)
@@ -44,9 +44,9 @@ var cmdThings = []cobra.Command{
 		Short: "Get things",
 		Long: "Get all things or get thing by id. Things can be filtered by name or metadata\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things get all $USERTOKEN - lists all things\n" +
-			"\tmainflux-cli things get all $USERTOKEN --offset=10 --limit=10 - lists all things with offset and limit\n" +
-			"\tmainflux-cli things get <thing_id> $USERTOKEN - shows thing with provided <thing_id>\n",
+			"\tmagistrala-cli things get all $USERTOKEN - lists all things\n" +
+			"\tmagistrala-cli things get all $USERTOKEN --offset=10 --limit=10 - lists all things with offset and limit\n" +
+			"\tmagistrala-cli things get <thing_id> $USERTOKEN - shows thing with provided <thing_id>\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
@@ -57,7 +57,7 @@ var cmdThings = []cobra.Command{
 				logError(err)
 				return
 			}
-			pageMetadata := mfxsdk.PageMetadata{
+			pageMetadata := mgxsdk.PageMetadata{
 				Name:     Name,
 				Offset:   Offset,
 				Limit:    Limit,
@@ -86,7 +86,7 @@ var cmdThings = []cobra.Command{
 		Short: "Identify thing",
 		Long: "Validates thing's key and returns its ID\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things identify <thing_key>\n",
+			"\tmagistrala-cli things identify <thing_key>\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
 				logUsage(cmd.Use)
@@ -107,17 +107,17 @@ var cmdThings = []cobra.Command{
 		Short: "Update thing",
 		Long: "Updates thing with provided id, name and metadata, or updates thing tags, secret or owner\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things update <thing_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n" +
-			"\tmainflux-cli things update tags <thing_id> '{\"tag1\":\"value1\", \"tag2\":\"value2\"}' $USERTOKEN\n" +
-			"\tmainflux-cli things update secret <thing_id> newsecret $USERTOKEN\n" +
-			"\tmainflux-cli things update owner <thing_id> <owner_id> $USERTOKEN\n",
+			"\tmagistrala-cli things update <thing_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n" +
+			"\tmagistrala-cli things update tags <thing_id> '{\"tag1\":\"value1\", \"tag2\":\"value2\"}' $USERTOKEN\n" +
+			"\tmagistrala-cli things update secret <thing_id> newsecret $USERTOKEN\n" +
+			"\tmagistrala-cli things update owner <thing_id> <owner_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 && len(args) != 3 {
 				logUsage(cmd.Use)
 				return
 			}
 
-			var thing mfxsdk.Thing
+			var thing mgxsdk.Thing
 			if args[0] == "tags" {
 				if err := json.Unmarshal([]byte(args[2]), &thing.Tags); err != nil {
 					logError(err)
@@ -177,7 +177,7 @@ var cmdThings = []cobra.Command{
 		Short: "Change thing status to enabled",
 		Long: "Change thing status to enabled\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things enable <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli things enable <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
@@ -198,7 +198,7 @@ var cmdThings = []cobra.Command{
 		Short: "Change thing status to disabled",
 		Long: "Change thing status to disabled\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things disable <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli things disable <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
@@ -219,13 +219,13 @@ var cmdThings = []cobra.Command{
 		Short: "Share thing with a user",
 		Long: "Share thing with a user\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things share <thing_id> <user_id> <relation> $USERTOKEN\n",
+			"\tmagistrala-cli things share <thing_id> <user_id> <relation> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
 				logUsage(cmd.Use)
 				return
 			}
-			req := mfxsdk.UsersRelationRequest{
+			req := mgxsdk.UsersRelationRequest{
 				Relation: args[2],
 				UserIDs:  []string{args[1]},
 			}
@@ -243,13 +243,13 @@ var cmdThings = []cobra.Command{
 		Short: "Unshare thing with a user",
 		Long: "Unshare thing with a user\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things share  <thing_id> <user_id> <relation> $USERTOKEN\n",
+			"\tmagistrala-cli things share  <thing_id> <user_id> <relation> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
 				logUsage(cmd.Use)
 				return
 			}
-			req := mfxsdk.UsersRelationRequest{
+			req := mgxsdk.UsersRelationRequest{
 				Relation: args[2],
 				UserIDs:  []string{args[1]},
 			}
@@ -267,14 +267,14 @@ var cmdThings = []cobra.Command{
 		Short: "Connect thing",
 		Long: "Connect thing to the channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things connect <thing_id> <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli things connect <thing_id> <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Use)
 				return
 			}
 
-			connIDs := mfxsdk.Connection{
+			connIDs := mgxsdk.Connection{
 				ChannelID: args[1],
 				ThingID:   args[0],
 			}
@@ -291,14 +291,14 @@ var cmdThings = []cobra.Command{
 		Short: "Disconnect thing",
 		Long: "Disconnect thing to the channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things disconnect <thing_id> <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli things disconnect <thing_id> <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Use)
 				return
 			}
 
-			connIDs := mfxsdk.Connection{
+			connIDs := mgxsdk.Connection{
 				ThingID:   args[0],
 				ChannelID: args[1],
 			}
@@ -315,13 +315,13 @@ var cmdThings = []cobra.Command{
 		Short: "Connected list",
 		Long: "List of Channels connected to Thing\n" +
 			"Usage:\n" +
-			"\tmainflux-cli connections <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli connections <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
-			pm := mfxsdk.PageMetadata{
+			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
 			}
@@ -339,13 +339,13 @@ var cmdThings = []cobra.Command{
 		Short: "List users",
 		Long: "List users of a thing\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things users <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli things users <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
-			pm := mfxsdk.PageMetadata{
+			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
 			}

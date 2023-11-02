@@ -44,7 +44,7 @@ setup_protoc() {
     export PATH=$PATH:/usr/local/bin/protoc
 }
 
-setup_mf() {
+setup_mg() {
     echo "Setting up Magistrala..."
     for p in $(ls *.pb.go); do
         mv $p $p.tmp
@@ -81,7 +81,7 @@ setup() {
     echo "Setting up..."
     update_go
     setup_protoc
-    setup_mf
+    setup_mg
     setup_lint
 }
 

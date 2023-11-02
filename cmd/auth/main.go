@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	api "github.com/absmach/magistrala/auth/api"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
@@ -27,7 +27,7 @@ import (
 	"github.com/absmach/magistrala/internal/server"
 	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/uuid"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
@@ -75,13 +75,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init logger: %s", err.Error()))
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -141,13 +141,13 @@ func main() {
 	}
 	registerAuthServiceServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		mainflux.RegisterAuthServiceServer(srv, grpcapi.NewServer(svc))
+		magistrala.RegisterAuthServiceServer(srv, grpcapi.NewServer(svc))
 	}
 
 	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, registerAuthServiceServer, logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -197,7 +197,7 @@ func initSchema(client *authzed.Client, schemaFilePath string) error {
 	return nil
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger mflog.Logger, spicedbClient *authzed.Client) auth.Service {
+func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger mglog.Logger, spicedbClient *authzed.Client) auth.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
 

@@ -22,7 +22,7 @@ func TestIssueToken(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	client := sdk.User{
 		ID: generateUUID(t),
@@ -69,7 +69,7 @@ func TestIssueToken(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByIdentity", mock.Anything, mock.Anything).Return(convertClient(tc.dbClient), tc.err)
-		token, err := mfsdk.CreateToken(tc.client)
+		token, err := mgsdk.CreateToken(tc.client)
 		switch tc.err {
 		case nil:
 			assert.NotEmpty(t, token, fmt.Sprintf("%s: expected token, got empty", tc.desc))
@@ -89,7 +89,7 @@ func TestRefreshToken(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	user := sdk.User{
 		ID:   generateUUID(t),
@@ -126,7 +126,7 @@ func TestRefreshToken(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(convertClient(user), tc.err)
-		_, err := mfsdk.RefreshToken(tc.token)
+		_, err := mgsdk.RefreshToken(tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
 			assert.NotEmpty(t, token, fmt.Sprintf("%s: expected token, got empty", tc.desc))

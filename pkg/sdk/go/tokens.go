@@ -19,7 +19,7 @@ type Token struct {
 	AccessType   string `json:"access_type,omitempty"`
 }
 
-func (sdk mfSDK) CreateToken(user User) (Token, errors.SDKError) {
+func (sdk mgSDK) CreateToken(user User) (Token, errors.SDKError) {
 	treq := tokenReq{
 		Identity: user.Credentials.Identity,
 		Secret:   user.Credentials.Secret,
@@ -43,7 +43,7 @@ func (sdk mfSDK) CreateToken(user User) (Token, errors.SDKError) {
 	return token, nil
 }
 
-func (sdk mfSDK) RefreshToken(token string) (Token, errors.SDKError) {
+func (sdk mgSDK) RefreshToken(token string) (Token, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, refreshTokenEndpoint)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, []byte{}, nil, http.StatusCreated)

@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/absmach/magistrala/auth"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
@@ -20,10 +20,10 @@ const defRetrieveAllLimit = 1000
 type policyAgent struct {
 	client           *authzed.Client
 	permissionClient v1.PermissionsServiceClient
-	logger           mflog.Logger
+	logger           mglog.Logger
 }
 
-func NewPolicyAgent(client *authzed.Client, logger mflog.Logger) auth.PolicyAgent {
+func NewPolicyAgent(client *authzed.Client, logger mglog.Logger) auth.PolicyAgent {
 	return &policyAgent{
 		client:           client,
 		permissionClient: client.PermissionsServiceClient,

@@ -10,7 +10,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/certs/pki"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
 var (
@@ -47,12 +47,12 @@ type Service interface {
 type certsService struct {
 	auth      magistrala.AuthServiceClient
 	certsRepo Repository
-	sdk       mfsdk.SDK
+	sdk       mgsdk.SDK
 	pki       pki.Agent
 }
 
 // New returns new Certs service.
-func New(auth magistrala.AuthServiceClient, certs Repository, sdk mfsdk.SDK, pki pki.Agent) Service {
+func New(auth magistrala.AuthServiceClient, certs Repository, sdk mgsdk.SDK, pki pki.Agent) Service {
 	return &certsService{
 		certsRepo: certs,
 		sdk:       sdk,

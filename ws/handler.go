@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -46,7 +46,7 @@ var (
 	ErrFailedPublishDisconnectEvent = errors.New("failed to publish disconnect event")
 	ErrFailedParseSubtopic          = errors.New("failed to parse subtopic")
 	ErrFailedPublishConnectEvent    = errors.New("failed to publish connect event")
-	ErrFailedPublishToMsgBroker     = errors.New("failed to publish to mainflux message broker")
+	ErrFailedPublishToMsgBroker     = errors.New("failed to publish to magistrala message broker")
 )
 
 var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
@@ -54,12 +54,12 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 // Event implements events.Event interface.
 type handler struct {
 	pubsub messaging.PubSub
-	auth   mainflux.AuthzServiceClient
+	auth   magistrala.AuthzServiceClient
 	logger logger.Logger
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(pubsub messaging.PubSub, logger logger.Logger, auth mainflux.AuthzServiceClient) session.Handler {
+func NewHandler(pubsub messaging.PubSub, logger logger.Logger, auth magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		logger: logger,
 		pubsub: pubsub,
@@ -163,7 +163,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		token = string(s.Password)
 	}
 
-	ar := &mainflux.AuthorizeReq{
+	ar := &magistrala.AuthorizeReq{
 		Namespace:   "",
 		SubjectType: "thing",
 		Permission:  "publish",
@@ -235,7 +235,7 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 
 	chanID := channelParts[1]
 
-	ar := &mainflux.AuthorizeReq{
+	ar := &magistrala.AuthorizeReq{
 		Namespace:   "",
 		SubjectType: "thing",
 		Permission:  action,

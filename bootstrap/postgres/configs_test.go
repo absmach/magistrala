@@ -21,8 +21,8 @@ const numConfigs = 10
 
 var (
 	config = bootstrap.Config{
-		ThingID:     "mf-thing",
-		ThingKey:    "mf-key",
+		ThingID:     "mg-thing",
+		ThingKey:    "mg-key",
 		ExternalID:  "external-id",
 		ExternalKey: "external-key",
 		Owner:       "user@email.com",

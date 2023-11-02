@@ -19,8 +19,8 @@ default values.
 | MG_SMPP_NOTIFIER_HTTP_SERVER_KEY  | Service HTTP server key                                                           | ""                             |
 | MG_SMPP_NOTIFIER_DB_HOST          | Database host address                                                             | localhost                      |
 | MG_SMPP_NOTIFIER_DB_PORT          | Database host port                                                                | 5432                           |
-| MG_SMPP_NOTIFIER_DB_USER          | Database user                                                                     | mainflux                       |
-| MG_SMPP_NOTIFIER_DB_PASS          | Database password                                                                 | mainflux                       |
+| MG_SMPP_NOTIFIER_DB_USER          | Database user                                                                     | magistrala                     |
+| MG_SMPP_NOTIFIER_DB_PASS          | Database password                                                                 | magistrala                     |
 | MG_SMPP_NOTIFIER_DB_NAME          | Name of the database used by the service                                          | subscriptions                  |
 | MG_SMPP_NOTIFIER_DB_SSL_MODE      | DB connection SSL mode (disable, require, verify-ca, verify-full)                 | disable                        |
 | MG_SMPP_NOTIFIER_DB_SSL_CERT      | Path to the PEM encoded certificate file                                          | ""                             |
@@ -40,7 +40,7 @@ default values.
 | MG_AUTH_GRPC_CA_CERT              | Path to Auth client CA certs in pem format                                        | ""                             |
 | MG_MESSAGE_BROKER_URL             | Message broker URL                                                                | nats://127.0.0.1:4222          |
 | MG_JAEGER_URL                     | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                 | Send telemetry to mainflux call home server                                       | true                           |
+| MG_SEND_TELEMETRY                 | Send telemetry to magistrala call home server                                     | true                           |
 | MG_SMPP_NOTIFIER_INSTANCE_ID      | SMPP Notifier instance ID                                                         | ""                             |
 
 ## Usage

@@ -12,26 +12,26 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                   | Description                                                         | Default                        |
-| -------------------------- | ------------------------------------------------------------------- | ------------------------------ |
-| MG_TWINS_LOG_LEVEL         | Log level for twin service (debug, info, warn, error)               | info                           |
-| MG_TWINS_HTTP_PORT         | Twins service HTTP port                                             | 9018                           |
-| MG_TWINS_SERVER_CERT       | Path to server certificate in PEM format                            |                                |
-| MG_TWINS_SERVER_KEY        | Path to server key in PEM format                                    |                                |
-| MG_JAEGER_URL              | Jaeger server URL                                                   | http://jaeger:14268/api/traces |
-| MG_TWINS_DB                | Database name                                                       | mainflux                       |
-| MG_TWINS_DB_HOST           | Database host address                                               | localhost                      |
-| MG_TWINS_DB_PORT           | Database host port                                                  | 27017                          |
-| MG_THINGS_STANDALONE_ID    | User ID for standalone mode (no gRPC communication with users)      |                                |
-| MG_THINGS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header |                                |
-| MG_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                      | false                          |
-| MG_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                   |                                |
-| MG_TWINS_CHANNEL_ID        | Message broker notifications channel ID                             |                                |
-| MG_MESSAGE_BROKER_URL      | Magistrala Message broker URL                                         | nats://localhost:4222          |
-| MG_AUTH_GRPC_URL           | Users service gRPC URL                                              | localhost:7001                 |
-| MG_AUTH_GRPC_TIMEOUT       | Users service gRPC request timeout in seconds                       | 1s                             |
-| MG_TWINS_CACHE_URL         | Cache database URL                                                  | redis://localhost:6379/0       |
-| MG_SEND_TELEMETRY          | Send telemetry to mainflux call home server                         | true                           |
+| Variable                   | Description                                                         | Default                          |
+| -------------------------- | ------------------------------------------------------------------- | -------------------------------- |
+| MG_TWINS_LOG_LEVEL         | Log level for twin service (debug, info, warn, error)               | info                             |
+| MG_TWINS_HTTP_PORT         | Twins service HTTP port                                             | 9018                             |
+| MG_TWINS_SERVER_CERT       | Path to server certificate in PEM format                            |                                  |
+| MG_TWINS_SERVER_KEY        | Path to server key in PEM format                                    |                                  |
+| MG_JAEGER_URL              | Jaeger server URL                                                   | <http://jaeger:14268/api/traces> |
+| MG_TWINS_DB                | Database name                                                       | magistrala                       |
+| MG_TWINS_DB_HOST           | Database host address                                               | localhost                        |
+| MG_TWINS_DB_PORT           | Database host port                                                  | 27017                            |
+| MG_THINGS_STANDALONE_ID    | User ID for standalone mode (no gRPC communication with users)      |                                  |
+| MG_THINGS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header |                                  |
+| MG_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                      | false                            |
+| MG_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                   |                                  |
+| MG_TWINS_CHANNEL_ID        | Message broker notifications channel ID                             |                                  |
+| MG_MESSAGE_BROKER_URL      | Magistrala Message broker URL                                       | <nats://localhost:4222>          |
+| MG_AUTH_GRPC_URL           | Users service gRPC URL                                              | <localhost:7001>                 |
+| MG_AUTH_GRPC_TIMEOUT       | Users service gRPC request timeout in seconds                       | 1s                               |
+| MG_TWINS_CACHE_URL         | Cache database URL                                                  | <redis://localhost:6379/0>       |
+| MG_SEND_TELEMETRY          | Send telemetry to magistrala call home server                       | true                             |
 
 ## Deployment
 
@@ -71,7 +71,7 @@ MG_MESSAGE_BROKER_URL=[Magistrala Message broker URL] \
 MG_AUTH_GRPC_URL=[Users service gRPC URL] \
 MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
 MG_TWINS_CACHE_URL=[Cache database URL] \
-$GOBIN/mainflux-twins
+$GOBIN/magistrala-twins
 ```
 
 ## Usage
@@ -94,7 +94,7 @@ MG_TWINS_CHANNEL_ID=
 ```
 
 with the corresponding values of the desired channel. If you are running
-mainflux natively, than do the same thing in the corresponding console
+magistrala natively, than do the same thing in the corresponding console
 environment.
 
 For more information about service capabilities and its usage, please check out

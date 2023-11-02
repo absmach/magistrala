@@ -19,8 +19,8 @@ default values.
 | MG_SMTP_NOTIFIER_HTTP_SERVER_KEY  | SMTP Notifier service HTTP server key                                   | ""                             |
 | MG_SMTP_NOTIFIER_DB_HOST          | Database host address                                                   | localhost                      |
 | MG_SMTP_NOTIFIER_DB_PORT          | Database host port                                                      | 5432                           |
-| MG_SMTP_NOTIFIER_DB_USER          | Database user                                                           | mainflux                       |
-| MG_SMTP_NOTIFIER_DB_PASS          | Database password                                                       | mainflux                       |
+| MG_SMTP_NOTIFIER_DB_USER          | Database user                                                           | magistrala                     |
+| MG_SMTP_NOTIFIER_DB_PASS          | Database password                                                       | magistrala                     |
 | MG_SMTP_NOTIFIER_DB_NAME          | Name of the database used by the service                                | subscriptions                  |
 | MG_SMTP_NOTIFIER_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                        |
 | MG_SMTP_NOTIFIER_DB_SSL_CERT      | Path to the PEM encoded cert file                                       | ""                             |
@@ -41,7 +41,7 @@ default values.
 | MG_AUTH_GRPC_CA_CERT              | Path to Users service CA cert in pem format                             | ""                             |
 | MG_AUTH_CLIENT_TLS                | Auth client TLS flag                                                    | false                          |
 | MG_AUTH_CA_CERTS                  | Path to Auth client CA certs in pem format                              | ""                             |
-| MG_SEND_TELEMETRY                 | Send telemetry to mainflux call home server                             | true                           |
+| MG_SEND_TELEMETRY                 | Send telemetry to magistrala call home server                           | true                           |
 | MG_SMTP_NOTIFIER_INSTANCE_ID      | SMTP Notifier instance ID                                               | ""                             |
 
 ## Usage

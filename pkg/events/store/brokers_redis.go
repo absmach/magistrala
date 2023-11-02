@@ -10,7 +10,7 @@ import (
 	"context"
 	"log"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/redis"
 )
@@ -28,7 +28,7 @@ func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, er
 	return pb, nil
 }
 
-func NewSubscriber(_ context.Context, url, stream, consumer string, logger mflog.Logger) (events.Subscriber, error) {
+func NewSubscriber(_ context.Context, url, stream, consumer string, logger mglog.Logger) (events.Subscriber, error) {
 	pb, err := redis.NewSubscriber(url, stream, consumer, logger)
 	if err != nil {
 		return nil, err

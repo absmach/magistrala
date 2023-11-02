@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -48,7 +48,7 @@ func MakeHandler(instanceID string) http.Handler {
 		opts...,
 	), "publish"))
 
-	r.GetFunc("/health", mainflux.Health("http", instanceID))
+	r.GetFunc("/health", magistrala.Health("http", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

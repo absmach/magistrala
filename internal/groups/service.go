@@ -10,7 +10,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
 )
@@ -70,7 +70,7 @@ func (svc service) CreateGroup(ctx context.Context, token string, g groups.Group
 	if err != nil {
 		return groups.Group{}, err
 	}
-	if g.Status != mfclients.EnabledStatus && g.Status != mfclients.DisabledStatus {
+	if g.Status != mgclients.EnabledStatus && g.Status != mgclients.DisabledStatus {
 		return groups.Group{}, apiutil.ErrInvalidStatus
 	}
 	if g.Owner == "" {
@@ -300,7 +300,7 @@ func (svc service) UpdateGroup(ctx context.Context, token string, g groups.Group
 func (svc service) EnableGroup(ctx context.Context, token, id string) (groups.Group, error) {
 	group := groups.Group{
 		ID:        id,
-		Status:    mfclients.EnabledStatus,
+		Status:    mgclients.EnabledStatus,
 		UpdatedAt: time.Now(),
 	}
 	group, err := svc.changeGroupStatus(ctx, token, group)
@@ -313,7 +313,7 @@ func (svc service) EnableGroup(ctx context.Context, token, id string) (groups.Gr
 func (svc service) DisableGroup(ctx context.Context, token, id string) (groups.Group, error) {
 	group := groups.Group{
 		ID:        id,
-		Status:    mfclients.DisabledStatus,
+		Status:    mgclients.DisabledStatus,
 		UpdatedAt: time.Now(),
 	}
 	group, err := svc.changeGroupStatus(ctx, token, group)
@@ -465,7 +465,7 @@ func (svc service) changeGroupStatus(ctx context.Context, token string, group gr
 		return groups.Group{}, err
 	}
 	if dbGroup.Status == group.Status {
-		return groups.Group{}, mfclients.ErrStatusAlreadyAssigned
+		return groups.Group{}, mgclients.ErrStatusAlreadyAssigned
 	}
 
 	group.UpdatedBy = id

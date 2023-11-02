@@ -6,7 +6,7 @@ package things
 import (
 	"context"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/clients"
 )
 
@@ -56,7 +56,7 @@ type Service interface {
 	Identify(ctx context.Context, key string) (string, error)
 
 	// Authorize used for AuthZ gRPC server implementation and Things authorization.
-	Authorize(ctx context.Context, req *mainflux.AuthorizeReq) (string, error)
+	Authorize(ctx context.Context, req *magistrala.AuthorizeReq) (string, error)
 }
 
 // Cache contains thing caching interface.

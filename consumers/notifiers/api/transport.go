@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/logger"
@@ -66,7 +66,7 @@ func MakeHandler(svc notifiers.Service, logger logger.Logger, instanceID string)
 		opts...,
 	), "delete"))
 
-	mux.GetFunc("/health", mainflux.Health("notifier", instanceID))
+	mux.GetFunc("/health", magistrala.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -122,7 +122,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	if ar, ok := response.(mainflux.Response); ok {
+	if ar, ok := response.(magistrala.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}

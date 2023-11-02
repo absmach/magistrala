@@ -10,14 +10,14 @@ import (
 	"log"
 	"os"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	authapi "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
@@ -58,13 +58,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -123,7 +123,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, targetServerConf, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -144,7 +144,7 @@ func main() {
 	}
 }
 
-func newService(tc mainflux.AuthzServiceClient, nps messaging.PubSub, logger mflog.Logger, tracer trace.Tracer) ws.Service {
+func newService(tc magistrala.AuthzServiceClient, nps messaging.PubSub, logger mglog.Logger, tracer trace.Tracer) ws.Service {
 	svc := ws.New(tc, nps)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)
@@ -153,7 +153,7 @@ func newService(tc mainflux.AuthzServiceClient, nps messaging.PubSub, logger mfl
 	return svc
 }
 
-func proxyWS(ctx context.Context, cfg server.Config, logger mflog.Logger, handler session.Handler) error {
+func proxyWS(ctx context.Context, cfg server.Config, logger mglog.Logger, handler session.Handler) error {
 	target := fmt.Sprintf("ws://%s:%s", targetWSHost, targetWSPort)
 	address := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	wp, err := websockets.NewProxy(address, target, logger, handler)

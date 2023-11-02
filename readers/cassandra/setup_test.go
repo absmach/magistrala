@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	casclient "github.com/absmach/magistrala/internal/clients/cassandra"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/gocql/gocql"
 	"github.com/ory/dockertest/v3"
 )
 
-var logger, _ = mflog.New(os.Stdout, mflog.Info.String())
+var logger, _ = mglog.New(os.Stdout, mglog.Info.String())
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

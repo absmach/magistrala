@@ -13,12 +13,12 @@ import (
 	"os"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authapi "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt"
 	"github.com/absmach/magistrala/mqtt/events"
 	mqtttracing "github.com/absmach/magistrala/mqtt/tracing"
@@ -68,13 +68,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -170,7 +170,7 @@ func main() {
 	h = handler.NewTracing(tracer, h)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -197,7 +197,7 @@ func main() {
 	}
 }
 
-func proxyMQTT(ctx context.Context, cfg config, logger mflog.Logger, handler session.Handler) error {
+func proxyMQTT(ctx context.Context, cfg config, logger mglog.Logger, handler session.Handler) error {
 	address := fmt.Sprintf(":%s", cfg.MQTTPort)
 	target := fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort)
 	mp := mp.New(address, target, handler, logger)
@@ -216,7 +216,7 @@ func proxyMQTT(ctx context.Context, cfg config, logger mflog.Logger, handler ses
 	}
 }
 
-func proxyWS(ctx context.Context, cfg config, logger mflog.Logger, handler session.Handler) error {
+func proxyWS(ctx context.Context, cfg config, logger mglog.Logger, handler session.Handler) error {
 	target := fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort)
 	wp := websocket.New(target, cfg.HTTPTargetPath, "ws", handler, logger)
 	http.Handle("/mqtt", wp.Handler())

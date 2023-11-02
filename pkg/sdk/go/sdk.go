@@ -42,7 +42,7 @@ const (
 // ContentType represents all possible content types.
 type ContentType string
 
-var _ SDK = (*mfSDK)(nil)
+var _ SDK = (*mgSDK)(nil)
 
 var (
 	// ErrFailedCreation indicates that entity creation failed.
@@ -103,7 +103,7 @@ type Credentials struct {
 
 // SDK contains Magistrala API.
 type SDK interface {
-	// CreateUser registers mainflux user.
+	// CreateUser registers magistrala user.
 	//
 	// example:
 	//  user := sdk.User{
@@ -960,7 +960,7 @@ type SDK interface {
 	DeleteSubscription(id, token string) errors.SDKError
 }
 
-type mfSDK struct {
+type mgSDK struct {
 	bootstrapURL   string
 	certsURL       string
 	httpAdapterURL string
@@ -987,9 +987,9 @@ type Config struct {
 	TLSVerification bool
 }
 
-// NewSDK returns new mainflux SDK instance.
+// NewSDK returns new magistrala SDK instance.
 func NewSDK(conf Config) SDK {
-	return &mfSDK{
+	return &mgSDK{
 		bootstrapURL:   conf.BootstrapURL,
 		certsURL:       conf.CertsURL,
 		httpAdapterURL: conf.HTTPAdapterURL,
@@ -1011,7 +1011,7 @@ func NewSDK(conf Config) SDK {
 
 // processRequest creates and send a new HTTP request, and checks for errors in the HTTP response.
 // It then returns the response headers, the response body, and the associated error(s) (if any).
-func (sdk mfSDK) processRequest(method, url, token string, data []byte, headers map[string]string, expectedRespCodes ...int) (http.Header, []byte, errors.SDKError) {
+func (sdk mgSDK) processRequest(method, url, token string, data []byte, headers map[string]string, expectedRespCodes ...int) (http.Header, []byte, errors.SDKError) {
 	req, err := http.NewRequest(method, url, bytes.NewReader(data))
 	if err != nil {
 		return make(http.Header), []byte{}, errors.NewSDKError(err)
@@ -1051,7 +1051,7 @@ func (sdk mfSDK) processRequest(method, url, token string, data []byte, headers 
 	return resp.Header, body, nil
 }
 
-func (sdk mfSDK) withQueryParams(baseURL, endpoint string, pm PageMetadata) (string, error) {
+func (sdk mgSDK) withQueryParams(baseURL, endpoint string, pm PageMetadata) (string, error) {
 	q, err := pm.query()
 	if err != nil {
 		return "", err

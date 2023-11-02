@@ -20,13 +20,13 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "e2e",
 		Short: "e2e is end-to-end testing tool for Magistrala",
-		Long: "Tool for testing end-to-end flow of mainflux by doing a couple of operations namely:\n" +
+		Long: "Tool for testing end-to-end flow of magistrala by doing a couple of operations namely:\n" +
 			"1. Creating, viewing, updating and changing status of users, groups, things and channels.\n" +
 			"2. Connecting users and groups to each other and things and channels to each other.\n" +
 			"3. Sending messages from things to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).\n" +
 			"Complete documentation is available at https://docs.mainflux.io",
 		Example: "Here is a simple example of using e2e tool.\n" +
-			"Use the following commands from the root mainflux directory:\n\n" +
+			"Use the following commands from the root magistrala directory:\n\n" +
 			"go run tools/e2e/cmd/main.go\n" +
 			"go run tools/e2e/cmd/main.go --host 142.93.118.47\n" +
 			"go run tools/e2e/cmd/main.go --host localhost --num 10 --num_of_messages 100 --prefix e2e",
@@ -47,7 +47,7 @@ func main() {
 	})
 
 	// Root Flags
-	rootCmd.PersistentFlags().StringVarP(&econf.Host, "host", "H", "localhost", "address for a running mainflux instance")
+	rootCmd.PersistentFlags().StringVarP(&econf.Host, "host", "H", "localhost", "address for a running magistrala instance")
 	rootCmd.PersistentFlags().StringVarP(&econf.Prefix, "prefix", "p", "", "name prefix for users, groups, things and channels")
 	rootCmd.PersistentFlags().Uint64VarP(&econf.Num, "num", "n", defNum, "number of users, groups, channels and things to create and connect")
 	rootCmd.PersistentFlags().Uint64VarP(&econf.NumOfMsg, "num_of_messages", "N", defNum, "number of messages to send")

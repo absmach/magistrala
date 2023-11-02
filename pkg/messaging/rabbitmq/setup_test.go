@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"testing"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/rabbitmq"
 	"github.com/ory/dockertest/v3"
@@ -29,7 +29,7 @@ const (
 var (
 	publisher messaging.Publisher
 	pubsub    messaging.PubSub
-	logger    mflog.Logger
+	logger    mglog.Logger
 	address   string
 )
 
@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	logger, err = mflog.New(os.Stdout, mflog.Debug.String())
+	logger, err = mglog.New(os.Stdout, mglog.Debug.String())
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

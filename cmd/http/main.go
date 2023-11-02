@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"os"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	adapter "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
 	"github.com/absmach/magistrala/internal"
@@ -20,7 +20,7 @@ import (
 	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
@@ -59,13 +59,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -120,7 +120,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, targetServerCfg, api.MakeHandler(cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -141,7 +141,7 @@ func main() {
 	}
 }
 
-func newService(pub messaging.Publisher, tc mainflux.AuthzServiceClient, logger mflog.Logger, tracer trace.Tracer) session.Handler {
+func newService(pub messaging.Publisher, tc magistrala.AuthzServiceClient, logger mglog.Logger, tracer trace.Tracer) session.Handler {
 	svc := adapter.NewHandler(pub, logger, tc)
 	svc = handler.NewTracing(tracer, svc)
 	svc = handler.LoggingMiddleware(svc, logger)
@@ -150,7 +150,7 @@ func newService(pub messaging.Publisher, tc mainflux.AuthzServiceClient, logger 
 	return svc
 }
 
-func proxyHTTP(ctx context.Context, cfg server.Config, logger mflog.Logger, handler session.Handler) error {
+func proxyHTTP(ctx context.Context, cfg server.Config, logger mglog.Logger, handler session.Handler) error {
 	address := fmt.Sprintf("%s:%s", "", cfg.Port)
 	target := fmt.Sprintf("%s:%s", targetHTTPHost, targetHTTPPort)
 	mp, err := mproxy.NewProxy(address, target, handler, logger)
@@ -171,7 +171,6 @@ func proxyHTTP(ctx context.Context, cfg server.Config, logger mflog.Logger, hand
 			errCh <- mp.Listen()
 		}()
 		logger.Info(fmt.Sprintf("%s service http server listening at %s:%s without TLS", svcName, cfg.Host, cfg.Port))
-
 	}
 
 	select {

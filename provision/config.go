@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/pelletier/go-toml"
@@ -23,12 +23,12 @@ type ServiceConf struct {
 	ThingsURL      string `toml:"things_url"    env:"MG_PROVISION_THINGS_LOCATION"      envDefault:"http://localhost"`
 	UsersURL       string `toml:"users_url"     env:"MG_PROVISION_USERS_LOCATION"       envDefault:"http://localhost"`
 	HTTPPort       string `toml:"http_port"     env:"MG_PROVISION_HTTP_PORT"            envDefault:"9016"`
-	MfUser         string `toml:"mf_user"       env:"MG_PROVISION_USER"                 envDefault:"test@example.com"`
-	MfPass         string `toml:"mf_pass"       env:"MG_PROVISION_PASS"                 envDefault:"test"`
-	MfAPIKey       string `toml:"mf_api_key"    env:"MG_PROVISION_API_KEY"              envDefault:""`
-	MfBSURL        string `toml:"mf_bs_url"     env:"MG_PROVISION_BS_SVC_URL"           envDefault:"http://localhost:9000/things/configs"`
-	MfWhiteListURL string `toml:"mf_white_list" env:"MG_PROVISION_BS_SVC_WHITELIST_URL" envDefault:"http://localhost:9000/things/state"`
-	MfCertsURL     string `toml:"mf_certs_url"  env:"MG_PROVISION_CERTS_SVC_URL"        envDefault:"http://localhost:9019"`
+	MgUser         string `toml:"mg_user"       env:"MG_PROVISION_USER"                 envDefault:"test@example.com"`
+	MgPass         string `toml:"mg_pass"       env:"MG_PROVISION_PASS"                 envDefault:"test"`
+	MgAPIKey       string `toml:"mg_api_key"    env:"MG_PROVISION_API_KEY"              envDefault:""`
+	MgBSURL        string `toml:"mg_bs_url"     env:"MG_PROVISION_BS_SVC_URL"           envDefault:"http://localhost:9000/things/configs"`
+	MgWhiteListURL string `toml:"mg_white_list" env:"MG_PROVISION_BS_SVC_WHITELIST_URL" envDefault:"http://localhost:9000/things/state"`
+	MgCertsURL     string `toml:"mg_certs_url"  env:"MG_PROVISION_CERTS_SVC_URL"        envDefault:"http://localhost:9019"`
 }
 
 // Bootstrap represetns the Bootstrap config.
@@ -61,7 +61,7 @@ type Config struct {
 	File          string             `toml:"file"      env:"MG_PROVISION_CONFIG_FILE" envDefault:"config.toml"`
 	Server        ServiceConf        `toml:"server"    mapstructure:"server"`
 	Bootstrap     Bootstrap          `toml:"bootstrap" mapstructure:"bootstrap"`
-	Things        []mfclients.Client `toml:"things"    mapstructure:"things"`
+	Things        []mgclients.Client `toml:"things"    mapstructure:"things"`
 	Channels      []groups.Group     `toml:"channels"  mapstructure:"channels"`
 	Cert          Cert               `toml:"cert"      mapstructure:"cert"`
 	BSContent     string             `env:"MG_PROVISION_BS_CONTENT" envDefault:""`

@@ -5,7 +5,7 @@
 package uuid
 
 import (
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gofrs/uuid"
 )
@@ -13,12 +13,12 @@ import (
 // ErrGeneratingID indicates error in generating UUID.
 var ErrGeneratingID = errors.New("failed to generate uuid")
 
-var _ mainflux.IDProvider = (*uuidProvider)(nil)
+var _ magistrala.IDProvider = (*uuidProvider)(nil)
 
 type uuidProvider struct{}
 
 // New instantiates a UUID provider.
-func New() mainflux.IDProvider {
+func New() magistrala.IDProvider {
 	return &uuidProvider{}
 }
 

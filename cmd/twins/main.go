@@ -19,7 +19,7 @@ import (
 	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
@@ -68,13 +68,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -171,7 +171,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config, users magistrala.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, logger mflog.Logger) (twins.Service, error) {
+func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config, users magistrala.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, logger mglog.Logger) (twins.Service, error) {
 	twinRepo := twmongodb.NewTwinRepository(db)
 	twinRepo = tracing.TwinRepositoryMiddleware(tracer, twinRepo)
 
@@ -206,7 +206,7 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config,
 	return svc, nil
 }
 
-func handle(ctx context.Context, logger mflog.Logger, chanID string, svc twins.Service) handlerFunc {
+func handle(ctx context.Context, logger mglog.Logger, chanID string, svc twins.Service) handlerFunc {
 	return func(msg *messaging.Message) error {
 		if msg.Channel == chanID {
 			return nil

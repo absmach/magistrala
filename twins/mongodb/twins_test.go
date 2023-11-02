@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/twins"
@@ -27,15 +27,15 @@ const (
 	maxNameSize = 1024
 	testDB      = "test"
 	collection  = "twins"
-	email       = "mfx_twin@example.com"
-	validName   = "mfx_twin"
+	email       = "mgx_twin@example.com"
+	validName   = "mgx_twin"
 	subtopic    = "engine"
 )
 
 var (
 	port        string
 	addr        string
-	testLog, _  = mflog.New(os.Stdout, mflog.Info.String())
+	testLog, _  = mglog.New(os.Stdout, mglog.Info.String())
 	idProvider  = uuid.New()
 	invalidName = strings.Repeat("m", maxNameSize+1)
 )

@@ -6,84 +6,84 @@ package mocks
 import (
 	"context"
 
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/stretchr/testify/mock"
 )
 
 const WrongID = "wrongID"
 
-var _ mfgroups.Repository = (*Repository)(nil)
+var _ mggroups.Repository = (*Repository)(nil)
 
 type Repository struct {
 	mock.Mock
 }
 
-func (m *Repository) ChangeStatus(ctx context.Context, group mfgroups.Group) (mfgroups.Group, error) {
+func (m *Repository) ChangeStatus(ctx context.Context, group mggroups.Group) (mggroups.Group, error) {
 	ret := m.Called(ctx, group)
 
 	if group.ID == WrongID {
-		return mfgroups.Group{}, errors.ErrNotFound
+		return mggroups.Group{}, errors.ErrNotFound
 	}
 
-	if group.Status != mfclients.EnabledStatus && group.Status != mfclients.DisabledStatus {
-		return mfgroups.Group{}, errors.ErrMalformedEntity
+	if group.Status != mgclients.EnabledStatus && group.Status != mgclients.DisabledStatus {
+		return mggroups.Group{}, errors.ErrMalformedEntity
 	}
 
-	return ret.Get(0).(mfgroups.Group), ret.Error(1)
+	return ret.Get(0).(mggroups.Group), ret.Error(1)
 }
 
-func (m *Repository) RetrieveByIDs(ctx context.Context, gm mfgroups.Page, ids ...string) (mfgroups.Page, error) {
+func (m *Repository) RetrieveByIDs(ctx context.Context, gm mggroups.Page, ids ...string) (mggroups.Page, error) {
 	ret := m.Called(ctx, gm)
 
-	return ret.Get(0).(mfgroups.Page), ret.Error(1)
+	return ret.Get(0).(mggroups.Page), ret.Error(1)
 }
 
-func (m *Repository) MembershipsByGroupIDs(ctx context.Context, gm mfgroups.Page) (mfgroups.Page, error) {
+func (m *Repository) MembershipsByGroupIDs(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
 	ret := m.Called(ctx, gm)
 
-	return ret.Get(0).(mfgroups.Page), ret.Error(1)
+	return ret.Get(0).(mggroups.Page), ret.Error(1)
 }
 
-func (m *Repository) RetrieveAll(ctx context.Context, gm mfgroups.Page) (mfgroups.Page, error) {
+func (m *Repository) RetrieveAll(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
 	ret := m.Called(ctx, gm)
 
-	return ret.Get(0).(mfgroups.Page), ret.Error(1)
+	return ret.Get(0).(mggroups.Page), ret.Error(1)
 }
 
-func (m *Repository) RetrieveByID(ctx context.Context, id string) (mfgroups.Group, error) {
+func (m *Repository) RetrieveByID(ctx context.Context, id string) (mggroups.Group, error) {
 	ret := m.Called(ctx, id)
 
 	if id == WrongID {
-		return mfgroups.Group{}, errors.ErrNotFound
+		return mggroups.Group{}, errors.ErrNotFound
 	}
 
-	return ret.Get(0).(mfgroups.Group), ret.Error(1)
+	return ret.Get(0).(mggroups.Group), ret.Error(1)
 }
 
-func (m *Repository) Save(ctx context.Context, g mfgroups.Group) (mfgroups.Group, error) {
+func (m *Repository) Save(ctx context.Context, g mggroups.Group) (mggroups.Group, error) {
 	ret := m.Called(ctx, g)
 
 	if g.Parent == WrongID {
-		return mfgroups.Group{}, errors.ErrCreateEntity
+		return mggroups.Group{}, errors.ErrCreateEntity
 	}
 
 	if g.Owner == WrongID {
-		return mfgroups.Group{}, errors.ErrCreateEntity
+		return mggroups.Group{}, errors.ErrCreateEntity
 	}
 
 	return g, ret.Error(1)
 }
 
-func (m *Repository) Update(ctx context.Context, g mfgroups.Group) (mfgroups.Group, error) {
+func (m *Repository) Update(ctx context.Context, g mggroups.Group) (mggroups.Group, error) {
 	ret := m.Called(ctx, g)
 
 	if g.ID == WrongID {
-		return mfgroups.Group{}, errors.ErrNotFound
+		return mggroups.Group{}, errors.ErrNotFound
 	}
 
-	return ret.Get(0).(mfgroups.Group), ret.Error(1)
+	return ret.Get(0).(mggroups.Group), ret.Error(1)
 }
 
 func (m *Repository) Unassign(ctx context.Context, groupID, memberKind string, memberIDs ...string) error {

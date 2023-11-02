@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
@@ -29,8 +29,8 @@ const (
 	parentGroupRelation   = "parent_group"
 	viewerRelation        = "viewer"
 
-	mainfluxObject = "magistrala"
-	refreshToken   = "refresh_token"
+	magistralaObject = "magistrala"
+	refreshToken     = "refresh_token"
 )
 
 const (
@@ -96,7 +96,7 @@ var _ Service = (*service)(nil)
 
 type service struct {
 	keys            KeyRepository
-	idProvider      mainflux.IDProvider
+	idProvider      magistrala.IDProvider
 	agent           PolicyAgent
 	tokenizer       Tokenizer
 	loginDuration   time.Duration
@@ -104,7 +104,7 @@ type service struct {
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, idp mainflux.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration time.Duration) Service {
+func New(keys KeyRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration time.Duration) Service {
 	return &service{
 		tokenizer:       tokenizer,
 		keys:            keys,
@@ -198,7 +198,7 @@ func (svc service) AddPolicies(ctx context.Context, token, object string, subjec
 		return err
 	}
 
-	if err := svc.Authorize(ctx, PolicyReq{Object: mainfluxObject, Subject: user}); err != nil {
+	if err := svc.Authorize(ctx, PolicyReq{Object: magistralaObject, Subject: user}); err != nil {
 		return err
 	}
 
@@ -225,7 +225,7 @@ func (svc service) DeletePolicies(ctx context.Context, token, object string, sub
 	}
 
 	// Check if the user identified by token is the admin.
-	if err := svc.Authorize(ctx, PolicyReq{Object: mainfluxObject, Subject: user}); err != nil {
+	if err := svc.Authorize(ctx, PolicyReq{Object: magistralaObject, Subject: user}); err != nil {
 		return err
 	}
 

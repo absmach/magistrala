@@ -37,7 +37,7 @@ type Group struct {
 	Status      string    `json:"status,omitempty"`
 }
 
-func (sdk mfSDK) CreateGroup(g Group, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) CreateGroup(g Group, token string) (Group, errors.SDKError) {
 	data, err := json.Marshal(g)
 	if err != nil {
 		return Group{}, errors.NewSDKError(err)
@@ -57,7 +57,7 @@ func (sdk mfSDK) CreateGroup(g Group, token string) (Group, errors.SDKError) {
 	return g, nil
 }
 
-func (sdk mfSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+func (sdk mgSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.usersURL, groupsEndpoint, pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -66,7 +66,7 @@ func (sdk mfSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKEr
 	return sdk.getGroups(url, token)
 }
 
-func (sdk mfSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+func (sdk mgSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
 	pm.Level = MaxLevel
 	url, err := sdk.withQueryParams(fmt.Sprintf("%s/%s/%s", sdk.usersURL, groupsEndpoint, id), "parents", pm)
 	if err != nil {
@@ -76,7 +76,7 @@ func (sdk mfSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, 
 	return sdk.getGroups(url, token)
 }
 
-func (sdk mfSDK) Children(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+func (sdk mgSDK) Children(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
 	pm.Level = MaxLevel
 	url, err := sdk.withQueryParams(fmt.Sprintf("%s/%s/%s", sdk.usersURL, groupsEndpoint, id), "children", pm)
 	if err != nil {
@@ -86,7 +86,7 @@ func (sdk mfSDK) Children(id string, pm PageMetadata, token string) (GroupsPage,
 	return sdk.getGroups(url, token)
 }
 
-func (sdk mfSDK) getGroups(url, token string) (GroupsPage, errors.SDKError) {
+func (sdk mgSDK) getGroups(url, token string) (GroupsPage, errors.SDKError) {
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {
 		return GroupsPage{}, err
@@ -100,7 +100,7 @@ func (sdk mfSDK) getGroups(url, token string) (GroupsPage, errors.SDKError) {
 	return tp, nil
 }
 
-func (sdk mfSDK) Group(id, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) Group(id, token string) (Group, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, groupsEndpoint, id)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -116,7 +116,7 @@ func (sdk mfSDK) Group(id, token string) (Group, errors.SDKError) {
 	return t, nil
 }
 
-func (sdk mfSDK) UpdateGroup(g Group, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) UpdateGroup(g Group, token string) (Group, errors.SDKError) {
 	data, err := json.Marshal(g)
 	if err != nil {
 		return Group{}, errors.NewSDKError(err)
@@ -137,15 +137,15 @@ func (sdk mfSDK) UpdateGroup(g Group, token string) (Group, errors.SDKError) {
 	return g, nil
 }
 
-func (sdk mfSDK) EnableGroup(id, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) EnableGroup(id, token string) (Group, errors.SDKError) {
 	return sdk.changeGroupStatus(id, enableEndpoint, token)
 }
 
-func (sdk mfSDK) DisableGroup(id, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) DisableGroup(id, token string) (Group, errors.SDKError) {
 	return sdk.changeGroupStatus(id, disableEndpoint, token)
 }
 
-func (sdk mfSDK) AddUserToGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError {
+func (sdk mgSDK) AddUserToGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError {
 	data, err := json.Marshal(req)
 	if err != nil {
 		return errors.NewSDKError(err)
@@ -157,7 +157,7 @@ func (sdk mfSDK) AddUserToGroup(groupID string, req UsersRelationRequest, token 
 	return sdkerr
 }
 
-func (sdk mfSDK) RemoveUserFromGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError {
+func (sdk mgSDK) RemoveUserFromGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError {
 	data, err := json.Marshal(req)
 	if err != nil {
 		return errors.NewSDKError(err)
@@ -169,7 +169,7 @@ func (sdk mfSDK) RemoveUserFromGroup(groupID string, req UsersRelationRequest, t
 	return sdkerr
 }
 
-func (sdk mfSDK) ListGroupUsers(groupID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
+func (sdk mgSDK) ListGroupUsers(groupID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, usersEndpoint), pm)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
@@ -186,7 +186,7 @@ func (sdk mfSDK) ListGroupUsers(groupID string, pm PageMetadata, token string) (
 	return up, nil
 }
 
-func (sdk mfSDK) ListGroupChannels(groupID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+func (sdk mgSDK) ListGroupChannels(groupID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, channelsEndpoint), pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -203,7 +203,7 @@ func (sdk mfSDK) ListGroupChannels(groupID string, pm PageMetadata, token string
 	return gp, nil
 }
 
-func (sdk mfSDK) changeGroupStatus(id, status, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) changeGroupStatus(id, status, token string) (Group, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.usersURL, groupsEndpoint, id, status)
 
 	_, body, err := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusOK)

@@ -2,18 +2,18 @@
 set -euo pipefail
 
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export MAINFLUX_DIR=$scriptdir/../../../
+export MAGISTRALA_DIR=$scriptdir/../../../
 
 cd $scriptdir
 
 readDotEnv() {
     set -o allexport
-    source $MAINFLUX_DIR/docker/.env
+    source $MAGISTRALA_DIR/docker/.env
     set +o allexport
 }
 
 vault() {
-    docker exec -it mainflux-vault vault "$@"
+    docker exec -it magistrala-vault vault "$@"
 }
 
 vaultEnablePKI() {
@@ -58,7 +58,7 @@ vaultGenerateIntermediateCSR() {
 
 vaultSignIntermediateCSR() {
     echo "Sign intermediate CSR"
-    docker cp data/${MG_VAULT_CA_NAME}_int.csr mainflux-vault:/vault/${MG_VAULT_CA_NAME}_int.csr
+    docker cp data/${MG_VAULT_CA_NAME}_int.csr magistrala-vault:/vault/${MG_VAULT_CA_NAME}_int.csr
     vault write -format=json ${MG_VAULT_PKI_PATH}/root/sign-intermediate \
         csr=@/vault/${MG_VAULT_CA_NAME}_int.csr \
         | tee >(jq -r .data.certificate >data/${MG_VAULT_CA_NAME}_int.crt) \
@@ -67,7 +67,7 @@ vaultSignIntermediateCSR() {
 
 vaultInjectIntermediateCertificate() {
     echo "Inject Intermediate Certificate"
-    docker cp data/${MG_VAULT_CA_NAME}_int.crt mainflux-vault:/vault/${MG_VAULT_CA_NAME}_int.crt
+    docker cp data/${MG_VAULT_CA_NAME}_int.crt magistrala-vault:/vault/${MG_VAULT_CA_NAME}_int.crt
     vault write ${MG_VAULT_PKI_INT_PATH}/intermediate/set-signed certificate=@/vault/${MG_VAULT_CA_NAME}_int.crt
 }
 
@@ -102,7 +102,7 @@ vaultGenerateServerCertificate() {
 }
 
 vaultCleanupFiles() {
-    docker exec mainflux-vault sh -c 'rm -rf /vault/*.{crt,csr}'
+    docker exec magistrala-vault sh -c 'rm -rf /vault/*.{crt,csr}'
 }
 
 if ! command -v jq &> /dev/null
@@ -132,10 +132,10 @@ vaultCleanupFiles
 
 echo "Copying certificate files"
 
-cp -v data/${MG_VAULT_CA_CN}.crt     ${MAINFLUX_DIR}/docker/ssl/certs/magistrala-server.crt
-cp -v data/${MG_VAULT_CA_CN}.key     ${MAINFLUX_DIR}/docker/ssl/certs/magistrala-server.key
-cp -v data/${MG_VAULT_CA_NAME}_int.key        ${MAINFLUX_DIR}/docker/ssl/certs/ca.key
-cp -v data/${MG_VAULT_CA_NAME}_int.crt        ${MAINFLUX_DIR}/docker/ssl/certs/ca.crt
-cp -v data/${MG_VAULT_CA_NAME}_int_bundle.crt ${MAINFLUX_DIR}/docker/ssl/bundle.pem
+cp -v data/${MG_VAULT_CA_CN}.crt     ${MAGISTRALA_DIR}/docker/ssl/certs/magistrala-server.crt
+cp -v data/${MG_VAULT_CA_CN}.key     ${MAGISTRALA_DIR}/docker/ssl/certs/magistrala-server.key
+cp -v data/${MG_VAULT_CA_NAME}_int.key        ${MAGISTRALA_DIR}/docker/ssl/certs/ca.key
+cp -v data/${MG_VAULT_CA_NAME}_int.crt        ${MAGISTRALA_DIR}/docker/ssl/certs/ca.crt
+cp -v data/${MG_VAULT_CA_NAME}_int_bundle.crt ${MAGISTRALA_DIR}/docker/ssl/bundle.pem
 
 exit 0

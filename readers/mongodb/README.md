@@ -27,7 +27,7 @@ default values.
 | MG_AUTH_GRPC_CLIENT_TLS          | Flag that indicates if TLS should be turned on      | false                          |
 | MG_AUTH_GRPC_CA_CERT             | Path to trusted CAs in PEM format                   | ""                             |
 | MG_JAEGER_URL                    | Jaeger server URL                                   | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                | Send telemetry to mainflux call home server         | true                           |
+| MG_SEND_TELEMETRY                | Send telemetry to magistrala call home server       | true                           |
 | MG_MONGO_READER_INSTANCE_ID      | Service instance ID                                 | ""                             |
 
 ## Deployment
@@ -41,7 +41,7 @@ To start the service, execute the following shell script:
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the mongodb reader
 make mongodb-reader
@@ -67,9 +67,9 @@ MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
 MG_AUTH_GRPC_CA_CERT=[Path to trusted CAs in PEM format] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_MONGO_READER_INSTANCE_ID=[Service instance ID] \
-$GOBIN/mainflux-mongodb-reader
+$GOBIN/magistrala-mongodb-reader
 
 ```
 

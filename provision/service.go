@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
@@ -68,7 +68,7 @@ type Service interface {
 }
 
 type provisionService struct {
-	logger mflog.Logger
+	logger mglog.Logger
 	sdk    sdk.SDK
 	conf   Config
 }
@@ -85,7 +85,7 @@ type Result struct {
 }
 
 // New returns new provision service.
-func New(cfg Config, sdk sdk.SDK, logger mflog.Logger) Service {
+func New(cfg Config, sdk sdk.SDK, logger mglog.Logger) Service {
 	return &provisionService{
 		logger: logger,
 		conf:   cfg,
@@ -275,19 +275,19 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 
 	// If no token in request is provided
 	// use API key provided in config file or env
-	if ps.conf.Server.MfAPIKey != "" {
-		return ps.conf.Server.MfAPIKey, nil
+	if ps.conf.Server.MgAPIKey != "" {
+		return ps.conf.Server.MgAPIKey, nil
 	}
 
 	// If no API key use username and password provided to create access token.
-	if ps.conf.Server.MfUser == "" || ps.conf.Server.MfPass == "" {
+	if ps.conf.Server.MgUser == "" || ps.conf.Server.MgPass == "" {
 		return token, ErrMissingCredentials
 	}
 
 	u := sdk.User{
 		Credentials: sdk.Credentials{
-			Identity: ps.conf.Server.MfUser,
-			Secret:   ps.conf.Server.MfPass,
+			Identity: ps.conf.Server.MgUser,
+			Secret:   ps.conf.Server.MgPass,
 		},
 	}
 	tkn, err := ps.sdk.CreateToken(u)

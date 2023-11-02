@@ -6,11 +6,11 @@ package api
 import (
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/opcua"
 )
 
-var _ mainflux.Response = (*browseRes)(nil)
+var _ magistrala.Response = (*browseRes)(nil)
 
 type browseRes struct {
 	Nodes []opcua.BrowsedNode `json:"nodes"`

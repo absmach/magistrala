@@ -6,7 +6,7 @@ package api
 import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 )
 
 type createGroupReq struct {
-	mfgroups.Group
+	mggroups.Group
 	token string
 }
 
@@ -51,7 +51,7 @@ func (req updateGroupReq) validate() error {
 }
 
 type listGroupsReq struct {
-	mfgroups.Page
+	mggroups.Page
 	token      string
 	memberKind string
 	memberID   string
@@ -70,7 +70,7 @@ func (req listGroupsReq) validate() error {
 	if req.memberKind == thingsKind && req.memberID == "" {
 		return apiutil.ErrMissingID
 	}
-	if req.Level < mfgroups.MinLevel || req.Level > mfgroups.MaxLevel {
+	if req.Level < mggroups.MinLevel || req.Level > mggroups.MaxLevel {
 		return apiutil.ErrInvalidLevel
 	}
 

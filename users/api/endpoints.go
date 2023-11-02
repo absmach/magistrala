@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/users"
 	"github.com/go-kit/kit/endpoint"
@@ -71,7 +71,7 @@ func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		pm := mfclients.Page{
+		pm := mgclients.Page{
 			Status:   req.status,
 			Offset:   req.offset,
 			Limit:    req.limit,
@@ -164,7 +164,7 @@ func updateClientEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		client := mfclients.Client{
+		client := mgclients.Client{
 			ID:       req.id,
 			Name:     req.Name,
 			Metadata: req.Metadata,
@@ -185,7 +185,7 @@ func updateClientTagsEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		client := mfclients.Client{
+		client := mgclients.Client{
 			ID:   req.id,
 			Tags: req.Tags,
 		}
@@ -219,7 +219,7 @@ func updateClientIdentityEndpoint(svc users.Service) endpoint.Endpoint {
 // Link is generated using MG_TOKEN_RESET_ENDPOINT env.
 // and value from Referer header for host.
 // {Referer}+{MG_TOKEN_RESET_ENDPOINT}+{token=TOKEN}
-// http://mainflux.com/reset-request?token=xxxxxxxxxxx.
+// http://magistrala.com/reset-request?token=xxxxxxxxxxx.
 // Email with a link is being sent to the user.
 // When user clicks on a link it should get the ui with form to
 // enter new password, when form is submitted token and new password
@@ -280,7 +280,7 @@ func updateClientOwnerEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		client := mfclients.Client{
+		client := mgclients.Client{
 			ID:    req.id,
 			Owner: req.Owner,
 		}
@@ -365,7 +365,7 @@ func disableClientEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-func buildClientsResponse(cp mfclients.MembersPage) clientsPageRes {
+func buildClientsResponse(cp mgclients.MembersPage) clientsPageRes {
 	res := clientsPageRes{
 		pageRes: pageRes{
 			Total:  cp.Total,

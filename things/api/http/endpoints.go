@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/things"
@@ -82,7 +82,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		pm := mfclients.Page{
+		pm := mgclients.Page{
 			Status:     req.status,
 			Offset:     req.offset,
 			Limit:      req.limit,
@@ -136,7 +136,7 @@ func updateClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		cli := mfclients.Client{
+		cli := mgclients.Client{
 			ID:       req.id,
 			Name:     req.Name,
 			Metadata: req.Metadata,
@@ -157,7 +157,7 @@ func updateClientTagsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		cli := mfclients.Client{
+		cli := mgclients.Client{
 			ID:   req.id,
 			Tags: req.Tags,
 		}
@@ -193,7 +193,7 @@ func updateClientOwnerEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		cli := mfclients.Client{
+		cli := mgclients.Client{
 			ID:    req.id,
 			Owner: req.Owner,
 		}
@@ -238,7 +238,7 @@ func disableClientEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func buildClientsResponse(cp mfclients.MembersPage) clientsPageRes {
+func buildClientsResponse(cp mgclients.MembersPage) clientsPageRes {
 	res := clientsPageRes{
 		pageRes: pageRes{
 			Total:  cp.Total,

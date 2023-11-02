@@ -12,9 +12,9 @@
 
 BUILD_DIR=../build
 
-# Kill all mainflux-* stuff
+# Kill all magistrala-* stuff
 function cleanup {
-    pkill mainflux
+    pkill magistrala
     pkill nats
 }
 
@@ -38,32 +38,32 @@ done
 ###
 # Users
 ###
-MG_USERS_LOG_LEVEL=info MG_USERS_HTTP_PORT=9002 MG_USERS_GRPC_PORT=7001 MG_USERS_ADMIN_EMAIL=admin@mainflux.com MG_USERS_ADMIN_PASSWORD=12345678 MG_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/mainflux-users &
+MG_USERS_LOG_LEVEL=info MG_USERS_HTTP_PORT=9002 MG_USERS_GRPC_PORT=7001 MG_USERS_ADMIN_EMAIL=admin@magistrala.com MG_USERS_ADMIN_PASSWORD=12345678 MG_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/magistrala-users &
 
 ###
 # Things
 ###
-MG_THINGS_LOG_LEVEL=info MG_THINGS_HTTP_PORT=9000 MG_THINGS_AUTH_GRPC_PORT=7000 MG_THINGS_AUTH_HTTP_PORT=9002 $BUILD_DIR/mainflux-things &
+MG_THINGS_LOG_LEVEL=info MG_THINGS_HTTP_PORT=9000 MG_THINGS_AUTH_GRPC_PORT=7000 MG_THINGS_AUTH_HTTP_PORT=9002 $BUILD_DIR/magistrala-things &
 
 ###
 # HTTP
 ###
-MG_HTTP_ADAPTER_LOG_LEVEL=info MG_HTTP_ADAPTER_PORT=8008 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/mainflux-http &
+MG_HTTP_ADAPTER_LOG_LEVEL=info MG_HTTP_ADAPTER_PORT=8008 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-http &
 
 ###
 # WS
 ###
-MG_WS_ADAPTER_LOG_LEVEL=info MG_WS_ADAPTER_HTTP_PORT=8190 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/mainflux-ws &
+MG_WS_ADAPTER_LOG_LEVEL=info MG_WS_ADAPTER_HTTP_PORT=8190 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-ws &
 
 ###
 # MQTT
 ###
-MG_MQTT_ADAPTER_LOG_LEVEL=info MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/mainflux-mqtt &
+MG_MQTT_ADAPTER_LOG_LEVEL=info MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-mqtt &
 
 ###
 # CoAP
 ###
-MG_COAP_ADAPTER_LOG_LEVEL=info MG_COAP_ADAPTER_PORT=5683 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/mainflux-coap &
+MG_COAP_ADAPTER_LOG_LEVEL=info MG_COAP_ADAPTER_PORT=5683 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-coap &
 
 trap cleanup EXIT
 

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	mfjson "github.com/absmach/magistrala/pkg/transformers/json"
+	mgjson "github.com/absmach/magistrala/pkg/transformers/json"
 )
 
 func ExampleParseFlat() {
@@ -19,7 +19,7 @@ func ExampleParseFlat() {
 		"key5/nested2/nested4": "value5",
 	}
 
-	out := mfjson.ParseFlat(in)
+	out := mgjson.ParseFlat(in)
 	b, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
 		panic(err)
@@ -54,7 +54,7 @@ func ExampleFlatten() {
 			},
 		},
 	}
-	out, err := mfjson.Flatten(in)
+	out, err := mgjson.Flatten(in)
 	if err != nil {
 		panic(err)
 	}

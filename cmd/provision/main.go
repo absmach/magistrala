@@ -12,15 +12,15 @@ import (
 	"os"
 	"reflect"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mglog "github.com/absmach/magistrala/logger"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfgroups "github.com/absmach/magistrala/pkg/groups"
-	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/magistrala/provision/api"
@@ -48,13 +48,13 @@ func main() {
 		log.Fatalf(fmt.Sprintf("failed to load %s configuration : %s", svcName, err))
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.Server.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.Server.LogLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -73,15 +73,15 @@ func main() {
 		logger.Info("Continue with settings from file: " + cfg.File)
 	}
 
-	SDKCfg := mfsdk.Config{
+	SDKCfg := mgsdk.Config{
 		UsersURL:        cfg.Server.UsersURL,
 		ThingsURL:       cfg.Server.ThingsURL,
-		BootstrapURL:    cfg.Server.MfBSURL,
-		CertsURL:        cfg.Server.MfCertsURL,
+		BootstrapURL:    cfg.Server.MgBSURL,
+		CertsURL:        cfg.Server.MgCertsURL,
 		MsgContentType:  contentType,
 		TLSVerification: cfg.Server.TLS,
 	}
-	SDK := mfsdk.NewSDK(SDKCfg)
+	SDK := mgsdk.NewSDK(SDKCfg)
 
 	svc := provision.New(cfg, SDK, logger)
 	svc = api.NewLoggingMiddleware(svc, logger)
@@ -90,7 +90,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -141,7 +141,7 @@ func loadConfig() (provision.Config, error) {
 			Content: content,
 		},
 		// This is default conf for provision if there is no config file
-		Channels: []mfgroups.Group{
+		Channels: []mggroups.Group{
 			{
 				Name:     "control-channel",
 				Metadata: map[string]interface{}{"type": "control"},
@@ -150,7 +150,7 @@ func loadConfig() (provision.Config, error) {
 				Metadata: map[string]interface{}{"type": "data"},
 			},
 		},
-		Things: []mfclients.Client{
+		Things: []mgclients.Client{
 			{
 				Name:     "thing",
 				Metadata: map[string]interface{}{"external_id": "xxxxxx"},

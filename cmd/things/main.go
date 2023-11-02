@@ -18,7 +18,7 @@ import (
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	"github.com/absmach/magistrala/internal/env"
-	mfgroups "github.com/absmach/magistrala/internal/groups"
+	mggroups "github.com/absmach/magistrala/internal/groups"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
@@ -26,7 +26,7 @@ import (
 	"github.com/absmach/magistrala/internal/server"
 	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
@@ -81,13 +81,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -205,7 +205,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth magistrala.AuthServiceClient, cacheClient *redis.Client, keyDuration, esURL string, tracer trace.Tracer, logger mflog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth magistrala.AuthServiceClient, cacheClient *redis.Client, keyDuration, esURL string, tracer trace.Tracer, logger mglog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -220,7 +220,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	thingCache := thcache.NewCache(cacheClient, kDuration)
 
 	csvc := things.NewService(auth, cRepo, gRepo, thingCache, idp)
-	gsvc := mfgroups.NewService(gRepo, idp, auth)
+	gsvc := mggroups.NewService(gRepo, idp, auth)
 
 	csvc, err = thevents.NewEventStoreMiddleware(ctx, csvc, esURL)
 	if err != nil {

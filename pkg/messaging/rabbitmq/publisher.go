@@ -76,7 +76,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		amqp.Publishing{
 			Headers:     amqp.Table{},
 			ContentType: "application/octet-stream",
-			AppId:       "mainflux-publisher",
+			AppId:       "magistrala-publisher",
 			Body:        data,
 		})
 

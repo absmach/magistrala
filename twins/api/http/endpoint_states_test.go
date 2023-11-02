@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/twins"
@@ -49,7 +49,7 @@ func TestListStates(t *testing.T) {
 		Owner: email,
 	}
 	def := mocks.CreateDefinition(channels[0:2], subtopics[0:2])
-	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	tw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	repoCall.Unset()
@@ -185,7 +185,7 @@ func TestListStates(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, mock.Anything).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall := auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,

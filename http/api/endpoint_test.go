@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	server "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
@@ -26,7 +26,7 @@ import (
 
 const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
-func newService(auth mainflux.AuthzServiceClient) session.Handler {
+func newService(auth magistrala.AuthzServiceClient) session.Handler {
 	pub := mocks.NewPublisher()
 	return server.NewHandler(pub, logger.NewMock(), auth)
 }
@@ -91,14 +91,8 @@ func TestPublish(t *testing.T) {
 
 	defer ts.Close()
 
-	auth.On("Authorize", mock.Anything, &mainflux.AuthorizeReq{
-		Subject:     thingKey,
-		Object:      chanID,
-		Namespace:   "",
-		SubjectType: "thing",
-		Permission:  "publish",
-		ObjectType:  "group"}).Return(&mainflux.AuthorizeRes{Authorized: true, Id: ""}, nil)
-	auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false, Id: ""}, nil)
+	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: chanID, Namespace: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, nil)
+	auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false, Id: ""}, nil)
 
 	cases := map[string]struct {
 		chanID      string

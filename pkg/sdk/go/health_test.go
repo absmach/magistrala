@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +36,7 @@ func TestHealth(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mfsdk := sdk.NewSDK(sdkConf)
+	mgsdk := sdk.NewSDK(sdkConf)
 	cases := map[string]struct {
 		service     string
 		empty       bool
@@ -67,12 +67,12 @@ func TestHealth(t *testing.T) {
 		},
 	}
 	for desc, tc := range cases {
-		h, err := mfsdk.Health(tc.service)
+		h, err := mgsdk.Health(tc.service)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", desc, tc.err, err))
 		assert.Equal(t, tc.status, h.Status, fmt.Sprintf("%s: expected %s status, got %s", desc, tc.status, h.Status))
 		assert.Equal(t, tc.empty, h.Version == "", fmt.Sprintf("%s: expected non-empty version", desc))
-		assert.Equal(t, mainflux.Commit, h.Commit, fmt.Sprintf("%s: expected non-empty commit", desc))
+		assert.Equal(t, magistrala.Commit, h.Commit, fmt.Sprintf("%s: expected non-empty commit", desc))
 		assert.Equal(t, tc.description, h.Description, fmt.Sprintf("%s: expected proper description, got %s", desc, h.Description))
-		assert.Equal(t, mainflux.BuildTime, h.BuildTime, fmt.Sprintf("%s: expected default epoch date, got %s", desc, h.BuildTime))
+		assert.Equal(t, magistrala.BuildTime, h.BuildTime, fmt.Sprintf("%s: expected default epoch date, got %s", desc, h.BuildTime))
 	}
 }

@@ -25,9 +25,9 @@ import (
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events/store"
-	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
@@ -42,7 +42,7 @@ const (
 	defDB          = "bootstrap"
 	defSvcHTTPPort = "9013"
 
-	thingsStream = "mainflux.things"
+	thingsStream = "magistrala.things"
 )
 
 type config struct {
@@ -66,13 +66,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -158,16 +158,16 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
+func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mglog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 
-	config := mfsdk.Config{
+	config := mgsdk.Config{
 		ThingsURL: cfg.ThingsURL,
 	}
 
-	sdk := mfsdk.NewSDK(config)
+	sdk := mgsdk.NewSDK(config)
 
 	svc := bootstrap.New(auth, repoConfig, sdk, []byte(cfg.EncKey))
 
@@ -184,7 +184,7 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 	return svc, nil
 }
 
-func subscribeToThingsES(ctx context.Context, svc bootstrap.Service, cfg config, logger mflog.Logger) error {
+func subscribeToThingsES(ctx context.Context, svc bootstrap.Service, cfg config, logger mglog.Logger) error {
 	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, thingsStream, cfg.ESConsumerName, logger)
 	if err != nil {
 		return err

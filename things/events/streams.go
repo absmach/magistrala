@@ -6,14 +6,14 @@ package events
 import (
 	"context"
 
-	mainflux "github.com/absmach/magistrala"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/things"
 )
 
-const streamID = "mainflux.things"
+const streamID = "magistrala.things"
 
 var _ things.Service = (*eventStore)(nil)
 
@@ -36,7 +36,7 @@ func NewEventStoreMiddleware(ctx context.Context, svc things.Service, url string
 	}, nil
 }
 
-func (es *eventStore) CreateThings(ctx context.Context, token string, thing ...mfclients.Client) ([]mfclients.Client, error) {
+func (es *eventStore) CreateThings(ctx context.Context, token string, thing ...mgclients.Client) ([]mgclients.Client, error) {
 	sths, err := es.svc.CreateThings(ctx, token, thing...)
 	if err != nil {
 		return sths, err
@@ -54,7 +54,7 @@ func (es *eventStore) CreateThings(ctx context.Context, token string, thing ...m
 	return sths, nil
 }
 
-func (es *eventStore) UpdateClient(ctx context.Context, token string, thing mfclients.Client) (mfclients.Client, error) {
+func (es *eventStore) UpdateClient(ctx context.Context, token string, thing mgclients.Client) (mgclients.Client, error) {
 	cli, err := es.svc.UpdateClient(ctx, token, thing)
 	if err != nil {
 		return cli, err
@@ -63,7 +63,7 @@ func (es *eventStore) UpdateClient(ctx context.Context, token string, thing mfcl
 	return es.update(ctx, "", cli)
 }
 
-func (es *eventStore) UpdateClientOwner(ctx context.Context, token string, thing mfclients.Client) (mfclients.Client, error) {
+func (es *eventStore) UpdateClientOwner(ctx context.Context, token string, thing mgclients.Client) (mgclients.Client, error) {
 	cli, err := es.svc.UpdateClientOwner(ctx, token, thing)
 	if err != nil {
 		return cli, err
@@ -72,7 +72,7 @@ func (es *eventStore) UpdateClientOwner(ctx context.Context, token string, thing
 	return es.update(ctx, "owner", cli)
 }
 
-func (es *eventStore) UpdateClientTags(ctx context.Context, token string, thing mfclients.Client) (mfclients.Client, error) {
+func (es *eventStore) UpdateClientTags(ctx context.Context, token string, thing mgclients.Client) (mgclients.Client, error) {
 	cli, err := es.svc.UpdateClientTags(ctx, token, thing)
 	if err != nil {
 		return cli, err
@@ -81,7 +81,7 @@ func (es *eventStore) UpdateClientTags(ctx context.Context, token string, thing 
 	return es.update(ctx, "tags", cli)
 }
 
-func (es *eventStore) UpdateClientSecret(ctx context.Context, token, id, key string) (mfclients.Client, error) {
+func (es *eventStore) UpdateClientSecret(ctx context.Context, token, id, key string) (mgclients.Client, error) {
 	cli, err := es.svc.UpdateClientSecret(ctx, token, id, key)
 	if err != nil {
 		return cli, err
@@ -90,7 +90,7 @@ func (es *eventStore) UpdateClientSecret(ctx context.Context, token, id, key str
 	return es.update(ctx, "secret", cli)
 }
 
-func (es *eventStore) update(ctx context.Context, operation string, thing mfclients.Client) (mfclients.Client, error) {
+func (es *eventStore) update(ctx context.Context, operation string, thing mgclients.Client) (mgclients.Client, error) {
 	event := updateClientEvent{
 		thing, operation,
 	}
@@ -102,7 +102,7 @@ func (es *eventStore) update(ctx context.Context, operation string, thing mfclie
 	return thing, nil
 }
 
-func (es *eventStore) ViewClient(ctx context.Context, token, id string) (mfclients.Client, error) {
+func (es *eventStore) ViewClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	cli, err := es.svc.ViewClient(ctx, token, id)
 	if err != nil {
 		return cli, err
@@ -118,7 +118,7 @@ func (es *eventStore) ViewClient(ctx context.Context, token, id string) (mfclien
 	return cli, nil
 }
 
-func (es *eventStore) ListClients(ctx context.Context, token string, reqUserID string, pm mfclients.Page) (mfclients.ClientsPage, error) {
+func (es *eventStore) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	cp, err := es.svc.ListClients(ctx, token, reqUserID, pm)
 	if err != nil {
 		return cp, err
@@ -134,7 +134,7 @@ func (es *eventStore) ListClients(ctx context.Context, token string, reqUserID s
 	return cp, nil
 }
 
-func (es *eventStore) ListClientsByGroup(ctx context.Context, token, chID string, pm mfclients.Page) (mfclients.MembersPage, error) {
+func (es *eventStore) ListClientsByGroup(ctx context.Context, token, chID string, pm mgclients.Page) (mgclients.MembersPage, error) {
 	mp, err := es.svc.ListClientsByGroup(ctx, token, chID, pm)
 	if err != nil {
 		return mp, err
@@ -149,7 +149,7 @@ func (es *eventStore) ListClientsByGroup(ctx context.Context, token, chID string
 	return mp, nil
 }
 
-func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mfclients.Client, error) {
+func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	cli, err := es.svc.EnableClient(ctx, token, id)
 	if err != nil {
 		return cli, err
@@ -158,7 +158,7 @@ func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mfcli
 	return es.delete(ctx, cli)
 }
 
-func (es *eventStore) DisableClient(ctx context.Context, token, id string) (mfclients.Client, error) {
+func (es *eventStore) DisableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	cli, err := es.svc.DisableClient(ctx, token, id)
 	if err != nil {
 		return cli, err
@@ -167,7 +167,7 @@ func (es *eventStore) DisableClient(ctx context.Context, token, id string) (mfcl
 	return es.delete(ctx, cli)
 }
 
-func (es *eventStore) delete(ctx context.Context, cli mfclients.Client) (mfclients.Client, error) {
+func (es *eventStore) delete(ctx context.Context, cli mgclients.Client) (mgclients.Client, error) {
 	event := removeClientEvent{
 		id:        cli.ID,
 		updatedAt: cli.UpdatedAt,
@@ -196,7 +196,7 @@ func (es *eventStore) Identify(ctx context.Context, key string) (string, error) 
 	return thingID, nil
 }
 
-func (es *eventStore) Authorize(ctx context.Context, req *mainflux.AuthorizeReq) (string, error) {
+func (es *eventStore) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) (string, error) {
 	thingID, err := es.svc.Authorize(ctx, req)
 	if err != nil {
 		return thingID, err

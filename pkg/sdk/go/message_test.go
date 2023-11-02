@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	adapter "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func newMessageService(cc mainflux.AuthzServiceClient) session.Handler {
+func newMessageService(cc magistrala.AuthzServiceClient) session.Handler {
 	pub := mocks.NewPublisher()
 
 	return adapter.NewHandler(pub, logger.NewMock(), cc)
@@ -60,23 +60,11 @@ func TestSendMessage(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mfsdk := sdk.NewSDK(sdkConf)
+	mgsdk := sdk.NewSDK(sdkConf)
 
-	auth.On("Authorize", mock.Anything, &mainflux.AuthorizeReq{
-		Subject:     atoken,
-		Object:      chanID,
-		Namespace:   "",
-		SubjectType: "thing",
-		Permission:  "publish",
-		ObjectType:  "group"}).Return(&mainflux.AuthorizeRes{Authorized: true, Id: ""}, nil)
-	auth.On("Authorize", mock.Anything, &mainflux.AuthorizeReq{
-		Subject:     invalidToken,
-		Object:      chanID,
-		Namespace:   "",
-		SubjectType: "thing",
-		Permission:  "publish",
-		ObjectType:  "group"}).Return(&mainflux.AuthorizeRes{Authorized: true, Id: ""}, errors.ErrAuthentication)
-	auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false, Id: ""}, nil)
+	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: atoken, Object: chanID, Namespace: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, nil)
+	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: invalidToken, Object: chanID, Namespace: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, errors.ErrAuthentication)
+	auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false, Id: ""}, nil)
 
 	cases := map[string]struct {
 		chanID string
@@ -122,7 +110,7 @@ func TestSendMessage(t *testing.T) {
 		},
 	}
 	for desc, tc := range cases {
-		err := mfsdk.SendMessage(tc.chanID, tc.msg, tc.auth)
+		err := mgsdk.SendMessage(tc.chanID, tc.msg, tc.auth)
 		switch tc.err {
 		case nil:
 			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error: %s", desc, err))
@@ -146,7 +134,7 @@ func TestSetContentType(t *testing.T) {
 		MsgContentType:  "application/senml+json",
 		TLSVerification: false,
 	}
-	mfsdk := sdk.NewSDK(sdkConf)
+	mgsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
 		desc  string
@@ -165,7 +153,7 @@ func TestSetContentType(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := mfsdk.SetContentType(tc.cType)
+		err := mgsdk.SetContentType(tc.cType)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	writer "github.com/absmach/magistrala/consumers/writers/influxdb"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
@@ -23,7 +23,7 @@ import (
 const valueFields = 5
 
 var (
-	testLog, _    = mflog.New(os.Stdout, mflog.Info.String())
+	testLog, _    = mglog.New(os.Stdout, mglog.Info.String())
 	streamsSize   = 250
 	rowCountSenml = fmt.Sprintf(`from(bucket: "%s") 
 	|> range(start: -1h, stop: 1h) 

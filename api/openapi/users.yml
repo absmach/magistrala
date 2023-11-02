@@ -918,7 +918,7 @@ components:
           properties:
             identity:
               type: string
-              example: admin@mainflux.com
+              example: admin@magistrala.com
               description: User Identity for example email address.
         metadata:
           type: object
@@ -1081,7 +1081,7 @@ components:
           properties:
             identity:
               type: string
-              example: user@mainflux.com
+              example: user@magistrala.com
               description: User Identity for example email address.
             secret:
               type: string
@@ -1241,7 +1241,7 @@ components:
       properties:
         identity:
           type: string
-          example: user@mainflux.com
+          example: user@magistrala.com
           description: User Identity for example email address.
       required:
         - identity
@@ -1266,7 +1266,7 @@ components:
       properties:
         owner:
           type: string
-          example: user@mainflux.com
+          example: user@magistrala.com
           description: User owner for example email address.
       required:
         - owner
@@ -1345,7 +1345,7 @@ components:
       properties:
         identity:
           type: string
-          example: user@mainflux.com
+          example: user@magistrala.com
           description: User Identity for example email address.
         secret:
           type: string

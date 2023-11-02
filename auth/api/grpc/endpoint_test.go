@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/auth/jwt"
@@ -53,7 +53,7 @@ func newService() auth.Service {
 func startGRPCServer(svc auth.Service, port int) {
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
-	mainflux.RegisterAuthServiceServer(server, grpcapi.NewServer(svc))
+	magistrala.RegisterAuthServiceServer(server, grpcapi.NewServer(svc))
 	go func() {
 		if err := server.Serve(listener); err != nil {
 			panic(fmt.Sprintf("failed to serve: %s", err))
@@ -117,7 +117,7 @@ func TestIssue(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := client.Issue(context.Background(), &mainflux.IssueReq{Id: tc.id, Type: uint32(tc.kind)})
+		_, err := client.Issue(context.Background(), &magistrala.IssueReq{Id: tc.id, Type: uint32(tc.kind)})
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
@@ -141,49 +141,49 @@ func TestIdentify(t *testing.T) {
 	cases := []struct {
 		desc  string
 		token string
-		idt   *mainflux.IdentityRes
+		idt   *magistrala.IdentityRes
 		err   error
 		code  codes.Code
 	}{
 		{
 			desc:  "identify user with user token",
 			token: loginToken.AccessToken,
-			idt:   &mainflux.IdentityRes{Id: id},
+			idt:   &magistrala.IdentityRes{Id: id},
 			err:   nil,
 			code:  codes.OK,
 		},
 		{
 			desc:  "identify user with recovery token",
 			token: recoveryToken.AccessToken,
-			idt:   &mainflux.IdentityRes{Id: id},
+			idt:   &magistrala.IdentityRes{Id: id},
 			err:   nil,
 			code:  codes.OK,
 		},
 		{
 			desc:  "identify user with API token",
 			token: apiToken.AccessToken,
-			idt:   &mainflux.IdentityRes{Id: id},
+			idt:   &magistrala.IdentityRes{Id: id},
 			err:   nil,
 			code:  codes.OK,
 		},
 		{
 			desc:  "identify user with invalid user token",
 			token: "invalid",
-			idt:   &mainflux.IdentityRes{},
+			idt:   &magistrala.IdentityRes{},
 			err:   status.Error(codes.Unauthenticated, "unauthenticated access"),
 			code:  codes.Unauthenticated,
 		},
 		{
 			desc:  "identify user with empty token",
 			token: "",
-			idt:   &mainflux.IdentityRes{},
+			idt:   &magistrala.IdentityRes{},
 			err:   status.Error(codes.InvalidArgument, "received invalid token request"),
 			code:  codes.Unauthenticated,
 		},
 	}
 
 	for _, tc := range cases {
-		idt, err := client.Identify(context.Background(), &mainflux.IdentityReq{Token: tc.token})
+		idt, err := client.Identify(context.Background(), &magistrala.IdentityReq{Token: tc.token})
 		if idt != nil {
 			assert.Equal(t, tc.idt, idt, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.idt, idt))
 		}
@@ -207,7 +207,7 @@ func TestAuthorize(t *testing.T) {
 		subject  string
 		object   string
 		relation string
-		ar       *mainflux.AuthorizeRes
+		ar       *magistrala.AuthorizeRes
 		err      error
 		code     codes.Code
 	}{
@@ -217,7 +217,7 @@ func TestAuthorize(t *testing.T) {
 			subject:  id,
 			object:   authoritiesObj,
 			relation: memberRelation,
-			ar:       &mainflux.AuthorizeRes{Authorized: true},
+			ar:       &magistrala.AuthorizeRes{Authorized: true},
 			err:      nil,
 			code:     codes.OK,
 		},
@@ -227,7 +227,7 @@ func TestAuthorize(t *testing.T) {
 			subject:  id,
 			object:   authoritiesObj,
 			relation: "unauthorizedRelation",
-			ar:       &mainflux.AuthorizeRes{Authorized: false},
+			ar:       &magistrala.AuthorizeRes{Authorized: false},
 			err:      nil,
 			code:     codes.PermissionDenied,
 		},
@@ -237,7 +237,7 @@ func TestAuthorize(t *testing.T) {
 			subject:  id,
 			object:   "unauthorizedobject",
 			relation: memberRelation,
-			ar:       &mainflux.AuthorizeRes{Authorized: false},
+			ar:       &magistrala.AuthorizeRes{Authorized: false},
 			err:      nil,
 			code:     codes.PermissionDenied,
 		},
@@ -247,7 +247,7 @@ func TestAuthorize(t *testing.T) {
 			subject:  "unauthorizedSubject",
 			object:   authoritiesObj,
 			relation: memberRelation,
-			ar:       &mainflux.AuthorizeRes{Authorized: false},
+			ar:       &magistrala.AuthorizeRes{Authorized: false},
 			err:      nil,
 			code:     codes.PermissionDenied,
 		},
@@ -257,13 +257,13 @@ func TestAuthorize(t *testing.T) {
 			subject:  "",
 			object:   "",
 			relation: "",
-			ar:       &mainflux.AuthorizeRes{Authorized: false},
+			ar:       &magistrala.AuthorizeRes{Authorized: false},
 			err:      nil,
 			code:     codes.InvalidArgument,
 		},
 	}
 	for _, tc := range cases {
-		ar, err := client.Authorize(context.Background(), &mainflux.AuthorizeReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
+		ar, err := client.Authorize(context.Background(), &magistrala.AuthorizeReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
 		if ar != nil {
 			assert.Equal(t, tc.ar, ar, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ar, ar))
 		}
@@ -290,7 +290,7 @@ func TestAddPolicy(t *testing.T) {
 		subject  string
 		object   string
 		relation string
-		ar       *mainflux.AddPolicyRes
+		ar       *magistrala.AddPolicyRes
 		err      error
 		code     codes.Code
 	}{
@@ -300,7 +300,7 @@ func TestAddPolicy(t *testing.T) {
 			subject:  id,
 			object:   groupAdminObj,
 			relation: memberRelation,
-			ar:       &mainflux.AddPolicyRes{Authorized: true},
+			ar:       &magistrala.AddPolicyRes{Authorized: true},
 			err:      nil,
 			code:     codes.OK,
 		},
@@ -310,13 +310,13 @@ func TestAddPolicy(t *testing.T) {
 			subject:  "",
 			object:   "",
 			relation: "",
-			ar:       &mainflux.AddPolicyRes{Authorized: false},
+			ar:       &magistrala.AddPolicyRes{Authorized: false},
 			err:      nil,
 			code:     codes.InvalidArgument,
 		},
 	}
 	for _, tc := range cases {
-		apr, err := client.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
+		apr, err := client.AddPolicy(context.Background(), &magistrala.AddPolicyReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
 		if apr != nil {
 			assert.Equal(t, tc.ar, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ar, apr))
 		}
@@ -338,7 +338,7 @@ func TestDeletePolicy(t *testing.T) {
 	readRelation := "read"
 	thingID := "thing"
 
-	apr, err := client.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Subject: id, Object: thingID, Permission: readRelation})
+	apr, err := client.AddPolicy(context.Background(), &magistrala.AddPolicyReq{Subject: id, Object: thingID, Permission: readRelation})
 	assert.Nil(t, err, fmt.Sprintf("Adding read policy to user expected to succeed: %s", err))
 	assert.True(t, apr.GetAuthorized(), fmt.Sprintf("Adding read policy expected to make user authorized, expected %v got %v", true, apr.GetAuthorized()))
 
@@ -348,7 +348,7 @@ func TestDeletePolicy(t *testing.T) {
 		subject  string
 		object   string
 		relation string
-		dpr      *mainflux.DeletePolicyRes
+		dpr      *magistrala.DeletePolicyRes
 		code     codes.Code
 	}{
 		{
@@ -357,7 +357,7 @@ func TestDeletePolicy(t *testing.T) {
 			subject:  id,
 			object:   thingID,
 			relation: readRelation,
-			dpr:      &mainflux.DeletePolicyRes{Deleted: true},
+			dpr:      &magistrala.DeletePolicyRes{Deleted: true},
 			code:     codes.OK,
 		},
 		{
@@ -366,12 +366,12 @@ func TestDeletePolicy(t *testing.T) {
 			subject:  "",
 			object:   "",
 			relation: "",
-			dpr:      &mainflux.DeletePolicyRes{Deleted: false},
+			dpr:      &magistrala.DeletePolicyRes{Deleted: false},
 			code:     codes.InvalidArgument,
 		},
 	}
 	for _, tc := range cases {
-		dpr, err := client.DeletePolicy(context.Background(), &mainflux.DeletePolicyReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
+		dpr, err := client.DeletePolicy(context.Background(), &magistrala.DeletePolicyReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))

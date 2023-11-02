@@ -27,7 +27,7 @@ distinguished_name = dn
 prompt = no
 
 [dn]
-CN = mf.svc
+CN = mg.svc
 C  = RS
 ST = RS
 L  = BELGRADE

@@ -11,14 +11,14 @@ import (
 	"os"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	"github.com/absmach/magistrala/internal/clients/jaeger"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/lora"
 	"github.com/absmach/magistrala/lora/api"
 	"github.com/absmach/magistrala/lora/events"
@@ -42,7 +42,7 @@ const (
 	thingsRMPrefix   = "thing"
 	channelsRMPrefix = "channel"
 	connsRMPrefix    = "connection"
-	thingsStream     = "mainflux.things"
+	thingsStream     = "magistrala.things"
 )
 
 type config struct {
@@ -71,13 +71,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -148,7 +148,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -165,7 +165,7 @@ func main() {
 	}
 }
 
-func connectToMQTTBroker(url, user, password string, timeout time.Duration, logger mflog.Logger) (mqttpaho.Client, error) {
+func connectToMQTTBroker(url, user, password string, timeout time.Duration, logger mglog.Logger) (mqttpaho.Client, error) {
 	opts := mqttpaho.NewClientOptions()
 	opts.AddBroker(url)
 	opts.SetUsername(user)
@@ -186,7 +186,7 @@ func connectToMQTTBroker(url, user, password string, timeout time.Duration, logg
 	return client, nil
 }
 
-func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Duration, topic string, logger mflog.Logger) error {
+func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Duration, topic string, logger mglog.Logger) error {
 	mqtt := mqtt.NewBroker(svc, mc, timeout, logger)
 	logger.Info("Subscribed to Lora MQTT broker")
 	if err := mqtt.Subscribe(topic); err != nil {
@@ -195,7 +195,7 @@ func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Du
 	return nil
 }
 
-func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logger mflog.Logger) error {
+func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logger mglog.Logger) error {
 	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, thingsStream, cfg.ESConsumerName, logger)
 	if err != nil {
 		return err
@@ -208,12 +208,12 @@ func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logg
 	return subscriber.Subscribe(ctx, handler)
 }
 
-func newRouteMapRepository(client *redis.Client, prefix string, logger mflog.Logger) lora.RouteMapRepository {
+func newRouteMapRepository(client *redis.Client, prefix string, logger mglog.Logger) lora.RouteMapRepository {
 	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
 	return events.NewRouteMapRepository(client, prefix)
 }
 
-func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger mflog.Logger) lora.Service {
+func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger mglog.Logger) lora.Service {
 	thingsRM := newRouteMapRepository(rmConn, thingsRMPrefix, logger)
 	chansRM := newRouteMapRepository(rmConn, channelsRMPrefix, logger)
 	connsRM := newRouteMapRepository(rmConn, connsRMPrefix, logger)

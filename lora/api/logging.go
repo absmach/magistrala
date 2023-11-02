@@ -122,7 +122,7 @@ func (lm loggingMiddleware) ConnectThing(ctx context.Context, chanID, thingID st
 
 func (lm loggingMiddleware) DisconnectThing(ctx context.Context, chanID, thingID string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("disconnect_thing mfx-%s : mfx-%s, took %s to complete", chanID, thingID, time.Since(begin))
+		message := fmt.Sprintf("disconnect_thing mgx-%s : mgx-%s, took %s to complete", chanID, thingID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

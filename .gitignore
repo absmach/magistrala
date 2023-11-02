@@ -10,4 +10,4 @@ build
 tools/e2e/e2e
 tools/mqtt-bench/mqtt-bench
 tools/provision/provision
-tools/provision/mfconn.toml
+tools/provision/mgconn.toml

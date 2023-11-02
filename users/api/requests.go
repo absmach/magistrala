@@ -6,13 +6,13 @@ package api
 import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 )
 
 const maxLimitSize = 100
 
 type createClientReq struct {
-	client mfclients.Client
+	client mgclients.Client
 	token  string
 }
 
@@ -54,7 +54,7 @@ func (req viewProfileReq) validate() error {
 
 type listClientsReq struct {
 	token      string
-	status     mfclients.Status
+	status     mgclients.Status
 	offset     uint64
 	limit      uint64
 	name       string
@@ -63,7 +63,7 @@ type listClientsReq struct {
 	visibility string
 	owner      string
 	sharedBy   string
-	metadata   mfclients.Metadata
+	metadata   mgclients.Metadata
 }
 
 func (req listClientsReq) validate() error {
@@ -84,7 +84,7 @@ func (req listClientsReq) validate() error {
 }
 
 type listMembersByObjectReq struct {
-	mfclients.Page
+	mgclients.Page
 	token      string
 	objectKind string
 	objectID   string
@@ -108,7 +108,7 @@ type updateClientReq struct {
 	token    string
 	id       string
 	Name     string             `json:"name,omitempty"`
-	Metadata mfclients.Metadata `json:"metadata,omitempty"`
+	Metadata mgclients.Metadata `json:"metadata,omitempty"`
 }
 
 func (req updateClientReq) validate() error {

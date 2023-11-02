@@ -12,7 +12,7 @@ import (
 	"github.com/absmach/magistrala/twins"
 )
 
-const streamID = "mainflux.twins"
+const streamID = "magistrala.twins"
 
 var _ twins.Service = (*eventStore)(nil)
 

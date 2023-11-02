@@ -21,7 +21,7 @@ default values.
 | MG_THINGS_AUTH_GRPC_CA_CERTS   | Path to trusted CAs in PEM format                   |                                |
 | MG_MESSAGE_BROKER_URL          | Message broker instance URL                         | nats://localhost:4222          |
 | MG_JAEGER_URL                  | Jaeger server URL                                   | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY              | Send telemetry to mainflux call home server         | true                           |
+| MG_SEND_TELEMETRY              | Send telemetry to magistrala call home server       | true                           |
 | MG_HTTP_ADAPTER_INSTANCE_ID    | HTTP Adapter instance ID                            |                                |
 
 ## Deployment
@@ -35,7 +35,7 @@ To start the service outside of the container, execute the following shell scrip
 # download the latest version of the service
 git clone https://github.com/absmach/magistrala
 
-cd mainflux
+cd magistrala
 
 # compile the http
 make http
@@ -55,9 +55,9 @@ MG_THINGS_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] 
 MG_THINGS_AUTH_GRPC_CA_CERTS=[Path to trusted CAs in PEM format] \
 MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_HTTP_ADAPTER_INSTANCE_ID=[HTTP Adapter instance ID] \
-$GOBIN/mainflux-http
+$GOBIN/magistrala-http
 ```
 
 Setting `MG_HTTP_ADAPTER_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Things gRPC endpoint trusting only those CAs that are provided.

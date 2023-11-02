@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
@@ -39,13 +39,13 @@ var _ Service = (*adapterService)(nil)
 
 // Observers is a map of maps,.
 type adapterService struct {
-	auth    mainflux.AuthzServiceClient
+	auth    magistrala.AuthzServiceClient
 	pubsub  messaging.PubSub
 	obsLock sync.Mutex
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(auth mainflux.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(auth magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	as := &adapterService{
 		auth:    auth,
 		pubsub:  pubsub,
@@ -56,7 +56,7 @@ func New(auth mainflux.AuthzServiceClient, pubsub messaging.PubSub) Service {
 }
 
 func (svc *adapterService) Publish(ctx context.Context, key string, msg *messaging.Message) error {
-	ar := &mainflux.AuthorizeReq{
+	ar := &magistrala.AuthorizeReq{
 		Namespace:   "",
 		SubjectType: "thing",
 		Permission:  "publish",
@@ -77,7 +77,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 }
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
-	ar := &mainflux.AuthorizeReq{
+	ar := &magistrala.AuthorizeReq{
 		Namespace:   "",
 		SubjectType: "thing",
 		Permission:  "subscribe",
@@ -105,7 +105,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 }
 
 func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
-	ar := &mainflux.AuthorizeReq{
+	ar := &magistrala.AuthorizeReq{
 		Namespace:   "",
 		SubjectType: "thing",
 		Permission:  "subscribe",

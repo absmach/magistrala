@@ -6,7 +6,7 @@ package cli
 import (
 	"encoding/json"
 
-	mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 
-			var channel mfxsdk.Channel
+			var channel mgxsdk.Channel
 			if err := json.Unmarshal([]byte(args[0]), &channel); err != nil {
 				logError(err)
 				return
@@ -55,7 +55,7 @@ var cmdChannels = []cobra.Command{
 				logError(err)
 				return
 			}
-			pageMetadata := mfxsdk.PageMetadata{
+			pageMetadata := mgxsdk.PageMetadata{
 				Name:     "",
 				Offset:   Offset,
 				Limit:    Limit,
@@ -91,7 +91,7 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 
-			var channel mfxsdk.Channel
+			var channel mgxsdk.Channel
 			if err := json.Unmarshal([]byte(args[1]), &channel); err != nil {
 				logError(err)
 				return
@@ -115,7 +115,7 @@ var cmdChannels = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-			pm := mfxsdk.PageMetadata{
+			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
 			}
@@ -171,7 +171,7 @@ var cmdChannels = []cobra.Command{
 		Short: "Assign user",
 		Long: "Assign user to a channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli channels assign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels assign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 5 {
 				logUsage(cmd.Use)
@@ -182,7 +182,7 @@ var cmdChannels = []cobra.Command{
 				logError(err)
 				return
 			}
-			if err := sdk.AddUserToChannel(args[2], mfxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+			if err := sdk.AddUserToChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
 				logError(err)
 				return
 			}
@@ -194,7 +194,7 @@ var cmdChannels = []cobra.Command{
 		Short: "Unassign user",
 		Long: "Unassign user from a channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli channels unassign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]'  <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels unassign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]'  <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 5 {
 				logUsage(cmd.Use)
@@ -205,7 +205,7 @@ var cmdChannels = []cobra.Command{
 				logError(err)
 				return
 			}
-			if err := sdk.RemoveUserFromChannel(args[2], mfxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+			if err := sdk.RemoveUserFromChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
 				logError(err)
 				return
 			}
@@ -217,7 +217,7 @@ var cmdChannels = []cobra.Command{
 		Short: "Assign group",
 		Long: "Assign group to a channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli channels assign group  '[\"<group_id_1>\", \"<group_id_2>\"]' <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels assign group  '[\"<group_id_1>\", \"<group_id_2>\"]' <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 5 {
 				logUsage(cmd.Use)
@@ -228,7 +228,7 @@ var cmdChannels = []cobra.Command{
 				logError(err)
 				return
 			}
-			if err := sdk.AddUserGroupToChannel(args[1], mfxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+			if err := sdk.AddUserGroupToChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
 				logError(err)
 				return
 			}
@@ -240,7 +240,7 @@ var cmdChannels = []cobra.Command{
 		Short: "Unassign group",
 		Long: "Unassign group from a channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli channels unassign group '[\"<group_id_1>\", \"<group_id_2>\"]'  <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels unassign group '[\"<group_id_1>\", \"<group_id_2>\"]'  <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 5 {
 				logUsage(cmd.Use)
@@ -251,7 +251,7 @@ var cmdChannels = []cobra.Command{
 				logError(err)
 				return
 			}
-			if err := sdk.RemoveUserGroupFromChannel(args[1], mfxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+			if err := sdk.RemoveUserGroupFromChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
 				logError(err)
 				return
 			}
@@ -263,13 +263,13 @@ var cmdChannels = []cobra.Command{
 		Short: "List users",
 		Long: "List users of a channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli channels users <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels users <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
-			pm := mfxsdk.PageMetadata{
+			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
 			}
@@ -287,13 +287,13 @@ var cmdChannels = []cobra.Command{
 		Short: "List groups",
 		Long: "List groups of a channel\n" +
 			"Usage:\n" +
-			"\tmainflux-cli channels groups <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels groups <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
-			pm := mfxsdk.PageMetadata{
+			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
 			}

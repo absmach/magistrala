@@ -8,10 +8,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/postgres"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gofrs/uuid"
 )
@@ -47,8 +47,8 @@ const (
 	DefLimit         = 10
 	DefLevel         = 0
 	DefStatus        = "enabled"
-	DefClientStatus  = mfclients.Enabled
-	DefGroupStatus   = mfclients.Enabled
+	DefClientStatus  = mgclients.Enabled
+	DefGroupStatus   = mgclients.Enabled
 	SharedVisibility = "shared"
 	MyVisibility     = "mine"
 	AllVisibility    = "all"
@@ -76,7 +76,7 @@ func ValidateUUID(extID string) (err error) {
 
 // EncodeResponse encodes successful response.
 func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	if ar, ok := response.(mainflux.Response); ok {
+	if ar, ok := response.(magistrala.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}

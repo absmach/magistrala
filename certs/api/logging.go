@@ -11,18 +11,18 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/certs"
-	mflog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 )
 
 var _ certs.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mflog.Logger
+	logger mglog.Logger
 	svc    certs.Service
 }
 
 // LoggingMiddleware adds logging facilities to the bootstrap service.
-func LoggingMiddleware(svc certs.Service, logger mflog.Logger) certs.Service {
+func LoggingMiddleware(svc certs.Service, logger mglog.Logger) certs.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

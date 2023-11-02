@@ -23,7 +23,7 @@ type Subscription struct {
 	Contact string `json:"contact,omitempty"`
 }
 
-func (sdk mfSDK) CreateSubscription(topic, contact, token string) (string, errors.SDKError) {
+func (sdk mgSDK) CreateSubscription(topic, contact, token string) (string, errors.SDKError) {
 	sub := Subscription{
 		Topic:   topic,
 		Contact: contact,
@@ -45,7 +45,7 @@ func (sdk mfSDK) CreateSubscription(topic, contact, token string) (string, error
 	return id, nil
 }
 
-func (sdk mfSDK) ListSubscriptions(pm PageMetadata, token string) (SubscriptionPage, errors.SDKError) {
+func (sdk mgSDK) ListSubscriptions(pm PageMetadata, token string) (SubscriptionPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.usersURL, subscriptionEndpoint, pm)
 	if err != nil {
 		return SubscriptionPage{}, errors.NewSDKError(err)
@@ -64,7 +64,7 @@ func (sdk mfSDK) ListSubscriptions(pm PageMetadata, token string) (SubscriptionP
 	return sp, nil
 }
 
-func (sdk mfSDK) ViewSubscription(id, token string) (Subscription, errors.SDKError) {
+func (sdk mgSDK) ViewSubscription(id, token string) (Subscription, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, subscriptionEndpoint, id)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -80,7 +80,7 @@ func (sdk mfSDK) ViewSubscription(id, token string) (Subscription, errors.SDKErr
 	return sub, nil
 }
 
-func (sdk mfSDK) DeleteSubscription(id, token string) errors.SDKError {
+func (sdk mgSDK) DeleteSubscription(id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, subscriptionEndpoint, id)
 
 	_, _, err := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)

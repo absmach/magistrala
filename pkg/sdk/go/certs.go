@@ -26,7 +26,7 @@ type Cert struct {
 	Expiration time.Time `json:"expiration,omitempty"`
 }
 
-func (sdk mfSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError) {
+func (sdk mgSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError) {
 	r := certReq{
 		ThingID: thingID,
 		Valid:   valid,
@@ -51,7 +51,7 @@ func (sdk mfSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError)
 	return c, nil
 }
 
-func (sdk mfSDK) ViewCert(id, token string) (Cert, errors.SDKError) {
+func (sdk mgSDK) ViewCert(id, token string) (Cert, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, certsEndpoint, id)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -67,7 +67,7 @@ func (sdk mfSDK) ViewCert(id, token string) (Cert, errors.SDKError) {
 	return cert, nil
 }
 
-func (sdk mfSDK) ViewCertByThing(thingID, token string) (CertSerials, errors.SDKError) {
+func (sdk mgSDK) ViewCertByThing(thingID, token string) (CertSerials, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, serialsEndpoint, thingID)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -83,7 +83,7 @@ func (sdk mfSDK) ViewCertByThing(thingID, token string) (CertSerials, errors.SDK
 	return cs, nil
 }
 
-func (sdk mfSDK) RevokeCert(id, token string) (time.Time, errors.SDKError) {
+func (sdk mgSDK) RevokeCert(id, token string) (time.Time, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, certsEndpoint, id)
 
 	_, body, err := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusOK)

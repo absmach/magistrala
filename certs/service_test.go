@@ -17,7 +17,7 @@ import (
 	chmocks "github.com/absmach/magistrala/internal/groups/mocks"
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
-	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
 	httpapi "github.com/absmach/magistrala/things/api/http"
@@ -49,11 +49,11 @@ func newService() (certs.Service, error) {
 	tsvc, auth := newThingsService()
 	server := newThingsServer(tsvc)
 
-	config := mfsdk.Config{
+	config := mgsdk.Config{
 		ThingsURL: server.URL,
 	}
 
-	sdk := mfsdk.NewSDK(config)
+	sdk := mgsdk.NewSDK(config)
 	repo := mocks.NewCertsRepository()
 
 	tlsCert, caCert, err := certs.LoadCertificates(caPath, caKeyPath)

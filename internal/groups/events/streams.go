@@ -11,7 +11,7 @@ import (
 	"github.com/absmach/magistrala/pkg/groups"
 )
 
-const streamID = "mainflux.users"
+const streamID = "magistrala.users"
 
 var _ groups.Service = (*eventStore)(nil)
 

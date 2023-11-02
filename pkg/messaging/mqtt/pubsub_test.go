@@ -28,7 +28,7 @@ const (
 var data = []byte("payload")
 
 // ErrFailedHandleMessage indicates that the message couldn't be handled.
-var errFailedHandleMessage = errors.New("failed to handle mainflux message")
+var errFailedHandleMessage = errors.New("failed to handle magistrala message")
 
 func TestPublisher(t *testing.T) {
 	msgChan := make(chan []byte)

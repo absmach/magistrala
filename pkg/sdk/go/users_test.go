@@ -15,8 +15,8 @@ import (
 	"github.com/absmach/magistrala/internal/groups"
 	gmocks "github.com/absmach/magistrala/internal/groups/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
-	mflog "github.com/absmach/magistrala/logger"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mglog "github.com/absmach/magistrala/logger"
+	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/users"
@@ -40,7 +40,7 @@ func newClientServer() (*httptest.Server, *mocks.Repository, *gmocks.Repository,
 	csvc := users.NewService(cRepo, auth, emailer, phasher, idProvider, passRegex)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 
-	logger := mflog.NewMock()
+	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	api.MakeHandler(csvc, gsvc, mux, logger, "")
 
@@ -53,12 +53,12 @@ func TestCreateClient(t *testing.T) {
 
 	user := sdk.User{
 		Credentials: sdk.Credentials{Identity: "admin@example.com", Secret: "secret"},
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 	}
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
 		desc     string
@@ -157,7 +157,7 @@ func TestCreateClient(t *testing.T) {
 				Metadata:    validMetadata,
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
-				Status:      mfclients.EnabledStatus.String(),
+				Status:      mgclients.EnabledStatus.String(),
 			},
 			response: sdk.User{
 				ID:          id,
@@ -168,7 +168,7 @@ func TestCreateClient(t *testing.T) {
 				Metadata:    validMetadata,
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
-				Status:      mfclients.EnabledStatus.String(),
+				Status:      mgclients.EnabledStatus.String(),
 			},
 			token: token,
 			err:   nil,
@@ -176,7 +176,7 @@ func TestCreateClient(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := cRepo.On("Save", mock.Anything, mock.Anything).Return(tc.response, tc.err)
-		rClient, err := mfsdk.CreateUser(tc.client, tc.token)
+		rClient, err := mgsdk.CreateUser(tc.client, tc.token)
 		tc.response.ID = rClient.ID
 		tc.response.Owner = rClient.Owner
 		tc.response.CreatedAt = rClient.CreatedAt
@@ -200,7 +200,7 @@ func TestListClients(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	for i := 10; i < 100; i++ {
 		cl := sdk.User{
@@ -211,11 +211,11 @@ func TestListClients(t *testing.T) {
 				Secret:   fmt.Sprintf("password_%d", i),
 			},
 			Metadata: sdk.Metadata{"name": fmt.Sprintf("client_%d", i)},
-			Status:   mfclients.EnabledStatus.String(),
+			Status:   mgclients.EnabledStatus.String(),
 		}
 		if i == 50 {
 			cl.Owner = "clientowner"
-			cl.Status = mfclients.DisabledStatus.String()
+			cl.Status = mgclients.DisabledStatus.String()
 			cl.Tags = []string{"tag1", "tag2"}
 		}
 		cls = append(cls, cl)
@@ -333,7 +333,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			offset:   0,
 			limit:    1,
-			status:   mfclients.DisabledStatus.String(),
+			status:   mgclients.DisabledStatus.String(),
 			response: []sdk.User{cls[50]},
 			err:      nil,
 		},
@@ -361,8 +361,8 @@ func TestListClients(t *testing.T) {
 		}
 
 		repoCall1 := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(errors.ErrAuthorization)
-		repoCall2 := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(mfclients.ClientsPage{Page: convertClientPage(pm), Clients: convertClients(tc.response)}, tc.err)
-		page, err := mfsdk.Users(pm, validToken)
+		repoCall2 := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(pm), Clients: convertClients(tc.response)}, tc.err)
+		page, err := mgsdk.Users(pm, validToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Users, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		repoCall1.Unset()
@@ -379,12 +379,12 @@ func TestClient(t *testing.T) {
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validMetadata,
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 	}
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
 		desc     string
@@ -427,7 +427,7 @@ func TestClient(t *testing.T) {
 		repoCall := auth.On("Evaluate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall2 := cRepo.On("RetrieveByID", mock.Anything, tc.clientID).Return(convertClient(tc.response), tc.err)
-		rClient, err := mfsdk.User(tc.clientID, tc.token)
+		rClient, err := mgsdk.User(tc.clientID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		tc.response.Credentials.Secret = ""
 		assert.Equal(t, tc.response, rClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rClient))
@@ -452,12 +452,12 @@ func TestProfile(t *testing.T) {
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validMetadata,
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 	}
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
 		desc     string
@@ -481,7 +481,7 @@ func TestProfile(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
-		rClient, err := mfsdk.UserProfile(tc.token)
+		rClient, err := mgsdk.UserProfile(tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		tc.response.Credentials.Secret = ""
 		assert.Equal(t, tc.response, rClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rClient))
@@ -500,7 +500,7 @@ func TestUpdateClient(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	user = sdk.User{
 		ID:          generateUUID(t),
@@ -508,7 +508,7 @@ func TestUpdateClient(t *testing.T) {
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validMetadata,
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 	}
 
 	client1 := user
@@ -566,7 +566,7 @@ func TestUpdateClient(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("Update", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
-		uClient, err := mfsdk.UpdateUser(tc.client, tc.token)
+		uClient, err := mgsdk.UpdateUser(tc.client, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, uClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, uClient))
 		if tc.err == nil {
@@ -587,7 +587,7 @@ func TestUpdateClientTags(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	user = sdk.User{
 		ID:          generateUUID(t),
@@ -595,7 +595,7 @@ func TestUpdateClientTags(t *testing.T) {
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validMetadata,
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 	}
 
 	client1 := user
@@ -653,7 +653,7 @@ func TestUpdateClientTags(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("UpdateTags", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
-		uClient, err := mfsdk.UpdateUserTags(tc.client, tc.token)
+		uClient, err := mgsdk.UpdateUserTags(tc.client, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, uClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, uClient))
 		if tc.err == nil {
@@ -674,7 +674,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	user = sdk.User{
 		ID:          generateUUID(t),
@@ -682,7 +682,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "updatedclientidentity", Secret: secret},
 		Metadata:    validMetadata,
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 	}
 
 	client2 := user
@@ -738,7 +738,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("UpdateIdentity", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
-		uClient, err := mfsdk.UpdateUserIdentity(tc.client, tc.token)
+		uClient, err := mgsdk.UpdateUserIdentity(tc.client, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, uClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, uClient))
 		if tc.err == nil {
@@ -759,7 +759,7 @@ func TestUpdateClientSecret(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	user.ID = generateUUID(t)
 	rclient := user
@@ -807,7 +807,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		repoCall := cRepo.On("RetrieveByID", mock.Anything, user.ID).Return(convertClient(tc.response), tc.repoErr)
 		repoCall1 := cRepo.On("RetrieveByIdentity", mock.Anything, user.Credentials.Identity).Return(convertClient(tc.response), tc.repoErr)
 		repoCall2 := cRepo.On("UpdateSecret", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.repoErr)
-		uClient, err := mfsdk.UpdatePassword(tc.oldSecret, tc.newSecret, tc.token)
+		uClient, err := mgsdk.UpdatePassword(tc.oldSecret, tc.newSecret, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, uClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, uClient))
 		if tc.err == nil {
@@ -831,7 +831,7 @@ func TestUpdateClientOwner(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
 	user = sdk.User{
 		ID:          generateUUID(t),
@@ -839,7 +839,7 @@ func TestUpdateClientOwner(t *testing.T) {
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validMetadata,
-		Status:      mfclients.EnabledStatus.String(),
+		Status:      mgclients.EnabledStatus.String(),
 		Owner:       "owner",
 	}
 
@@ -894,7 +894,7 @@ func TestUpdateClientOwner(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("UpdateOwner", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
-		uClient, err := mfsdk.UpdateUserOwner(tc.client, tc.token)
+		uClient, err := mgsdk.UpdateUserOwner(tc.client, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, uClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, uClient))
 		if tc.err == nil {
@@ -915,12 +915,12 @@ func TestEnableClient(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
-	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus.String()}
-	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus.String()}
+	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus.String()}
+	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus.String()}
 	endisabledClient1 := disabledClient1
-	endisabledClient1.Status = mfclients.EnabledStatus.String()
+	endisabledClient1.Status = mgclients.EnabledStatus.String()
 	endisabledClient1.ID = testsutil.GenerateUUID(t)
 
 	cases := []struct {
@@ -965,7 +965,7 @@ func TestEnableClient(t *testing.T) {
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertClient(tc.client), tc.repoErr)
 		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.repoErr)
-		eClient, err := mfsdk.EnableUser(tc.id, tc.token)
+		eClient, err := mgsdk.EnableUser(tc.id, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, eClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, eClient))
 		if tc.err == nil {
@@ -991,7 +991,7 @@ func TestEnableClient(t *testing.T) {
 	}{
 		{
 			desc:   "list enabled clients",
-			status: mfclients.EnabledStatus.String(),
+			status: mgclients.EnabledStatus.String(),
 			size:   2,
 			response: sdk.UsersPage{
 				Users: []sdk.User{enabledClient1, endisabledClient1},
@@ -999,7 +999,7 @@ func TestEnableClient(t *testing.T) {
 		},
 		{
 			desc:   "list disabled clients",
-			status: mfclients.DisabledStatus.String(),
+			status: mgclients.DisabledStatus.String(),
 			size:   1,
 			response: sdk.UsersPage{
 				Users: []sdk.User{disabledClient1},
@@ -1007,7 +1007,7 @@ func TestEnableClient(t *testing.T) {
 		},
 		{
 			desc:   "list enabled and disabled clients",
-			status: mfclients.AllStatus.String(),
+			status: mgclients.AllStatus.String(),
 			size:   3,
 			response: sdk.UsersPage{
 				Users: []sdk.User{enabledClient1, disabledClient1, endisabledClient1},
@@ -1024,7 +1024,7 @@ func TestEnableClient(t *testing.T) {
 		}
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(convertClientsPage(tc.response), nil)
-		clientsPage, err := mfsdk.Users(pm, validToken)
+		clientsPage, err := mgsdk.Users(pm, validToken)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(clientsPage.Users))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
@@ -1040,12 +1040,12 @@ func TestDisableClient(t *testing.T) {
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
-	mfsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(conf)
 
-	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus.String()}
-	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus.String()}
+	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus.String()}
+	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus.String()}
 	disenabledClient1 := enabledClient1
-	disenabledClient1.Status = mfclients.DisabledStatus.String()
+	disenabledClient1.Status = mgclients.DisabledStatus.String()
 	disenabledClient1.ID = testsutil.GenerateUUID(t)
 
 	cases := []struct {
@@ -1090,7 +1090,7 @@ func TestDisableClient(t *testing.T) {
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertClient(tc.client), tc.repoErr)
 		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.repoErr)
-		dClient, err := mfsdk.DisableUser(tc.id, tc.token)
+		dClient, err := mgsdk.DisableUser(tc.id, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, dClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, dClient))
 		if tc.err == nil {
@@ -1116,7 +1116,7 @@ func TestDisableClient(t *testing.T) {
 	}{
 		{
 			desc:   "list enabled clients",
-			status: mfclients.EnabledStatus.String(),
+			status: mgclients.EnabledStatus.String(),
 			size:   2,
 			response: sdk.UsersPage{
 				Users: []sdk.User{enabledClient1, disenabledClient1},
@@ -1124,7 +1124,7 @@ func TestDisableClient(t *testing.T) {
 		},
 		{
 			desc:   "list disabled clients",
-			status: mfclients.DisabledStatus.String(),
+			status: mgclients.DisabledStatus.String(),
 			size:   1,
 			response: sdk.UsersPage{
 				Users: []sdk.User{disabledClient1},
@@ -1132,7 +1132,7 @@ func TestDisableClient(t *testing.T) {
 		},
 		{
 			desc:   "list enabled and disabled clients",
-			status: mfclients.AllStatus.String(),
+			status: mgclients.AllStatus.String(),
 			size:   3,
 			response: sdk.UsersPage{
 				Users: []sdk.User{enabledClient1, disabledClient1, disenabledClient1},
@@ -1149,7 +1149,7 @@ func TestDisableClient(t *testing.T) {
 		}
 		repoCall := auth.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(convertClientsPage(tc.response), nil)
-		page, err := mfsdk.Users(pm, validToken)
+		page, err := mgsdk.Users(pm, validToken)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(page.Users))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))

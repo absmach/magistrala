@@ -14,11 +14,10 @@ VERSION ?= $(shell git describe --abbrev=0 --tags)
 COMMIT ?= $(shell git rev-parse HEAD)
 TIME ?= $(shell date +%F_%T)
 USER_REPO ?= $(shell git remote get-url origin | sed -e 's/.*\/\([^/]*\)\/\([^/]*\).*/\1_\2/' )
-BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD  2>/dev/null || git describe --tags --abbrev=0  2>/dev/null )
 empty:=
 space:= $(empty) $(empty)
 # Docker compose project name should follow this guidelines: https://docs.docker.com/compose/reference/#use--p-to-specify-a-project-name
-DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)_$(BRANCH)) | tr -c -s '[:alnum:][=-=]' '_' | tr '[:upper:]' '[:lower:]')
+DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO) | tr -c -s '[:alnum:][=-=]' '_' | tr '[:upper:]' '[:lower:]')
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0

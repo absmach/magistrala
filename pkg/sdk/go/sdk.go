@@ -1123,6 +1123,9 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.State != "" {
 		q.Add("state", pm.State)
 	}
+	if pm.Permission != "" {
+		q.Add("permission", pm.Permission)
+	}
 
 	return q.Encode(), nil
 }

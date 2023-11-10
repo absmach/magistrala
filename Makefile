@@ -17,7 +17,7 @@ USER_REPO ?= $(shell git remote get-url origin | sed -e 's/.*\/\([^/]*\)\/\([^/]
 empty:=
 space:= $(empty) $(empty)
 # Docker compose project name should follow this guidelines: https://docs.docker.com/compose/reference/#use--p-to-specify-a-project-name
-DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO) | tr -c -s '[:alnum:][=-=]' '_' | tr '[:upper:]' '[:lower:]')
+DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | tr -c -s '[:alnum:][=-=]' '_' | tr '[:upper:]' '[:lower:]')
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0

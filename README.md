@@ -1,6 +1,5 @@
 # Magistrala
-
-[![Build Status](https://mainflux.semaphoreci.com/badges/mainflux/branches/master.svg?style=shields)](https://mainflux.semaphoreci.com/projects/mainflux)
+[![Build Status](https://absmach.semaphoreci.com/badges/magistrala/branches/main.svg?style=shields&key=0ec33406-5653-4711-9495-2bc69127cd98)](https://absmach.semaphoreci.com/projects/magistrala)
 [![go report card][grc-badge]][grc-url]
 [![coverage][cov-badge]][cov-url]
 [![license][license]](LICENSE)
@@ -162,8 +161,6 @@ Data collection is on by default and can be disabled by setting the env variable
 By utilizing Magistrala, you actively contribute to its improvement. Together, we can build a more robust and efficient IoT platform. Thank you for your trust in Magistrala!
 
 [banner]: https://github.com/mainflux/docs/blob/master/docs/img/gopherBanner.jpg
-[ci-badge]: https://semaphoreci.com/api/v1/absmach/magistrala/branches/master/badge.svg
-[ci-url]: https://semaphoreci.com/absmach/magistrala
 [docs]: https://docs.mainflux.io
 [docker]: https://www.docker.com
 [forum]: https://groups.google.com/forum/#!forum/mainflux

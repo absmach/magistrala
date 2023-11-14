@@ -39,6 +39,8 @@ const (
 	RecoveryKey
 	// APIKey enables the one to act on behalf of the user.
 	APIKey
+	// InvitationKey is a key for inviting new users.
+	InvitationKey
 )
 
 func (kt KeyType) String() string {

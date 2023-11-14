@@ -13,10 +13,12 @@ import (
 )
 
 const (
-	recoveryDuration = 5 * time.Minute
-	thingsKind       = "things"
-	channelsKind     = "channels"
-	usersKind        = "users"
+	recoveryDuration   = 5 * time.Minute
+	invitationDuration = 24 * time.Hour
+
+	thingsKind   = "things"
+	channelsKind = "channels"
+	usersKind    = "users"
 
 	thingType   = "thing"
 	channelType = "channel"
@@ -124,6 +126,8 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Token, err
 		return svc.refreshKey(ctx, token, key)
 	case RecoveryKey:
 		return svc.tmpKey(recoveryDuration, key)
+	case InvitationKey:
+		return svc.tmpKey(invitationDuration, key)
 	default:
 		return svc.accessKey(key)
 	}
@@ -160,7 +164,7 @@ func (svc service) Identify(ctx context.Context, token string) (string, error) {
 	}
 
 	switch key.Type {
-	case RecoveryKey, AccessKey:
+	case RecoveryKey, AccessKey, InvitationKey:
 		return key.Subject, nil
 	case APIKey:
 		_, err := svc.keys.Retrieve(ctx, key.Issuer, key.ID)
@@ -312,6 +316,7 @@ func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (int, error)
 }
 
 func (svc service) tmpKey(duration time.Duration, key Key) (Token, error) {
+	key.ExpiresAt = time.Now().Add(duration)
 	value, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)

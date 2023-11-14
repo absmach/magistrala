@@ -12,9 +12,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 var (
@@ -24,7 +25,7 @@ var (
 )
 
 // NewProvider initializes Jaeger TraceProvider.
-func NewProvider(ctx context.Context, svcName, jaegerUrl, instanceID string, fraction float64) (*tracesdk.TracerProvider, error) {
+func NewProvider(ctx context.Context, svcName, jaegerUrl, instanceID string, fraction float64) (*trace.TracerProvider, error) {
 	if jaegerUrl == "" {
 		return nil, errNoURL
 	}
@@ -65,16 +66,16 @@ func NewProvider(ctx context.Context, svcName, jaegerUrl, instanceID string, fra
 	}
 	attributes = append(attributes, hostAttr.Attributes()...)
 
-	tp := tracesdk.NewTracerProvider(
-		tracesdk.WithSampler(tracesdk.TraceIDRatioBased(fraction)),
-		tracesdk.WithBatcher(exporter),
-		tracesdk.WithResource(resource.NewWithAttributes(
+	tp := trace.NewTracerProvider(
+		trace.WithSampler(trace.TraceIDRatioBased(fraction)),
+		trace.WithBatcher(exporter),
+		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			attributes...,
 		)),
 	)
 	otel.SetTracerProvider(tp)
-	// otel.SetTextMapPropagator(jaegerp.Jaeger{})
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return tp, nil
 }

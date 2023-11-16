@@ -10,13 +10,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
 	"github.com/absmach/magistrala"
 	authapi "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt"
@@ -28,6 +28,7 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging/handler"
 	mqttpub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/caarlos0/env/v10"
 	"github.com/cenkalti/backoff/v4"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
@@ -51,7 +52,7 @@ type config struct {
 	HTTPTargetPort        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
 	HTTPTargetPath        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
 	Instance              string        `env:"MG_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
-	JaegerURL             string        `env:"MG_JAEGER_URL"                                envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL             url.URL       `env:"MG_JAEGER_URL"                                envDefault:"http://jaeger:14268/api/traces"`
 	BrokerURL             string        `env:"MG_MESSAGE_BROKER_URL"                        envDefault:"nats://localhost:4222"`
 	SendTelemetry         bool          `env:"MG_SEND_TELEMETRY"                            envDefault:"true"`
 	InstanceID            string        `env:"MG_MQTT_ADAPTER_INSTANCE_ID"                  envDefault:""`

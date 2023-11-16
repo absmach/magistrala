@@ -4,8 +4,8 @@
 package cassandra
 
 import (
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/caarlos0/env/v10"
 	"github.com/gocql/gocql"
 )
 
@@ -34,7 +34,7 @@ func Setup(envPrefix string) (*gocql.Session, error) {
 // the initial query in database.
 func SetupDB(envPrefix string, initQuery string) (*gocql.Session, error) {
 	config := Config{}
-	if err := env.Parse(&config, env.Options{Prefix: envPrefix}); err != nil {
+	if err := env.ParseWithOptions(&config, env.Options{Prefix: envPrefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
 	}
 	cs, err := Connect(config)

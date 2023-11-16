@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/caarlos0/env/v10"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -40,7 +40,7 @@ func Connect(cfg Config) (*mongo.Database, error) {
 // Setup load configuration from environment, create new MongoDB client and connect to MongoDB server.
 func Setup(envPrefix string) (*mongo.Database, error) {
 	cfg := Config{}
-	if err := env.Parse(&cfg, env.Options{Prefix: envPrefix}); err != nil {
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
 	}
 	db, err := Connect(cfg)

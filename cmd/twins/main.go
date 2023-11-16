@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 
 	"github.com/absmach/magistrala"
@@ -16,7 +17,6 @@ import (
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	mongoclient "github.com/absmach/magistrala/internal/clients/mongo"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
@@ -31,6 +31,7 @@ import (
 	"github.com/absmach/magistrala/twins/events"
 	twmongodb "github.com/absmach/magistrala/twins/mongodb"
 	"github.com/absmach/magistrala/twins/tracing"
+	"github.com/caarlos0/env/v10"
 	"github.com/go-redis/redis/v8"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -51,7 +52,7 @@ type config struct {
 	StandaloneToken string  `env:"MG_TWINS_STANDALONE_TOKEN"   envDefault:""`
 	ChannelID       string  `env:"MG_TWINS_CHANNEL_ID"         envDefault:""`
 	BrokerURL       string  `env:"MG_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
-	JaegerURL       string  `env:"MG_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL       url.URL `env:"MG_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry   bool    `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
 	InstanceID      string  `env:"MG_TWINS_INSTANCE_ID"        envDefault:""`
 	ESURL           string  `env:"MG_TWINS_ES_URL"             envDefault:"redis://localhost:6379/0"`
@@ -85,7 +86,7 @@ func main() {
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

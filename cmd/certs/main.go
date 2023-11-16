@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 
 	"github.com/absmach/magistrala"
@@ -20,13 +21,13 @@ import (
 	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.opentelemetry.io/otel/trace"
@@ -45,7 +46,7 @@ type config struct {
 	LogLevel      string  `env:"MG_CERTS_LOG_LEVEL"        envDefault:"info"`
 	CertsURL      string  `env:"MG_SDK_CERTS_URL"          envDefault:"http://localhost"`
 	ThingsURL     string  `env:"MG_THINGS_URL"             envDefault:"http://things:9000"`
-	JaegerURL     string  `env:"MG_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"         envDefault:"true"`
 	InstanceID    string  `env:"MG_CERTS_INSTANCE_ID"      envDefault:""`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
@@ -137,7 +138,7 @@ func main() {
 	svc := newService(auth, db, tracer, logger, cfg, dbConfig, pkiclient)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

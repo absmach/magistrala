@@ -6,8 +6,8 @@ package postgres
 import (
 	"fmt"
 
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/caarlos0/env/v10"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
@@ -41,7 +41,7 @@ func Setup(prefix string, migrations migrate.MemoryMigrationSource) (*sqlx.DB, e
 // unapplied database migrations. A non-nil error is returned to indicate failure.
 func SetupWithConfig(prefix string, migrations migrate.MemoryMigrationSource, defConfig Config) (*sqlx.DB, error) {
 	cfg := defConfig
-	if err := env.Parse(&cfg, env.Options{Prefix: prefix}); err != nil {
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: prefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
 	}
 	return SetupDB(cfg, migrations)
@@ -82,7 +82,7 @@ func MigrateDB(db *sqlx.DB, migrations migrate.MemoryMigrationSource) error {
 }
 
 func (c *Config) LoadEnv(prefix string) error {
-	if err := env.Parse(c, env.Options{Prefix: prefix}); err != nil {
+	if err := env.ParseWithOptions(c, env.Options{Prefix: prefix}); err != nil {
 		return errors.Wrap(errConfig, err)
 	}
 	return nil

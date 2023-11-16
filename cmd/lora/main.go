@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/absmach/magistrala/internal"
 	"github.com/absmach/magistrala/internal/clients/jaeger"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
@@ -28,6 +28,7 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/caarlos0/env/v10"
 	mqttpaho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/go-redis/redis/v8"
 	chclient "github.com/mainflux/callhome/pkg/client"
@@ -54,7 +55,7 @@ type config struct {
 	LoraMsgTimeout time.Duration `env:"MG_LORA_ADAPTER_MESSAGES_TIMEOUT"    envDefault:"30s"`
 	ESConsumerName string        `env:"MG_LORA_ADAPTER_EVENT_CONSUMER"      envDefault:"lora-adapter"`
 	BrokerURL      string        `env:"MG_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
-	JaegerURL      string        `env:"MG_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL      url.URL       `env:"MG_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry  bool          `env:"MG_SEND_TELEMETRY"                   envDefault:"true"`
 	InstanceID     string        `env:"MG_LORA_ADAPTER_INSTANCE_ID"         envDefault:""`
 	ESURL          string        `env:"MG_LORA_ADAPTER_ES_URL"              envDefault:"redis://localhost:6379/0"`
@@ -88,7 +89,7 @@ func main() {
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

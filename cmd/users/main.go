@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"regexp"
 	"time"
@@ -19,7 +20,6 @@ import (
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/absmach/magistrala/internal/email"
-	"github.com/absmach/magistrala/internal/env"
 	mggroups "github.com/absmach/magistrala/internal/groups"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
 	gevents "github.com/absmach/magistrala/internal/groups/events"
@@ -40,6 +40,7 @@ import (
 	"github.com/absmach/magistrala/users/hasher"
 	clientspg "github.com/absmach/magistrala/users/postgres"
 	ctracing "github.com/absmach/magistrala/users/tracing"
+	"github.com/caarlos0/env/v10"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
@@ -58,20 +59,18 @@ const (
 )
 
 type config struct {
-	LogLevel        string  `env:"MG_USERS_LOG_LEVEL"              envDefault:"info"`
-	SecretKey       string  `env:"MG_USERS_SECRET_KEY"             envDefault:"secret"`
-	AdminEmail      string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:""`
-	AdminPassword   string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:""`
-	PassRegexText   string  `env:"MG_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
-	AccessDuration  string  `env:"MG_USERS_ACCESS_TOKEN_DURATION"  envDefault:"15m"`
-	RefreshDuration string  `env:"MG_USERS_REFRESH_TOKEN_DURATION" envDefault:"24h"`
-	ResetURL        string  `env:"MG_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
-	JaegerURL       string  `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry   bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID      string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
-	ESURL           string  `env:"MG_USERS_ES_URL"                 envDefault:"redis://localhost:6379/0"`
-	TraceRatio      float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
-	PassRegex       *regexp.Regexp
+	LogLevel      string  `env:"MG_USERS_LOG_LEVEL"              envDefault:"info"`
+	SecretKey     string  `env:"MG_USERS_SECRET_KEY"             envDefault:"secret"`
+	AdminEmail    string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:""`
+	AdminPassword string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:""`
+	PassRegexText string  `env:"MG_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
+	ResetURL      string  `env:"MG_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID    string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
+	ESURL         string  `env:"MG_USERS_ES_URL"                 envDefault:"redis://localhost:6379/0"`
+	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	PassRegex     *regexp.Regexp
 }
 
 func main() {
@@ -159,7 +158,7 @@ func main() {
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return

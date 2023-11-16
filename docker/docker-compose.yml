@@ -79,7 +79,7 @@ services:
     environment:
       POSTGRES_USER: ${MG_AUTH_DB_USER}
       POSTGRES_PASSWORD: ${MG_AUTH_DB_PASS}
-      POSTGRES_DB: ${MG_AUTH_DB}
+      POSTGRES_DB: ${MG_AUTH_DB_NAME}
     networks:
       - magistrala-base-net
     volumes:
@@ -95,19 +95,38 @@ services:
       - ${MG_AUTH_GRPC_PORT}
     restart: on-failure
     environment:
+      MG_AUTH_LOG_LEVEL: ${MG_AUTH_LOG_LEVEL}
       MG_SPICEDB_SCHEMA_FILE: ${MG_SPICEDB_SCHEMA_FILE}
       MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
       MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
-      MG_AUTH_LOG_LEVEL: ${MG_AUTH_LOG_LEVEL}
-      MG_AUTH_DB_HOST: auth-db
+      MG_AUTH_ACCESS_TOKEN_DURATION: ${MG_AUTH_ACCESS_TOKEN_DURATION}
+      MG_AUTH_REFRESH_TOKEN_DURATION: ${MG_AUTH_REFRESH_TOKEN_DURATION}      
+      MG_AUTH_SECRET_KEY: ${MG_AUTH_SECRET_KEY}
+      MG_AUTH_HTTP_HOST: ${MG_AUTH_HTTP_HOST}
+      MG_AUTH_HTTP_PORT: ${MG_AUTH_HTTP_PORT}
+      MG_AUTH_HTTP_SERVER_CERT: ${MG_AUTH_HTTP_SERVER_CERT}
+      MG_AUTH_HTTP_SERVER_KEY: ${MG_AUTH_HTTP_SERVER_KEY}
+      MG_AUTH_GRPC_HOST: ${MG_AUTH_GRPC_HOST}
+      MG_AUTH_GRPC_PORT: ${MG_AUTH_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      MG_AUTH_GRPC_SERVER_CERT: ${MG_AUTH_GRPC_SERVER_CERT:+/auth-grpc-server.crt}
+      MG_AUTH_GRPC_SERVER_KEY: ${MG_AUTH_GRPC_SERVER_KEY:+/auth-grpc-server.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_AUTH_DB_HOST: ${MG_AUTH_DB_HOST}
       MG_AUTH_DB_PORT: ${MG_AUTH_DB_PORT}
       MG_AUTH_DB_USER: ${MG_AUTH_DB_USER}
       MG_AUTH_DB_PASS: ${MG_AUTH_DB_PASS}
-      MG_AUTH_DB: ${MG_AUTH_DB}
-      MG_AUTH_HTTP_PORT: ${MG_AUTH_HTTP_PORT}
-      MG_AUTH_GRPC_PORT: ${MG_AUTH_GRPC_PORT}
-      MG_AUTH_SECRET: ${MG_AUTH_SECRET}
-      MG_AUTH_ACCESS_TOKEN_DURATION: ${MG_AUTH_ACCESS_TOKEN_DURATION}
+      MG_AUTH_DB_NAME: ${MG_AUTH_DB_NAME}
+      MG_AUTH_DB_SSL_MODE: ${MG_AUTH_DB_SSL_MODE}
+      MG_AUTH_DB_SSL_CERT: ${MG_AUTH_DB_SSL_CERT}
+      MG_AUTH_DB_SSL_KEY: ${MG_AUTH_DB_SSL_KEY}
+      MG_AUTH_DB_SSL_ROOT_CERT: ${MG_AUTH_DB_SSL_ROOT_CERT}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_AUTH_ADAPTER_INSTANCE_ID: ${MG_AUTH_ADAPTER_INSTANCE_ID}
     ports:
       - ${MG_AUTH_HTTP_PORT}:${MG_AUTH_HTTP_PORT}
       - ${MG_AUTH_GRPC_PORT}:${MG_AUTH_GRPC_PORT}
@@ -353,11 +372,11 @@ services:
   jaeger:
     image: jaegertracing/all-in-one:1.38.0
     container_name: magistrala-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: ${MG_JAEGER_COLLECTOR_OTLP_ENABLED}
     ports:
-      - ${MG_JAEGER_PORT}:${MG_JAEGER_PORT}/udp
       - ${MG_JAEGER_FRONTEND}:${MG_JAEGER_FRONTEND}
-      - ${MG_JAEGER_COLLECTOR}:${MG_JAEGER_COLLECTOR}
-      - ${MG_JAEGER_CONFIGS}:${MG_JAEGER_CONFIGS}
+      - ${MG_JAEGER_OLTP_HTTP}:${MG_JAEGER_OLTP_HTTP}
     networks:
       - magistrala-base-net
 

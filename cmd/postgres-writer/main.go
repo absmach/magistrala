@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 
 	"github.com/absmach/magistrala"
@@ -18,13 +19,13 @@ import (
 	"github.com/absmach/magistrala/internal"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
@@ -42,7 +43,7 @@ type config struct {
 	LogLevel      string  `env:"MG_POSTGRES_WRITER_LOG_LEVEL"     envDefault:"info"`
 	ConfigPath    string  `env:"MG_POSTGRES_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
 	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
-	JaegerURL     string  `env:"MG_JAEGER_URL"                    envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"                    envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"                envDefault:"true"`
 	InstanceID    string  `env:"MG_POSTGRES_WRITER_INSTANCE_ID"   envDefault:""`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"            envDefault:"1.0"`
@@ -74,7 +75,7 @@ func main() {
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

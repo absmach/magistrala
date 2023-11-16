@@ -7,8 +7,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/caarlos0/env/v10"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
@@ -36,7 +36,7 @@ type Config struct {
 // Setup load configuration from environment variable, create InfluxDB client and connect to InfluxDB server.
 func Setup(ctx context.Context, envPrefix string) (influxdb2.Client, error) {
 	config := Config{}
-	if err := env.Parse(&config, env.Options{Prefix: envPrefix}); err != nil {
+	if err := env.ParseWithOptions(&config, env.Options{Prefix: envPrefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
 	}
 	return Connect(ctx, config)

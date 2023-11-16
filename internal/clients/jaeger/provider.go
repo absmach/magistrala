@@ -25,8 +25,8 @@ var (
 )
 
 // NewProvider initializes Jaeger TraceProvider.
-func NewProvider(ctx context.Context, svcName, jaegerUrl, instanceID string, fraction float64) (*trace.TracerProvider, error) {
-	if jaegerUrl == "" {
+func NewProvider(ctx context.Context, svcName string, jaegerUrl url.URL, instanceID string, fraction float64) (*trace.TracerProvider, error) {
+	if jaegerUrl == (url.URL{}) {
 		return nil, errNoURL
 	}
 
@@ -34,25 +34,19 @@ func NewProvider(ctx context.Context, svcName, jaegerUrl, instanceID string, fra
 		return nil, errNoSvcName
 	}
 
-	url, err := url.Parse(jaegerUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	var exporter *otlptrace.Exporter
-	switch url.Scheme {
+	var client otlptrace.Client
+	switch jaegerUrl.Scheme {
 	case "http":
-		exporter, err = otlptracehttp.New(ctx, otlptracehttp.WithEndpoint(url.Host), otlptracehttp.WithURLPath(url.Path), otlptracehttp.WithInsecure())
-		if err != nil {
-			return nil, err
-		}
+		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(jaegerUrl.Host), otlptracehttp.WithURLPath(jaegerUrl.Path), otlptracehttp.WithInsecure())
 	case "https":
-		exporter, err = otlptracehttp.New(ctx, otlptracehttp.WithEndpoint(url.Host), otlptracehttp.WithURLPath(url.Path))
-		if err != nil {
-			return nil, err
-		}
+		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(jaegerUrl.Host), otlptracehttp.WithURLPath(jaegerUrl.Path))
 	default:
 		return nil, errUnsupportedTraceURLScheme
+	}
+
+	exporter, err := otlptrace.New(ctx, client)
+	if err != nil {
+		return nil, err
 	}
 
 	attributes := []attribute.KeyValue{

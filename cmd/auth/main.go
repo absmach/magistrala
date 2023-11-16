@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/absmach/magistrala/internal"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
@@ -32,6 +32,7 @@ import (
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
+	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.opentelemetry.io/otel/trace"
@@ -53,17 +54,17 @@ const (
 )
 
 type config struct {
-	LogLevel          string  `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
-	SecretKey         string  `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
-	JaegerURL         string  `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry     bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID        string  `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
-	AccessDuration    string  `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"30m"`
-	RefreshDuration   string  `env:"MG_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
-	SpicedbHost       string  `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort       string  `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbSchemaFile string  `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
-	TraceRatio        float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	LogLevel          string        `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
+	SecretKey         string        `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
+	JaegerURL         url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry     bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID        string        `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
+	AccessDuration    time.Duration `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"1h"`
+	RefreshDuration   time.Duration `env:"MG_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
+	SpicedbHost       string        `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort       string        `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbSchemaFile string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
+	TraceRatio        float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 }
 
 func main() {
@@ -126,7 +127,7 @@ func main() {
 	svc := newService(db, tracer, cfg, dbConfig, logger, spicedbclient)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return
@@ -134,7 +135,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
-	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
+	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return
@@ -205,16 +206,7 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 	idProvider := uuid.New()
 	t := jwt.New([]byte(cfg.SecretKey))
 
-	aDuration, err := time.ParseDuration(cfg.AccessDuration)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to parse access token duration: %s", err.Error()))
-	}
-	rDuration, err := time.ParseDuration(cfg.RefreshDuration)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to parse refresh token duration: %s", err.Error()))
-	}
-
-	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, aDuration, rDuration)
+	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("groups", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

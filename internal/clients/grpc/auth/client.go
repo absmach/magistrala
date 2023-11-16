@@ -7,9 +7,9 @@ import (
 	"github.com/absmach/magistrala"
 	authgrpc "github.com/absmach/magistrala/auth/api/grpc"
 	grpcclient "github.com/absmach/magistrala/internal/clients/grpc"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/pkg/errors"
 	thingsauth "github.com/absmach/magistrala/things/api/grpc"
+	"github.com/caarlos0/env/v10"
 )
 
 const (
@@ -22,7 +22,7 @@ var errGrpcConfig = errors.New("failed to load grpc configuration")
 // Setup loads Auth gRPC configuration from environment variable and creates new Auth gRPC API.
 func Setup(svcName string) (magistrala.AuthServiceClient, grpcclient.ClientHandler, error) {
 	config := grpcclient.Config{}
-	if err := env.Parse(&config, env.Options{Prefix: envAuthGrpcPrefix}); err != nil {
+	if err := env.ParseWithOptions(&config, env.Options{Prefix: envAuthGrpcPrefix}); err != nil {
 		return nil, nil, errors.Wrap(errGrpcConfig, err)
 	}
 	c, ch, err := grpcclient.Setup(config, svcName)
@@ -36,7 +36,7 @@ func Setup(svcName string) (magistrala.AuthServiceClient, grpcclient.ClientHandl
 // Setup loads Auth gRPC configuration from environment variable and creates new Auth gRPC API.
 func SetupAuthz(svcName string) (magistrala.AuthzServiceClient, grpcclient.ClientHandler, error) {
 	config := grpcclient.Config{}
-	if err := env.Parse(&config, env.Options{Prefix: envAuthzGrpcPrefix}); err != nil {
+	if err := env.ParseWithOptions(&config, env.Options{Prefix: envAuthzGrpcPrefix}); err != nil {
 		return nil, nil, errors.Wrap(errGrpcConfig, err)
 	}
 	c, ch, err := grpcclient.Setup(config, svcName)

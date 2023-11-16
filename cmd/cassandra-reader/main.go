@@ -14,7 +14,6 @@ import (
 	"github.com/absmach/magistrala/internal"
 	cassandraclient "github.com/absmach/magistrala/internal/clients/cassandra"
 	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
@@ -22,6 +21,7 @@ import (
 	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/magistrala/readers/api"
 	"github.com/absmach/magistrala/readers/cassandra"
+	"github.com/caarlos0/env/v10"
 	"github.com/gocql/gocql"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
@@ -100,7 +100,7 @@ func main() {
 
 	// Create new http server
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

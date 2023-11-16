@@ -14,7 +14,6 @@ import (
 	"github.com/absmach/magistrala/internal"
 	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	influxdbclient "github.com/absmach/magistrala/internal/clients/influxdb"
-	"github.com/absmach/magistrala/internal/env"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
@@ -22,6 +21,7 @@ import (
 	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/magistrala/readers/api"
 	"github.com/absmach/magistrala/readers/influxdb"
+	"github.com/caarlos0/env/v10"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
@@ -35,8 +35,8 @@ const (
 )
 
 type config struct {
-	LogLevel      string `env:"MG_INFLUX_READER_LOG_LEVEL"  envDefault:"info"`
-	SendTelemetry bool   `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
+	LogLevel      string `env:"MG_INFLUX_READER_LOG_LEVEL"     envDefault:"info"`
+	SendTelemetry bool   `env:"MG_SEND_TELEMETRY"              envDefault:"true"`
 	InstanceID    string `env:"MG_INFLUX_READER_INSTANCE_ID"   envDefault:""`
 }
 
@@ -86,7 +86,7 @@ func main() {
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	influxDBConfig := influxdbclient.Config{}
-	if err := env.Parse(&influxDBConfig, env.Options{Prefix: envPrefixDB}); err != nil {
+	if err := env.ParseWithOptions(&influxDBConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load InfluxDB client configuration from environment variable : %s", err))
 		exitCode = 1
 		return
@@ -109,7 +109,7 @@ func main() {
 	repo := newService(client, repocfg, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

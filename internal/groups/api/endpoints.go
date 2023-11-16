@@ -12,14 +12,14 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+func CreateGroupEndpoint(svc groups.Service, kind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		group, err := svc.CreateGroup(ctx, req.token, req.Group)
+		group, err := svc.CreateGroup(ctx, req.token, kind, req.Group)
 		if err != nil {
 			return nil, err
 		}

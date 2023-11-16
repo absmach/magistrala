@@ -34,8 +34,8 @@ func NewEventStoreMiddleware(ctx context.Context, svc groups.Service, url string
 	}, nil
 }
 
-func (es eventStore) CreateGroup(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
-	group, err := es.svc.CreateGroup(ctx, token, group)
+func (es eventStore) CreateGroup(ctx context.Context, token, kind string, group groups.Group) (groups.Group, error) {
+	group, err := es.svc.CreateGroup(ctx, token, kind, group)
 	if err != nil {
 		return group, err
 	}
@@ -84,7 +84,7 @@ func (es eventStore) ViewGroup(ctx context.Context, token, id string) (groups.Gr
 	return group, nil
 }
 
-func (es eventStore) ListGroups(ctx context.Context, token string, memberKind string, memberID string, pm groups.Page) (groups.Page, error) {
+func (es eventStore) ListGroups(ctx context.Context, token, memberKind, memberID string, pm groups.Page) (groups.Page, error) {
 	gp, err := es.svc.ListGroups(ctx, token, memberKind, memberID, pm)
 	if err != nil {
 		return gp, err
@@ -129,7 +129,7 @@ func (es eventStore) Assign(ctx context.Context, token, groupID, relation, membe
 	return es.svc.Assign(ctx, token, groupID, relation, memberKind, memberIDs...)
 }
 
-func (es eventStore) Unassign(ctx context.Context, token, groupID string, relation string, memberKind string, memberIDs ...string) error {
+func (es eventStore) Unassign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) error {
 	return es.svc.Unassign(ctx, token, groupID, relation, memberKind, memberIDs...)
 }
 

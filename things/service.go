@@ -7,27 +7,12 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/things/postgres"
-)
-
-const (
-	ownerRelation = "owner"
-	groupRelation = "group"
-
-	ownerPermission  = "delete"
-	deletePermission = "delete"
-	editPermission   = "edit"
-	viewPermission   = "view"
-
-	userType  = "user"
-	tokenKind = "token"
-	userKind  = "users"
-	thingType = "thing"
-	groupType = "group"
 )
 
 type service struct {
@@ -56,9 +41,9 @@ func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) 
 	}
 
 	r := &magistrala.AuthorizeReq{
-		SubjectType: groupType,
+		SubjectType: auth.GroupType,
 		Subject:     req.GetObject(),
-		ObjectType:  thingType,
+		ObjectType:  auth.ThingType,
 		Object:      thingID,
 		Permission:  req.GetPermission(),
 	}
@@ -74,7 +59,7 @@ func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) 
 }
 
 func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclients.Client) ([]mgclients.Client, error) {
-	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	user, err := svc.identify(ctx, token)
 	if err != nil {
 		return []mgclients.Client{}, errors.Wrap(errors.ErrAuthorization, err)
 	}
@@ -94,9 +79,6 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 			}
 			c.Credentials.Secret = key
 		}
-		if c.Owner == "" {
-			c.Owner = user.GetId()
-		}
 		if c.Status != mgclients.DisabledStatus && c.Status != mgclients.EnabledStatus {
 			return []mgclients.Client{}, apiutil.ErrInvalidStatus
 		}
@@ -108,25 +90,37 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 	if err != nil {
 		return nil, err
 	}
+	// ToDo: Add defer function, on error delete all clients
 
+	policies := magistrala.AddPoliciesReq{}
 	for _, c := range saved {
-		policy := magistrala.AddPolicyReq{
-			SubjectType: userType,
+		policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			Domain:      user.GetDomainId(),
+			SubjectType: auth.UserType,
 			Subject:     user.GetId(),
-			Relation:    ownerRelation,
-			ObjectType:  thingType,
+			Relation:    auth.AdministratorRelation,
+			ObjectKind:  auth.NewThingKind,
+			ObjectType:  auth.ThingType,
 			Object:      c.ID,
-		}
-		if _, err := svc.auth.AddPolicy(ctx, &policy); err != nil {
-			return nil, err
-		}
+		})
+		policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			Domain:      user.GetDomainId(),
+			SubjectType: auth.DomainType,
+			Subject:     user.GetDomainId(),
+			Relation:    auth.DomainRelation,
+			ObjectType:  auth.ThingType,
+			Object:      c.ID,
+		})
+	}
+	if _, err := svc.auth.AddPolicies(ctx, &policies); err != nil {
+		return nil, err
 	}
 
 	return saved, nil
 }
 
 func (svc service) ViewClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
-	_, err := svc.authorize(ctx, userType, tokenKind, token, viewPermission, thingType, id)
+	_, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.ViewPermission, auth.ThingType, id)
 	if err != nil {
 		return mgclients.Client{}, err
 	}
@@ -137,26 +131,27 @@ func (svc service) ViewClient(ctx context.Context, token string, id string) (mgc
 func (svc service) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	var ids []string
 
-	userID, err := svc.identify(ctx, token)
+	res, err := svc.identify(ctx, token)
 	if err != nil {
 		return mgclients.ClientsPage{}, err
 	}
 
 	switch {
-	case (reqUserID != "" && reqUserID != userID):
-		if _, err := svc.authorize(ctx, userType, userKind, userID, ownerRelation, userType, reqUserID); err != nil {
+	case (reqUserID != "" && reqUserID != res.GetUserId()):
+		// Check user is admin of domain, if yes then show listing on domain context
+		if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.DomainType, res.GetDomainId()); err != nil {
 			return mgclients.ClientsPage{}, err
 		}
-		rtids, err := svc.listClientIDs(ctx, reqUserID, pm.Permission)
+		rtids, err := svc.listClientIDs(ctx, auth.EncodeDomainUserID(res.GetDomainId(), reqUserID), pm.Permission)
 		if err != nil {
 			return mgclients.ClientsPage{}, err
 		}
-		ids, err = svc.filterAllowedThingIDs(ctx, userID, pm.Permission, rtids)
+		ids, err = svc.filterAllowedThingIDs(ctx, res.GetId(), pm.Permission, rtids)
 		if err != nil {
 			return mgclients.ClientsPage{}, err
 		}
 	default:
-		ids, err = svc.listClientIDs(ctx, userID, pm.Permission)
+		ids, err = svc.listClientIDs(ctx, res.GetId(), pm.Permission)
 		if err != nil {
 			return mgclients.ClientsPage{}, err
 		}
@@ -175,10 +170,10 @@ func (svc service) ListClients(ctx context.Context, token string, reqUserID stri
 
 func (svc service) listClientIDs(ctx context.Context, userID, permission string) ([]string, error) {
 	tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
-		SubjectType: userType,
+		SubjectType: auth.UserType,
 		Subject:     userID,
 		Permission:  permission,
-		ObjectType:  thingType,
+		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
 		return nil, err
@@ -189,10 +184,10 @@ func (svc service) listClientIDs(ctx context.Context, userID, permission string)
 func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission string, thingIDs []string) ([]string, error) {
 	var ids []string
 	tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
-		SubjectType: userType,
+		SubjectType: auth.UserType,
 		Subject:     userID,
 		Permission:  permission,
-		ObjectType:  thingType,
+		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
 		return nil, err
@@ -208,7 +203,7 @@ func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission
 }
 
 func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
+	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
 	if err != nil {
 		return mgclients.Client{}, err
 	}
@@ -224,7 +219,7 @@ func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients
 }
 
 func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
+	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
 	if err != nil {
 		return mgclients.Client{}, err
 	}
@@ -239,7 +234,7 @@ func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgcli
 }
 
 func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, id)
+	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, id)
 	if err != nil {
 		return mgclients.Client{}, err
 	}
@@ -257,7 +252,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string
 }
 
 func (svc service) UpdateClientOwner(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
+	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
 	if err != nil {
 		return mgclients.Client{}, err
 	}
@@ -305,59 +300,65 @@ func (svc service) DisableClient(ctx context.Context, token, id string) (mgclien
 }
 
 func (svc service) Share(ctx context.Context, token, id, relation string, userids ...string) error {
-	_, err := svc.authorize(ctx, userType, tokenKind, token, ownerPermission, thingType, id)
+	user, err := svc.identify(ctx, token)
 	if err != nil {
+		return nil
+	}
+	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return err
 	}
 
+	policies := magistrala.AddPoliciesReq{}
 	for _, userid := range userids {
-		addPolicyReq := &magistrala.AddPolicyReq{
-			SubjectType: userType,
-			Subject:     userid,
+		policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			SubjectType: auth.UserType,
+			Subject:     auth.EncodeDomainUserID(user.GetDomainId(), userid),
 			Relation:    relation,
-			ObjectType:  thingType,
+			ObjectType:  auth.ThingType,
 			Object:      id,
-		}
-
-		res, err := svc.auth.AddPolicy(ctx, addPolicyReq)
-		if err != nil {
-			return err
-		}
-		if !res.Authorized {
-			return errors.ErrAuthorization
-		}
+		})
+	}
+	res, err := svc.auth.AddPolicies(ctx, &policies)
+	if err != nil {
+		return err
+	}
+	if !res.Authorized {
+		return errors.ErrAuthorization
 	}
 	return nil
 }
 
 func (svc service) Unshare(ctx context.Context, token, id, relation string, userids ...string) error {
-	_, err := svc.authorize(ctx, userType, tokenKind, token, ownerPermission, thingType, id)
+	user, err := svc.identify(ctx, token)
 	if err != nil {
+		return nil
+	}
+	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return err
 	}
 
+	policies := magistrala.DeletePoliciesReq{}
 	for _, userid := range userids {
-		delPolicyReq := &magistrala.DeletePolicyReq{
-			SubjectType: userType,
-			Subject:     userid,
+		policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+			SubjectType: auth.UserType,
+			Subject:     auth.EncodeDomainUserID(user.GetDomainId(), userid),
 			Relation:    relation,
-			ObjectType:  thingType,
+			ObjectType:  auth.ThingType,
 			Object:      id,
-		}
-
-		res, err := svc.auth.DeletePolicy(ctx, delPolicyReq)
-		if err != nil {
-			return err
-		}
-		if !res.Deleted {
-			return errors.ErrAuthorization
-		}
+		})
+	}
+	res, err := svc.auth.DeletePolicies(ctx, &policies)
+	if err != nil {
+		return err
+	}
+	if !res.Deleted {
+		return errors.ErrAuthorization
 	}
 	return nil
 }
 
 func (svc service) changeClientStatus(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, userType, tokenKind, token, deletePermission, thingType, client.ID)
+	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.DeletePermission, auth.ThingType, client.ID)
 	if err != nil {
 		return mgclients.Client{}, err
 	}
@@ -374,15 +375,15 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 }
 
 func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string, pm mgclients.Page) (mgclients.MembersPage, error) {
-	if _, err := svc.authorize(ctx, userType, tokenKind, token, pm.Permission, groupType, groupID); err != nil {
+	if _, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, pm.Permission, auth.GroupType, groupID); err != nil {
 		return mgclients.MembersPage{}, err
 	}
 
 	tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
-		SubjectType: groupType,
+		SubjectType: auth.GroupType,
 		Subject:     groupID,
-		Permission:  groupRelation,
-		ObjectType:  thingType,
+		Permission:  auth.GroupRelation,
+		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
 		return mgclients.MembersPage{}, err
@@ -418,13 +419,15 @@ func (svc service) Identify(ctx context.Context, key string) (string, error) {
 	return client.ID, nil
 }
 
-func (svc service) identify(ctx context.Context, token string) (string, error) {
-	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+func (svc service) identify(ctx context.Context, token string) (*magistrala.IdentityRes, error) {
+	res, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return user.GetId(), nil
+	if res.GetId() == "" || res.GetDomainId() == "" {
+		return nil, errors.ErrDomainAuthorization
+	}
+	return res, nil
 }
 
 func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, perm, objType, obj string) (string, error) {

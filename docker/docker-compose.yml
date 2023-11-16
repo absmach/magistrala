@@ -267,6 +267,8 @@ services:
       POSTGRES_PASSWORD: ${MG_USERS_DB_PASS}
       POSTGRES_DB: ${MG_USERS_DB_NAME}
       MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+    ports:
+      - 6000:5432
     networks:
       - magistrala-base-net
     volumes:

@@ -34,19 +34,19 @@ func (tm *tracingMiddleware) RegisterClient(ctx context.Context, token string, c
 }
 
 // IssueToken traces the "IssueToken" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) IssueToken(ctx context.Context, identity, secret string) (*magistrala.Token, error) {
+func (tm *tracingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_issue_token", trace.WithAttributes(attribute.String("identity", identity)))
 	defer span.End()
 
-	return tm.svc.IssueToken(ctx, identity, secret)
+	return tm.svc.IssueToken(ctx, identity, secret, domainID)
 }
 
 // RefreshToken traces the "RefreshToken" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) RefreshToken(ctx context.Context, accessToken string) (*magistrala.Token, error) {
+func (tm *tracingMiddleware) RefreshToken(ctx context.Context, accessToken, domainID string) (*magistrala.Token, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_refresh_token", trace.WithAttributes(attribute.String("access_token", accessToken)))
 	defer span.End()
 
-	return tm.svc.RefreshToken(ctx, accessToken)
+	return tm.svc.RefreshToken(ctx, accessToken, domainID)
 }
 
 // ViewClient traces the "ViewClient" operation of the wrapped clients.Service.
@@ -144,15 +144,15 @@ func (tm *tracingMiddleware) ViewProfile(ctx context.Context, token string) (mgc
 	return tm.svc.ViewProfile(ctx, token)
 }
 
-// UpdateClientOwner traces the "UpdateClientOwner" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) UpdateClientOwner(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_update_client_owner", trace.WithAttributes(
+// UpdateClientRole traces the "UpdateClientRole" operation of the wrapped clients.Service.
+func (tm *tracingMiddleware) UpdateClientRole(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_update_client_role", trace.WithAttributes(
 		attribute.String("id", cli.ID),
 		attribute.StringSlice("tags", cli.Tags),
 	))
 	defer span.End()
 
-	return tm.svc.UpdateClientOwner(ctx, token, cli)
+	return tm.svc.UpdateClientRole(ctx, token, cli)
 }
 
 // EnableClient traces the "EnableClient" operation of the wrapped clients.Service.

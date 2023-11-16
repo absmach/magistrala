@@ -69,6 +69,12 @@ var (
 	// ErrMalformedPolicyAct indicates missing policies action.
 	ErrMalformedPolicyAct = errors.New("malfalmormed policy action")
 
+	// ErrMalformedPolicyRel indicates missing policies relation.
+	ErrMalformedPolicyRel = errors.New("malfalmormed policy relation")
+
+	// ErrMalformedPolicyPer indicates missing policies relation.
+	ErrMalformedPolicyPer = errors.New("malfalmormed policy permission")
+
 	// ErrMissingCertData indicates missing cert data (ttl).
 	ErrMissingCertData = errors.New("missing certificate data")
 
@@ -152,4 +158,7 @@ var (
 
 	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type.
 	ErrUnsupportedContentType = errors.New("unsupported content type")
+
+	// ErrRollbackTx indicates failed to rollback transaction
+	ErrRollbackTx = errors.New("failed to rollback transaction")
 )

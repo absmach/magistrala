@@ -22,6 +22,7 @@ const (
 	RelationKey      = "relation"
 	StatusKey        = "status"
 	OffsetKey        = "offset"
+	OrderKey         = "order"
 	LimitKey         = "limit"
 	MetadataKey      = "metadata"
 	ParentKey        = "parent_id"
@@ -44,6 +45,8 @@ const (
 	DefPermission    = "view"
 	DefTotal         = uint64(100)
 	DefOffset        = 0
+	DefOrder         = "updated_by"
+	DefDir           = "asc"
 	DefLimit         = 10
 	DefLevel         = 0
 	DefStatus        = "enabled"

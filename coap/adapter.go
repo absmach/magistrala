@@ -57,7 +57,7 @@ func New(auth magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 
 func (svc *adapterService) Publish(ctx context.Context, key string, msg *messaging.Message) error {
 	ar := &magistrala.AuthorizeReq{
-		Namespace:   "",
+		Domain:      "",
 		SubjectType: "thing",
 		Permission:  "publish",
 		Subject:     key,
@@ -78,7 +78,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
 	ar := &magistrala.AuthorizeReq{
-		Namespace:   "",
+		Domain:      "",
 		SubjectType: "thing",
 		Permission:  "subscribe",
 		Subject:     key,
@@ -106,7 +106,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 
 func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
 	ar := &magistrala.AuthorizeReq{
-		Namespace:   "",
+		Domain:      "",
 		SubjectType: "thing",
 		Permission:  "subscribe",
 		Subject:     key,

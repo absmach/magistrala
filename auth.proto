@@ -18,12 +18,13 @@ service AuthzService {
 // functionalities for the users service.
 service AuthService {
   rpc Issue(IssueReq) returns (Token) {}
-  rpc Login(LoginReq) returns (Token) {}
   rpc Refresh(RefreshReq) returns (Token) {}
   rpc Identify(IdentityReq) returns (IdentityRes) {}
   rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
   rpc AddPolicy(AddPolicyReq) returns (AddPolicyRes) {}
+  rpc AddPolicies(AddPoliciesReq) returns (AddPoliciesRes) {}
   rpc DeletePolicy(DeletePolicyReq) returns (DeletePolicyRes) {}
+  rpc DeletePolicies(DeletePoliciesReq) returns (DeletePoliciesRes) {}
   rpc ListObjects(ListObjectsReq) returns (ListObjectsRes) {}
   rpc ListAllObjects(ListObjectsReq) returns (ListObjectsRes) {}
   rpc CountObjects(CountObjectsReq) returns (CountObjectsRes) {}
@@ -46,23 +47,24 @@ message IdentityReq {
 }
 
 message IdentityRes {
-    string id    = 1;
+    string id    = 1; // IMPROVEMENT NOTE: change name from "id" to "subject" , sub in jwt = user id  + domain id //
+    string user_id = 2; // user id
+    string domain_id = 3; // domain id
 }
 
 message IssueReq {
-  string id = 1;
+  string user_id = 1;
+  optional string domain_id = 2;
   uint32 type = 3;
 }
 
-message LoginReq {
-  string id = 1;
-  string domain = 3;
+message RefreshReq {
+  string refresh_token = 1;
+  optional string domain_id = 2;
 }
 
-message RefreshReq { string value = 1; }
-
 message AuthorizeReq {
-  string namespace = 1;        // Namespace = Domain
+  string domain = 1;           // Domain
   string subject_type = 2;     // Thing or User
   string subject_kind = 3;     // ID or Token
   string subject_relation = 4; // Subject relation
@@ -79,33 +81,49 @@ message AuthorizeRes {
 }
 
 message AddPolicyReq {
-  string namespace = 1;
+  string domain = 1;
   string subject_type = 2;
   string subject_relation = 3;
-  string subject = 4;
-  string relation = 5;
-  string permission = 6;
-  string object = 7;
-  string object_type = 8;
+  string subject_kind = 4;
+  string subject = 5;
+  string relation = 6;
+  string permission = 7;
+  string object = 8;
+  string object_kind = 9;
+  string object_type = 10;
+}
+
+message AddPoliciesReq{
+  repeated AddPolicyReq addPoliciesReq= 1;
 }
 
 message AddPolicyRes { bool authorized = 1; }
 
+message AddPoliciesRes { bool authorized = 1; }
+
 message DeletePolicyReq {
-  string namespace = 1;
+  string domain = 1;
   string subject_type = 2;
   string subject_relation = 3;
-  string subject = 4;
-  string relation = 5;
-  string permission = 6;
-  string object = 7;
-  string object_type = 8;
+  string subject_kind = 4;
+  string subject = 5;
+  string relation = 6;
+  string permission = 7;
+  string object = 8;
+  string object_kind = 9;
+  string object_type = 10;
+}
+
+message DeletePoliciesReq {
+  repeated DeletePolicyReq deletePoliciesReq = 1;
 }
 
 message DeletePolicyRes { bool deleted = 1; }
 
+message DeletePoliciesRes { bool deleted = 1; }
+
 message ListObjectsReq {
-  string namespace = 1;
+  string domain = 1;
   string subject_type = 2;
   string subject_relation = 3;
   string subject = 4;
@@ -123,7 +141,7 @@ message ListObjectsRes {
 }
 
 message CountObjectsReq {
-  string namespace = 1;
+  string domain = 1;
   string subject_type = 2;
   string subject_relation = 3;
   string subject = 4;
@@ -137,7 +155,7 @@ message CountObjectsReq {
 message CountObjectsRes { int64 count = 1; }
 
 message ListSubjectsReq {
-  string namespace = 1;
+  string domain = 1;
   string subject_type = 2;
   string subject_relation = 3;
   string subject = 4;
@@ -155,7 +173,7 @@ message ListSubjectsRes {
 }
 
 message CountSubjectsReq {
-  string namespace = 1;
+  string domain = 1;
   string subject_type = 2;
   string subject_relation = 3;
   string subject = 4;

@@ -25,7 +25,7 @@ func GenerateUUID(t *testing.T) string {
 	return ulid
 }
 
-func GenerateValidToken(t *testing.T, clientID string, svc users.Service, cRepo *cmocks.Repository, phasher users.Hasher) string {
+func GenerateValidToken(t *testing.T, clientID string, svc users.Service, cRepo *cmocks.Repository, phasher users.Hasher, domainID string) string {
 	client := mgclients.Client{
 		ID:   clientID,
 		Name: "validtoken",
@@ -39,7 +39,7 @@ func GenerateValidToken(t *testing.T, clientID string, svc users.Service, cRepo 
 	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
 
 	repoCall := cRepo.On("RetrieveByIdentity", context.Background(), client.Credentials.Identity).Return(rClient, nil)
-	token, err := svc.IssueToken(context.Background(), client.Credentials.Identity, client.Credentials.Secret)
+	token, err := svc.IssueToken(context.Background(), client.Credentials.Identity, client.Credentials.Secret, domainID)
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("Create token expected nil got %s\n", err))
 	ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), client.Credentials.Identity)
 	assert.True(t, ok, "RetrieveByIdentity was not called on creating token")

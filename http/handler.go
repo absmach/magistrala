@@ -146,7 +146,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	ar := &magistrala.AuthorizeReq{
 		Subject:     tok,
 		Object:      msg.Channel,
-		Namespace:   "",
+		Domain:      "",
 		SubjectType: "thing",
 		Permission:  "publish",
 		ObjectType:  "group",

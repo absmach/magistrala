@@ -17,6 +17,15 @@ import (
 
 const defRetrieveAllLimit = 1000
 
+var (
+	errInvalidSubject   = errors.New("invalid subject kind")
+	errAddPolicies      = errors.New("failed to add policies")
+	errRetrievePolicies = errors.New("failed to retrieve policies")
+	errRemovePolicies   = errors.New("failed to remove the policies")
+	errNoPolicies       = errors.New("no policies provided")
+	errPermission       = errors.New("failed to check permission")
+)
+
 type policyAgent struct {
 	client           *authzed.Client
 	permissionClient v1.PermissionsServiceClient
@@ -40,20 +49,26 @@ func (pa *policyAgent) CheckPolicy(ctx context.Context, pr auth.PolicyReq) error
 
 	resp, err := pa.permissionClient.CheckPermission(ctx, &checkReq)
 	if err != nil {
-		return errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to check permission: %w", err))
+		return errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errPermission, err))
 	}
 	if resp.Permissionship == v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION {
 		return nil
 	}
 	if reason, ok := v1.CheckPermissionResponse_Permissionship_name[int32(resp.Permissionship)]; ok {
-		return errors.Wrap(errors.ErrAuthorization, fmt.Errorf("%s", reason))
+		return errors.Wrap(errors.ErrAuthorization, errors.New(reason))
 	}
 	return errors.ErrAuthorization
 }
 
 func (pa *policyAgent) AddPolicies(ctx context.Context, prs []auth.PolicyReq) error {
 	updates := []*v1.RelationshipUpdate{}
+	var preconds []*v1.Precondition
 	for _, pr := range prs {
+		precond, err := pa.policyPreCondition(pr)
+		if err != nil {
+			return err
+		}
+		preconds = append(preconds, precond...)
 		updates = append(updates, &v1.RelationshipUpdate{
 			Operation: v1.RelationshipUpdate_OPERATION_CREATE,
 			Relationship: &v1.Relationship{
@@ -63,16 +78,22 @@ func (pa *policyAgent) AddPolicies(ctx context.Context, prs []auth.PolicyReq) er
 			},
 		})
 	}
-	if len(updates) > 0 {
-		_, err := pa.permissionClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{Updates: updates})
-		if err != nil {
-			return errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to add policy: %w", err))
-		}
+	if len(updates) == 0 {
+		return errNoPolicies
+	}
+	_, err := pa.permissionClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{Updates: updates, OptionalPreconditions: preconds})
+	if err != nil {
+		return errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errAddPolicies, err))
 	}
 	return nil
 }
 
 func (pa *policyAgent) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {
+	precond, err := pa.policyPreCondition(pr)
+	if err != nil {
+		return err
+	}
+
 	updates := []*v1.RelationshipUpdate{
 		{
 			Operation: v1.RelationshipUpdate_OPERATION_CREATE,
@@ -83,9 +104,9 @@ func (pa *policyAgent) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {
 			},
 		},
 	}
-	_, err := pa.permissionClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{Updates: updates})
+	_, err = pa.permissionClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{Updates: updates, OptionalPreconditions: precond})
 	if err != nil {
-		return errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to add policy: %w", err))
+		return errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errAddPolicies, err))
 	}
 	return nil
 }
@@ -102,11 +123,12 @@ func (pa *policyAgent) DeletePolicies(ctx context.Context, prs []auth.PolicyReq)
 			},
 		})
 	}
-	if len(updates) > 0 {
-		_, err := pa.permissionClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{Updates: updates})
-		if err != nil {
-			return errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to delete policy: %w", err))
-		}
+	if len(updates) == 0 {
+		return errNoPolicies
+	}
+	_, err := pa.permissionClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{Updates: updates})
+	if err != nil {
+		return errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errRemovePolicies, err))
 	}
 	return nil
 }
@@ -126,9 +148,8 @@ func (pa *policyAgent) DeletePolicy(ctx context.Context, pr auth.PolicyReq) erro
 			},
 		},
 	}
-	_, err := pa.permissionClient.DeleteRelationships(ctx, req)
-	if err != nil {
-		return errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to remove the policy: %w", err))
+	if _, err := pa.permissionClient.DeleteRelationships(ctx, req); err != nil {
+		return errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errRemovePolicies, err))
 	}
 	return nil
 }
@@ -146,31 +167,27 @@ func (pa *policyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, n
 	}
 	stream, err := pa.permissionClient.LookupResources(ctx, resourceReq)
 	if err != nil {
-		return nil, "", errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to retrieve policies: %w", err))
+		return nil, "", errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errRetrievePolicies, err))
 	}
 	resources := []*v1.LookupResourcesResponse{}
-	var retErr error
-loop:
+	var token string
 	for {
 		resp, err := stream.Recv()
 		switch err {
 		case nil:
 			resources = append(resources, resp)
 		case io.EOF:
-			break loop
+			if len(resources) > 0 && resources[len(resources)-1].AfterResultCursor != nil {
+				token = resources[len(resources)-1].AfterResultCursor.Token
+			}
+			return objectsToAuthPolicies(resources), token, nil
 		default:
-			retErr = err
-			break loop
+			if len(resources) > 0 && resources[len(resources)-1].AfterResultCursor != nil {
+				token = resources[len(resources)-1].AfterResultCursor.Token
+			}
+			return objectsToAuthPolicies(resources), token, errors.Wrap(errors.ErrViewEntity, err)
 		}
 	}
-	var token string
-	if len(resources) > 0 {
-		token = resources[len(resources)-1].AfterResultCursor.Token
-	}
-	if retErr != nil {
-		retErr = errors.Wrap(errors.ErrViewEntity, retErr)
-	}
-	return objectsToAuthPolicies(resources), token, retErr
 }
 
 func (pa *policyAgent) RetrieveAllObjects(ctx context.Context, pr auth.PolicyReq) ([]auth.PolicyRes, error) {
@@ -181,7 +198,7 @@ func (pa *policyAgent) RetrieveAllObjects(ctx context.Context, pr auth.PolicyReq
 	}
 	stream, err := pa.permissionClient.LookupResources(ctx, resourceReq)
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to retrieve policies: %w", err))
+		return nil, errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errRetrievePolicies, err))
 	}
 	tuples := []auth.PolicyRes{}
 	for {
@@ -228,11 +245,10 @@ func (pa *policyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, 
 	}
 	stream, err := pa.permissionClient.LookupSubjects(ctx, &subjectsReq)
 	if err != nil {
-		return nil, "", errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to retrieve policies: %w", err))
+		return nil, "", errors.Wrap(errors.ErrMalformedEntity, errors.Wrap(errRetrievePolicies, err))
 	}
 	subjects := []*v1.LookupSubjectsResponse{}
-	var retErr error
-loop:
+	var token string
 	for {
 		resp, err := stream.Recv()
 
@@ -240,16 +256,17 @@ loop:
 		case nil:
 			subjects = append(subjects, resp)
 		case io.EOF:
-			break loop
+			if len(subjects) > 0 && subjects[len(subjects)-1].AfterResultCursor != nil {
+				token = subjects[len(subjects)-1].AfterResultCursor.Token
+			}
+			return subjectsToAuthPolicies(subjects), token, nil
 		default:
-			retErr = err
-			break loop
+			if len(subjects) > 0 && subjects[len(subjects)-1].AfterResultCursor != nil {
+				token = subjects[len(subjects)-1].AfterResultCursor.Token
+			}
+			return subjectsToAuthPolicies(subjects), token, errors.Wrap(errors.ErrViewEntity, err)
 		}
 	}
-	if retErr != nil {
-		retErr = errors.Wrap(errors.ErrViewEntity, retErr)
-	}
-	return subjectsToAuthPolicies(subjects), "", retErr
 }
 
 func (pa *policyAgent) RetrieveAllSubjects(ctx context.Context, pr auth.PolicyReq) ([]auth.PolicyRes, error) {
@@ -314,7 +331,6 @@ func (pa *policyAgent) Watch(continueToken string) {
 	if err != nil {
 		pa.logger.Error(fmt.Sprintf("got error while watching: %s", err.Error()))
 	}
-loop:
 	for {
 		watchResp, err := stream.Recv()
 		switch err {
@@ -322,10 +338,10 @@ loop:
 			pa.publishToStream(watchResp)
 		case io.EOF:
 			pa.logger.Info("got EOF while watch streaming")
-			break loop
+			return
 		default:
 			pa.logger.Error(fmt.Sprintf("got error while watch streaming : %s", err.Error()))
-			break loop
+			return
 		}
 	}
 }
@@ -346,4 +362,271 @@ func (pa *policyAgent) publishToStream(resp *v1.WatchResponse) {
 		Operation : %s	object_type: %s		object_id: %s 	relation: %s 	subject_type: %s 	subject_relation: %s	subject_id: %s
 		`, operation, objectType, objectID, relation, subjectType, subjectRelation, subjectID))
 	}
+}
+
+func (pa *policyAgent) policyPreCondition(pr auth.PolicyReq) ([]*v1.Precondition, error) {
+	// Checks are required for following  ( -> means adding)
+	// 1.) user -> group (both user groups and channels)
+	// 2.) user -> thing
+	// 3.) group -> group (both for adding parent_group and channels)
+	// 4.) group (channel) -> thing
+
+	switch {
+	// 1.) user -> group (both user groups and channels)
+	// Checks :
+	// - USER with ANY RELATION to DOMAIN
+	// - GROUP with DOMAIN RELATION to DOMAIN
+	case pr.SubjectType == auth.UserType && pr.ObjectType == auth.GroupType:
+		return userGroupPreConditions(pr)
+
+	// 2.) user -> thing
+	// Checks :
+	// - USER with ANY RELATION to DOMAIN
+	// - THING with DOMAIN RELATION to DOMAIN
+	case pr.SubjectType == auth.UserType && pr.ObjectType == auth.ThingType:
+		return userThingPreConditions(pr)
+
+	// 3.) group -> group (both for adding parent_group and channels)
+	// Checks :
+	// - CHILD_GROUP with out PARENT_GROUP RELATION with any GROUP
+	case pr.SubjectType == auth.GroupType && pr.ObjectType == auth.GroupType:
+		return groupPreConditions(pr)
+
+	// 4.) group (channel) -> thing
+	// Checks :
+	// - GROUP (channel) with DOMAIN RELATION to DOMAIN
+	// - NO GROUP should not have PARENT_GROUP RELATION with GROUP (channel)
+	// - THING with DOMAIN RELATION to DOMAIN
+	case pr.SubjectType == auth.GroupType && pr.ObjectType == auth.ThingType:
+		return channelThingPreCondition(pr)
+
+	// Check thing and group not belongs to other domain before adding to domain
+	case pr.SubjectType == auth.DomainType && pr.Relation == auth.DomainRelation && (pr.ObjectType == auth.ThingType || pr.ObjectType == auth.GroupType):
+		preconds := []*v1.Precondition{
+			{
+				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       pr.ObjectType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.DomainRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType: auth.DomainType,
+					},
+				},
+			},
+		}
+		return preconds, nil
+	}
+	return nil, nil
+}
+
+func userGroupPreConditions(pr auth.PolicyReq) ([]*v1.Precondition, error) {
+	preconds := []*v1.Precondition{
+		{
+			Operation: v1.Precondition_OPERATION_MUST_MATCH,
+			Filter: &v1.RelationshipFilter{
+				ResourceType:       auth.DomainType,
+				OptionalResourceId: pr.Domain,
+				OptionalSubjectFilter: &v1.SubjectFilter{
+					SubjectType:       auth.UserType,
+					OptionalSubjectId: pr.Subject,
+				},
+			},
+		},
+	}
+	switch {
+	case pr.ObjectKind == auth.NewGroupKind || pr.ObjectKind == auth.NewChannelKind:
+		preconds = append(preconds,
+			&v1.Precondition{
+				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       auth.GroupType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.DomainRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType: auth.DomainType,
+					},
+				},
+			},
+		)
+	default:
+		preconds = append(preconds,
+			&v1.Precondition{
+				Operation: v1.Precondition_OPERATION_MUST_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       auth.GroupType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.DomainRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType:       auth.DomainType,
+						OptionalSubjectId: pr.Domain,
+					},
+				},
+			},
+		)
+	}
+	return preconds, nil
+}
+
+func userThingPreConditions(pr auth.PolicyReq) ([]*v1.Precondition, error) {
+	preconds := []*v1.Precondition{
+		{
+			Operation: v1.Precondition_OPERATION_MUST_MATCH,
+			Filter: &v1.RelationshipFilter{
+				ResourceType:       auth.DomainType,
+				OptionalResourceId: pr.Domain,
+				OptionalSubjectFilter: &v1.SubjectFilter{
+					SubjectType:       auth.UserType,
+					OptionalSubjectId: pr.Subject,
+				},
+			},
+		},
+	}
+	switch {
+	// For New thing
+	// - THING without DOMAIN RELATION to ANY DOMAIN
+	case pr.ObjectKind == auth.NewThingKind:
+		preconds = append(preconds,
+			&v1.Precondition{
+				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       auth.ThingType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.DomainRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType: auth.DomainType,
+					},
+				},
+			},
+		)
+	default:
+		// For existing thing
+		// - THING without DOMAIN RELATION to ANY DOMAIN
+		preconds = append(preconds,
+			&v1.Precondition{
+				Operation: v1.Precondition_OPERATION_MUST_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       auth.ThingType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.DomainRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType:       auth.DomainType,
+						OptionalSubjectId: pr.Domain,
+					},
+				},
+			},
+		)
+	}
+	return preconds, nil
+}
+
+func groupPreConditions(pr auth.PolicyReq) ([]*v1.Precondition, error) {
+	// - PARENT_GROUP (subject) with DOMAIN RELATION to DOMAIN
+	precond := []*v1.Precondition{
+		{
+			Operation: v1.Precondition_OPERATION_MUST_MATCH,
+			Filter: &v1.RelationshipFilter{
+				ResourceType:       auth.GroupType,
+				OptionalResourceId: pr.Subject,
+				OptionalRelation:   auth.DomainRelation,
+				OptionalSubjectFilter: &v1.SubjectFilter{
+					SubjectType:       auth.DomainType,
+					OptionalSubjectId: pr.Domain,
+				},
+			},
+		},
+	}
+	if pr.ObjectKind != auth.ChannelsKind {
+		precond = append(precond,
+			&v1.Precondition{
+				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       auth.GroupType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.ParentGroupRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType: auth.GroupType,
+					},
+				},
+			},
+		)
+	}
+	switch {
+	// - NEW CHILD_GROUP (object) with out DOMAIN RELATION to ANY DOMAIN
+	case pr.ObjectType == auth.GroupType && pr.ObjectKind == auth.NewGroupKind:
+		precond = append(precond,
+			&v1.Precondition{
+				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       auth.GroupType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.DomainRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType: auth.DomainType,
+					},
+				},
+			},
+		)
+	default:
+		// - CHILD_GROUP (object) with DOMAIN RELATION to DOMAIN
+		precond = append(precond,
+			&v1.Precondition{
+				Operation: v1.Precondition_OPERATION_MUST_MATCH,
+				Filter: &v1.RelationshipFilter{
+					ResourceType:       auth.GroupType,
+					OptionalResourceId: pr.Object,
+					OptionalRelation:   auth.DomainRelation,
+					OptionalSubjectFilter: &v1.SubjectFilter{
+						SubjectType:       auth.DomainType,
+						OptionalSubjectId: pr.Domain,
+					},
+				},
+			},
+		)
+	}
+	return precond, nil
+}
+
+func channelThingPreCondition(pr auth.PolicyReq) ([]*v1.Precondition, error) {
+	if pr.SubjectKind != auth.ChannelsKind {
+		return nil, errInvalidSubject
+	}
+	precond := []*v1.Precondition{
+		{
+			Operation: v1.Precondition_OPERATION_MUST_MATCH,
+			Filter: &v1.RelationshipFilter{
+				ResourceType:       auth.GroupType,
+				OptionalResourceId: pr.Subject,
+				OptionalRelation:   auth.DomainRelation,
+				OptionalSubjectFilter: &v1.SubjectFilter{
+					SubjectType:       auth.DomainType,
+					OptionalSubjectId: pr.Domain,
+				},
+			},
+		},
+		{
+			Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+			Filter: &v1.RelationshipFilter{
+				ResourceType:     auth.GroupType,
+				OptionalRelation: auth.ParentGroupRelation,
+				OptionalSubjectFilter: &v1.SubjectFilter{
+					SubjectType:       auth.GroupType,
+					OptionalSubjectId: pr.Subject,
+				},
+			},
+		},
+		{
+			Operation: v1.Precondition_OPERATION_MUST_MATCH,
+			Filter: &v1.RelationshipFilter{
+				ResourceType:       auth.ThingType,
+				OptionalResourceId: pr.Object,
+				OptionalRelation:   auth.DomainRelation,
+				OptionalSubjectFilter: &v1.SubjectFilter{
+					SubjectType:       auth.DomainType,
+					OptionalSubjectId: pr.Domain,
+				},
+			},
+		},
+	}
+	return precond, nil
 }

@@ -98,8 +98,8 @@ func TestHandshake(t *testing.T) {
 	ts, err := newProxyHTPPServer(handler, target)
 	require.Nil(t, err)
 	defer ts.Close()
-	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: id, Namespace: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: "1"}, nil)
-	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: id, Namespace: "", SubjectType: "thing", Permission: "subscribe", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: "2"}, nil)
+	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: id, Domain: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: "1"}, nil)
+	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: id, Domain: "", SubjectType: "thing", Permission: "subscribe", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: "2"}, nil)
 	auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false, Id: "3"}, nil)
 
 	cases := []struct {

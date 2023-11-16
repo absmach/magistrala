@@ -96,7 +96,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 // and returns the thingID if it is.
 func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, action string) (string, error) {
 	ar := &magistrala.AuthorizeReq{
-		Namespace:   "",
+		Domain:      "",
 		SubjectType: "thing",
 		Permission:  action,
 		Subject:     thingKey,

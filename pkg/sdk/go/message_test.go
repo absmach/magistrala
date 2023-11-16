@@ -62,8 +62,8 @@ func TestSendMessage(t *testing.T) {
 
 	mgsdk := sdk.NewSDK(sdkConf)
 
-	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: atoken, Object: chanID, Namespace: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, nil)
-	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: invalidToken, Object: chanID, Namespace: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, errors.ErrAuthentication)
+	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: atoken, Object: chanID, Domain: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, nil)
+	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: invalidToken, Object: chanID, Domain: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, errors.ErrAuthentication)
 	auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false, Id: ""}, nil)
 
 	cases := map[string]struct {

@@ -19,8 +19,8 @@ type Authz struct {
 	mock.Mock
 }
 
-func (m *Authz) AddPolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error {
-	ret := m.Called(ctx, token, object, subjectIDs, relations)
+func (m *Authz) AddPolicies(ctx context.Context, prs []auth.PolicyReq) error {
+	ret := m.Called(ctx, prs)
 
 	return ret.Error(0)
 }
@@ -49,8 +49,8 @@ func (m *Authz) CountSubjects(ctx context.Context, pr auth.PolicyReq) (int, erro
 	return ret.Get(0).(int), ret.Error(1)
 }
 
-func (m *Authz) DeletePolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error {
-	ret := m.Called(ctx, token, object, subjectIDs, relations)
+func (m *Authz) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
+	ret := m.Called(ctx, prs)
 
 	return ret.Error(0)
 }

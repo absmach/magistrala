@@ -5,7 +5,6 @@ package grpc
 
 import (
 	"context"
-	"time"
 
 	"github.com/absmach/magistrala/auth"
 	"github.com/go-kit/kit/endpoint"
@@ -19,33 +18,9 @@ func issueEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 
 		key := auth.Key{
-			Type:    req.keyType,
-			Subject: req.id,
-		}
-		tkn, err := svc.Issue(ctx, "", key)
-		if err != nil {
-			return issueRes{}, err
-		}
-		ret := issueRes{
-			accessToken:  tkn.AccessToken,
-			refreshToken: tkn.RefreshToken,
-			accessType:   tkn.AccessType,
-		}
-		return ret, nil
-	}
-}
-
-func loginEndpoint(svc auth.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(issueReq)
-		if err := req.validate(); err != nil {
-			return issueRes{}, err
-		}
-
-		key := auth.Key{
-			Type:     req.keyType,
-			Subject:  req.id,
-			IssuedAt: time.Now().UTC(),
+			Type:   req.keyType,
+			User:   req.userID,
+			Domain: req.domainID,
 		}
 		tkn, err := svc.Issue(ctx, "", key)
 		if err != nil {
@@ -67,8 +42,8 @@ func refreshEndpoint(svc auth.Service) endpoint.Endpoint {
 			return issueRes{}, err
 		}
 
-		key := auth.Key{Type: auth.RefreshKey}
-		tkn, err := svc.Issue(ctx, req.value, key)
+		key := auth.Key{Domain: req.domainID, Type: auth.RefreshKey}
+		tkn, err := svc.Issue(ctx, req.refreshToken, key)
 		if err != nil {
 			return issueRes{}, err
 		}
@@ -88,12 +63,12 @@ func identifyEndpoint(svc auth.Service) endpoint.Endpoint {
 			return identityRes{}, err
 		}
 
-		id, err := svc.Identify(ctx, req.token)
+		key, err := svc.Identify(ctx, req.token)
 		if err != nil {
 			return identityRes{}, err
 		}
 
-		return identityRes{id: id}, nil
+		return identityRes{id: key.Subject, userID: key.User, domainID: key.Domain}, nil
 	}
 }
 
@@ -106,7 +81,7 @@ func authorizeEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 
 		err := svc.Authorize(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
 			SubjectKind: req.SubjectKind,
 			Subject:     req.Subject,
@@ -130,18 +105,50 @@ func addPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 
 		err := svc.AddPolicy(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
+			SubjectKind: req.SubjectKind,
 			Subject:     req.Subject,
 			Relation:    req.Relation,
 			Permission:  req.Permission,
 			ObjectType:  req.ObjectType,
+			ObjectKind:  req.ObjectKind,
 			Object:      req.Object,
 		})
 		if err != nil {
 			return addPolicyRes{}, err
 		}
 		return addPolicyRes{authorized: true}, err
+	}
+}
+
+func addPoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		reqs := request.(policiesReq)
+		if err := reqs.validate(); err != nil {
+			return addPoliciesRes{}, err
+		}
+
+		prs := []auth.PolicyReq{}
+
+		for _, req := range reqs {
+			prs = append(prs, auth.PolicyReq{
+				Domain:      req.Domain,
+				SubjectType: req.SubjectType,
+				SubjectKind: req.SubjectKind,
+				Subject:     req.Subject,
+				Relation:    req.Relation,
+				Permission:  req.Permission,
+				ObjectType:  req.ObjectType,
+				ObjectKind:  req.ObjectKind,
+				Object:      req.Object,
+			})
+		}
+
+		if err := svc.AddPolicies(ctx, prs); err != nil {
+			return addPoliciesRes{}, err
+		}
+		return addPoliciesRes{authorized: true}, nil
 	}
 }
 
@@ -153,12 +160,14 @@ func deletePolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 
 		err := svc.DeletePolicy(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
+			SubjectKind: req.SubjectKind,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			Relation:    req.Relation,
 			Permission:  req.Permission,
 			ObjectType:  req.ObjectType,
+			ObjectKind:  req.ObjectKind,
 			Object:      req.Object,
 		})
 		if err != nil {
@@ -168,12 +177,42 @@ func deletePolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
+func deletePoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		reqs := request.(policiesReq)
+		if err := reqs.validate(); err != nil {
+			return deletePoliciesRes{}, err
+		}
+
+		prs := []auth.PolicyReq{}
+
+		for _, req := range reqs {
+			prs = append(prs, auth.PolicyReq{
+				Domain:      req.Domain,
+				SubjectType: req.SubjectType,
+				SubjectKind: req.SubjectKind,
+				Subject:     req.Subject,
+				Relation:    req.Relation,
+				Permission:  req.Permission,
+				ObjectType:  req.ObjectType,
+				ObjectKind:  req.ObjectKind,
+				Object:      req.Object,
+			})
+		}
+
+		if err := svc.DeletePolicies(ctx, prs); err != nil {
+			return deletePoliciesRes{}, err
+		}
+		return deletePoliciesRes{deleted: true}, nil
+	}
+}
+
 func listObjectsEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listObjectsReq)
 
 		page, err := svc.ListObjects(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			Relation:    req.Relation,
@@ -193,7 +232,7 @@ func listAllObjectsEndpoint(svc auth.Service) endpoint.Endpoint {
 		req := request.(listObjectsReq)
 
 		page, err := svc.ListAllObjects(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			Relation:    req.Relation,
@@ -213,7 +252,7 @@ func countObjectsEndpoint(svc auth.Service) endpoint.Endpoint {
 		req := request.(countObjectsReq)
 
 		count, err := svc.CountObjects(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			Relation:    req.Relation,
@@ -233,7 +272,7 @@ func listSubjectsEndpoint(svc auth.Service) endpoint.Endpoint {
 		req := request.(listSubjectsReq)
 
 		page, err := svc.ListSubjects(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			Relation:    req.Relation,
@@ -253,7 +292,7 @@ func listAllSubjectsEndpoint(svc auth.Service) endpoint.Endpoint {
 		req := request.(listSubjectsReq)
 
 		page, err := svc.ListAllSubjects(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			Relation:    req.Relation,
@@ -273,7 +312,7 @@ func countSubjectsEndpoint(svc auth.Service) endpoint.Endpoint {
 		req := request.(countSubjectsReq)
 
 		count, err := svc.CountSubjects(ctx, auth.PolicyReq{
-			Namespace:   req.Namespace,
+			Domain:      req.Domain,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			Relation:    req.Relation,

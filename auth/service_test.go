@@ -42,11 +42,12 @@ const (
 func newService() (auth.Service, *mocks.Keys) {
 	krepo := new(mocks.Keys)
 	prepo := new(mocks.PolicyAgent)
+	drepo := new(mocks.DomainsRepo)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))
 
-	return auth.New(krepo, idProvider, t, prepo, loginDuration, refreshDuration), krepo
+	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration), krepo
 }
 
 func TestIssue(t *testing.T) {
@@ -317,212 +318,44 @@ func TestAuthorize(t *testing.T) {
 func TestAddPolicy(t *testing.T) {
 	svc, _ := newService()
 
-	pr := auth.PolicyReq{Object: "obj", Relation: "rel", Subject: "sub"}
-	err := svc.AddPolicy(context.Background(), pr)
-	require.Nil(t, err, fmt.Sprintf("adding %v policy expected to succeed: %v", pr, err))
+	prs := []auth.PolicyReq{{Object: "obj", ObjectType: "object", Relation: "rel", Subject: "sub", SubjectType: "subject"}}
+	err := svc.AddPolicies(context.Background(), prs)
+	require.Nil(t, err, fmt.Sprintf("adding %v policies expected to succeed: %v", prs, err))
 
-	err = svc.Authorize(context.Background(), pr)
-	require.Nil(t, err, fmt.Sprintf("checking shared %v policy expected to be succeed: %#v", pr, err))
-}
-
-func TestDeletePolicy(t *testing.T) {
-	svc, _ := newService()
-
-	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRelation, Subject: id}
-	err := svc.DeletePolicy(context.Background(), pr)
-	require.Nil(t, err, fmt.Sprintf("deleting %v policy expected to succeed: %s", pr, err))
-}
-
-func TestAddPolicies(t *testing.T) {
-	svc, _ := newService()
-	secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
-
-	key := auth.Key{
-		ID:       "id",
-		Type:     auth.APIKey,
-		Subject:  id,
-		IssuedAt: time.Now(),
-	}
-
-	apiToken, err := svc.Issue(context.Background(), secret.AccessToken, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
-
-	thingID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	tmpID := "tmpid"
-
-	// Add read policy to users.
-	err = svc.AddPolicies(context.Background(), apiToken.AccessToken, thingID, []string{id, tmpID}, []string{readPolicy})
-	assert.Nil(t, err, fmt.Sprintf("adding policies expected to succeed: %s", err))
-
-	// Add write and delete policies to users.
-	err = svc.AddPolicies(context.Background(), apiToken.AccessToken, thingID, []string{id, tmpID}, []string{writePolicy, deletePolicy})
-	assert.Nil(t, err, fmt.Sprintf("adding multiple policies expected to succeed: %s", err))
-
-	cases := []struct {
-		desc   string
-		policy auth.PolicyReq
-		err    error
-	}{
-		{
-			desc:   "check valid 'read' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: readPolicy, Subject: id},
-			err:    nil,
-		},
-		{
-			desc:   "check valid 'write' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: writePolicy, Subject: id},
-			err:    nil,
-		},
-		{
-			desc:   "check valid 'delete' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: deletePolicy, Subject: id},
-			err:    nil,
-		},
-		{
-			desc:   "check valid 'read' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: readPolicy, Subject: tmpID},
-			err:    nil,
-		},
-		{
-			desc:   "check valid 'write' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: writePolicy, Subject: tmpID},
-			err:    nil,
-		},
-		{
-			desc:   "check valid 'delete' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: deletePolicy, Subject: tmpID},
-			err:    nil,
-		},
-		{
-			desc:   "check invalid 'access' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: "access", Subject: id},
-			err:    errors.ErrAuthorization,
-		},
-		{
-			desc:   "check invalid 'access' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: "access", Subject: tmpID},
-			err:    errors.ErrAuthorization,
-		},
-	}
-
-	for _, tc := range cases {
-		err := svc.Authorize(context.Background(), tc.policy)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v, got %v", tc.desc, tc.err, err))
+	for _, pr := range prs {
+		err = svc.Authorize(context.Background(), pr)
+		require.Nil(t, err, fmt.Sprintf("checking shared %v policy expected to be succeed: %#v", pr, err))
 	}
 }
 
 func TestDeletePolicies(t *testing.T) {
 	svc, _ := newService()
-	secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
-	key := auth.Key{
-		ID:       "id",
-		Type:     auth.APIKey,
-		Subject:  id,
-		IssuedAt: time.Now(),
-	}
-
-	apiToken, err := svc.Issue(context.Background(), secret.AccessToken, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
-
-	thingID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	tmpID := "tmpid"
-	memberPolicy := "member"
-
-	// Add read, write and delete policies to users.
-	err = svc.AddPolicies(context.Background(), apiToken.AccessToken, thingID, []string{id, tmpID}, []string{readPolicy, writePolicy, deletePolicy, memberPolicy})
-	assert.Nil(t, err, fmt.Sprintf("adding policies expected to succeed: %s", err))
-
-	// Delete multiple policies from single user.
-	err = svc.DeletePolicies(context.Background(), apiToken.AccessToken, thingID, []string{id}, []string{readPolicy, writePolicy})
-	assert.Nil(t, err, fmt.Sprintf("deleting policies from single user expected to succeed: %s", err))
-
-	// Delete multiple policies from multiple user.
-	err = svc.DeletePolicies(context.Background(), apiToken.AccessToken, thingID, []string{id, tmpID}, []string{deletePolicy, memberPolicy})
-	assert.Nil(t, err, fmt.Sprintf("deleting policies from multiple user expected to succeed: %s", err))
-
-	cases := []struct {
-		desc   string
-		policy auth.PolicyReq
-		err    error
-	}{
-		{
-			desc:   "check non-existing 'read' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: readPolicy, Subject: id},
-			err:    errors.ErrAuthorization,
-		},
-		{
-			desc:   "check non-existing 'write' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: writePolicy, Subject: id},
-			err:    errors.ErrAuthorization,
-		},
-		{
-			desc:   "check non-existing 'delete' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: deletePolicy, Subject: id},
-			err:    errors.ErrAuthorization,
-		},
-		{
-			desc:   "check non-existing 'member' policy of user with id",
-			policy: auth.PolicyReq{Object: thingID, Relation: memberPolicy, Subject: id},
-			err:    errors.ErrAuthorization,
-		},
-		{
-			desc:   "check non-existing 'delete' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: deletePolicy, Subject: tmpID},
-			err:    errors.ErrAuthorization,
-		},
-		{
-			desc:   "check non-existing 'member' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: memberPolicy, Subject: tmpID},
-			err:    errors.ErrAuthorization,
-		},
-		{
-			desc:   "check valid 'read' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: readPolicy, Subject: tmpID},
-			err:    nil,
-		},
-		{
-			desc:   "check valid 'write' policy of user with tmpid",
-			policy: auth.PolicyReq{Object: thingID, Relation: writePolicy, Subject: tmpID},
-			err:    nil,
-		},
-	}
-
-	for _, tc := range cases {
-		err := svc.Authorize(context.Background(), tc.policy)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v, got %v", tc.desc, tc.err, err))
-	}
+	prs := []auth.PolicyReq{{Object: "obj", ObjectType: "object", Relation: "rel", Subject: "sub", SubjectType: "subject"}}
+	err := svc.DeletePolicies(context.Background(), prs)
+	require.Nil(t, err, fmt.Sprintf("adding %v policies expected to succeed: %v", prs, err))
 }
 
 func TestListPolicies(t *testing.T) {
 	svc, _ := newService()
-	secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
-	key := auth.Key{
-		ID:       "id",
-		Type:     auth.APIKey,
-		Subject:  id,
-		IssuedAt: time.Now(),
-	}
-
-	apiToken, err := svc.Issue(context.Background(), secret.AccessToken, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 	pageLen := 15
 
 	// Add arbitrary policies to the user.
+	var prs []auth.PolicyReq
 	for i := 0; i < pageLen; i++ {
-		err = svc.AddPolicies(context.Background(), apiToken.AccessToken, fmt.Sprintf("thing-%d", i), []string{id}, []string{readPolicy})
-		assert.Nil(t, err, fmt.Sprintf("adding policies expected to succeed: %s", err))
+		prs = append(prs, auth.PolicyReq{
+			Subject:     id,
+			SubjectType: auth.UserType,
+			Relation:    auth.ViewerRelation,
+			Object:      fmt.Sprintf("thing-%d", i),
+			ObjectType:  auth.ThingType,
+		})
 	}
+	err := svc.AddPolicies(context.Background(), prs)
+	assert.Nil(t, err, fmt.Sprintf("adding policies expected to succeed: %s", err))
 
-	page, err := svc.ListObjects(context.Background(), auth.PolicyReq{Subject: id, Relation: readPolicy}, "", 100)
+	page, err := svc.ListObjects(context.Background(), auth.PolicyReq{Subject: id, SubjectType: auth.UserType, ObjectType: auth.ThingType, Permission: auth.ViewPermission}, "", 100)
 	assert.Nil(t, err, fmt.Sprintf("listing policies expected to succeed: %s", err))
 	assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
 }

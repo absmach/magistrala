@@ -7,8 +7,8 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/api/http/domains"
 	"github.com/absmach/magistrala/auth/api/http/keys"
-	"github.com/absmach/magistrala/auth/api/http/policies"
 	"github.com/absmach/magistrala/logger"
 	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -19,7 +19,7 @@ func MakeHandler(svc auth.Service, logger logger.Logger, instanceID string) http
 	mux := bone.New()
 
 	mux = keys.MakeHandler(svc, mux, logger)
-	mux = policies.MakeHandler(svc, mux, logger)
+	mux = domains.MakeHandler(svc, mux, logger)
 
 	mux.GetFunc("/health", magistrala.Health("auth", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())

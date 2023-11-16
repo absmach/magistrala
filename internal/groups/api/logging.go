@@ -26,16 +26,16 @@ func LoggingMiddleware(svc groups.Service, logger mglog.Logger) groups.Service {
 
 // CreateGroup logs the create_group request. It logs the group name, id and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
+func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token, kind string, group groups.Group) (g groups.Group, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method create_group for group %s with id %s using token %s took %s to complete", g.Name, g.ID, token, time.Since(begin))
+		message := fmt.Sprintf("Method create_group for %s %s  with id %s using token %s took %s to complete", g.Name, kind, g.ID, token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
-	return lm.svc.CreateGroup(ctx, token, group)
+	return lm.svc.CreateGroup(ctx, token, kind, group)
 }
 
 // UpdateGroup logs the update_group request. It logs the group name, id and token and the time it took to complete the request.
@@ -68,7 +68,7 @@ func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 
 // ListGroups logs the list_groups request. It logs the token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ListGroups(ctx context.Context, token string, memberKind, memberID string, gp groups.Page) (cg groups.Page, err error) {
+func (lm *loggingMiddleware) ListGroups(ctx context.Context, token, memberKind, memberID string, gp groups.Page) (cg groups.Page, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_groups %d groups using token %s took %s to complete", cg.Total, token, time.Since(begin))
 		if err != nil {
@@ -122,7 +122,7 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID, pe
 	return lm.svc.ListMembers(ctx, token, groupID, permission, memberKind)
 }
 
-func (lm *loggingMiddleware) Assign(ctx context.Context, token, groupID string, relation string, memberKind string, memberIDs ...string) (err error) {
+func (lm *loggingMiddleware) Assign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method assign for token %s and member %s group id %s took %s to complete", token, memberIDs, groupID, time.Since(begin))
 		if err != nil {
@@ -135,7 +135,7 @@ func (lm *loggingMiddleware) Assign(ctx context.Context, token, groupID string, 
 	return lm.svc.Assign(ctx, token, groupID, relation, memberKind, memberIDs...)
 }
 
-func (lm *loggingMiddleware) Unassign(ctx context.Context, token string, groupID string, relation string, memberKind string, memberIDs ...string) (err error) {
+func (lm *loggingMiddleware) Unassign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method unassign for token %s and member %s group id %s took %s to complete", token, memberIDs, groupID, time.Since(begin))
 		if err != nil {

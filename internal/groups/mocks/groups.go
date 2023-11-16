@@ -86,22 +86,14 @@ func (m *Repository) Update(ctx context.Context, g mggroups.Group) (mggroups.Gro
 	return ret.Get(0).(mggroups.Group), ret.Error(1)
 }
 
-func (m *Repository) Unassign(ctx context.Context, groupID, memberKind string, memberIDs ...string) error {
-	ret := m.Called(ctx, groupID, memberKind, memberIDs)
-
-	if groupID == WrongID {
-		return errors.ErrNotFound
-	}
+func (m *Repository) UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error {
+	ret := m.Called(ctx, parentGroupID, groupIDs)
 
 	return ret.Error(0)
 }
 
-func (m *Repository) Assign(ctx context.Context, groupID, groupType string, memberIDs ...string) error {
-	ret := m.Called(ctx, groupID, groupType, memberIDs)
-
-	if groupID == WrongID {
-		return errors.ErrNotFound
-	}
+func (m *Repository) AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error {
+	ret := m.Called(ctx, parentGroupID, groupIDs)
 
 	return ret.Error(0)
 }

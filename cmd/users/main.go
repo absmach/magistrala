@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	authSvc "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal"
 	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
@@ -29,6 +30,7 @@ import (
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
@@ -197,7 +199,7 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := users.NewService(cRepo, auth, emailer, hsr, idp, c.PassRegex)
+	csvc := users.NewService(cRepo, auth, emailer, hsr, idp, c.PassRegex, true)
 	gsvc := mggroups.NewService(gRepo, idp, auth)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
@@ -219,21 +221,24 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 	counter, latency = internal.MakeMetrics("groups", "api")
 	gsvc = gapi.MetricsMiddleware(gsvc, counter, latency)
 
-	if err := createAdmin(ctx, c, cRepo, hsr, csvc); err != nil {
+	clientID, err := createAdmin(ctx, c, cRepo, hsr, csvc, auth)
+	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-
+	if err := createAdminPolicy(ctx, clientID, auth); err != nil {
+		return nil, nil, err
+	}
 	return csvc, gsvc, err
 }
 
-func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr users.Hasher, svc users.Service) error {
+func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr users.Hasher, svc users.Service, auth magistrala.AuthServiceClient) (string, error) {
 	id, err := uuid.New().ID()
 	if err != nil {
-		return err
+		return "", err
 	}
 	hash, err := hsr.Hash(c.AdminPassword)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	client := mgclients.Client{
@@ -252,17 +257,42 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 		Status:    mgclients.EnabledStatus,
 	}
 
-	if _, err := crepo.RetrieveByIdentity(ctx, client.Credentials.Identity); err == nil {
-		return nil
+	if c, err := crepo.RetrieveByIdentity(ctx, client.Credentials.Identity); err == nil {
+		return c.ID, nil
 	}
 
 	// Create an admin
 	if _, err = crepo.Save(ctx, client); err != nil {
-		return err
+		return "", err
 	}
-	if _, err = svc.IssueToken(ctx, c.AdminEmail, c.AdminPassword); err != nil {
-		return err
+	if _, err = svc.IssueToken(ctx, c.AdminEmail, c.AdminPassword, ""); err != nil {
+		return "", err
 	}
+	return client.ID, nil
+}
 
+func createAdminPolicy(ctx context.Context, clientID string, auth magistrala.AuthServiceClient) error {
+	res, err := auth.Authorize(ctx, &magistrala.AuthorizeReq{
+		SubjectType: authSvc.UserType,
+		Subject:     clientID,
+		Permission:  authSvc.AdministratorRelation,
+		Object:      authSvc.MagistralaObject,
+		ObjectType:  authSvc.PlatformType,
+	})
+	if err != nil || !res.Authorized {
+		addPolicyRes, err := auth.AddPolicy(ctx, &magistrala.AddPolicyReq{
+			SubjectType: authSvc.UserType,
+			Subject:     clientID,
+			Relation:    authSvc.AdministratorRelation,
+			Object:      authSvc.MagistralaObject,
+			ObjectType:  authSvc.PlatformType,
+		})
+		if err != nil {
+			return err
+		}
+		if !addPolicyRes.Authorized {
+			return errors.ErrAuthorization
+		}
+	}
 	return nil
 }

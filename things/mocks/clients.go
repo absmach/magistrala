@@ -53,6 +53,12 @@ func (m *Repository) RetrieveAll(ctx context.Context, pm mgclients.Page) (mgclie
 	return ret.Get(0).(mgclients.ClientsPage), ret.Error(1)
 }
 
+func (m *Repository) RetrieveAllBasicInfo(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	ret := m.Called(ctx, pm)
+
+	return ret.Get(0).(mgclients.ClientsPage), ret.Error(1)
+}
+
 func (m *Repository) RetrieveByID(ctx context.Context, id string) (mgclients.Client, error) {
 	ret := m.Called(ctx, id)
 

@@ -24,8 +24,10 @@ var (
 )
 
 const (
-	issuerName = "magistrala.auth"
-	tokenType  = "type"
+	issuerName  = "magistrala.auth"
+	tokenType   = "type"
+	userField   = "user"
+	domainField = "domain"
 )
 
 type tokenizer struct {
@@ -49,6 +51,8 @@ func (repo *tokenizer) Issue(key auth.Key) (string, error) {
 		Subject(key.Subject).
 		Claim(tokenType, key.Type).
 		Expiration(key.ExpiresAt)
+	builder.Claim(userField, key.User)
+	builder.Claim(domainField, key.Domain)
 	if key.ID != "" {
 		builder.JwtID(key.ID)
 	}

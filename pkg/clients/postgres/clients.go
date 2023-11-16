@@ -188,6 +188,57 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 	return page, nil
 }
 
+func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+	query, err := pageQuery(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+
+	dbPage, err := toDBClientsPage(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	defer rows.Close()
+
+	var items []clients.Client
+	for rows.Next() {
+		dbc := DBClient{}
+		if err := rows.StructScan(&dbc); err != nil {
+			return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		}
+
+		c, err := ToClient(dbc)
+		if err != nil {
+			return clients.ClientsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, query)
+
+	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	page := clients.ClientsPage{
+		Clients: items,
+		Page: clients.Page{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+
+	return page, nil
+}
+
 func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	if len(pm.IDs) <= 0 {
 		return clients.ClientsPage{
@@ -277,11 +328,11 @@ type DBClient struct {
 	Owner     *string          `db:"owner_id,omitempty"` // nullable
 	Secret    string           `db:"secret"`
 	Metadata  []byte           `db:"metadata,omitempty"`
-	CreatedAt time.Time        `db:"created_at"`
+	CreatedAt time.Time        `db:"created_at,omitempty"`
 	UpdatedAt sql.NullTime     `db:"updated_at,omitempty"`
 	UpdatedBy *string          `db:"updated_by,omitempty"`
 	Groups    []groups.Group   `db:"groups,omitempty"`
-	Status    clients.Status   `db:"status"`
+	Status    clients.Status   `db:"status,omitempty"`
 	Role      clients.Role     `db:"role,omitempty"`
 }
 
@@ -373,6 +424,10 @@ func toDBClientsPage(pm clients.Page) (dbClientsPage, error) {
 	if err != nil {
 		return dbClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
+	var role clients.Role
+	if pm.Role != nil {
+		role = *pm.Role
+	}
 	return dbClientsPage{
 		Name:     pm.Name,
 		Identity: pm.Identity,
@@ -383,6 +438,7 @@ func toDBClientsPage(pm clients.Page) (dbClientsPage, error) {
 		Limit:    pm.Limit,
 		Status:   pm.Status,
 		Tag:      pm.Tag,
+		Role:     uint8(role),
 	}, nil
 }
 
@@ -397,6 +453,7 @@ type dbClientsPage struct {
 	Tag      string         `db:"tag"`
 	Status   clients.Status `db:"status"`
 	GroupID  string         `db:"group_id"`
+	Role     uint8          `db:"role"`
 }
 
 func pageQuery(pm clients.Page) (string, error) {
@@ -429,6 +486,9 @@ func pageQuery(pm clients.Page) (string, error) {
 		query = append(query, "c.owner_id = :owner_id")
 	}
 
+	if pm.Role != nil {
+		query = append(query, "c.role = :role")
+	}
 	if len(query) > 0 {
 		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
 	}

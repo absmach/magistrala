@@ -10,6 +10,9 @@ var (
 	// ErrAuthorization indicates failure occurred while authorizing the entity.
 	ErrAuthorization = New("failed to perform authorization over the entity")
 
+	// ErrDomainAuthorization indicates failure occurred while authorizing the domain.
+	ErrDomainAuthorization = New("failed to perform authorization over the domain")
+
 	// ErrMalformedEntity indicates a malformed entity specification.
 	ErrMalformedEntity = New("malformed entity specification")
 

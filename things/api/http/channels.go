@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
@@ -26,7 +27,7 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger logger.Logger) http.Ha
 	}
 	r.Route("/channels", func(r chi.Router) {
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.CreateGroupEndpoint(svc),
+			gapi.CreateGroupEndpoint(svc, auth.NewChannelKind),
 			gapi.DecodeGroupCreate,
 			api.EncodeResponse,
 			opts...,

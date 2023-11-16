@@ -157,6 +157,24 @@ func listMembersByThingEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
+func listMembersByDomainEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listMembersByObjectReq)
+		req.objectKind = "domains"
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
+		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
+		if err != nil {
+			return nil, err
+		}
+
+		return buildClientsResponse(page), nil
+	}
+}
+
 func updateClientEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientReq)
@@ -273,18 +291,18 @@ func updateClientSecretEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-func updateClientOwnerEndpoint(svc users.Service) endpoint.Endpoint {
+func updateClientRoleEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(updateClientOwnerReq)
+		req := request.(updateClientRoleReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client := mgclients.Client{
-			ID:    req.id,
-			Owner: req.Owner,
+			ID:   req.id,
+			Role: req.role,
 		}
-		client, err := svc.UpdateClientOwner(ctx, req.token, client)
+		client, err := svc.UpdateClientRole(ctx, req.token, client)
 		if err != nil {
 			return nil, err
 		}
@@ -300,7 +318,7 @@ func issueTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		token, err := svc.IssueToken(ctx, req.Identity, req.Secret)
+		token, err := svc.IssueToken(ctx, req.Identity, req.Secret, req.DomainID)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +338,7 @@ func refreshTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		token, err := svc.RefreshToken(ctx, req.RefreshToken)
+		token, err := svc.RefreshToken(ctx, req.RefreshToken, req.DomainID)
 		if err != nil {
 			return nil, err
 		}

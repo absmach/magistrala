@@ -10,6 +10,7 @@ else
 fi
 
 envsubst '
+    ${MG_AUTH_HTTP_PORT}
     ${MG_USERS_HTTP_PORT}
     ${MG_THINGS_HTTP_PORT}
     ${MG_THINGS_AUTH_HTTP_PORT}

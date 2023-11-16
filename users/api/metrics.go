@@ -40,21 +40,21 @@ func (ms *metricsMiddleware) RegisterClient(ctx context.Context, token string, c
 }
 
 // IssueToken instruments IssueToken method with metrics.
-func (ms *metricsMiddleware) IssueToken(ctx context.Context, identity, secret string) (*magistrala.Token, error) {
+func (ms *metricsMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_token").Add(1)
 		ms.latency.With("method", "issue_token").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.IssueToken(ctx, identity, secret)
+	return ms.svc.IssueToken(ctx, identity, secret, domainID)
 }
 
 // RefreshToken instruments RefreshToken method with metrics.
-func (ms *metricsMiddleware) RefreshToken(ctx context.Context, accessToken string) (token *magistrala.Token, err error) {
+func (ms *metricsMiddleware) RefreshToken(ctx context.Context, refreshToken, domainID string) (token *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "refresh_token").Add(1)
 		ms.latency.With("method", "refresh_token").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.RefreshToken(ctx, accessToken)
+	return ms.svc.RefreshToken(ctx, refreshToken, domainID)
 }
 
 // ViewClient instruments ViewClient method with metrics.
@@ -147,13 +147,13 @@ func (ms *metricsMiddleware) SendPasswordReset(ctx context.Context, host, email,
 	return ms.svc.SendPasswordReset(ctx, host, email, user, token)
 }
 
-// UpdateClientOwner instruments UpdateClientOwner method with metrics.
-func (ms *metricsMiddleware) UpdateClientOwner(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
+// UpdateClientRole instruments UpdateClientRole method with metrics.
+func (ms *metricsMiddleware) UpdateClientRole(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "update_client_owner").Add(1)
-		ms.latency.With("method", "update_client_owner").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "update_client_role").Add(1)
+		ms.latency.With("method", "update_client_role").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.UpdateClientOwner(ctx, token, client)
+	return ms.svc.UpdateClientRole(ctx, token, client)
 }
 
 // EnableClient instruments EnableClient method with metrics.

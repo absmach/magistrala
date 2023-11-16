@@ -139,13 +139,14 @@ func (req updateClientTagsReq) validate() error {
 	return nil
 }
 
-type updateClientOwnerReq struct {
+type updateClientRoleReq struct {
 	id    string
 	token string
-	Owner string `json:"owner,omitempty"`
+	role  mgclients.Role
+	Role  string `json:"role,omitempty"`
 }
 
-func (req updateClientOwnerReq) validate() error {
+func (req updateClientRoleReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
@@ -206,6 +207,7 @@ func (req changeClientStatusReq) validate() error {
 type loginClientReq struct {
 	Identity string `json:"identity,omitempty"`
 	Secret   string `json:"secret,omitempty"`
+	DomainID string `json:"domain_id,omitempty"`
 }
 
 func (req loginClientReq) validate() error {
@@ -221,6 +223,7 @@ func (req loginClientReq) validate() error {
 
 type tokenReq struct {
 	RefreshToken string `json:"refresh_token,omitempty"`
+	DomainID     string `json:"domain_id,omitempty"`
 }
 
 func (req tokenReq) validate() error {
@@ -317,6 +320,50 @@ func (req unassignUsersReq) validate() error {
 		return apiutil.ErrMissingRelation
 	}
 	if len(req.UserIDs) == 0 {
+		return apiutil.ErrEmptyList
+	}
+
+	return nil
+}
+
+type assignGroupsReq struct {
+	token    string
+	groupID  string
+	GroupIDs []string `json:"group_ids"`
+}
+
+func (req assignGroupsReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	if req.groupID == "" {
+		return apiutil.ErrMissingID
+	}
+
+	if len(req.GroupIDs) == 0 {
+		return apiutil.ErrEmptyList
+	}
+
+	return nil
+}
+
+type unassignGroupsReq struct {
+	token    string
+	groupID  string
+	GroupIDs []string `json:"group_ids"`
+}
+
+func (req unassignGroupsReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	if req.groupID == "" {
+		return apiutil.ErrMissingID
+	}
+
+	if len(req.GroupIDs) == 0 {
 		return apiutil.ErrEmptyList
 	}
 

@@ -42,7 +42,7 @@ func (lm *loggingMiddleware) RegisterClient(ctx context.Context, token string, c
 
 // IssueToken logs the issue_token request. It logs the client identity and token type and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret string) (t *magistrala.Token, err error) {
+func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method issue_token of type %s for client %s took %s to complete", t.GetAccessType(), identity, time.Since(begin))
 		if err != nil {
@@ -51,12 +51,12 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret st
 		}
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
-	return lm.svc.IssueToken(ctx, identity, secret)
+	return lm.svc.IssueToken(ctx, identity, secret, domainID)
 }
 
 // RefreshToken logs the refresh_token request. It logs the refreshtoken, token type and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken string) (t *magistrala.Token, err error) {
+func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method refresh_token of type %s for refresh token %s took %s to complete", t.AccessType, refreshToken, time.Since(begin))
 		if err != nil {
@@ -65,7 +65,7 @@ func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken stri
 		}
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
-	return lm.svc.RefreshToken(ctx, refreshToken)
+	return lm.svc.RefreshToken(ctx, refreshToken, domainID)
 }
 
 // ViewClient logs the view_client request. It logs the client id and token and the time it took to complete the request.
@@ -208,18 +208,18 @@ func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email,
 	return lm.svc.SendPasswordReset(ctx, host, email, user, token)
 }
 
-// UpdateClientOwner logs the update_client_owner request. It logs the client id and token and the time it took to complete the request.
+// UpdateClientRole logs the update_client_role request. It logs the client id and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) UpdateClientOwner(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
+func (lm *loggingMiddleware) UpdateClientRole(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_client_owner for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		message := fmt.Sprintf("Method update_client_role for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
-	return lm.svc.UpdateClientOwner(ctx, token, client)
+	return lm.svc.UpdateClientRole(ctx, token, client)
 }
 
 // EnableClient logs the enable_client request. It logs the client id and token and the time it took to complete the request.

@@ -223,7 +223,7 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 	chanID := channelParts[1]
 
 	ar := &magistrala.AuthorizeReq{
-		Namespace:   "",
+		Domain:      "",
 		SubjectType: "thing",
 		Permission:  action,
 		Subject:     password,

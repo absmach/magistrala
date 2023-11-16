@@ -218,7 +218,6 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
 	}
-
 	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
@@ -245,6 +244,60 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 	page.Total = total
 
 	return page, nil
+}
+
+func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error {
+	if len(groupIDs) == 0 {
+		return nil
+	}
+	var updateColumns []string
+	for _, groupID := range groupIDs {
+		updateColumns = append(updateColumns, fmt.Sprintf("('%s', '%s') ", groupID, parentGroupID))
+	}
+	uc := strings.Join(updateColumns, ",")
+	query := fmt.Sprintf(`
+			UPDATE groups AS g SET
+				parent_id = u.parent_group_id
+			FROM (VALUES
+				%s
+			) AS u(id, parent_group_id)
+			WHERE g.id = u.id;
+	`, uc)
+
+	row, err := repo.db.QueryContext(ctx, query)
+	if err != nil {
+		return postgres.HandleError(err, errors.ErrUpdateEntity)
+	}
+	defer row.Close()
+
+	return nil
+}
+
+func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error {
+	if len(groupIDs) == 0 {
+		return nil
+	}
+	var updateColumns []string
+	for _, groupID := range groupIDs {
+		updateColumns = append(updateColumns, fmt.Sprintf("('%s', '%s') ", groupID, parentGroupID))
+	}
+	uc := strings.Join(updateColumns, ",")
+	query := fmt.Sprintf(`
+			UPDATE groups AS g SET
+				parent_id = NULL
+			FROM (VALUES
+				%s
+			) AS u(id, parent_group_id)
+			WHERE g.id = u.id ;
+	`, uc)
+
+	row, err := repo.db.QueryContext(ctx, query)
+	if err != nil {
+		return postgres.HandleError(err, errors.ErrUpdateEntity)
+	}
+	defer row.Close()
+
+	return nil
 }
 
 func buildHierachy(gm mggroups.Page) string {

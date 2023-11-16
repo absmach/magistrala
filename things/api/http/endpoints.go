@@ -6,6 +6,7 @@ package http
 import (
 	"context"
 
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -186,26 +187,6 @@ func updateClientSecretEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func updateClientOwnerEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(updateClientOwnerReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		cli := mgclients.Client{
-			ID:    req.id,
-			Owner: req.Owner,
-		}
-		client, err := svc.UpdateClientOwner(ctx, req.token, cli)
-		if err != nil {
-			return nil, err
-		}
-
-		return updateClientRes{Client: client}, nil
-	}
-}
-
 func enableClientEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeClientStatusReq)
@@ -261,7 +242,7 @@ func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Assign(ctx, req.token, req.groupID, req.Relation, "users", req.UserIDs...); err != nil {
+		if err := svc.Assign(ctx, req.token, req.groupID, req.Relation, auth.UsersKind, req.UserIDs...); err != nil {
 			return nil, err
 		}
 
@@ -276,7 +257,7 @@ func unassignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.groupID, req.Relation, "users", req.UserIDs...); err != nil {
+		if err := svc.Unassign(ctx, req.token, req.groupID, req.Relation, auth.UsersKind, req.UserIDs...); err != nil {
 			return nil, err
 		}
 
@@ -291,7 +272,7 @@ func assignUserGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Assign(ctx, req.token, req.groupID, "parent_group", "groups", req.UserGroupIDs...); err != nil {
+		if err := svc.Assign(ctx, req.token, req.groupID, auth.ParentGroupRelation, auth.ChannelsKind, req.UserGroupIDs...); err != nil {
 			return nil, err
 		}
 
@@ -306,7 +287,7 @@ func unassignUserGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.groupID, "parent_group", "groups", req.UserGroupIDs...); err != nil {
+		if err := svc.Unassign(ctx, req.token, req.groupID, auth.ParentGroupRelation, auth.ChannelsKind, req.UserGroupIDs...); err != nil {
 			return nil, err
 		}
 
@@ -321,7 +302,7 @@ func connectChannelThingEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Assign(ctx, req.token, req.ChannelID, "group", "things", req.ThingID); err != nil {
+		if err := svc.Assign(ctx, req.token, req.ChannelID, auth.GroupRelation, auth.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -336,7 +317,7 @@ func disconnectChannelThingEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.ChannelID, "group", "things", req.ThingID); err != nil {
+		if err := svc.Unassign(ctx, req.token, req.ChannelID, auth.GroupRelation, auth.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -351,7 +332,7 @@ func connectEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Assign(ctx, req.token, req.ChannelID, "group", "things", req.ThingID); err != nil {
+		if err := svc.Assign(ctx, req.token, req.ChannelID, auth.GroupRelation, auth.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -366,7 +347,7 @@ func disconnectEndpoint(svc groups.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.ChannelID, "group", "things", req.ThingID); err != nil {
+		if err := svc.Unassign(ctx, req.token, req.ChannelID, auth.GroupRelation, auth.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 

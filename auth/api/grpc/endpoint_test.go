@@ -43,11 +43,12 @@ var svc auth.Service
 func newService() auth.Service {
 	krepo := new(mocks.Keys)
 	prepo := new(mocks.PolicyAgent)
+	drepo := new(mocks.DomainsRepo)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))
 
-	return auth.New(krepo, idProvider, t, prepo, loginDuration, refreshDuration)
+	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration)
 }
 
 func startGRPCServer(svc auth.Service, port int) {
@@ -117,7 +118,7 @@ func TestIssue(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := client.Issue(context.Background(), &magistrala.IssueReq{Id: tc.id, Type: uint32(tc.kind)})
+		_, err := client.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.id, Type: uint32(tc.kind)})
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))

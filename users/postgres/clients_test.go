@@ -176,60 +176,45 @@ func TestClientsSave(t *testing.T) {
 	}
 }
 
-func TestIsOwner(t *testing.T) {
+func TestIsPlatformAdmin(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 	repo := cpostgres.NewRepository(database)
 
-	owner := mgclients.Client{
-		ID:   testsutil.GenerateUUID(t),
-		Name: "owner",
-		Credentials: mgclients.Credentials{
-			Identity: "owner@example.com",
-			Secret:   password,
-		},
-		Metadata: mgclients.Metadata{},
-		Status:   mgclients.EnabledStatus,
-	}
-	owner, err := repo.Save(context.Background(), owner)
-	require.Nil(t, err, fmt.Sprintf("save owner unexpected error: %s", err))
-
 	cases := []struct {
-		desc    string
-		ownerID string
-		client  mgclients.Client
-		err     error
+		desc   string
+		client mgclients.Client
+		err    error
 	}{
 		{
-			desc:    "add new client successfully with an owner",
-			ownerID: owner.ID,
+			desc: "authorize check for super user",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
 				Credentials: mgclients.Credentials{
-					Identity: "withowner@example.com",
+					Identity: "admin@example.com",
 					Secret:   password,
 				},
-				Owner:    owner.ID,
 				Metadata: mgclients.Metadata{},
 				Status:   mgclients.EnabledStatus,
+				Role:     mgclients.AdminRole,
 			},
 			err: nil,
 		},
 		{
-			desc:    "add new client successfully without an owner",
-			ownerID: owner.ID,
+			desc: "unauthorize user",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
 				Credentials: mgclients.Credentials{
-					Identity: "withoutowner@example.com",
+					Identity: clientIdentity,
 					Secret:   password,
 				},
 				Metadata: mgclients.Metadata{},
 				Status:   mgclients.EnabledStatus,
+				Role:     mgclients.UserRole,
 			},
 			err: errors.ErrAuthorization,
 		},
@@ -238,7 +223,7 @@ func TestIsOwner(t *testing.T) {
 	for _, tc := range cases {
 		_, err := repo.Save(context.Background(), tc.client)
 		require.Nil(t, err, fmt.Sprintf("%s: save client unexpected error: %s", tc.desc, err))
-		err = repo.IsOwner(context.Background(), tc.client.ID, tc.ownerID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		err = repo.CheckSuperAdmin(context.Background(), tc.client.ID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 	}
 }

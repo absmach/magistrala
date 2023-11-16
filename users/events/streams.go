@@ -62,8 +62,8 @@ func (es *eventStore) UpdateClient(ctx context.Context, token string, user mgcli
 	return es.update(ctx, "", user)
 }
 
-func (es *eventStore) UpdateClientOwner(ctx context.Context, token string, user mgclients.Client) (mgclients.Client, error) {
-	user, err := es.svc.UpdateClientOwner(ctx, token, user)
+func (es *eventStore) UpdateClientRole(ctx context.Context, token string, user mgclients.Client) (mgclients.Client, error) {
+	user, err := es.svc.UpdateClientRole(ctx, token, user)
 	if err != nil {
 		return user, err
 	}
@@ -239,14 +239,15 @@ func (es *eventStore) GenerateResetToken(ctx context.Context, email, host string
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) IssueToken(ctx context.Context, identity, secret string) (*magistrala.Token, error) {
-	token, err := es.svc.IssueToken(ctx, identity, secret)
+func (es *eventStore) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
+	token, err := es.svc.IssueToken(ctx, identity, secret, domainID)
 	if err != nil {
 		return token, err
 	}
 
 	event := issueTokenEvent{
 		identity: identity,
+		domainID: domainID,
 	}
 
 	if err := es.Publish(ctx, event); err != nil {
@@ -256,13 +257,13 @@ func (es *eventStore) IssueToken(ctx context.Context, identity, secret string) (
 	return token, nil
 }
 
-func (es *eventStore) RefreshToken(ctx context.Context, refreshToken string) (*magistrala.Token, error) {
-	token, err := es.svc.RefreshToken(ctx, refreshToken)
+func (es *eventStore) RefreshToken(ctx context.Context, refreshToken, domainID string) (*magistrala.Token, error) {
+	token, err := es.svc.RefreshToken(ctx, refreshToken, domainID)
 	if err != nil {
 		return token, err
 	}
 
-	event := refreshTokenEvent{}
+	event := refreshTokenEvent{domainID: domainID}
 
 	if err := es.Publish(ctx, event); err != nil {
 		return token, err

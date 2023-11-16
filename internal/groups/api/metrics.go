@@ -29,12 +29,12 @@ func MetricsMiddleware(svc groups.Service, counter metrics.Counter, latency metr
 }
 
 // CreateGroup instruments CreateGroup method with metrics.
-func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token, kind string, g groups.Group) (groups.Group, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_group").Add(1)
 		ms.latency.With("method", "create_group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.CreateGroup(ctx, token, g)
+	return ms.svc.CreateGroup(ctx, token, kind, g)
 }
 
 // UpdateGroup instruments UpdateGroup method with metrics.
@@ -56,7 +56,7 @@ func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 }
 
 // ListGroups instruments ListGroups method with metrics.
-func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, memberKind, memberID string, gp groups.Page) (cg groups.Page, err error) {
+func (ms *metricsMiddleware) ListGroups(ctx context.Context, token, memberKind, memberID string, gp groups.Page) (cg groups.Page, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_groups").Add(1)
 		ms.latency.With("method", "list_groups").Observe(time.Since(begin).Seconds())
@@ -65,7 +65,7 @@ func (ms *metricsMiddleware) ListGroups(ctx context.Context, token string, membe
 }
 
 // EnableGroup instruments EnableGroup method with metrics.
-func (ms *metricsMiddleware) EnableGroup(ctx context.Context, token string, id string) (g groups.Group, err error) {
+func (ms *metricsMiddleware) EnableGroup(ctx context.Context, token, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "enable_group").Add(1)
 		ms.latency.With("method", "enable_group").Observe(time.Since(begin).Seconds())
@@ -74,7 +74,7 @@ func (ms *metricsMiddleware) EnableGroup(ctx context.Context, token string, id s
 }
 
 // DisableGroup instruments DisableGroup method with metrics.
-func (ms *metricsMiddleware) DisableGroup(ctx context.Context, token string, id string) (g groups.Group, err error) {
+func (ms *metricsMiddleware) DisableGroup(ctx context.Context, token, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "disable_group").Add(1)
 		ms.latency.With("method", "disable_group").Observe(time.Since(begin).Seconds())
@@ -92,7 +92,7 @@ func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID, pe
 }
 
 // Assign instruments Assign method with metrics.
-func (ms *metricsMiddleware) Assign(ctx context.Context, token, groupID string, relation string, memberKind string, memberIDs ...string) (err error) {
+func (ms *metricsMiddleware) Assign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "assign").Add(1)
 		ms.latency.With("method", "assign").Observe(time.Since(begin).Seconds())
@@ -102,7 +102,7 @@ func (ms *metricsMiddleware) Assign(ctx context.Context, token, groupID string, 
 }
 
 // Unassign instruments Unassign method with metrics.
-func (ms *metricsMiddleware) Unassign(ctx context.Context, token, groupID string, relation string, memberKind string, memberIDs ...string) (err error) {
+func (ms *metricsMiddleware) Unassign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "unassign").Add(1)
 		ms.latency.With("method", "unassign").Observe(time.Since(begin).Seconds())

@@ -200,7 +200,7 @@ func initSchema(client *authzed.Client, schemaFilePath string) error {
 func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger mglog.Logger, spicedbClient *authzed.Client) auth.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
-
+	domainsRepo := apostgres.NewDomainRepository(database)
 	pa := spicedb.NewPolicyAgent(spicedbClient, logger)
 	idProvider := uuid.New()
 	t := jwt.New([]byte(cfg.SecretKey))
@@ -214,7 +214,7 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 		logger.Error(fmt.Sprintf("failed to parse refresh token duration: %s", err.Error()))
 	}
 
-	svc := auth.New(keysRepo, idProvider, t, pa, aDuration, rDuration)
+	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, aDuration, rDuration)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("groups", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

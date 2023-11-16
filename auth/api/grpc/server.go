@@ -20,12 +20,13 @@ var _ magistrala.AuthServiceServer = (*grpcServer)(nil)
 type grpcServer struct {
 	magistrala.UnimplementedAuthServiceServer
 	issue           kitgrpc.Handler
-	login           kitgrpc.Handler
 	refresh         kitgrpc.Handler
 	identify        kitgrpc.Handler
 	authorize       kitgrpc.Handler
 	addPolicy       kitgrpc.Handler
+	addPolicies     kitgrpc.Handler
 	deletePolicy    kitgrpc.Handler
+	deletePolicies  kitgrpc.Handler
 	listObjects     kitgrpc.Handler
 	listAllObjects  kitgrpc.Handler
 	countObjects    kitgrpc.Handler
@@ -40,11 +41,6 @@ func NewServer(svc auth.Service) magistrala.AuthServiceServer {
 		issue: kitgrpc.NewServer(
 			(issueEndpoint(svc)),
 			decodeIssueRequest,
-			encodeIssueResponse,
-		),
-		login: kitgrpc.NewServer(
-			(loginEndpoint(svc)),
-			decodeLoginRequest,
 			encodeIssueResponse,
 		),
 		refresh: kitgrpc.NewServer(
@@ -67,10 +63,20 @@ func NewServer(svc auth.Service) magistrala.AuthServiceServer {
 			decodeAddPolicyRequest,
 			encodeAddPolicyResponse,
 		),
+		addPolicies: kitgrpc.NewServer(
+			(addPoliciesEndpoint(svc)),
+			decodeAddPoliciesRequest,
+			encodeAddPoliciesResponse,
+		),
 		deletePolicy: kitgrpc.NewServer(
 			(deletePolicyEndpoint(svc)),
 			decodeDeletePolicyRequest,
 			encodeDeletePolicyResponse,
+		),
+		deletePolicies: kitgrpc.NewServer(
+			(deletePoliciesEndpoint(svc)),
+			decodeDeletePoliciesRequest,
+			encodeDeletePoliciesResponse,
 		),
 		listObjects: kitgrpc.NewServer(
 			(listObjectsEndpoint(svc)),
@@ -113,14 +119,6 @@ func (s *grpcServer) Issue(ctx context.Context, req *magistrala.IssueReq) (*magi
 	return res.(*magistrala.Token), nil
 }
 
-func (s *grpcServer) Login(ctx context.Context, req *magistrala.LoginReq) (*magistrala.Token, error) {
-	_, res, err := s.login.ServeGRPC(ctx, req)
-	if err != nil {
-		return nil, encodeError(err)
-	}
-	return res.(*magistrala.Token), nil
-}
-
 func (s *grpcServer) Refresh(ctx context.Context, req *magistrala.RefreshReq) (*magistrala.Token, error) {
 	_, res, err := s.refresh.ServeGRPC(ctx, req)
 	if err != nil {
@@ -153,12 +151,28 @@ func (s *grpcServer) AddPolicy(ctx context.Context, req *magistrala.AddPolicyReq
 	return res.(*magistrala.AddPolicyRes), nil
 }
 
+func (s *grpcServer) AddPolicies(ctx context.Context, req *magistrala.AddPoliciesReq) (*magistrala.AddPoliciesRes, error) {
+	_, res, err := s.addPolicies.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*magistrala.AddPoliciesRes), nil
+}
+
 func (s *grpcServer) DeletePolicy(ctx context.Context, req *magistrala.DeletePolicyReq) (*magistrala.DeletePolicyRes, error) {
 	_, res, err := s.deletePolicy.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
 	return res.(*magistrala.DeletePolicyRes), nil
+}
+
+func (s *grpcServer) DeletePolicies(ctx context.Context, req *magistrala.DeletePoliciesReq) (*magistrala.DeletePoliciesRes, error) {
+	_, res, err := s.deletePolicies.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*magistrala.DeletePoliciesRes), nil
 }
 
 func (s *grpcServer) ListObjects(ctx context.Context, req *magistrala.ListObjectsReq) (*magistrala.ListObjectsRes, error) {
@@ -211,17 +225,12 @@ func (s *grpcServer) CountSubjects(ctx context.Context, req *magistrala.CountSub
 
 func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.IssueReq)
-	return issueReq{id: req.GetId(), keyType: auth.KeyType(req.GetType())}, nil
-}
-
-func decodeLoginRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*magistrala.LoginReq)
-	return issueReq{id: req.GetId(), keyType: auth.AccessKey}, nil
+	return issueReq{userID: req.GetUserId(), domainID: req.GetDomainId(), keyType: auth.KeyType(req.GetType())}, nil
 }
 
 func decodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.RefreshReq)
-	return refreshReq{value: req.GetValue()}, nil
+	return refreshReq{refreshToken: req.GetRefreshToken(), domainID: req.GetDomainId()}, nil
 }
 
 func encodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -241,13 +250,13 @@ func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 
 func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(identityRes)
-	return &magistrala.IdentityRes{Id: res.id}, nil
+	return &magistrala.IdentityRes{Id: res.id, UserId: res.userID, DomainId: res.domainID}, nil
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.AuthorizeReq)
 	return authReq{
-		Namespace:   req.GetNamespace(),
+		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
 		SubjectKind: req.GetSubjectKind(),
 		Subject:     req.GetSubject(),
@@ -266,12 +275,14 @@ func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{
 func decodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.AddPolicyReq)
 	return policyReq{
-		Namespace:   req.GetNamespace(),
+		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
+		SubjectKind: req.GetSubjectKind(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
+		ObjectKind:  req.GetObjectKind(),
 		Object:      req.GetObject(),
 	}, nil
 }
@@ -281,15 +292,41 @@ func encodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{
 	return &magistrala.AddPolicyRes{Authorized: res.authorized}, nil
 }
 
+func decodeAddPoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	reqs := grpcReq.(*magistrala.AddPoliciesReq)
+	r := policiesReq{}
+	for _, req := range reqs.AddPoliciesReq {
+		r = append(r, policyReq{
+			Domain:      req.GetDomain(),
+			SubjectType: req.GetSubjectType(),
+			SubjectKind: req.GetSubjectKind(),
+			Subject:     req.GetSubject(),
+			Relation:    req.GetRelation(),
+			Permission:  req.GetPermission(),
+			ObjectType:  req.GetObjectType(),
+			ObjectKind:  req.GetObjectKind(),
+			Object:      req.GetObject(),
+		})
+	}
+	return r, nil
+}
+
+func encodeAddPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(addPoliciesRes)
+	return &magistrala.AddPoliciesRes{Authorized: res.authorized}, nil
+}
+
 func decodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.DeletePolicyReq)
 	return policyReq{
-		Namespace:   req.GetNamespace(),
+		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
+		SubjectKind: req.GetSubjectKind(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
+		ObjectKind:  req.GetObjectKind(),
 		Object:      req.GetObject(),
 	}, nil
 }
@@ -299,10 +336,34 @@ func encodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interfa
 	return &magistrala.DeletePolicyRes{Deleted: res.deleted}, nil
 }
 
+func decodeDeletePoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	reqs := grpcReq.(*magistrala.DeletePoliciesReq)
+	r := policiesReq{}
+	for _, req := range reqs.DeletePoliciesReq {
+		r = append(r, policyReq{
+			Domain:      req.GetDomain(),
+			SubjectType: req.GetSubjectType(),
+			SubjectKind: req.GetSubjectKind(),
+			Subject:     req.GetSubject(),
+			Relation:    req.GetRelation(),
+			Permission:  req.GetPermission(),
+			ObjectType:  req.GetObjectType(),
+			ObjectKind:  req.GetObjectKind(),
+			Object:      req.GetObject(),
+		})
+	}
+	return r, nil
+}
+
+func encodeDeletePoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(deletePoliciesRes)
+	return &magistrala.DeletePoliciesRes{Deleted: res.deleted}, nil
+}
+
 func decodeListObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.ListObjectsReq)
 	return listObjectsReq{
-		Namespace:     req.GetNamespace(),
+		Domain:        req.GetDomain(),
 		SubjectType:   req.GetSubjectType(),
 		Subject:       req.GetSubject(),
 		Relation:      req.GetRelation(),
@@ -322,7 +383,7 @@ func encodeListObjectsResponse(_ context.Context, grpcRes interface{}) (interfac
 func decodeCountObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.CountObjectsReq)
 	return countObjectsReq{
-		Namespace:   req.GetNamespace(),
+		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
@@ -340,7 +401,7 @@ func encodeCountObjectsResponse(_ context.Context, grpcRes interface{}) (interfa
 func decodeListSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.ListSubjectsReq)
 	return listSubjectsReq{
-		Namespace:   req.GetNamespace(),
+		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
@@ -358,7 +419,7 @@ func encodeListSubjectsResponse(_ context.Context, grpcRes interface{}) (interfa
 func decodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.CountSubjectsReq)
 	return countSubjectsReq{
-		Namespace:   req.GetNamespace(),
+		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),

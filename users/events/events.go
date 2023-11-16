@@ -366,20 +366,25 @@ func (grte generateResetTokenEvent) Encode() (map[string]interface{}, error) {
 
 type issueTokenEvent struct {
 	identity string
+	domainID string
 }
 
 func (ite issueTokenEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": issueToken,
 		"identity":  ite.identity,
+		"domain_id": ite.domainID,
 	}, nil
 }
 
-type refreshTokenEvent struct{}
+type refreshTokenEvent struct {
+	domainID string
+}
 
 func (rte refreshTokenEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": refreshToken,
+		"domain_id": rte.domainID,
 	}, nil
 }
 

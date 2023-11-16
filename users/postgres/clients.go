@@ -26,7 +26,7 @@ type Repository interface {
 	// operation failure.
 	Save(ctx context.Context, client mgclients.Client) (mgclients.Client, error)
 
-	IsOwner(ctx context.Context, clientID string, ownerID string) error
+	CheckSuperAdmin(ctx context.Context, adminID string) error
 }
 
 // NewRepository instantiates a PostgreSQL
@@ -66,10 +66,9 @@ func (repo clientRepo) Save(ctx context.Context, c mgclients.Client) (mgclients.
 	return client, nil
 }
 
-func (repo clientRepo) IsOwner(ctx context.Context, clientID, ownerID string) error {
-	q := "SELECT * FROM clients WHERE id = $1 AND owner_id = $2"
-
-	rows, err := repo.ClientRepository.DB.QueryContext(ctx, q, clientID, ownerID)
+func (repo clientRepo) CheckSuperAdmin(ctx context.Context, adminID string) error {
+	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
+	rows, err := repo.ClientRepository.DB.QueryContext(ctx, q, adminID, mgclients.AdminRole)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.ErrAuthorization

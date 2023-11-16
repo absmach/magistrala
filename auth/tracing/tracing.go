@@ -52,7 +52,7 @@ func (tm *tracingMiddleware) RetrieveKey(ctx context.Context, token, id string) 
 	return tm.svc.RetrieveKey(ctx, token, id)
 }
 
-func (tm *tracingMiddleware) Identify(ctx context.Context, token string) (string, error) {
+func (tm *tracingMiddleware) Identify(ctx context.Context, token string) (auth.Key, error) {
 	ctx, span := tm.tracer.Start(ctx, "identify")
 	defer span.End()
 
@@ -89,15 +89,11 @@ func (tm *tracingMiddleware) AddPolicy(ctx context.Context, pr auth.PolicyReq) e
 	return tm.svc.AddPolicy(ctx, pr)
 }
 
-func (tm *tracingMiddleware) AddPolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error {
-	ctx, span := tm.tracer.Start(ctx, "add_policies", trace.WithAttributes(
-		attribute.String("object", object),
-		attribute.StringSlice("subject_ids", subjectIDs),
-		attribute.StringSlice("relations", relations),
-	))
+func (tm *tracingMiddleware) AddPolicies(ctx context.Context, prs []auth.PolicyReq) error {
+	ctx, span := tm.tracer.Start(ctx, "add_policies", trace.WithAttributes())
 	defer span.End()
 
-	return tm.svc.AddPolicies(ctx, token, object, subjectIDs, relations)
+	return tm.svc.AddPolicies(ctx, prs)
 }
 
 func (tm *tracingMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq) error {
@@ -115,15 +111,11 @@ func (tm *tracingMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq
 	return tm.svc.DeletePolicy(ctx, pr)
 }
 
-func (tm *tracingMiddleware) DeletePolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error {
-	ctx, span := tm.tracer.Start(ctx, "delete_policies", trace.WithAttributes(
-		attribute.String("object", object),
-		attribute.StringSlice("subject_ids", subjectIDs),
-		attribute.StringSlice("relations", relations),
-	))
+func (tm *tracingMiddleware) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
+	ctx, span := tm.tracer.Start(ctx, "delete_policies", trace.WithAttributes())
 	defer span.End()
 
-	return tm.svc.DeletePolicies(ctx, token, object, subjectIDs, relations)
+	return tm.svc.DeletePolicies(ctx, prs)
 }
 
 func (tm *tracingMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) (auth.PolicyPage, error) {
@@ -220,4 +212,70 @@ func (tm *tracingMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyRe
 	defer span.End()
 
 	return tm.svc.CountSubjects(ctx, pr)
+}
+
+func (tm *tracingMiddleware) CreateDomain(ctx context.Context, token string, d auth.Domain) (auth.Domain, error) {
+	ctx, span := tm.tracer.Start(ctx, "create_domain", trace.WithAttributes(
+		attribute.String("name", d.Name),
+	))
+	defer span.End()
+	return tm.svc.CreateDomain(ctx, token, d)
+}
+
+func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token string, id string) (auth.Domain, error) {
+	ctx, span := tm.tracer.Start(ctx, "view_domain", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+	return tm.svc.RetrieveDomain(ctx, token, id)
+}
+
+func (tm *tracingMiddleware) UpdateDomain(ctx context.Context, token string, id string, d auth.DomainReq) (auth.Domain, error) {
+	ctx, span := tm.tracer.Start(ctx, "update_domain", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+	return tm.svc.UpdateDomain(ctx, token, id, d)
+}
+
+func (tm *tracingMiddleware) ChangeDomainStatus(ctx context.Context, token string, id string, d auth.DomainReq) (auth.Domain, error) {
+	ctx, span := tm.tracer.Start(ctx, "change_domain_status", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+	return tm.svc.ChangeDomainStatus(ctx, token, id, d)
+}
+
+func (tm *tracingMiddleware) ListDomains(ctx context.Context, token string, p auth.Page) (auth.DomainsPage, error) {
+	ctx, span := tm.tracer.Start(ctx, "list_domains")
+	defer span.End()
+	return tm.svc.ListDomains(ctx, token, p)
+}
+
+func (tm *tracingMiddleware) AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+	ctx, span := tm.tracer.Start(ctx, "assign_users", trace.WithAttributes(
+		attribute.String("id", id),
+		attribute.StringSlice("user_ids", userIds),
+		attribute.String("relation", relation),
+	))
+	defer span.End()
+	return tm.svc.AssignUsers(ctx, token, id, userIds, relation)
+}
+
+func (tm *tracingMiddleware) UnassignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+	ctx, span := tm.tracer.Start(ctx, "unassign_users", trace.WithAttributes(
+		attribute.String("id", id),
+		attribute.StringSlice("user_ids", userIds),
+		attribute.String("relation", relation),
+	))
+	defer span.End()
+	return tm.svc.UnassignUsers(ctx, token, id, userIds, relation)
+}
+
+func (tm *tracingMiddleware) ListUserDomains(ctx context.Context, token string, userID string, p auth.Page) (auth.DomainsPage, error) {
+	ctx, span := tm.tracer.Start(ctx, "list_user_domains", trace.WithAttributes(
+		attribute.String("user_id", userID),
+	))
+	defer span.End()
+	return tm.svc.ListUserDomains(ctx, token, userID, p)
 }

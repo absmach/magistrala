@@ -23,7 +23,7 @@ const (
 // Paths are unique per owner.
 type Group struct {
 	ID          string           `json:"id"`
-	Owner       string           `json:"owner_id"`
+	Owner       string           `json:"owner_id,omitempty"`
 	Parent      string           `json:"parent_id,omitempty"`
 	Name        string           `json:"name"`
 	Description string           `json:"description,omitempty"`
@@ -83,14 +83,14 @@ type Repository interface {
 	// ChangeStatus changes groups status to active or inactive
 	ChangeStatus(ctx context.Context, group Group) (Group, error)
 
-	// Assign(ctx context.Context, groupID, memberKind string, ids ...string) error
+	AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error
 
-	// Unassign(ctx context.Context, groupID string, ids ...string) error
+	UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error
 }
 
 type Service interface {
 	// CreateGroup creates new  group.
-	CreateGroup(ctx context.Context, token string, g Group) (Group, error)
+	CreateGroup(ctx context.Context, token, kind string, g Group) (Group, error)
 
 	// UpdateGroup updates the group identified by the provided ID.
 	UpdateGroup(ctx context.Context, token string, g Group) (Group, error)

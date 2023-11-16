@@ -74,13 +74,6 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger mglog.Logger) http.Ha
 			opts...,
 		), "update_thing_credentials").ServeHTTP)
 
-		r.Patch("/{thingID}/owner", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientOwnerEndpoint(svc),
-			decodeUpdateClientOwner,
-			api.EncodeResponse,
-			opts...,
-		), "update_thing_owner").ServeHTTP)
-
 		r.Post("/{thingID}/enable", otelhttp.NewHandler(kithttp.NewServer(
 			enableClientEndpoint(svc),
 			decodeChangeClientStatus,

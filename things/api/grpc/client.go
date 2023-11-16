@@ -59,7 +59,7 @@ func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.AuthorizeReq)
 	return &magistrala.AuthorizeReq{
-		Namespace:   req.GetNamespace(),
+		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		SubjectKind: req.GetSubjectKind(),

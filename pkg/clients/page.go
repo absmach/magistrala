@@ -18,4 +18,5 @@ type Page struct {
 	Status     Status   `json:"status,omitempty"`
 	IDs        []string `json:"ids,omitempty"`
 	Identity   string   `json:"identity,omitempty"`
+	Role       *Role    `json:"-"`
 }

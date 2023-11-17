@@ -11,7 +11,6 @@ import (
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/ws"
 	"github.com/absmach/magistrala/ws/mocks"
@@ -77,7 +76,7 @@ func TestSubscribe(t *testing.T) {
 			chanID:   chanID,
 			subtopic: subTopic,
 			fail:     true,
-			err:      errors.Wrap(ws.ErrFailedSubscription, ws.ErrFailedSubscription),
+			err:      ws.ErrFailedSubscription,
 		},
 		{
 			desc:     "subscribe to channel with invalid chanID and invalid thingKey",

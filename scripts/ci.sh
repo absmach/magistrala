@@ -1,3 +1,7 @@
+#!/bin/bash
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 # This script contains commands to be executed by the CI tool.
 NPROC=$(nproc)
 GO_VERSION=1.21.3

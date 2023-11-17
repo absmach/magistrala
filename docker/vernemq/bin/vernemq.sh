@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
 
 NET_INTERFACE=$(route | grep '^default' | grep -o '[^ ]*$')
 NET_INTERFACE=${DOCKER_NET_INTERFACE:-${NET_INTERFACE}}

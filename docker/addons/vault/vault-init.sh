@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 set -euo pipefail
 
 scriptdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"

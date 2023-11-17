@@ -1,3 +1,6 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 # Builder
 FROM erlang:24.3.3.0-alpine AS builder
 RUN apk add --update git build-base bsd-compat-headers openssl-dev snappy-dev curl \

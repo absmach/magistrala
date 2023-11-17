@@ -1,3 +1,6 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 run:
   timeout: 3m
   build-tags:
@@ -29,7 +32,7 @@ linters-settings:
     checks: ["-ST1000", "-ST1003", "-ST1020", "-ST1021", "-ST1022"]
   goheader:
     template: |-
-      Copyright (c) Magistrala
+      Copyright (c) Abstract Machines
       SPDX-License-Identifier: Apache-2.0
 
 linters:

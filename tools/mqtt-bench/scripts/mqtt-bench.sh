@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
 
 i=0
 echo "BEGIN TEST " > result.$1.out

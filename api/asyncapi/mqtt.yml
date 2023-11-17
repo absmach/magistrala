@@ -1,3 +1,6 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 asyncapi: '2.6.0'
 id: 'https://github.com/absmach/magistrala/blob/master/api/asyncapi/mqtt.yml'
 info:

@@ -1,4 +1,6 @@
-#!/bin/ash
+#!/bin/bash
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
 
 if [ -z "$MG_MQTT_CLUSTER" ]
 then

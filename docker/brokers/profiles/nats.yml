@@ -1,3 +1,6 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 # This file is used to configure NATS broker.
 # It used when running nats both as an MQTT and Message broker.
 services:

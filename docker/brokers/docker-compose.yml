@@ -1,3 +1,6 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 # This file configures Magistrala brokers. Magistrala uses two types of brokers:
 # 1. MQTT_BROKER: Handles MQTT communication between MQTT adapters and message broker.
 # 2. MESSAGE_BROKER: Manages communication between adapters and Magistrala writer services.

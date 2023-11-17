@@ -1,3 +1,6 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 [mqtt]
   timeout = 1000
   [mqtt.broker]

@@ -230,22 +230,24 @@ type SDK interface {
 	// CreateToken receives credentials and returns user token.
 	//
 	// example:
-	//  user := sdk.User{
-	//    Credentials: sdk.Credentials{
+	//  lt := sdk.Login{
 	//      Identity: "john.doe@example",
 	//      Secret:   "12345678",
-	//    },
 	//  }
-	//  token, _ := sdk.CreateToken(user)
+	//  token, _ := sdk.CreateToken(lt)
 	//  fmt.Println(token)
-	CreateToken(user User) (Token, errors.SDKError)
+	CreateToken(lt Login) (Token, errors.SDKError)
 
 	// RefreshToken receives credentials and returns user token.
 	//
 	// example:
-	//  token, _ := sdk.RefreshToken("refresh_token")
+	//  lt := sdk.Login{
+	//      DomainID:   "domain_id",
+	//  }
+	// example:
+	//  token, _ := sdk.RefreshToken(lt,"refresh_token")
 	//  fmt.Println(token)
-	RefreshToken(token string) (Token, errors.SDKError)
+	RefreshToken(lt Login, token string) (Token, errors.SDKError)
 
 	// ListUserChannels list all channels belongs a particular user id.
 	//
@@ -537,8 +539,8 @@ type SDK interface {
 	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// group, _ := sdk.AddUserToGroup("groupID",req, "token")
-	// fmt.Println(group)
+	// err := sdk.AddUserToGroup("groupID",req, "token")
+	// fmt.Println(err)
 	AddUserToGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
 
 	// RemoveUserFromGroup remove user from a group.
@@ -548,8 +550,8 @@ type SDK interface {
 	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// group, _ := sdk.RemoveUserFromGroup("groupID",req, "token")
-	// fmt.Println(group)
+	// err := sdk.RemoveUserFromGroup("groupID",req, "token")
+	// fmt.Println(err)
 	RemoveUserFromGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
 
 	// ListGroupUsers list all users in the group id .
@@ -958,6 +960,113 @@ type SDK interface {
 	//  err := sdk.DeleteSubscription("id", "token")
 	//  fmt.Println(err)
 	DeleteSubscription(id, token string) errors.SDKError
+
+	// CreateDomain creates new domain and returns its details.
+	//
+	// example:
+	//  domain := sdk.Domain{
+	//    Name: "My Domain",
+	//    Metadata: sdk.Metadata{
+	//      "key": "value",
+	//    },
+	//  }
+	//  domain, _ := sdk.CreateDomain(group, "token")
+	//  fmt.Println(domain)
+	CreateDomain(d Domain, token string) (Domain, errors.SDKError)
+
+	// RetrieveDomain retrieve domain information of given domain ID .
+	//
+	// example:
+	//  domain, _ := sdk.Domain("domainID", "token")
+	//  fmt.Println(domain)
+	Domain(domainID, token string) (Domain, errors.SDKError)
+
+	// UpdateDomain updates details of the given domain ID.
+	//
+	// example:
+	//  domain := sdk.Domain{
+	//    ID : "domainID"
+	//    Name: "New Domain Name",
+	//    Metadata: sdk.Metadata{
+	//      "key": "value",
+	//    },
+	//  }
+	//  domain, _ := sdk.UpdateDomain(domain, "token")
+	//  fmt.Println(domain)
+	UpdateDomain(d Domain, token string) (Domain, errors.SDKError)
+
+	// Domains returns list of domain for the given filters.
+	//
+	// example:
+	//  pm := sdk.PageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//    Name:   "My Domain",
+	//    Permission : "view"
+	//  }
+	//  domains, _ := sdk.Domains(pm, "token")
+	//  fmt.Println(domains)
+	Domains(pm PageMetadata, token string) (DomainsPage, errors.SDKError)
+
+	// ListDomainUsers returns list of users for the given domain ID and filters.
+	//
+	// example:
+	//  pm := sdk.PageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//    Permission : "view"
+	//  }
+	//  users, _ := sdk.ListDomainUsers("domainID", pm, "token")
+	//  fmt.Println(users)
+	ListDomainUsers(domainID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
+
+	// ListUserDomains returns list of domains for the given user ID and filters.
+	//
+	// example:
+	//  pm := sdk.PageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//    Permission : "view"
+	//  }
+	//  domains, _ := sdk.ListUserDomains("userID", pm, "token")
+	//  fmt.Println(domains)
+	ListUserDomains(userID string, pm PageMetadata, token string) (DomainsPage, errors.SDKError)
+
+	// EnableDomain changes the status of the domain to enabled.
+	//
+	// example:
+	//  err := sdk.EnableDomain("domainID", "token")
+	//  fmt.Println(err)
+	EnableDomain(domainID, token string) errors.SDKError
+
+	// DisableDomain changes the status of the domain to disabled.
+	//
+	// example:
+	//  err := sdk.DisableDomain("domainID", "token")
+	//  fmt.Println(err)
+	DisableDomain(domainID, token string) errors.SDKError
+
+	// AddUserToDomain adds a user to a domain.
+	//
+	// example:
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer",  "member"
+	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	// err := sdk.AddUserToDomain("domainID", req, "token")
+	// fmt.Println(err)
+	AddUserToDomain(domainID string, req UsersRelationRequest, token string) errors.SDKError
+
+	// RemoveUserFromDomain removes a user from a domain.
+	//
+	// example:
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer" , "member"
+	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	// err := sdk.RemoveUserFromDomain("domainID", req, "token")
+	// fmt.Println(err)
+	RemoveUserFromDomain(domainID string, req UsersRelationRequest, token string) errors.SDKError
 }
 
 type mgSDK struct {
@@ -967,6 +1076,7 @@ type mgSDK struct {
 	readerURL      string
 	thingsURL      string
 	usersURL       string
+	domainsURL     string
 	HostURL        string
 
 	msgContentType ContentType
@@ -981,6 +1091,7 @@ type Config struct {
 	ReaderURL      string
 	ThingsURL      string
 	UsersURL       string
+	DomainsURL     string
 	HostURL        string
 
 	MsgContentType  ContentType
@@ -996,6 +1107,7 @@ func NewSDK(conf Config) SDK {
 		readerURL:      conf.ReaderURL,
 		thingsURL:      conf.ThingsURL,
 		usersURL:       conf.UsersURL,
+		domainsURL:     conf.DomainsURL,
 		HostURL:        conf.HostURL,
 
 		msgContentType: conf.MsgContentType,

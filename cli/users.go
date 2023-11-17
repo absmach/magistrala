@@ -88,24 +88,26 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "token <username> <password>",
+		Use:   "token <username> <password> [<domainID>]",
 		Short: "Get token",
 		Long: "Generate new token from username and password\n" +
 			"For example:\n" +
 			"\tmagistrala-cli users token user@example.com 12345678\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 && len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
 
-			user := mgxsdk.User{
-				Credentials: mgxsdk.Credentials{
-					Identity: args[0],
-					Secret:   args[1],
-				},
+			lg := mgxsdk.Login{
+				Identity: args[0],
+				Secret:   args[1],
 			}
-			token, err := sdk.CreateToken(user)
+			if len(args) == 3 {
+				lg.DomainID = args[2]
+			}
+
+			token, err := sdk.CreateToken(lg)
 			if err != nil {
 				logError(err)
 				return
@@ -115,18 +117,22 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "refreshtoken <token>",
+		Use:   "refreshtoken <token> [<domainID>]",
 		Short: "Get token",
 		Long: "Generate new token from refresh token\n" +
 			"For example:\n" +
 			"\tmagistrala-cli users refreshtoken <refresh_token>\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 1 {
+			if len(args) != 2 && len(args) != 1 {
 				logUsage(cmd.Use)
 				return
 			}
 
-			token, err := sdk.RefreshToken(args[0])
+			lg := mgxsdk.Login{}
+			if len(args) == 2 {
+				lg.DomainID = args[1]
+			}
+			token, err := sdk.RefreshToken(lg, args[0])
 			if err != nil {
 				logError(err)
 				return
@@ -351,13 +357,13 @@ var cmdUsers = []cobra.Command{
 				Limit:  Limit,
 			}
 
-			users, err := sdk.ListUserChannels(args[0], pm, args[1])
+			cp, err := sdk.ListUserChannels(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
 
-			logJSON(users)
+			logJSON(cp)
 		},
 	},
 
@@ -378,15 +384,43 @@ var cmdUsers = []cobra.Command{
 				Limit:  Limit,
 			}
 
-			users, err := sdk.ListUserThings(args[0], pm, args[1])
+			tp, err := sdk.ListUserThings(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
 
-			logJSON(users)
+			logJSON(tp)
 		},
 	},
+
+	{
+		Use:   "domains <user_id> <user_auth_token>",
+		Short: "List domains",
+		Long: "List user's domains\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli users domains <user_id> <user_auth_token>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			pm := mgxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
+
+			dp, err := sdk.ListUserDomains(args[0], pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(dp)
+		},
+	},
+
 	{
 		Use:   "groups <user_id> <user_auth_token>",
 		Short: "List groups",

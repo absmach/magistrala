@@ -284,11 +284,9 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 		return token, ErrMissingCredentials
 	}
 
-	u := sdk.User{
-		Credentials: sdk.Credentials{
-			Identity: ps.conf.Server.MgUser,
-			Secret:   ps.conf.Server.MgPass,
-		},
+	u := sdk.Login{
+		Identity: ps.conf.Server.MgUser,
+		Secret:   ps.conf.Server.MgPass,
 	}
 	tkn, err := ps.sdk.CreateToken(u)
 	if err != nil {

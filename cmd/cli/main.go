@@ -18,6 +18,7 @@ const (
 	defUsersURL     string = defURL + ":9002"
 	defThingsURL    string = defURL + ":9000"
 	defBootstrapURL string = defURL + ":9013"
+	defDomainsURL   string = defURL + ":8189"
 	defCertsURL     string = defURL + ":9019"
 )
 
@@ -30,6 +31,7 @@ func main() {
 		HTTPAdapterURL:  fmt.Sprintf("%s/http", defURL),
 		BootstrapURL:    defBootstrapURL,
 		CertsURL:        defCertsURL,
+		DomainsURL:      defDomainsURL,
 		MsgContentType:  sdk.ContentType(msgContentType),
 		TLSVerification: false,
 		HostURL:         defURL,
@@ -53,6 +55,7 @@ func main() {
 	// API commands
 	healthCmd := cli.NewHealthCmd()
 	usersCmd := cli.NewUsersCmd()
+	domainsCmd := cli.NewDomainsCmd()
 	thingsCmd := cli.NewThingsCmd()
 	groupsCmd := cli.NewGroupsCmd()
 	channelsCmd := cli.NewChannelsCmd()
@@ -66,6 +69,7 @@ func main() {
 	// Root Commands
 	rootCmd.AddCommand(healthCmd)
 	rootCmd.AddCommand(usersCmd)
+	rootCmd.AddCommand(domainsCmd)
 	rootCmd.AddCommand(groupsCmd)
 	rootCmd.AddCommand(thingsCmd)
 	rootCmd.AddCommand(channelsCmd)
@@ -107,6 +111,14 @@ func main() {
 		"u",
 		sdkConf.UsersURL,
 		"Users service URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.DomainsURL,
+		"domains-url",
+		"d",
+		sdkConf.DomainsURL,
+		"Domains service URL",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

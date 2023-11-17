@@ -142,15 +142,11 @@ func createUser(s sdk.SDK, conf Config) (string, error) {
 		Status: sdk.EnabledStatus,
 	}
 
-	pass := user.Credentials.Secret
-
-	user, err := s.CreateUser(user, "")
-	if err != nil {
+	if _, err := s.CreateUser(user, ""); err != nil {
 		return "", fmt.Errorf("unable to create user: %w", err)
 	}
 
-	user.Credentials.Secret = pass
-	token, err := s.CreateToken(user)
+	token, err := s.CreateToken(sdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret})
 	if err != nil {
 		return "", fmt.Errorf("unable to login user: %w", err)
 	}

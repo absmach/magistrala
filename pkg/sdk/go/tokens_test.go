@@ -40,36 +40,31 @@ func TestIssueToken(t *testing.T) {
 
 	cases := []struct {
 		desc     string
-		client   sdk.User
+		login    sdk.Login
 		dbClient sdk.User
 		err      errors.SDKError
 	}{
 		{
 			desc:     "issue token for a new user",
-			client:   client,
+			login:    sdk.Login{Identity: client.Credentials.Identity, Secret: client.Credentials.Secret},
 			dbClient: rClient,
 			err:      nil,
 		},
 		{
-			desc:   "issue token for an empty user",
-			client: sdk.User{},
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusInternalServerError),
+			desc:  "issue token for an empty user",
+			login: sdk.Login{},
+			err:   errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusInternalServerError),
 		},
 		{
-			desc: "issue token for invalid identity",
-			client: sdk.User{
-				Credentials: sdk.Credentials{
-					Identity: "invalid",
-					Secret:   "secret",
-				},
-			},
+			desc:     "issue token for invalid identity",
+			login:    sdk.Login{Identity: "invalid", Secret: "secret"},
 			dbClient: wrongClient,
 			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 	}
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByIdentity", mock.Anything, mock.Anything).Return(convertClient(tc.dbClient), tc.err)
-		token, err := mgsdk.CreateToken(tc.client)
+		token, err := mgsdk.CreateToken(tc.login)
 		switch tc.err {
 		case nil:
 			assert.NotEmpty(t, token, fmt.Sprintf("%s: expected token, got empty", tc.desc))
@@ -126,7 +121,7 @@ func TestRefreshToken(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(convertClient(user), tc.err)
-		_, err := mgsdk.RefreshToken(tc.token)
+		_, err := mgsdk.RefreshToken(sdk.Login{}, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
 			assert.NotEmpty(t, token, fmt.Sprintf("%s: expected token, got empty", tc.desc))

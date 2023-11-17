@@ -43,11 +43,6 @@ type Connection struct {
 	ChannelID string `json:"channel_id,omitempty"`
 }
 
-type tokenReq struct {
-	Identity string `json:"identity"`
-	Secret   string `json:"secret"`
-}
-
 type UsersRelationRequest struct {
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`

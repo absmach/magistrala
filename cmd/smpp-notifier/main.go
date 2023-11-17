@@ -19,12 +19,12 @@ import (
 	mgsmpp "github.com/absmach/magistrala/consumers/notifiers/smpp"
 	"github.com/absmach/magistrala/consumers/notifiers/tracing"
 	"github.com/absmach/magistrala/internal"
-	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/ulid"
@@ -40,6 +40,7 @@ const (
 	svcName        = "smpp-notifier"
 	envPrefixDB    = "MG_SMPP_NOTIFIER_DB_"
 	envPrefixHTTP  = "MG_SMPP_NOTIFIER_HTTP_"
+	envPrefixAuth  = "MG_AUTH_GRPC_"
 	defDB          = "subscriptions"
 	defSvcHTTPPort = "9014"
 )
@@ -123,7 +124,14 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	auth, authHandler, err := authclient.Setup(svcName)
+	authConfig := auth.Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	authClient, authHandler, err := auth.Setup(authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -132,7 +140,7 @@ func main() {
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	svc := newService(db, tracer, auth, cfg, smppConfig, logger)
+	svc := newService(db, tracer, authClient, cfg, smppConfig, logger)
 	if err = consumers.Start(ctx, svcName, pubSub, svc, cfg.ConfigPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create Postgres writer: %s", err))
 		exitCode = 1

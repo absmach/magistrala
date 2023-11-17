@@ -14,7 +14,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
-	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
@@ -27,6 +26,7 @@ import (
 	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
@@ -54,6 +54,7 @@ const (
 	envPrefixDB        = "MG_THINGS_DB_"
 	envPrefixHTTP      = "MG_THINGS_HTTP_"
 	envPrefixGRPC      = "MG_THINGS_AUTH_GRPC_"
+	envPrefixAuth      = "MG_AUTH_GRPC_"
 	defDB              = "things"
 	defSvcHTTPPort     = "9000"
 	defSvcAuthGRPCPort = "7000"
@@ -137,25 +138,32 @@ func main() {
 	}
 	defer cacheclient.Close()
 
-	var auth magistrala.AuthServiceClient
+	var authClient magistrala.AuthServiceClient
 
 	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
 	case true:
-		auth = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
+		authClient = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
 		logger.Info("Using standalone auth service")
 	default:
-		authServiceClient, authHandler, err := authclient.Setup(svcName)
+		authConfig := auth.Config{}
+		if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+			logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+			exitCode = 1
+			return
+		}
+
+		authServiceClient, authHandler, err := auth.Setup(authConfig)
 		if err != nil {
 			logger.Error(err.Error())
 			exitCode = 1
 			return
 		}
 		defer authHandler.Close()
-		auth = authServiceClient
+		authClient = authServiceClient
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
-	csvc, gsvc, err := newService(ctx, db, dbConfig, auth, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
+	csvc, gsvc, err := newService(ctx, db, dbConfig, authClient, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1

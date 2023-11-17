@@ -15,13 +15,13 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	authapi "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	"github.com/absmach/magistrala/internal/server"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt"
 	"github.com/absmach/magistrala/mqtt/events"
 	mqtttracing "github.com/absmach/magistrala/mqtt/tracing"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
@@ -37,7 +37,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const svcName = "mqtt"
+const (
+	svcName        = "mqtt"
+	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
+)
 
 type config struct {
 	LogLevel              string        `env:"MG_MQTT_ADAPTER_LOG_LEVEL"                    envDefault:"info"`
@@ -157,17 +160,24 @@ func main() {
 		return
 	}
 
-	auth, aHandler, err := authapi.SetupAuthz("authz")
+	authConfig := auth.Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuthz}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	authClient, authHandler, err := auth.SetupAuthz(authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer aHandler.Close()
+	defer authHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + aHandler.Secure())
+	logger.Info("Successfully connected to things grpc server " + authHandler.Secure())
 
-	h := mqtt.NewHandler(np, es, logger, auth)
+	h := mqtt.NewHandler(np, es, logger, authClient)
 	h = handler.NewTracing(tracer, h)
 
 	if cfg.SendTelemetry {

@@ -13,13 +13,13 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
-	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	mongoclient "github.com/absmach/magistrala/internal/clients/mongo"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
@@ -43,6 +43,7 @@ const (
 	svcName        = "twins"
 	envPrefixDB    = "MG_TWINS_DB_"
 	envPrefixHTTP  = "MG_TWINS_HTTP_"
+	envPrefixAuth  = "MG_AUTH_GRPC_"
 	defSvcHTTPPort = "9018"
 )
 
@@ -120,19 +121,26 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	var auth magistrala.AuthServiceClient
+	var authClient magistrala.AuthServiceClient
 	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
 	case true:
-		auth = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
+		authClient = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
 	default:
-		authServiceClient, authHandler, err := authclient.Setup(svcName)
+		authConfig := auth.Config{}
+		if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+			logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+			exitCode = 1
+			return
+		}
+
+		authServiceClient, authHandler, err := auth.Setup(authConfig)
 		if err != nil {
 			logger.Error(err.Error())
 			exitCode = 1
 			return
 		}
 		defer authHandler.Close()
-		auth = authServiceClient
+		authClient = authServiceClient
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
@@ -145,7 +153,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	svc, err := newService(ctx, svcName, pubSub, cfg, auth, tracer, db, cacheClient, logger)
+	svc, err := newService(ctx, svcName, pubSub, cfg, authClient, tracer, db, cacheClient, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1

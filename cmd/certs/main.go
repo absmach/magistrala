@@ -18,13 +18,13 @@ import (
 	certspg "github.com/absmach/magistrala/certs/postgres"
 	"github.com/absmach/magistrala/certs/tracing"
 	"github.com/absmach/magistrala/internal"
-	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/auth"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
@@ -38,6 +38,7 @@ const (
 	svcName        = "certs"
 	envPrefixDB    = "MG_CERTS_DB_"
 	envPrefixHTTP  = "MG_CERTS_HTTP_"
+	envPrefixAuth  = "MG_AUTH_GRPC_"
 	defDB          = "certs"
 	defSvcHTTPPort = "9019"
 )
@@ -112,7 +113,14 @@ func main() {
 	}
 	defer db.Close()
 
-	auth, authHandler, err := authclient.Setup(svcName)
+	authConfig := auth.Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	authClient, authHandler, err := auth.Setup(authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -135,7 +143,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	svc := newService(auth, db, tracer, logger, cfg, dbConfig, pkiclient)
+	svc := newService(authClient, db, tracer, logger, cfg, dbConfig, pkiclient)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {

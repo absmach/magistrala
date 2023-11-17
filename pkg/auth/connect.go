@@ -1,7 +1,7 @@
 // Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
-package grpc
+package auth
 
 import (
 	"crypto/tls"
@@ -35,30 +35,82 @@ type Config struct {
 	ClientCert   string        `env:"CLIENT_CERT"      envDefault:""`
 	ClientKey    string        `env:"CLIENT_KEY"       envDefault:""`
 	ServerCAFile string        `env:"SERVER_CA_CERTS"  envDefault:""`
-	URL          string        `env:"URL"              envDefault:""`
+	URL          string        `env:"URL"              envDefault:"localhost:8181"`
 	Timeout      time.Duration `env:"TIMEOUT"          envDefault:"1s"`
 }
 
-type ClientHandler interface {
+// Handler is used to handle gRPC connection.
+type Handler interface {
+	// Close closes gRPC connection.
 	Close() error
-	IsSecure() bool
+
+	// Secure is used for pretty printing TLS info.
 	Secure() string
+
+	// Connection returns the gRPC connection.
+	Connection() *grpc.ClientConn
 }
 
-type Client struct {
+type client struct {
 	*grpc.ClientConn
+	cfg    Config
 	secure security
 }
 
-var _ ClientHandler = (*Client)(nil)
+var _ Handler = (*client)(nil)
 
-// NewClientHandler create new client handler for gRPC client.
-func NewClientHandler(c *Client) ClientHandler {
-	return c
+func newClient(cfg Config) (Handler, error) {
+	conn, secure, err := connect(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &client{
+		ClientConn: conn,
+		cfg:        cfg,
+		secure:     secure,
+	}, nil
 }
 
-// Connect creates new gRPC client and connect to gRPC server.
-func Connect(cfg Config) (*grpc.ClientConn, security, error) {
+func (c *client) Close() error {
+	if err := c.ClientConn.Close(); err != nil {
+		return errors.Wrap(errGrpcClose, err)
+	}
+
+	return nil
+}
+
+func (c *client) IsSecure() bool {
+	switch c.secure {
+	case withTLS, withmTLS:
+		return true
+	case withoutTLS:
+		fallthrough
+	default:
+		return true
+	}
+}
+
+func (c *client) Connection() *grpc.ClientConn {
+	return c.ClientConn
+}
+
+// Secure is used for pretty printing TLS info.
+func (c *client) Secure() string {
+	switch c.secure {
+	case withTLS:
+		return "with TLS"
+	case withmTLS:
+		return "with mTLS"
+	case withoutTLS:
+		fallthrough
+	default:
+		return "without TLS"
+	}
+}
+
+// connect creates new gRPC client and connect to gRPC server.
+func connect(cfg Config) (*grpc.ClientConn, security, error) {
 	opts := []grpc.DialOption{
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 	}
@@ -104,57 +156,7 @@ func Connect(cfg Config) (*grpc.ClientConn, security, error) {
 
 	conn, err := grpc.Dial(cfg.URL, opts...)
 	if err != nil {
-		return nil, secure, err
+		return nil, secure, errors.Wrap(errGrpcConnect, err)
 	}
 	return conn, secure, nil
-}
-
-// Setup load gRPC configuration from environment variable, creates new gRPC client and connect to gRPC server.
-func Setup(config Config, svcName string) (*Client, ClientHandler, error) {
-	// connect to auth grpc server
-	grpcClient, secure, err := Connect(config)
-	if err != nil {
-		return nil, nil, errors.Wrap(errGrpcConnect, err)
-	}
-
-	c := &Client{grpcClient, secure}
-
-	return c, NewClientHandler(c), nil
-}
-
-// Close shuts down trace provider.
-func (c *Client) Close() error {
-	var retErr error
-	err := c.ClientConn.Close()
-	if err != nil {
-		retErr = errors.Wrap(errGrpcClose, err)
-	}
-	return retErr
-}
-
-// IsSecure is utility method for checking if
-// the client is running with TLS enabled.
-func (c *Client) IsSecure() bool {
-	switch c.secure {
-	case withTLS, withmTLS:
-		return true
-	case withoutTLS:
-		fallthrough
-	default:
-		return true
-	}
-}
-
-// Secure is used for pretty printing TLS info.
-func (c *Client) Secure() string {
-	switch c.secure {
-	case withTLS:
-		return "with TLS"
-	case withmTLS:
-		return "with mTLS"
-	case withoutTLS:
-		fallthrough
-	default:
-		return "without TLS"
-	}
 }

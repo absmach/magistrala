@@ -19,13 +19,13 @@ import (
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
 	"github.com/absmach/magistrala/internal"
-	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	"github.com/absmach/magistrala/internal/clients/jaeger"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/events/store"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -40,6 +40,7 @@ const (
 	svcName        = "bootstrap"
 	envPrefixDB    = "MG_BOOTSTRAP_DB_"
 	envPrefixHTTP  = "MG_BOOTSTRAP_HTTP_"
+	envPrefixAuth  = "MG_AUTH_GRPC_"
 	defDB          = "bootstrap"
 	defSvcHTTPPort = "9013"
 
@@ -96,8 +97,14 @@ func main() {
 	}
 	defer db.Close()
 
-	// Create new auth grpc client api
-	auth, authHandler, err := authclient.Setup(svcName)
+	authConfig := auth.Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	authClient, authHandler, err := auth.Setup(authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -120,7 +127,7 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	// Create new service
-	svc, err := newService(ctx, auth, db, tracer, logger, cfg, dbConfig)
+	svc, err := newService(ctx, authClient, db, tracer, logger, cfg, dbConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1

@@ -12,11 +12,11 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
-	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/magistrala/readers/api"
@@ -31,6 +31,8 @@ const (
 	svcName        = "timescaledb-reader"
 	envPrefixDB    = "MG_TIMESCALE_"
 	envPrefixHTTP  = "MG_TIMESCALE_READER_HTTP_"
+	envPrefixAuth  = "MG_AUTH_GRPC_"
+	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
 	defDB          = "messages"
 	defSvcHTTPPort = "9011"
 )
@@ -80,7 +82,14 @@ func main() {
 
 	repo := newService(db, logger)
 
-	ac, acHandler, err := authclient.Setup(svcName)
+	authConfig := auth.Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	ac, acHandler, err := auth.Setup(authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -90,7 +99,14 @@ func main() {
 
 	logger.Info("Successfully connected to auth grpc server " + acHandler.Secure())
 
-	tc, tcHandler, err := authclient.SetupAuthz(svcName)
+	authConfig = auth.Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuthz}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	tc, tcHandler, err := auth.SetupAuthz(authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

@@ -35,11 +35,11 @@ type Config struct {
 
 // Setup load configuration from environment variable, create InfluxDB client and connect to InfluxDB server.
 func Setup(ctx context.Context, envPrefix string) (influxdb2.Client, error) {
-	config := Config{}
-	if err := env.ParseWithOptions(&config, env.Options{Prefix: envPrefix}); err != nil {
+	cfg := Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
 	}
-	return Connect(ctx, config)
+	return Connect(ctx, cfg)
 }
 
 // Connect create InfluxDB client and connect to InfluxDB server.

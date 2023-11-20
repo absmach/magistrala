@@ -93,10 +93,11 @@ func main() {
 	}
 
 	dbConfig := pgclient.Config{Name: defDB}
-	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
+	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Fatal(err.Error())
 	}
-	db, err := pgclient.SetupWithConfig(envPrefixDB, *apostgres.Migration(), dbConfig)
+
+	db, err := pgclient.Setup(dbConfig, *apostgres.Migration())
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

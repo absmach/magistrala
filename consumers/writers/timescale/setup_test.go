@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	db, err = pgclient.SetupDB(dbConfig, *timescale.Migration())
+	db, err = pgclient.Setup(dbConfig, *timescale.Migration())
 	if err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}

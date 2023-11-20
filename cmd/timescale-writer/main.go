@@ -82,7 +82,12 @@ func main() {
 	}
 
 	dbConfig := pgclient.Config{Name: defDB}
-	db, err := pgclient.SetupWithConfig(envPrefixDB, *timescale.Migration(), dbConfig)
+	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s Postgres configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+	db, err := pgclient.Setup(dbConfig, *timescale.Migration())
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

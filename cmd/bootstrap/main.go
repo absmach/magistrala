@@ -86,10 +86,10 @@ func main() {
 
 	// Create new postgres client
 	dbConfig := pgclient.Config{Name: defDB}
-	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
+	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Fatal(err.Error())
 	}
-	db, err := pgclient.SetupWithConfig(envPrefixDB, *bootstrappg.Migration(), dbConfig)
+	db, err := pgclient.Setup(dbConfig, *bootstrappg.Migration())
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -98,7 +98,7 @@ func main() {
 	defer db.Close()
 
 	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return

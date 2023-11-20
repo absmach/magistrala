@@ -76,7 +76,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	if db, err = pgclient.SetupDB(dbConfig, *cpostgres.Migration()); err != nil {
+	if db, err = pgclient.Setup(dbConfig, *cpostgres.Migration()); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 

@@ -35,7 +35,7 @@ type Config struct {
 	ClientCert   string        `env:"CLIENT_CERT"      envDefault:""`
 	ClientKey    string        `env:"CLIENT_KEY"       envDefault:""`
 	ServerCAFile string        `env:"SERVER_CA_CERTS"  envDefault:""`
-	URL          string        `env:"URL"              envDefault:"localhost:8181"`
+	URL          string        `env:"URL"              envDefault:""`
 	Timeout      time.Duration `env:"TIMEOUT"          envDefault:"1s"`
 }
 

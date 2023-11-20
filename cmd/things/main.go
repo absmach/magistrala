@@ -101,14 +101,15 @@ func main() {
 
 	// Create new database for things
 	dbConfig := pgclient.Config{Name: defDB}
-	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
-		logger.Fatal(err.Error())
+	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
-
 	tm := thingspg.Migration()
 	gm := gpostgres.Migration()
 	tm.Migrations = append(tm.Migrations, gm.Migrations...)
-	db, err := pgclient.SetupWithConfig(envPrefixDB, *tm, dbConfig)
+	db, err := pgclient.Setup(dbConfig, *tm)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -146,7 +147,7 @@ func main() {
 		logger.Info("Using standalone auth service")
 	default:
 		authConfig := auth.Config{}
-		if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
 			logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 			exitCode = 1
 			return

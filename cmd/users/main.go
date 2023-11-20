@@ -112,16 +112,15 @@ func main() {
 	}
 
 	dbConfig := pgclient.Config{Name: defDB}
-	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s database configuration : %s", svcName, err.Error()))
+	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
+		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-
 	cm := clientspg.Migration()
 	gm := gpostgres.Migration()
 	cm.Migrations = append(cm.Migrations, gm.Migrations...)
-	db, err := pgclient.SetupWithConfig(envPrefixDB, *cm, dbConfig)
+	db, err := pgclient.Setup(dbConfig, *cm)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -143,7 +142,7 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return

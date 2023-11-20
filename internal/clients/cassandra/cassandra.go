@@ -33,11 +33,11 @@ func Setup(envPrefix string) (*gocql.Session, error) {
 // creates new cassandra connection and executes
 // the initial query in database.
 func SetupDB(envPrefix string, initQuery string) (*gocql.Session, error) {
-	config := Config{}
-	if err := env.ParseWithOptions(&config, env.Options{Prefix: envPrefix}); err != nil {
+	cfg := Config{}
+	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
 	}
-	cs, err := Connect(config)
+	cs, err := Connect(cfg)
 	if err != nil {
 		return nil, err
 	}

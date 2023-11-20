@@ -89,7 +89,7 @@ func main() {
 	}
 
 	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuthz}); err != nil {
+	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuthz}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return

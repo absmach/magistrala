@@ -83,7 +83,12 @@ func main() {
 	}
 
 	dbConfig := pgclient.Config{Name: defDB}
-	db, err := pgclient.SetupWithConfig(envPrefixDB, *notifierpg.Migration(), dbConfig)
+	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s Postgres configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+	db, err := pgclient.Setup(dbConfig, *notifierpg.Migration())
 	if err != nil {
 		logger.Fatal(err.Error())
 		exitCode = 1
@@ -128,7 +133,7 @@ func main() {
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
 	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return

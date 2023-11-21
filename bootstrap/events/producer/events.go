@@ -5,8 +5,6 @@ package producer
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/pkg/events"
@@ -75,7 +73,11 @@ func (ce configEvent) Encode() (map[string]interface{}, error) {
 		for i, ch := range ce.Channels {
 			channels[i] = ch.ID
 		}
-		val["channels"] = fmt.Sprintf("[%s]", strings.Join(channels, ", "))
+		data, err := json.Marshal(channels)
+		if err != nil {
+			return map[string]interface{}{}, err
+		}
+		val["channels"] = string(data)
 	}
 	if ce.ClientCert != "" {
 		val["client_cert"] = ce.ClientCert
@@ -170,7 +172,11 @@ func (be bootstrapEvent) Encode() (map[string]interface{}, error) {
 		for i, ch := range be.Channels {
 			channels[i] = ch.ID
 		}
-		val["channels"] = fmt.Sprintf("[%s]", strings.Join(channels, ", "))
+		data, err := json.Marshal(channels)
+		if err != nil {
+			return map[string]interface{}{}, err
+		}
+		val["channels"] = string(data)
 	}
 	if be.ClientCert != "" {
 		val["client_cert"] = be.ClientCert
@@ -206,9 +212,14 @@ type updateConnectionsEvent struct {
 }
 
 func (uce updateConnectionsEvent) Encode() (map[string]interface{}, error) {
+	data, err := json.Marshal(uce.mgChannels)
+	if err != nil {
+		return map[string]interface{}{}, err
+	}
+
 	return map[string]interface{}{
 		"thing_id":  uce.mgThing,
-		"channels":  fmt.Sprintf("[%s]", strings.Join(uce.mgChannels, ", ")),
+		"channels":  string(data),
 		"operation": thingUpdateConnections,
 	}, nil
 }

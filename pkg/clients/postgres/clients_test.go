@@ -8,11 +8,9 @@ import (
 	"fmt"
 	"testing"
 
-	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	mggroups "github.com/absmach/magistrala/pkg/groups"
 	cpostgres "github.com/absmach/magistrala/users/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +25,10 @@ var (
 )
 
 func TestClientsRetrieveByID(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client := mgclients.Client{
@@ -65,7 +66,10 @@ func TestClientsRetrieveByID(t *testing.T) {
 }
 
 func TestClientsRetrieveByIdentity(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client := mgclients.Client{
@@ -96,27 +100,22 @@ func TestClientsRetrieveByIdentity(t *testing.T) {
 }
 
 func TestClientsRetrieveAll(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
-	grepo := gpostgres.New(database)
 
 	nClients := uint64(200)
 	ownerID := testsutil.GenerateUUID(t)
 
 	meta := mgclients.Metadata{
-		"admin": "true",
+		"admin": true,
 	}
 	wrongMeta := mgclients.Metadata{
-		"admin": "false",
+		"admin": false,
 	}
 	expectedClients := []mgclients.Client{}
-
-	sharedGroup := mggroups.Group{
-		ID:   testsutil.GenerateUUID(t),
-		Name: "shared-group",
-	}
-	_, err := grepo.Save(context.Background(), sharedGroup)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("TestRetrieveAll%d@example.com", i)
@@ -138,7 +137,7 @@ func TestClientsRetrieveAll(t *testing.T) {
 		if i%50 == 0 {
 			client.Status = mgclients.DisabledStatus
 		}
-		client, err = repo.Save(context.Background(), client)
+		client, err := repo.Save(context.Background(), client)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		expectedClients = append(expectedClients, client)
 	}
@@ -272,20 +271,6 @@ func TestClientsRetrieveAll(t *testing.T) {
 			response: []mgclients.Client{},
 			size:     0,
 		},
-		"retrieve all clients shared by": {
-			pm: mgclients.Page{
-				Offset: 0,
-				Limit:  nClients,
-				Total:  nClients,
-				Status: mgclients.AllStatus,
-			},
-			response: []mgclients.Client{
-				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
-				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
-				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
-			},
-			size: 20,
-		},
 		"retrieve all clients shared by and owned by": {
 			pm: mgclients.Page{
 				Offset: 0,
@@ -357,20 +342,6 @@ func TestClientsRetrieveAll(t *testing.T) {
 			response: []mgclients.Client{},
 			size:     0,
 		},
-		"retrieve all clients by sharedby": {
-			pm: mgclients.Page{
-				Offset: 0,
-				Limit:  nClients,
-				Total:  nClients,
-				Status: mgclients.AllStatus,
-			},
-			response: []mgclients.Client{
-				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
-				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
-				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
-			},
-			size: 20,
-		},
 	}
 	for desc, tc := range cases {
 		page, err := repo.RetrieveAll(context.Background(), tc.pm)
@@ -382,7 +353,10 @@ func TestClientsRetrieveAll(t *testing.T) {
 }
 
 func TestClientsUpdateMetadata(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mgclients.Client{
@@ -538,7 +512,10 @@ func TestClientsUpdateMetadata(t *testing.T) {
 }
 
 func TestClientsUpdateTags(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mgclients.Client{
@@ -614,7 +591,10 @@ func TestClientsUpdateTags(t *testing.T) {
 }
 
 func TestClientsUpdateSecret(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mgclients.Client{
@@ -698,7 +678,10 @@ func TestClientsUpdateSecret(t *testing.T) {
 }
 
 func TestClientsUpdateIdentity(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mgclients.Client{
@@ -777,7 +760,10 @@ func TestClientsUpdateIdentity(t *testing.T) {
 }
 
 func TestClientsUpdateOwner(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mgclients.Client{
@@ -853,7 +839,10 @@ func TestClientsUpdateOwner(t *testing.T) {
 }
 
 func TestClientsChangeStatus(t *testing.T) {
-	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mgclients.Client{

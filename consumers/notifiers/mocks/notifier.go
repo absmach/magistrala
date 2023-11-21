@@ -10,7 +10,7 @@ import (
 
 var _ notifiers.Notifier = (*notifier)(nil)
 
-const invalidSender = "invalid@example.com"
+const InvalidSender = "invalid@example.com"
 
 type notifier struct{}
 
@@ -21,7 +21,7 @@ func NewNotifier() notifiers.Notifier {
 
 func (n notifier) Notify(from string, to []string, msg *messaging.Message) error {
 	for _, t := range to {
-		if t == invalidSender {
+		if t == InvalidSender {
 			return notifiers.ErrNotify
 		}
 	}

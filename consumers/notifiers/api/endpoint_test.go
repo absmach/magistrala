@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/consumers/notifiers"
 	httpapi "github.com/absmach/magistrala/consumers/notifiers/api"
@@ -22,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -30,9 +32,9 @@ const (
 	contact1    = "email1@example.com"
 	contact2    = "email2@example.com"
 	token       = "token"
-	wrongValue  = "wrong_value"
 	topic       = "topic"
 	instanceID  = "5de9b29a-feb9-11ed-be56-0242ac120002"
+	validID     = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
 var (
@@ -65,13 +67,13 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newService(tokens map[string]string) notifiers.Service {
+func newService() (notifiers.Service, *authmocks.Service) {
 	auth := new(authmocks.Service)
 	repo := mocks.NewRepo(make(map[string]notifiers.Subscription))
 	idp := uuid.NewMock()
 	notif := mocks.NewNotifier()
 	from := "exampleFrom"
-	return notifiers.New(auth, repo, idp, notif, from)
+	return notifiers.New(auth, repo, idp, notif, from), auth
 }
 
 func newServer(svc notifiers.Service) *httptest.Server {
@@ -89,7 +91,7 @@ func toJSON(data interface{}) string {
 }
 
 func TestCreate(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc, auth := newService()
 	ss := newServer(svc)
 	defer ss.Close()
 
@@ -147,7 +149,7 @@ func TestCreate(t *testing.T) {
 			desc:        "add with invalid auth token",
 			req:         data,
 			contentType: contentType,
-			auth:        wrongValue,
+			auth:        authmocks.InvalidValue,
 			status:      http.StatusUnauthorized,
 			location:    "",
 		},
@@ -178,6 +180,8 @@ func TestCreate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+
 		req := testRequest{
 			client:      ss.Client(),
 			method:      http.MethodPost,
@@ -192,11 +196,13 @@ func TestCreate(t *testing.T) {
 		location := res.Header.Get("Location")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location %s got %s", tc.desc, tc.location, location))
+
+		repoCall.Unset()
 	}
 }
 
 func TestView(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc, auth := newService()
 	ss := newServer(svc)
 	defer ss.Close()
 
@@ -204,11 +210,14 @@ func TestView(t *testing.T) {
 		Topic:   topic,
 		Contact: contact1,
 	}
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	id, err := svc.CreateSubscription(context.Background(), token, sub)
 	assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
+	repoCall.Unset()
+
 	sr := subRes{
 		ID:      id,
-		OwnerID: email,
+		OwnerID: validID,
 		Contact: sub.Contact,
 		Topic:   sub.Topic,
 	}
@@ -238,7 +247,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view with invalid auth token",
 			id:     id,
-			auth:   wrongValue,
+			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
 		},
@@ -252,6 +261,8 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+
 		req := testRequest{
 			client: ss.Client(),
 			method: http.MethodGet,
@@ -265,11 +276,13 @@ func TestView(t *testing.T) {
 		data := strings.Trim(string(body), "\n")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, data))
+
+		repoCall.Unset()
 	}
 }
 
 func TestList(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc, auth := newService()
 	ss := newServer(svc)
 	defer ss.Close()
 
@@ -284,14 +297,16 @@ func TestList(t *testing.T) {
 		if i%2 == 0 {
 			sub.Contact = contact2
 		}
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		id, err := svc.CreateSubscription(context.Background(), token, sub)
 		sr := subRes{
 			ID:      id,
-			OwnerID: email,
+			OwnerID: validID,
 			Contact: sub.Contact,
 			Topic:   sub.Topic,
 		}
 		assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
+		repoCall.Unset()
 		subs = append(subs, sr)
 	}
 	noLimit := toJSON(page{Offset: 5, Limit: 20, Total: numSubs, Subscriptions: subs[5:25]})
@@ -359,7 +374,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "list with invalid auth token",
-			auth:   wrongValue,
+			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
 		},
@@ -372,6 +387,8 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+
 		req := testRequest{
 			client: ss.Client(),
 			method: http.MethodGet,
@@ -385,11 +402,13 @@ func TestList(t *testing.T) {
 		data := strings.Trim(string(body), "\n")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: got unexpected body\n", tc.desc))
+
+		repoCall.Unset()
 	}
 }
 
 func TestRemove(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc, auth := newService()
 	ss := newServer(svc)
 	defer ss.Close()
 
@@ -397,8 +416,10 @@ func TestRemove(t *testing.T) {
 		Topic:   "topic",
 		Contact: contact1,
 	}
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	id, err := svc.CreateSubscription(context.Background(), token, sub)
 	assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
+	repoCall.Unset()
 
 	cases := []struct {
 		desc   string
@@ -428,7 +449,7 @@ func TestRemove(t *testing.T) {
 		{
 			desc:   "view with invalid auth token",
 			id:     id,
-			auth:   wrongValue,
+			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
 		},
@@ -442,6 +463,8 @@ func TestRemove(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+
 		req := testRequest{
 			client: ss.Client(),
 			method: http.MethodDelete,
@@ -451,6 +474,8 @@ func TestRemove(t *testing.T) {
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+
+		repoCall.Unset()
 	}
 }
 

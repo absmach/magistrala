@@ -118,7 +118,9 @@ ifdef pv
 endif
 
 install:
-	cp ${BUILD_DIR}/* $(GOBIN)
+	for file in $(BUILD_DIR)/*; do \
+		cp $$file $(GOBIN)/magistrala-`basename $$file`; \
+	done
 
 test:
 	go test -mod=vendor -v -race -count 1 -tags test $(shell go list ./... | grep -v 'vendor\|cmd')

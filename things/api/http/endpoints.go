@@ -120,7 +120,7 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
+
 		page, err := svc.ListClientsByGroup(ctx, req.token, req.groupID, req.Page)
 		if err != nil {
 			return nil, err

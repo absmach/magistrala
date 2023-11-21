@@ -159,6 +159,6 @@ var (
 	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type.
 	ErrUnsupportedContentType = errors.New("unsupported content type")
 
-	// ErrRollbackTx indicates failed to rollback transaction
+	// ErrRollbackTx indicates failed to rollback transaction.
 	ErrRollbackTx = errors.New("failed to rollback transaction")
 )

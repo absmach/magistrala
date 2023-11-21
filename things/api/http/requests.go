@@ -154,26 +154,6 @@ func (req updateClientTagsReq) validate() error {
 	return nil
 }
 
-type updateClientOwnerReq struct {
-	id    string
-	token string
-	Owner string `json:"owner,omitempty"`
-}
-
-func (req updateClientOwnerReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-	if req.id == "" {
-		return apiutil.ErrMissingID
-	}
-	if req.Owner == "" {
-		return apiutil.ErrMissingOwner
-	}
-
-	return nil
-}
-
 type updateClientCredentialsReq struct {
 	token  string
 	id     string

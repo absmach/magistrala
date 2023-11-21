@@ -210,7 +210,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 	return svc.groups.RetrieveByIDs(ctx, gm, ids...)
 }
 
-// IMPROVEMENT NOTE: remove this function and all its related auxillary function, ListMembers are moved to respective service
+// IMPROVEMENT NOTE: remove this function and all its related auxiliary function, ListMembers are moved to respective service.
 func (svc service) ListMembers(ctx context.Context, token, groupID, permission, memberKind string) (groups.MembersPage, error) {
 	_, err := svc.authorize(ctx, auth.UserType, token, auth.ViewPermission, auth.GroupType, groupID)
 	if err != nil {

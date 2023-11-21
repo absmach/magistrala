@@ -119,7 +119,7 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Token, err
 	case InvitationKey:
 		return svc.tmpKey(invitationDuration, key)
 	default:
-		return svc.accessKey(key)
+		return svc.accessKey(ctx, key)
 	}
 }
 
@@ -300,12 +300,12 @@ func (svc service) tmpKey(duration time.Duration, key Key) (Token, error) {
 	return Token{AccessToken: value}, nil
 }
 
-func (svc service) accessKey(key Key) (Token, error) {
+func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 	var err error
 	key.Type = AccessKey
 	key.ExpiresAt = time.Now().Add(svc.loginDuration)
 
-	key.Subject, err = svc.checkUserDomain(key)
+	key.Subject, err = svc.checkUserDomain(ctx, key)
 	if err != nil {
 		return Token{}, err
 	}
@@ -339,7 +339,7 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	key.User = k.User
 	key.Type = AccessKey
 
-	key.Subject, err = svc.checkUserDomain(key)
+	key.Subject, err = svc.checkUserDomain(ctx, key)
 	if err != nil {
 		return Token{}, err
 	}
@@ -359,10 +359,10 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	return Token{AccessToken: access, RefreshToken: refresh}, nil
 }
 
-func (svc service) checkUserDomain(key Key) (subject string, err error) {
+func (svc service) checkUserDomain(ctx context.Context, key Key) (subject string, err error) {
 	if key.Domain != "" {
-		// Check user is platform admin
-		if err = svc.Authorize(context.Background(), PolicyReq{
+		// Check user is platform admin.
+		if err = svc.Authorize(ctx, PolicyReq{
 			Subject:     key.User,
 			SubjectType: UserType,
 			Permission:  AdminPermission,
@@ -371,9 +371,9 @@ func (svc service) checkUserDomain(key Key) (subject string, err error) {
 		}); err == nil {
 			return key.User, nil
 		}
-		//Check user is domain member
+		// Check user is domain member.
 		domainUserSubject := EncodeDomainUserID(key.Domain, key.User)
-		if err = svc.Authorize(context.Background(), PolicyReq{
+		if err = svc.Authorize(ctx, PolicyReq{
 			Subject:     domainUserSubject,
 			SubjectType: UserType,
 			Permission:  MembershipPermission,
@@ -611,7 +611,7 @@ func (svc service) UnassignUsers(ctx context.Context, token string, id string, u
 	return svc.removeDomainPolicies(ctx, id, relation, userIds...)
 }
 
-// IMPROVEMENT NOTE: Take decision: Only Patform admin or both Patform and domain admins can see others users domain
+// IMPROVEMENT NOTE: Take decision: Only Patform admin or both Patform and domain admins can see others users domain.
 func (svc service) ListUserDomains(ctx context.Context, token string, userID string, p Page) (DomainsPage, error) {
 	res, err := svc.Identify(ctx, token)
 	if err != nil {

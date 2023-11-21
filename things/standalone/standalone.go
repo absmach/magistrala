@@ -69,6 +69,7 @@ func (repo singleUserRepo) DeletePolicy(ctx context.Context, in *magistrala.Dele
 func (repo singleUserRepo) DeletePolicies(ctx context.Context, in *magistrala.DeletePoliciesReq, opts ...grpc.CallOption) (*magistrala.DeletePoliciesRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) ListObjects(ctx context.Context, in *magistrala.ListObjectsReq, opts ...grpc.CallOption) (*magistrala.ListObjectsRes, error) {
 	return nil, nil
 }

@@ -19,8 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var idProvider = uuid.New()
-
 const (
 	secret      = "secret"
 	email       = "test@example.com"
@@ -33,10 +31,6 @@ const (
 	loginDuration   = 30 * time.Minute
 	refreshDuration = 24 * time.Hour
 	accessToken     = "access"
-
-	readPolicy   = "read"
-	writePolicy  = "write"
-	deletePolicy = "delete"
 )
 
 func newService() (auth.Service, *mocks.Keys) {

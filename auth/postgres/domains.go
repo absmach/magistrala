@@ -22,8 +22,6 @@ import (
 
 var _ auth.DomainsRepository = (*domainRepo)(nil)
 
-var errRollbackTx = errors.New("failed to rollback transaction")
-
 type domainRepo struct {
 	db postgres.Database
 }
@@ -36,7 +34,6 @@ func NewDomainRepository(db postgres.Database) auth.DomainsRepository {
 	}
 }
 
-// Save the domain to database
 func (repo domainRepo) Save(ctx context.Context, d auth.Domain) (ad auth.Domain, err error) {
 	q := `INSERT INTO domains (id, name, tags, alias, metadata, created_at, updated_at, updated_by, created_by, status)
 	VALUES (:id, :name, :tags, :alias, :metadata, :created_at, :updated_at, :updated_by, :created_by, :status)

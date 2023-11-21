@@ -110,7 +110,6 @@ func listMembersByGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return nil, err
@@ -129,7 +128,6 @@ func listMembersByChannelEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return nil, err
@@ -147,7 +145,6 @@ func listMembersByThingEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return nil, err
@@ -165,7 +162,6 @@ func listMembersByDomainEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return nil, err

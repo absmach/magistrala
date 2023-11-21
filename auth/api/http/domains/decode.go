@@ -66,7 +66,6 @@ func decodeListDomainRequest(ctx context.Context, r *http.Request) (interface{},
 	}
 
 	return req, nil
-
 }
 
 func decodeEnableDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {

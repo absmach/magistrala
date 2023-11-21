@@ -45,7 +45,6 @@ func retrieveDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		return retrieveDomainRes{Data: domain}, nil
-
 	}
 }
 
@@ -98,7 +97,6 @@ func listDomainsEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		return listDomainsRes{Data: dp}, nil
-
 	}
 }
 

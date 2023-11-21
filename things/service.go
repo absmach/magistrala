@@ -90,7 +90,6 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 	if err != nil {
 		return nil, err
 	}
-	// ToDo: Add defer function, on error delete all clients
 
 	policies := magistrala.AddPoliciesReq{}
 	for _, c := range saved {

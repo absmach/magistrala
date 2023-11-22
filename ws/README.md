@@ -6,29 +6,29 @@ WebSocket adapter provides a [WebSocket](https://en.wikipedia.org/wiki/WebSocket
 
 The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
-| Variable                           | Description                                                                        | Default                          |
-| ---------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------- |
-| MG_WS_ADAPTER_LOG_LEVEL            | Log level for the WS Adapter (debug, info, warn, error)                            | info                             |
-| MG_WS_ADAPTER_HTTP_HOST            | Service WS host                                                                    | ""                               |
-| MG_WS_ADAPTER_HTTP_PORT            | Service WS port                                                                    | 8190                             |
-| MG_WS_ADAPTER_HTTP_SERVER_CERT     | Path to the PEM encoded server certificate file                                    | ""                               |
-| MG_WS_ADAPTER_HTTP_SERVER_KEY      | Path to the PEM encoded server key file                                            | ""                               |
-| MG_WS_ADAPTER_HTTP_SERVER_CA_CERTS | Path to the PEM encoded server CA certificate file                                 | ""                               |
-| MG_WS_ADAPTER_HTTP_CLIENT_CA_CERTS | Path to the PEM encoded client CA certificate file                                 | ""                               |
-| MG_THINGS_AUTH_GRPC_URL            | Things service Auth gRPC URL                                                       | <things:7000>                    |
-| MG_THINGS_AUTH_GRPC_TIMEOUT        | Things service Auth gRPC request timeout in seconds                                | 1s                               |
-| MG_THINGS_AUTH_GRPC_CLIENT_CERT    | Path to the PEM encoded things service Auth gRPC client certificate file           | ""                               |
-| MG_THINGS_AUTH_GRPC_CLIENT_KEY     | Path to the PEM encoded things service Auth gRPC client key file                   | ""                               |
-| MG_THINGS_AUTH_GRPC_SERVER_CERTS   | Path to the PEM encoded things server Auth gRPC server trusted CA certificate file | ""                               |
-| MG_MESSAGE_BROKER_URL              | Message broker instance URL                                                        | <nats://broker:4222>             |
-| MG_JAEGER_URL                      | Jaeger server URL                                                                  | <http://jaeger:14268/api/traces> |
-| MG_JAEGER_TRACE_RATIO              | Jaeger sampling ratio                                                              | 1.0                              |
-| MG_SEND_TELEMETRY                  | Send telemetry to magistrala call home server                                      | true                             |
-| MG_WS_ADAPTER_INSTANCE_ID          | Service instance ID                                                                | ""                               |
+| Variable                           | Description                                                                        | Default                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------- |
+| MG_WS_ADAPTER_LOG_LEVEL            | Log level for the WS Adapter (debug, info, warn, error)                            | info                                |
+| MG_WS_ADAPTER_HTTP_HOST            | Service WS host                                                                    | ""                                  |
+| MG_WS_ADAPTER_HTTP_PORT            | Service WS port                                                                    | 8190                                |
+| MG_WS_ADAPTER_HTTP_SERVER_CERT     | Path to the PEM encoded server certificate file                                    | ""                                  |
+| MG_WS_ADAPTER_HTTP_SERVER_KEY      | Path to the PEM encoded server key file                                            | ""                                  |
+| MG_WS_ADAPTER_HTTP_SERVER_CA_CERTS | Path to the PEM encoded server CA certificate file                                 | ""                                  |
+| MG_WS_ADAPTER_HTTP_CLIENT_CA_CERTS | Path to the PEM encoded client CA certificate file                                 | ""                                  |
+| MG_THINGS_AUTH_GRPC_URL            | Things service Auth gRPC URL                                                       | <localhost:7000>                    |
+| MG_THINGS_AUTH_GRPC_TIMEOUT        | Things service Auth gRPC request timeout in seconds                                | 1s                                  |
+| MG_THINGS_AUTH_GRPC_CLIENT_CERT    | Path to the PEM encoded things service Auth gRPC client certificate file           | ""                                  |
+| MG_THINGS_AUTH_GRPC_CLIENT_KEY     | Path to the PEM encoded things service Auth gRPC client key file                   | ""                                  |
+| MG_THINGS_AUTH_GRPC_SERVER_CERTS   | Path to the PEM encoded things server Auth gRPC server trusted CA certificate file | ""                                  |
+| MG_MESSAGE_BROKER_URL              | Message broker instance URL                                                        | <nats://localhost:4222>             |
+| MG_JAEGER_URL                      | Jaeger server URL                                                                  | <http://localhost:14268/api/traces> |
+| MG_JAEGER_TRACE_RATIO              | Jaeger sampling ratio                                                              | 1.0                                 |
+| MG_SEND_TELEMETRY                  | Send telemetry to magistrala call home server                                      | true                                |
+| MG_WS_ADAPTER_INSTANCE_ID          | Service instance ID                                                                | ""                                  |
 
 ## Deployment
 
-The service is distributed as Docker container. Check the [`ws-adapter`](https://github.com/absmach/magistrala/blob/master/docker/docker-compose.yml) service section in docker-compose to see how the service is deployed.
+The service is distributed as Docker container. Check the [`ws-adapter`](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yml) service section in docker-compose to see how the service is deployed.
 
 Running this service outside of container requires working instance of the message broker service, things service and Jaeger server.
 To start the service outside of the container, execute the following shell script:

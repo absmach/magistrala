@@ -52,24 +52,21 @@ const (
 	svcName        = "users"
 	envPrefixDB    = "MG_USERS_DB_"
 	envPrefixHTTP  = "MG_USERS_HTTP_"
-	envPrefixGrpc  = "MG_USERS_GRPC_"
 	envPrefixAuth  = "MG_AUTH_GRPC_"
 	defDB          = "users"
 	defSvcHTTPPort = "9002"
-	defSvcGRPCPort = "9192"
 )
 
 type config struct {
 	LogLevel      string  `env:"MG_USERS_LOG_LEVEL"              envDefault:"info"`
-	SecretKey     string  `env:"MG_USERS_SECRET_KEY"             envDefault:"secret"`
-	AdminEmail    string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:""`
-	AdminPassword string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:""`
+	AdminEmail    string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:"admin@example.com"`
+	AdminPassword string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:"12345678"`
 	PassRegexText string  `env:"MG_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
 	ResetURL      string  `env:"MG_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:14268/api/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
 	InstanceID    string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
-	ESURL         string  `env:"MG_USERS_ES_URL"                 envDefault:"redis://localhost:6379/0"`
+	ESURL         string  `env:"MG_USERS_ES_URL"                 envDefault:"nats://localhost:4222"`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 	PassRegex     *regexp.Regexp
 }

@@ -320,7 +320,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 	if err != nil {
 		return mgclients.Client{}, err
 	}
-	if _, err := svc.IssueToken(ctx, dbClient.Credentials.Identity, "", oldSecret); err != nil {
+	if _, err := svc.IssueToken(ctx, dbClient.Credentials.Identity, oldSecret, ""); err != nil {
 		return mgclients.Client{}, err
 	}
 	newSecret, err = svc.hasher.Hash(newSecret)
@@ -471,12 +471,12 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind string, ob
 }
 
 func (svc *service) checkSuperAdmin(ctx context.Context, adminID string) error {
-	if err := svc.clients.CheckSuperAdmin(ctx, adminID); err != nil {
-		return err
-	}
 	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, adminID, auth.AdminPermission, auth.PlatformType, auth.MagistralaObject); err != nil {
-		return err
+		if err := svc.clients.CheckSuperAdmin(ctx, adminID); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 

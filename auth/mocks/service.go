@@ -25,9 +25,6 @@ func (m *Service) Issue(ctx context.Context, in *magistrala.IssueReq, opts ...gr
 	if in.GetUserId() == InvalidValue || in.GetUserId() == "" {
 		return &magistrala.Token{}, errors.ErrAuthentication
 	}
-	if in.GetDomainId() == InvalidValue || in.GetDomainId() == "" {
-		return &magistrala.Token{}, errors.ErrAuthentication
-	}
 
 	return ret.Get(0).(*magistrala.Token), ret.Error(1)
 }
@@ -35,9 +32,6 @@ func (m *Service) Issue(ctx context.Context, in *magistrala.IssueReq, opts ...gr
 func (m *Service) Refresh(ctx context.Context, in *magistrala.RefreshReq, opts ...grpc.CallOption) (*magistrala.Token, error) {
 	ret := m.Called(ctx, in)
 	if in.GetRefreshToken() == InvalidValue || in.GetRefreshToken() == "" {
-		return &magistrala.Token{}, errors.ErrAuthentication
-	}
-	if in.GetDomainId() == InvalidValue || in.GetDomainId() == "" {
 		return &magistrala.Token{}, errors.ErrAuthentication
 	}
 

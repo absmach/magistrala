@@ -83,11 +83,6 @@ func main() {
 		return
 	}
 
-	targetServerConf := server.Config{
-		Port: targetWSPort,
-		Host: targetWSHost,
-	}
-
 	authConfig := auth.Config{}
 	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuthz}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
@@ -125,11 +120,11 @@ func main() {
 		return
 	}
 	defer nps.Close()
-	nps = brokerstracing.NewPubSub(targetServerConf, tracer, nps)
+	nps = brokerstracing.NewPubSub(httpServerConfig, tracer, nps)
 
 	svc := newService(authClient, nps, logger, tracer)
 
-	hs := httpserver.New(ctx, cancel, svcName, targetServerConf, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)

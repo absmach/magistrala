@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	protocol            = "ws"
+	service             = "ws"
 	readwriteBufferSize = 1024
 )
 
@@ -42,7 +42,8 @@ func MakeHandler(ctx context.Context, svc ws.Service, l mglog.Logger, instanceID
 	mux := bone.New()
 	mux.GetFunc("/channels/:chanID/messages", handshake(ctx, svc))
 	mux.GetFunc("/channels/:chanID/messages/*", handshake(ctx, svc))
-	mux.GetFunc("/version", magistrala.Health(protocol, instanceID))
+
+	mux.GetFunc("/health", magistrala.Health(service, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

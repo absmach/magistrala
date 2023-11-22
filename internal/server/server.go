@@ -18,7 +18,7 @@ type Server interface {
 }
 
 type Config struct {
-	Host         string `env:"HOST"            envDefault:""`
+	Host         string `env:"HOST"            envDefault:"localhost"`
 	Port         string `env:"PORT"            envDefault:""`
 	CertFile     string `env:"SERVER_CERT"     envDefault:""`
 	KeyFile      string `env:"SERVER_KEY"      envDefault:""`

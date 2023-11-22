@@ -32,11 +32,11 @@ var (
 )
 
 type Config struct {
+	URL          string        `env:"URL"              envDefault:""`
+	Timeout      time.Duration `env:"TIMEOUT"          envDefault:"1s"`
 	ClientCert   string        `env:"CLIENT_CERT"      envDefault:""`
 	ClientKey    string        `env:"CLIENT_KEY"       envDefault:""`
 	ServerCAFile string        `env:"SERVER_CA_CERTS"  envDefault:""`
-	URL          string        `env:"URL"              envDefault:""`
-	Timeout      time.Duration `env:"TIMEOUT"          envDefault:"1s"`
 }
 
 // Handler is used to handle gRPC connection.

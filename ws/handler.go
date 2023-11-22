@@ -135,13 +135,13 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		return errors.Wrap(ErrFailedPublish, ErrClientNotInitialized)
 	}
 	h.logger.Info(fmt.Sprintf(LogInfoPublished, s.ID, *topic))
-	// Topics are in the format:
-	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 
 	if len(*payload) == 0 {
 		return ErrFailedMessagePublish
 	}
 
+	// Topics are in the format:
+	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 	channelParts := channelRegExp.FindStringSubmatch(*topic)
 	if len(channelParts) < 2 {
 		return errors.Wrap(ErrFailedPublish, ErrMalformedTopic)

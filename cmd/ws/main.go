@@ -83,6 +83,11 @@ func main() {
 		return
 	}
 
+	targetServerConfig := server.Config{
+		Port: targetWSPort,
+		Host: targetWSHost,
+	}
+
 	authConfig := auth.Config{}
 	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuthz}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
@@ -120,11 +125,11 @@ func main() {
 		return
 	}
 	defer nps.Close()
-	nps = brokerstracing.NewPubSub(httpServerConfig, tracer, nps)
+	nps = brokerstracing.NewPubSub(targetServerConfig, tracer, nps)
 
 	svc := newService(authClient, nps, logger, tracer)
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, targetServerConfig, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -136,7 +141,7 @@ func main() {
 			return hs.Start()
 		})
 		handler := ws.NewHandler(nps, logger, authClient)
-		return proxyWS(ctx, httpServerConfig, logger, handler)
+		return proxyWS(ctx, httpServerConfig, targetServerConfig, logger, handler)
 	})
 
 	g.Go(func() error {
@@ -157,9 +162,9 @@ func newService(tc magistrala.AuthzServiceClient, nps messaging.PubSub, logger m
 	return svc
 }
 
-func proxyWS(ctx context.Context, cfg server.Config, logger mglog.Logger, handler session.Handler) error {
-	target := fmt.Sprintf("ws://%s:%s", targetWSHost, targetWSPort)
-	address := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
+func proxyWS(ctx context.Context, hostConfig server.Config, targetConfig server.Config, logger mglog.Logger, handler session.Handler) error {
+	target := fmt.Sprintf("ws://%s:%s", targetConfig.Host, targetConfig.Port)
+	address := fmt.Sprintf("%s:%s", hostConfig.Host, hostConfig.Port)
 	wp, err := websockets.NewProxy(address, target, logger, handler)
 	if err != nil {
 		return err
@@ -168,11 +173,11 @@ func proxyWS(ctx context.Context, cfg server.Config, logger mglog.Logger, handle
 	errCh := make(chan error)
 
 	go func() {
-		if cfg.CertFile != "" && cfg.KeyFile != "" {
-			logger.Info(fmt.Sprintf("ws-adapter service http server listening at %s:%s with TLS", cfg.Host, cfg.Port))
-			errCh <- wp.ListenTLS(cfg.CertFile, cfg.KeyFile)
+		if hostConfig.CertFile != "" && hostConfig.KeyFile != "" {
+			logger.Info(fmt.Sprintf("ws-adapter service http server listening at %s:%s with TLS", hostConfig.Host, hostConfig.Port))
+			errCh <- wp.ListenTLS(hostConfig.CertFile, hostConfig.KeyFile)
 		} else {
-			logger.Info(fmt.Sprintf("ws-adapter service http server listening at %s:%s without TLS", cfg.Host, cfg.Port))
+			logger.Info(fmt.Sprintf("ws-adapter service http server listening at %s:%s without TLS", hostConfig.Host, hostConfig.Port))
 			errCh <- wp.Listen()
 		}
 	}()

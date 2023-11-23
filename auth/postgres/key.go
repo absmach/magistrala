@@ -37,7 +37,7 @@ func (kr *repo) Save(ctx context.Context, key auth.Key) (string, error) {
 
 	dbKey := toDBKey(key)
 	if _, err := kr.db.NamedExecContext(ctx, q, dbKey); err != nil {
-		return "", postgres.HandleError(err, errSave)
+		return "", postgres.HandleError(errSave, err)
 	}
 
 	return dbKey.ID, nil
@@ -51,7 +51,7 @@ func (kr *repo) Retrieve(ctx context.Context, issuerID, id string) (auth.Key, er
 			return auth.Key{}, errors.ErrNotFound
 		}
 
-		return auth.Key{}, postgres.HandleError(err, errRetrieve)
+		return auth.Key{}, postgres.HandleError(errRetrieve, err)
 	}
 
 	return toKey(key), nil

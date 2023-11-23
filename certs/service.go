@@ -10,6 +10,8 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/certs/pki"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
@@ -21,6 +23,8 @@ var (
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
 	ErrFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
+
+	ErrFailedReadFromPKI = errors.New("failed to read certificate from PKI")
 )
 
 var _ Service = (*certsService)(nil)
@@ -82,7 +86,7 @@ type Cert struct {
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, ttl string) (Cert, error) {
 	owner, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return Cert{}, err
+		return Cert{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	thing, err := cs.sdk.Thing(thingID, token)
@@ -115,7 +119,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 	var revoke Revoke
 	u, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return revoke, err
+		return revoke, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
@@ -145,18 +149,18 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
 	u, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return Page{}, err
+		return Page{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	cp, err := cs.certsRepo.RetrieveByThing(ctx, u.GetId(), thingID, offset, limit)
 	if err != nil {
-		return Page{}, err
+		return Page{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 
 	for i, cert := range cp.Certs {
 		vcert, err := cs.pki.Read(cert.Serial)
 		if err != nil {
-			return Page{}, err
+			return Page{}, errors.Wrap(ErrFailedReadFromPKI, err)
 		}
 		cp.Certs[i].ClientCert = vcert.ClientCert
 		cp.Certs[i].ClientKey = vcert.ClientKey
@@ -168,7 +172,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, of
 func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
 	u, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return Page{}, err
+		return Page{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	return cs.certsRepo.RetrieveByThing(ctx, u.GetId(), thingID, offset, limit)
@@ -177,17 +181,17 @@ func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, 
 func (cs *certsService) ViewCert(ctx context.Context, token, serialID string) (Cert, error) {
 	u, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return Cert{}, err
+		return Cert{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	cert, err := cs.certsRepo.RetrieveBySerial(ctx, u.GetId(), serialID)
 	if err != nil {
-		return Cert{}, err
+		return Cert{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 
 	vcert, err := cs.pki.Read(serialID)
 	if err != nil {
-		return Cert{}, err
+		return Cert{}, errors.Wrap(ErrFailedReadFromPKI, err)
 	}
 
 	c := Cert{

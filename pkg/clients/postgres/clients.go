@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/jackc/pgtype"
 )
@@ -94,16 +95,16 @@ func (repo ClientRepository) RetrieveByID(ctx context.Context, id string) (clien
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+			return clients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 		}
-		return clients.Client{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	defer row.Close()
 	row.Next()
 	dbc = DBClient{}
 	if err := row.StructScan(&dbc); err != nil {
-		return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+		return clients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 
 	return ToClient(dbc)
@@ -121,16 +122,16 @@ func (repo ClientRepository) RetrieveByIdentity(ctx context.Context, identity st
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+			return clients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 		}
-		return clients.Client{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	defer row.Close()
 	row.Next()
 	dbc = DBClient{}
 	if err := row.StructScan(&dbc); err != nil {
-		return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+		return clients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 
 	return ToClient(dbc)
@@ -139,7 +140,7 @@ func (repo ClientRepository) RetrieveByIdentity(ctx context.Context, identity st
 func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	query, err := pageQuery(pm)
 	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.owner_id, '') AS owner_id, c.status,
@@ -159,7 +160,7 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 	for rows.Next() {
 		dbc := DBClient{}
 		if err := rows.StructScan(&dbc); err != nil {
-			return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+			return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
 		c, err := ToClient(dbc)
@@ -173,7 +174,7 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 
 	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
 	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	page := clients.ClientsPage{
@@ -191,7 +192,7 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	query, err := pageQuery(pm)
 	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
@@ -210,7 +211,7 @@ func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm client
 	for rows.Next() {
 		dbc := DBClient{}
 		if err := rows.StructScan(&dbc); err != nil {
-			return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+			return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
 		c, err := ToClient(dbc)
@@ -224,7 +225,7 @@ func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm client
 
 	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
 	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	page := clients.ClientsPage{
@@ -247,7 +248,7 @@ func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Pa
 	}
 	query, err := pageQuery(pm)
 	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.owner_id, '') AS owner_id, c.status,
@@ -267,7 +268,7 @@ func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Pa
 	for rows.Next() {
 		dbc := DBClient{}
 		if err := rows.StructScan(&dbc); err != nil {
-			return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+			return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
 		c, err := ToClient(dbc)
@@ -281,7 +282,7 @@ func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Pa
 
 	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
 	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	page := clients.ClientsPage{
@@ -300,12 +301,12 @@ func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Pa
 func (repo ClientRepository) update(ctx context.Context, client clients.Client, query string) (clients.Client, error) {
 	dbc, err := ToDBClient(client)
 	if err != nil {
-		return clients.Client{}, errors.Wrap(errors.ErrUpdateEntity, err)
+		return clients.Client{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	row, err := repo.DB.NamedQueryContext(ctx, query, dbc)
 	if err != nil {
-		return clients.Client{}, postgres.HandleError(err, errors.ErrUpdateEntity)
+		return clients.Client{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 
 	defer row.Close()
@@ -341,7 +342,7 @@ func ToDBClient(c clients.Client) (DBClient, error) {
 	if len(c.Metadata) > 0 {
 		b, err := json.Marshal(c.Metadata)
 		if err != nil {
-			return DBClient{}, errors.Wrap(errors.ErrMalformedEntity, err)
+			return DBClient{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
 		}
 		data = b
 	}
@@ -422,7 +423,7 @@ func ToClient(c DBClient) (clients.Client, error) {
 func toDBClientsPage(pm clients.Page) (dbClientsPage, error) {
 	_, data, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
-		return dbClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return dbClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	var role clients.Role
 	if pm.Role != nil {
@@ -459,7 +460,7 @@ type dbClientsPage struct {
 func pageQuery(pm clients.Page) (string, error) {
 	mq, _, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrViewEntity, err)
+		return "", errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	var query []string
 	var emq string

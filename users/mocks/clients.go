@@ -8,6 +8,7 @@ import (
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/users/postgres"
 	"github.com/stretchr/testify/mock"
 )
@@ -24,11 +25,11 @@ func (m *Repository) ChangeStatus(ctx context.Context, client mgclients.Client) 
 	ret := m.Called(ctx, client)
 
 	if client.ID == WrongID {
-		return mgclients.Client{}, errors.ErrNotFound
+		return mgclients.Client{}, repoerr.ErrNotFound
 	}
 
 	if client.Status != mgclients.EnabledStatus && client.Status != mgclients.DisabledStatus {
-		return mgclients.Client{}, errors.ErrMalformedEntity
+		return mgclients.Client{}, repoerr.ErrMalformedEntity
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
@@ -37,7 +38,7 @@ func (m *Repository) ChangeStatus(ctx context.Context, client mgclients.Client) 
 func (m *Repository) Members(ctx context.Context, groupID string, pm mgclients.Page) (mgclients.MembersPage, error) {
 	ret := m.Called(ctx, groupID, pm)
 	if groupID == WrongID {
-		return mgclients.MembersPage{}, errors.ErrNotFound
+		return mgclients.MembersPage{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(mgclients.MembersPage), ret.Error(1)
@@ -59,7 +60,7 @@ func (m *Repository) RetrieveByID(ctx context.Context, id string) (mgclients.Cli
 	ret := m.Called(ctx, id)
 
 	if id == WrongID {
-		return mgclients.Client{}, errors.ErrNotFound
+		return mgclients.Client{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
@@ -69,7 +70,7 @@ func (m *Repository) RetrieveByIdentity(ctx context.Context, identity string) (m
 	ret := m.Called(ctx, identity)
 
 	if identity == "" {
-		return mgclients.Client{}, errors.ErrMalformedEntity
+		return mgclients.Client{}, repoerr.ErrMalformedEntity
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
@@ -78,10 +79,10 @@ func (m *Repository) RetrieveByIdentity(ctx context.Context, identity string) (m
 func (m *Repository) Save(ctx context.Context, client mgclients.Client) (mgclients.Client, error) {
 	ret := m.Called(ctx, client)
 	if client.Owner == WrongID {
-		return mgclients.Client{}, errors.ErrMalformedEntity
+		return mgclients.Client{}, repoerr.ErrMalformedEntity
 	}
 	if client.Credentials.Secret == "" {
-		return mgclients.Client{}, errors.ErrMalformedEntity
+		return mgclients.Client{}, repoerr.ErrMalformedEntity
 	}
 
 	return client, ret.Error(1)
@@ -91,7 +92,7 @@ func (m *Repository) Update(ctx context.Context, client mgclients.Client) (mgcli
 	ret := m.Called(ctx, client)
 
 	if client.ID == WrongID {
-		return mgclients.Client{}, errors.ErrNotFound
+		return mgclients.Client{}, repoerr.ErrNotFound
 	}
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
 }
@@ -100,10 +101,10 @@ func (m *Repository) UpdateIdentity(ctx context.Context, client mgclients.Client
 	ret := m.Called(ctx, client)
 
 	if client.ID == WrongID {
-		return mgclients.Client{}, errors.ErrNotFound
+		return mgclients.Client{}, repoerr.ErrNotFound
 	}
 	if client.Credentials.Identity == "" {
-		return mgclients.Client{}, errors.ErrMalformedEntity
+		return mgclients.Client{}, repoerr.ErrMalformedEntity
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
@@ -113,10 +114,10 @@ func (m *Repository) UpdateSecret(ctx context.Context, client mgclients.Client) 
 	ret := m.Called(ctx, client)
 
 	if client.ID == WrongID {
-		return mgclients.Client{}, errors.ErrNotFound
+		return mgclients.Client{}, repoerr.ErrNotFound
 	}
 	if client.Credentials.Secret == "" {
-		return mgclients.Client{}, errors.ErrMalformedEntity
+		return mgclients.Client{}, repoerr.ErrMalformedEntity
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
@@ -126,7 +127,7 @@ func (m *Repository) UpdateTags(ctx context.Context, client mgclients.Client) (m
 	ret := m.Called(ctx, client)
 
 	if client.ID == WrongID {
-		return mgclients.Client{}, errors.ErrNotFound
+		return mgclients.Client{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
@@ -136,7 +137,7 @@ func (m *Repository) UpdateOwner(ctx context.Context, client mgclients.Client) (
 	ret := m.Called(ctx, client)
 
 	if client.ID == WrongID {
-		return mgclients.Client{}, errors.ErrNotFound
+		return mgclients.Client{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
@@ -146,7 +147,7 @@ func (m *Repository) RetrieveBySecret(ctx context.Context, key string) (mgclient
 	ret := m.Called(ctx, key)
 
 	if key == "" {
-		return mgclients.Client{}, errors.ErrMalformedEntity
+		return mgclients.Client{}, repoerr.ErrMalformedEntity
 	}
 
 	return ret.Get(0).(mgclients.Client), ret.Error(1)

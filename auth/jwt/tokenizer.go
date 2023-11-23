@@ -21,6 +21,16 @@ var (
 	errJWTExpiryKey = errors.New(`"exp" not satisfied`)
 	// ErrExpiry indicates that the token is expired.
 	ErrExpiry = errors.New("token is expired")
+	// ErrSetClaim indicates an inability to set the claim.
+	ErrSetClaim = errors.New("failed to set claim")
+	// ErrSignJWT indicates an error in signing jwt token.
+	ErrSignJWT = errors.New("failed to sign jwt token")
+	// ErrParseToken indicates a failure to parse the token.
+	ErrParseToken = errors.New("failed to parse token")
+	// ErrValidateJWTToken indicates a failure to validate JWT token.
+	ErrValidateJWTToken = errors.New("failed to validate jwt token")
+	// ErrJSONHandle indicates an error in handling JSON.
+	ErrJSONHandle = errors.New("failed to perform operation JSON")
 )
 
 const (
@@ -62,7 +72,7 @@ func (repo *tokenizer) Issue(key auth.Key) (string, error) {
 	}
 	signedTkn, err := jwt.Sign(tkn, jwt.WithKey(jwa.HS512, repo.secret))
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(ErrSignJWT, err)
 	}
 	return string(signedTkn), nil
 }
@@ -87,16 +97,16 @@ func (repo *tokenizer) Parse(token string) (auth.Key, error) {
 		return nil
 	})
 	if err := jwt.Validate(tkn, jwt.WithValidator(validator)); err != nil {
-		return auth.Key{}, err
+		return auth.Key{}, errors.Wrap(ErrValidateJWTToken, err)
 	}
 
 	jsn, err := json.Marshal(tkn.PrivateClaims())
 	if err != nil {
-		return auth.Key{}, err
+		return auth.Key{}, errors.Wrap(ErrJSONHandle, err)
 	}
 	var key auth.Key
 	if err := json.Unmarshal(jsn, &key); err != nil {
-		return auth.Key{}, err
+		return auth.Key{}, errors.Wrap(ErrJSONHandle, err)
 	}
 
 	tType, ok := tkn.Get(tokenType)

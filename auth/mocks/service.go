@@ -8,6 +8,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
@@ -23,7 +24,7 @@ type Service struct {
 func (m *Service) Issue(ctx context.Context, in *magistrala.IssueReq, opts ...grpc.CallOption) (*magistrala.Token, error) {
 	ret := m.Called(ctx, in)
 	if in.GetUserId() == InvalidValue || in.GetUserId() == "" {
-		return &magistrala.Token{}, errors.ErrAuthentication
+		return &magistrala.Token{}, svcerr.ErrAuthentication
 	}
 
 	return ret.Get(0).(*magistrala.Token), ret.Error(1)
@@ -32,7 +33,7 @@ func (m *Service) Issue(ctx context.Context, in *magistrala.IssueReq, opts ...gr
 func (m *Service) Refresh(ctx context.Context, in *magistrala.RefreshReq, opts ...grpc.CallOption) (*magistrala.Token, error) {
 	ret := m.Called(ctx, in)
 	if in.GetRefreshToken() == InvalidValue || in.GetRefreshToken() == "" {
-		return &magistrala.Token{}, errors.ErrAuthentication
+		return &magistrala.Token{}, svcerr.ErrAuthentication
 	}
 
 	return ret.Get(0).(*magistrala.Token), ret.Error(1)
@@ -41,7 +42,7 @@ func (m *Service) Refresh(ctx context.Context, in *magistrala.RefreshReq, opts .
 func (m *Service) Identify(ctx context.Context, in *magistrala.IdentityReq, opts ...grpc.CallOption) (*magistrala.IdentityRes, error) {
 	ret := m.Called(ctx, in)
 	if in.GetToken() == InvalidValue || in.GetToken() == "" {
-		return &magistrala.IdentityRes{}, errors.ErrAuthentication
+		return &magistrala.IdentityRes{}, svcerr.ErrAuthentication
 	}
 
 	return ret.Get(0).(*magistrala.IdentityRes), ret.Error(1)
@@ -50,7 +51,7 @@ func (m *Service) Identify(ctx context.Context, in *magistrala.IdentityReq, opts
 func (m *Service) Authorize(ctx context.Context, in *magistrala.AuthorizeReq, opts ...grpc.CallOption) (*magistrala.AuthorizeRes, error) {
 	ret := m.Called(ctx, in)
 	if in.GetSubject() == InvalidValue || in.GetSubject() == "" {
-		return &magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization
+		return &magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization
 	}
 	if in.GetObject() == InvalidValue || in.GetObject() == "" {
 		return &magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization

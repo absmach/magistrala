@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
@@ -21,10 +21,10 @@ type Service struct {
 func (m *Service) Authorize(ctx context.Context, in *magistrala.AuthorizeReq, opts ...grpc.CallOption) (*magistrala.AuthorizeRes, error) {
 	ret := m.Called(ctx, in)
 	if in.GetSubject() == WrongID || in.GetSubject() == "" {
-		return &magistrala.AuthorizeRes{}, errors.ErrAuthorization
+		return &magistrala.AuthorizeRes{}, svcerr.ErrAuthorization
 	}
 	if in.GetObject() == WrongID || in.GetObject() == "" {
-		return &magistrala.AuthorizeRes{}, errors.ErrAuthorization
+		return &magistrala.AuthorizeRes{}, svcerr.ErrAuthorization
 	}
 
 	return ret.Get(0).(*magistrala.AuthorizeRes), ret.Error(1)

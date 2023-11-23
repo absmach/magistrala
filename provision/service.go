@@ -117,7 +117,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 
 	token, err = ps.createTokenIfEmpty(token)
 	if err != nil {
-		return res, err
+		return res, errors.Wrap(ErrFailedToCreateToken, err)
 	}
 
 	if len(ps.conf.Things) == 0 {
@@ -162,7 +162,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		}
 		ch, err := ps.sdk.CreateChannel(ch, token)
 		if err != nil {
-			return res, err
+			return res, errors.Wrap(ErrFailedChannelCreation, err)
 		}
 		ch, err = ps.sdk.Channel(ch.ID, token)
 		if err != nil {
@@ -257,7 +257,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 func (ps *provisionService) Cert(token, thingID, ttl string) (string, string, error) {
 	token, err := ps.createTokenIfEmpty(token)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(ErrFailedToCreateToken, err)
 	}
 
 	th, err := ps.sdk.Thing(thingID, token)

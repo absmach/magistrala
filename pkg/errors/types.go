@@ -3,6 +3,8 @@
 
 package errors
 
+import "errors"
+
 var (
 	// ErrAuthentication indicates failure occurred while authenticating the entity.
 	ErrAuthentication = New("failed to perform authentication over the entity")
@@ -43,5 +45,6 @@ var (
 	// ErrLogin indicates wrong login credentials.
 	ErrLogin = New("invalid user id or secret")
 
-	ErrUnsupportedContentType = New("invalid content type")
+	// ErrUnsupportedContentType indicates invalid content type.
+	ErrUnsupportedContentType = errors.New("invalid content type")
 )

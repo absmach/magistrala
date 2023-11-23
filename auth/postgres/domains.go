@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/jackc/pgtype"
 	"github.com/jmoiron/sqlx"
 )
@@ -41,24 +42,24 @@ func (repo domainRepo) Save(ctx context.Context, d auth.Domain) (ad auth.Domain,
 
 	dbd, err := toDBDomains(d)
 	if err != nil {
-		return auth.Domain{}, errors.Wrap(errors.ErrCreateEntity, err)
+		return auth.Domain{}, errors.Wrap(repoerr.ErrCreateEntity, repoerr.ErrRollbackTx)
 	}
 
 	row, err := repo.db.NamedQueryContext(ctx, q, dbd)
 	if err != nil {
-		return auth.Domain{}, postgres.HandleError(err, errors.ErrCreateEntity)
+		return auth.Domain{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
 
 	defer row.Close()
 	row.Next()
 	dbd = dbDomain{}
 	if err := row.StructScan(&dbd); err != nil {
-		return auth.Domain{}, err
+		return auth.Domain{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 	}
 
 	domain, err := toDomain(dbd)
 	if err != nil {
-		return auth.Domain{}, err
+		return auth.Domain{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 	}
 
 	return domain, nil
@@ -99,7 +100,7 @@ func (repo domainRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth
 	}
 	query, err := buildPageQuery(pm)
 	if err != nil {
-		return auth.DomainsPage{}, err
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 	}
 	if query == "" {
 		return auth.DomainsPage{}, nil
@@ -147,7 +148,7 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 	var q string
 	query, err := buildPageQuery(pm)
 	if err != nil {
-		return auth.DomainsPage{}, err
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 	}
 	if query == "" {
 		return auth.DomainsPage{}, nil
@@ -236,19 +237,19 @@ func (repo domainRepo) Update(ctx context.Context, id string, userID string, dr 
 	}
 	row, err := repo.db.NamedQueryContext(ctx, q, dbd)
 	if err != nil {
-		return auth.Domain{}, postgres.HandleError(err, errors.ErrUpdateEntity)
+		return auth.Domain{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 
 	// defer row.Close()
 	row.Next()
 	dbd = dbDomain{}
 	if err := row.StructScan(&dbd); err != nil {
-		return auth.Domain{}, err
+		return auth.Domain{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 	}
 
 	domain, err := toDomain(dbd)
 	if err != nil {
-		return auth.Domain{}, err
+		return auth.Domain{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 	}
 
 	return domain, nil
@@ -265,7 +266,7 @@ func (repo domainRepo) Delete(ctx context.Context, id string) error {
 
 	row, err := repo.db.NamedQueryContext(ctx, q, nil)
 	if err != nil {
-		return postgres.HandleError(err, errors.ErrRemoveEntity)
+		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
 	}
 	defer row.Close()
 
@@ -281,7 +282,7 @@ func (repo domainRepo) SavePolicies(ctx context.Context, pcs ...auth.Policy) err
 	dbpc := toDBPolicies(pcs...)
 	row, err := repo.db.NamedQueryContext(ctx, q, dbpc)
 	if err != nil {
-		return postgres.HandleError(err, errors.ErrCreateEntity)
+		return postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
 	defer row.Close()
 
@@ -305,7 +306,7 @@ func (repo domainRepo) CheckPolicy(ctx context.Context, pc auth.Policy) error {
 	dbpc := toDBPolicy(pc)
 	row, err := repo.db.NamedQueryContext(ctx, q, dbpc)
 	if err != nil {
-		return postgres.HandleError(err, errors.ErrCreateEntity)
+		return postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
 	defer row.Close()
 	row.Next()
@@ -345,7 +346,7 @@ func (repo domainRepo) DeletePolicies(ctx context.Context, pcs ...auth.Policy) (
 		dbpc := toDBPolicy(pc)
 		row, err := tx.NamedQuery(q, dbpc)
 		if err != nil {
-			return postgres.HandleError(err, errors.ErrRemoveEntity)
+			return postgres.HandleError(repoerr.ErrRemoveEntity, err)
 		}
 		defer row.Close()
 	}

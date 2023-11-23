@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -22,10 +23,9 @@ const (
 )
 
 var (
-	invalidName    = strings.Repeat("m", maxNameSize+10)
-	password       = "$tr0ngPassw0rd"
-	clientIdentity = "client-identity@example.com"
-	clientName     = "client name"
+	invalidName = strings.Repeat("m", maxNameSize+10)
+	password    = "$tr0ngPassw0rd"
+	namesgen    = namegenerator.NewNameGenerator()
 )
 
 func TestClientsSave(t *testing.T) {
@@ -37,6 +37,9 @@ func TestClientsSave(t *testing.T) {
 
 	uid := testsutil.GenerateUUID(t)
 
+	name := namesgen.Generate()
+	clientIdentity := name + "@example.com"
+
 	cases := []struct {
 		desc   string
 		client mgclients.Client
@@ -46,7 +49,7 @@ func TestClientsSave(t *testing.T) {
 			desc: "add new client successfully",
 			client: mgclients.Client{
 				ID:   uid,
-				Name: clientName,
+				Name: name,
 				Credentials: mgclients.Credentials{
 					Identity: clientIdentity,
 					Secret:   password,
@@ -61,9 +64,9 @@ func TestClientsSave(t *testing.T) {
 			client: mgclients.Client{
 				ID:    testsutil.GenerateUUID(t),
 				Owner: uid,
-				Name:  clientName,
+				Name:  namesgen.Generate(),
 				Credentials: mgclients.Credentials{
-					Identity: "withowner-client@example.com",
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
 				Metadata: mgclients.Metadata{},
@@ -75,7 +78,21 @@ func TestClientsSave(t *testing.T) {
 			desc: "add client with duplicate client identity",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
-				Name: clientName,
+				Name: namesgen.Generate(),
+				Credentials: mgclients.Credentials{
+					Identity: clientIdentity,
+					Secret:   password,
+				},
+				Metadata: mgclients.Metadata{},
+				Status:   mgclients.EnabledStatus,
+			},
+			err: errors.ErrConflict,
+		},
+		{
+			desc: "add client with duplicate client name",
+			client: mgclients.Client{
+				ID:   testsutil.GenerateUUID(t),
+				Name: name,
 				Credentials: mgclients.Credentials{
 					Identity: clientIdentity,
 					Secret:   password,
@@ -89,9 +106,9 @@ func TestClientsSave(t *testing.T) {
 			desc: "add client with invalid client id",
 			client: mgclients.Client{
 				ID:   invalidName,
-				Name: clientName,
+				Name: namesgen.Generate(),
 				Credentials: mgclients.Credentials{
-					Identity: "invalidid-client@example.com",
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
 				Metadata: mgclients.Metadata{},
@@ -105,7 +122,7 @@ func TestClientsSave(t *testing.T) {
 				ID:   testsutil.GenerateUUID(t),
 				Name: invalidName,
 				Credentials: mgclients.Credentials{
-					Identity: "invalidname-client@example.com",
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
 				Metadata: mgclients.Metadata{},
@@ -119,7 +136,7 @@ func TestClientsSave(t *testing.T) {
 				ID:    testsutil.GenerateUUID(t),
 				Owner: invalidName,
 				Credentials: mgclients.Credentials{
-					Identity: "invalidowner-client@example.com",
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
 				Metadata: mgclients.Metadata{},
@@ -131,7 +148,7 @@ func TestClientsSave(t *testing.T) {
 			desc: "add client with invalid client identity",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
-				Name: clientName,
+				Name: namesgen.Generate(),
 				Credentials: mgclients.Credentials{
 					Identity: invalidName,
 					Secret:   password,
@@ -142,12 +159,24 @@ func TestClientsSave(t *testing.T) {
 			err: errors.ErrMalformedEntity,
 		},
 		{
-			desc: "add client with a missing client identity",
+			desc: "add client with a missing client name",
 			client: mgclients.Client{
 				ID: testsutil.GenerateUUID(t),
 				Credentials: mgclients.Credentials{
-					Identity: "",
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
+				},
+				Metadata: mgclients.Metadata{},
+			},
+			err: nil,
+		},
+		{
+			desc: "add client with a missing client identity",
+			client: mgclients.Client{
+				ID:   testsutil.GenerateUUID(t),
+				Name: namesgen.Generate(),
+				Credentials: mgclients.Credentials{
+					Secret: password,
 				},
 				Metadata: mgclients.Metadata{},
 			},
@@ -156,10 +185,10 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with a missing client secret",
 			client: mgclients.Client{
-				ID: testsutil.GenerateUUID(t),
+				ID:   testsutil.GenerateUUID(t),
+				Name: namesgen.Generate(),
 				Credentials: mgclients.Credentials{
-					Identity: "missing-client-secret@example.com",
-					Secret:   "",
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 				},
 				Metadata: mgclients.Metadata{},
 			},
@@ -192,9 +221,9 @@ func TestIsPlatformAdmin(t *testing.T) {
 			desc: "authorize check for super user",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
-				Name: clientName,
+				Name: namesgen.Generate(),
 				Credentials: mgclients.Credentials{
-					Identity: "admin@example.com",
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
 				Metadata: mgclients.Metadata{},
@@ -207,9 +236,9 @@ func TestIsPlatformAdmin(t *testing.T) {
 			desc: "unauthorize user",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
-				Name: clientName,
+				Name: namesgen.Generate(),
 				Credentials: mgclients.Credentials{
-					Identity: clientIdentity,
+					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
 				Metadata: mgclients.Metadata{},

@@ -96,7 +96,7 @@ func New(cfg Config, sdk sdk.SDK, logger mglog.Logger) Service {
 // Mapping retrieves current configuration.
 func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
 	userFilter := sdk.PageMetadata{
-		Email:    "",
+		Identity: "",
 		Offset:   uint64(offset),
 		Limit:    uint64(limit),
 		Metadata: make(map[string]interface{}),

@@ -203,11 +203,11 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.Email,
-		"email",
-		"e",
+		&cli.Identity,
+		"identity",
+		"I",
 		"",
-		"User email query parameter",
+		"User identity query parameter",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

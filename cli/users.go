@@ -63,7 +63,7 @@ var cmdUsers = []cobra.Command{
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
-				Email:    Email,
+				Identity: Identity,
 				Offset:   Offset,
 				Limit:    Limit,
 				Metadata: metadata,

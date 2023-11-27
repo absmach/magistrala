@@ -74,7 +74,7 @@ type PageMetadata struct {
 	Offset     uint64   `json:"offset"`
 	Limit      uint64   `json:"limit"`
 	Level      uint64   `json:"level,omitempty"`
-	Email      string   `json:"email,omitempty"`
+	Identity   string   `json:"identity,omitempty"`
 	Name       string   `json:"name,omitempty"`
 	Type       string   `json:"type,omitempty"`
 	Metadata   Metadata `json:"metadata,omitempty"`
@@ -91,6 +91,7 @@ type PageMetadata struct {
 	Topic      string   `json:"topic,omitempty"`
 	Contact    string   `json:"contact,omitempty"`
 	State      string   `json:"state,omitempty"`
+	Order      string   `json:"order,omitempty"`
 }
 
 // Credentials represent client credentials: it contains
@@ -1186,8 +1187,8 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Level != 0 {
 		q.Add("level", strconv.FormatUint(pm.Level, 10))
 	}
-	if pm.Email != "" {
-		q.Add("email", pm.Email)
+	if pm.Identity != "" {
+		q.Add("identity", pm.Identity)
 	}
 	if pm.Name != "" {
 		q.Add("name", pm.Name)

@@ -159,6 +159,15 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 	JOIN policies pc
 	ON pc.object_id = d.id`
 
+	// The service sends the user ID in the pagemeta subject field, which filters domains by joining with the policies table.
+	// For SuperAdmins, access to domains is granted without the policies filter.
+	// If the user making the request is a super admin, the service will assign an empty value to the pagemeta subject field.
+	// In the repository, when the pagemeta subject is empty, the query should be constructed without applying the policies filter.
+	if pm.SubjectID == "" {
+		q = `SELECT d.id as id, d.name as name, d.tags as tags, d.alias as alias, d.metadata as metadata, d.created_at as created_at, d.updated_at as updated_at, d.updated_by as updated_by, d.created_by as created_by, d.status as status
+		FROM domains as d`
+	}
+
 	q = fmt.Sprintf("%s %s LIMIT %d OFFSET %d", q, query, pm.Limit, pm.Offset)
 
 	dbPage, err := toDBClientsPage(pm)

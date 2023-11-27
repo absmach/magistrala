@@ -88,6 +88,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 		if c.Status != mgclients.DisabledStatus && c.Status != mgclients.EnabledStatus {
 			return []mgclients.Client{}, svcerr.ErrInvalidStatus
 		}
+		c.Owner = user.GetDomainId()
 		c.CreatedAt = time.Now()
 		clients = append(clients, c)
 	}

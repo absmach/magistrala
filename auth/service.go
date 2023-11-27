@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -548,7 +549,16 @@ func (svc service) ListDomains(ctx context.Context, token string, p Page) (Domai
 	}); err == nil {
 		p.SubjectID = ""
 	}
-	return svc.domains.ListDomains(ctx, p)
+	dp, err := svc.domains.ListDomains(ctx, p)
+	if err != nil {
+		return DomainsPage{}, postgres.HandleError(svcerr.ErrViewEntity, err)
+	}
+	if p.SubjectID == "" {
+		for i := range dp.Domains {
+			dp.Domains[i].Permission = AdministratorRelation
+		}
+	}
+	return dp, nil
 }
 
 func (svc service) AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {

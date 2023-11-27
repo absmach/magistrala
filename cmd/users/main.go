@@ -68,6 +68,7 @@ type config struct {
 	InstanceID    string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
 	ESURL         string  `env:"MG_USERS_ES_URL"                 envDefault:"nats://localhost:4222"`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	SelfRegister  bool    `env:"MF_USERS_ALLOW_SELF_REGISTER"    envDefault:"false"`
 	PassRegex     *regexp.Regexp
 }
 
@@ -202,7 +203,7 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := users.NewService(cRepo, auth, emailer, hsr, idp, c.PassRegex, true)
+	csvc := users.NewService(cRepo, auth, emailer, hsr, idp, c.PassRegex, c.SelfRegister)
 	gsvc := mggroups.NewService(gRepo, idp, auth)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)

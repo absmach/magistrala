@@ -418,7 +418,7 @@ func decodeChangeClientStatus(_ context.Context, r *http.Request) (interface{}, 
 }
 
 func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r)
+	page, err := queryPageParams(r, api.DefPermission)
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +432,7 @@ func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, 
 }
 
 func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r)
+	page, err := queryPageParams(r, api.DefPermission)
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +446,7 @@ func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}
 }
 
 func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r)
+	page, err := queryPageParams(r, api.DefPermission)
 	if err != nil {
 		return nil, err
 	}
@@ -460,7 +460,7 @@ func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, 
 }
 
 func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r)
+	page, err := queryPageParams(r, auth.MembershipPermission)
 	if err != nil {
 		return nil, err
 	}
@@ -480,7 +480,7 @@ func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{},
 	return req, nil
 }
 
-func queryPageParams(r *http.Request) (mgclients.Page, error) {
+func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, error) {
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -517,7 +517,7 @@ func queryPageParams(r *http.Request) (mgclients.Page, error) {
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
+	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, defPermission)
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}

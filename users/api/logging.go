@@ -44,7 +44,11 @@ func (lm *loggingMiddleware) RegisterClient(ctx context.Context, token string, c
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method issue_token of type %s for client %s took %s to complete", t.GetAccessType(), identity, time.Since(begin))
+		message := "Method issue_token"
+		if t != nil {
+			message = fmt.Sprintf("%s of type %s", message, t.AccessType)
+		}
+		message = fmt.Sprintf("%s for client %s took %s to complete", message, identity, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -58,7 +62,11 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, d
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method refresh_token of type %s for refresh token %s took %s to complete", t.AccessType, refreshToken, time.Since(begin))
+		message := "Method refresh_token"
+		if t != nil {
+			message = fmt.Sprintf("%s of type %s", message, t.AccessType)
+		}
+		message = fmt.Sprintf("%s for refresh token %s took %s to complete", message, refreshToken, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

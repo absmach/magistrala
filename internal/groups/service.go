@@ -55,7 +55,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 
 	g.ID = groupID
 	g.CreatedAt = time.Now()
-
+	g.Owner = res.GetDomainId()
 	if g.Parent != "" {
 		_, err := svc.authorize(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, g.Parent)
 		if err != nil {

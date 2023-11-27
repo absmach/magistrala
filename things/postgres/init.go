@@ -21,13 +21,15 @@ func Migration() *migrate.MemoryMigrationSource {
 						name		VARCHAR(1024),
 						owner_id	VARCHAR(36),
 						identity	VARCHAR(254),
-						secret		VARCHAR(4096) NOT NULL UNIQUE,
+						secret		VARCHAR(4096) NOT NULL,
 						tags		TEXT[],
 						metadata	JSONB,
 						created_at	TIMESTAMP,
 						updated_at	TIMESTAMP,
 						updated_by  VARCHAR(254),
-						status		SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0)
+						status		SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
+						UNIQUE		(owner_id, secret),
+						UNIQUE		(owner_id, name)
 					)`,
 				},
 				Down: []string{

@@ -424,6 +424,19 @@ func (pa *policyAgent) addPolicyPreCondition(ctx context.Context, pr auth.Policy
 
 func (pa *policyAgent) userGroupPreConditions(ctx context.Context, pr auth.PolicyReq) ([]*v1.Precondition, error) {
 	var preconds []*v1.Precondition
+
+	// user should not have any relation with group
+	preconds = append(preconds, &v1.Precondition{
+		Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+		Filter: &v1.RelationshipFilter{
+			ResourceType:       auth.GroupType,
+			OptionalResourceId: pr.Object,
+			OptionalSubjectFilter: &v1.SubjectFilter{
+				SubjectType:       auth.UserType,
+				OptionalSubjectId: pr.Subject,
+			},
+		},
+	})
 	isSuperAdmin := false
 	if err := pa.CheckPolicy(ctx, auth.PolicyReq{
 		Subject:     pr.Subject,
@@ -484,6 +497,20 @@ func (pa *policyAgent) userGroupPreConditions(ctx context.Context, pr auth.Polic
 
 func (pa *policyAgent) userThingPreConditions(ctx context.Context, pr auth.PolicyReq) ([]*v1.Precondition, error) {
 	var preconds []*v1.Precondition
+
+	// user should not have any relation with thing
+	preconds = append(preconds, &v1.Precondition{
+		Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
+		Filter: &v1.RelationshipFilter{
+			ResourceType:       auth.ThingType,
+			OptionalResourceId: pr.Object,
+			OptionalSubjectFilter: &v1.SubjectFilter{
+				SubjectType:       auth.UserType,
+				OptionalSubjectId: pr.Subject,
+			},
+		},
+	})
+
 	isSuperAdmin := false
 	if err := pa.CheckPolicy(ctx, auth.PolicyReq{
 		Subject:     pr.Subject,

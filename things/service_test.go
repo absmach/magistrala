@@ -241,8 +241,8 @@ func TestRegisterClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-		repoCall1 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Authorized: true}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("Save", context.Background(), mock.Anything).Return(&mgclients.Client{}, tc.err)
 		registerTime := time.Now()
 		expected, err := svc.CreateThings(context.Background(), tc.token, tc.client)
@@ -575,7 +575,7 @@ func TestListClients(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		if tc.token == authmocks.InvalidValue {
 			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: authmocks.InvalidValue}).Return(&magistrala.IdentityRes{}, svcerror.ErrAuthentication)
@@ -647,7 +647,7 @@ func TestUpdateClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(mgclients.Client{}, tc.err)
 		repoCall3 := cRepo.On("Update", context.Background(), mock.Anything).Return(tc.response, tc.err)
@@ -700,7 +700,7 @@ func TestUpdateClientTags(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(mgclients.Client{}, tc.err)
 		repoCall3 := cRepo.On("UpdateTags", context.Background(), mock.Anything).Return(tc.response, tc.err)
@@ -753,7 +753,7 @@ func TestUpdateClientOwner(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(mgclients.Client{}, tc.err)
 		repoCall3 := cRepo.On("UpdateOwner", context.Background(), mock.Anything).Return(tc.response, tc.err)
@@ -797,7 +797,7 @@ func TestUpdateClientSecret(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("UpdateSecret", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		updatedClient, err := svc.UpdateClientSecret(context.Background(), tc.token, tc.id, tc.newSecret)
@@ -852,7 +852,7 @@ func TestEnableClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.client, tc.err)
 		repoCall3 := cRepo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.response, tc.err)
@@ -917,7 +917,7 @@ func TestEnableClient(t *testing.T) {
 			Limit:  100,
 			Status: tc.status,
 		}
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		repoCall2 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
@@ -973,7 +973,7 @@ func TestDisableClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.client, tc.err)
 		repoCall3 := cRepo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.response, tc.err)
@@ -1038,7 +1038,7 @@ func TestDisableClient(t *testing.T) {
 			Limit:  100,
 			Status: tc.status,
 		}
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		repoCall2 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
@@ -1167,7 +1167,7 @@ func TestListMembers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, nil)
 		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), tc.page).Return(mgclients.ClientsPage{Page: tc.response.Page, Clients: tc.response.Members}, tc.err)

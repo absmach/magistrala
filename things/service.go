@@ -307,7 +307,7 @@ func (svc service) DisableClient(ctx context.Context, token, id string) (mgclien
 func (svc service) Share(ctx context.Context, token, id, relation string, userids ...string) error {
 	user, err := svc.identify(ctx, token)
 	if err != nil {
-		return nil
+		return err
 	}
 	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
@@ -446,7 +446,7 @@ func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, per
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", err
 	}
 	if !res.GetAuthorized() {
 		return "", errors.Wrap(errors.ErrAuthorization, err)

@@ -109,8 +109,7 @@ var cmdThings = []cobra.Command{
 			"Usage:\n" +
 			"\tmagistrala-cli things update <thing_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n" +
 			"\tmagistrala-cli things update tags <thing_id> '{\"tag1\":\"value1\", \"tag2\":\"value2\"}' $USERTOKEN\n" +
-			"\tmagistrala-cli things update secret <thing_id> newsecret $USERTOKEN\n" +
-			"\tmagistrala-cli things update owner <thing_id> <owner_id> $USERTOKEN\n",
+			"\tmagistrala-cli things update secret <thing_id> <newsecret> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 && len(args) != 3 {
 				logUsage(cmd.Use)
@@ -136,19 +135,6 @@ var cmdThings = []cobra.Command{
 
 			if args[0] == "secret" {
 				thing, err := sdk.UpdateThingSecret(args[1], args[2], args[3])
-				if err != nil {
-					logError(err)
-					return
-				}
-
-				logJSON(thing)
-				return
-			}
-
-			if args[0] == "owner" {
-				thing.ID = args[1]
-				thing.Owner = args[2]
-				thing, err := sdk.UpdateThingOwner(thing, args[3])
 				if err != nil {
 					logError(err)
 					return

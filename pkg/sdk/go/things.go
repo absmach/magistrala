@@ -195,27 +195,6 @@ func (sdk mgSDK) UpdateThingSecret(id, secret, token string) (Thing, errors.SDKE
 	return t, nil
 }
 
-func (sdk mgSDK) UpdateThingOwner(t Thing, token string) (Thing, errors.SDKError) {
-	data, err := json.Marshal(t)
-	if err != nil {
-		return Thing{}, errors.NewSDKError(err)
-	}
-
-	url := fmt.Sprintf("%s/%s/%s/owner", sdk.thingsURL, thingsEndpoint, t.ID)
-
-	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
-	if sdkerr != nil {
-		return Thing{}, sdkerr
-	}
-
-	t = Thing{}
-	if err = json.Unmarshal(body, &t); err != nil {
-		return Thing{}, errors.NewSDKError(err)
-	}
-
-	return t, nil
-}
-
 func (sdk mgSDK) EnableThing(id, token string) (Thing, errors.SDKError) {
 	return sdk.changeThingStatus(id, enableEndpoint, token)
 }

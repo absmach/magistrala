@@ -588,7 +588,7 @@ func (svc service) authorize(ctx context.Context, subjectType, subject, permissi
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", err
 	}
 	if !res.GetAuthorized() {
 		return "", errors.ErrAuthorization
@@ -607,7 +607,7 @@ func (svc service) authorizeKind(ctx context.Context, subjectType, subjectKind, 
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", err
 	}
 	if !res.GetAuthorized() {
 		return "", errors.ErrAuthorization

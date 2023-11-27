@@ -23,7 +23,7 @@ func TestHealth(t *testing.T) {
 	auth.Test(t)
 	defer usclsv.Close()
 
-	certSvc, err := newCertService()
+	certSvc, _, _, err := newCertService()
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating service: %s", err))
 	CertTs := newCertServer(certSvc)
 	defer CertTs.Close()

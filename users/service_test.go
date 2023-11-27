@@ -824,13 +824,13 @@ func TestUpdateClientIdentity(t *testing.T) {
 	}
 }
 
-func TestUpdateClientOwner(t *testing.T) {
+func TestUpdateClientRole(t *testing.T) {
 	cRepo := new(mocks.Repository)
 	auth := new(authmocks.Service)
 	e := mocks.NewEmailer()
 	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
 
-	client.Owner = "newowner@mail.com"
+	client.Role = mgclients.AdminRole
 
 	cases := []struct {
 		desc     string
@@ -840,24 +840,24 @@ func TestUpdateClientOwner(t *testing.T) {
 		err      error
 	}{
 		{
-			desc:     "update client owner with valid token",
+			desc:     "update client role with valid token",
 			client:   client,
 			token:    validToken,
 			response: client,
 			err:      nil,
 		},
 		{
-			desc:     "update client owner with invalid token",
+			desc:     "update client role with invalid token",
 			client:   client,
 			token:    inValidToken,
 			response: mgclients.Client{},
 			err:      svcerror.ErrAuthentication,
 		},
 		{
-			desc: "update client owner with invalid ID",
+			desc: "update client role with invalid ID",
 			client: mgclients.Client{
-				ID:    mocks.WrongID,
-				Owner: "updatedowner@mail.com",
+				ID:   mocks.WrongID,
+				Role: mgclients.AdminRole,
 			},
 			response: mgclients.Client{},
 			token:    inValidToken,
@@ -874,13 +874,13 @@ func TestUpdateClientOwner(t *testing.T) {
 			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: inValidToken}).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
 			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
 		}
-		repoCall4 := cRepo.On("UpdateOwner", context.Background(), mock.Anything).Return(tc.response, tc.err)
+		repoCall4 := cRepo.On("UpdateRole", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		updatedClient, err := svc.UpdateClientRole(context.Background(), tc.token, tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, updatedClient))
 		if tc.err == nil {
-			ok := repoCall4.Parent.AssertCalled(t, "UpdateOwner", context.Background(), mock.Anything)
-			assert.True(t, ok, fmt.Sprintf("UpdateOwner was not called on %s", tc.desc))
+			ok := repoCall4.Parent.AssertCalled(t, "UpdateRole", context.Background(), mock.Anything)
+			assert.True(t, ok, fmt.Sprintf("UpdateRole was not called on %s", tc.desc))
 		}
 		repoCall.Unset()
 		repoCall1.Unset()

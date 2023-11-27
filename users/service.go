@@ -374,7 +374,7 @@ func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgcli
 	if err := svc.updateClientPolicy(ctx, cli.ID, cli.Role); err != nil {
 		return mgclients.Client{}, errors.Wrap(ErrFailedPolicyUpdate, err)
 	}
-	client, err = svc.clients.UpdateOwner(ctx, client)
+	client, err = svc.clients.UpdateRole(ctx, client)
 	if err != nil {
 		// If failed to update role in DB, then revert back to platform admin policy in spicedb
 		if errRollback := svc.updateClientPolicy(ctx, cli.ID, mgclients.UserRole); errRollback != nil {

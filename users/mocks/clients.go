@@ -143,6 +143,16 @@ func (m *Repository) UpdateOwner(ctx context.Context, client mgclients.Client) (
 	return ret.Get(0).(mgclients.Client), ret.Error(1)
 }
 
+func (m *Repository) UpdateRole(ctx context.Context, client mgclients.Client) (mgclients.Client, error) {
+	ret := m.Called(ctx, client)
+
+	if client.ID == WrongID {
+		return mgclients.Client{}, errors.ErrNotFound
+	}
+
+	return ret.Get(0).(mgclients.Client), ret.Error(1)
+}
+
 func (m *Repository) RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error) {
 	ret := m.Called(ctx, key)
 

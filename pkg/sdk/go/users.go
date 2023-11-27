@@ -248,13 +248,13 @@ func (sdk mgSDK) UpdatePassword(oldPass, newPass, token string) (User, errors.SD
 	return user, nil
 }
 
-func (sdk mgSDK) UpdateUserOwner(user User, token string) (User, errors.SDKError) {
+func (sdk mgSDK) UpdateUserRole(user User, token string) (User, errors.SDKError) {
 	data, err := json.Marshal(user)
 	if err != nil {
 		return User{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/owner", sdk.usersURL, usersEndpoint, user.ID)
+	url := fmt.Sprintf("%s/%s/%s/role", sdk.usersURL, usersEndpoint, user.ID)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {

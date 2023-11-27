@@ -98,6 +98,9 @@ type Repository interface {
 	// UpdateOwner updates owner for client with given id.
 	UpdateOwner(ctx context.Context, client Client) (Client, error)
 
+	// UpdateRole updates role for client with given id.
+	UpdateRole(ctx context.Context, client Client) (Client, error)
+
 	// ChangeStatus changes client status to enabled or disabled
 	ChangeStatus(ctx context.Context, client Client) (Client, error)
 }

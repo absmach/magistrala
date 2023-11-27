@@ -182,16 +182,16 @@ type SDK interface {
 	//  fmt.Println(user)
 	UpdateUserIdentity(user User, token string) (User, errors.SDKError)
 
-	// UpdateUserOwner updates the user's owner.
+	// UpdateUserRole updates the user's role.
 	//
 	// example:
 	//  user := sdk.User{
 	//    ID:   "userID",
-	//    Owner: "ownerID",
+	//    Role: "role",
 	//  }
-	//  user, _ := sdk.UpdateUserOwner(user, "token")
+	//  user, _ := sdk.UpdateUserRole(user, "token")
 	//  fmt.Println(user)
-	UpdateUserOwner(user User, token string) (User, errors.SDKError)
+	UpdateUserRole(user User, token string) (User, errors.SDKError)
 
 	// ResetPasswordRequest sends a password request email to a user.
 	//
@@ -382,17 +382,6 @@ type SDK interface {
 	//  thing, err := sdk.UpdateThingSecret("thingID", "newSecret", "token")
 	//  fmt.Println(thing)
 	UpdateThingSecret(id, secret, token string) (Thing, errors.SDKError)
-
-	// UpdateThingOwner updates the client's owner.
-	//
-	// example:
-	//  thing := sdk.Thing{
-	//    ID:    "thingID",
-	//    Owner: "ownerID",
-	//  }
-	//  thing, _ := sdk.UpdateThingOwner(thing, "token")
-	//  fmt.Println(thing)
-	UpdateThingOwner(thing Thing, token string) (Thing, errors.SDKError)
 
 	// EnableThing changes client status to enabled.
 	//

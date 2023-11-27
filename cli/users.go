@@ -148,8 +148,7 @@ var cmdUsers = []cobra.Command{
 			"Usage:\n" +
 			"\tmagistrala-cli users update <user_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN - updates user name and metadata\n" +
 			"\tmagistrala-cli users update tags <user_id> '[\"tag1\", \"tag2\"]' $USERTOKEN - updates user tags\n" +
-			"\tmagistrala-cli users update identity <user_id> newidentity@example.com $USERTOKEN - updates user identity\n" +
-			"\tmagistrala-cli users update owner <user_id> <owner_id> $USERTOKEN - updates user owner\n",
+			"\tmagistrala-cli users update identity <user_id> newidentity@example.com $USERTOKEN - updates user identity\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 && len(args) != 3 {
 				logUsage(cmd.Use)
@@ -187,10 +186,10 @@ var cmdUsers = []cobra.Command{
 
 			}
 
-			if args[0] == "owner" {
+			if args[0] == "role" {
 				user.ID = args[1]
-				user.Owner = args[2]
-				user, err := sdk.UpdateUserOwner(user, args[3])
+				user.Role = args[2]
+				user, err := sdk.UpdateUserRole(user, args[3])
 				if err != nil {
 					logError(err)
 					return

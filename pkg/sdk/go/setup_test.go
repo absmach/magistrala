@@ -23,7 +23,7 @@ const (
 	Identity        = "identity"
 	secret          = "strongsecret"
 	token           = "token"
-	invalidToken    = "invalidtoken"
+	invalidToken    = "invalid"
 	contentType     = "application/senml+json"
 )
 

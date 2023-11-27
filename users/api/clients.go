@@ -102,7 +102,7 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger mglog.Logger) http.Han
 			decodeUpdateClientRole,
 			api.EncodeResponse,
 			opts...,
-		), "update_client_owner").ServeHTTP)
+		), "update_client_role").ServeHTTP)
 
 		r.Post("/tokens/issue", otelhttp.NewHandler(kithttp.NewServer(
 			issueTokenEndpoint(svc),

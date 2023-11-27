@@ -13,7 +13,7 @@ import (
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/ws"
-	"github.com/go-zoo/bone"
+	"github.com/go-chi/chi/v5"
 )
 
 var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
@@ -45,7 +45,7 @@ func handshake(ctx context.Context, svc ws.Service) http.HandlerFunc {
 func decodeRequest(r *http.Request) (connReq, error) {
 	authKey := r.Header.Get("Authorization")
 	if authKey == "" {
-		authKeys := bone.GetQuery(r, "authorization")
+		authKeys := r.URL.Query()["authorization"]
 		if len(authKeys) == 0 {
 			logger.Debug("Missing authorization key.")
 			return connReq{}, errUnauthorizedAccess
@@ -53,7 +53,7 @@ func decodeRequest(r *http.Request) (connReq, error) {
 		authKey = authKeys[0]
 	}
 
-	chanID := bone.GetValue(r, "chanID")
+	chanID := chi.URLParam(r, "chanID")
 
 	req := connReq{
 		thingKey: authKey,

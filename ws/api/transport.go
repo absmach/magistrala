@@ -11,7 +11,7 @@ import (
 	"github.com/absmach/magistrala"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/ws"
-	"github.com/go-zoo/bone"
+	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -39,11 +39,11 @@ var (
 func MakeHandler(ctx context.Context, svc ws.Service, l mglog.Logger, instanceID string) http.Handler {
 	logger = l
 
-	mux := bone.New()
-	mux.GetFunc("/channels/:chanID/messages", handshake(ctx, svc))
-	mux.GetFunc("/channels/:chanID/messages/*", handshake(ctx, svc))
+	mux := chi.NewRouter()
+	mux.Get("/channels/{chanID}/messages", handshake(ctx, svc))
+	mux.Get("/channels/{chanID}/messages/*", handshake(ctx, svc))
 
-	mux.GetFunc("/health", magistrala.Health(service, instanceID))
+	mux.Get("/health", magistrala.Health(service, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

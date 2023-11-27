@@ -14,8 +14,8 @@ import (
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/twins"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -36,51 +36,48 @@ func MakeHandler(svc twins.Service, logger logger.Logger, instanceID string) htt
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
-	r := bone.New()
+	r := chi.NewRouter()
 
-	r.Post("/twins", otelhttp.NewHandler(kithttp.NewServer(
-		addTwinEndpoint(svc),
-		decodeTwinCreation,
-		encodeResponse,
-		opts...,
-	), "add_twin"))
-
-	r.Put("/twins/:twinID", otelhttp.NewHandler(kithttp.NewServer(
-		updateTwinEndpoint(svc),
-		decodeTwinUpdate,
-		encodeResponse,
-		opts...,
-	), "update_twin"))
-
-	r.Get("/twins/:twinID", otelhttp.NewHandler(kithttp.NewServer(
-		viewTwinEndpoint(svc),
-		decodeView,
-		encodeResponse,
-		opts...,
-	), "view_twin"))
-
-	r.Delete("/twins/:twinID", otelhttp.NewHandler(kithttp.NewServer(
-		removeTwinEndpoint(svc),
-		decodeView,
-		encodeResponse,
-		opts...,
-	), "remove_twin"))
-
-	r.Get("/twins", otelhttp.NewHandler(kithttp.NewServer(
-		listTwinsEndpoint(svc),
-		decodeList,
-		encodeResponse,
-		opts...,
-	), "list_twins"))
-
-	r.Get("/states/:twinID", otelhttp.NewHandler(kithttp.NewServer(
+	r.Route("/twins", func(r chi.Router) {
+		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+			addTwinEndpoint(svc),
+			decodeTwinCreation,
+			encodeResponse,
+			opts...,
+		), "add_twin").ServeHTTP)
+		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+			listTwinsEndpoint(svc),
+			decodeList,
+			encodeResponse,
+			opts...,
+		), "list_twins").ServeHTTP)
+		r.Put("/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
+			updateTwinEndpoint(svc),
+			decodeTwinUpdate,
+			encodeResponse,
+			opts...,
+		), "update_twin").ServeHTTP)
+		r.Get("/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
+			viewTwinEndpoint(svc),
+			decodeView,
+			encodeResponse,
+			opts...,
+		), "view_twin").ServeHTTP)
+		r.Delete("/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
+			removeTwinEndpoint(svc),
+			decodeView,
+			encodeResponse,
+			opts...,
+		), "remove_twin").ServeHTTP)
+	})
+	r.Get("/states/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
 		listStatesEndpoint(svc),
 		decodeListStates,
 		encodeResponse,
 		opts...,
-	), "list_states"))
+	), "list_states").ServeHTTP)
 
-	r.GetFunc("/health", magistrala.Health("twins", instanceID))
+	r.Get("/health", magistrala.Health("twins", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r
@@ -106,7 +103,7 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := updateTwinReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "twinID"),
+		id:    chi.URLParam(r, "twinID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -118,7 +115,7 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewTwinReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "twinID"),
+		id:    chi.URLParam(r, "twinID"),
 	}
 
 	return req, nil
@@ -171,7 +168,7 @@ func decodeListStates(_ context.Context, r *http.Request) (interface{}, error) {
 		token:  apiutil.ExtractBearerToken(r),
 		limit:  l,
 		offset: o,
-		id:     bone.GetValue(r, "twinID"),
+		id:     chi.URLParam(r, "twinID"),
 	}
 
 	return req, nil

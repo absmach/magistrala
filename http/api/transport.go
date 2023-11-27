@@ -11,8 +11,8 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc/codes"
@@ -33,22 +33,22 @@ func MakeHandler(instanceID string) http.Handler {
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
-	r := bone.New()
+	r := chi.NewRouter()
 	r.Post("/channels/:chanID/messages", otelhttp.NewHandler(kithttp.NewServer(
 		sendMessageEndpoint(),
 		decodeRequest,
 		encodeResponse,
 		opts...,
-	), "publish"))
+	), "publish").ServeHTTP)
 
 	r.Post("/channels/:chanID/messages/*", otelhttp.NewHandler(kithttp.NewServer(
 		sendMessageEndpoint(),
 		decodeRequest,
 		encodeResponse,
 		opts...,
-	), "publish"))
+	), "publish").ServeHTTP)
 
-	r.GetFunc("/health", magistrala.Health("http", instanceID))
+	r.Get("/health", magistrala.Health("http", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

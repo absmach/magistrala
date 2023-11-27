@@ -13,8 +13,8 @@ import (
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/provision"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -28,24 +28,24 @@ func MakeHandler(svc provision.Service, logger logger.Logger, instanceID string)
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
-	r := bone.New()
+	r := chi.NewRouter()
 
 	r.Post("/mapping", kithttp.NewServer(
 		doProvision(svc),
 		decodeProvisionRequest,
 		encodeResponse,
 		opts...,
-	))
+	).ServeHTTP)
 
 	r.Get("/mapping", kithttp.NewServer(
 		getMapping(svc),
 		decodeMappingRequest,
 		encodeResponse,
 		opts...,
-	))
+	).ServeHTTP)
 
 	r.Handle("/metrics", promhttp.Handler())
-	r.GetFunc("/health", magistrala.Health("provision", instanceID))
+	r.Get("/health", magistrala.Health("provision", instanceID))
 
 	return r
 }

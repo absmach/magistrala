@@ -13,8 +13,8 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/opcua"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -33,16 +33,16 @@ func MakeHandler(svc opcua.Service, logger mglog.Logger, instanceID string) http
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
-	r := bone.New()
+	r := chi.NewRouter()
 
 	r.Get("/browse", kithttp.NewServer(
 		browseEndpoint(svc),
 		decodeBrowse,
 		encodeResponse,
 		opts...,
-	))
+	).ServeHTTP)
 
-	r.GetFunc("/health", magistrala.Health("opcua-adapter", instanceID))
+	r.Get("/health", magistrala.Health("opcua-adapter", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

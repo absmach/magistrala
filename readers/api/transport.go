@@ -12,8 +12,8 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/readers"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -54,15 +54,15 @@ func MakeHandler(svc readers.MessageRepository, uauth magistrala.AuthServiceClie
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
-	mux := bone.New()
+	mux := chi.NewRouter()
 	mux.Get("/channels/:chanID/messages", kithttp.NewServer(
 		listMessagesEndpoint(svc, uauth, taauth),
 		decodeList,
 		encodeResponse,
 		opts...,
-	))
+	).ServeHTTP)
 
-	mux.GetFunc("/health", magistrala.Health(svcName, instanceID))
+	mux.Get("/health", magistrala.Health(svcName, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -140,7 +140,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := listMessagesReq{
-		chanID: bone.GetValue(r, "chanID"),
+		chanID: chi.URLParam(r, "chanID"),
 		token:  apiutil.ExtractBearerToken(r),
 		key:    apiutil.ExtractThingKey(r),
 		pageMeta: readers.PageMetadata{

@@ -13,8 +13,8 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -33,38 +33,37 @@ func MakeHandler(svc certs.Service, logger logger.Logger, instanceID string) htt
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
-	r := bone.New()
+	r := chi.NewRouter()
 
-	r.Post("/certs", otelhttp.NewHandler(kithttp.NewServer(
-		issueCert(svc),
-		decodeCerts,
-		encodeResponse,
-		opts...,
-	), "issue"))
-
-	r.Get("/certs/:certID", otelhttp.NewHandler(kithttp.NewServer(
-		viewCert(svc),
-		decodeViewCert,
-		encodeResponse,
-		opts...,
-	), "view"))
-
-	r.Delete("/certs/:certID", otelhttp.NewHandler(kithttp.NewServer(
-		revokeCert(svc),
-		decodeRevokeCerts,
-		encodeResponse,
-		opts...,
-	), "revoke"))
-
+	r.Route("/certs", func(r chi.Router) {
+		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+			issueCert(svc),
+			decodeCerts,
+			encodeResponse,
+			opts...,
+		), "issue").ServeHTTP)
+		r.Get("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+			viewCert(svc),
+			decodeViewCert,
+			encodeResponse,
+			opts...,
+		), "view").ServeHTTP)
+		r.Delete("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+			revokeCert(svc),
+			decodeRevokeCerts,
+			encodeResponse,
+			opts...,
+		), "revoke").ServeHTTP)
+	})
 	r.Get("/serials/:thingID", otelhttp.NewHandler(kithttp.NewServer(
 		listSerials(svc),
 		decodeListCerts,
 		encodeResponse,
 		opts...,
-	), "list_serials"))
+	), "list_serials").ServeHTTP)
 
 	r.Handle("/metrics", promhttp.Handler())
-	r.GetFunc("/health", magistrala.Health("certs", instanceID))
+	r.Get("/health", magistrala.Health("certs", instanceID))
 
 	return r
 }
@@ -99,7 +98,7 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := listReq{
 		token:   apiutil.ExtractBearerToken(r),
-		thingID: bone.GetValue(r, "thingID"),
+		thingID: chi.URLParam(r, "thingID"),
 		limit:   l,
 		offset:  o,
 	}
@@ -109,7 +108,7 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeViewCert(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewReq{
 		token:    apiutil.ExtractBearerToken(r),
-		serialID: bone.GetValue(r, "certID"),
+		serialID: chi.URLParam(r, "certID"),
 	}
 
 	return req, nil
@@ -131,7 +130,7 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	req := revokeReq{
 		token:  apiutil.ExtractBearerToken(r),
-		certID: bone.GetValue(r, "certID"),
+		certID: chi.URLParam(r, "certID"),
 	}
 
 	return req, nil

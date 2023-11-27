@@ -15,8 +15,8 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -39,69 +39,74 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger mg
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
-	r := bone.New()
 
-	r.Post("/things/configs", otelhttp.NewHandler(kithttp.NewServer(
-		addEndpoint(svc),
-		decodeAddRequest,
-		encodeResponse,
-		opts...), "add"))
+	r := chi.NewRouter()
 
-	r.Get("/things/configs/:configID", otelhttp.NewHandler(kithttp.NewServer(
-		viewEndpoint(svc),
-		decodeEntityRequest,
-		encodeResponse,
-		opts...), "view"))
+	r.Route("/things", func(r chi.Router) {
+		r.Route("/configs", func(r chi.Router) {
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				addEndpoint(svc),
+				decodeAddRequest,
+				encodeResponse,
+				opts...), "add").ServeHTTP)
 
-	r.Put("/things/configs/:configID", otelhttp.NewHandler(kithttp.NewServer(
-		updateEndpoint(svc),
-		decodeUpdateRequest,
-		encodeResponse,
-		opts...), "update"))
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				listEndpoint(svc),
+				decodeListRequest,
+				encodeResponse,
+				opts...), "list").ServeHTTP)
 
-	r.Patch("/things/configs/certs/:certID", otelhttp.NewHandler(kithttp.NewServer(
-		updateCertEndpoint(svc),
-		decodeUpdateCertRequest,
-		encodeResponse,
-		opts...), "update_cert"))
+			r.Get("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+				viewEndpoint(svc),
+				decodeEntityRequest,
+				encodeResponse,
+				opts...), "view").ServeHTTP)
 
-	r.Put("/things/configs/connections/:connID", otelhttp.NewHandler(kithttp.NewServer(
-		updateConnEndpoint(svc),
-		decodeUpdateConnRequest,
-		encodeResponse,
-		opts...), "update_connections"))
+			r.Put("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+				updateEndpoint(svc),
+				decodeUpdateRequest,
+				encodeResponse,
+				opts...), "update").ServeHTTP)
 
-	r.Get("/things/configs", otelhttp.NewHandler(kithttp.NewServer(
-		listEndpoint(svc),
-		decodeListRequest,
-		encodeResponse,
-		opts...), "list"))
+			r.Delete("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+				removeEndpoint(svc),
+				decodeEntityRequest,
+				encodeResponse,
+				opts...), "remove").ServeHTTP)
 
-	r.Get("/things/bootstrap/:externalID", otelhttp.NewHandler(kithttp.NewServer(
-		bootstrapEndpoint(svc, reader, false),
-		decodeBootstrapRequest,
-		encodeResponse,
-		opts...), "bootstrap"))
+			r.Patch("/certs/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+				updateCertEndpoint(svc),
+				decodeUpdateCertRequest,
+				encodeResponse,
+				opts...), "update_cert").ServeHTTP)
 
-	r.Get("/things/bootstrap/secure/:externalID", otelhttp.NewHandler(kithttp.NewServer(
-		bootstrapEndpoint(svc, reader, true),
-		decodeBootstrapRequest,
-		encodeSecureRes,
-		opts...), "bootstrap_secure"))
+			r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
+				updateConnEndpoint(svc),
+				decodeUpdateConnRequest,
+				encodeResponse,
+				opts...), "update_connections").ServeHTTP)
+		})
 
-	r.Put("/things/state/:thingID", otelhttp.NewHandler(kithttp.NewServer(
-		stateEndpoint(svc),
-		decodeStateRequest,
-		encodeResponse,
-		opts...), "update_state"))
+		r.Route("/bootstrap", func(r chi.Router) {
+			r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+				bootstrapEndpoint(svc, reader, false),
+				decodeBootstrapRequest,
+				encodeResponse,
+				opts...), "bootstrap").ServeHTTP)
+			r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+				bootstrapEndpoint(svc, reader, true),
+				decodeBootstrapRequest,
+				encodeSecureRes,
+				opts...), "bootstrap_secure").ServeHTTP)
+		})
 
-	r.Delete("/things/configs/:configID", otelhttp.NewHandler(kithttp.NewServer(
-		removeEndpoint(svc),
-		decodeEntityRequest,
-		encodeResponse,
-		opts...), "remove"))
-
-	r.GetFunc("/health", magistrala.Health("bootstrap", instanceID))
+		r.Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+			stateEndpoint(svc),
+			decodeStateRequest,
+			encodeResponse,
+			opts...), "update_state").ServeHTTP)
+	})
+	r.Get("/health", magistrala.Health("bootstrap", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r
@@ -127,7 +132,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 
 	req := updateReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "configID"),
+		id:    chi.URLParam(r, "configID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -143,7 +148,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 
 	req := updateCertReq{
 		token:   apiutil.ExtractBearerToken(r),
-		thingID: bone.GetValue(r, "certID"),
+		thingID: chi.URLParam(r, "certID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -159,7 +164,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 
 	req := updateConnReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "connID"),
+		id:    chi.URLParam(r, "connID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -196,7 +201,7 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := bootstrapReq{
-		id:  bone.GetValue(r, "externalID"),
+		id:  chi.URLParam(r, "externalID"),
 		key: apiutil.ExtractThingKey(r),
 	}
 
@@ -210,7 +215,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 	req := changeStateReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "thingID"),
+		id:    chi.URLParam(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -222,7 +227,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := entityReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "configID"),
+		id:    chi.URLParam(r, "configID"),
 	}
 
 	return req, nil

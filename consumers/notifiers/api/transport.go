@@ -14,8 +14,8 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-zoo/bone"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -36,37 +36,39 @@ func MakeHandler(svc notifiers.Service, logger logger.Logger, instanceID string)
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
-	mux := bone.New()
+	mux := chi.NewRouter()
 
-	mux.Post("/subscriptions", otelhttp.NewHandler(kithttp.NewServer(
-		createSubscriptionEndpoint(svc),
-		decodeCreate,
-		encodeResponse,
-		opts...,
-	), "create"))
+	mux.Route("/subscriptions", func(r chi.Router) {
+		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+			createSubscriptionEndpoint(svc),
+			decodeCreate,
+			encodeResponse,
+			opts...,
+		), "create").ServeHTTP)
 
-	mux.Get("/subscriptions/:subID", otelhttp.NewHandler(kithttp.NewServer(
-		viewSubscriptionEndpint(svc),
-		decodeSubscription,
-		encodeResponse,
-		opts...,
-	), "view"))
+		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+			listSubscriptionsEndpoint(svc),
+			decodeList,
+			encodeResponse,
+			opts...,
+		), "list").ServeHTTP)
 
-	mux.Get("/subscriptions", otelhttp.NewHandler(kithttp.NewServer(
-		listSubscriptionsEndpoint(svc),
-		decodeList,
-		encodeResponse,
-		opts...,
-	), "list"))
+		r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
+			viewSubscriptionEndpint(svc),
+			decodeSubscription,
+			encodeResponse,
+			opts...,
+		), "view").ServeHTTP)
 
-	mux.Delete("/subscriptions/:subID", otelhttp.NewHandler(kithttp.NewServer(
-		deleteSubscriptionEndpint(svc),
-		decodeSubscription,
-		encodeResponse,
-		opts...,
-	), "delete"))
+		r.Delete("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
+			deleteSubscriptionEndpint(svc),
+			decodeSubscription,
+			encodeResponse,
+			opts...,
+		), "delete").ServeHTTP)
+	})
 
-	mux.GetFunc("/health", magistrala.Health("notifier", instanceID))
+	mux.Get("/health", magistrala.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -87,7 +89,7 @@ func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error) {
 	req := subReq{
-		id:    bone.GetValue(r, "subID"),
+		id:    chi.URLParam(r, "subID"),
 		token: apiutil.ExtractBearerToken(r),
 	}
 
@@ -96,12 +98,12 @@ func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error)
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	req := listSubsReq{token: apiutil.ExtractBearerToken(r)}
-	vals := bone.GetQuery(r, topicKey)
+	vals := r.URL.Query()[topicKey]
 	if len(vals) > 0 {
 		req.topic = vals[0]
 	}
 
-	vals = bone.GetQuery(r, contactKey)
+	vals = r.URL.Query()[contactKey]
 	if len(vals) > 0 {
 		req.contact = vals[0]
 	}

@@ -18,7 +18,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/go-zoo/bone"
+	"github.com/go-chi/chi/v5"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	"github.com/plgd-dev/go-coap/v2/mux"
@@ -50,8 +50,8 @@ var (
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(instanceID string) http.Handler {
-	b := bone.New()
-	b.GetFunc("/health", magistrala.Health(protocol, instanceID))
+	b := chi.NewRouter()
+	b.Get("/health", magistrala.Health(protocol, instanceID))
 	b.Handle("/metrics", promhttp.Handler())
 
 	return b

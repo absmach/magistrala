@@ -1,0 +1,111 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-build: # Linting and building are combined to save time for setting up Go
+    name: Lint and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name : Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21.x
+          cache-dependency-path: "go.sum"
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+
+      - name: Compile check for rabbitmq
+        run: |
+          MG_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
+
+      - name: Compile check for redis
+        run: |
+          MG_ES_STORE_TYPE=redis make mqtt
+       
+      - name: Build Binaries
+        run: |
+          make all -j $(nproc)
+          make dockers_dev -j $(nproc)
+
+  run-tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: users
+            paths: 'users/** cmd/users/** auth/service.go auth/api/grpc/client.go'
+
+          - name: things
+            paths: 'things/** cmd/things/** auth/service.go auth/api/grpc/client.go'
+
+          - name: coap
+            paths: 'coap/** cmd/coap/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: http
+            paths: 'http/** cmd/http/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: mqtt
+            paths: 'mqtt/** cmd/mqtt/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+            
+          - name: ws
+            paths: 'ws/** cmd/ws/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: certs
+            paths:  'certs/** cmd/certs/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: provision
+            paths: 'provision/** cmd/provision/**'
+
+          - name: cli
+            paths: 'cli/** cmd/cli/**'
+
+          - name: lora
+            paths: 'lora/** cmd/lora/**'
+
+          - name: opcua
+            paths: 'opcua/** cmd/opcua/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: logger
+            paths: 'logger/**'
+
+          - name: tools
+            paths: 'tools/**'
+
+    steps: 
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v40
+
+      - name: Check for changes in specific paths
+        uses: dorny/paths-filter@v2
+        id: changes
+        with: 
+          filters: |
+            any: 
+              - '${{ matrix.service.paths }}/**'
+
+      - name: Test ${{ matrix.service.name }}
+        run: |
+          cd ${{ matrix.service.name }}
+          go test ./... --race -v -coverprofile=coverage.out
+          go tool cover -html=coverage.out -o coverage.html

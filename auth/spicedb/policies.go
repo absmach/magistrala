@@ -187,7 +187,7 @@ func (pa *policyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, n
 			if len(resources) > 0 && resources[len(resources)-1].AfterResultCursor != nil {
 				token = resources[len(resources)-1].AfterResultCursor.Token
 			}
-			return objectsToAuthPolicies(resources), token, errors.Wrap(repoerr.ErrViewEntity, err)
+			return []auth.PolicyRes{}, token, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 	}
 }
@@ -266,7 +266,7 @@ func (pa *policyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, 
 			if len(subjects) > 0 && subjects[len(subjects)-1].AfterResultCursor != nil {
 				token = subjects[len(subjects)-1].AfterResultCursor.Token
 			}
-			return subjectsToAuthPolicies(subjects), token, errors.Wrap(repoerr.ErrViewEntity, err)
+			return []auth.PolicyRes{}, token, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 	}
 }

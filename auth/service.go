@@ -244,7 +244,7 @@ func (svc service) ListObjects(ctx context.Context, pr PolicyReq, nextPageToken 
 		page.Policies = append(page.Policies, tuple.Object)
 	}
 	page.NextPageToken = npt
-	return page, err
+	return page, nil
 }
 
 func (svc service) ListAllObjects(ctx context.Context, pr PolicyReq) (PolicyPage, error) {
@@ -256,7 +256,7 @@ func (svc service) ListAllObjects(ctx context.Context, pr PolicyReq) (PolicyPage
 	for _, tuple := range res {
 		page.Policies = append(page.Policies, tuple.Object)
 	}
-	return page, errors.Wrap(errors.ErrNotFound, err)
+	return page, nil
 }
 
 func (svc service) CountObjects(ctx context.Context, pr PolicyReq) (int, error) {
@@ -276,7 +276,7 @@ func (svc service) ListSubjects(ctx context.Context, pr PolicyReq, nextPageToken
 		page.Policies = append(page.Policies, tuple.Subject)
 	}
 	page.NextPageToken = npt
-	return page, errors.Wrap(svcerr.ErrNotFound, err)
+	return page, nil
 }
 
 func (svc service) ListAllSubjects(ctx context.Context, pr PolicyReq) (PolicyPage, error) {
@@ -288,7 +288,7 @@ func (svc service) ListAllSubjects(ctx context.Context, pr PolicyReq) (PolicyPag
 	for _, tuple := range res {
 		page.Policies = append(page.Policies, tuple.Subject)
 	}
-	return page, errors.Wrap(svcerr.ErrNotFound, err)
+	return page, nil
 }
 
 func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (int, error) {

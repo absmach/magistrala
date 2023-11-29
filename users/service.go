@@ -5,7 +5,6 @@ package users
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"time"
 
@@ -97,28 +96,12 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	cli.ID = clientID
 	cli.CreatedAt = time.Now()
 
-	res, err := svc.auth.AddPolicy(ctx, &magistrala.AddPolicyReq{
-		SubjectType: auth.UserType,
-		Subject:     cli.ID,
-		Relation:    auth.MemberRelation,
-		Object:      auth.MagistralaObject,
-		ObjectType:  auth.PlatformType,
-	})
-	if err != nil {
+	if err := svc.addClientPolicy(ctx, cli.ID, cli.Role); err != nil {
 		return mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
-	}
-	if !res.Authorized {
-		return mgclients.Client{}, fmt.Errorf("failed to create policy")
 	}
 	defer func() {
 		if err != nil {
-			if _, errRollback := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-				SubjectType: auth.UserType,
-				Subject:     cli.ID,
-				Relation:    auth.MemberRelation,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-			}); errRollback != nil {
+			if errRollback := svc.addClientPolicyRollback(ctx, cli.ID, cli.Role); errRollback != nil {
 				err = errors.Wrap(err, errors.Wrap(repoerr.ErrRollbackTx, errRollback))
 			}
 		}
@@ -522,6 +505,65 @@ func (svc service) Identify(ctx context.Context, token string) (string, error) {
 		return "", errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	return user.GetUserId(), nil
+}
+func (svc service) addClientPolicy(ctx context.Context, userID string, role mgclients.Role) error {
+	var policies magistrala.AddPoliciesReq
+
+	policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Relation:    auth.MemberRelation,
+		ObjectType:  auth.PlatformType,
+		Object:      auth.MagistralaObject,
+	})
+
+	if role == mgclients.AdminRole {
+		policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			SubjectType: auth.UserType,
+			Subject:     userID,
+			Relation:    auth.AdministratorRelation,
+			ObjectType:  auth.PlatformType,
+			Object:      auth.MagistralaObject,
+		})
+	}
+	resp, err := svc.auth.AddPolicies(ctx, &policies)
+	if err != nil {
+		return err
+	}
+	if !resp.Authorized {
+		return errors.ErrAuthorization
+	}
+	return nil
+}
+
+func (svc service) addClientPolicyRollback(ctx context.Context, userID string, role mgclients.Role) error {
+	var policies magistrala.DeletePoliciesReq
+
+	policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Relation:    auth.MemberRelation,
+		ObjectType:  auth.PlatformType,
+		Object:      auth.MagistralaObject,
+	})
+
+	if role == mgclients.AdminRole {
+		policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+			SubjectType: auth.UserType,
+			Subject:     userID,
+			Relation:    auth.AdministratorRelation,
+			ObjectType:  auth.PlatformType,
+			Object:      auth.MagistralaObject,
+		})
+	}
+	resp, err := svc.auth.DeletePolicies(ctx, &policies)
+	if err != nil {
+		return err
+	}
+	if !resp.Deleted {
+		return errors.ErrAuthorization
+	}
+	return nil
 }
 
 func (svc service) updateClientPolicy(ctx context.Context, userID string, role mgclients.Role) error {

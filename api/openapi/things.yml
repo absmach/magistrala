@@ -196,32 +196,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/owner:
-    patch:
-      summary: Updates the thing owner.
-      description: |
-        Updates owner for the thing with provided ID. Owner is updated using
-        authorization token and a new owner identifier received in request.
-      tags:
-        - Things
-      parameters:
-        - $ref: "#/components/parameters/ThingID"
-      requestBody:
-        $ref: "#/components/requestBodies/ThingUpdateOwnerReq"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          $ref: "#/components/responses/ThingRes"
-        "400":
-          description: Failed due to malformed JSON.
-        "404":
-          description: Failed due to non existing thing.
-        "401":
-          description: Missing or invalid access token provided.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
   /things/{thingID}/secret:
     patch:
       summary: Updates Secret of the identified thing.
@@ -1647,14 +1621,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ThingSecret"
-
-    ThingUpdateOwnerReq:
-      description: JSON-formated document describing the owner of thing to be update
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ThingOwner"
 
     ShareThingReq:
       description: JSON-formated document describing the policy related to sharing things

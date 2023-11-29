@@ -6,8 +6,10 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/pkg/clients"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -26,6 +28,10 @@ type Repository interface {
 	// Save persists the client account. A non-nil error is returned to indicate
 	// operation failure.
 	Save(ctx context.Context, client mgclients.Client) (mgclients.Client, error)
+
+	RetrieveByID(ctx context.Context, id string) (mgclients.Client, error)
+
+	UpdateRole(ctx context.Context, client clients.Client) (clients.Client, error)
 
 	CheckSuperAdmin(ctx context.Context, adminID string) error
 }
@@ -84,4 +90,109 @@ func (repo clientRepo) CheckSuperAdmin(ctx context.Context, adminID string) erro
 		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	return nil
+}
+
+func (repo clientRepo) RetrieveByID(ctx context.Context, id string) (clients.Client, error) {
+	q := `SELECT id, name, tags, COALESCE(owner_id, '') AS owner_id, identity, secret, metadata, created_at, updated_at, updated_by, status, role
+        FROM clients WHERE id = :id`
+
+	dbc := pgclients.DBClient{
+		ID: id,
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+		}
+		return clients.Client{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	defer row.Close()
+	row.Next()
+	dbc = pgclients.DBClient{}
+	if err := row.StructScan(&dbc); err != nil {
+		return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+	}
+
+	return pgclients.ToClient(dbc)
+}
+
+func (repo clientRepo) RetrieveAll(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+	query, err := pgclients.PageQuery(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.owner_id, '') AS owner_id, c.status, c.role,
+					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+
+	dbPage, err := pgclients.ToDBClientsPage(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	defer rows.Close()
+
+	var items []clients.Client
+	for rows.Next() {
+		dbc := pgclients.DBClient{}
+		if err := rows.StructScan(&dbc); err != nil {
+			return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		}
+
+		c, err := pgclients.ToClient(dbc)
+		if err != nil {
+			return clients.ClientsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, query)
+
+	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	page := clients.ClientsPage{
+		Clients: items,
+		Page: clients.Page{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+
+	return page, nil
+}
+
+func (repo clientRepo) UpdateRole(ctx context.Context, client clients.Client) (clients.Client, error) {
+	query := `UPDATE clients SET role = :role, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, role, created_at, updated_at, updated_by`
+
+	dbc, err := pgclients.ToDBClient(client)
+	if err != nil {
+		return clients.Client{}, errors.Wrap(errors.ErrUpdateEntity, err)
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, query, dbc)
+	if err != nil {
+		return clients.Client{}, postgres.HandleError(err, errors.ErrUpdateEntity)
+	}
+
+	defer row.Close()
+	if ok := row.Next(); !ok {
+		return clients.Client{}, errors.Wrap(errors.ErrNotFound, row.Err())
+	}
+	dbc = pgclients.DBClient{}
+	if err := row.StructScan(&dbc); err != nil {
+		return clients.Client{}, err
+	}
+
+	return pgclients.ToClient(dbc)
 }

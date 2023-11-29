@@ -109,18 +109,6 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 	return lm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
 
-func (lm *loggingMiddleware) UpdateClientOwner(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
-	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_thing_owner for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
-		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
-			return
-		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
-	}(time.Now())
-	return lm.svc.UpdateClientOwner(ctx, token, client)
-}
-
 func (lm *loggingMiddleware) EnableClient(ctx context.Context, token string, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method enable_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))

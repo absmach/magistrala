@@ -16,7 +16,7 @@ const channelsEndpoint = "channels"
 
 // Channel represents magistrala channel.
 type Channel struct {
-	ID          string     `json:"id"`
+	ID          string     `json:"id,omitempty"`
 	OwnerID     string     `json:"owner_id,omitempty"`
 	ParentID    string     `json:"parent_id,omitempty"`
 	Name        string     `json:"name,omitempty"`
@@ -28,6 +28,7 @@ type Channel struct {
 	CreatedAt   time.Time  `json:"created_at,omitempty"`
 	UpdatedAt   time.Time  `json:"updated_at,omitempty"`
 	Status      string     `json:"status,omitempty"`
+	Permissions []string   `json:"permissions,omitempty"`
 }
 
 func (sdk mgSDK) CreateChannel(c Channel, token string) (Channel, errors.SDKError) {
@@ -111,6 +112,22 @@ func (sdk mgSDK) ChannelsByThing(thingID string, pm PageMetadata, token string) 
 
 func (sdk mgSDK) Channel(id, token string) (Channel, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, channelsEndpoint, id)
+
+	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if err != nil {
+		return Channel{}, err
+	}
+
+	var c Channel
+	if err := json.Unmarshal(body, &c); err != nil {
+		return Channel{}, errors.NewSDKError(err)
+	}
+
+	return c, nil
+}
+
+func (sdk mgSDK) ChannelPermissions(id, token string) (Channel, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, id, permissionsEndpoint)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {

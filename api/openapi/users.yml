@@ -215,18 +215,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /users/{userID}/owner:
+  /users/{userID}/role:
     patch:
-      summary: Updates the user owner.
+      summary: Updates the user role.
       description: |
-        Updates owner for the user with provided ID. Owner is updated using
-        authorization token and a new owner identifier received in request.
+        Updates role for the user with provided ID.
       tags:
         - Users
       parameters:
         - $ref: "#/components/parameters/UserID"
       requestBody:
-        $ref: "#/components/requestBodies/UserUpdateOwnerReq"
+        $ref: "#/components/requestBodies/UserUpdateRoleReq"
       security:
         - bearerAuth: []
       responses:
@@ -299,8 +298,6 @@ paths:
         authorization token and the new received info.
       tags:
         - Users
-      parameters:
-        - $ref: "#/components/parameters/UserID"
       requestBody:
         $ref: "#/components/requestBodies/UserUpdateSecretReq"
       security:
@@ -1264,13 +1261,14 @@ components:
         - old_secret
         - new_secret
 
-    UserOwner:
+    UserRole:
       type: object
       properties:
-        owner:
+        role:
           type: string
-          example: user@magistrala.com
-          description: User owner for example email address.
+          enum: ["admin","user"]
+          example: user
+          description: User role example.
       required:
         - owner
 
@@ -1658,13 +1656,13 @@ components:
           schema:
             $ref: "#/components/schemas/UserSecret"
 
-    UserUpdateOwnerReq:
-      description: JSON-formated document describing the owner of user to be update
+    UserUpdateRoleReq:
+      description: JSON-formated document describing the role of the user to be updated
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UserOwner"
+            $ref: "#/components/schemas/UserRole"
 
     GroupCreateReq:
       description: JSON-formatted document describing the new group to be registered

@@ -63,15 +63,6 @@ func (es *eventStore) UpdateClient(ctx context.Context, token string, thing mgcl
 	return es.update(ctx, "", cli)
 }
 
-func (es *eventStore) UpdateClientOwner(ctx context.Context, token string, thing mgclients.Client) (mgclients.Client, error) {
-	cli, err := es.svc.UpdateClientOwner(ctx, token, thing)
-	if err != nil {
-		return cli, err
-	}
-
-	return es.update(ctx, "owner", cli)
-}
-
 func (es *eventStore) UpdateClientTags(ctx context.Context, token string, thing mgclients.Client) (mgclients.Client, error) {
 	cli, err := es.svc.UpdateClientTags(ctx, token, thing)
 	if err != nil {

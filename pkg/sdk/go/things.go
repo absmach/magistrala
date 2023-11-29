@@ -13,17 +13,18 @@ import (
 )
 
 const (
-	thingsEndpoint     = "things"
-	connectEndpoint    = "connect"
-	disconnectEndpoint = "disconnect"
-	identifyEndpoint   = "identify"
-	shareEndpoint      = "share"
-	unshareEndpoint    = "unshare"
+	permissionsEndpoint = "permissions"
+	thingsEndpoint      = "things"
+	connectEndpoint     = "connect"
+	disconnectEndpoint  = "disconnect"
+	identifyEndpoint    = "identify"
+	shareEndpoint       = "share"
+	unshareEndpoint     = "unshare"
 )
 
 // Thing represents magistrala thing.
 type Thing struct {
-	ID          string                 `json:"id"`
+	ID          string                 `json:"id,omitempty"`
 	Name        string                 `json:"name,omitempty"`
 	Credentials Credentials            `json:"credentials"`
 	Tags        []string               `json:"tags,omitempty"`
@@ -32,6 +33,7 @@ type Thing struct {
 	CreatedAt   time.Time              `json:"created_at,omitempty"`
 	UpdatedAt   time.Time              `json:"updated_at,omitempty"`
 	Status      string                 `json:"status,omitempty"`
+	Permissions []string               `json:"permissions,omitempty"`
 }
 
 func (sdk mgSDK) CreateThing(thing Thing, token string) (Thing, errors.SDKError) {
@@ -116,6 +118,22 @@ func (sdk mgSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (
 
 func (sdk mgSDK) Thing(id, token string) (Thing, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, id)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return Thing{}, sdkerr
+	}
+
+	var t Thing
+	if err := json.Unmarshal(body, &t); err != nil {
+		return Thing{}, errors.NewSDKError(err)
+	}
+
+	return t, nil
+}
+
+func (sdk mgSDK) ThingPermissions(id, token string) (Thing, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, thingsEndpoint, id, permissionsEndpoint)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {

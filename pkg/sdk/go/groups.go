@@ -23,7 +23,7 @@ const (
 // Path in a tree consisting of group IDs
 // Paths are unique per owner.
 type Group struct {
-	ID          string    `json:"id"`
+	ID          string    `json:"id,omitempty"`
 	OwnerID     string    `json:"owner_id,omitempty"`
 	ParentID    string    `json:"parent_id,omitempty"`
 	Name        string    `json:"name,omitempty"`
@@ -35,6 +35,7 @@ type Group struct {
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 	Status      string    `json:"status,omitempty"`
+	Permissions []string  `json:"permissions,omitempty"`
 }
 
 func (sdk mgSDK) CreateGroup(g Group, token string) (Group, errors.SDKError) {
@@ -116,6 +117,21 @@ func (sdk mgSDK) Group(id, token string) (Group, errors.SDKError) {
 	return t, nil
 }
 
+func (sdk mgSDK) GroupPermissions(id, token string) (Group, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.usersURL, groupsEndpoint, id, permissionsEndpoint)
+
+	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if err != nil {
+		return Group{}, err
+	}
+
+	var t Group
+	if err := json.Unmarshal(body, &t); err != nil {
+		return Group{}, errors.NewSDKError(err)
+	}
+
+	return t, nil
+}
 func (sdk mgSDK) UpdateGroup(g Group, token string) (Group, errors.SDKError) {
 	data, err := json.Marshal(g)
 	if err != nil {

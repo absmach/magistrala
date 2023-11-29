@@ -86,14 +86,6 @@ func (ms *metricsMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 	return ms.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
 
-func (ms *metricsMiddleware) UpdateClientOwner(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "update_thing_owner").Add(1)
-		ms.latency.With("method", "update_thing_owner").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.UpdateClientOwner(ctx, token, client)
-}
-
 func (ms *metricsMiddleware) EnableClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "enable_thing").Add(1)

@@ -146,7 +146,7 @@ func (repo ClientRepository) RetrieveByIdentity(ctx context.Context, identity st
 }
 
 func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	query, err := pageQuery(pm)
+	query, err := PageQuery(pm)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -154,7 +154,7 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.owner_id, '') AS owner_id, c.status,
 					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
 
-	dbPage, err := toDBClientsPage(pm)
+	dbPage, err := ToDBClientsPage(pm)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
 	}
@@ -198,14 +198,14 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 }
 
 func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	query, err := pageQuery(pm)
+	query, err := PageQuery(pm)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
 
-	dbPage, err := toDBClientsPage(pm)
+	dbPage, err := ToDBClientsPage(pm)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
 	}
@@ -254,7 +254,7 @@ func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Pa
 			Page: clients.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
 		}, nil
 	}
-	query, err := pageQuery(pm)
+	query, err := PageQuery(pm)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -262,7 +262,7 @@ func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Pa
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.owner_id, '') AS owner_id, c.status,
 					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
 
-	dbPage, err := toDBClientsPage(pm)
+	dbPage, err := ToDBClientsPage(pm)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
 	}
@@ -342,7 +342,7 @@ type DBClient struct {
 	UpdatedBy *string          `db:"updated_by,omitempty"`
 	Groups    []groups.Group   `db:"groups,omitempty"`
 	Status    clients.Status   `db:"status,omitempty"`
-	Role      clients.Role     `db:"role,omitempty"`
+	Role      *clients.Role    `db:"role,omitempty"`
 }
 
 func ToDBClient(c clients.Client) (DBClient, error) {
@@ -383,7 +383,7 @@ func ToDBClient(c clients.Client) (DBClient, error) {
 		UpdatedAt: updatedAt,
 		UpdatedBy: updatedBy,
 		Status:    c.Status,
-		Role:      c.Role,
+		Role:      &c.Role,
 	}, nil
 }
 
@@ -411,7 +411,7 @@ func ToClient(c DBClient) (clients.Client, error) {
 		updatedAt = c.UpdatedAt.Time
 	}
 
-	return clients.Client{
+	cli := clients.Client{
 		ID:    c.ID,
 		Name:  c.Name,
 		Tags:  tags,
@@ -425,10 +425,14 @@ func ToClient(c DBClient) (clients.Client, error) {
 		UpdatedAt: updatedAt,
 		UpdatedBy: updatedBy,
 		Status:    c.Status,
-	}, nil
+	}
+	if c.Role != nil {
+		cli.Role = *c.Role
+	}
+	return cli, nil
 }
 
-func toDBClientsPage(pm clients.Page) (dbClientsPage, error) {
+func ToDBClientsPage(pm clients.Page) (dbClientsPage, error) {
 	_, data, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
 		return dbClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -465,7 +469,7 @@ type dbClientsPage struct {
 	Role     uint8          `db:"role"`
 }
 
-func pageQuery(pm clients.Page) (string, error) {
+func PageQuery(pm clients.Page) (string, error) {
 	mq, _, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
 		return "", errors.Wrap(repoerr.ErrViewEntity, err)

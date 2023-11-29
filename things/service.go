@@ -317,22 +317,6 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string
 	return svc.clients.UpdateSecret(ctx, client)
 }
 
-func (svc service) UpdateClientOwner(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
-	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
-	}
-
-	client := mgclients.Client{
-		ID:        cli.ID,
-		Owner:     cli.Owner,
-		UpdatedAt: time.Now(),
-		UpdatedBy: userID,
-		Status:    mgclients.EnabledStatus,
-	}
-	return svc.clients.UpdateOwner(ctx, client)
-}
-
 func (svc service) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	client := mgclients.Client{
 		ID:        id,

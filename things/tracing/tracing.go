@@ -81,17 +81,6 @@ func (tm *tracingMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 	return tm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
 
-// UpdateClientOwner traces the "UpdateClientOwner" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) UpdateClientOwner(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_update_client_owner", trace.WithAttributes(
-		attribute.String("id", cli.ID),
-		attribute.String("owner", cli.Owner),
-	))
-	defer span.End()
-
-	return tm.svc.UpdateClientOwner(ctx, token, cli)
-}
-
 // EnableClient traces the "EnableClient" operation of the wrapped policies.Service.
 func (tm *tracingMiddleware) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_enable_client", trace.WithAttributes(attribute.String("id", id)))

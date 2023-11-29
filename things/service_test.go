@@ -713,60 +713,6 @@ func TestUpdateClientTags(t *testing.T) {
 		repoCall3.Unset()
 	}
 }
-
-func TestUpdateClientOwner(t *testing.T) {
-	svc, cRepo, auth := newService()
-
-	client.Owner = "newowner@mail.com"
-
-	cases := []struct {
-		desc     string
-		client   mgclients.Client
-		response mgclients.Client
-		token    string
-		err      error
-	}{
-		{
-			desc:     "update client owner with valid token",
-			client:   client,
-			token:    validToken,
-			response: client,
-			err:      nil,
-		},
-		{
-			desc:     "update client owner with invalid token",
-			client:   client,
-			token:    "non-existent",
-			response: mgclients.Client{},
-			err:      svcerror.ErrAuthentication,
-		},
-		{
-			desc: "update client owner with invalid ID",
-			client: mgclients.Client{
-				ID:    mocks.WrongID,
-				Owner: "updatedowner@mail.com",
-			},
-			response: mgclients.Client{},
-			token:    validToken,
-			err:      errors.ErrNotFound,
-		},
-	}
-
-	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(mgclients.Client{}, tc.err)
-		repoCall3 := cRepo.On("UpdateOwner", context.Background(), mock.Anything).Return(tc.response, tc.err)
-		updatedClient, err := svc.UpdateClientOwner(context.Background(), tc.token, tc.client)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.response, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, updatedClient))
-		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
-	}
-}
-
 func TestUpdateClientSecret(t *testing.T) {
 	svc, cRepo, auth := newService()
 

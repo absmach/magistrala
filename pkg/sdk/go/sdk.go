@@ -351,6 +351,13 @@ type SDK interface {
 	//  fmt.Println(thing)
 	Thing(id, token string) (Thing, errors.SDKError)
 
+	// ThingPermissions returns user permissions on the thing id.
+	//
+	// example:
+	//  thing, _ := sdk.Thing("thingID", "token")
+	//  fmt.Println(thing)
+	ThingPermissions(id, token string) (Thing, errors.SDKError)
+
 	// UpdateThing updates existing thing.
 	//
 	// example:
@@ -494,6 +501,13 @@ type SDK interface {
 	//  fmt.Println(group)
 	Group(id, token string) (Group, errors.SDKError)
 
+	// GroupPermissions returns user permissions by group ID.
+	//
+	// example:
+	//  group, _ := sdk.Group("groupID", "token")
+	//  fmt.Println(group)
+	GroupPermissions(id, token string) (Group, errors.SDKError)
+
 	// UpdateGroup updates existing group.
 	//
 	// example:
@@ -632,6 +646,13 @@ type SDK interface {
 	//  channel, _ := sdk.Channel("channelID", "token")
 	//  fmt.Println(channel)
 	Channel(id, token string) (Channel, errors.SDKError)
+
+	// ChannelPermissions returns user permissions on the channel ID.
+	//
+	// example:
+	//  channel, _ := sdk.Channel("channelID", "token")
+	//  fmt.Println(channel)
+	ChannelPermissions(id, token string) (Channel, errors.SDKError)
 
 	// UpdateChannel updates existing channel.
 	//

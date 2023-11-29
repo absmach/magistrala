@@ -40,9 +40,6 @@ type Service interface {
 	// UpdateClientSecret updates the client's secret
 	UpdateClientSecret(ctx context.Context, token, id, key string) (clients.Client, error)
 
-	// UpdateClientOwner updates the client's owner.
-	UpdateClientOwner(ctx context.Context, token string, client clients.Client) (clients.Client, error)
-
 	// EnableClient logically enableds the client identified with the provided ID
 	EnableClient(ctx context.Context, token, id string) (clients.Client, error)
 

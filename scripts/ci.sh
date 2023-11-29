@@ -72,7 +72,7 @@ setup_mg() {
     echo "Compile check for rabbitmq..."
     MG_MESSAGE_BROKER_TYPE=rabbitmq make http
     echo "Compile check for redis..."
-    MG_ES_STORE_TYPE=redis make http
+    MG_ES_TYPE=redis make http
     make -j$NPROC
 }
 

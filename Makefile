@@ -34,15 +34,15 @@ else
     MG_MQTT_BROKER_TYPE=nats
 endif
 
-ifneq ($(MG_ES_STORE_TYPE),)
-    MG_ES_STORE_TYPE := $(MG_ES_STORE_TYPE)
+ifneq ($(MG_ES_TYPE),)
+    MG_ES_TYPE := $(MG_ES_TYPE)
 else
-    MG_ES_STORE_TYPE=nats
+    MG_ES_TYPE=nats
 endif
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -tags $(MG_MESSAGE_BROKER_TYPE) --tags $(MG_ES_STORE_TYPE) -ldflags "-s -w \
+	go build -tags $(MG_MESSAGE_BROKER_TYPE) --tags $(MG_ES_TYPE) -ldflags "-s -w \
 	-X 'github.com/absmach/magistrala.BuildTime=$(TIME)' \
 	-X 'github.com/absmach/magistrala.Version=$(VERSION)' \
 	-X 'github.com/absmach/magistrala.Commit=$(COMMIT)'" \
@@ -232,13 +232,13 @@ else
 endif
 
 run: check_certs change_config
-ifeq ($(MG_ES_STORE_TYPE), redis)
-	sed -i "s/MG_ES_STORE_TYPE=.*/MG_ES_STORE_TYPE=redis/" docker/.env
-	sed -i "s/MG_ES_STORE_URL=.*/MG_ES_STORE_URL=$$\{MG_REDIS_URL}/" docker/.env
+ifeq ($(MG_ES_TYPE), redis)
+	sed -i "s/MG_ES_TYPE=.*/MG_ES_TYPE=redis/" docker/.env
+	sed -i "s/MG_ES_URL=.*/MG_ES_URL=$$\{MG_REDIS_URL}/" docker/.env
 	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) --profile redis -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 else
-	sed -i "s,MG_ES_STORE_TYPE=.*,MG_ES_STORE_TYPE=$$\{MG_MESSAGE_BROKER_TYPE}," docker/.env
-	sed -i "s,MG_ES_STORE_URL=.*,MG_ES_STORE_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
+	sed -i "s,MG_ES_TYPE=.*,MG_ES_TYPE=$$\{MG_MESSAGE_BROKER_TYPE}," docker/.env
+	sed -i "s,MG_ES_URL=.*,MG_ES_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
 	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 endif
 

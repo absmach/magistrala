@@ -56,7 +56,7 @@ type config struct {
 	JaegerURL       url.URL `env:"MG_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry   bool    `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
 	InstanceID      string  `env:"MG_TWINS_INSTANCE_ID"        envDefault:""`
-	ESURL           string  `env:"MG_TWINS_ES_URL"             envDefault:"redis://localhost:6379/0"`
+	ESURL           string  `env:"MG_ES_URL"                   envDefault:"nats://localhost:4222"`
 	CacheURL        string  `env:"MG_TWINS_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
 	TraceRatio      float64 `env:"MG_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
 }

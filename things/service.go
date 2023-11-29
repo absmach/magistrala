@@ -14,6 +14,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/things/postgres"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -134,6 +135,22 @@ func (svc service) ViewClient(ctx context.Context, token string, id string) (mgc
 	return svc.clients.RetrieveByID(ctx, id)
 }
 
+func (svc service) ViewClientPerms(ctx context.Context, token string, id string) ([]string, error) {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, err := svc.listUserThingPermission(ctx, res.GetId(), id)
+	if err != nil {
+		return nil, err
+	}
+	if len(permissions) == 0 {
+		return nil, errors.ErrAuthorization
+	}
+	return permissions, nil
+}
+
 func (svc service) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	var ids []string
 
@@ -171,7 +188,50 @@ func (svc service) ListClients(ctx context.Context, token string, reqUserID stri
 
 	pm.IDs = ids
 
-	return svc.clients.RetrieveAllByIDs(ctx, pm)
+	tp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+
+	if pm.ListPerms && len(tp.Clients) > 0 {
+		g, ctx := errgroup.WithContext(ctx)
+
+		for i := range tp.Clients {
+			// Copying loop variable "i" to avoid "loop variable captured by func literal"
+			iter := i
+			g.Go(func() error {
+				return svc.retrievePermissions(ctx, res.GetId(), &tp.Clients[iter])
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			return mgclients.ClientsPage{}, err
+		}
+	}
+	return tp, nil
+}
+
+// Experimental functions used for async calling of svc.listUserThingPermission. This might be helpful during listing of large number of entities.
+func (svc service) retrievePermissions(ctx context.Context, userID string, client *mgclients.Client) error {
+	permissions, err := svc.listUserThingPermission(ctx, userID, client.ID)
+	if err != nil {
+		return err
+	}
+	client.Permissions = permissions
+	return nil
+}
+
+func (svc service) listUserThingPermission(ctx context.Context, userID, thingID string) ([]string, error) {
+	lp, err := svc.auth.ListPermissions(ctx, &magistrala.ListPermissionsReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Object:      thingID,
+		ObjectType:  auth.ThingType,
+	})
+	if err != nil {
+		return []string{}, err
+	}
+	return lp.GetPermissions(), nil
 }
 
 func (svc service) listClientIDs(ctx context.Context, userID, permission string) ([]string, error) {
@@ -381,7 +441,11 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 }
 
 func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string, pm mgclients.Page) (mgclients.MembersPage, error) {
-	if _, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, pm.Permission, auth.GroupType, groupID); err != nil {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return mgclients.MembersPage{}, err
+	}
+	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), pm.Permission, auth.GroupType, groupID); err != nil {
 		return mgclients.MembersPage{}, err
 	}
 
@@ -400,6 +464,22 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	cp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
 	if err != nil {
 		return mgclients.MembersPage{}, errors.Wrap(repoerr.ErrNotFound, err)
+	}
+
+	if pm.ListPerms && len(cp.Clients) > 0 {
+		g, ctx := errgroup.WithContext(ctx)
+
+		for i := range cp.Clients {
+			// Copying loop variable "i" to avoid "loop variable captured by func literal"
+			iter := i
+			g.Go(func() error {
+				return svc.retrievePermissions(ctx, res.GetId(), &cp.Clients[iter])
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			return mgclients.MembersPage{}, err
+		}
 	}
 
 	return mgclients.MembersPage{

@@ -40,6 +40,13 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger logger.Logger) http.Ha
 			opts...,
 		), "view_channel").ServeHTTP)
 
+		r.Get("/{groupID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
+			gapi.ViewGroupPermsEndpoint(svc),
+			gapi.DecodeGroupPermsRequest,
+			api.EncodeResponse,
+			opts...,
+		), "view_channel_permissions").ServeHTTP)
+
 		r.Put("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.UpdateGroupEndpoint(svc),
 			gapi.DecodeGroupUpdate,

@@ -118,6 +118,22 @@ func (es *eventStore) ViewClient(ctx context.Context, token, id string) (mgclien
 	return cli, nil
 }
 
+func (es *eventStore) ViewClientPerms(ctx context.Context, token, id string) ([]string, error) {
+	permissions, err := es.svc.ViewClientPerms(ctx, token, id)
+	if err != nil {
+		return permissions, err
+	}
+
+	event := viewClientPermsEvent{
+		permissions,
+	}
+	if err := es.Publish(ctx, event); err != nil {
+		return permissions, err
+	}
+
+	return permissions, nil
+}
+
 func (es *eventStore) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	cp, err := es.svc.ListClients(ctx, token, reqUserID, pm)
 	if err != nil {

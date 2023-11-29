@@ -39,6 +39,14 @@ func (tm *tracingMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 	return tm.gsvc.ViewGroup(ctx, token, id)
 }
 
+// ViewGroupPerms traces the "ViewGroupPerms" operation of the wrapped groups.Service.
+func (tm *tracingMiddleware) ViewGroupPerms(ctx context.Context, token, id string) ([]string, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_view_group", trace.WithAttributes(attribute.String("id", id)))
+	defer span.End()
+
+	return tm.gsvc.ViewGroupPerms(ctx, token, id)
+}
+
 // ListGroups traces the "ListGroups" operation of the wrapped groups.Service.
 func (tm *tracingMiddleware) ListGroups(ctx context.Context, token, memberKind, memberID string, gm groups.Page) (groups.Page, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_groups")

@@ -19,6 +19,7 @@ const (
 	clientUpdate      = clientPrefix + "update"
 	clientRemove      = clientPrefix + "remove"
 	clientView        = clientPrefix + "view"
+	clientViewPerms   = clientPrefix + "view_perms"
 	clientList        = clientPrefix + "list"
 	clientListByGroup = clientPrefix + "list_by_channel"
 	clientIdentify    = clientPrefix + "identify"
@@ -30,6 +31,7 @@ var (
 	_ events.Event = (*updateClientEvent)(nil)
 	_ events.Event = (*removeClientEvent)(nil)
 	_ events.Event = (*viewClientEvent)(nil)
+	_ events.Event = (*viewClientPermsEvent)(nil)
 	_ events.Event = (*listClientEvent)(nil)
 	_ events.Event = (*listClientByGroupEvent)(nil)
 	_ events.Event = (*identifyClientEvent)(nil)
@@ -184,6 +186,18 @@ func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
 		val["status"] = vce.Status.String()
 	}
 
+	return val, nil
+}
+
+type viewClientPermsEvent struct {
+	permissions []string
+}
+
+func (vcpe viewClientPermsEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation":   clientViewPerms,
+		"permissions": vcpe.permissions,
+	}
 	return val, nil
 }
 

@@ -14,6 +14,7 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -114,6 +115,22 @@ func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Grou
 	return svc.groups.RetrieveByID(ctx, id)
 }
 
+func (svc service) ViewGroupPerms(ctx context.Context, token string, id string) ([]string, error) {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, err := svc.listUserGroupPermission(ctx, res.GetId(), id)
+	if err != nil {
+		return nil, err
+	}
+	if len(permissions) == 0 {
+		return nil, errors.ErrAuthorization
+	}
+	return permissions, nil
+}
+
 func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID string, gm groups.Page) (groups.Page, error) {
 	var ids []string
 	res, err := svc.identify(ctx, token)
@@ -207,7 +224,50 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			PageMeta: gm.PageMeta,
 		}, nil
 	}
-	return svc.groups.RetrieveByIDs(ctx, gm, ids...)
+	gp, err := svc.groups.RetrieveByIDs(ctx, gm, ids...)
+	if err != nil {
+		return groups.Page{}, err
+	}
+
+	if gm.ListPerms && len(gp.Groups) > 0 {
+		g, ctx := errgroup.WithContext(ctx)
+
+		for i := range gp.Groups {
+			// Copying loop variable "i" to avoid "loop variable captured by func literal"
+			iter := i
+			g.Go(func() error {
+				return svc.retrievePermissions(ctx, res.GetId(), &gp.Groups[iter])
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			return groups.Page{}, err
+		}
+	}
+	return gp, nil
+}
+
+// Experimental functions used for async calling of svc.listUserThingPermission. This might be helpful during listing of large number of entities.
+func (svc service) retrievePermissions(ctx context.Context, userID string, group *groups.Group) error {
+	permissions, err := svc.listUserGroupPermission(ctx, userID, group.ID)
+	if err != nil {
+		return err
+	}
+	group.Permissions = permissions
+	return nil
+}
+
+func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID string) ([]string, error) {
+	lp, err := svc.auth.ListPermissions(ctx, &magistrala.ListPermissionsReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Object:      groupID,
+		ObjectType:  auth.GroupType,
+	})
+	if err != nil {
+		return []string{}, err
+	}
+	return lp.GetPermissions(), nil
 }
 
 // IMPROVEMENT NOTE: remove this function and all its related auxiliary function, ListMembers are moved to respective service.

@@ -40,6 +40,7 @@ const (
 	LevelKey         = "level"
 	TreeKey          = "tree"
 	DirKey           = "dir"
+	ListPerms        = "list_perms"
 	VisibilityKey    = "visibility"
 	SharedByKey      = "shared_by"
 	TokenKey         = "token"
@@ -53,6 +54,7 @@ const (
 	DefStatus        = "enabled"
 	DefClientStatus  = mgclients.Enabled
 	DefGroupStatus   = mgclients.Enabled
+	DefListPerms     = false
 	SharedVisibility = "shared"
 	MyVisibility     = "mine"
 	AllVisibility    = "all"

@@ -49,6 +49,18 @@ func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (
 	return lm.svc.ViewClient(ctx, token, id)
 }
 
+func (lm *loggingMiddleware) ViewClientPerms(ctx context.Context, token, id string) (p []string, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method view_thing_permissions for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+	return lm.svc.ViewClientPerms(ctx, token, id)
+}
+
 func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things using token %s took %s to complete", token, time.Since(begin))

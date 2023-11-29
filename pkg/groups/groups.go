@@ -35,6 +35,7 @@ type Group struct {
 	UpdatedAt   time.Time        `json:"updated_at,omitempty"`
 	UpdatedBy   string           `json:"updated_by,omitempty"`
 	Status      clients.Status   `json:"status"`
+	Permissions []string         `json:"permissions,omitempty"`
 }
 
 type Member struct {
@@ -59,6 +60,7 @@ type Page struct {
 	Level      uint64
 	ID         string
 	Permission string
+	ListPerms  bool
 	Direction  int64 // ancestors (+1) or descendants (-1)
 	Groups     []Group
 }
@@ -97,6 +99,9 @@ type Service interface {
 
 	// ViewGroup retrieves data about the group identified by ID.
 	ViewGroup(ctx context.Context, token, id string) (Group, error)
+
+	// ViewGroupPerms retrieves permissions on the group id for the given authorized token.
+	ViewGroupPerms(ctx context.Context, token, id string) ([]string, error)
 
 	// ListGroups retrieves
 	ListGroups(ctx context.Context, token, memberKind, memberID string, gm Page) (Page, error)

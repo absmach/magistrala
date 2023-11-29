@@ -52,3 +52,13 @@ type listSubjectsRes struct {
 type countSubjectsRes struct {
 	count int
 }
+
+type listPermissionsRes struct {
+	Domain          string
+	SubjectType     string
+	Subject         string
+	SubjectRelation string
+	ObjectType      string
+	Object          string
+	Permissions     []string
+}

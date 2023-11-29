@@ -20,6 +20,9 @@ type Service interface {
 	// ViewClient retrieves client info for a given client ID and an authorized token.
 	ViewClient(ctx context.Context, token, id string) (clients.Client, error)
 
+	// ViewClientPerms retrieves permissions on the client id for the given authorized token.
+	ViewClientPerms(ctx context.Context, token, id string) ([]string, error)
+
 	// ListClients retrieves clients list for a valid auth token.
 	ListClients(ctx context.Context, token string, reqUserID string, pm clients.Page) (clients.ClientsPage, error)
 

@@ -119,3 +119,9 @@ func (m *Service) CountSubjects(ctx context.Context, in *magistrala.CountSubject
 
 	return ret.Get(0).(*magistrala.CountSubjectsRes), ret.Error(1)
 }
+
+func (m *Service) ListPermissions(ctx context.Context, in *magistrala.ListPermissionsReq, opts ...grpc.CallOption) (*magistrala.ListPermissionsRes, error) {
+	ret := m.Called(ctx, in)
+
+	return ret.Get(0).(*magistrala.ListPermissionsRes), ret.Error(1)
+}

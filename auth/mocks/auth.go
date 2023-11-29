@@ -85,6 +85,12 @@ func (m *Authz) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageTok
 	return ret.Get(0).(auth.PolicyPage), ret.Error(1)
 }
 
+func (m *Authz) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (auth.Permissions, error) {
+	ret := m.Called(ctx, pr, filterPermissions)
+
+	return ret.Get(0).(auth.Permissions), ret.Error(1)
+}
+
 type PolicyAgent struct {
 	mock.Mock
 }
@@ -153,4 +159,10 @@ func (m *PolicyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, n
 	ret := m.Called(ctx, pr, nextPageToken, limit)
 
 	return ret.Get(0).([]auth.PolicyRes), ret.String(1), ret.Error(2)
+}
+
+func (m *PolicyAgent) RetrievePermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (auth.Permissions, error) {
+	ret := m.Called(ctx, pr, filterPermissions)
+
+	return ret.Get(0).(auth.Permissions), ret.Error(1)
 }

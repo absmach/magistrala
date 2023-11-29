@@ -19,4 +19,5 @@ type Page struct {
 	IDs        []string `json:"ids,omitempty"`
 	Identity   string   `json:"identity,omitempty"`
 	Role       *Role    `json:"-"`
+	ListPerms  bool     `json:"-"`
 }

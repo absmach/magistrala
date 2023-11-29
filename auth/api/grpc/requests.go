@@ -165,3 +165,13 @@ type countSubjectsReq struct {
 	Object        string
 	NextPageToken string
 }
+
+type listPermissionsReq struct {
+	Domain            string
+	SubjectType       string
+	Subject           string
+	SubjectRelation   string
+	ObjectType        string
+	Object            string
+	FilterPermissions []string
+}

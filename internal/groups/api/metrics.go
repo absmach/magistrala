@@ -55,6 +55,15 @@ func (ms *metricsMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 	return ms.svc.ViewGroup(ctx, token, id)
 }
 
+// ViewGroupPerms instruments ViewGroup method with metrics.
+func (ms *metricsMiddleware) ViewGroupPerms(ctx context.Context, token, id string) (p []string, err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "view_group_perms").Add(1)
+		ms.latency.With("method", "view_group_perms").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.ViewGroupPerms(ctx, token, id)
+}
+
 // ListGroups instruments ListGroups method with metrics.
 func (ms *metricsMiddleware) ListGroups(ctx context.Context, token, memberKind, memberID string, gp groups.Page) (cg groups.Page, err error) {
 	defer func(begin time.Time) {

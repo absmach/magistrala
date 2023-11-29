@@ -40,6 +40,13 @@ func (tm *tracingMiddleware) ViewClient(ctx context.Context, token string, id st
 	return tm.svc.ViewClient(ctx, token, id)
 }
 
+// ViewClientPerms traces the "ViewClientPerms" operation of the wrapped policies.Service.
+func (tm *tracingMiddleware) ViewClientPerms(ctx context.Context, token string, id string) ([]string, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_view_client_permissions", trace.WithAttributes(attribute.String("id", id)))
+	defer span.End()
+	return tm.svc.ViewClientPerms(ctx, token, id)
+}
+
 // ListClients traces the "ListClients" operation of the wrapped policies.Service.
 func (tm *tracingMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_clients")

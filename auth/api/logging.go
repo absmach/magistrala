@@ -102,6 +102,19 @@ func (lm *loggingMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyRe
 	return lm.svc.CountSubjects(ctx, pr)
 }
 
+func (lm *loggingMiddleware) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (p auth.Permissions, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method list_permissions took %s to complete", time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ListPermissions(ctx, pr, filterPermissions)
+}
+
 func (lm *loggingMiddleware) Issue(ctx context.Context, token string, key auth.Key) (tkn auth.Token, err error) {
 	defer func(begin time.Time) {
 		d := ""

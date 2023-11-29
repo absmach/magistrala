@@ -326,3 +326,27 @@ func countSubjectsEndpoint(svc auth.Service) endpoint.Endpoint {
 		return countSubjectsRes{count: count}, nil
 	}
 }
+
+func listPermissionsEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listPermissionsReq)
+		permissions, err := svc.ListPermissions(ctx, auth.PolicyReq{
+			SubjectType:     req.SubjectType,
+			SubjectRelation: req.SubjectRelation,
+			Subject:         req.Subject,
+			Object:          req.Object,
+			ObjectType:      req.ObjectType,
+		}, req.FilterPermissions)
+		if err != nil {
+			return listPermissionsRes{}, err
+		}
+		return listPermissionsRes{
+			SubjectType:     req.SubjectType,
+			SubjectRelation: req.SubjectRelation,
+			Subject:         req.Subject,
+			Object:          req.Object,
+			ObjectType:      req.ObjectType,
+			Permissions:     permissions,
+		}, nil
+	}
+}

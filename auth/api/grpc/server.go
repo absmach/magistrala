@@ -17,6 +17,40 @@ import (
 
 var _ magistrala.AuthServiceServer = (*grpcServer)(nil)
 
+var (
+	defThingsFilterPermissions = []string{
+		auth.AdminPermission,
+		auth.DeletePermission,
+		auth.EditPermission,
+		auth.ViewPermission,
+		auth.SharePermission,
+		auth.PublishPermission,
+		auth.SubscribePermission,
+	}
+
+	defGroupsFilterPermissions = []string{
+		auth.AdminPermission,
+		auth.DeletePermission,
+		auth.EditPermission,
+		auth.ViewPermission,
+		auth.MembershipPermission,
+		auth.SharePermission,
+	}
+
+	defDomainsFilterPermissions = []string{
+		auth.AdminPermission,
+		auth.DeletePermission,
+		auth.EditPermission,
+		auth.ViewPermission,
+		auth.MembershipPermission,
+		auth.SharePermission,
+	}
+	defPlatformFilterPermissions = []string{
+		auth.AdminPermission,
+		auth.MembershipPermission,
+	}
+)
+
 type grpcServer struct {
 	magistrala.UnimplementedAuthServiceServer
 	issue           kitgrpc.Handler
@@ -33,6 +67,7 @@ type grpcServer struct {
 	listSubjects    kitgrpc.Handler
 	listAllSubjects kitgrpc.Handler
 	countSubjects   kitgrpc.Handler
+	listPermissions kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -107,6 +142,11 @@ func NewServer(svc auth.Service) magistrala.AuthServiceServer {
 			(countSubjectsEndpoint(svc)),
 			decodeCountSubjectsRequest,
 			encodeCountSubjectsResponse,
+		),
+		listPermissions: kitgrpc.NewServer(
+			(listPermissionsEndpoint(svc)),
+			decodeListPermissionsRequest,
+			encodeListPermissionsResponse,
 		),
 	}
 }
@@ -221,6 +261,14 @@ func (s *grpcServer) CountSubjects(ctx context.Context, req *magistrala.CountSub
 		return nil, encodeError(err)
 	}
 	return res.(*magistrala.CountSubjectsRes), nil
+}
+
+func (s *grpcServer) ListPermissions(ctx context.Context, req *magistrala.ListPermissionsReq) (*magistrala.ListPermissionsRes, error) {
+	_, res, err := s.listPermissions.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*magistrala.ListPermissionsRes), nil
 }
 
 func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -432,6 +480,49 @@ func decodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interfa
 func encodeCountSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(countObjectsRes)
 	return &magistrala.CountObjectsRes{Count: int64(res.count)}, nil
+}
+
+func decodeListPermissionsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*magistrala.ListPermissionsReq)
+	var fp []string
+
+	switch req.GetObjectType() {
+	case auth.ThingType:
+		fp = defThingsFilterPermissions
+	case auth.GroupType:
+		fp = defGroupsFilterPermissions
+	case auth.PlatformType:
+		fp = defPlatformFilterPermissions
+	case auth.DomainType:
+		fp = defDomainsFilterPermissions
+	default:
+		return nil, apiutil.ErrMalformedPolicy
+	}
+	if len(req.GetFilterPermissions()) > 0 {
+		fp = req.GetFilterPermissions()
+	}
+	return listPermissionsReq{
+		Domain:            req.GetDomain(),
+		SubjectType:       req.GetSubjectType(),
+		Subject:           req.GetSubject(),
+		SubjectRelation:   req.GetSubjectRelation(),
+		ObjectType:        req.GetObjectType(),
+		Object:            req.GetObject(),
+		FilterPermissions: fp,
+	}, nil
+}
+
+func encodeListPermissionsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(listPermissionsRes)
+	return &magistrala.ListPermissionsRes{
+		Domain:          res.Domain,
+		SubjectType:     res.SubjectType,
+		Subject:         res.Subject,
+		SubjectRelation: res.SubjectRelation,
+		ObjectType:      res.ObjectType,
+		Object:          res.Object,
+		Permissions:     res.Permissions,
+	}, nil
 }
 
 func encodeError(err error) error {

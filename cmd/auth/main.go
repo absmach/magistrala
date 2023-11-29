@@ -169,8 +169,8 @@ func main() {
 	}
 }
 
-func initSpiceDB(cfg config) (*authzed.Client, error) {
-	client, err := authzed.NewClient(
+func initSpiceDB(cfg config) (*authzed.ClientWithExperimental, error) {
+	client, err := authzed.NewClientWithExperimentalAPIs(
 		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpcutil.WithInsecureBearerToken(SpicePreSharedKey),
@@ -186,7 +186,7 @@ func initSpiceDB(cfg config) (*authzed.Client, error) {
 	return client, nil
 }
 
-func initSchema(client *authzed.Client, schemaFilePath string) error {
+func initSchema(client *authzed.ClientWithExperimental, schemaFilePath string) error {
 	schemaContent, err := os.ReadFile(schemaFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read spice db schema file : %w", err)
@@ -199,7 +199,7 @@ func initSchema(client *authzed.Client, schemaFilePath string) error {
 	return nil
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger mglog.Logger, spicedbClient *authzed.Client) auth.Service {
+func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger mglog.Logger, spicedbClient *authzed.ClientWithExperimental) auth.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
 	domainsRepo := apostgres.NewDomainRepository(database)

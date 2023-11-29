@@ -93,3 +93,7 @@ func (repo singleUserRepo) ListAllSubjects(ctx context.Context, in *magistrala.L
 func (repo singleUserRepo) CountSubjects(ctx context.Context, in *magistrala.CountSubjectsReq, opts ...grpc.CallOption) (*magistrala.CountSubjectsRes, error) {
 	return nil, nil
 }
+
+func (repo singleUserRepo) ListPermissions(ctx context.Context, in *magistrala.ListPermissionsReq, opts ...grpc.CallOption) (*magistrala.ListPermissionsRes, error) {
+	return nil, nil
+}

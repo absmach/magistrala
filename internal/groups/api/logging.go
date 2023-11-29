@@ -66,6 +66,20 @@ func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 	return lm.svc.ViewGroup(ctx, token, id)
 }
 
+// ViewGroupPerms logs the view_group request. It logs the group name, id and token and the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) ViewGroupPerms(ctx context.Context, token, id string) (p []string, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method view_group_perms for group with id %s using token %s took %s to complete", id, token, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+	return lm.svc.ViewGroupPerms(ctx, token, id)
+}
+
 // ListGroups logs the list_groups request. It logs the token and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ListGroups(ctx context.Context, token, memberKind, memberID string, gp groups.Page) (cg groups.Page, err error) {

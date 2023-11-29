@@ -13,6 +13,7 @@ import (
 
 var (
 	_ magistrala.Response = (*viewClientRes)(nil)
+	_ magistrala.Response = (*viewClientPermsRes)(nil)
 	_ magistrala.Response = (*createClientRes)(nil)
 	_ magistrala.Response = (*deleteClientRes)(nil)
 	_ magistrala.Response = (*clientsPageRes)(nil)
@@ -85,6 +86,22 @@ func (res viewClientRes) Headers() map[string]string {
 }
 
 func (res viewClientRes) Empty() bool {
+	return false
+}
+
+type viewClientPermsRes struct {
+	Permissions []string `json:"permissions"`
+}
+
+func (res viewClientPermsRes) Code() int {
+	return http.StatusOK
+}
+
+func (res viewClientPermsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res viewClientPermsRes) Empty() bool {
 	return false
 }
 

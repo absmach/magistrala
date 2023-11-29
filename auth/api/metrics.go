@@ -82,6 +82,15 @@ func (ms *metricsMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyRe
 	return ms.svc.CountSubjects(ctx, pr)
 }
 
+func (ms *metricsMiddleware) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (p auth.Permissions, err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "list_permissions").Add(1)
+		ms.latency.With("method", "list_permissions").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ListPermissions(ctx, pr, filterPermissions)
+}
+
 func (ms *metricsMiddleware) Issue(ctx context.Context, token string, key auth.Key) (auth.Token, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_key").Add(1)

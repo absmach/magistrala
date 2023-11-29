@@ -118,6 +118,8 @@ type PolicyPage struct {
 	NextPageToken string
 }
 
+type Permissions []string
+
 // Authz represents a authorization service. It exposes
 // functionalities through `auth` to perform authorization.
 type Authz interface {
@@ -161,6 +163,9 @@ type Authz interface {
 
 	// CountSubjects count policies based on the given PolicyReq structure.
 	CountSubjects(ctx context.Context, pr PolicyReq) (int, error)
+
+	// ListPermissions lists permission betweeen given subject and object .
+	ListPermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)
 }
 
 // PolicyAgent facilitates the communication to authorization
@@ -203,4 +208,7 @@ type PolicyAgent interface {
 
 	// RetrieveAllSubjectsCount
 	RetrieveAllSubjectsCount(ctx context.Context, pr PolicyReq) (int, error)
+
+	// (ctx context.Context, pr PolicyReq, filterPermissions []string) ([]PolicyReq, error)
+	RetrievePermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)
 }

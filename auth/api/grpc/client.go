@@ -33,6 +33,7 @@ type grpcClient struct {
 	listSubjects    endpoint.Endpoint
 	listAllSubjects endpoint.Endpoint
 	countSubjects   endpoint.Endpoint
+	listPermissions endpoint.Endpoint
 	timeout         time.Duration
 }
 
@@ -150,6 +151,14 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.AuthServ
 			encodeCountSubjectsRequest,
 			decodeCountSubjectsResponse,
 			magistrala.CountSubjectsRes{},
+		).Endpoint(),
+		listPermissions: kitgrpc.NewClient(
+			conn,
+			svcName,
+			"ListPermissions",
+			encodeListPermissionsRequest,
+			decodeListPermissionsResponse,
+			magistrala.ListPermissionsRes{},
 		).Endpoint(),
 
 		timeout: timeout,
@@ -650,6 +659,60 @@ func encodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interfa
 		Subject:     req.Subject,
 		Relation:    req.Relation,
 		Permission:  req.Permission,
+		ObjectType:  req.ObjectType,
+		Object:      req.Object,
+	}, nil
+}
+
+func (client grpcClient) ListPermissions(ctx context.Context, in *magistrala.ListPermissionsReq, opts ...grpc.CallOption) (*magistrala.ListPermissionsRes, error) {
+	ctx, close := context.WithTimeout(ctx, client.timeout)
+	defer close()
+
+	res, err := client.listPermissions(ctx, listPermissionsReq{
+		Domain:            in.GetDomain(),
+		SubjectType:       in.GetSubjectType(),
+		Subject:           in.GetSubject(),
+		SubjectRelation:   in.GetSubjectRelation(),
+		ObjectType:        in.GetObjectType(),
+		Object:            in.GetObject(),
+		FilterPermissions: in.GetFilterPermissions(),
+	})
+	if err != nil {
+		return &magistrala.ListPermissionsRes{}, err
+	}
+
+	lp := res.(listPermissionsRes)
+	return &magistrala.ListPermissionsRes{
+		Domain:          lp.Domain,
+		SubjectType:     lp.SubjectType,
+		Subject:         lp.Subject,
+		SubjectRelation: lp.SubjectRelation,
+		ObjectType:      lp.ObjectType,
+		Object:          lp.Object,
+		Permissions:     lp.Permissions,
+	}, nil
+
+}
+
+func decodeListPermissionsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(*magistrala.ListPermissionsRes)
+	return listPermissionsRes{
+		Domain:          res.GetDomain(),
+		SubjectType:     res.GetSubjectType(),
+		Subject:         res.GetSubject(),
+		SubjectRelation: res.GetSubjectRelation(),
+		ObjectType:      res.GetObjectType(),
+		Object:          res.GetObject(),
+		Permissions:     res.GetPermissions(),
+	}, nil
+}
+
+func encodeListPermissionsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(listPermissionsReq)
+	return &magistrala.ListPermissionsReq{
+		Domain:      req.Domain,
+		SubjectType: req.SubjectType,
+		Subject:     req.Subject,
 		ObjectType:  req.ObjectType,
 		Object:      req.Object,
 	}, nil

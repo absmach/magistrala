@@ -56,6 +56,11 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	listPerms, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	req := listGroupsReq{
 		token:      apiutil.ExtractBearerToken(r),
 		tree:       tree,
@@ -67,6 +72,7 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 			Permission: permission,
 			PageMeta:   pm,
 			Direction:  dir,
+			ListPerms:  listPerms,
 		},
 	}
 	return req, nil
@@ -91,6 +97,11 @@ func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	listPerms, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	req := listGroupsReq{
 		token: apiutil.ExtractBearerToken(r),
 		tree:  tree,
@@ -100,6 +111,7 @@ func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, 
 			Permission: permission,
 			PageMeta:   pm,
 			Direction:  +1,
+			ListPerms:  listPerms,
 		},
 	}
 	return req, nil
@@ -124,6 +136,11 @@ func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{},
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	listPerms, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	req := listGroupsReq{
 		token: apiutil.ExtractBearerToken(r),
 		tree:  tree,
@@ -133,6 +150,7 @@ func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{},
 			Permission: permission,
 			PageMeta:   pm,
 			Direction:  -1,
+			ListPerms:  listPerms,
 		},
 	}
 	return req, nil
@@ -170,6 +188,14 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 
 func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupReq{
+		token: apiutil.ExtractBearerToken(r),
+		id:    chi.URLParam(r, "groupID"),
+	}
+	return req, nil
+}
+
+func DecodeGroupPermsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := groupPermsReq{
 		token: apiutil.ExtractBearerToken(r),
 		id:    chi.URLParam(r, "groupID"),
 	}

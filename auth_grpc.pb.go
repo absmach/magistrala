@@ -130,6 +130,7 @@ const (
 	AuthService_ListSubjects_FullMethodName    = "/magistrala.AuthService/ListSubjects"
 	AuthService_ListAllSubjects_FullMethodName = "/magistrala.AuthService/ListAllSubjects"
 	AuthService_CountSubjects_FullMethodName   = "/magistrala.AuthService/CountSubjects"
+	AuthService_ListPermissions_FullMethodName = "/magistrala.AuthService/ListPermissions"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -150,6 +151,7 @@ type AuthServiceClient interface {
 	ListSubjects(ctx context.Context, in *ListSubjectsReq, opts ...grpc.CallOption) (*ListSubjectsRes, error)
 	ListAllSubjects(ctx context.Context, in *ListSubjectsReq, opts ...grpc.CallOption) (*ListSubjectsRes, error)
 	CountSubjects(ctx context.Context, in *CountSubjectsReq, opts ...grpc.CallOption) (*CountSubjectsRes, error)
+	ListPermissions(ctx context.Context, in *ListPermissionsReq, opts ...grpc.CallOption) (*ListPermissionsRes, error)
 }
 
 type authServiceClient struct {
@@ -286,6 +288,15 @@ func (c *authServiceClient) CountSubjects(ctx context.Context, in *CountSubjects
 	return out, nil
 }
 
+func (c *authServiceClient) ListPermissions(ctx context.Context, in *ListPermissionsReq, opts ...grpc.CallOption) (*ListPermissionsRes, error) {
+	out := new(ListPermissionsRes)
+	err := c.cc.Invoke(ctx, AuthService_ListPermissions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -304,6 +315,7 @@ type AuthServiceServer interface {
 	ListSubjects(context.Context, *ListSubjectsReq) (*ListSubjectsRes, error)
 	ListAllSubjects(context.Context, *ListSubjectsReq) (*ListSubjectsRes, error)
 	CountSubjects(context.Context, *CountSubjectsReq) (*CountSubjectsRes, error)
+	ListPermissions(context.Context, *ListPermissionsReq) (*ListPermissionsRes, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -352,6 +364,9 @@ func (UnimplementedAuthServiceServer) ListAllSubjects(context.Context, *ListSubj
 }
 func (UnimplementedAuthServiceServer) CountSubjects(context.Context, *CountSubjectsReq) (*CountSubjectsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CountSubjects not implemented")
+}
+func (UnimplementedAuthServiceServer) ListPermissions(context.Context, *ListPermissionsReq) (*ListPermissionsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPermissions not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -618,6 +633,24 @@ func _AuthService_CountSubjects_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_ListPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPermissionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ListPermissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ListPermissions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ListPermissions(ctx, req.(*ListPermissionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -680,6 +713,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CountSubjects",
 			Handler:    _AuthService_CountSubjects_Handler,
+		},
+		{
+			MethodName: "ListPermissions",
+			Handler:    _AuthService_ListPermissions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

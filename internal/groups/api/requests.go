@@ -96,6 +96,22 @@ func (req groupReq) validate() error {
 	return nil
 }
 
+type groupPermsReq struct {
+	token string
+	id    string
+}
+
+func (req groupPermsReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}
+
 type changeGroupStatusReq struct {
 	token string
 	id    string

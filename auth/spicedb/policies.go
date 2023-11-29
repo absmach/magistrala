@@ -29,12 +29,12 @@ var (
 )
 
 type policyAgent struct {
-	client           *authzed.Client
+	client           *authzed.ClientWithExperimental
 	permissionClient v1.PermissionsServiceClient
 	logger           mglog.Logger
 }
 
-func NewPolicyAgent(client *authzed.Client, logger mglog.Logger) auth.PolicyAgent {
+func NewPolicyAgent(client *authzed.ClientWithExperimental, logger mglog.Logger) auth.PolicyAgent {
 	return &policyAgent{
 		client:           client,
 		permissionClient: client.PermissionsServiceClient,
@@ -303,6 +303,44 @@ func (pa *policyAgent) RetrieveAllSubjectsCount(ctx context.Context, pr auth.Pol
 		nextPageToken = npt
 	}
 	return count, nil
+}
+
+func (pa *policyAgent) RetrievePermissions(ctx context.Context, pr auth.PolicyReq, filterPermission []string) (auth.Permissions, error) {
+	var permissionChecks []*v1.BulkCheckPermissionRequestItem
+	for _, fp := range filterPermission {
+		permissionChecks = append(permissionChecks, &v1.BulkCheckPermissionRequestItem{
+			Resource: &v1.ObjectReference{
+				ObjectType: pr.ObjectType,
+				ObjectId:   pr.Object,
+			},
+			Permission: fp,
+			Subject: &v1.SubjectReference{
+				Object: &v1.ObjectReference{
+					ObjectType: pr.SubjectType,
+					ObjectId:   pr.Subject,
+				},
+				OptionalRelation: pr.SubjectRelation,
+			},
+		})
+	}
+	resp, err := pa.client.ExperimentalServiceClient.BulkCheckPermission(ctx, &v1.BulkCheckPermissionRequest{Items: permissionChecks})
+	if err != nil {
+		return auth.Permissions{}, err
+	}
+
+	permissions := []string{}
+	for _, pair := range resp.Pairs {
+		if pair.GetError() != nil {
+			s := pair.GetError()
+			return auth.Permissions{}, fmt.Errorf("code: %s, details: %s, message: %s", s.Code, s.Details, s.Message)
+		}
+		item := pair.GetItem()
+		req := pair.GetRequest()
+		if item != nil && req != nil && item.Permissionship == v1.CheckPermissionResponse_PERMISSIONSHIP_HAS_PERMISSION {
+			permissions = append(permissions, req.GetPermission())
+		}
+	}
+	return permissions, nil
 }
 
 func objectsToAuthPolicies(objects []*v1.LookupResourcesResponse) []auth.PolicyRes {

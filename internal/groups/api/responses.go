@@ -72,6 +72,22 @@ func (res viewGroupRes) Empty() bool {
 	return false
 }
 
+type viewGroupPermsRes struct {
+	Permissions []string `json:"permissions"`
+}
+
+func (res viewGroupPermsRes) Code() int {
+	return http.StatusOK
+}
+
+func (res viewGroupPermsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res viewGroupPermsRes) Empty() bool {
+	return false
+}
+
 type createGroupRes struct {
 	groups.Group `json:",inline"`
 	created      bool

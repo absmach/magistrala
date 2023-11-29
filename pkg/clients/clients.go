@@ -50,6 +50,7 @@ type Client struct {
 	UpdatedBy   string      `json:"updated_by,omitempty"`
 	Status      Status      `json:"status,omitempty"` // 1 for enabled, 0 for disabled
 	Role        Role        `json:"role,omitempty"`   // 1 for admin, 0 for normal user
+	Permissions []string    `json:"permissions,omitempty"`
 }
 
 // ClientsPage contains page related metadata as well as list

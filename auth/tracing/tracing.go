@@ -214,6 +214,23 @@ func (tm *tracingMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyRe
 	return tm.svc.CountSubjects(ctx, pr)
 }
 
+func (tm *tracingMiddleware) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (auth.Permissions, error) {
+	ctx, span := tm.tracer.Start(ctx, "list_permissions", trace.WithAttributes(
+		attribute.String("subject", pr.Subject),
+		attribute.String("subject_type", pr.SubjectType),
+		attribute.String("subject_kind", pr.SubjectKind),
+		attribute.String("subject_relation", pr.SubjectRelation),
+		attribute.String("object", pr.Object),
+		attribute.String("object_type", pr.ObjectType),
+		attribute.String("relation", pr.Relation),
+		attribute.String("permission", pr.Permission),
+		attribute.StringSlice("filter_permissions", filterPermissions),
+	))
+	defer span.End()
+
+	return tm.svc.ListPermissions(ctx, pr, filterPermissions)
+}
+
 func (tm *tracingMiddleware) CreateDomain(ctx context.Context, token string, d auth.Domain) (auth.Domain, error) {
 	ctx, span := tm.tracer.Start(ctx, "create_domain", trace.WithAttributes(
 		attribute.String("name", d.Name),

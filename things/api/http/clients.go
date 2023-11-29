@@ -53,6 +53,13 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger mglog.Logger) http.Ha
 			opts...,
 		), "view_thing").ServeHTTP)
 
+		r.Get("/{thingID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
+			viewClientPermsEndpoint(svc),
+			decodeViewClientPerms,
+			api.EncodeResponse,
+			opts...,
+		), "view_thing").ServeHTTP)
+
 		r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 			updateClientEndpoint(svc),
 			decodeUpdateClient,
@@ -133,6 +140,15 @@ func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
+func decodeViewClientPerms(_ context.Context, r *http.Request) (interface{}, error) {
+	req := viewClientPermsReq{
+		token: apiutil.ExtractBearerToken(r),
+		id:    chi.URLParam(r, "thingID"),
+	}
+
+	return req, nil
+}
+
 func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) {
 	var ownerID string
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
@@ -168,6 +184,12 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
 	if oid != "" {
 		ownerID = oid
 	}
@@ -184,6 +206,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		name:       n,
 		tag:        t,
 		permission: p,
+		listPerms:  lp,
 		userID:     chi.URLParam(r, "userID"),
 		owner:      ownerID,
 	}
@@ -302,6 +325,11 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	req := listMembersReq{
 		token: apiutil.ExtractBearerToken(r),
 		Page: mgclients.Page{
@@ -310,6 +338,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 			Limit:      l,
 			Permission: p,
 			Metadata:   m,
+			ListPerms:  lp,
 		},
 		groupID: chi.URLParam(r, "groupID"),
 	}

@@ -17,6 +17,7 @@ const (
 	groupUpdate          = groupPrefix + "update"
 	groupRemove          = groupPrefix + "remove"
 	groupView            = groupPrefix + "view"
+	groupViewPerms       = groupPrefix + "view_perms"
 	groupList            = groupPrefix + "list"
 	groupListMemberships = groupPrefix + "list_by_user"
 )
@@ -25,6 +26,7 @@ var (
 	_ events.Event = (*createGroupEvent)(nil)
 	_ events.Event = (*updateGroupEvent)(nil)
 	_ events.Event = (*removeGroupEvent)(nil)
+	_ events.Event = (*viewGroupEvent)(nil)
 	_ events.Event = (*viewGroupEvent)(nil)
 	_ events.Event = (*listGroupEvent)(nil)
 	_ events.Event = (*listGroupMembershipEvent)(nil)
@@ -173,6 +175,18 @@ func (vge viewGroupEvent) Encode() (map[string]interface{}, error) {
 		val["status"] = vge.Status.String()
 	}
 
+	return val, nil
+}
+
+type viewGroupPermsEvent struct {
+	permissions []string
+}
+
+func (vgpe viewGroupPermsEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation":   groupViewPerms,
+		"permissions": vgpe.permissions,
+	}
 	return val, nil
 }
 

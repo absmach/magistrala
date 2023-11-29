@@ -76,6 +76,22 @@ func viewClientEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
+func viewClientPermsEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewClientPermsReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		p, err := svc.ViewClientPerms(ctx, req.token, req.id)
+		if err != nil {
+			return nil, err
+		}
+
+		return viewClientPermsRes{Permissions: p}, nil
+	}
+}
+
 func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listClientsReq)
@@ -92,6 +108,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			Tag:        req.tag,
 			Permission: req.permission,
 			Metadata:   req.metadata,
+			ListPerms:  req.listPerms,
 		}
 		page, err := svc.ListClients(ctx, req.token, req.userID, pm)
 		if err != nil {

@@ -295,6 +295,10 @@ func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (int, error)
 	return svc.agent.RetrieveAllSubjectsCount(ctx, pr)
 }
 
+func (svc service) ListPermissions(ctx context.Context, pr PolicyReq, filterPermisions []string) (Permissions, error) {
+	return svc.agent.RetrievePermissions(ctx, pr, filterPermisions)
+}
+
 func (svc service) tmpKey(duration time.Duration, key Key) (Token, error) {
 	key.ExpiresAt = time.Now().Add(duration)
 	value, err := svc.tokenizer.Issue(key)

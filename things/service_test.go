@@ -11,7 +11,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
-	"github.com/absmach/magistrala/internal/apiutil"
 	gmocks "github.com/absmach/magistrala/internal/groups/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
@@ -74,7 +73,7 @@ func TestRegisterClient(t *testing.T) {
 			desc:   "register existing client",
 			client: client,
 			token:  validToken,
-			err:    errors.ErrConflict,
+			err:    svcerror.ErrConflict,
 		},
 		{
 			desc: "register a new enabled client with name",
@@ -200,7 +199,7 @@ func TestRegisterClient(t *testing.T) {
 					Secret: secret,
 				},
 			},
-			err:   errors.ErrMalformedEntity,
+			err:   repoerror.ErrMalformedEntity,
 			token: validToken,
 		},
 		{
@@ -212,7 +211,7 @@ func TestRegisterClient(t *testing.T) {
 					Secret:   secret,
 				},
 			},
-			err:   errors.ErrMalformedEntity,
+			err:   repoerror.ErrMalformedEntity,
 			token: validToken,
 		},
 		{
@@ -223,7 +222,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "newclientwithemptysecret@example.com",
 				},
 			},
-			err:   apiutil.ErrMissingSecret,
+			err:   repoerror.ErrMissingSecret,
 			token: validToken,
 		},
 		{
@@ -235,7 +234,7 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
-			err:   apiutil.ErrInvalidStatus,
+			err:   svcerror.ErrInvalidStatus,
 			token: validToken,
 		},
 	}

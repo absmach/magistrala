@@ -45,4 +45,7 @@ var (
 
 	// ErrMissingSecret indicates missing secret.
 	ErrMissingSecret = errors.New("missing secret")
+
+	// ErrInvalidSecret indicates invalid secret.
+	ErrInvalidSecret = errors.New("missing secret")
 )

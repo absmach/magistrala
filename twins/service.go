@@ -13,7 +13,6 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/mainflux/senml"
@@ -106,7 +105,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 	defer ts.publish(ctx, &id, &err, crudOp["createSucc"], crudOp["createFail"], &b)
 	res, err := ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return Twin{}, errors.Wrap(errors.ErrAuthentication, err)
+		return Twin{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	twin.ID, err = ts.idProvider.ID()
@@ -133,7 +132,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 
 	twin.Revision = 0
 	if _, err = ts.twins.Save(ctx, twin); err != nil {
-		return Twin{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return Twin{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	id = twin.ID
@@ -149,12 +148,12 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 
 	_, err = ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return errors.ErrAuthentication
+		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	tw, err := ts.twins.RetrieveByID(ctx, twin.ID)
 	if err != nil {
-		return errors.Wrap(repoerr.ErrNotFound, err)
+		return errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
 	revision := false
@@ -184,7 +183,7 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 	tw.Revision++
 
 	if err := ts.twins.Update(ctx, tw); err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
 	id = twin.ID
@@ -199,12 +198,12 @@ func (ts *twinsService) ViewTwin(ctx context.Context, token, twinID string) (tw 
 
 	_, err = ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return Twin{}, errors.Wrap(errors.ErrAuthorization, err)
+		return Twin{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
 	twin, err := ts.twins.RetrieveByID(ctx, twinID)
 	if err != nil {
-		return Twin{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return Twin{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
 	b, err = json.Marshal(twin)
@@ -218,11 +217,11 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 
 	_, err = ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return errors.ErrAuthentication
+		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	if err := ts.twins.Remove(ctx, twinID); err != nil {
-		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
 	return ts.twinCache.Remove(ctx, twinID)
@@ -231,7 +230,7 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return Page{}, errors.ErrAuthentication
+		return Page{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	return ts.twins.RetrieveAll(ctx, res.GetId(), offset, limit, name, metadata)
@@ -240,7 +239,7 @@ func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint
 func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error) {
 	_, err := ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return StatesPage{}, errors.ErrAuthentication
+		return StatesPage{}, svcerr.ErrAuthentication
 	}
 
 	return ts.states.RetrieveAll(ctx, offset, limit, twinID)

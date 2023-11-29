@@ -19,6 +19,7 @@ import (
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
@@ -118,7 +119,7 @@ func TestIssueCert(t *testing.T) {
 			token:   invalid,
 			thingID: thingID,
 			ttl:     ttl,
-			err:     errors.ErrAuthentication,
+			err:     svcerr.ErrAuthentication,
 		},
 	}
 
@@ -166,7 +167,7 @@ func TestRevokeCert(t *testing.T) {
 			desc:    "revoke cert for invalid token",
 			token:   invalid,
 			thingID: thingID,
-			err:     errors.ErrAuthentication,
+			err:     svcerr.ErrAuthentication,
 		},
 		{
 			desc:    "revoke cert for invalid thing id",
@@ -227,7 +228,7 @@ func TestListCerts(t *testing.T) {
 			offset:  0,
 			limit:   certNum,
 			size:    0,
-			err:     errors.ErrAuthentication,
+			err:     svcerr.ErrAuthentication,
 		},
 		{
 			desc:    "list half certs with valid token",
@@ -307,7 +308,7 @@ func TestListSerials(t *testing.T) {
 			offset:  0,
 			limit:   certNum,
 			certs:   nil,
-			err:     errors.ErrAuthentication,
+			err:     svcerr.ErrAuthentication,
 		},
 		{
 			desc:    "list half certs with valid token",
@@ -376,14 +377,14 @@ func TestViewCert(t *testing.T) {
 			token:    invalid,
 			serialID: cert.Serial,
 			cert:     certs.Cert{},
-			err:      errors.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
 			desc:     "list cert with invalid serial",
 			token:    token,
 			serialID: invalid,
 			cert:     certs.Cert{},
-			err:      errors.ErrNotFound,
+			err:      svcerr.ErrNotFound,
 		},
 	}
 

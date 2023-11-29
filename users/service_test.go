@@ -12,7 +12,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
-	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -220,7 +219,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "newclientwithemptysecret@example.com",
 				},
 			},
-			err:   apiutil.ErrMissingSecret,
+			err:   repoerror.ErrMissingSecret,
 			token: validToken,
 		},
 		{
@@ -232,7 +231,7 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
-			err:   apiutil.ErrInvalidStatus,
+			err:   svcerror.ErrInvalidStatus,
 			token: validToken,
 		},
 	}
@@ -293,21 +292,21 @@ func TestViewClient(t *testing.T) {
 			response: mgclients.Client{},
 			token:    inValidToken,
 			clientID: client.ID,
-			err:      errors.ErrAuthentication,
+			err:      svcerror.ErrAuthentication,
 		},
 		{
 			desc:     "view client with valid token and invalid client id",
 			response: mgclients.Client{},
 			token:    validToken,
 			clientID: mocks.WrongID,
-			err:      errors.ErrNotFound,
+			err:      svcerror.ErrNotFound,
 		},
 		{
 			desc:     "view client with an invalid token and invalid client id",
 			response: mgclients.Client{},
 			token:    inValidToken,
 			clientID: mocks.WrongID,
-			err:      errors.ErrAuthentication,
+			err:      svcerror.ErrAuthentication,
 		},
 	}
 
@@ -402,7 +401,7 @@ func TestListClients(t *testing.T) {
 					Limit:  0,
 				},
 			},
-			err: errors.ErrAuthentication,
+			err: svcerror.ErrAuthentication,
 		},
 		{
 			desc:  "list clients that are shared with me",
@@ -649,7 +648,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client1,
 			response: mgclients.Client{},
 			token:    inValidToken,
-			err:      errors.ErrAuthentication,
+			err:      svcerror.ErrAuthentication,
 		},
 		{
 			desc: "update client name with invalid ID",
@@ -659,7 +658,7 @@ func TestUpdateClient(t *testing.T) {
 			},
 			response: mgclients.Client{},
 			token:    inValidToken,
-			err:      errors.ErrAuthentication,
+			err:      svcerror.ErrAuthentication,
 		},
 		{
 			desc:     "update client metadata with valid token",
@@ -673,7 +672,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client2,
 			response: mgclients.Client{},
 			token:    inValidToken,
-			err:      errors.ErrAuthentication,
+			err:      svcerror.ErrAuthentication,
 		},
 	}
 
@@ -735,7 +734,7 @@ func TestUpdateClientTags(t *testing.T) {
 			},
 			response: mgclients.Client{},
 			token:    inValidToken,
-			err:      errors.ErrAuthentication,
+			err:      svcerror.ErrAuthentication,
 		},
 	}
 
@@ -861,7 +860,7 @@ func TestUpdateClientRole(t *testing.T) {
 			},
 			response: mgclients.Client{},
 			token:    inValidToken,
-			err:      errors.ErrAuthentication,
+			err:      svcerror.ErrAuthentication,
 		},
 	}
 
@@ -929,7 +928,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newSecret",
 			token:     validToken,
 			response:  mgclients.Client{},
-			err:       apiutil.ErrInvalidSecret,
+			err:       repoerror.ErrInvalidSecret,
 		},
 	}
 
@@ -1428,7 +1427,7 @@ func TestRefreshToken(t *testing.T) {
 			desc:   "refresh token with access token for an existing client",
 			token:  validToken,
 			client: client,
-			err:    errors.ErrAuthentication,
+			err:    svcerror.ErrAuthentication,
 		},
 		{
 			desc:   "refresh token with access token for a non-existing client",
@@ -1440,7 +1439,7 @@ func TestRefreshToken(t *testing.T) {
 			desc:   "refresh token with invalid token for an existing client",
 			token:  inValidToken,
 			client: client,
-			err:    errors.ErrAuthentication,
+			err:    svcerror.ErrAuthentication,
 		},
 	}
 

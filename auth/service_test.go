@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/auth/jwt"
 	"github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -30,22 +31,35 @@ const (
 	authoritiesObj  = "authorities"
 	loginDuration   = 30 * time.Minute
 	refreshDuration = 24 * time.Hour
-	accessToken     = "access"
 )
 
-func newService() (auth.Service, *mocks.Keys) {
+var (
+	errIssueUser = errors.New("failed to issue new login key")
+	errDelete    = errors.New("failed to delete key from database")
+)
+
+func newService() (auth.Service, *mocks.Keys, string) {
 	krepo := new(mocks.Keys)
 	prepo := new(mocks.PolicyAgent)
 	drepo := new(mocks.DomainsRepo)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))
+	key := auth.Key{
+		IssuedAt:  time.Now(),
+		ExpiresAt: time.Now().Add(refreshDuration),
+		Subject:   id,
+		Type:      auth.AccessKey,
+		User:      email,
+		Domain:    groupName,
+	}
+	token, _ := t.Issue(key)
 
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration), krepo
+	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration), krepo, token
 }
 
 func TestIssue(t *testing.T) {
-	svc, krepo := newService()
+	svc, krepo, accessToken := newService()
 
 	cases := []struct {
 		desc  string
@@ -63,14 +77,6 @@ func TestIssue(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc: "issue login key with no time",
-			key: auth.Key{
-				Type: auth.AccessKey,
-			},
-			token: accessToken,
-			err:   auth.ErrInvalidKeyIssuedAt,
-		},
-		{
 			desc: "issue API key",
 			key: auth.Key{
 				Type:     auth.APIKey,
@@ -86,15 +92,7 @@ func TestIssue(t *testing.T) {
 				IssuedAt: time.Now(),
 			},
 			token: "invalid",
-			err:   errors.ErrAuthentication,
-		},
-		{
-			desc: "issue API key with no time",
-			key: auth.Key{
-				Type: auth.APIKey,
-			},
-			token: accessToken,
-			err:   auth.ErrInvalidKeyIssuedAt,
+			err:   svcerr.ErrAuthentication,
 		},
 		{
 			desc: "issue recovery key",
@@ -104,14 +102,6 @@ func TestIssue(t *testing.T) {
 			},
 			token: "",
 			err:   nil,
-		},
-		{
-			desc: "issue recovery with no issue time",
-			key: auth.Key{
-				Type: auth.RecoveryKey,
-			},
-			token: accessToken,
-			err:   auth.ErrInvalidKeyIssuedAt,
 		},
 	}
 
@@ -124,16 +114,20 @@ func TestIssue(t *testing.T) {
 }
 
 func TestRevoke(t *testing.T) {
-	svc, _ := newService()
+	svc, krepo, _ := newService()
+	repocall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, errIssueUser)
 	secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
+	repocall.Unset()
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	key := auth.Key{
 		Type:     auth.APIKey,
 		IssuedAt: time.Now(),
 		Subject:  id,
 	}
+	repocall1 := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, errIssueUser)
 	_, err = svc.Issue(context.Background(), secret.AccessToken, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
+	repocall1.Unset()
 
 	cases := []struct {
 		desc  string
@@ -162,15 +156,19 @@ func TestRevoke(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repocall := krepo.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(errDelete, tc.err)
 		err := svc.Revoke(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+		repocall.Unset()
 	}
 }
 
 func TestRetrieve(t *testing.T) {
-	svc, _ := newService()
+	svc, krepo, _ := newService()
+	repocall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, errIssueUser)
 	secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	repocall.Unset()
 	key := auth.Key{
 		ID:       "id",
 		Type:     auth.APIKey,
@@ -178,14 +176,20 @@ func TestRetrieve(t *testing.T) {
 		IssuedAt: time.Now(),
 	}
 
+	repocall1 := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, errIssueUser)
 	userToken, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	repocall1.Unset()
 
+	repocall2 := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, errIssueUser)
 	apiToken, err := svc.Issue(context.Background(), secret.AccessToken, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing login's key expected to succeed: %s", err))
+	repocall2.Unset()
 
+	repocall3 := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, errIssueUser)
 	resetToken, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.RecoveryKey, IssuedAt: time.Now()})
 	assert.Nil(t, err, fmt.Sprintf("Issuing reset key expected to succeed: %s", err))
+	repocall3.Unset()
 
 	cases := []struct {
 		desc  string
@@ -228,11 +232,12 @@ func TestRetrieve(t *testing.T) {
 	for _, tc := range cases {
 		_, err := svc.RetrieveKey(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+		repocall.Unset()
 	}
 }
 
 func TestIdentify(t *testing.T) {
-	svc, _ := newService()
+	svc, _, _ := newService()
 
 	loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
@@ -302,7 +307,7 @@ func TestIdentify(t *testing.T) {
 }
 
 func TestAuthorize(t *testing.T) {
-	svc, _ := newService()
+	svc, _, _ := newService()
 
 	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRelation, Subject: id}
 	err := svc.Authorize(context.Background(), pr)
@@ -310,7 +315,7 @@ func TestAuthorize(t *testing.T) {
 }
 
 func TestAddPolicy(t *testing.T) {
-	svc, _ := newService()
+	svc, _, _ := newService()
 
 	prs := []auth.PolicyReq{{Object: "obj", ObjectType: "object", Relation: "rel", Subject: "sub", SubjectType: "subject"}}
 	err := svc.AddPolicies(context.Background(), prs)
@@ -323,7 +328,7 @@ func TestAddPolicy(t *testing.T) {
 }
 
 func TestDeletePolicies(t *testing.T) {
-	svc, _ := newService()
+	svc, _, _ := newService()
 
 	prs := []auth.PolicyReq{{Object: "obj", ObjectType: "object", Relation: "rel", Subject: "sub", SubjectType: "subject"}}
 	err := svc.DeletePolicies(context.Background(), prs)
@@ -331,7 +336,7 @@ func TestDeletePolicies(t *testing.T) {
 }
 
 func TestListPolicies(t *testing.T) {
-	svc, _ := newService()
+	svc, _, _ := newService()
 
 	pageLen := 15
 

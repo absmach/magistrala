@@ -70,28 +70,29 @@ var (
 )
 
 type PageMetadata struct {
-	Total      uint64   `json:"total"`
-	Offset     uint64   `json:"offset"`
-	Limit      uint64   `json:"limit"`
-	Level      uint64   `json:"level,omitempty"`
-	Identity   string   `json:"identity,omitempty"`
-	Name       string   `json:"name,omitempty"`
-	Type       string   `json:"type,omitempty"`
-	Metadata   Metadata `json:"metadata,omitempty"`
-	Status     string   `json:"status,omitempty"`
-	Action     string   `json:"action,omitempty"`
-	Subject    string   `json:"subject,omitempty"`
-	Object     string   `json:"object,omitempty"`
-	Permission string   `json:"permission,omitempty"`
-	Tag        string   `json:"tag,omitempty"`
-	Owner      string   `json:"owner,omitempty"`
-	SharedBy   string   `json:"shared_by,omitempty"`
-	Visibility string   `json:"visibility,omitempty"`
-	OwnerID    string   `json:"owner_id,omitempty"`
-	Topic      string   `json:"topic,omitempty"`
-	Contact    string   `json:"contact,omitempty"`
-	State      string   `json:"state,omitempty"`
-	Order      string   `json:"order,omitempty"`
+	Total           uint64   `json:"total"`
+	Offset          uint64   `json:"offset"`
+	Limit           uint64   `json:"limit"`
+	Level           uint64   `json:"level,omitempty"`
+	Identity        string   `json:"identity,omitempty"`
+	Name            string   `json:"name,omitempty"`
+	Type            string   `json:"type,omitempty"`
+	Metadata        Metadata `json:"metadata,omitempty"`
+	Status          string   `json:"status,omitempty"`
+	Action          string   `json:"action,omitempty"`
+	Subject         string   `json:"subject,omitempty"`
+	Object          string   `json:"object,omitempty"`
+	Permission      string   `json:"permission,omitempty"`
+	Tag             string   `json:"tag,omitempty"`
+	Owner           string   `json:"owner,omitempty"`
+	SharedBy        string   `json:"shared_by,omitempty"`
+	Visibility      string   `json:"visibility,omitempty"`
+	OwnerID         string   `json:"owner_id,omitempty"`
+	Topic           string   `json:"topic,omitempty"`
+	Contact         string   `json:"contact,omitempty"`
+	State           string   `json:"state,omitempty"`
+	Order           string   `json:"order,omitempty"`
+	ListPermissions string   `json:"list_perms,omitempty"`
 }
 
 // Credentials represent client credentials: it contains
@@ -1249,6 +1250,8 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Permission != "" {
 		q.Add("permission", pm.Permission)
 	}
-
+	if pm.ListPermissions != "" {
+		q.Add("list_perms", pm.ListPermissions)
+	}
 	return q.Encode(), nil
 }

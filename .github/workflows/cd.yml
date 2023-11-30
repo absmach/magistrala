@@ -43,4 +43,3 @@ jobs:
       - name: Build and push Dockers
         run: |
           make latest -j $(nproc)
-          make docker_push

@@ -132,6 +132,7 @@ func (sdk mgSDK) GroupPermissions(id, token string) (Group, errors.SDKError) {
 
 	return t, nil
 }
+
 func (sdk mgSDK) UpdateGroup(g Group, token string) (Group, errors.SDKError) {
 	data, err := json.Marshal(g)
 	if err != nil {

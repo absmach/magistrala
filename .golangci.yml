@@ -17,7 +17,6 @@ linters-settings:
   gocritic:
     enabled-checks:
       - captLocal
-      - dupImport
       - singleCaseSwitch
     disabled-checks:
       - appendAssign

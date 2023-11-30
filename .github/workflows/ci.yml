@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name : Setup Go
         uses: actions/setup-go@v4
@@ -109,3 +109,10 @@ jobs:
           cd ${{ matrix.service.name }}
           go test ./... --race -v -coverprofile=coverage.out
           go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV }}
+          name: codecov-umbrella
+          verbose: true

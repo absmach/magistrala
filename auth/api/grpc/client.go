@@ -691,7 +691,6 @@ func (client grpcClient) ListPermissions(ctx context.Context, in *magistrala.Lis
 		Object:          lp.Object,
 		Permissions:     lp.Permissions,
 	}, nil
-
 }
 
 func decodeListPermissionsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

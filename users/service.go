@@ -506,6 +506,7 @@ func (svc service) Identify(ctx context.Context, token string) (string, error) {
 	}
 	return user.GetUserId(), nil
 }
+
 func (svc service) addClientPolicy(ctx context.Context, userID string, role mgclients.Role) error {
 	var policies magistrala.AddPoliciesReq
 

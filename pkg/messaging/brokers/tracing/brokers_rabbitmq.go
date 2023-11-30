@@ -23,11 +23,9 @@ func init() {
 }
 
 func NewPublisher(cfg server.Config, tracer trace.Tracer, pub messaging.Publisher) messaging.Publisher {
-
 	return tracing.NewPublisher(cfg, tracer, pub)
 }
 
 func NewPubSub(cfg server.Config, tracer trace.Tracer, pubsub messaging.PubSub) messaging.PubSub {
-
 	return tracing.NewPubSub(cfg, tracer, pubsub)
 }

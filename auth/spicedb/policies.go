@@ -332,7 +332,7 @@ func (pa *policyAgent) RetrievePermissions(ctx context.Context, pr auth.PolicyRe
 	for _, pair := range resp.Pairs {
 		if pair.GetError() != nil {
 			s := pair.GetError()
-			return auth.Permissions{}, fmt.Errorf("code: %s, details: %s, message: %s", s.Code, s.Details, s.Message)
+			return auth.Permissions{}, fmt.Errorf(`code: %v, details: %v, message: %s`, s.Code, s.Details, s.Message)
 		}
 		item := pair.GetItem()
 		req := pair.GetRequest()

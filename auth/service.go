@@ -16,10 +16,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
-const (
-	recoveryDuration   = 5 * time.Minute
-	invitationDuration = 24 * time.Hour
-)
+const recoveryDuration = 5 * time.Minute
 
 var (
 	errRollbackPolicy     = errors.New("failed to rollback policy")
@@ -90,25 +87,27 @@ type Service interface {
 var _ Service = (*service)(nil)
 
 type service struct {
-	keys            KeyRepository
-	domains         DomainsRepository
-	idProvider      magistrala.IDProvider
-	agent           PolicyAgent
-	tokenizer       Tokenizer
-	loginDuration   time.Duration
-	refreshDuration time.Duration
+	keys               KeyRepository
+	domains            DomainsRepository
+	idProvider         magistrala.IDProvider
+	agent              PolicyAgent
+	tokenizer          Tokenizer
+	loginDuration      time.Duration
+	refreshDuration    time.Duration
+	invitationDuration time.Duration
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration time.Duration) Service {
+func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
 	return &service{
-		tokenizer:       tokenizer,
-		domains:         domains,
-		keys:            keys,
-		idProvider:      idp,
-		agent:           policyAgent,
-		loginDuration:   loginDuration,
-		refreshDuration: refreshDuration,
+		tokenizer:          tokenizer,
+		domains:            domains,
+		keys:               keys,
+		idProvider:         idp,
+		agent:              policyAgent,
+		loginDuration:      loginDuration,
+		refreshDuration:    refreshDuration,
+		invitationDuration: invitationDuration,
 	}
 }
 
@@ -122,7 +121,7 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Token, err
 	case RecoveryKey:
 		return svc.tmpKey(recoveryDuration, key)
 	case InvitationKey:
-		return svc.tmpKey(invitationDuration, key)
+		return svc.invitationKey(ctx, key)
 	default:
 		return svc.accessKey(ctx, key)
 	}
@@ -331,6 +330,24 @@ func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 	}
 
 	return Token{AccessToken: access, RefreshToken: refresh}, nil
+}
+
+func (svc service) invitationKey(ctx context.Context, key Key) (Token, error) {
+	var err error
+	key.Type = InvitationKey
+	key.ExpiresAt = time.Now().Add(svc.invitationDuration)
+
+	key.Subject, err = svc.checkUserDomain(ctx, key)
+	if err != nil {
+		return Token{}, err
+	}
+
+	access, err := svc.tokenizer.Issue(key)
+	if err != nil {
+		return Token{}, errors.Wrap(errIssueTmp, err)
+	}
+
+	return Token{AccessToken: access}, nil
 }
 
 func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token, error) {

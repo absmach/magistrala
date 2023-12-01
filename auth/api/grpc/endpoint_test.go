@@ -36,6 +36,7 @@ const (
 	memberRelation  = "member"
 	loginDuration   = 30 * time.Minute
 	refreshDuration = 24 * time.Hour
+	invalidDuration = 7 * 24 * time.Hour
 )
 
 var svc auth.Service
@@ -48,7 +49,7 @@ func newService() auth.Service {
 
 	t := jwt.New([]byte(secret))
 
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration)
+	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration)
 }
 
 func startGRPCServer(svc auth.Service, port int) {

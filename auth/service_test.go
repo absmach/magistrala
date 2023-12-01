@@ -31,6 +31,7 @@ const (
 	authoritiesObj  = "authorities"
 	loginDuration   = 30 * time.Minute
 	refreshDuration = 24 * time.Hour
+	invalidDuration = 7 * 24 * time.Hour
 )
 
 var (
@@ -55,7 +56,7 @@ func newService() (auth.Service, *mocks.Keys, string) {
 	}
 	token, _ := t.Issue(key)
 
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration), krepo, token
+	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), krepo, token
 }
 
 func TestIssue(t *testing.T) {

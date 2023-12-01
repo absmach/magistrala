@@ -54,17 +54,18 @@ const (
 )
 
 type config struct {
-	LogLevel          string        `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
-	SecretKey         string        `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
-	JaegerURL         url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry     bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID        string        `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
-	AccessDuration    time.Duration `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"1h"`
-	RefreshDuration   time.Duration `env:"MG_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
-	SpicedbHost       string        `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort       string        `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbSchemaFile string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
-	TraceRatio        float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	LogLevel           string        `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
+	SecretKey          string        `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
+	JaegerURL          url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry      bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID         string        `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
+	AccessDuration     time.Duration `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"1h"`
+	RefreshDuration    time.Duration `env:"MG_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
+	InvitationDuration time.Duration `env:"MG_AUTH_INVITATION_DURATION"     envDefault:"168h"`
+	SpicedbHost        string        `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort        string        `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbSchemaFile  string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
+	TraceRatio         float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 }
 
 func main() {
@@ -207,7 +208,7 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 	idProvider := uuid.New()
 	t := jwt.New([]byte(cfg.SecretKey))
 
-	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration)
+	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("groups", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

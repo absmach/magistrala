@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -59,14 +60,14 @@ func TestCreateSubscription(t *testing.T) {
 			token: exampleUser1,
 			sub:   notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
 			id:    "",
-			err:   errors.ErrConflict,
+			err:   svcerr.ErrConflict,
 		},
 		{
 			desc:  "test with empty token",
 			token: "",
 			sub:   notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
 			id:    "",
-			err:   errors.ErrAuthentication,
+			err:   svcerr.ErrAuthentication,
 		},
 	}
 
@@ -108,14 +109,14 @@ func TestViewSubscription(t *testing.T) {
 			token: exampleUser1,
 			id:    "not_exist",
 			sub:   notifiers.Subscription{},
-			err:   errors.ErrNotFound,
+			err:   svcerr.ErrNotFound,
 		},
 		{
 			desc:  "test with empty token",
 			token: "",
 			id:    id,
 			sub:   notifiers.Subscription{},
-			err:   errors.ErrAuthentication,
+			err:   svcerr.ErrAuthentication,
 		},
 	}
 
@@ -188,7 +189,7 @@ func TestListSubscriptions(t *testing.T) {
 				Contact: "empty@example.com",
 			},
 			page: notifiers.Page{},
-			err:  errors.ErrNotFound,
+			err:  svcerr.ErrNotFound,
 		},
 		{
 			desc:  "test with empty token",
@@ -199,7 +200,7 @@ func TestListSubscriptions(t *testing.T) {
 				Topic:  "topic.subtopic.13",
 			},
 			page: notifiers.Page{},
-			err:  errors.ErrAuthentication,
+			err:  svcerr.ErrAuthentication,
 		},
 		{
 			desc:  "test with topic",
@@ -274,13 +275,13 @@ func TestRemoveSubscription(t *testing.T) {
 			desc:  "test not existing",
 			token: exampleUser1,
 			id:    "not_exist",
-			err:   errors.ErrNotFound,
+			err:   svcerr.ErrNotFound,
 		},
 		{
 			desc:  "test with empty token",
 			token: "",
 			id:    id,
-			err:   errors.ErrAuthentication,
+			err:   svcerr.ErrAuthentication,
 		},
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -52,6 +53,13 @@ func MakeHandler(svc notifiers.Service, logger logger.Logger, instanceID string)
 			encodeResponse,
 			opts...,
 		), "list").ServeHTTP)
+
+		r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+			deleteSubscriptionEndpint(svc),
+			decodeSubscription,
+			encodeResponse,
+			opts...,
+		), "delete").ServeHTTP)
 
 		r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
 			viewSubscriptionEndpint(svc),
@@ -146,25 +154,25 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 
 	switch {
-	case errors.Contains(err, errors.ErrMalformedEntity),
+	case errors.Contains(err, svcerr.ErrMalformedEntity),
 		errors.Contains(err, apiutil.ErrInvalidContact),
 		errors.Contains(err, apiutil.ErrInvalidTopic),
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, errors.ErrNotFound):
+	case errors.Contains(err, svcerr.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, errors.ErrAuthentication),
+	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, errors.ErrConflict):
+	case errors.Contains(err, svcerr.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 
-	case errors.Contains(err, errors.ErrCreateEntity),
-		errors.Contains(err, errors.ErrViewEntity),
-		errors.Contains(err, errors.ErrRemoveEntity):
+	case errors.Contains(err, svcerr.ErrCreateEntity),
+		errors.Contains(err, svcerr.ErrViewEntity),
+		errors.Contains(err, svcerr.ErrRemoveEntity):
 		w.WriteHeader(http.StatusInternalServerError)
 
 	default:

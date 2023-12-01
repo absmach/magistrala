@@ -20,7 +20,7 @@ import (
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -38,8 +38,8 @@ const (
 )
 
 var (
-	notFoundRes   = toJSON(apiutil.ErrorRes{Msg: errors.ErrNotFound.Error()})
-	unauthRes     = toJSON(apiutil.ErrorRes{Msg: errors.ErrAuthentication.Error()})
+	notFoundRes   = toJSON(apiutil.ErrorRes{Msg: svcerr.ErrNotFound.Error()})
+	unauthRes     = toJSON(apiutil.ErrorRes{Msg: svcerr.ErrAuthentication.Error()})
 	invalidRes    = toJSON(apiutil.ErrorRes{Err: apiutil.ErrInvalidQueryParams.Error(), Msg: apiutil.ErrValidation.Error()})
 	missingTokRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerToken.Error(), Msg: apiutil.ErrValidation.Error()})
 )

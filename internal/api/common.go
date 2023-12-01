@@ -115,7 +115,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrLimitSize),
 		errors.Contains(err, apiutil.ErrNameSize):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, errors.ErrAuthentication),
+	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, svcerr.ErrNotFound):

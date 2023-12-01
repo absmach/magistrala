@@ -24,6 +24,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -159,7 +160,7 @@ func TestAdd(t *testing.T) {
 			desc:   "create invalid config",
 			config: invalidConfig,
 			token:  validToken,
-			err:    errors.ErrMalformedEntity,
+			err:    svcerr.ErrMalformedEntity,
 			event:  nil,
 		},
 	}
@@ -293,7 +294,7 @@ func TestUpdate(t *testing.T) {
 			desc:   "update non-existing config",
 			config: nonExisting,
 			token:  validToken,
-			err:    errors.ErrNotFound,
+			err:    svcerr.ErrNotFound,
 			event:  nil,
 		},
 	}
@@ -372,7 +373,7 @@ func TestUpdateConnections(t *testing.T) {
 			id:          saved.ThingID,
 			token:       validToken,
 			connections: []string{"256"},
-			err:         errors.ErrNotFound,
+			err:         svcerr.ErrNotFound,
 			event:       nil,
 		},
 	}
@@ -465,7 +466,7 @@ func TestUpdateCert(t *testing.T) {
 			clientCert: "clientCert",
 			clientKey:  "clientKey",
 			caCert:     "caCert",
-			err:        errors.ErrAuthentication,
+			err:        svcerr.ErrAuthentication,
 			event:      nil,
 		},
 		{
@@ -475,7 +476,7 @@ func TestUpdateCert(t *testing.T) {
 			clientCert: "clientCert",
 			clientKey:  "clientKey",
 			caCert:     "caCert",
-			err:        errors.ErrNotFound,
+			err:        svcerr.ErrNotFound,
 			event:      nil,
 		},
 		{
@@ -515,7 +516,7 @@ func TestUpdateCert(t *testing.T) {
 			clientCert: "clientCert",
 			clientKey:  "clientKey",
 			caCert:     "caCert",
-			err:        errors.ErrAuthentication,
+			err:        svcerr.ErrAuthentication,
 			event:      nil,
 		},
 		{
@@ -525,7 +526,7 @@ func TestUpdateCert(t *testing.T) {
 			clientCert: "clientCert",
 			clientKey:  "clientKey",
 			caCert:     "caCert",
-			err:        errors.ErrNotFound,
+			err:        svcerr.ErrNotFound,
 			event:      nil,
 		},
 		{
@@ -648,7 +649,7 @@ func TestRemove(t *testing.T) {
 			desc:  "remove config with invalid credentials",
 			id:    saved.ThingID,
 			token: "",
-			err:   errors.ErrAuthentication,
+			err:   svcerr.ErrAuthentication,
 			event: nil,
 		},
 	}
@@ -657,7 +658,7 @@ func TestRemove(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		err := svc.Remove(context.Background(), tc.token, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},
@@ -807,7 +808,7 @@ func TestChangeState(t *testing.T) {
 			id:    saved.ThingID,
 			token: "invalid",
 			state: bootstrap.Inactive,
-			err:   errors.ErrAuthentication,
+			err:   svcerr.ErrAuthentication,
 			event: nil,
 		},
 	}
@@ -819,7 +820,7 @@ func TestChangeState(t *testing.T) {
 		repoCall2 = auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
 		repoCall3 := auth.On("DeletePolicy", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
 		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},

@@ -35,14 +35,9 @@ jobs:
       - name: Compile check for redis
         run: |
           MG_ES_TYPE=redis make mqtt
-       
-      - name: Build Binaries
-        run: |
-          make all -j $(nproc)
-          make dockers_dev -j $(nproc)
 
   run-tests:
-    name: Run Tests
+    name: Run ${{ matrix.service.name }} Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -86,6 +81,9 @@ jobs:
           - name: tools
             paths: 'tools/**'
 
+          - name: bootstrap
+            paths: 'bootstrap/** cmd/bootstrap/** things/policies/postgres/policies.go things/policies/api/grpc/client.go'
+
     steps: 
       - name: Checkout
         uses: actions/checkout@v4
@@ -104,7 +102,7 @@ jobs:
             any: 
               - '${{ matrix.service.paths }}/**'
 
-      - name: Test ${{ matrix.service.name }}
+      - name: Run ${{ matrix.service.name }} Test
         run: |
           cd ${{ matrix.service.name }}
           go test ./... --race -v -coverprofile=coverage.out

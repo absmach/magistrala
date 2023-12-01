@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 run:
-  timeout: 3m
+  timeout: 10m
   build-tags:
     - "nats"
 

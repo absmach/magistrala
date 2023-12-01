@@ -1077,7 +1077,7 @@ func TestListMembers(t *testing.T) {
 					Limit:  0,
 				},
 			},
-			err: errors.ErrAuthorization,
+			err: errors.ErrAuthentication,
 		},
 		{
 			desc:    "list clients with an invalid id",

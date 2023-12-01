@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/readers"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -55,7 +56,7 @@ func MakeHandler(svc readers.MessageRepository, uauth magistrala.AuthServiceClie
 	}
 
 	mux := chi.NewRouter()
-	mux.Get("/channels/:chanID/messages", kithttp.NewServer(
+	mux.Get("/channels/{chanID}/messages", kithttp.NewServer(
 		listMessagesEndpoint(svc, uauth, taauth),
 		decodeList,
 		encodeResponse,
@@ -191,14 +192,14 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
 	case errors.Contains(err, nil):
 	case errors.Contains(err, apiutil.ErrInvalidQueryParams),
-		errors.Contains(err, errors.ErrMalformedEntity),
+		errors.Contains(err, svcerr.ErrMalformedEntity),
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrLimitSize),
 		errors.Contains(err, apiutil.ErrOffsetSize),
 		errors.Contains(err, apiutil.ErrInvalidComparator):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, errors.ErrAuthentication),
-		errors.Contains(err, errors.ErrAuthorization),
+	case errors.Contains(err, svcerr.ErrAuthentication),
+		errors.Contains(err, svcerr.ErrAuthorization),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, readers.ErrReadMessages):
@@ -252,6 +253,6 @@ func authorize(ctx context.Context, req listMessagesReq, uauth magistrala.AuthSe
 		}
 		return nil
 	default:
-		return errors.ErrAuthorization
+		return svcerr.ErrAuthorization
 	}
 }

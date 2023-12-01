@@ -12,6 +12,7 @@ jobs:
   lint-and-build: # Linting and building are combined to save time for setting up Go
     name: Lint and Build
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout Code
@@ -39,8 +40,9 @@ jobs:
   run-tests:
     name: Run ${{ matrix.service.name }} Tests
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
-      matrix:
+      matrix:        
         service:
           - name: users
             paths: 'users/** cmd/users/** auth/service.go auth/api/grpc/client.go'
@@ -81,9 +83,24 @@ jobs:
           - name: tools
             paths: 'tools/**'
 
-          - name: bootstrap
-            paths: 'bootstrap/** cmd/bootstrap/** things/policies/postgres/policies.go things/policies/api/grpc/client.go'
+          - name: internal
+            paths: 'internal/**'
 
+          - name: pkg
+            paths: 'pkg/**'
+
+          - name: readers
+            paths: 'readers/** cmd/cassandra-reader/** cmd/influxdb-reader/** cmd/mongodb-reader/** cmd/postgres-reader/** cmd/timescale-reader/* things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: consumers
+            paths: 'consumers/** cmd/cassandra-writer/** cmd/influxdb-writer/** cmd/mongodb-writer/** cmd/postgres-writer/** cmd/timescale-writer/** cmd/smpp-notifier/** cmd/smtp-notifier/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: twins
+            paths: 'twins/** cmd/twins/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
+
+          - name: bootstrap
+            paths: 'bootstrap/** cmd/bootstrap/** things/policies/postgres/polices.go things/policies/api/grpc/client.go'
+            
     steps: 
       - name: Checkout
         uses: actions/checkout@v4

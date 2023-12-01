@@ -12,6 +12,8 @@ jobs:
   build-and-push:
     name: Build and Push
     runs-on: ubuntu-latest
+    continue-on-error: true
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

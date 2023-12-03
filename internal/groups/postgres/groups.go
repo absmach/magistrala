@@ -198,7 +198,7 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 
 func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page, ids ...string) (mggroups.Page, error) {
 	var q string
-	if len(ids) <= 0 {
+	if (len(ids) <= 0) && (gm.PageMeta.OwnerID == "") {
 		return mggroups.Page{}, repoerror.ErrNotFound
 	}
 	query, err := buildQuery(gm, ids...)
@@ -215,6 +215,8 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 	}
 	q = fmt.Sprintf("%s %s ORDER BY g.updated_at LIMIT :limit OFFSET :offset;", q, query)
 
+	fmt.Println(q)
+	fmt.Printf("%+v\n", gm)
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
@@ -324,7 +326,9 @@ func buildHierachy(gm mggroups.Page) string {
 func buildQuery(gm mggroups.Page, ids ...string) (string, error) {
 	queries := []string{}
 
-	queries = append(queries, fmt.Sprintf(" id in ('%s') ", strings.Join(ids, "', '")))
+	if len(ids) > 0 {
+		queries = append(queries, fmt.Sprintf(" id in ('%s') ", strings.Join(ids, "', '")))
+	}
 	if gm.Name != "" {
 		queries = append(queries, "g.name = :name")
 	}

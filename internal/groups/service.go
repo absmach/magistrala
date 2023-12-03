@@ -192,7 +192,8 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			return groups.Page{}, err
 		}
 	case auth.UsersKind:
-		if memberID != "" && res.GetUserId() != memberID {
+		switch {
+		case memberID != "" && res.GetUserId() != memberID:
 			if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.DomainType, res.GetDomainId()); err != nil {
 				return groups.Page{}, err
 			}
@@ -209,21 +210,25 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			if err != nil {
 				return groups.Page{}, err
 			}
-		} else {
-			ids, err = svc.listAllGroupsOfUserID(ctx, res.GetId(), gm.Permission)
-			if err != nil {
-				return groups.Page{}, err
+		default:
+			err := svc.checkSuperAdmin(ctx, res.GetUserId())
+			switch {
+			case err == nil:
+				if res.GetDomainId() == "" {
+					return groups.Page{}, errors.ErrMalformedEntity
+				}
+				gm.PageMeta.OwnerID = res.GetDomainId()
+			default:
+				ids, err = svc.listAllGroupsOfUserID(ctx, res.GetId(), gm.Permission)
+				if err != nil {
+					return groups.Page{}, err
+				}
 			}
 		}
 	default:
 		return groups.Page{}, errMemberKind
 	}
 
-	if len(ids) == 0 {
-		return groups.Page{
-			PageMeta: gm.PageMeta,
-		}, nil
-	}
 	gp, err := svc.groups.RetrieveByIDs(ctx, gm, ids...)
 	if err != nil {
 		return groups.Page{}, err
@@ -268,6 +273,23 @@ func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID 
 		return []string{}, err
 	}
 	return lp.GetPermissions(), nil
+}
+
+func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
+	res, err := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Permission:  auth.AdminPermission,
+		ObjectType:  auth.PlatformType,
+		Object:      auth.MagistralaObject,
+	})
+	if err != nil {
+		return err
+	}
+	if !res.Authorized {
+		return errors.ErrAuthorization
+	}
+	return nil
 }
 
 // IMPROVEMENT NOTE: remove this function and all its related auxiliary function, ListMembers are moved to respective service.

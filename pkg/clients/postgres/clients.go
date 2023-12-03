@@ -249,7 +249,7 @@ func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm client
 }
 
 func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	if len(pm.IDs) <= 0 {
+	if (len(pm.IDs) <= 0) && (pm.Owner == "") {
 		return clients.ClientsPage{
 			Page: clients.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
 		}, nil

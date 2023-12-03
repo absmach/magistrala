@@ -174,16 +174,19 @@ func (svc service) ListClients(ctx context.Context, token string, reqUserID stri
 			return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrNotFound, err)
 		}
 	default:
-		ids, err = svc.listClientIDs(ctx, res.GetId(), pm.Permission)
-		if err != nil {
-			return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrNotFound, err)
+		err := svc.checkSuperAdmin(ctx, res.GetUserId())
+		switch {
+		case err == nil:
+			if res.GetDomainId() == "" {
+				return mgclients.ClientsPage{}, svcerr.ErrMalformedEntity
+			}
+			pm.Owner = res.GetDomainId()
+		default:
+			ids, err = svc.listClientIDs(ctx, res.GetId(), pm.Permission)
+			if err != nil {
+				return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrNotFound, err)
+			}
 		}
-	}
-
-	if len(ids) == 0 {
-		return mgclients.ClientsPage{
-			Page: mgclients.Page{Total: 0, Limit: pm.Limit, Offset: pm.Offset},
-		}, nil
 	}
 
 	pm.IDs = ids
@@ -266,6 +269,23 @@ func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission
 		}
 	}
 	return ids, nil
+}
+
+func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
+	res, err := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Permission:  auth.AdminPermission,
+		ObjectType:  auth.PlatformType,
+		Object:      auth.MagistralaObject,
+	})
+	if err != nil {
+		return err
+	}
+	if !res.Authorized {
+		return svcerr.ErrAuthorization
+	}
+	return nil
 }
 
 func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {

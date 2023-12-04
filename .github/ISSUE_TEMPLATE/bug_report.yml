@@ -2,17 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 name: Bug Report
-description: File a bug/issue
-title: "[BUG] <title>"
-labels: ["bug", "needs-review", "needs-reproduction"]
+description: File a bug/issue report. Make sure to search to see if an issue already exists for the bug you encountered.
+title: "Bug: <title>"
+labels: ["bug", "needs-review", "help wanted"]
 body:
-  - type: checkboxes
-    attributes:
-      label: Is there an existing issue for this?
-      description: Please search to see if an issue already exists for the bug you encountered.
-      options:
-        - label: I have searched the existing issues
-          required: true
   - type: textarea
     attributes:
       label: What were you trying to achieve?

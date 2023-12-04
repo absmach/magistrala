@@ -1,0 +1,11 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+blank_issues_enabled: false
+contact_links:
+  - name: Google group
+    url: https://groups.google.com/forum/#!forum/mainflux
+    about: Join the Mainflux community on Google group.
+  - name: Gitter
+    url: https://gitter.im/mainflux/mainflux
+    about: Join the Mainflux community on Gitter.

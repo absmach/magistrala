@@ -8,33 +8,29 @@ OPC-UA Server is used for connectivity layer and the data is pushed via this ada
 
 ## Configuration
 
-The service is configured using the environment variables presented in the
-following table. Note that any unset variables will be replaced with their
-default values.
+The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
-| Variable                        | Description                                   | Default                          |
-| ------------------------------- | --------------------------------------------- | -------------------------------- |
-| MG_OPCUA_ADAPTER_HTTP_PORT      | Service HTTP port                             | 8180                             |
-| MG_OPCUA_ADAPTER_LOG_LEVEL      | Service Log level                             | info                             |
-| MG_MESSAGE_BROKER_URL           | Message broker instance URL                   | <nats://localhost:4222>          |
-| MG_OPCUA_ADAPTER_INTERVAL_MS    | OPC-UA Server Interval in milliseconds        | 1000                             |
-| MG_OPCUA_ADAPTER_POLICY         | OPC-UA Server Policy                          |                                  |
-| MG_OPCUA_ADAPTER_MODE           | OPC-UA Server Mode                            |                                  |
-| MG_OPCUA_ADAPTER_CERT_FILE      | OPC-UA Server Certificate file                |                                  |
-| MG_OPCUA_ADAPTER_KEY_FILE       | OPC-UA Server Key file                        |                                  |
-| MG_OPCUA_ADAPTER_ROUTE_MAP_URL  | Route-map database URL                        | <redis://localhost:6379/0>       |
-| MG_THINGS_ES_URL                | Things service event source URL               | <localhost:6379>                 |
-| MG_THINGS_ES_PASS               | Things service event source password          |                                  |
-| MG_THINGS_ES_DB                 | Things service event source DB                | 0                                |
-| MG_OPCUA_ADAPTER_EVENT_CONSUMER | Service event consumer name                   | opcua                            |
-| MG_JAEGER_URL                   | Jaeger server URL                             | <http://jaeger:14268/api/traces> |
-| MG_SEND_TELEMETRY               | Send telemetry to magistrala call home server | true                             |
+| Variable                          | Description                                             | Default                             |
+| --------------------------------- | ------------------------------------------------------- | ----------------------------------- |
+| MG_OPCUA_ADAPTER_LOG_LEVEL        | Log level for the WS Adapter (debug, info, warn, error) | info                                |
+| MG_OPCUA_ADAPTER_HTTP_HOST        | Service OPC-UA host                                     | ""                                  |
+| MG_OPCUA_ADAPTER_HTTP_PORT        | Service WOPC-UAS port                                   | 8180                                |
+| MG_OPCUA_ADAPTER_HTTP_SERVER_CERT | Path to the PEM encoded server certificate file         | ""                                  |
+| MG_OPCUA_ADAPTER_HTTP_SERVER_KEY  | Path to the PEM encoded server key file                 | ""                                  |
+| MG_OPCUA_ADAPTER_ROUTE_MAP_URL    | Route-map database URL                                  | <redis://localhost:6379/0>          |
+| MG_ES_URL                         | Event source URL                                        | <nats://localhost:4222>             |
+| MG_OPCUA_ADAPTER_EVENT_CONSUMER   | Service event consumer name                             | opcua-adapter                       |
+| MG_MESSAGE_BROKER_URL             | Message broker instance URL                             | <nats://localhost:4222>             |
+| MG_JAEGER_URL                     | Jaeger server URL                                       | <http://localhost:14268/api/traces> |
+| MG_JAEGER_TRACE_RATIO             | Jaeger sampling ratio                                   | 1.0                                 |
+| MG_SEND_TELEMETRY                 | Send telemetry to magistrala call home server           | true                                |
+| MG_OPCUA_ADAPTER_INSTANCE_ID      | Service instance ID                                     | ""                                  |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`opcua-adapter`](https://github.com/absmach/magistrala/blob/master/docker/addons/opcua-adapter/docker-compose.yml#L29-L53) service section in
-docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`opcua-adapter`](https://github.com/absmach/magistrala/blob/master/docker/addons/opcua-adapter/docker-compose.yml) service section in docker-compose to see how service is deployed.
 
+Running this service outside of container requires working instance of the message broker service, redis routemap server and Jaeger server.
 To start the service outside of the container, execute the following shell script:
 
 ```bash
@@ -50,26 +46,27 @@ make opcua
 make install
 
 # set the environment variables and run the service
-MG_OPCUA_ADAPTER_HTTP_PORT=[Service HTTP port] \
-MG_OPCUA_ADAPTER_LOG_LEVEL=[OPC-UA Adapter Log Level] \
-MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
-MG_OPCUA_ADAPTER_INTERVAL_MS: [OPC-UA Server Interval (milliseconds)] \
-MG_OPCUA_ADAPTER_POLICY=[OPC-UA Server Policy] \
-MG_OPCUA_ADAPTER_MODE=[OPC-UA Server Mode] \
-MG_OPCUA_ADAPTER_CERT_FILE=[OPC-UA Server Certificate file] \
-MG_OPCUA_ADAPTER_KEY_FILE=[OPC-UA Server Key file] \
-MG_OPCUA_ADAPTER_ROUTE_MAP_URL=[Route-map database URL] \
-MG_THINGS_ES_URL=[Things service event source URL] \
-MG_THINGS_ES_PASS=[Things service event source password] \
-MG_THINGS_ES_DB=[Things service event source password] \
-MG_OPCUA_ADAPTER_EVENT_CONSUMER=[OPC-UA adapter instance name] \
+MG_OPCUA_ADAPTER_LOG_LEVEL=info \
+MG_OPCUA_ADAPTER_HTTP_HOST=localhost \
+MG_OPCUA_ADAPTER_HTTP_PORT=8180 \
+MG_OPCUA_ADAPTER_HTTP_SERVER_CERT="" \
+MG_OPCUA_ADAPTER_HTTP_SERVER_KEY="" \
+MG_OPCUA_ADAPTER_ROUTE_MAP_URL=redis://localhost:6379/0 \
+MG_ES_URL=nats://localhost:4222 \
+MG_OPCUA_ADAPTER_EVENT_CONSUMER=opcua-adapter \
+MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
+MG_JAEGER_URL=http://localhost:14268/api/traces \
+MG_JAEGER_TRACE_RATIO=1.0 \
+MG_SEND_TELEMETRY=true \
+MG_OPCUA_ADAPTER_INSTANCE_ID="" \
 $GOBIN/magistrala-opcua
 ```
 
+Setting `MG_LORA_ADAPTER_HTTP_SERVER_CERT` and `MG_LORA_ADAPTER_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key.
+
 ### Using docker-compose
 
-This service can be deployed using docker containers.
-Docker compose file is available in `<project_root>/docker/addons/opcua-adapter/docker-compose.yml`. In order to run Magistrala opcua-adapter, execute the following command:
+This service can be deployed using docker containers. Docker compose file is available in `<project_root>/docker/addons/opcua-adapter/docker-compose.yml`. In order to run Magistrala opcua-adapter, execute the following command:
 
 ```bash
 docker-compose -f docker/addons/opcua-adapter/docker-compose.yml up -d
@@ -77,5 +74,4 @@ docker-compose -f docker/addons/opcua-adapter/docker-compose.yml up -d
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out
-the [Magistrala documentation](https://docs.mainflux.io/opcua).
+For more information about service capabilities and its usage, please check out the [Magistrala documentation](https://docs.mainflux.io/opcua).

@@ -43,29 +43,29 @@ import (
 )
 
 const (
-	svcName           = "auth"
-	envPrefixHTTP     = "MG_AUTH_HTTP_"
-	envPrefixGrpc     = "MG_AUTH_GRPC_"
-	envPrefixDB       = "MG_AUTH_DB_"
-	defDB             = "auth"
-	defSvcHTTPPort    = "8180"
-	defSvcGRPCPort    = "8181"
-	SpicePreSharedKey = "12345678"
+	svcName        = "auth"
+	envPrefixHTTP  = "MG_AUTH_HTTP_"
+	envPrefixGrpc  = "MG_AUTH_GRPC_"
+	envPrefixDB    = "MG_AUTH_DB_"
+	defDB          = "auth"
+	defSvcHTTPPort = "8180"
+	defSvcGRPCPort = "8181"
 )
 
 type config struct {
-	LogLevel           string        `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
-	SecretKey          string        `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
-	JaegerURL          url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry      bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID         string        `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
-	AccessDuration     time.Duration `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"1h"`
-	RefreshDuration    time.Duration `env:"MG_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
-	InvitationDuration time.Duration `env:"MG_AUTH_INVITATION_DURATION"     envDefault:"168h"`
-	SpicedbHost        string        `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort        string        `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbSchemaFile  string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
-	TraceRatio         float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	LogLevel            string        `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
+	SecretKey           string        `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
+	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID          string        `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
+	AccessDuration      time.Duration `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"1h"`
+	RefreshDuration     time.Duration `env:"MG_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
+	InvitationDuration  time.Duration `env:"MG_AUTH_INVITATION_DURATION"     envDefault:"168h"`
+	SpicedbHost         string        `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort         string        `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbSchemaFile   string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
+	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
+	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 }
 
 func main() {
@@ -119,7 +119,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	spicedbclient, err := initSpiceDB(cfg)
+	spicedbclient, err := initSpiceDB(ctx, cfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init spicedb grpc client : %s\n", err.Error()))
 		exitCode = 1
@@ -170,30 +170,30 @@ func main() {
 	}
 }
 
-func initSpiceDB(cfg config) (*authzed.ClientWithExperimental, error) {
+func initSpiceDB(ctx context.Context, cfg config) (*authzed.ClientWithExperimental, error) {
 	client, err := authzed.NewClientWithExperimentalAPIs(
 		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithInsecureBearerToken(SpicePreSharedKey),
+		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
 	)
 	if err != nil {
 		return client, err
 	}
 
-	if err := initSchema(client, cfg.SpicedbSchemaFile); err != nil {
+	if err := initSchema(ctx, client, cfg.SpicedbSchemaFile); err != nil {
 		return client, err
 	}
 
 	return client, nil
 }
 
-func initSchema(client *authzed.ClientWithExperimental, schemaFilePath string) error {
+func initSchema(ctx context.Context, client *authzed.ClientWithExperimental, schemaFilePath string) error {
 	schemaContent, err := os.ReadFile(schemaFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read spice db schema file : %w", err)
 	}
 
-	if _, err = client.SchemaServiceClient.WriteSchema(context.Background(), &v1.WriteSchemaRequest{Schema: string(schemaContent)}); err != nil {
+	if _, err = client.SchemaServiceClient.WriteSchema(ctx, &v1.WriteSchemaRequest{Schema: string(schemaContent)}); err != nil {
 		return fmt.Errorf("failed to create schema in spicedb : %w", err)
 	}
 

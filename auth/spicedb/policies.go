@@ -363,8 +363,8 @@ func subjectsToAuthPolicies(subjects []*v1.LookupSubjectsResponse) []auth.Policy
 	return policies
 }
 
-func (pa *policyAgent) Watch(continueToken string) {
-	stream, err := pa.client.WatchServiceClient.Watch(context.Background(), &v1.WatchRequest{
+func (pa *policyAgent) Watch(ctx context.Context, continueToken string) {
+	stream, err := pa.client.WatchServiceClient.Watch(ctx, &v1.WatchRequest{
 		OptionalObjectTypes: []string{},
 		OptionalStartCursor: &v1.ZedToken{Token: continueToken},
 	})

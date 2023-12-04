@@ -52,7 +52,7 @@ type config struct {
 	EncKey         string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
 	ESConsumerName string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
 	ThingsURL      string  `env:"MG_THINGS_URL"                 envDefault:"http://localhost:9000"`
-	JaegerURL      url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL      url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:14268/api/traces"`
 	SendTelemetry  bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
 	InstanceID     string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
 	ESURL          string  `env:"MG_ES_URL"                     envDefault:"nats://localhost:4222"`

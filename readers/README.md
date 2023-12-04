@@ -1,10 +1,7 @@
 # Readers
 
-Readers provide an implementation of various `message readers`.
-Message readers are services that consume normalized (in `SenML` format)
-Magistrala messages from data storage and opens HTTP API for message consumption.
+Readers provide implementations of various `message readers`. Message readers are services that consume normalized (in `SenML` format) Magistrala messages from data storage and expose HTTP API for message consumption.
 
-For an in-depth explanation of the usage of `reader`, as well as thorough
-understanding of Magistrala, please check out the [official documentation][doc].
+For an in-depth explanation of the usage of `reader`, as well as thorough understanding of Magistrala, please check out the [official documentation][doc].
 
 [doc]: https://docs.mainflux.io

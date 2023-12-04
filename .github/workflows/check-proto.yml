@@ -8,15 +8,17 @@ on:
     branches:
       - main
     paths:
-      - "workflows/**"
+      - ".github/workflows/check-proto.yml"
       - "auth.proto"
       - "auth/*.pb.go"
       - "pkg/messaging/message.proto"
       - "pkg/messaging/*.pb.go"
+
   pull_request:
     branches:
       - main
     paths:
+      - ".github/workflows/check-proto.yml"
       - "auth.proto"
       - "auth/*.pb.go"
       - "pkg/messaging/message.proto"

@@ -12,13 +12,12 @@ jobs:
   lint-and-build: # Linting and building are combined to save time for setting up Go
     name: Lint and Build
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name : Setup Go
+      - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version: 1.21.x
@@ -29,6 +28,10 @@ jobs:
         with:
           version: latest
 
+      - name: Build all Binaries
+        run: |
+          make all -j $(nproc)
+
       - name: Compile check for rabbitmq
         run: |
           MG_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
@@ -38,96 +41,239 @@ jobs:
           MG_ES_TYPE=redis make mqtt
 
   run-tests:
-    name: Run ${{ matrix.service.name }} Tests
+    name: Run tests
     runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      matrix:        
-        service:
-          - name: users
-            paths: 'users/** cmd/users/** auth/service.go auth/api/grpc/client.go'
+    needs: lint-and-build
 
-          - name: things
-            paths: 'things/** cmd/things/** auth/service.go auth/api/grpc/client.go'
-
-          - name: coap
-            paths: 'coap/** cmd/coap/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: http
-            paths: 'http/** cmd/http/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: mqtt
-            paths: 'mqtt/** cmd/mqtt/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-            
-          - name: ws
-            paths: 'ws/** cmd/ws/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: certs
-            paths:  'certs/** cmd/certs/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: provision
-            paths: 'provision/** cmd/provision/**'
-
-          - name: cli
-            paths: 'cli/** cmd/cli/**'
-
-          - name: lora
-            paths: 'lora/** cmd/lora/**'
-
-          - name: opcua
-            paths: 'opcua/** cmd/opcua/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: logger
-            paths: 'logger/**'
-
-          - name: tools
-            paths: 'tools/**'
-
-          - name: internal
-            paths: 'internal/**'
-
-          - name: pkg
-            paths: 'pkg/**'
-
-          - name: readers
-            paths: 'readers/** cmd/cassandra-reader/** cmd/influxdb-reader/** cmd/mongodb-reader/** cmd/postgres-reader/** cmd/timescale-reader/* things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: consumers
-            paths: 'consumers/** cmd/cassandra-writer/** cmd/influxdb-writer/** cmd/mongodb-writer/** cmd/postgres-writer/** cmd/timescale-writer/** cmd/smpp-notifier/** cmd/smtp-notifier/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: twins
-            paths: 'twins/** cmd/twins/** things/api/grpc/** auth/service.go auth/api/grpc/client.go'
-
-          - name: bootstrap
-            paths: 'bootstrap/** cmd/bootstrap/** things/policies/postgres/polices.go things/policies/api/grpc/client.go'
-            
-    steps: 
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v40
-
       - name: Check for changes in specific paths
         uses: dorny/paths-filter@v2
         id: changes
-        with: 
+        with:
           filters: |
-            any: 
-              - '${{ matrix.service.paths }}/**'
+            bootstrap:
+              - "bootstrap/**"
+              - "cmd/bootstrap/**"
+              - "things/policies/postgres/polices.go"
+              - "things/policies/api/grpc/client.go"
 
-      - name: Run ${{ matrix.service.name }} Test
+            certs:
+              - "certs/**"
+              - "cmd/certs/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            coap:
+              - "coap/**"
+              - "cmd/coap/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            consumers:
+              - "consumers/**"
+              - "cmd/cassandra-writer/**"
+              - "cmd/influxdb-writer/**"
+              - "cmd/mongodb-writer/**"
+              - "cmd/postgres-writer/**"
+              - "cmd/timescale-writer/**"
+              - "cmd/smpp-notifier/**"
+              - "cmd/smtp-notifier/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            http:
+              - "http/**"
+              - "cmd/http/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            internal:
+              - "internal/**"
+
+            lora:
+              - "lora/**"
+              - "cmd/lora/**"
+              
+            logger:
+              - "logger/**"
+
+            mqtt:
+              - "mqtt/**"
+              - "cmd/mqtt/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            opcua:
+              - "opcua/**"
+              - "cmd/opcua/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            pkg:
+              - "pkg/**"
+
+            provision:
+              - "provision/**"
+              - "cmd/provision/**"
+
+            readers:
+              - "readers/**"
+              - "cmd/cassandra-reader/**"
+              - "cmd/influxdb-reader/**"
+              - "cmd/mongodb-reader/**"
+              - "cmd/postgres-reader/**"
+              - "cmd/timescale-reader/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            things:
+              - "things/**"
+              - "cmd/things/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            twins:
+              - "twins/**"
+              - "cmd/twins/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            users:
+              - "users/**"
+              - "cmd/users/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+            ws:
+              - "ws/**"
+              - "cmd/ws/**"
+              - "things/api/grpc/**"
+              - "auth/service.go"
+              - "auth/api/grpc/client.go"
+
+      - name: Create coverage directory
         run: |
-          cd ${{ matrix.service.name }}
-          go test ./... --race -v -coverprofile=coverage.out
-          go tool cover -html=coverage.out -o coverage.html
+          mkdir coverage
+
+      - name: Run bootstrap tests
+        if: steps.changes.outputs.bootstrap == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/bootstrap.out ./bootstrap/...
+          go tool cover -html=coverage/bootstrap.out -o coverage/bootstrap.html
+
+      - name: Run certs tests
+        if: steps.changes.outputs.certs == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/certs.out ./certs/...        
+          go tool cover -html=coverage/certs.out -o coverage/certs.html
+
+      - name: Run CoAP tests
+        if: steps.changes.outputs.coap == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/coap.out ./coap/...
+          go tool cover -html=coverage/coap.out -o coverage/coap.html
+
+      - name: Run consumers tests
+        if: steps.changes.outputs.consumers == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/consumers.out ./consumers/...
+          go tool cover -html=coverage/consumers.out -o coverage/consumers.html
+
+      - name: Run HTTP tests
+        if: steps.changes.outputs.http == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/http.out ./http/...
+          go tool cover -html=coverage/http.out -o coverage/http.html
+
+      - name: Run internal tests
+        if: steps.changes.outputs.internal == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/internal.out ./internal/...
+          go tool cover -html=coverage/internal.out -o coverage/internal.html
+
+      - name: Run logger tests
+        if: steps.changes.outputs.logger == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/logger.out ./logger/...
+          go tool cover -html=coverage/logger.out -o coverage/logger.html
+
+      - name: Run LoRa tests
+        if: steps.changes.outputs.lora == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/lora.out ./lora/...
+          go tool cover -html=coverage/lora.out -o coverage/lora.html
+
+      - name: Run MQTT tests
+        if: steps.changes.outputs.mqtt == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/mqtt.out ./mqtt/...
+          go tool cover -html=coverage/mqtt.out -o coverage/mqtt.html
+
+      - name: Run OPC-UA tests
+        if: steps.changes.outputs.opcua == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/opcua.out ./opcua/...
+          go tool cover -html=coverage/opcua.out -o coverage/opcua.html
+
+      - name: Run pkg tests
+        if: steps.changes.outputs.pkg == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg.out ./pkg/...
+          go tool cover -html=coverage/pkg.out -o coverage/pkg.html
+
+      - name: Run provision tests
+        if: steps.changes.outputs.provision == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/provision.out ./provision/...
+          go tool cover -html=coverage/provision.out -o coverage/provision.html
+
+      - name: Run readers tests
+        if: steps.changes.outputs.readers == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/readers.out ./readers/...
+          go tool cover -html=coverage/readers.out -o coverage/readers.html
+
+      - name: Run things tests
+        if: steps.changes.outputs.things == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/things.out ./things/...
+          go tool cover -html=coverage/things.out -o coverage/things.html
+
+      - name: Run twins tests
+        if: steps.changes.outputs.twins == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/twins.out ./twins/...
+          go tool cover -html=coverage/twins.out -o coverage/twins.html
+
+      - name: Run users tests
+        if: steps.changes.outputs.users == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/users.out ./users/...
+          go tool cover -html=coverage/users.out -o coverage/users.html
+
+      - name: Run WebSocket tests
+        if: steps.changes.outputs.ws == 'true'
+        run: |
+          go test --race -v -count=1 =coverprofile=coverage/ws.out ./ws/...
+          go tool cover -html=coverage/ws.out -o coverage/ws.html
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV }}
+          directory: ./coverage/
           name: codecov-umbrella
           verbose: true

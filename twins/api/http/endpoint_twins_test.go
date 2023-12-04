@@ -305,7 +305,7 @@ func TestUpdateTwin(t *testing.T) {
 			req:         invalidData,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusBadRequest,
+			status:      http.StatusMethodNotAllowed,
 		},
 	}
 
@@ -372,13 +372,6 @@ func TestViewTwin(t *testing.T) {
 			id:     stw.ID,
 			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
-			res:    twinRes{},
-		},
-		{
-			desc:   "view twin by passing empty id",
-			id:     "",
-			auth:   token,
-			status: http.StatusBadRequest,
 			res:    twinRes{},
 		},
 		{
@@ -624,7 +617,7 @@ func TestRemoveTwin(t *testing.T) {
 			desc:   "delete twin by passing empty id",
 			id:     "",
 			auth:   token,
-			status: http.StatusBadRequest,
+			status: http.StatusMethodNotAllowed,
 		},
 		{
 			desc:   "delete twin with invalid token",

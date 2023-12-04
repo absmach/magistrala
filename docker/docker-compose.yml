@@ -116,6 +116,7 @@ services:
       MG_AUTH_GRPC_SERVER_CERT: ${MG_AUTH_GRPC_SERVER_CERT:+/auth-grpc-server.crt}
       MG_AUTH_GRPC_SERVER_KEY: ${MG_AUTH_GRPC_SERVER_KEY:+/auth-grpc-server.key}
       MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_AUTH_GRPC_CLIENT_CA_CERTS: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:+/auth-grpc-client-ca.crt}
       MG_AUTH_DB_HOST: ${MG_AUTH_DB_HOST}
       MG_AUTH_DB_PORT: ${MG_AUTH_DB_PORT}
       MG_AUTH_DB_USER: ${MG_AUTH_DB_USER}

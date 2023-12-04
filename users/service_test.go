@@ -241,8 +241,8 @@ func TestRegisterClient(t *testing.T) {
 		if tc.token == inValidToken {
 			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: inValidToken}).Return(&magistrala.IdentityRes{}, svcerror.ErrAuthentication)
 		}
-		repoCall1 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Authorized: true}, nil)
-		repoCall2 := auth.On("DeletePolicy", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
+		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
+		repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: true}, nil)
 		repoCall3 := cRepo.On("Save", context.Background(), mock.Anything).Return(&mgclients.Client{}, tc.err)
 		registerTime := time.Now()
 		expected, err := svc.RegisterClient(context.Background(), tc.token, tc.client)

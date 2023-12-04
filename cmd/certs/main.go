@@ -45,9 +45,8 @@ const (
 
 type config struct {
 	LogLevel      string  `env:"MG_CERTS_LOG_LEVEL"        envDefault:"info"`
-	CertsURL      string  `env:"MG_SDK_CERTS_URL"          envDefault:"http://localhost"`
-	ThingsURL     string  `env:"MG_THINGS_URL"             envDefault:"http://things:9000"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
+	ThingsURL     string  `env:"MG_THINGS_URL"             envDefault:"http://localhost:9000"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"             envDefault:"http://localhost:14268/api/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"         envDefault:"true"`
 	InstanceID    string  `env:"MG_CERTS_INSTANCE_ID"      envDefault:""`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
@@ -175,7 +174,6 @@ func newService(auth magistrala.AuthServiceClient, db *sqlx.DB, tracer trace.Tra
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	certsRepo := certspg.NewRepository(database, logger)
 	config := mgsdk.Config{
-		CertsURL:  cfg.CertsURL,
 		ThingsURL: cfg.ThingsURL,
 	}
 	sdk := mgsdk.NewSDK(config)

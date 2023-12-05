@@ -267,7 +267,7 @@ jobs:
       - name: Run WebSocket tests
         if: steps.changes.outputs.ws == 'true'
         run: |
-          go test --race -v -count=1 =coverprofile=coverage/ws.out ./ws/...
+          go test --race -v -count=1 -coverprofile=coverage/ws.out ./ws/...
           go tool cover -html=coverage/ws.out -o coverage/ws.html
 
       - name: Upload coverage

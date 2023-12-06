@@ -190,7 +190,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger mglog.Logger) (users.Service, groups.Service, error) {
+func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger mglog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := clientspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -198,13 +198,13 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 	idp := uuid.New()
 	hsr := hasher.New()
 
-	emailer, err := emailer.New(c.ResetURL, &ec)
+	emailerClient, err := emailer.New(c.ResetURL, &ec)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := users.NewService(cRepo, auth, emailer, hsr, idp, c.PassRegex, c.SelfRegister)
-	gsvc := mggroups.NewService(gRepo, idp, auth)
+	csvc := users.NewService(cRepo, authClient, emailerClient, hsr, idp, c.PassRegex, c.SelfRegister)
+	gsvc := mggroups.NewService(gRepo, idp, authClient)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
 	if err != nil {
@@ -229,7 +229,7 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-	if err := createAdminPolicy(ctx, clientID, auth); err != nil {
+	if err := createAdminPolicy(ctx, clientID, authClient); err != nil {
 		return nil, nil, err
 	}
 	return csvc, gsvc, err
@@ -275,8 +275,8 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 	return client.ID, nil
 }
 
-func createAdminPolicy(ctx context.Context, clientID string, auth magistrala.AuthServiceClient) error {
-	res, err := auth.Authorize(ctx, &magistrala.AuthorizeReq{
+func createAdminPolicy(ctx context.Context, clientID string, authClient magistrala.AuthServiceClient) error {
+	res, err := authClient.Authorize(ctx, &magistrala.AuthorizeReq{
 		SubjectType: authSvc.UserType,
 		Subject:     clientID,
 		Permission:  authSvc.AdministratorRelation,
@@ -284,7 +284,7 @@ func createAdminPolicy(ctx context.Context, clientID string, auth magistrala.Aut
 		ObjectType:  authSvc.PlatformType,
 	})
 	if err != nil || !res.Authorized {
-		addPolicyRes, err := auth.AddPolicy(ctx, &magistrala.AddPolicyReq{
+		addPolicyRes, err := authClient.AddPolicy(ctx, &magistrala.AddPolicyReq{
 			SubjectType: authSvc.UserType,
 			Subject:     clientID,
 			Relation:    authSvc.AdministratorRelation,

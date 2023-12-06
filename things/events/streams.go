@@ -125,7 +125,7 @@ func (es *eventStore) ViewClientPerms(ctx context.Context, token, id string) ([]
 	return permissions, nil
 }
 
-func (es *eventStore) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+func (es *eventStore) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	cp, err := es.svc.ListClients(ctx, token, reqUserID, pm)
 	if err != nil {
 		return cp, err
@@ -222,7 +222,7 @@ func (es *eventStore) Authorize(ctx context.Context, req *magistrala.AuthorizeRe
 	return thingID, nil
 }
 
-func (es *eventStore) Share(ctx context.Context, token, id string, relation string, userids ...string) error {
+func (es *eventStore) Share(ctx context.Context, token, id, relation string, userids ...string) error {
 	if err := es.svc.Share(ctx, token, id, relation, userids...); err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func (es *eventStore) Share(ctx context.Context, token, id string, relation stri
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) Unshare(ctx context.Context, token, id string, relation string, userids ...string) error {
+func (es *eventStore) Unshare(ctx context.Context, token, id, relation string, userids ...string) error {
 	if err := es.svc.Unshare(ctx, token, id, relation, userids...); err != nil {
 		return err
 	}

@@ -11,13 +11,13 @@ import (
 
 	"github.com/absmach/magistrala/certs/postgres"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
 )
 
 var (
-	testLog, _ = logger.New(os.Stdout, logger.Info.String())
+	testLog, _ = mglog.New(os.Stdout, mglog.Info.String())
 	db         *sqlx.DB
 )
 

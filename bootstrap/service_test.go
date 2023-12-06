@@ -67,13 +67,13 @@ var (
 )
 
 func newService(url string, auth magistrala.AuthServiceClient) bootstrap.Service {
-	things := mocks.NewConfigsRepository()
+	thingsRepo := mocks.NewConfigsRepository()
 	config := mgsdk.Config{
 		ThingsURL: url,
 	}
 
 	sdk := mgsdk.NewSDK(config)
-	return bootstrap.New(auth, things, sdk, encKey)
+	return bootstrap.New(auth, thingsRepo, sdk, encKey)
 }
 
 func newThingsService() (things.Service, mggroups.Service, *thmocks.Repository, *chmocks.Repository, *authmocks.Service) {

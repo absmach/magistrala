@@ -33,11 +33,11 @@ type service struct {
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(g groups.Repository, idp magistrala.IDProvider, auth magistrala.AuthServiceClient) groups.Service {
+func NewService(g groups.Repository, idp magistrala.IDProvider, authClient magistrala.AuthServiceClient) groups.Service {
 	return service{
 		groups:     g,
 		idProvider: idp,
-		auth:       auth,
+		auth:       authClient,
 	}
 }
 
@@ -115,7 +115,7 @@ func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Grou
 	return svc.groups.RetrieveByID(ctx, id)
 }
 
-func (svc service) ViewGroupPerms(ctx context.Context, token string, id string) ([]string, error) {
+func (svc service) ViewGroupPerms(ctx context.Context, token, id string) ([]string, error) {
 	res, err := svc.identify(ctx, token)
 	if err != nil {
 		return nil, err
@@ -452,16 +452,16 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 }
 
 func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) (err error) {
-	groups, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
+	groupsPage, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
 	if err != nil {
 		return errors.Wrap(errRetrieveGroups, err)
 	}
-	if len(groups.Groups) == 0 {
+	if len(groupsPage.Groups) == 0 {
 		return errGroupIDs
 	}
 	var addPolicies magistrala.AddPoliciesReq
 	var deletePolicies magistrala.DeletePoliciesReq
-	for _, group := range groups.Groups {
+	for _, group := range groupsPage.Groups {
 		if group.Parent != "" {
 			return fmt.Errorf("%s group already have parent", group.ID)
 		}
@@ -498,16 +498,16 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 }
 
 func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) error {
-	groups, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
+	groupsPage, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
 	if err != nil {
 		return errors.Wrap(errRetrieveGroups, err)
 	}
-	if len(groups.Groups) == 0 {
+	if len(groupsPage.Groups) == 0 {
 		return errGroupIDs
 	}
 	var addPolicies magistrala.AddPoliciesReq
 	var deletePolicies magistrala.DeletePoliciesReq
-	for _, group := range groups.Groups {
+	for _, group := range groupsPage.Groups {
 		if group.Parent != "" && group.Parent != parentGroupID {
 			return fmt.Errorf("%s group doesn't have same parent", group.ID)
 		}

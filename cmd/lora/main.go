@@ -166,9 +166,9 @@ func main() {
 	}
 }
 
-func connectToMQTTBroker(url, user, password string, timeout time.Duration, logger mglog.Logger) (mqttpaho.Client, error) {
+func connectToMQTTBroker(burl, user, password string, timeout time.Duration, logger mglog.Logger) (mqttpaho.Client, error) {
 	opts := mqttpaho.NewClientOptions()
-	opts.AddBroker(url)
+	opts.AddBroker(burl)
 	opts.SetUsername(user)
 	opts.SetPassword(password)
 	opts.SetOnConnectHandler(func(_ mqttpaho.Client) {
@@ -188,9 +188,9 @@ func connectToMQTTBroker(url, user, password string, timeout time.Duration, logg
 }
 
 func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Duration, topic string, logger mglog.Logger) error {
-	mqtt := mqtt.NewBroker(svc, mc, timeout, logger)
+	mqttBroker := mqtt.NewBroker(svc, mc, timeout, logger)
 	logger.Info("Subscribed to Lora MQTT broker")
-	if err := mqtt.Subscribe(topic); err != nil {
+	if err := mqttBroker.Subscribe(topic); err != nil {
 		return fmt.Errorf("failed to subscribe to Lora MQTT broker: %s", err)
 	}
 	return nil

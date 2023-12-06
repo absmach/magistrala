@@ -85,11 +85,11 @@ type Result struct {
 }
 
 // New returns new provision service.
-func New(cfg Config, sdk sdk.SDK, logger mglog.Logger) Service {
+func New(cfg Config, mgsdk sdk.SDK, logger mglog.Logger) Service {
 	return &provisionService{
 		logger: logger,
 		conf:   cfg,
-		sdk:    sdk,
+		sdk:    mgsdk,
 	}
 }
 

@@ -6,7 +6,7 @@ package gopcua
 import (
 	"context"
 
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/opcua"
 	"github.com/absmach/magistrala/pkg/errors"
 	opcuagocpua "github.com/gopcua/opcua"
@@ -36,11 +36,11 @@ var _ opcua.Browser = (*browser)(nil)
 
 type browser struct {
 	ctx    context.Context
-	logger logger.Logger
+	logger mglog.Logger
 }
 
 // NewBrowser returns new OPC-UA browser instance.
-func NewBrowser(ctx context.Context, log logger.Logger) opcua.Browser {
+func NewBrowser(ctx context.Context, log mglog.Logger) opcua.Browser {
 	return browser{
 		ctx:    ctx,
 		logger: log,

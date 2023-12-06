@@ -504,7 +504,7 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 	return svc.domains.Save(ctx, d)
 }
 
-func (svc service) RetrieveDomain(ctx context.Context, token string, id string) (Domain, error) {
+func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain, error) {
 	if err := svc.Authorize(ctx, PolicyReq{
 		Subject:     token,
 		SubjectType: UserType,
@@ -519,7 +519,7 @@ func (svc service) RetrieveDomain(ctx context.Context, token string, id string) 
 	return svc.domains.RetrieveByID(ctx, id)
 }
 
-func (svc service) UpdateDomain(ctx context.Context, token string, id string, d DomainReq) (Domain, error) {
+func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainReq) (Domain, error) {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
@@ -537,7 +537,7 @@ func (svc service) UpdateDomain(ctx context.Context, token string, id string, d 
 	return svc.domains.Update(ctx, id, key.User, d)
 }
 
-func (svc service) ChangeDomainStatus(ctx context.Context, token string, id string, d DomainReq) (Domain, error) {
+func (svc service) ChangeDomainStatus(ctx context.Context, token, id string, d DomainReq) (Domain, error) {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
@@ -582,7 +582,7 @@ func (svc service) ListDomains(ctx context.Context, token string, p Page) (Domai
 	return dp, nil
 }
 
-func (svc service) AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
 	if err := svc.Authorize(ctx, PolicyReq{
 		Subject:     token,
 		SubjectType: UserType,
@@ -620,7 +620,7 @@ func (svc service) AssignUsers(ctx context.Context, token string, id string, use
 	return svc.addDomainPolicies(ctx, id, relation, userIds...)
 }
 
-func (svc service) UnassignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+func (svc service) UnassignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
 	if err := svc.Authorize(ctx, PolicyReq{
 		Subject:     token,
 		SubjectType: UserType,
@@ -647,7 +647,7 @@ func (svc service) UnassignUsers(ctx context.Context, token string, id string, u
 }
 
 // IMPROVEMENT NOTE: Take decision: Only Patform admin or both Patform and domain admins can see others users domain.
-func (svc service) ListUserDomains(ctx context.Context, token string, userID string, p Page) (DomainsPage, error) {
+func (svc service) ListUserDomains(ctx context.Context, token, userID string, p Page) (DomainsPage, error) {
 	res, err := svc.Identify(ctx, token)
 	if err != nil {
 		return DomainsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
@@ -803,7 +803,7 @@ func (svc service) removeDomainPolicies(ctx context.Context, domainID, relation 
 	return svc.domains.DeletePolicies(ctx, pcs...)
 }
 
-func EncodeDomainUserID(domainID string, userID string) string {
+func EncodeDomainUserID(domainID, userID string) string {
 	if domainID == "" || userID == "" {
 		return ""
 	}

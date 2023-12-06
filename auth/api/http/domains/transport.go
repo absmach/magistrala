@@ -7,13 +7,13 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func MakeHandler(svc auth.Service, mux *chi.Mux, logger logger.Logger) *chi.Mux {
+func MakeHandler(svc auth.Service, mux *chi.Mux, logger mglog.Logger) *chi.Mux {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}

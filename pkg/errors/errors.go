@@ -68,7 +68,7 @@ func (ce *customError) MarshalJSON() ([]byte, error) {
 }
 
 // Contains inspects if e2 error is contained in any layer of e1 error.
-func Contains(e1 error, e2 error) bool {
+func Contains(e1, e2 error) bool {
 	if e1 == nil || e2 == nil {
 		return e2 == e1
 	}
@@ -83,7 +83,7 @@ func Contains(e1 error, e2 error) bool {
 }
 
 // Wrap returns an Error that wrap err with wrapper.
-func Wrap(wrapper error, err error) error {
+func Wrap(wrapper, err error) error {
 	if wrapper == nil || err == nil {
 		return wrapper
 	}

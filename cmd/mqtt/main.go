@@ -208,14 +208,14 @@ func main() {
 	}
 }
 
-func proxyMQTT(ctx context.Context, cfg config, logger mglog.Logger, handler session.Handler) error {
+func proxyMQTT(ctx context.Context, cfg config, logger mglog.Logger, sessionHandler session.Handler) error {
 	address := fmt.Sprintf(":%s", cfg.MQTTPort)
 	target := fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort)
-	mp := mp.New(address, target, handler, logger)
+	mproxy := mp.New(address, target, sessionHandler, logger)
 
 	errCh := make(chan error)
 	go func() {
-		errCh <- mp.Listen(ctx)
+		errCh <- mproxy.Listen(ctx)
 	}()
 
 	select {
@@ -227,9 +227,9 @@ func proxyMQTT(ctx context.Context, cfg config, logger mglog.Logger, handler ses
 	}
 }
 
-func proxyWS(ctx context.Context, cfg config, logger mglog.Logger, handler session.Handler) error {
+func proxyWS(ctx context.Context, cfg config, logger mglog.Logger, sessionHandler session.Handler) error {
 	target := fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort)
-	wp := websocket.New(target, cfg.HTTPTargetPath, "ws", handler, logger)
+	wp := websocket.New(target, cfg.HTTPTargetPath, "ws", sessionHandler, logger)
 	http.Handle("/mqtt", wp.Handler())
 
 	errCh := make(chan error)

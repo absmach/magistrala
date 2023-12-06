@@ -204,7 +204,7 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 }
 
 // Update updates the client name and metadata.
-func (repo domainRepo) Update(ctx context.Context, id string, userID string, dr auth.DomainReq) (auth.Domain, error) {
+func (repo domainRepo) Update(ctx context.Context, id, userID string, dr auth.DomainReq) (auth.Domain, error) {
 	var query []string
 	var upq string
 	var ws string = "AND status = :status"

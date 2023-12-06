@@ -176,7 +176,7 @@ func (ms *metricsMiddleware) CreateDomain(ctx context.Context, token string, d a
 	return ms.svc.CreateDomain(ctx, token, d)
 }
 
-func (ms *metricsMiddleware) RetrieveDomain(ctx context.Context, token string, id string) (auth.Domain, error) {
+func (ms *metricsMiddleware) RetrieveDomain(ctx context.Context, token, id string) (auth.Domain, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "retrieve_domain").Add(1)
 		ms.latency.With("method", "retrieve_domain").Observe(time.Since(begin).Seconds())
@@ -184,7 +184,7 @@ func (ms *metricsMiddleware) RetrieveDomain(ctx context.Context, token string, i
 	return ms.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) UpdateDomain(ctx context.Context, token string, id string, d auth.DomainReq) (auth.Domain, error) {
+func (ms *metricsMiddleware) UpdateDomain(ctx context.Context, token, id string, d auth.DomainReq) (auth.Domain, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_domain").Add(1)
 		ms.latency.With("method", "update_domain").Observe(time.Since(begin).Seconds())
@@ -192,7 +192,7 @@ func (ms *metricsMiddleware) UpdateDomain(ctx context.Context, token string, id 
 	return ms.svc.UpdateDomain(ctx, token, id, d)
 }
 
-func (ms *metricsMiddleware) ChangeDomainStatus(ctx context.Context, token string, id string, d auth.DomainReq) (auth.Domain, error) {
+func (ms *metricsMiddleware) ChangeDomainStatus(ctx context.Context, token, id string, d auth.DomainReq) (auth.Domain, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "change_domain_status").Add(1)
 		ms.latency.With("method", "change_domain_status").Observe(time.Since(begin).Seconds())
@@ -208,7 +208,7 @@ func (ms *metricsMiddleware) ListDomains(ctx context.Context, token string, page
 	return ms.svc.ListDomains(ctx, token, page)
 }
 
-func (ms *metricsMiddleware) AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+func (ms *metricsMiddleware) AssignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "assign_users").Add(1)
 		ms.latency.With("method", "assign_users").Observe(time.Since(begin).Seconds())
@@ -216,7 +216,7 @@ func (ms *metricsMiddleware) AssignUsers(ctx context.Context, token string, id s
 	return ms.svc.AssignUsers(ctx, token, id, userIds, relation)
 }
 
-func (ms *metricsMiddleware) UnassignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+func (ms *metricsMiddleware) UnassignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "unassign_users").Add(1)
 		ms.latency.With("method", "unassign_users").Observe(time.Since(begin).Seconds())
@@ -224,7 +224,7 @@ func (ms *metricsMiddleware) UnassignUsers(ctx context.Context, token string, id
 	return ms.svc.UnassignUsers(ctx, token, id, userIds, relation)
 }
 
-func (ms *metricsMiddleware) ListUserDomains(ctx context.Context, token string, userID string, page auth.Page) (auth.DomainsPage, error) {
+func (ms *metricsMiddleware) ListUserDomains(ctx context.Context, token, userID string, page auth.Page) (auth.DomainsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_user_domains").Add(1)
 		ms.latency.With("method", "list_user_domains").Observe(time.Since(begin).Seconds())

@@ -101,7 +101,7 @@ func (es eventStore) RemoveTwin(ctx context.Context, token, id string) error {
 	return nil
 }
 
-func (es eventStore) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
+func (es eventStore) ListTwins(ctx context.Context, token string, offset, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
 	tp, err := es.svc.ListTwins(ctx, token, offset, limit, name, metadata)
 	if err != nil {
 		return tp, err
@@ -120,7 +120,7 @@ func (es eventStore) ListTwins(ctx context.Context, token string, offset uint64,
 	return tp, nil
 }
 
-func (es eventStore) ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (twins.StatesPage, error) {
+func (es eventStore) ListStates(ctx context.Context, token string, offset, limit uint64, id string) (twins.StatesPage, error) {
 	sp, err := es.svc.ListStates(ctx, token, offset, limit, id)
 	if err != nil {
 		return sp, err

@@ -166,8 +166,8 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.AuthServ
 }
 
 func (client grpcClient) Issue(ctx context.Context, req *magistrala.IssueReq, _ ...grpc.CallOption) (*magistrala.Token, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.issue(ctx, issueReq{userID: req.GetUserId(), domainID: req.GetDomainId(), keyType: auth.KeyType(req.Type)})
 	if err != nil {
@@ -186,8 +186,8 @@ func decodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, e
 }
 
 func (client grpcClient) Refresh(ctx context.Context, req *magistrala.RefreshReq, _ ...grpc.CallOption) (*magistrala.Token, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.refresh(ctx, refreshReq{refreshToken: req.GetRefreshToken(), domainID: req.GetDomainId()})
 	if err != nil {
@@ -206,8 +206,8 @@ func decodeRefreshResponse(_ context.Context, grpcRes interface{}) (interface{},
 }
 
 func (client grpcClient) Identify(ctx context.Context, token *magistrala.IdentityReq, _ ...grpc.CallOption) (*magistrala.IdentityRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.identify(ctx, identityReq{token: token.GetToken()})
 	if err != nil {
@@ -229,8 +229,8 @@ func decodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}
 }
 
 func (client grpcClient) Authorize(ctx context.Context, req *magistrala.AuthorizeReq, _ ...grpc.CallOption) (r *magistrala.AuthorizeRes, err error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.authorize(ctx, authReq{
 		Domain:      req.GetDomain(),
@@ -270,8 +270,8 @@ func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}
 }
 
 func (client grpcClient) AddPolicy(ctx context.Context, in *magistrala.AddPolicyReq, opts ...grpc.CallOption) (*magistrala.AddPolicyRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.addPolicy(ctx, policyReq{
 		Domain:      in.GetDomain(),
@@ -313,8 +313,8 @@ func encodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}
 }
 
 func (client grpcClient) AddPolicies(ctx context.Context, in *magistrala.AddPoliciesReq, opts ...grpc.CallOption) (*magistrala.AddPoliciesRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 	r := policiesReq{}
 	if in.GetAddPoliciesReq() != nil {
 		for _, mgApr := range in.GetAddPoliciesReq() {
@@ -368,8 +368,8 @@ func encodeAddPoliciesRequest(_ context.Context, grpcReq interface{}) (interface
 }
 
 func (client grpcClient) DeletePolicy(ctx context.Context, in *magistrala.DeletePolicyReq, opts ...grpc.CallOption) (*magistrala.DeletePolicyRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.deletePolicy(ctx, policyReq{
 		Domain:      in.GetDomain(),
@@ -411,8 +411,8 @@ func encodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interfac
 }
 
 func (client grpcClient) DeletePolicies(ctx context.Context, in *magistrala.DeletePoliciesReq, opts ...grpc.CallOption) (*magistrala.DeletePoliciesRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 	r := policiesReq{}
 
 	if in.GetDeletePoliciesReq() != nil {
@@ -466,8 +466,8 @@ func encodeDeletePoliciesRequest(_ context.Context, grpcReq interface{}) (interf
 }
 
 func (client grpcClient) ListObjects(ctx context.Context, in *magistrala.ListObjectsReq, opts ...grpc.CallOption) (*magistrala.ListObjectsRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.listObjects(ctx, listObjectsReq{
 		Domain:      in.GetDomain(),
@@ -505,8 +505,8 @@ func encodeListObjectsRequest(_ context.Context, grpcReq interface{}) (interface
 }
 
 func (client grpcClient) ListAllObjects(ctx context.Context, in *magistrala.ListObjectsReq, opts ...grpc.CallOption) (*magistrala.ListObjectsRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.listAllObjects(ctx, listObjectsReq{
 		Domain:      in.GetDomain(),
@@ -526,8 +526,8 @@ func (client grpcClient) ListAllObjects(ctx context.Context, in *magistrala.List
 }
 
 func (client grpcClient) CountObjects(ctx context.Context, in *magistrala.CountObjectsReq, opts ...grpc.CallOption) (*magistrala.CountObjectsRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.countObjects(ctx, listObjectsReq{
 		Domain:      in.GetDomain(),
@@ -565,8 +565,8 @@ func encodeCountObjectsRequest(_ context.Context, grpcReq interface{}) (interfac
 }
 
 func (client grpcClient) ListSubjects(ctx context.Context, in *magistrala.ListSubjectsReq, opts ...grpc.CallOption) (*magistrala.ListSubjectsRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.listSubjects(ctx, listSubjectsReq{
 		Domain:        in.GetDomain(),
@@ -605,8 +605,8 @@ func encodeListSubjectsRequest(_ context.Context, grpcReq interface{}) (interfac
 }
 
 func (client grpcClient) ListAllSubjects(ctx context.Context, in *magistrala.ListSubjectsReq, opts ...grpc.CallOption) (*magistrala.ListSubjectsRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.listAllSubjects(ctx, listSubjectsReq{
 		Domain:      in.GetDomain(),
@@ -626,8 +626,8 @@ func (client grpcClient) ListAllSubjects(ctx context.Context, in *magistrala.Lis
 }
 
 func (client grpcClient) CountSubjects(ctx context.Context, in *magistrala.CountSubjectsReq, opts ...grpc.CallOption) (*magistrala.CountSubjectsRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.countSubjects(ctx, countSubjectsReq{
 		Domain:      in.GetDomain(),
@@ -665,8 +665,8 @@ func encodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interfa
 }
 
 func (client grpcClient) ListPermissions(ctx context.Context, in *magistrala.ListPermissionsReq, opts ...grpc.CallOption) (*magistrala.ListPermissionsRes, error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.listPermissions(ctx, listPermissionsReq{
 		Domain:            in.GetDomain(),

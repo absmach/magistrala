@@ -42,7 +42,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
-	callhome "github.com/mainflux/callhome/pkg/client"
+	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -193,7 +193,7 @@ func main() {
 	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, regiterAuthzServer, logger)
 
 	if cfg.SendTelemetry {
-		chc := callhome.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -215,7 +215,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth magistrala.AuthServiceClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger mglog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authClient magistrala.AuthServiceClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger mglog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -224,8 +224,8 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 
 	thingCache := thcache.NewCache(cacheClient, keyDuration)
 
-	csvc := things.NewService(auth, cRepo, gRepo, thingCache, idp)
-	gsvc := mggroups.NewService(gRepo, idp, auth)
+	csvc := things.NewService(authClient, cRepo, gRepo, thingCache, idp)
+	gsvc := mggroups.NewService(gRepo, idp, authClient)
 
 	csvc, err := thevents.NewEventStoreMiddleware(ctx, csvc, esURL)
 	if err != nil {

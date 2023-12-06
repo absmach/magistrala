@@ -157,7 +157,7 @@ func (ms *metricsMiddleware) UpdateClientRole(ctx context.Context, token string,
 }
 
 // EnableClient instruments EnableClient method with metrics.
-func (ms *metricsMiddleware) EnableClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
+func (ms *metricsMiddleware) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "enable_client").Add(1)
 		ms.latency.With("method", "enable_client").Observe(time.Since(begin).Seconds())
@@ -166,7 +166,7 @@ func (ms *metricsMiddleware) EnableClient(ctx context.Context, token string, id 
 }
 
 // DisableClient instruments DisableClient method with metrics.
-func (ms *metricsMiddleware) DisableClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
+func (ms *metricsMiddleware) DisableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "disable_client").Add(1)
 		ms.latency.With("method", "disable_client").Observe(time.Since(begin).Seconds())

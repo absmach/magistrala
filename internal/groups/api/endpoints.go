@@ -159,7 +159,7 @@ func ListMembersEndpoint(svc groups.Service, memberKind string) endpoint.Endpoin
 	}
 }
 
-func AssignMembersEndpoint(svc groups.Service, relation string, memberKind string) endpoint.Endpoint {
+func AssignMembersEndpoint(svc groups.Service, relation, memberKind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignReq)
 		if relation != "" {
@@ -178,7 +178,7 @@ func AssignMembersEndpoint(svc groups.Service, relation string, memberKind strin
 	}
 }
 
-func UnassignMembersEndpoint(svc groups.Service, relation string, memberKind string) endpoint.Endpoint {
+func UnassignMembersEndpoint(svc groups.Service, relation, memberKind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(unassignReq)
 		if relation != "" {

@@ -239,7 +239,7 @@ func (tm *tracingMiddleware) CreateDomain(ctx context.Context, token string, d a
 	return tm.svc.CreateDomain(ctx, token, d)
 }
 
-func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token string, id string) (auth.Domain, error) {
+func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token, id string) (auth.Domain, error) {
 	ctx, span := tm.tracer.Start(ctx, "view_domain", trace.WithAttributes(
 		attribute.String("id", id),
 	))
@@ -247,7 +247,7 @@ func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token string, i
 	return tm.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (tm *tracingMiddleware) UpdateDomain(ctx context.Context, token string, id string, d auth.DomainReq) (auth.Domain, error) {
+func (tm *tracingMiddleware) UpdateDomain(ctx context.Context, token, id string, d auth.DomainReq) (auth.Domain, error) {
 	ctx, span := tm.tracer.Start(ctx, "update_domain", trace.WithAttributes(
 		attribute.String("id", id),
 	))
@@ -255,7 +255,7 @@ func (tm *tracingMiddleware) UpdateDomain(ctx context.Context, token string, id 
 	return tm.svc.UpdateDomain(ctx, token, id, d)
 }
 
-func (tm *tracingMiddleware) ChangeDomainStatus(ctx context.Context, token string, id string, d auth.DomainReq) (auth.Domain, error) {
+func (tm *tracingMiddleware) ChangeDomainStatus(ctx context.Context, token, id string, d auth.DomainReq) (auth.Domain, error) {
 	ctx, span := tm.tracer.Start(ctx, "change_domain_status", trace.WithAttributes(
 		attribute.String("id", id),
 	))
@@ -269,7 +269,7 @@ func (tm *tracingMiddleware) ListDomains(ctx context.Context, token string, p au
 	return tm.svc.ListDomains(ctx, token, p)
 }
 
-func (tm *tracingMiddleware) AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+func (tm *tracingMiddleware) AssignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
 	ctx, span := tm.tracer.Start(ctx, "assign_users", trace.WithAttributes(
 		attribute.String("id", id),
 		attribute.StringSlice("user_ids", userIds),
@@ -279,7 +279,7 @@ func (tm *tracingMiddleware) AssignUsers(ctx context.Context, token string, id s
 	return tm.svc.AssignUsers(ctx, token, id, userIds, relation)
 }
 
-func (tm *tracingMiddleware) UnassignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
+func (tm *tracingMiddleware) UnassignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
 	ctx, span := tm.tracer.Start(ctx, "unassign_users", trace.WithAttributes(
 		attribute.String("id", id),
 		attribute.StringSlice("user_ids", userIds),
@@ -289,7 +289,7 @@ func (tm *tracingMiddleware) UnassignUsers(ctx context.Context, token string, id
 	return tm.svc.UnassignUsers(ctx, token, id, userIds, relation)
 }
 
-func (tm *tracingMiddleware) ListUserDomains(ctx context.Context, token string, userID string, p auth.Page) (auth.DomainsPage, error) {
+func (tm *tracingMiddleware) ListUserDomains(ctx context.Context, token, userID string, p auth.Page) (auth.DomainsPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "list_user_domains", trace.WithAttributes(
 		attribute.String("user_id", userID),
 	))

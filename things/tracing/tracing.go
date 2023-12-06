@@ -34,21 +34,21 @@ func (tm *tracingMiddleware) CreateThings(ctx context.Context, token string, cli
 }
 
 // ViewClient traces the "ViewClient" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) ViewClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
+func (tm *tracingMiddleware) ViewClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_view_client", trace.WithAttributes(attribute.String("id", id)))
 	defer span.End()
 	return tm.svc.ViewClient(ctx, token, id)
 }
 
 // ViewClientPerms traces the "ViewClientPerms" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) ViewClientPerms(ctx context.Context, token string, id string) ([]string, error) {
+func (tm *tracingMiddleware) ViewClientPerms(ctx context.Context, token, id string) ([]string, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_view_client_permissions", trace.WithAttributes(attribute.String("id", id)))
 	defer span.End()
 	return tm.svc.ViewClientPerms(ctx, token, id)
 }
 
 // ListClients traces the "ListClients" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+func (tm *tracingMiddleware) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_clients")
 	defer span.End()
 	return tm.svc.ListClients(ctx, token, reqUserID, pm)
@@ -121,14 +121,14 @@ func (tm *tracingMiddleware) Authorize(ctx context.Context, req *magistrala.Auth
 }
 
 // Share traces the "Share" operation of the wrapped things.Service.
-func (tm *tracingMiddleware) Share(ctx context.Context, token, id string, relation string, userids ...string) error {
+func (tm *tracingMiddleware) Share(ctx context.Context, token, id, relation string, userids ...string) error {
 	ctx, span := tm.tracer.Start(ctx, "share", trace.WithAttributes(attribute.String("id", id), attribute.String("relation", relation), attribute.StringSlice("user_ids", userids)))
 	defer span.End()
 	return tm.svc.Share(ctx, token, id, relation, userids...)
 }
 
 // Unshare traces the "Unshare" operation of the wrapped things.Service.
-func (tm *tracingMiddleware) Unshare(ctx context.Context, token, id string, relation string, userids ...string) error {
+func (tm *tracingMiddleware) Unshare(ctx context.Context, token, id, relation string, userids ...string) error {
 	ctx, span := tm.tracer.Start(ctx, "unshare", trace.WithAttributes(attribute.String("id", id), attribute.String("relation", relation), attribute.StringSlice("user_ids", userids)))
 	defer span.End()
 	return tm.svc.Unshare(ctx, token, id, relation, userids...)

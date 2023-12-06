@@ -61,7 +61,7 @@ func (lm *loggingMiddleware) ViewClientPerms(ctx context.Context, token, id stri
 	return lm.svc.ViewClientPerms(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
+func (lm *loggingMiddleware) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things using token %s took %s to complete", token, time.Since(begin))
 		if err != nil {
@@ -109,7 +109,7 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 	return lm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
 
-func (lm *loggingMiddleware) EnableClient(ctx context.Context, token string, id string) (c mgclients.Client, err error) {
+func (lm *loggingMiddleware) EnableClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method enable_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
 		if err != nil {
@@ -121,7 +121,7 @@ func (lm *loggingMiddleware) EnableClient(ctx context.Context, token string, id 
 	return lm.svc.EnableClient(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) DisableClient(ctx context.Context, token string, id string) (c mgclients.Client, err error) {
+func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method disable_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
 		if err != nil {
@@ -169,7 +169,7 @@ func (lm *loggingMiddleware) Authorize(ctx context.Context, req *magistrala.Auth
 	return lm.svc.Authorize(ctx, req)
 }
 
-func (lm *loggingMiddleware) Share(ctx context.Context, token, id string, relation string, userids ...string) (err error) {
+func (lm *loggingMiddleware) Share(ctx context.Context, token, id, relation string, userids ...string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method share for thing id %s with relation %s for users %v took %s to complete", id, relation, userids, time.Since(begin))
 		if err != nil {
@@ -181,7 +181,7 @@ func (lm *loggingMiddleware) Share(ctx context.Context, token, id string, relati
 	return lm.svc.Share(ctx, token, id, relation, userids...)
 }
 
-func (lm *loggingMiddleware) Unshare(ctx context.Context, token, id string, relation string, userids ...string) (err error) {
+func (lm *loggingMiddleware) Unshare(ctx context.Context, token, id, relation string, userids ...string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method unshare for thing id %s with relation %s for users %v took %s to complete", id, relation, userids, time.Since(begin))
 		if err != nil {

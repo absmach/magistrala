@@ -16,7 +16,7 @@ import (
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/certs/mocks"
 	chmocks "github.com/absmach/magistrala/internal/groups/mocks"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -51,7 +51,7 @@ const (
 )
 
 func newThingsServer(svc things.Service) *httptest.Server {
-	logger := logger.NewMock()
+	logger := mglog.NewMock()
 	mux := chi.NewMux()
 	httpapi.MakeHandler(svc, nil, mux, logger, instanceID)
 	return httptest.NewServer(mux)

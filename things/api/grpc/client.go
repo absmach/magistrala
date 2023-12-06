@@ -39,8 +39,8 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.AuthzSer
 }
 
 func (client grpcClient) Authorize(ctx context.Context, req *magistrala.AuthorizeReq, _ ...grpc.CallOption) (r *magistrala.AuthorizeRes, err error) {
-	ctx, close := context.WithTimeout(ctx, client.timeout)
-	defer close()
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
 
 	res, err := client.authorize(ctx, req)
 	if err != nil {

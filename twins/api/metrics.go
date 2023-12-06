@@ -58,7 +58,7 @@ func (ms *metricsMiddleware) ViewTwin(ctx context.Context, token, twinID string)
 	return ms.svc.ViewTwin(ctx, token, twinID)
 }
 
-func (ms *metricsMiddleware) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata twins.Metadata) (page twins.Page, err error) {
+func (ms *metricsMiddleware) ListTwins(ctx context.Context, token string, offset, limit uint64, name string, metadata twins.Metadata) (page twins.Page, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_twins").Add(1)
 		ms.latency.With("method", "list_twins").Observe(time.Since(begin).Seconds())
@@ -76,7 +76,7 @@ func (ms *metricsMiddleware) SaveStates(ctx context.Context, msg *messaging.Mess
 	return ms.svc.SaveStates(ctx, msg)
 }
 
-func (ms *metricsMiddleware) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (st twins.StatesPage, err error) {
+func (ms *metricsMiddleware) ListStates(ctx context.Context, token string, offset, limit uint64, twinID string) (st twins.StatesPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_states").Add(1)
 		ms.latency.With("method", "list_states").Observe(time.Since(begin).Seconds())

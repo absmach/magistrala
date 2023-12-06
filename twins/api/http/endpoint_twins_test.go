@@ -18,7 +18,7 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/twins"
 	httpapi "github.com/absmach/magistrala/twins/api/http"
 	"github.com/absmach/magistrala/twins/mocks"
@@ -87,7 +87,7 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func newServer(svc twins.Service) *httptest.Server {
-	logger := logger.NewMock()
+	logger := mglog.NewMock()
 	mux := httpapi.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }

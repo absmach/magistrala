@@ -195,7 +195,7 @@ func TestCreateThings(t *testing.T) {
 	ts, cRepo, _, auth := newThingsServer()
 	defer ts.Close()
 
-	things := []sdk.Thing{
+	thingsList := []sdk.Thing{
 		{
 			Name:   "test",
 			Status: mgclients.EnabledStatus.String(),
@@ -219,14 +219,14 @@ func TestCreateThings(t *testing.T) {
 	}{
 		{
 			desc:     "register new things",
-			things:   things,
-			response: things,
+			things:   thingsList,
+			response: thingsList,
 			token:    token,
 			err:      nil,
 		},
 		{
 			desc:     "register existing things",
-			things:   things,
+			things:   thingsList,
 			response: []sdk.Thing{},
 			token:    token,
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedCreation), http.StatusInternalServerError),

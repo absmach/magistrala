@@ -49,30 +49,30 @@ func (repo *messageRepositoryMock) ReadAll(chanID string, rpm readers.PageMetada
 
 	var msgs []readers.Message
 	for _, m := range repo.messages[chanID] {
-		senml := m.(senml.Message)
+		msg := m.(senml.Message)
 
 		ok := true
 
 		for name := range query {
 			switch name {
 			case "subtopic":
-				if rpm.Subtopic != senml.Subtopic {
+				if rpm.Subtopic != msg.Subtopic {
 					ok = false
 				}
 			case "publisher":
-				if rpm.Publisher != senml.Publisher {
+				if rpm.Publisher != msg.Publisher {
 					ok = false
 				}
 			case "name":
-				if rpm.Name != senml.Name {
+				if rpm.Name != msg.Name {
 					ok = false
 				}
 			case "protocol":
-				if rpm.Protocol != senml.Protocol {
+				if rpm.Protocol != msg.Protocol {
 					ok = false
 				}
 			case "v":
-				if senml.Value == nil {
+				if msg.Value == nil {
 					ok = false
 				}
 
@@ -80,57 +80,57 @@ func (repo *messageRepositoryMock) ReadAll(chanID string, rpm readers.PageMetada
 				if okQuery {
 					switch val.(string) {
 					case readers.LowerThanKey:
-						if senml.Value != nil &&
-							*senml.Value >= rpm.Value {
+						if msg.Value != nil &&
+							*msg.Value >= rpm.Value {
 							ok = false
 						}
 					case readers.LowerThanEqualKey:
-						if senml.Value != nil &&
-							*senml.Value > rpm.Value {
+						if msg.Value != nil &&
+							*msg.Value > rpm.Value {
 							ok = false
 						}
 					case readers.GreaterThanKey:
-						if senml.Value != nil &&
-							*senml.Value <= rpm.Value {
+						if msg.Value != nil &&
+							*msg.Value <= rpm.Value {
 							ok = false
 						}
 					case readers.GreaterThanEqualKey:
-						if senml.Value != nil &&
-							*senml.Value < rpm.Value {
+						if msg.Value != nil &&
+							*msg.Value < rpm.Value {
 							ok = false
 						}
 					case readers.EqualKey:
 					default:
-						if senml.Value != nil &&
-							*senml.Value != rpm.Value {
+						if msg.Value != nil &&
+							*msg.Value != rpm.Value {
 							ok = false
 						}
 					}
 				}
 			case "vb":
-				if senml.BoolValue == nil ||
-					(senml.BoolValue != nil &&
-						*senml.BoolValue != rpm.BoolValue) {
+				if msg.BoolValue == nil ||
+					(msg.BoolValue != nil &&
+						*msg.BoolValue != rpm.BoolValue) {
 					ok = false
 				}
 			case "vs":
-				if senml.StringValue == nil ||
-					(senml.StringValue != nil &&
-						*senml.StringValue != rpm.StringValue) {
+				if msg.StringValue == nil ||
+					(msg.StringValue != nil &&
+						*msg.StringValue != rpm.StringValue) {
 					ok = false
 				}
 			case "vd":
-				if senml.DataValue == nil ||
-					(senml.DataValue != nil &&
-						*senml.DataValue != rpm.DataValue) {
+				if msg.DataValue == nil ||
+					(msg.DataValue != nil &&
+						*msg.DataValue != rpm.DataValue) {
 					ok = false
 				}
 			case "from":
-				if senml.Time < rpm.From {
+				if msg.Time < rpm.From {
 					ok = false
 				}
 			case "to":
-				if senml.Time >= rpm.To {
+				if msg.Time >= rpm.To {
 					ok = false
 				}
 			}

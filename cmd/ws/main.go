@@ -162,7 +162,7 @@ func newService(tc magistrala.AuthzServiceClient, nps messaging.PubSub, logger m
 	return svc
 }
 
-func proxyWS(ctx context.Context, hostConfig server.Config, targetConfig server.Config, logger mglog.Logger, handler session.Handler) error {
+func proxyWS(ctx context.Context, hostConfig, targetConfig server.Config, logger mglog.Logger, handler session.Handler) error {
 	target := fmt.Sprintf("ws://%s:%s", targetConfig.Host, targetConfig.Port)
 	address := fmt.Sprintf("%s:%s", hostConfig.Host, hostConfig.Port)
 	wp, err := websockets.NewProxy(address, target, logger, handler)

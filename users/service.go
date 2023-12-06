@@ -51,10 +51,10 @@ type service struct {
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, auth magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, pr *regexp.Regexp, selfRegister bool) Service {
+func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, pr *regexp.Regexp, selfRegister bool) Service {
 	return service{
 		clients:      crepo,
-		auth:         auth,
+		auth:         authClient,
 		hasher:       hasher,
 		email:        emailer,
 		idProvider:   idp,
@@ -134,7 +134,7 @@ func (svc service) RefreshToken(ctx context.Context, refreshToken, domainID stri
 	return svc.auth.Refresh(ctx, &magistrala.RefreshReq{RefreshToken: refreshToken, DomainId: &d})
 }
 
-func (svc service) ViewClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
+func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
@@ -415,7 +415,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	return svc.clients.ChangeStatus(ctx, client)
 }
 
-func (svc service) ListMembers(ctx context.Context, token, objectKind string, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
+func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
 	var objectType string
 	var authzPerm string
 	switch objectKind {

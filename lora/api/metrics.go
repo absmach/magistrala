@@ -30,7 +30,7 @@ func MetricsMiddleware(svc lora.Service, counter metrics.Counter, latency metric
 	}
 }
 
-func (mm *metricsMiddleware) CreateThing(ctx context.Context, thingID string, loraDevEUI string) error {
+func (mm *metricsMiddleware) CreateThing(ctx context.Context, thingID, loraDevEUI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_thing").Add(1)
 		mm.latency.With("method", "create_thing").Observe(time.Since(begin).Seconds())
@@ -39,7 +39,7 @@ func (mm *metricsMiddleware) CreateThing(ctx context.Context, thingID string, lo
 	return mm.svc.CreateThing(ctx, thingID, loraDevEUI)
 }
 
-func (mm *metricsMiddleware) UpdateThing(ctx context.Context, thingID string, loraDevEUI string) error {
+func (mm *metricsMiddleware) UpdateThing(ctx context.Context, thingID, loraDevEUI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_thing").Add(1)
 		mm.latency.With("method", "update_thing").Observe(time.Since(begin).Seconds())

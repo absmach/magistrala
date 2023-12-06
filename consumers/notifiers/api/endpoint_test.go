@@ -19,7 +19,7 @@ import (
 	httpapi "github.com/absmach/magistrala/consumers/notifiers/api"
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -77,7 +77,7 @@ func newService() (notifiers.Service, *authmocks.Service) {
 }
 
 func newServer(svc notifiers.Service) *httptest.Server {
-	logger := logger.NewMock()
+	logger := mglog.NewMock()
 	mux := httpapi.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }

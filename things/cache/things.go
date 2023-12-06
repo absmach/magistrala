@@ -33,7 +33,7 @@ func NewCache(client *redis.Client, duration time.Duration) things.Cache {
 	}
 }
 
-func (tc *thingCache) Save(ctx context.Context, thingKey string, thingID string) error {
+func (tc *thingCache) Save(ctx context.Context, thingKey, thingID string) error {
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, thingKey)
 	if err := tc.client.Set(ctx, tkey, thingID, tc.keyDuration).Err(); err != nil {
 		return errors.Wrap(errors.ErrCreateEntity, err)

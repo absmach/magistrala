@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/opcua/db"
 )
 
@@ -62,11 +62,11 @@ type adapterService struct {
 	channelsRM RouteMapRepository
 	connectRM  RouteMapRepository
 	cfg        Config
-	logger     logger.Logger
+	logger     mglog.Logger
 }
 
 // New instantiates the OPC-UA adapter implementation.
-func New(sub Subscriber, brow Browser, thingsRM, channelsRM, connectRM RouteMapRepository, cfg Config, log logger.Logger) Service {
+func New(sub Subscriber, brow Browser, thingsRM, channelsRM, connectRM RouteMapRepository, cfg Config, log mglog.Logger) Service {
 	return &adapterService{
 		subscriber: sub,
 		browser:    brow,

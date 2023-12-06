@@ -50,7 +50,7 @@ func (tm *tracingMiddleware) RefreshToken(ctx context.Context, accessToken, doma
 }
 
 // ViewClient traces the "ViewClient" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) ViewClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
+func (tm *tracingMiddleware) ViewClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_view_client", trace.WithAttributes(attribute.String("id", id)))
 	defer span.End()
 

@@ -170,7 +170,7 @@ func NewConfigCmd() *cobra.Command {
 	}
 }
 
-func setConfigValue(key string, value string) error {
+func setConfigValue(key, value string) error {
 	config, err := read(ConfigPath)
 	if err != nil {
 		return err

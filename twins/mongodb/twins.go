@@ -131,7 +131,7 @@ func (tr *twinRepository) RetrieveByAttribute(ctx context.Context, channel, subt
 	return ids, nil
 }
 
-func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
+func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
 	coll := tr.db.Collection(twinsCollection)
 
 	findOptions := options.Find()

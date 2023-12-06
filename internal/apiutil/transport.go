@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	kithttp "github.com/go-kit/kit/transport/http"
 )
 
 // LoggingErrorEncoder is a go-kit error encoder logging decorator.
-func LoggingErrorEncoder(logger logger.Logger, enc kithttp.ErrorEncoder) kithttp.ErrorEncoder {
+func LoggingErrorEncoder(logger mglog.Logger, enc kithttp.ErrorEncoder) kithttp.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
 		if errors.Contains(err, ErrValidation) {
 			logger.Error(err.Error())
@@ -45,7 +45,7 @@ func ReadUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
 }
 
 // ReadStringQuery reads the value of string http query parameters for a given key.
-func ReadStringQuery(r *http.Request, key string, def string) (string, error) {
+func ReadStringQuery(r *http.Request, key, def string) (string, error) {
 	vals := r.URL.Query()[key]
 	if len(vals) > 1 {
 		return "", ErrInvalidQueryParams

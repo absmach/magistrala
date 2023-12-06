@@ -43,7 +43,7 @@ func (tm *tracingServiceMiddleware) Publish(ctx context.Context, key string, msg
 }
 
 // Subscribe traces a CoAP subscribe operation.
-func (tm *tracingServiceMiddleware) Subscribe(ctx context.Context, key string, chanID string, subtopic string, c coap.Client) error {
+func (tm *tracingServiceMiddleware) Subscribe(ctx context.Context, key, chanID, subtopic string, c coap.Client) error {
 	ctx, span := tm.tracer.Start(ctx, subscribeOP, trace.WithAttributes(
 		attribute.String("channel_id", chanID),
 		attribute.String("subtopic", subtopic),
@@ -53,7 +53,7 @@ func (tm *tracingServiceMiddleware) Subscribe(ctx context.Context, key string, c
 }
 
 // Unsubscribe traces a CoAP unsubscribe operation.
-func (tm *tracingServiceMiddleware) Unsubscribe(ctx context.Context, key string, chanID string, subptopic string, token string) error {
+func (tm *tracingServiceMiddleware) Unsubscribe(ctx context.Context, key, chanID, subptopic, token string) error {
 	ctx, span := tm.tracer.Start(ctx, unsubscribeOP, trace.WithAttributes(
 		attribute.String("channel_id", chanID),
 		attribute.String("subtopic", subptopic),

@@ -16,7 +16,7 @@ import (
 	httpapi "github.com/absmach/magistrala/certs/api"
 	"github.com/absmach/magistrala/certs/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -61,7 +61,7 @@ func newCertService() (certs.Service, *authmocks.Service, *thmocks.Repository, e
 }
 
 func newCertServer(svc certs.Service) *httptest.Server {
-	logger := logger.NewMock()
+	logger := mglog.NewMock()
 	mux := httpapi.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }

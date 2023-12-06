@@ -166,7 +166,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mglog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
+func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mglog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
@@ -177,7 +177,7 @@ func newService(ctx context.Context, auth magistrala.AuthServiceClient, db *sqlx
 
 	sdk := mgsdk.NewSDK(config)
 
-	svc := bootstrap.New(auth, repoConfig, sdk, []byte(cfg.EncKey))
+	svc := bootstrap.New(authClient, repoConfig, sdk, []byte(cfg.EncKey))
 
 	var err error
 	svc, err = producer.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)

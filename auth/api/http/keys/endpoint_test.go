@@ -19,7 +19,7 @@ import (
 	"github.com/absmach/magistrala/auth/jwt"
 	"github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -76,7 +76,7 @@ func newService() auth.Service {
 }
 
 func newServer(svc auth.Service) *httptest.Server {
-	logger := logger.NewMock()
+	logger := mglog.NewMock()
 	mux := httpapi.MakeHandler(svc, logger, "")
 	return httptest.NewServer(mux)
 }

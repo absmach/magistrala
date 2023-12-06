@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/internal/server"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -34,7 +34,7 @@ type serviceRegister func(srv *grpc.Server)
 
 var _ server.Server = (*Server)(nil)
 
-func New(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, registerService serviceRegister, logger logger.Logger) server.Server {
+func New(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, registerService serviceRegister, logger mglog.Logger) server.Server {
 	listenFullAddress := fmt.Sprintf("%s:%s", config.Host, config.Port)
 	return &Server{
 		BaseServer: server.BaseServer{

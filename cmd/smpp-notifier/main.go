@@ -172,12 +172,12 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, auth magistrala.AuthServiceClient, c config, sc mgsmpp.Config, logger mglog.Logger) notifiers.Service {
+func newService(db *sqlx.DB, tracer trace.Tracer, authClient magistrala.AuthServiceClient, c config, sc mgsmpp.Config, logger mglog.Logger) notifiers.Service {
 	database := notifierpg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierpg.New(database))
 	idp := ulid.New()
 	notifier := mgsmpp.New(sc)
-	svc := notifiers.New(auth, repo, idp, notifier, c.From)
+	svc := notifiers.New(authClient, repo, idp, notifier, c.From)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("notifier", "smpp")
 	svc = api.MetricsMiddleware(svc, counter, latency)

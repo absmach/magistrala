@@ -159,10 +159,10 @@ func newService(pub messaging.Publisher, tc magistrala.AuthzServiceClient, logge
 	return svc
 }
 
-func proxyHTTP(ctx context.Context, cfg server.Config, logger mglog.Logger, handler session.Handler) error {
+func proxyHTTP(ctx context.Context, cfg server.Config, logger mglog.Logger, sessionHandler session.Handler) error {
 	address := fmt.Sprintf("%s:%s", "", cfg.Port)
 	target := fmt.Sprintf("%s:%s", targetHTTPHost, targetHTTPPort)
-	mp, err := mproxy.NewProxy(address, target, handler, logger)
+	mp, err := mproxy.NewProxy(address, target, sessionHandler, logger)
 	if err != nil {
 		return err
 	}

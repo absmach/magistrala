@@ -10,7 +10,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/provision"
 	"github.com/go-chi/chi/v5"
@@ -23,7 +23,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc provision.Service, logger logger.Logger, instanceID string) http.Handler {
+func MakeHandler(svc provision.Service, logger mglog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}

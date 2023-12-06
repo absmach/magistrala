@@ -33,7 +33,7 @@ func NewService() (twins.Service, *authmocks.Service) {
 }
 
 // CreateDefinition creates twin definition.
-func CreateDefinition(channels []string, subtopics []string) twins.Definition {
+func CreateDefinition(channels, subtopics []string) twins.Definition {
 	var def twins.Definition
 	for i := range channels {
 		attr := twins.Attribute{
@@ -47,7 +47,7 @@ func CreateDefinition(channels []string, subtopics []string) twins.Definition {
 }
 
 // CreateTwin creates twin.
-func CreateTwin(channels []string, subtopics []string) twins.Twin {
+func CreateTwin(channels, subtopics []string) twins.Twin {
 	id++
 	return twins.Twin{
 		ID:          strconv.Itoa(id),

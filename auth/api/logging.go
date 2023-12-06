@@ -11,18 +11,18 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
-	log "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 )
 
 var _ auth.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger mglog.Logger
 	svc    auth.Service
 }
 
 // LoggingMiddleware adds logging facilities to the core service.
-func LoggingMiddleware(svc auth.Service, logger log.Logger) auth.Service {
+func LoggingMiddleware(svc auth.Service, logger mglog.Logger) auth.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
@@ -244,7 +244,7 @@ func (lm *loggingMiddleware) CreateDomain(ctx context.Context, token string, d a
 	return lm.svc.CreateDomain(ctx, token, d)
 }
 
-func (lm *loggingMiddleware) RetrieveDomain(ctx context.Context, token string, id string) (do auth.Domain, err error) {
+func (lm *loggingMiddleware) RetrieveDomain(ctx context.Context, token, id string) (do auth.Domain, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method retrieve_domain for domain id %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -256,7 +256,7 @@ func (lm *loggingMiddleware) RetrieveDomain(ctx context.Context, token string, i
 	return lm.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) UpdateDomain(ctx context.Context, token string, id string, d auth.DomainReq) (do auth.Domain, err error) {
+func (lm *loggingMiddleware) UpdateDomain(ctx context.Context, token, id string, d auth.DomainReq) (do auth.Domain, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_domain for domain id %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -268,7 +268,7 @@ func (lm *loggingMiddleware) UpdateDomain(ctx context.Context, token string, id 
 	return lm.svc.UpdateDomain(ctx, token, id, d)
 }
 
-func (lm *loggingMiddleware) ChangeDomainStatus(ctx context.Context, token string, id string, d auth.DomainReq) (do auth.Domain, err error) {
+func (lm *loggingMiddleware) ChangeDomainStatus(ctx context.Context, token, id string, d auth.DomainReq) (do auth.Domain, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method change_domain_status for domain id %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -292,7 +292,7 @@ func (lm *loggingMiddleware) ListDomains(ctx context.Context, token string, page
 	return lm.svc.ListDomains(ctx, token, page)
 }
 
-func (lm *loggingMiddleware) AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) (err error) {
+func (lm *loggingMiddleware) AssignUsers(ctx context.Context, token, id string, userIds []string, relation string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method assign_users took %s to complete", time.Since(begin))
 		if err != nil {
@@ -304,7 +304,7 @@ func (lm *loggingMiddleware) AssignUsers(ctx context.Context, token string, id s
 	return lm.svc.AssignUsers(ctx, token, id, userIds, relation)
 }
 
-func (lm *loggingMiddleware) UnassignUsers(ctx context.Context, token string, id string, userIds []string, relation string) (err error) {
+func (lm *loggingMiddleware) UnassignUsers(ctx context.Context, token, id string, userIds []string, relation string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method unassign_users took %s to complete", time.Since(begin))
 		if err != nil {
@@ -316,7 +316,7 @@ func (lm *loggingMiddleware) UnassignUsers(ctx context.Context, token string, id
 	return lm.svc.UnassignUsers(ctx, token, id, userIds, relation)
 }
 
-func (lm *loggingMiddleware) ListUserDomains(ctx context.Context, token string, userID string, page auth.Page) (do auth.DomainsPage, err error) {
+func (lm *loggingMiddleware) ListUserDomains(ctx context.Context, token, userID string, page auth.Page) (do auth.DomainsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_user_domains took %s to complete", time.Since(begin))
 		if err != nil {

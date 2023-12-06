@@ -14,10 +14,25 @@ issues:
     - "string `For example:\n` has (\\d+) occurrences, make it a constant"
 
 linters-settings:
+  importas:
+    no-unaliased: true
+    no-extra-aliases: false
+    alias:
+      - pkg: github.com/mainflux/callhome/pkg/client
+        alias: chclient
+      - pkg: github.com/absmach/magistrala/logger
+        alias: mglog
   gocritic:
     enabled-checks:
       - captLocal
       - singleCaseSwitch
+      - switchTrue
+      - importShadow
+      - httpNoBody
+      - paramTypeCombine
+      - emptyStringTest
+      - builtinShadow
+      - exposedSyncMutex
     disabled-checks:
       - appendAssign
     enabled-tags:

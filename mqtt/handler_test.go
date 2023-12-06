@@ -13,7 +13,7 @@ import (
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt"
 	"github.com/absmach/magistrala/mqtt/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -442,7 +442,7 @@ func TestDisconnect(t *testing.T) {
 }
 
 func newHandler() (session.Handler, *authmocks.Service) {
-	logger, err := logger.New(&logBuffer, "debug")
+	logger, err := mglog.New(&logBuffer, "debug")
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}

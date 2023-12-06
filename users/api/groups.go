@@ -12,7 +12,7 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/go-chi/chi/v5"
@@ -22,7 +22,7 @@ import (
 )
 
 // MakeHandler returns a HTTP handler for Groups API endpoints.
-func groupsHandler(svc groups.Service, r *chi.Mux, logger logger.Logger) http.Handler {
+func groupsHandler(svc groups.Service, r *chi.Mux, logger mglog.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}

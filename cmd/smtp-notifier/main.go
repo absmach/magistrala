@@ -182,7 +182,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, auth magistrala.AuthServiceClient, c config, ec email.Config, logger mglog.Logger) (notifiers.Service, error) {
+func newService(db *sqlx.DB, tracer trace.Tracer, authClient magistrala.AuthServiceClient, c config, ec email.Config, logger mglog.Logger) (notifiers.Service, error) {
 	database := notifierpg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierpg.New(database))
 	idp := ulid.New()
@@ -193,7 +193,7 @@ func newService(db *sqlx.DB, tracer trace.Tracer, auth magistrala.AuthServiceCli
 	}
 
 	notifier := smtp.New(agent)
-	svc := notifiers.New(auth, repo, idp, notifier, c.From)
+	svc := notifiers.New(authClient, repo, idp, notifier, c.From)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("notifier", "smtp")
 	svc = api.MetricsMiddleware(svc, counter, latency)

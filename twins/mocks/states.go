@@ -52,7 +52,7 @@ func (srm *stateRepositoryMock) Count(ctx context.Context, tw twins.Twin) (int64
 	return int64(len(srm.states)), nil
 }
 
-func (srm *stateRepositoryMock) RetrieveAll(ctx context.Context, offset uint64, limit uint64, twinID string) (twins.StatesPage, error) {
+func (srm *stateRepositoryMock) RetrieveAll(ctx context.Context, offset, limit uint64, twinID string) (twins.StatesPage, error) {
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 

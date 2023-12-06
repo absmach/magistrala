@@ -14,7 +14,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/ws"
 	"github.com/absmach/magistrala/ws/api"
 	"github.com/absmach/magistrala/ws/mocks"
@@ -42,13 +42,13 @@ func newService(auth magistrala.AuthzServiceClient) (ws.Service, mocks.MockPubSu
 }
 
 func newHTTPServer(svc ws.Service) *httptest.Server {
-	mux := api.MakeHandler(context.Background(), svc, logger.NewMock(), instanceID)
+	mux := api.MakeHandler(context.Background(), svc, mglog.NewMock(), instanceID)
 	return httptest.NewServer(mux)
 }
 
 func newProxyHTPPServer(svc session.Handler, targetServer *httptest.Server) (*httptest.Server, error) {
-	url := strings.ReplaceAll(targetServer.URL, "http", "ws")
-	mp, err := websockets.NewProxy("", url, logger.NewMock(), svc)
+	turl := strings.ReplaceAll(targetServer.URL, "http", "ws")
+	mp, err := websockets.NewProxy("", turl, mglog.NewMock(), svc)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +83,8 @@ func handshake(tsURL, chanID, subtopic, thingKey string, addHeader bool) (*webso
 		header.Add("Authorization", thingKey)
 	}
 
-	url, _ := makeURL(tsURL, chanID, subtopic, thingKey, addHeader)
-	conn, res, errRet := websocket.DefaultDialer.Dial(url, header)
+	turl, _ := makeURL(tsURL, chanID, subtopic, thingKey, addHeader)
+	conn, res, errRet := websocket.DefaultDialer.Dial(turl, header)
 
 	return conn, res, errRet
 }
@@ -94,7 +94,7 @@ func TestHandshake(t *testing.T) {
 	svc, pubsub := newService(auth)
 	target := newHTTPServer(svc)
 	defer target.Close()
-	handler := ws.NewHandler(pubsub, logger.NewMock(), auth)
+	handler := ws.NewHandler(pubsub, mglog.NewMock(), auth)
 	ts, err := newProxyHTPPServer(handler, target)
 	require.Nil(t, err)
 	defer ts.Close()

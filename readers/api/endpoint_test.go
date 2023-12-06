@@ -61,7 +61,7 @@ type testRequest struct {
 }
 
 func (tr testRequest) make() (*http.Response, error) {
-	req, err := http.NewRequest(tr.method, tr.url, nil)
+	req, err := http.NewRequest(tr.method, tr.url, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

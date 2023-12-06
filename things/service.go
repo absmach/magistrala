@@ -126,7 +126,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 	return saved, nil
 }
 
-func (svc service) ViewClient(ctx context.Context, token string, id string) (mgclients.Client, error) {
+func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	_, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.ViewPermission, auth.ThingType, id)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
@@ -135,7 +135,7 @@ func (svc service) ViewClient(ctx context.Context, token string, id string) (mgc
 	return svc.clients.RetrieveByID(ctx, id)
 }
 
-func (svc service) ViewClientPerms(ctx context.Context, token string, id string) ([]string, error) {
+func (svc service) ViewClientPerms(ctx context.Context, token, id string) ([]string, error) {
 	res, err := svc.identify(ctx, token)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (svc service) ViewClientPerms(ctx context.Context, token string, id string)
 	return permissions, nil
 }
 
-func (svc service) ListClients(ctx context.Context, token string, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	var ids []string
 
 	res, err := svc.identify(ctx, token)

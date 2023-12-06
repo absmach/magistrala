@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -56,11 +56,11 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 type handler struct {
 	pubsub messaging.PubSub
 	auth   magistrala.AuthzServiceClient
-	logger logger.Logger
+	logger mglog.Logger
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(pubsub messaging.PubSub, logger logger.Logger, auth magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(pubsub messaging.PubSub, logger mglog.Logger, auth magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		logger: logger,
 		pubsub: pubsub,

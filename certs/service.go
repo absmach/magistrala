@@ -56,12 +56,12 @@ type certsService struct {
 }
 
 // New returns new Certs service.
-func New(auth magistrala.AuthServiceClient, certs Repository, sdk mgsdk.SDK, pki pki.Agent) Service {
+func New(auth magistrala.AuthServiceClient, certs Repository, sdk mgsdk.SDK, pkiAgent pki.Agent) Service {
 	return &certsService{
 		certsRepo: certs,
 		sdk:       sdk,
 		auth:      auth,
-		pki:       pki,
+		pki:       pkiAgent,
 	}
 }
 
@@ -83,7 +83,7 @@ type Cert struct {
 	Expire         time.Time `json:"expire" mapstructure:"-"`
 }
 
-func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, ttl string) (Cert, error) {
+func (cs *certsService) IssueCert(ctx context.Context, token, thingID, ttl string) (Cert, error) {
 	owner, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return Cert{}, errors.Wrap(svcerr.ErrAuthentication, err)

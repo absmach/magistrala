@@ -17,7 +17,7 @@ import (
 	"github.com/absmach/magistrala/http/api"
 	"github.com/absmach/magistrala/http/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	mproxy "github.com/mainflux/mproxy/pkg/http"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
 func newService(auth magistrala.AuthzServiceClient) session.Handler {
 	pub := mocks.NewPublisher()
-	return server.NewHandler(pub, logger.NewMock(), auth)
+	return server.NewHandler(pub, mglog.NewMock(), auth)
 }
 
 func newTargetHTTPServer() *httptest.Server {
@@ -37,7 +37,7 @@ func newTargetHTTPServer() *httptest.Server {
 }
 
 func newProxyHTPPServer(svc session.Handler, targetServer *httptest.Server) (*httptest.Server, error) {
-	mp, err := mproxy.NewProxy("", targetServer.URL, svc, logger.NewMock())
+	mp, err := mproxy.NewProxy("", targetServer.URL, svc, mglog.NewMock())
 	if err != nil {
 		return nil, err
 	}

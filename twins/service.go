@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -80,13 +80,13 @@ type twinsService struct {
 	idProvider magistrala.IDProvider
 	channelID  string
 	twinCache  TwinCache
-	logger     logger.Logger
+	logger     mglog.Logger
 }
 
 var _ Service = (*twinsService)(nil)
 
 // New instantiates the twins service implementation.
-func New(publisher messaging.Publisher, auth magistrala.AuthServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp magistrala.IDProvider, chann string, logger logger.Logger) Service {
+func New(publisher messaging.Publisher, auth magistrala.AuthServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp magistrala.IDProvider, chann string, logger mglog.Logger) Service {
 	return &twinsService{
 		publisher:  publisher,
 		auth:       auth,
@@ -227,7 +227,7 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 	return ts.twinCache.Remove(ctx, twinID)
 }
 
-func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error) {
+func (ts *twinsService) ListTwins(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return Page{}, errors.Wrap(svcerr.ErrAuthentication, err)
@@ -236,7 +236,7 @@ func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint
 	return ts.twins.RetrieveAll(ctx, res.GetId(), offset, limit, name, metadata)
 }
 
-func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error) {
+func (ts *twinsService) ListStates(ctx context.Context, token string, offset, limit uint64, twinID string) (StatesPage, error) {
 	_, err := ts.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return StatesPage{}, svcerr.ErrAuthentication

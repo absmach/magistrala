@@ -99,6 +99,13 @@ jobs:
             internal:
               - "internal/**"
 
+            invitations:
+              - "invitations/**"
+              - "cmd/invitations/**"
+              - "auth.proto"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              
             lora:
               - "lora/**"
               - "cmd/lora/**"
@@ -203,6 +210,12 @@ jobs:
         run: |
           go test --race -v -count=1 -coverprofile=coverage/internal.out ./internal/...
           go tool cover -html=coverage/internal.out -o coverage/internal.html
+
+      - name: Run invitations tests
+        if: steps.changes.outputs.invitations == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/invitations.out ./invitations/...
+          go tool cover -html=coverage/invitations.out -o coverage/invitations.html
 
       - name: Run logger tests
         if: steps.changes.outputs.logger == 'true'

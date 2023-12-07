@@ -178,9 +178,3 @@ func (m *Repository) RetrieveAllByIDs(ctx context.Context, pm mgclients.Page) (m
 
 	return ret.Get(0).(mgclients.ClientsPage), ret.Error(1)
 }
-
-func (m *Repository) RetrieveNames(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	ret := m.Called(ctx, pm)
-
-	return ret.Get(0).(mgclients.ClientsPage), ret.Error(1)
-}

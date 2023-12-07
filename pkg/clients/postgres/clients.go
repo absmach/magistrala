@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -198,17 +199,15 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 }
 
 func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	query, err := PageQuery(pm)
-	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
+	sq, tq := constructSearchQuery(pm)
 
-	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, sq)
 
 	dbPage, err := ToDBClientsPage(pm)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
 	}
+
 	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
@@ -229,8 +228,8 @@ func (repo ClientRepository) RetrieveAllBasicInfo(ctx context.Context, pm client
 
 		items = append(items, c)
 	}
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, query)
 
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, tq)
 	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -506,4 +505,33 @@ func PageQuery(pm clients.Page) (string, error) {
 		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
 	}
 	return emq, nil
+}
+
+func constructSearchQuery(pm clients.Page) (string, string) {
+	var query []string
+	var emq string
+	var tq string
+
+	if pm.Name != "" {
+		query = append(query, "name ~ :name")
+	}
+	if pm.Identity != "" {
+		query = append(query, "identity ~ :identity")
+	}
+
+	if len(query) > 0 {
+		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	tq = emq
+
+	switch pm.Order {
+	case "name", "identity", "created_at", "updated_at":
+		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)
+		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
+			emq = fmt.Sprintf("%s %s", emq, pm.Dir)
+		}
+	}
+
+	return emq, tq
 }

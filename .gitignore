@@ -1,9 +1,7 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-# Set your private global .gitignore:
-# https://digitalfortress.tech/tricks/creating-a-global-gitignore/
-
+# build dirs
 build
 
 # tools
@@ -11,3 +9,6 @@ tools/e2e/e2e
 tools/mqtt-bench/mqtt-bench
 tools/provision/provision
 tools/provision/mgconn.toml
+
+# coverage files
+coverage

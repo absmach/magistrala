@@ -27,6 +27,7 @@ type Invitation struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 	ConfirmedAt time.Time `json:"confirmed_at,omitempty" db:"confirmed_at,omitempty"`
+	Resend      bool      `json:"resend,omitempty"`
 }
 
 // Page is a page of invitations.
@@ -65,20 +66,35 @@ func (page InvitationPage) MarshalJSON() ([]byte, error) {
 
 // Service is an interface that defines methods for managing invitations.
 type Service interface {
-	// SendInvitation sends an invitation to the email address associated with the given user.
-	SendInvitation(ctx context.Context, token, host string, invitation Invitation) (err error)
+	// SendInvitation sends an invitation to the given user.
+	// Only domain administrators and platform administrators can send invitations.
+	SendInvitation(ctx context.Context, token string, invitation Invitation) (err error)
 
 	// ViewInvitation returns an invitation.
-	ViewInvitation(ctx context.Context, token string, userID, domain string) (invitation Invitation, err error)
+	// People who can view invitations are:
+	// - the invited user: they can view their own invitations
+	// - the user who sent the invitation
+	// - domain administrators
+	// - platform administrators
+	ViewInvitation(ctx context.Context, token, userID, domain string) (invitation Invitation, err error)
 
 	// ListInvitations returns a list of invitations.
+	// People who can list invitations are:
+	// - platform administrators can list all invitations
+	// - domain administrators can list invitations for their domain
+	// By default, it will list invitations the current user has sent or received.
 	ListInvitations(ctx context.Context, token string, page Page) (invitations InvitationPage, err error)
 
 	// AcceptInvitation accepts an invitation by adding the user to the domain.
-	AcceptInvitation(ctx context.Context, token string) (userID string, domains []string, err error)
+	AcceptInvitation(ctx context.Context, token, domain string) (err error)
 
 	// DeleteInvitation deletes an invitation.
-	DeleteInvitation(ctx context.Context, token string, userID, domain string) (err error)
+	// People who can delete invitations are:
+	// - the invited user: they can delete their own invitations
+	// - the user who sent the invitation
+	// - domain administrators
+	// - platform administrators
+	DeleteInvitation(ctx context.Context, token, userID, domain string) (err error)
 }
 
 type Repository interface {
@@ -89,7 +105,7 @@ type Repository interface {
 	Retrieve(ctx context.Context, userID, domainID string) (Invitation, error)
 
 	// RetrieveAll returns a list of invitations based on the given page.
-	RetrieveAll(ctx context.Context, withToken bool, page Page) (invitations InvitationPage, err error)
+	RetrieveAll(ctx context.Context, page Page) (invitations InvitationPage, err error)
 
 	// UpdateToken updates an invitation by setting the token.
 	UpdateToken(ctx context.Context, invitation Invitation) (err error)

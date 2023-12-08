@@ -39,7 +39,7 @@ func (m *Repository) Retrieve(ctx context.Context, userID, domainID string) (inv
 	return ret.Get(0).(invitations.Invitation), ret.Error(1)
 }
 
-func (m *Repository) RetrieveAll(ctx context.Context, withToken bool, page invitations.Page) (invitations.InvitationPage, error) {
+func (m *Repository) RetrieveAll(ctx context.Context, page invitations.Page) (invitations.InvitationPage, error) {
 	ret := m.Called(ctx, page)
 
 	if page.UserID == Invalid || page.Domain == Invalid {

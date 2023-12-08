@@ -21,7 +21,7 @@ var (
 type Invitation struct {
 	InvitedBy   string    `json:"invited_by" db:"invited_by"`
 	UserID      string    `json:"user_id" db:"user_id"`
-	Domain      string    `json:"domain" db:"domain"`
+	DomainID    string    `json:"domain_id" db:"domain_id"`
 	Token       string    `json:"token,omitempty" db:"token"`
 	Relation    string    `json:"relation,omitempty" db:"relation"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
@@ -36,7 +36,7 @@ type Page struct {
 	Limit             uint64 `json:"limit" db:"limit"`
 	InvitedBy         string `json:"invited_by,omitempty" db:"invited_by,omitempty"`
 	UserID            string `json:"user_id,omitempty" db:"user_id,omitempty"`
-	Domain            string `json:"domain,omitempty" db:"domain,omitempty"`
+	DomainID          string `json:"domain_id,omitempty" db:"domain_id,omitempty"`
 	Relation          string `json:"relation,omitempty" db:"relation,omitempty"`
 	InvitedByOrUserID string `db:"invited_by_or_user_id,omitempty"`
 }
@@ -76,7 +76,7 @@ type Service interface {
 	// - the user who sent the invitation
 	// - domain administrators
 	// - platform administrators
-	ViewInvitation(ctx context.Context, token, userID, domain string) (invitation Invitation, err error)
+	ViewInvitation(ctx context.Context, token, userID, domainID string) (invitation Invitation, err error)
 
 	// ListInvitations returns a list of invitations.
 	// People who can list invitations are:
@@ -86,7 +86,7 @@ type Service interface {
 	ListInvitations(ctx context.Context, token string, page Page) (invitations InvitationPage, err error)
 
 	// AcceptInvitation accepts an invitation by adding the user to the domain.
-	AcceptInvitation(ctx context.Context, token, domain string) (err error)
+	AcceptInvitation(ctx context.Context, token, domainID string) (err error)
 
 	// DeleteInvitation deletes an invitation.
 	// People who can delete invitations are:
@@ -94,7 +94,7 @@ type Service interface {
 	// - the user who sent the invitation
 	// - domain administrators
 	// - platform administrators
-	DeleteInvitation(ctx context.Context, token, userID, domain string) (err error)
+	DeleteInvitation(ctx context.Context, token, userID, domainID string) (err error)
 }
 
 type Repository interface {

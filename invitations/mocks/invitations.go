@@ -22,7 +22,7 @@ type Repository struct {
 func (m *Repository) Create(ctx context.Context, invitation invitations.Invitation) error {
 	ret := m.Called(ctx, invitation)
 
-	if invitation.UserID == Invalid || invitation.Domain == Invalid || invitation.InvitedBy == Invalid {
+	if invitation.UserID == Invalid || invitation.DomainID == Invalid || invitation.InvitedBy == Invalid {
 		return errors.ErrNotFound
 	}
 
@@ -42,7 +42,7 @@ func (m *Repository) Retrieve(ctx context.Context, userID, domainID string) (inv
 func (m *Repository) RetrieveAll(ctx context.Context, page invitations.Page) (invitations.InvitationPage, error) {
 	ret := m.Called(ctx, page)
 
-	if page.UserID == Invalid || page.Domain == Invalid {
+	if page.UserID == Invalid || page.DomainID == Invalid {
 		return invitations.InvitationPage{}, errors.ErrNotFound
 	}
 
@@ -52,7 +52,7 @@ func (m *Repository) RetrieveAll(ctx context.Context, page invitations.Page) (in
 func (m *Repository) UpdateToken(ctx context.Context, invitation invitations.Invitation) error {
 	ret := m.Called(ctx, invitation)
 
-	if invitation.UserID == Invalid || invitation.Domain == Invalid {
+	if invitation.UserID == Invalid || invitation.DomainID == Invalid {
 		return errors.ErrNotFound
 	}
 
@@ -62,17 +62,17 @@ func (m *Repository) UpdateToken(ctx context.Context, invitation invitations.Inv
 func (m *Repository) UpdateConfirmation(ctx context.Context, invitation invitations.Invitation) error {
 	ret := m.Called(ctx, invitation)
 
-	if invitation.UserID == Invalid || invitation.Domain == Invalid {
+	if invitation.UserID == Invalid || invitation.DomainID == Invalid {
 		return errors.ErrNotFound
 	}
 
 	return ret.Error(0)
 }
 
-func (m *Repository) Delete(ctx context.Context, userID, domain string) error {
-	ret := m.Called(ctx, userID, domain)
+func (m *Repository) Delete(ctx context.Context, userID, domainID string) error {
+	ret := m.Called(ctx, userID, domainID)
 
-	if userID == Invalid || domain == Invalid {
+	if userID == Invalid || domainID == Invalid {
 		return errors.ErrNotFound
 	}
 

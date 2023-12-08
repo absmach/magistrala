@@ -39,11 +39,11 @@ func (svc *service) SendInvitation(ctx context.Context, token string, invitation
 	}
 	invitation.InvitedBy = userID
 
-	if err := svc.checkAdmin(ctx, userID, invitation.Domain); err != nil {
+	if err := svc.checkAdmin(ctx, userID, invitation.DomainID); err != nil {
 		return err
 	}
 
-	joinToken, err := svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: userID, DomainId: &invitation.Domain, Type: uint32(auth.InvitationKey)})
+	joinToken, err := svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: userID, DomainId: &invitation.DomainID, Type: uint32(auth.InvitationKey)})
 	if err != nil {
 		return err
 	}
@@ -60,12 +60,12 @@ func (svc *service) SendInvitation(ctx context.Context, token string, invitation
 	return svc.repo.Create(ctx, invitation)
 }
 
-func (svc *service) ViewInvitation(ctx context.Context, token, userID, domain string) (invitation Invitation, err error) {
+func (svc *service) ViewInvitation(ctx context.Context, token, userID, domainID string) (invitation Invitation, err error) {
 	tokenUserID, err := svc.identify(ctx, token)
 	if err != nil {
 		return Invitation{}, err
 	}
-	inv, err := svc.repo.Retrieve(ctx, userID, domain)
+	inv, err := svc.repo.Retrieve(ctx, userID, domainID)
 	if err != nil {
 		return Invitation{}, err
 	}
@@ -79,7 +79,7 @@ func (svc *service) ViewInvitation(ctx context.Context, token, userID, domain st
 		return inv, nil
 	}
 
-	if err := svc.checkAdmin(ctx, tokenUserID, domain); err != nil {
+	if err := svc.checkAdmin(ctx, tokenUserID, domainID); err != nil {
 		return Invitation{}, err
 	}
 
@@ -96,8 +96,8 @@ func (svc *service) ListInvitations(ctx context.Context, token string, page Page
 		return svc.repo.RetrieveAll(ctx, page)
 	}
 
-	if page.Domain != "" {
-		if err := svc.checkAdmin(ctx, userID, page.Domain); err != nil {
+	if page.DomainID != "" {
+		if err := svc.checkAdmin(ctx, userID, page.DomainID); err != nil {
 			return InvitationPage{}, err
 		}
 
@@ -109,13 +109,13 @@ func (svc *service) ListInvitations(ctx context.Context, token string, page Page
 	return svc.repo.RetrieveAll(ctx, page)
 }
 
-func (svc *service) AcceptInvitation(ctx context.Context, token, domain string) error {
+func (svc *service) AcceptInvitation(ctx context.Context, token, domainID string) error {
 	userID, err := svc.identify(ctx, token)
 	if err != nil {
 		return err
 	}
 
-	inv, err := svc.repo.Retrieve(ctx, userID, domain)
+	inv, err := svc.repo.Retrieve(ctx, userID, domainID)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (svc *service) AcceptInvitation(ctx context.Context, token, domain string) 
 			Relation: inv.Relation,
 			UserIDs:  []string{userID},
 		}
-		if sdkerr := svc.sdk.AddUserToDomain(inv.Domain, req, inv.Token); sdkerr != nil {
+		if sdkerr := svc.sdk.AddUserToDomain(inv.DomainID, req, inv.Token); sdkerr != nil {
 			return sdkerr
 		}
 

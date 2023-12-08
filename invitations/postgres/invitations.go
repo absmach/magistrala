@@ -22,8 +22,8 @@ func NewRepository(db postgres.Database) invitations.Repository {
 }
 
 func (repo *repository) Create(ctx context.Context, invitation invitations.Invitation) (err error) {
-	q := `INSERT INTO invitations (invited_by, user_id, domain, token, relation, created_at, updated_at, confirmed_at)
-		VALUES (:invited_by, :user_id, :domain, :token, :relation, :created_at, :updated_at, :confirmed_at)`
+	q := `INSERT INTO invitations (invited_by, user_id, domain_id, token, relation, created_at, updated_at, confirmed_at)
+		VALUES (:invited_by, :user_id, :domain_id, :token, :relation, :created_at, :updated_at, :confirmed_at)`
 
 	if _, err = repo.db.NamedExecContext(ctx, q, invitation); err != nil {
 		return postgres.HandleError(repoerr.ErrCreateEntity, err)
@@ -33,11 +33,11 @@ func (repo *repository) Create(ctx context.Context, invitation invitations.Invit
 }
 
 func (repo *repository) Retrieve(ctx context.Context, userID, domainID string) (invitations.Invitation, error) {
-	q := `SELECT invited_by, user_id, domain, token, relation, created_at, updated_at, confirmed_at FROM invitations WHERE user_id = :user_id AND domain = :domain;`
+	q := `SELECT invited_by, user_id, domain_id, token, relation, created_at, updated_at, confirmed_at FROM invitations WHERE user_id = :user_id AND domain_id = :domain_id;`
 
 	inv := invitations.Invitation{
-		UserID: userID,
-		Domain: domainID,
+		UserID:   userID,
+		DomainID: domainID,
 	}
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, inv)
@@ -61,7 +61,7 @@ func (repo *repository) Retrieve(ctx context.Context, userID, domainID string) (
 func (repo *repository) RetrieveAll(ctx context.Context, page invitations.Page) (invitations.InvitationPage, error) {
 	query := pageQuery(page)
 
-	q := fmt.Sprintf("SELECT invited_by, user_id, domain, relation, created_at, updated_at, confirmed_at FROM invitations %s LIMIT :limit OFFSET :offset;", query)
+	q := fmt.Sprintf("SELECT invited_by, user_id, domain_id, relation, created_at, updated_at, confirmed_at FROM invitations %s LIMIT :limit OFFSET :offset;", query)
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, page)
 	if err != nil {
@@ -96,7 +96,7 @@ func (repo *repository) RetrieveAll(ctx context.Context, page invitations.Page) 
 }
 
 func (repo *repository) UpdateToken(ctx context.Context, invitation invitations.Invitation) (err error) {
-	q := `UPDATE invitations SET token = :token, updated_at = :updated_at WHERE user_id = :user_id AND domain = :domain`
+	q := `UPDATE invitations SET token = :token, updated_at = :updated_at WHERE user_id = :user_id AND domain_id = :domain_id`
 
 	result, err := repo.db.NamedExecContext(ctx, q, invitation)
 	if err != nil {
@@ -110,7 +110,7 @@ func (repo *repository) UpdateToken(ctx context.Context, invitation invitations.
 }
 
 func (repo *repository) UpdateConfirmation(ctx context.Context, invitation invitations.Invitation) (err error) {
-	q := `UPDATE invitations SET confirmed_at = :confirmed_at, updated_at = :updated_at WHERE user_id = :user_id AND domain = :domain`
+	q := `UPDATE invitations SET confirmed_at = :confirmed_at, updated_at = :updated_at WHERE user_id = :user_id AND domain_id = :domain_id`
 
 	result, err := repo.db.NamedExecContext(ctx, q, invitation)
 	if err != nil {
@@ -124,7 +124,7 @@ func (repo *repository) UpdateConfirmation(ctx context.Context, invitation invit
 }
 
 func (repo *repository) Delete(ctx context.Context, userID, domain string) (err error) {
-	q := `DELETE FROM invitations WHERE user_id = $1 AND domain = $2`
+	q := `DELETE FROM invitations WHERE user_id = $1 AND domain_id = $2`
 
 	result, err := repo.db.ExecContext(ctx, q, userID, domain)
 	if err != nil {
@@ -140,8 +140,8 @@ func (repo *repository) Delete(ctx context.Context, userID, domain string) (err 
 func pageQuery(pm invitations.Page) string {
 	var query []string
 	var emq string
-	if pm.Domain != "" {
-		query = append(query, "domain = :domain")
+	if pm.DomainID != "" {
+		query = append(query, "domain_id = :domain_id")
 	}
 	if pm.UserID != "" {
 		query = append(query, "user_id = :user_id")

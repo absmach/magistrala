@@ -18,14 +18,14 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS invitations (
 						invited_by		VARCHAR(36) NOT NULL,
 						user_id			VARCHAR(36) NOT NULL,
-						domain			VARCHAR(36) NOT NULL,
+						domain_id		VARCHAR(36) NOT NULL,
 						token			TEXT NOT NULL,
 						relation		VARCHAR(254) NOT NULL,
 						created_at		TIMESTAMP NOT NULL,
 						updated_at		TIMESTAMP,
 						confirmed_at	TIMESTAMP,
-						UNIQUE (user_id, domain),
-						PRIMARY KEY (user_id, domain)
+						UNIQUE (user_id, domain_id),
+						PRIMARY KEY (user_id, domain_id)
 					)`,
 				},
 				Down: []string{

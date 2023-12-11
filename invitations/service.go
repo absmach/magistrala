@@ -33,17 +33,17 @@ func (svc *service) SendInvitation(ctx context.Context, token string, invitation
 		return err
 	}
 
-	userID, err := svc.identify(ctx, token)
+	user, err := svc.identify(ctx, token)
 	if err != nil {
 		return err
 	}
-	invitation.InvitedBy = userID
+	invitation.InvitedBy = user.GetUserId()
 
-	if err := svc.checkAdmin(ctx, userID, invitation.DomainID); err != nil {
+	if err := svc.checkAdmin(ctx, user.GetId(), invitation.DomainID); err != nil {
 		return err
 	}
 
-	joinToken, err := svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: userID, DomainId: &invitation.DomainID, Type: uint32(auth.InvitationKey)})
+	joinToken, err := svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: user.GetUserId(), DomainId: &invitation.DomainID, Type: uint32(auth.InvitationKey)})
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (svc *service) SendInvitation(ctx context.Context, token string, invitation
 }
 
 func (svc *service) ViewInvitation(ctx context.Context, token, userID, domainID string) (invitation Invitation, err error) {
-	tokenUserID, err := svc.identify(ctx, token)
+	user, err := svc.identify(ctx, token)
 	if err != nil {
 		return Invitation{}, err
 	}
@@ -71,15 +71,15 @@ func (svc *service) ViewInvitation(ctx context.Context, token, userID, domainID 
 	}
 	inv.Token = ""
 
-	if tokenUserID == userID {
+	if user.GetUserId() == userID {
 		return inv, nil
 	}
 
-	if inv.InvitedBy == tokenUserID {
+	if inv.InvitedBy == user.GetUserId() {
 		return inv, nil
 	}
 
-	if err := svc.checkAdmin(ctx, tokenUserID, domainID); err != nil {
+	if err := svc.checkAdmin(ctx, user.GetId(), domainID); err != nil {
 		return Invitation{}, err
 	}
 
@@ -87,49 +87,50 @@ func (svc *service) ViewInvitation(ctx context.Context, token, userID, domainID 
 }
 
 func (svc *service) ListInvitations(ctx context.Context, token string, page Page) (invitations InvitationPage, err error) {
-	userID, err := svc.identify(ctx, token)
+	user, err := svc.identify(ctx, token)
 	if err != nil {
 		return InvitationPage{}, err
 	}
 
-	if err := svc.authorize(ctx, auth.UserType, auth.UsersKind, userID, auth.AdminPermission, auth.PlatformType, auth.MagistralaObject); err == nil {
+	if err := svc.authorize(ctx, user.GetId(), auth.AdminPermission, auth.PlatformType, auth.MagistralaObject); err == nil {
 		return svc.repo.RetrieveAll(ctx, page)
 	}
 
 	if page.DomainID != "" {
-		if err := svc.checkAdmin(ctx, userID, page.DomainID); err != nil {
+		if err := svc.checkAdmin(ctx, user.GetId(), page.DomainID); err != nil {
 			return InvitationPage{}, err
 		}
 
 		return svc.repo.RetrieveAll(ctx, page)
 	}
 
-	page.InvitedByOrUserID = userID
+	page.InvitedByOrUserID = user.GetUserId()
 
 	return svc.repo.RetrieveAll(ctx, page)
 }
 
 func (svc *service) AcceptInvitation(ctx context.Context, token, domainID string) error {
-	userID, err := svc.identify(ctx, token)
+	user, err := svc.identify(ctx, token)
 	if err != nil {
 		return err
 	}
 
-	inv, err := svc.repo.Retrieve(ctx, userID, domainID)
+	inv, err := svc.repo.Retrieve(ctx, user.GetUserId(), domainID)
 	if err != nil {
 		return err
 	}
 
-	if inv.UserID == userID && inv.ConfirmedAt.IsZero() {
+	if inv.UserID == user.GetUserId() && inv.ConfirmedAt.IsZero() {
 		req := mgsdk.UsersRelationRequest{
 			Relation: inv.Relation,
-			UserIDs:  []string{userID},
+			UserIDs:  []string{user.GetUserId()},
 		}
 		if sdkerr := svc.sdk.AddUserToDomain(inv.DomainID, req, inv.Token); sdkerr != nil {
 			return sdkerr
 		}
 
 		inv.ConfirmedAt = time.Now()
+		inv.UpdatedAt = time.Now()
 		if err := svc.repo.UpdateConfirmation(ctx, inv); err != nil {
 			return err
 		}
@@ -139,11 +140,11 @@ func (svc *service) AcceptInvitation(ctx context.Context, token, domainID string
 }
 
 func (svc *service) DeleteInvitation(ctx context.Context, token, userID, domainID string) error {
-	tokenUserID, err := svc.identify(ctx, token)
+	user, err := svc.identify(ctx, token)
 	if err != nil {
 		return err
 	}
-	if tokenUserID == userID {
+	if user.GetUserId() == userID {
 		return svc.repo.Delete(ctx, userID, domainID)
 	}
 
@@ -152,30 +153,30 @@ func (svc *service) DeleteInvitation(ctx context.Context, token, userID, domainI
 		return err
 	}
 
-	if inv.InvitedBy == tokenUserID {
+	if inv.InvitedBy == user.GetUserId() {
 		return svc.repo.Delete(ctx, userID, domainID)
 	}
 
-	if err := svc.checkAdmin(ctx, tokenUserID, domainID); err != nil {
+	if err := svc.checkAdmin(ctx, user.GetId(), domainID); err != nil {
 		return err
 	}
 
 	return svc.repo.Delete(ctx, userID, domainID)
 }
 
-func (svc *service) identify(ctx context.Context, token string) (string, error) {
+func (svc *service) identify(ctx context.Context, token string) (*magistrala.IdentityRes, error) {
 	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return "", err
+		return &magistrala.IdentityRes{}, err
 	}
 
-	return user.GetUserId(), nil
+	return user, nil
 }
 
-func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, perm, objType, obj string) error {
+func (svc *service) authorize(ctx context.Context, subj, perm, objType, obj string) error {
 	req := &magistrala.AuthorizeReq{
-		SubjectType: subjType,
-		SubjectKind: subjKind,
+		SubjectType: auth.UserType,
+		SubjectKind: auth.UsersKind,
 		Subject:     subj,
 		Permission:  perm,
 		ObjectType:  objType,
@@ -195,10 +196,11 @@ func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, per
 
 // checkAdmin checks if the given user is a domain or platform administrator.
 func (svc *service) checkAdmin(ctx context.Context, userID, domainID string) error {
-	if err := svc.authorize(ctx, auth.UserType, auth.UsersKind, userID, auth.AdminPermission, auth.DomainType, domainID); err == nil {
+	if err := svc.authorize(ctx, userID, auth.AdminPermission, auth.DomainType, domainID); err == nil {
 		return nil
 	}
-	if err := svc.authorize(ctx, auth.UserType, auth.UsersKind, userID, auth.AdminPermission, auth.PlatformType, auth.MagistralaObject); err == nil {
+
+	if err := svc.authorize(ctx, userID, auth.AdminPermission, auth.PlatformType, auth.MagistralaObject); err == nil {
 		return nil
 	}
 

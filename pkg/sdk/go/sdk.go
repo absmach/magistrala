@@ -93,6 +93,10 @@ type PageMetadata struct {
 	State           string   `json:"state,omitempty"`
 	Order           string   `json:"order,omitempty"`
 	ListPermissions string   `json:"list_perms,omitempty"`
+	InvitedBy       string   `json:"invited_by,omitempty"`
+	UserID          string   `json:"user_id,omitempty"`
+	DomainID        string   `json:"domain_id,omitempty"`
+	Relation        string   `json:"relation,omitempty"`
 }
 
 // Credentials represent client credentials: it contains
@@ -1086,6 +1090,46 @@ type SDK interface {
 	// err := sdk.RemoveUserFromDomain("domainID", req, "token")
 	// fmt.Println(err)
 	RemoveUserFromDomain(domainID string, req UsersRelationRequest, token string) errors.SDKError
+
+	// SendInvitation sends an invitation to the email address associated with the given user.
+	//
+	// For example:
+	//  invitation := sdk.Invitation{
+	//    DomainID: "domainID",
+	//    UserID:   "userID",
+	//    Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
+	//  }
+	//  err := sdk.SendInvitation(invitation, "token")
+	//  fmt.Println(err)
+	SendInvitation(invitation Invitation, token string) (err error)
+
+	// Invitation returns an invitation.
+	//
+	// For example:
+	//  invitation, _ := sdk.Invitation("userID", "domainID", "token")
+	//  fmt.Println(invitation)
+	Invitation(userID, domainID, token string) (invitation Invitation, err error)
+
+	// Invitations returns a list of invitations.
+	//
+	// For example:
+	//  invitations, _ := sdk.Invitations(PageMetadata{Offset: 0, Limit: 10, Domain: "domainID"}, "token")
+	//  fmt.Println(invitations)
+	Invitations(pm PageMetadata, token string) (invitations InvitationPage, err error)
+
+	// AcceptInvitation accepts an invitation by adding the user to the domain that they were invited to.
+	//
+	// For example:
+	//  err := sdk.AcceptInvitation("domainID", "token")
+	//  fmt.Println(err)
+	AcceptInvitation(domainID, token string) (err error)
+
+	// DeleteInvitation deletes an invitation.
+	//
+	// For example:
+	//  err := sdk.DeleteInvitation("userID", "domainID", "token")
+	//  fmt.Println(err)
+	DeleteInvitation(userID, domainID, token string) (err error)
 }
 
 type mgSDK struct {
@@ -1096,6 +1140,7 @@ type mgSDK struct {
 	thingsURL      string
 	usersURL       string
 	domainsURL     string
+	invitationsURL string
 	HostURL        string
 
 	msgContentType ContentType
@@ -1111,6 +1156,7 @@ type Config struct {
 	ThingsURL      string
 	UsersURL       string
 	DomainsURL     string
+	InvitationsURL string
 	HostURL        string
 
 	MsgContentType  ContentType
@@ -1127,6 +1173,7 @@ func NewSDK(conf Config) SDK {
 		thingsURL:      conf.ThingsURL,
 		usersURL:       conf.UsersURL,
 		domainsURL:     conf.DomainsURL,
+		invitationsURL: conf.InvitationsURL,
 		HostURL:        conf.HostURL,
 
 		msgContentType: conf.MsgContentType,
@@ -1260,5 +1307,18 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.ListPermissions != "" {
 		q.Add("list_perms", pm.ListPermissions)
 	}
+	if pm.InvitedBy != "" {
+		q.Add("invited_by", pm.InvitedBy)
+	}
+	if pm.UserID != "" {
+		q.Add("user_id", pm.UserID)
+	}
+	if pm.DomainID != "" {
+		q.Add("domain_id", pm.DomainID)
+	}
+	if pm.Relation != "" {
+		q.Add("relation", pm.Relation)
+	}
+
 	return q.Encode(), nil
 }

@@ -14,12 +14,13 @@ import (
 )
 
 const (
-	defURL          string = "http://localhost"
-	defUsersURL     string = defURL + ":9002"
-	defThingsURL    string = defURL + ":9000"
-	defBootstrapURL string = defURL + ":9013"
-	defDomainsURL   string = defURL + ":8189"
-	defCertsURL     string = defURL + ":9019"
+	defURL            string = "http://localhost"
+	defUsersURL       string = defURL + ":9002"
+	defThingsURL      string = defURL + ":9000"
+	defBootstrapURL   string = defURL + ":9013"
+	defDomainsURL     string = defURL + ":8189"
+	defCertsURL       string = defURL + ":9019"
+	defInvitationsURL string = defURL + ":9020"
 )
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 		BootstrapURL:    defBootstrapURL,
 		CertsURL:        defCertsURL,
 		DomainsURL:      defDomainsURL,
+		InvitationsURL:  defInvitationsURL,
 		MsgContentType:  sdk.ContentType(msgContentType),
 		TLSVerification: false,
 		HostURL:         defURL,
@@ -65,6 +67,7 @@ func main() {
 	certsCmd := cli.NewCertsCmd()
 	subscriptionsCmd := cli.NewSubscriptionCmd()
 	configCmd := cli.NewConfigCmd()
+	invitationsCmd := cli.NewInvitationsCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(healthCmd)
@@ -79,6 +82,7 @@ func main() {
 	rootCmd.AddCommand(certsCmd)
 	rootCmd.AddCommand(subscriptionsCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(invitationsCmd)
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(
@@ -135,6 +139,14 @@ func main() {
 		"R",
 		sdkConf.ReaderURL,
 		"Reader URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.InvitationsURL,
+		"invitations-url",
+		"v",
+		sdkConf.InvitationsURL,
+		"Inivitations URL",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

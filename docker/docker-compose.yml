@@ -17,6 +17,7 @@ volumes:
   magistrala-es-volume:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
+  magistrala-invitations-db-volume:
 
 include:
   - path: brokers/docker-compose.yml
@@ -158,6 +159,78 @@ services:
         target: /auth-grpc-client-ca${MG_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+
+  invitations-db:
+    image: postgres:15.3-alpine
+    container_name: magistrala-invitations-db
+    restart: on-failure
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_INVITATIONS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_INVITATIONS_DB_PASS}
+      POSTGRES_DB: ${MG_INVITATIONS_DB_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+    ports:
+      - 6021:5432
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-invitations-db-volume:/var/lib/postgresql/data
+
+  invitations:
+    image: magistrala/invitations:${MG_RELEASE_TAG}
+    container_name: magistrala-invitations
+    restart: on-failure
+    depends_on:
+      - invitations-db
+    environment:
+      MG_INVITATIONS_LOG_LEVEL: ${MG_INVITATIONS_LOG_LEVEL}
+      MG_USERS_URL: ${MG_USERS_URL}
+      MG_DOMAINS_URL: ${MG_DOMAINS_URL}
+      MG_INVITATIONS_HTTP_HOST: ${MG_INVITATIONS_HTTP_HOST}
+      MG_INVITATIONS_HTTP_PORT: ${MG_INVITATIONS_HTTP_PORT}
+      MG_INVITATIONS_HTTP_SERVER_CERT: ${MG_INVITATIONS_HTTP_SERVER_CERT}
+      MG_INVITATIONS_HTTP_SERVER_KEY: ${MG_INVITATIONS_HTTP_SERVER_KEY}
+      MG_INVITATIONS_DB_HOST: ${MG_INVITATIONS_DB_HOST}
+      MG_INVITATIONS_DB_USER: ${MG_INVITATIONS_DB_USER}
+      MG_INVITATIONS_DB_PASS: ${MG_INVITATIONS_DB_PASS}
+      MG_INVITATIONS_DB_PORT: ${MG_INVITATIONS_DB_PORT}
+      MG_INVITATIONS_DB_NAME: ${MG_INVITATIONS_DB_NAME}
+      MG_INVITATIONS_DB_SSL_MODE: ${MG_INVITATIONS_DB_SSL_MODE}
+      MG_INVITATIONS_DB_SSL_CERT: ${MG_INVITATIONS_DB_SSL_CERT}
+      MG_INVITATIONS_DB_SSL_KEY: ${MG_INVITATIONS_DB_SSL_KEY}
+      MG_INVITATIONS_DB_SSL_ROOT_CERT: ${MG_INVITATIONS_DB_SSL_ROOT_CERT}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_INVITATIONS_INSTANCE_ID: ${MG_INVITATIONS_INSTANCE_ID}
+    ports:
+      - ${MG_INVITATIONS_HTTP_PORT}:${MG_INVITATIONS_HTTP_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      # Auth gRPC client certificates
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
   nginx:
     image: nginx:1.23.3-alpine
     container_name: magistrala-nginx

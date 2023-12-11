@@ -147,11 +147,15 @@ func TestSendInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{UserId: tc.tokenUserID}, tc.authNErr)
+		idRes := &magistrala.IdentityRes{
+			UserId: tc.tokenUserID,
+			Id:     testsutil.GenerateUUID(t) + "_" + tc.tokenUserID,
+		}
+		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(idRes, tc.authNErr)
 		domainReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.DomainType,
 			Object:      tc.req.DomainID,
@@ -160,7 +164,7 @@ func TestSendInvitation(t *testing.T) {
 		platformReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.PlatformType,
 			Object:      auth.MagistralaObject,
@@ -324,11 +328,15 @@ func TestViewInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{UserId: tc.tokenUserID}, tc.authNErr)
+		idRes := &magistrala.IdentityRes{
+			UserId: tc.tokenUserID,
+			Id:     testsutil.GenerateUUID(t) + "_" + tc.tokenUserID,
+		}
+		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(idRes, tc.authNErr)
 		domainReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.DomainType,
 			Object:      tc.domainID,
@@ -337,7 +345,7 @@ func TestViewInvitation(t *testing.T) {
 		platformReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.PlatformType,
 			Object:      auth.MagistralaObject,
@@ -498,11 +506,15 @@ func TestListInvitations(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{UserId: tc.tokenUserID}, tc.authNErr)
+		idRes := &magistrala.IdentityRes{
+			UserId: tc.tokenUserID,
+			Id:     testsutil.GenerateUUID(t) + "_" + tc.tokenUserID,
+		}
+		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(idRes, tc.authNErr)
 		domainReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.DomainType,
 			Object:      tc.page.DomainID,
@@ -511,7 +523,7 @@ func TestListInvitations(t *testing.T) {
 		platformReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.PlatformType,
 			Object:      auth.MagistralaObject,
@@ -720,11 +732,15 @@ func TestDeleteInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{UserId: tc.tokenUserID}, tc.authNErr)
+		idRes := &magistrala.IdentityRes{
+			UserId: tc.tokenUserID,
+			Id:     tc.domainID + "_" + tc.userID,
+		}
+		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(idRes, tc.authNErr)
 		domainReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.DomainType,
 			Object:      tc.domainID,
@@ -733,7 +749,7 @@ func TestDeleteInvitation(t *testing.T) {
 		platformReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
-			Subject:     tc.tokenUserID,
+			Subject:     idRes.GetId(),
 			Permission:  auth.AdminPermission,
 			ObjectType:  auth.PlatformType,
 			Object:      auth.MagistralaObject,

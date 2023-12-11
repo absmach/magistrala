@@ -19,6 +19,7 @@ envsubst '
     ${MG_HTTP_ADAPTER_PORT}
     ${MG_NGINX_MQTT_PORT}
     ${MG_NGINX_MQTTS_PORT}
+    ${MG_INVITATIONS_HTTP_PORT}
     ${MG_WS_ADAPTER_HTTP_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 exec nginx -g "daemon off;"

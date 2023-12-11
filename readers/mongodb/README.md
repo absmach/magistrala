@@ -22,8 +22,8 @@ default values.
 | MG_THINGS_AUTH_GRPC_TIMEOUT      | Things service Auth gRPC request timeout in seconds | 1s                             |
 | MG_THINGS_AUTH_GRPC_CLIENT_TLS   | Flag that indicates if TLS should be turned on      | false                          |
 | MG_THINGS_AUTH_GRPC_CA_CERTS     | Path to trusted CAs in PEM format                   | ""                             |
-| MG_AUTH_GRPC_URL                 | Users service gRPC URL                              | localhost:7001                 |
-| MG_AUTH_GRPC_TIMEOUT             | Users service gRPC request timeout in seconds       | 1s                             |
+| MG_AUTH_GRPC_URL                 | Auth service gRPC URL                               | localhost:7001                 |
+| MG_AUTH_GRPC_TIMEOUT             | Auth service gRPC request timeout in seconds        | 1s                             |
 | MG_AUTH_GRPC_CLIENT_TLS          | Flag that indicates if TLS should be turned on      | false                          |
 | MG_AUTH_GRPC_CA_CERT             | Path to trusted CAs in PEM format                   | ""                             |
 | MG_JAEGER_URL                    | Jaeger server URL                                   | http://jaeger:14268/api/traces |
@@ -62,8 +62,8 @@ MG_THINGS_AUTH_GRPC_URL=[Things service Auth gRPC URL] \
 MG_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
 MG_THINGS_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
 MG_THINGS_AUTH_GRPC_CA_CERTS=[Path to trusted CAs in PEM format] \
-MG_AUTH_GRPC_URL=[Users service gRPC URL] \
-MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
+MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
+MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
 MG_AUTH_GRPC_CA_CERT=[Path to trusted CAs in PEM format] \
 MG_JAEGER_URL=[Jaeger server URL] \

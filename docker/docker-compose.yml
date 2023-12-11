@@ -137,7 +137,27 @@ services:
       - magistrala-base-net
     volumes:
       - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
-
+      # Auth gRPC mTLS server certificates
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /auth-grpc-server${MG_AUTH_GRPC_SERVER_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /auth-grpc-server${MG_AUTH_GRPC_SERVER_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /auth-grpc-client-ca${MG_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
   nginx:
     image: nginx:1.23.3-alpine
     container_name: magistrala-nginx
@@ -229,9 +249,9 @@ services:
       MG_THINGS_DB_SSL_ROOT_CERT: ${MG_THINGS_DB_SSL_ROOT_CERT}
       MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
       MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
@@ -262,20 +282,20 @@ services:
         target: /things-grpc-client-ca${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
-      # Users gRPC client certificates
+      # Auth gRPC client certificates
       - type: bind
-        source: ${MG_USERS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -315,12 +335,6 @@ services:
       MG_USERS_HTTP_PORT: ${MG_USERS_HTTP_PORT}
       MG_USERS_HTTP_SERVER_CERT: ${MG_USERS_HTTP_SERVER_CERT}
       MG_USERS_HTTP_SERVER_KEY: ${MG_USERS_HTTP_SERVER_KEY}
-      MG_USERS_GRPC_HOST: ${MG_USERS_GRPC_HOST}
-      MG_USERS_GRPC_PORT: ${MG_USERS_GRPC_PORT}
-      MG_USERS_GRPC_SERVER_CERT: ${MG_USERS_GRPC_SERVER_CERT:+/users-grpc-server.crt}
-      MG_USERS_GRPC_SERVER_KEY: ${MG_USERS_GRPC_SERVER_KEY:+/users-grpc-server.key}
-      MG_USERS_GRPC_SERVER_CA_CERTS: ${MG_USERS_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MG_USERS_GRPC_CLIENT_CA_CERTS: ${MG_USERS_GRPC_CLIENT_CA_CERTS:+/users-grpc-client-ca.crt}
       MG_USERS_DB_HOST: ${MG_USERS_DB_HOST}
       MG_USERS_DB_PORT: ${MG_USERS_DB_PORT}
       MG_USERS_DB_USER: ${MG_USERS_DB_USER}
@@ -344,32 +358,29 @@ services:
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
       MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
       MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
     ports:
       - ${MG_USERS_HTTP_PORT}:${MG_USERS_HTTP_PORT}
-      - ${MG_USERS_GRPC_PORT}:${MG_USERS_GRPC_PORT}
     networks:
       - magistrala-base-net
     volumes:
       - ./templates/${MG_USERS_RESET_PWD_TEMPLATE}:/email.tmpl
-      # Users gRPC mTLS server certificates
+      # Auth gRPC client certificates
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /users-grpc-server${MG_USERS_GRPC_SERVER_CERT:+.crt}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /users-grpc-server${MG_USERS_GRPC_SERVER_KEY:+.key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_USERS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /users-grpc-client-ca${MG_USERS_GRPC_CLIENT_CA_CERTS:+.crt}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -421,17 +432,17 @@ services:
       # Things gRPC mTLS client certificates
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -466,17 +477,17 @@ services:
       # Things gRPC mTLS client certificates
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -513,20 +524,20 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      ## Things gRPC mTLS client certificates
+      # Things gRPC mTLS client certificates
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -561,16 +572,16 @@ services:
       # Things gRPC mTLS client certificates
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

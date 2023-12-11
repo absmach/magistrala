@@ -35,10 +35,10 @@ default values.
 | MG_EMAIL_FROM_ADDRESS             | Email "from" address                                                    |                                |
 | MG_EMAIL_FROM_NAME                | Email "from" name                                                       |                                |
 | MG_EMAIL_TEMPLATE                 | Email template for sending notification emails                          | email.tmpl                     |
-| MG_AUTH_GRPC_URL                  | Users service gRPC URL                                                  | localhost:7001                 |
-| MG_AUTH_GRPC_TIMEOUT              | Users service gRPC request timeout in seconds                           | 1s                             |
-| MG_AUTH_GRPC_CLIENT_TLS           | Users service gRPC TLS flag                                             | false                          |
-| MG_AUTH_GRPC_CA_CERT              | Path to Users service CA cert in pem format                             | ""                             |
+| MG_AUTH_GRPC_URL                  | Auth service gRPC URL                                                   | localhost:7001                 |
+| MG_AUTH_GRPC_TIMEOUT              | Auth service gRPC request timeout in seconds                            | 1s                             |
+| MG_AUTH_GRPC_CLIENT_TLS           | Auth service gRPC TLS flag                                              | false                          |
+| MG_AUTH_GRPC_CA_CERT              | Path to Auth service CA cert in pem format                              | ""                             |
 | MG_AUTH_CLIENT_TLS                | Auth client TLS flag                                                    | false                          |
 | MG_AUTH_CA_CERTS                  | Path to Auth client CA certs in pem format                              | ""                             |
 | MG_SEND_TELEMETRY                 | Send telemetry to magistrala call home server                           | true                           |

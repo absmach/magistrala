@@ -28,8 +28,8 @@ default values.
 | MG_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                   |                                  |
 | MG_TWINS_CHANNEL_ID        | Message broker notifications channel ID                             |                                  |
 | MG_MESSAGE_BROKER_URL      | Magistrala Message broker URL                                       | <nats://localhost:4222>          |
-| MG_AUTH_GRPC_URL           | Users service gRPC URL                                              | <localhost:7001>                 |
-| MG_AUTH_GRPC_TIMEOUT       | Users service gRPC request timeout in seconds                       | 1s                               |
+| MG_AUTH_GRPC_URL           | Auth service gRPC URL                                               | <localhost:7001>                 |
+| MG_AUTH_GRPC_TIMEOUT       | Auth service gRPC request timeout in seconds                        | 1s                               |
 | MG_TWINS_CACHE_URL         | Cache database URL                                                  | <redis://localhost:6379/0>       |
 | MG_SEND_TELEMETRY          | Send telemetry to magistrala call home server                       | true                             |
 
@@ -68,8 +68,8 @@ MG_TWINS_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
 MG_TWINS_CA_CERTS=[Path to trusted CAs in PEM format] \
 MG_TWINS_CHANNEL_ID=[Message broker notifications channel ID] \
 MG_MESSAGE_BROKER_URL=[Magistrala Message broker URL] \
-MG_AUTH_GRPC_URL=[Users service gRPC URL] \
-MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
+MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
+MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
 MG_TWINS_CACHE_URL=[Cache database URL] \
 $GOBIN/magistrala-twins
 ```

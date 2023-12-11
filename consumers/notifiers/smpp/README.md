@@ -34,9 +34,9 @@ default values.
 | MG_SMPP_DST_ADDR_TON              | SMPP destination address TON                                                      |                                |
 | MG_SMPP_SRC_ADDR_NPI              | SMPP source address NPI                                                           |                                |
 | MG_SMPP_DST_ADDR_NPI              | SMPP destination address NPI                                                      |                                |
-| MG_AUTH_GRPC_URL                  | Users service gRPC URL                                                            | localhost:7001                 |
-| MG_AUTH_GRPC_TIMEOUT              | Users service gRPC request timeout in seconds                                     | 1s                             |
-| MG_AUTH_GRPC_CLIENT_TLS           | Users client TLS flag                                                             | false                          |
+| MG_AUTH_GRPC_URL                  | Auth service gRPC URL                                                             | localhost:7001                 |
+| MG_AUTH_GRPC_TIMEOUT              | Auth service gRPC request timeout in seconds                                      | 1s                             |
+| MG_AUTH_GRPC_CLIENT_TLS           | Auth client TLS flag                                                              | false                          |
 | MG_AUTH_GRPC_CA_CERT              | Path to Auth client CA certs in pem format                                        | ""                             |
 | MG_MESSAGE_BROKER_URL             | Message broker URL                                                                | nats://127.0.0.1:4222          |
 | MG_JAEGER_URL                     | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |

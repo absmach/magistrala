@@ -28,10 +28,10 @@ default values.
 | MG_THINGS_AUTH_GRPC_TIMEOUT          | Things service Auth gRPC timeout in seconds   | 1s                             |
 | MG_THINGS_AUTH_GRPC_CLIENT_TLS       | Things service Auth gRPC TLS enabled flag     | false                          |
 | MG_THINGS_AUTH_GRPC_CA_CERTS         | Things service Auth gRPC CA certificates      | ""                             |
-| MG_AUTH_GRPC_URL                     | Users service gRPC URL                        | localhost:7001                 |
-| MG_AUTH_GRPC_TIMEOUT                 | Users service gRPC timeout in seconds         | 1s                             |
-| MG_AUTH_GRPC_CLIENT_TLS              | Users service gRPC TLS enabled flag           | false                          |
-| MG_AUTH_GRPC_CA_CERT                 | Users service gRPC CA certificate             | ""                             |
+| MG_AUTH_GRPC_URL                     | Auth service gRPC URL                         | localhost:7001                 |
+| MG_AUTH_GRPC_TIMEOUT                 | Auth service gRPC timeout in seconds          | 1s                             |
+| MG_AUTH_GRPC_CLIENT_TLS              | Auth service gRPC TLS enabled flag            | false                          |
+| MG_AUTH_GRPC_CA_CERT                 | Auth service gRPC CA certificate              | ""                             |
 | MG_JAEGER_URL                        | Jaeger server URL                             | http://jaeger:14268/api/traces |
 | MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server | true                           |
 | MG_TIMESCALE_READER_INSTANCE_ID      | Timescale reader instance ID                  | ""                             |
@@ -73,10 +73,10 @@ MG_THINGS_AUTH_GRPC_URL=[Things service Auth GRPC URL] \
 MG_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
 MG_THINGS_AUTH_GRPC_CLIENT_TLS=[Things service Auth gRPC TLS enabled flag] \
 MG_THINGS_AUTH_GRPC_CA_CERTS=[Things service Auth gRPC CA certificates] \
-MG_AUTH_GRPC_URL=[Users service Auth gRPC URL] \
-MG_AUTH_GRPC_TIMEOUT=[Users service Auth gRPC request timeout in seconds] \
-MG_AUTH_GRPC_CLIENT_TLS=[Users service Auth gRPC TLS enabled flag] \
-MG_AUTH_GRPC_CA_CERT=[Users service Auth gRPC CA certificates] \
+MG_AUTH_GRPC_URL=[Auth service Auth gRPC URL] \
+MG_AUTH_GRPC_TIMEOUT=[Auth service Auth gRPC request timeout in seconds] \
+MG_AUTH_GRPC_CLIENT_TLS=[Auth service Auth gRPC TLS enabled flag] \
+MG_AUTH_GRPC_CA_CERT=[Auth service Auth gRPC CA certificates] \
 MG_JAEGER_URL=[Jaeger server URL] \
 MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_TIMESCALE_READER_INSTANCE_ID=[Timescale reader instance ID] \

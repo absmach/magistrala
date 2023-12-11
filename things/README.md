@@ -41,11 +41,11 @@ default values.
 | MG_THINGS_ES_URL                | Event store URL                                                         | <localhost:6379>                 |
 | MG_THINGS_ES_PASS               | Event store password                                                    | ""                               |
 | MG_THINGS_ES_DB                 | Event store instance name                                               | 0                                |
-| MG_THINGS_STANDALONE_ID         | User ID for standalone mode (no gRPC communication with users)          | ""                               |
+| MG_THINGS_STANDALONE_ID         | User ID for standalone mode (no gRPC communication with Auth)           | ""                               |
 | MG_THINGS_STANDALONE_TOKEN      | User token for standalone mode that should be passed in auth header     | ""                               |
 | MG_JAEGER_URL                   | Jaeger server URL                                                       | <http://jaeger:14268/api/traces> |
-| MG_AUTH_GRPC_URL                | Users service gRPC URL                                                  | localhost:7001                   |
-| MG_AUTH_GRPC_TIMEOUT            | Users service gRPC request timeout in seconds                           | 1s                               |
+| MG_AUTH_GRPC_URL                | Auth service gRPC URL                                                   | localhost:7001                   |
+| MG_AUTH_GRPC_TIMEOUT            | Auth service gRPC request timeout in seconds                            | 1s                               |
 | MG_AUTH_GRPC_CLIENT_TLS         | Enable TLS for gRPC client                                              | false                            |
 | MG_AUTH_GRPC_CA_CERT            | Path to the CA certificate file                                         | ""                               |
 | MG_SEND_TELEMETRY               | Send telemetry to magistrala call home server.                          | true                             |
@@ -98,8 +98,8 @@ MG_THINGS_CACHE_URL=[Cache database URL] \
 MG_THINGS_ES_URL=[Event store URL] \
 MG_THINGS_ES_PASS=[Event store password] \
 MG_THINGS_ES_DB=[Event store instance name] \
-MG_AUTH_GRPC_URL=[Users service gRPC URL] \
-MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
+MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
+MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Enable TLS for gRPC client] \
 MG_AUTH_GRPC_CA_CERT=[Path to trusted CA certificate file] \
 MG_JAEGER_URL=[Jaeger server URL] \
@@ -108,7 +108,7 @@ MG_THINGS_INSTANCE_ID=[Things instance ID] \
 $GOBIN/magistrala-things
 ```
 
-Setting `MG_THINGS_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Users gRPC endpoint trusting only those CAs that are provided.
+Setting `MG_THINGS_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Auth gRPC endpoint trusting only those CAs that are provided.
 
 In constrained environments, sometimes it makes sense to run Things service as a standalone to reduce network traffic and simplify deployment. This means that Things service
 operates only using a single user and is able to authorize it without gRPC communication with Auth service.

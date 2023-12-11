@@ -16,12 +16,12 @@ THINGS_GRPC_SERVER_CN=things
 THINGS_GRPC_CLIENT_CN=things-client
 THINGS_GRPC_SERVER_CRT_FILE_NAME=things-grpc-server
 THINGS_GRPC_CLIENT_CRT_FILE_NAME=things-grpc-client
-USERS_GRPC_SERVER_CONF_FILE_NAME=users-grpc-server.conf
-USERS_GRPC_CLIENT_CONF_FILE_NAME=users-grpc-client.conf
-USERS_GRPC_SERVER_CN=users
-USERS_GRPC_CLIENT_CN=users-client
-USERS_GRPC_SERVER_CRT_FILE_NAME=users-grpc-server
-USERS_GRPC_CLIENT_CRT_FILE_NAME=users-grpc-client
+AUTH_GRPC_SERVER_CONF_FILE_NAME=auth-grpc-server.conf
+AUTH_GRPC_CLIENT_CONF_FILE_NAME=auth-grpc-client.conf
+AUTH_GRPC_SERVER_CN=auth
+AUTH_GRPC_CLIENT_CN=auth-client
+AUTH_GRPC_SERVER_CRT_FILE_NAME=auth-grpc-server
+AUTH_GRPC_CLIENT_CRT_FILE_NAME=auth-grpc-client
 
 define GRPC_CERT_CONFIG
 [req]
@@ -51,7 +51,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert test things_grpc_certs users_grpc_certs
+all: clean_certs ca server_cert things_grpc_certs auth_grpc_certs
 
 # CA name and key is "ca".
 ca:
@@ -123,47 +123,47 @@ things_grpc_certs:
 
 	rm -rf  $(CRT_LOCATION)/$(THINGS_GRPC_CLIENT_CRT_FILE_NAME).csr $(CRT_LOCATION)/$(THINGS_GRPC_CLIENT_CRT_FILE_NAME).conf
 
-users_grpc_certs:
-	# Users gRPC server certificate
-	$(file > $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).conf,$(subst <<SERVICE_NAME>>,$(USERS_GRPC_SERVER_CN),$(GRPC_CERT_CONFIG)) )
+auth_grpc_certs:
+	# Auth gRPC server certificate
+	$(file > $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).conf,$(subst <<SERVICE_NAME>>,$(AUTH_GRPC_SERVER_CN),$(GRPC_CERT_CONFIG)) )
 
 	openssl req -new -sha256  -newkey rsa:4096 -nodes \
-				-keyout $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).key  \
-				-out $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).csr \
-				-config $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).conf \
+				-keyout $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).key  \
+				-out $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).csr \
+				-config $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).conf \
 				-extensions v3_req
 
 	openssl x509 -req -sha256 \
-			-in $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).csr \
+			-in $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).csr \
 			-CA $(CRT_LOCATION)/ca.crt \
 			-CAkey $(CRT_LOCATION)/ca.key \
 			-CAcreateserial \
-			-out $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).crt \
+			-out $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).crt \
 			-days 365 \
-			-extfile $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).conf \
+			-extfile $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).conf \
 			-extensions v3_req
 
-	rm -rf  $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).csr $(CRT_LOCATION)/$(USERS_GRPC_SERVER_CRT_FILE_NAME).conf
-	# Users gRPC client certificate
-	$(file > $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).conf,$(subst <<SERVICE_NAME>>,$(USERS_GRPC_CLIENT_CN),$(GRPC_CERT_CONFIG)) )
+	rm -rf  $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).csr $(CRT_LOCATION)/$(AUTH_GRPC_SERVER_CRT_FILE_NAME).conf
+	# Auth gRPC client certificate
+	$(file > $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).conf,$(subst <<SERVICE_NAME>>,$(AUTH_GRPC_CLIENT_CN),$(GRPC_CERT_CONFIG)) )
 
 	openssl req -new -sha256 -newkey rsa:4096 -nodes \
-				-keyout $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).key  \
-				-out $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).csr \
-				-config $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).conf \
+				-keyout $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).key  \
+				-out $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).csr \
+				-config $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).conf \
 				-extensions v3_req
 
 	openssl x509 -req -sha256 \
-			-in $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).csr \
+			-in $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).csr \
 			-CA $(CRT_LOCATION)/ca.crt \
 			-CAkey $(CRT_LOCATION)/ca.key \
 			-CAcreateserial \
-			-out $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).crt \
+			-out $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).crt \
 			-days 365 \
-			-extfile $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).conf \
+			-extfile $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).conf \
 			-extensions v3_req
 
-	rm -rf  $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).csr $(CRT_LOCATION)/$(USERS_GRPC_CLIENT_CRT_FILE_NAME).conf
+	rm -rf  $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).csr $(CRT_LOCATION)/$(AUTH_GRPC_CLIENT_CRT_FILE_NAME).conf
 	
 clean_certs:
 	rm -r $(CRT_LOCATION)/*.crt

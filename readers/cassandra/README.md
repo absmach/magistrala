@@ -24,10 +24,10 @@ default values.
 | MG_THINGS_AUTH_GRPC_TIMEOUT          | Things service Auth gRPC request timeout in seconds | 1                              |
 | MG_THINGS_AUTH_GRPC_CLIENT_TLS       | Things service Auth gRPC TLS enabled                | false                          |
 | MG_THINGS_AUTH_GRPC_CA_CERTS         | Things service Auth gRPC CA certificates            | ""                             |
-| MG_AUTH_GRPC_URL                     | Users service gRPC URL                              | localhost:7001                 |
-| MG_AUTH_GRPC_TIMEOUT                 | Users service gRPC request timeout in seconds       | 1s                             |
-| MG_AUTH_GRPC_CLIENT_TLS              | Users service gRPC TLS enabled                      | false                          |
-| MG_AUTH_GRPC_CA_CERT                 | Users service gRPC CA certificates                  | ""                             |
+| MG_AUTH_GRPC_URL                     | Auth service gRPC URL                               | localhost:7001                 |
+| MG_AUTH_GRPC_TIMEOUT                 | Auth service gRPC request timeout in seconds        | 1s                             |
+| MG_AUTH_GRPC_CLIENT_TLS              | Auth service gRPC TLS enabled                       | false                          |
+| MG_AUTH_GRPC_CA_CERT                 | Auth service gRPC CA certificates                   | ""                             |
 | MG_JAEGER_URL                        | Jaeger server URL                                   | http://jaeger:14268/api/traces |
 | MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server       | true                           |
 | MG_CASSANDRA_READER_INSTANCE_ID      | Cassandra Reader instance ID                        | ""                             |
@@ -66,10 +66,10 @@ MG_THINGS_AUTH_GRPC_URL=[Things service Auth gRPC URL] \
 MG_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
 MG_THINGS_AUTH_GRPC_CLIENT_TLS=[Things service Auth gRPC TLS enabled] \
 MG_THINGS_AUTH_GRPC_CA_CERTS=[Things service Auth gRPC CA certificates] \
-MG_AUTH_GRPC_URL=[Users service gRPC URL] \
-MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
-MG_AUTH_GRPC_CLIENT_TLS=[Users service gRPC TLS enabled] \
-MG_AUTH_GRPC_CA_CERT=[Users service gRPC CA certificates] \
+MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
+MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
+MG_AUTH_GRPC_CLIENT_TLS=[Auth service gRPC TLS enabled] \
+MG_AUTH_GRPC_CA_CERT=[Auth service gRPC CA certificates] \
 MG_JAEGER_URL=[Jaeger server URL] \
 MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_CASSANDRA_READER_INSTANCE_ID=[Cassandra Reader instance ID] \

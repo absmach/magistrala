@@ -65,6 +65,7 @@ type Policy struct {
 type Domains interface {
 	CreateDomain(ctx context.Context, token string, d Domain) (Domain, error)
 	RetrieveDomain(ctx context.Context, token string, id string) (Domain, error)
+	RetrieveDomainPermissions(ctx context.Context, token string, id string) (Permissions, error)
 	UpdateDomain(ctx context.Context, token string, id string, d DomainReq) (Domain, error)
 	ChangeDomainStatus(ctx context.Context, token string, id string, d DomainReq) (Domain, error)
 	ListDomains(ctx context.Context, token string, page Page) (DomainsPage, error)
@@ -79,6 +80,9 @@ type DomainsRepository interface {
 
 	// RetrieveByID retrieves Domain by its unique ID.
 	RetrieveByID(ctx context.Context, id string) (Domain, error)
+
+	// RetrievePermissions retrieves domain permissions.
+	RetrievePermissions(ctx context.Context, subject, id string) ([]string, error)
 
 	// RetrieveAllByIDs retrieves for given Domain IDs .
 	RetrieveAllByIDs(ctx context.Context, pm Page) (DomainsPage, error)

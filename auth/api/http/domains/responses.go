@@ -54,8 +54,20 @@ func (res retrieveDomainRes) Empty() bool {
 	return false
 }
 
-func (res retrieveDomainRes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(res.Data)
+type retrieveDomainPermissionsRes struct {
+	Permissions []string `json:"permissions"`
+}
+
+func (res retrieveDomainPermissionsRes) Code() int {
+	return http.StatusOK
+}
+
+func (res retrieveDomainPermissionsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res retrieveDomainPermissionsRes) Empty() bool {
+	return false
 }
 
 type updateDomainRes struct {

@@ -986,12 +986,19 @@ type SDK interface {
 	//  fmt.Println(domain)
 	CreateDomain(d Domain, token string) (Domain, errors.SDKError)
 
-	// RetrieveDomain retrieve domain information of given domain ID .
+	// Domain retrieve domain information of given domain ID .
 	//
 	// example:
 	//  domain, _ := sdk.Domain("domainID", "token")
 	//  fmt.Println(domain)
 	Domain(domainID, token string) (Domain, errors.SDKError)
+
+	// DomainPermissions retrieve user permissions on the given domain ID .
+	//
+	// example:
+	//  permissions, _ := sdk.DomainPermissions("domainID", "token")
+	//  fmt.Println(permissions)
+	DomainPermissions(domainID, token string) (Domain, errors.SDKError)
 
 	// UpdateDomain updates details of the given domain ID.
 	//

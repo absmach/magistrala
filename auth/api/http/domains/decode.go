@@ -38,6 +38,14 @@ func decodeRetrieveDomainRequest(_ context.Context, r *http.Request) (interface{
 	return req, nil
 }
 
+func decodeRetrieveDomainPermissionsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := retrieveDomainPermissionsRequest{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}
+	return req, nil
+}
+
 func decodeUpdateDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)

@@ -92,6 +92,35 @@ func (repo domainRepo) RetrieveByID(ctx context.Context, id string) (auth.Domain
 	return toDomain(dbd)
 }
 
+func (repo domainRepo) RetrievePermissions(ctx context.Context, subject, id string) ([]string, error) {
+	q := `SELECT pc.relation as relation
+	FROM domains as d
+	JOIN policies pc
+	ON pc.object_id = d.id
+	WHERE d.id = $1
+	AND pc.subject_id = $2
+	`
+
+	rows, err := repo.db.QueryxContext(ctx, q, id, subject)
+	if err != nil {
+		return []string{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	defer rows.Close()
+
+	domains, err := repo.processRows(rows)
+	if err != nil {
+		return []string{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+
+	permissions := []string{}
+	for _, domain := range domains {
+		if domain.Permission != "" {
+			permissions = append(permissions, domain.Permission)
+		}
+	}
+	return permissions, nil
+}
+
 // RetrieveAllByIDs retrieves for given Domain IDs .
 func (repo domainRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth.DomainsPage, error) {
 	var q string

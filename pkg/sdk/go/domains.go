@@ -16,17 +16,18 @@ const domainsEndpoint = "domains"
 
 // Domain represents magistrala domain.
 type Domain struct {
-	ID         string    `json:"id,omitempty"`
-	Name       string    `json:"name,omitempty"`
-	Metadata   Metadata  `json:"metadata,omitempty"`
-	Tags       []string  `json:"tags,omitempty"`
-	Alias      string    `json:"alias,omitempty"`
-	Status     string    `json:"status,omitempty"`
-	Permission string    `json:"permission,omitempty"`
-	CreatedBy  string    `json:"created_by,omitempty"`
-	CreatedAt  time.Time `json:"created_at,omitempty"`
-	UpdatedBy  string    `json:"updated_by,omitempty"`
-	UpdatedAt  time.Time `json:"updated_at,omitempty"`
+	ID          string    `json:"id,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
+	Tags        []string  `json:"tags,omitempty"`
+	Alias       string    `json:"alias,omitempty"`
+	Status      string    `json:"status,omitempty"`
+	Permission  string    `json:"permission,omitempty"`
+	CreatedBy   string    `json:"created_by,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedBy   string    `json:"updated_by,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	Permissions []string  `json:"permissions,omitempty"`
 }
 
 func (sdk mgSDK) CreateDomain(domain Domain, token string) (Domain, errors.SDKError) {
@@ -71,6 +72,22 @@ func (sdk mgSDK) UpdateDomain(domain Domain, token string) (Domain, errors.SDKEr
 
 func (sdk mgSDK) Domain(domainID, token string) (Domain, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.domainsURL, domainsEndpoint, domainID)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return Domain{}, sdkerr
+	}
+
+	var domain Domain
+	if err := json.Unmarshal(body, &domain); err != nil {
+		return Domain{}, errors.NewSDKError(err)
+	}
+
+	return domain, nil
+}
+
+func (sdk mgSDK) DomainPermissions(domainID, token string) (Domain, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.domainsURL, domainsEndpoint, domainID, permissionsEndpoint)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {

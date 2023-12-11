@@ -41,6 +41,13 @@ func MakeHandler(svc auth.Service, mux *chi.Mux, logger mglog.Logger) *chi.Mux {
 				opts...,
 			), "view_domain").ServeHTTP)
 
+			r.Get("/permissions", otelhttp.NewHandler(kithttp.NewServer(
+				retrieveDomainPermissionsEndpoint(svc),
+				decodeRetrieveDomainPermissionsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "view_domain_permissions").ServeHTTP)
+
 			r.Patch("/", otelhttp.NewHandler(kithttp.NewServer(
 				updateDomainEndpoint(svc),
 				decodeUpdateDomainRequest,

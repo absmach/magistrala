@@ -56,6 +56,23 @@ func (req retrieveDomainRequest) validate() error {
 	return nil
 }
 
+type retrieveDomainPermissionsRequest struct {
+	token    string
+	domainID string
+}
+
+func (req retrieveDomainPermissionsRequest) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}
+
 type updateDomainReq struct {
 	token    string
 	domainID string

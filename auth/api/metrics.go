@@ -184,6 +184,14 @@ func (ms *metricsMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return ms.svc.RetrieveDomain(ctx, token, id)
 }
 
+func (ms *metricsMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (auth.Permissions, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "retrieve_domain_permissions").Add(1)
+		ms.latency.With("method", "retrieve_domain_permissions").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.RetrieveDomainPermissions(ctx, token, id)
+}
+
 func (ms *metricsMiddleware) UpdateDomain(ctx context.Context, token, id string, d auth.DomainReq) (auth.Domain, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_domain").Add(1)

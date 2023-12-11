@@ -27,6 +27,11 @@ func (m *DomainsRepo) RetrieveByID(ctx context.Context, id string) (auth.Domain,
 	return ret.Get(0).(auth.Domain), ret.Error(1)
 }
 
+func (m *DomainsRepo) RetrievePermissions(ctx context.Context, subject, id string) ([]string, error) {
+	ret := m.Called(ctx, id)
+	return ret.Get(0).([]string), ret.Error(1)
+}
+
 func (m *DomainsRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth.DomainsPage, error) {
 	ret := m.Called(ctx, pm)
 

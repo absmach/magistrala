@@ -48,6 +48,21 @@ func retrieveDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
+func retrieveDomainPermissionsEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(retrieveDomainPermissionsRequest)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		permissions, err := svc.RetrieveDomainPermissions(ctx, req.token, req.domainID)
+		if err != nil {
+			return nil, err
+		}
+		return retrieveDomainPermissionsRes{Permissions: permissions}, nil
+	}
+}
+
 func updateDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateDomainReq)

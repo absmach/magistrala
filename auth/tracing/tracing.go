@@ -247,6 +247,14 @@ func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return tm.svc.RetrieveDomain(ctx, token, id)
 }
 
+func (tm *tracingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (auth.Permissions, error) {
+	ctx, span := tm.tracer.Start(ctx, "view_domain_permissions", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+	return tm.svc.RetrieveDomainPermissions(ctx, token, id)
+}
+
 func (tm *tracingMiddleware) UpdateDomain(ctx context.Context, token, id string, d auth.DomainReq) (auth.Domain, error) {
 	ctx, span := tm.tracer.Start(ctx, "update_domain", trace.WithAttributes(
 		attribute.String("id", id),

@@ -44,6 +44,21 @@ func NewPolicyAgent(client *authzed.ClientWithExperimental, logger mglog.Logger)
 
 func (pa *policyAgent) CheckPolicy(ctx context.Context, pr auth.PolicyReq) error {
 	checkReq := v1.CheckPermissionRequest{
+		// FullyConsistent means little caching will be available, which means performance will suffer.
+		// Only use if a ZedToken is not available or absolutely latest information is required.
+		// If we want to avoid FullyConsistent and to improve the performance of  spicedb, then we need to cache the ZEDTOKEN whenever RELATIONS is created or updated.
+		// Instead of using FullyConsistent we need to use Consistency_AtLeastAsFresh, code looks like below one.
+		// Consistency: &v1.Consistency{
+		// 	Requirement: &v1.Consistency_AtLeastAsFresh{
+		// 		AtLeastAsFresh: getRelationTupleZedTokenFromCache() ,
+		// 	}
+		// },
+		// Reference: https://authzed.com/docs/reference/api-consistency
+		Consistency: &v1.Consistency{
+			Requirement: &v1.Consistency_FullyConsistent{
+				FullyConsistent: true,
+			},
+		},
 		Resource:   &v1.ObjectReference{ObjectType: pr.ObjectType, ObjectId: pr.Object},
 		Permission: pr.Permission,
 		Subject:    &v1.SubjectReference{Object: &v1.ObjectReference{ObjectType: pr.SubjectType, ObjectId: pr.Subject}, OptionalRelation: pr.SubjectRelation},
@@ -159,6 +174,11 @@ func (pa *policyAgent) DeletePolicy(ctx context.Context, pr auth.PolicyReq) erro
 // RetrieveObjects - Listing of things.
 func (pa *policyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) ([]auth.PolicyRes, string, error) {
 	resourceReq := &v1.LookupResourcesRequest{
+		Consistency: &v1.Consistency{
+			Requirement: &v1.Consistency_FullyConsistent{
+				FullyConsistent: true,
+			},
+		},
 		ResourceObjectType: pr.ObjectType,
 		Permission:         pr.Permission,
 		Subject:            &v1.SubjectReference{Object: &v1.ObjectReference{ObjectType: pr.SubjectType, ObjectId: pr.Subject}, OptionalRelation: pr.SubjectRelation},
@@ -194,6 +214,11 @@ func (pa *policyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, n
 
 func (pa *policyAgent) RetrieveAllObjects(ctx context.Context, pr auth.PolicyReq) ([]auth.PolicyRes, error) {
 	resourceReq := &v1.LookupResourcesRequest{
+		Consistency: &v1.Consistency{
+			Requirement: &v1.Consistency_FullyConsistent{
+				FullyConsistent: true,
+			},
+		},
 		ResourceObjectType: pr.ObjectType,
 		Permission:         pr.Permission,
 		Subject:            &v1.SubjectReference{Object: &v1.ObjectReference{ObjectType: pr.SubjectType, ObjectId: pr.Subject}, OptionalRelation: pr.SubjectRelation},
@@ -235,6 +260,11 @@ func (pa *policyAgent) RetrieveAllObjectsCount(ctx context.Context, pr auth.Poli
 
 func (pa *policyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) ([]auth.PolicyRes, string, error) {
 	subjectsReq := v1.LookupSubjectsRequest{
+		Consistency: &v1.Consistency{
+			Requirement: &v1.Consistency_FullyConsistent{
+				FullyConsistent: true,
+			},
+		},
 		Resource:                &v1.ObjectReference{ObjectType: pr.ObjectType, ObjectId: pr.Object},
 		Permission:              pr.Permission,
 		SubjectObjectType:       pr.SubjectType,
@@ -323,7 +353,14 @@ func (pa *policyAgent) RetrievePermissions(ctx context.Context, pr auth.PolicyRe
 			},
 		})
 	}
-	resp, err := pa.client.ExperimentalServiceClient.BulkCheckPermission(ctx, &v1.BulkCheckPermissionRequest{Items: permissionChecks})
+	resp, err := pa.client.ExperimentalServiceClient.BulkCheckPermission(ctx, &v1.BulkCheckPermissionRequest{
+		Consistency: &v1.Consistency{
+			Requirement: &v1.Consistency_FullyConsistent{
+				FullyConsistent: true,
+			},
+		},
+		Items: permissionChecks,
+	})
 	if err != nil {
 		return auth.Permissions{}, err
 	}

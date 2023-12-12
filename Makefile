@@ -128,7 +128,7 @@ test:
 	@for dir in $(DIRS); do \
         go test -v --race -count 1 -tags test -coverprofile=coverage/$$dir.out $$(go list ./... | grep $$dir | grep -v 'cmd'); \
     done
-	go test -v --race -count 1 -tags test -coverprofile=coverage/coverage.out $$(go list ./... | grep -v 'postgres\|internal\|opcua\|pkg\|consumers\|readers\|cmd')
+	go test -v --race -count 1 -tags test -coverprofile=coverage/coverage.out $$(go list ./... | grep -v 'consumers\|readers\|postgres\|internal\|opcua\|cmd')
 
 proto:
 	protoc -I. --go_out=. --go_opt=paths=source_relative pkg/messaging/*.proto

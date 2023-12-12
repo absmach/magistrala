@@ -19,6 +19,8 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/things"
 	api "github.com/absmach/magistrala/things/api/http"
@@ -79,7 +81,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  sdk.ErrFailedCreation,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrCreateEntity), http.StatusInternalServerError),
 		},
 		{
 			desc:     "register empty thing",
@@ -87,7 +89,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  errors.ErrMalformedEntity,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrMalformedEntity), http.StatusBadRequest),
 		},
 		{
 			desc: "register a thing that can't be marshalled",
@@ -229,7 +231,7 @@ func TestCreateThings(t *testing.T) {
 			things:   thingsList,
 			response: []sdk.Thing{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedCreation), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusInternalServerError),
 		},
 		{
 			desc:     "register empty things",
@@ -337,7 +339,7 @@ func TestListThings(t *testing.T) {
 			token:    authmocks.InvalidValue,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -345,7 +347,7 @@ func TestListThings(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -447,18 +449,21 @@ func TestListThings(t *testing.T) {
 			Tag:      tc.tag,
 		}
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
 		if tc.token != validToken {
 			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
+			repoCall2 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, errors.ErrAuthorization)
 		}
-		repoCall2 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(pm), Clients: convertThings(tc.response)}, tc.err)
+		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(pm), Clients: convertThings(tc.response)}, tc.err)
 		page, err := mgsdk.Things(pm, validToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Things, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		repoCall2.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
+		repoCall3.Unset()
 	}
 }
 
@@ -569,7 +574,7 @@ func TestListThingsByChannel(t *testing.T) {
 			channelID: testsutil.GenerateUUID(t),
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "list things with an invalid id",
@@ -577,7 +582,7 @@ func TestListThingsByChannel(t *testing.T) {
 			channelID: mocks.WrongID,
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrNotFound, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
@@ -635,7 +640,7 @@ func TestThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    invalidToken,
 			thingID:  generateUUID(t),
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc:     "view thing with valid token and invalid thing id",
@@ -649,7 +654,7 @@ func TestThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    invalidToken,
 			thingID:  mocks.WrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 	}
 
@@ -714,7 +719,7 @@ func TestUpdateThing(t *testing.T) {
 			thing:    thing1,
 			response: sdk.Thing{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc:     "update thing name with invalid id",
@@ -799,7 +804,7 @@ func TestUpdateThingTags(t *testing.T) {
 			thing:    thing1,
 			response: sdk.Thing{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc:     "update thing name with invalid id",
@@ -952,7 +957,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    enabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, sdk.ErrFailedEnable), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "enable non-existing thing",
@@ -1030,8 +1035,12 @@ func TestEnableThing(t *testing.T) {
 			Status: tc.status,
 		}
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response.Things)}, nil)
-		repoCall2 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		if tc.token != validToken {
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+		}
+		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response.Things)}, nil)
+		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
 		clientsPage, err := mgsdk.Things(pm, validToken)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(clientsPage.Things))
@@ -1039,6 +1048,7 @@ func TestEnableThing(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
 	}
 }
 
@@ -1082,7 +1092,7 @@ func TestDisableThing(t *testing.T) {
 			thing:    disabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, sdk.ErrFailedDisable), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "disable non-existing thing",
@@ -1160,8 +1170,12 @@ func TestDisableThing(t *testing.T) {
 			Status: tc.status,
 		}
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response.Things)}, nil)
-		repoCall2 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		if tc.token != validToken {
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+		}
+		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response.Things)}, nil)
+		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
 		page, err := mgsdk.Things(pm, validToken)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(page.Things))
@@ -1169,6 +1183,7 @@ func TestDisableThing(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
 	}
 }
 
@@ -1202,14 +1217,14 @@ func TestShareThing(t *testing.T) {
 			channelID: generateUUID(t),
 			thingID:   "thingID",
 			token:     invalidToken,
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "share thing with valid token for unauthorized user",
 			channelID: generateUUID(t),
 			thingID:   "thingID",
 			token:     validToken,
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthorization), http.StatusForbidden),
 			repoErr:   errors.ErrAuthorization,
 		},
 	}

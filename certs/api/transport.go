@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -55,7 +56,7 @@ func MakeHandler(svc certs.Service, logger mglog.Logger, instanceID string) http
 			opts...,
 		), "revoke").ServeHTTP)
 	})
-	r.Get("/serials/:thingID", otelhttp.NewHandler(kithttp.NewServer(
+	r.Get("/serials/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 		listSerials(svc),
 		decodeListCerts,
 		encodeResponse,
@@ -143,22 +144,22 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 
 	switch {
-	case errors.Contains(err, errors.ErrAuthentication),
+	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, errors.ErrMalformedEntity),
+	case errors.Contains(err, svcerr.ErrMalformedEntity),
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrMissingCertData),
 		errors.Contains(err, apiutil.ErrInvalidCertData),
 		errors.Contains(err, apiutil.ErrLimitSize):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, errors.ErrConflict):
+	case errors.Contains(err, svcerr.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, errors.ErrCreateEntity),
-		errors.Contains(err, errors.ErrViewEntity),
-		errors.Contains(err, errors.ErrRemoveEntity):
+	case errors.Contains(err, svcerr.ErrCreateEntity),
+		errors.Contains(err, svcerr.ErrViewEntity),
+		errors.Contains(err, svcerr.ErrRemoveEntity):
 		w.WriteHeader(http.StatusInternalServerError)
 
 	default:

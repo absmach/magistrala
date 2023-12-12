@@ -17,6 +17,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +89,7 @@ func TestCreateSubscription(t *testing.T) {
 			desc:         "create new subscription with invalid token",
 			subscription: sub1,
 			token:        authmocks.InvalidValue,
-			err:          errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:          errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 			empty:        true,
 		},
 		{
@@ -143,7 +144,7 @@ func TestViewSubscription(t *testing.T) {
 			desc:     "get non-existent subscription",
 			subID:    "43",
 			token:    exampleUser1,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 			response: sdk.Subscription{},
 		},
 		{
@@ -264,7 +265,7 @@ func TestDeleteSubscription(t *testing.T) {
 			desc:     "delete non-existent subscription",
 			subID:    "43",
 			token:    exampleUser1,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 			response: sdk.Subscription{},
 		},
 		{

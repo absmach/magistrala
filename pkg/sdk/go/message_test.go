@@ -17,6 +17,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	mproxy "github.com/mainflux/mproxy/pkg/http"
 	"github.com/mainflux/mproxy/pkg/session"
@@ -106,7 +107,7 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "invalid-token",
-			err:    errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusBadRequest),
 		},
 	}
 	for desc, tc := range cases {

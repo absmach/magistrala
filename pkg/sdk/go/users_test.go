@@ -19,6 +19,8 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/users"
 	"github.com/absmach/magistrala/users/api"
@@ -183,8 +185,8 @@ func TestCreateClient(t *testing.T) {
 		if tc.token != validToken {
 			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
 		}
-		repoCall1 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Authorized: true}, nil)
-		repoCall2 := auth.On("DeletePolicy", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
+		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
+		repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: true}, nil)
 		repoCall3 := crepo.On("Save", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		rClient, err := mgsdk.CreateUser(tc.client, tc.token)
 		tc.response.ID = rClient.ID
@@ -420,21 +422,21 @@ func TestClient(t *testing.T) {
 			response: sdk.User{},
 			token:    invalidToken,
 			clientID: generateUUID(t),
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:     "view client with valid token and invalid client id",
 			response: sdk.User{},
 			token:    validToken,
 			clientID: mocks.WrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrNotFound, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "view client with an invalid token and invalid client id",
 			response: sdk.User{},
 			token:    invalidToken,
 			clientID: mocks.WrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 	}
 
@@ -493,7 +495,7 @@ func TestProfile(t *testing.T) {
 			desc:     "view client with an invalid token",
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 	}
 
@@ -560,7 +562,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client1,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
@@ -651,7 +653,7 @@ func TestUpdateClientTags(t *testing.T) {
 			client:   client1,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
@@ -741,7 +743,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			client:   user,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
@@ -828,7 +830,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			token:     "non-existent",
 			response:  sdk.User{},
 			repoErr:   errors.ErrAuthentication,
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "update client secret with wrong old secret",
@@ -837,7 +839,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			token:     validToken,
 			response:  sdk.User{},
 			repoErr:   apiutil.ErrInvalidSecret,
-			err:       errors.NewSDKErrorWithStatus(apiutil.ErrInvalidSecret, http.StatusBadRequest),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrNotFound, repoerr.ErrMissingSecret), http.StatusBadRequest),
 		},
 	}
 
@@ -910,14 +912,14 @@ func TestUpdateClientRole(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(users.ErrFailedOwnerUpdate, users.ErrFailedOwnerUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -1002,7 +1004,7 @@ func TestEnableClient(t *testing.T) {
 			client:   enabledClient1,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, sdk.ErrFailedEnable), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, repoerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "enable non-existing client",
@@ -1131,7 +1133,7 @@ func TestDisableClient(t *testing.T) {
 			client:   disabledClient1,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, sdk.ErrFailedDisable), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, repoerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "disable non-existing client",

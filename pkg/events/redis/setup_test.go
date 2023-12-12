@@ -18,66 +18,54 @@ import (
 	"github.com/ory/dockertest/v3"
 )
 
-type client struct {
-	*redis.Client
-	url       string
-	pool      *dockertest.Pool
-	container *dockertest.Resource
-}
-
 var (
 	redisClient *redis.Client
 	redisURL    string
+	pool        *dockertest.Pool
+	container   *dockertest.Resource
 )
 
 func TestMain(m *testing.M) {
-	client, err := startContainer()
+	var err error
+	pool, err = dockertest.NewPool("")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("Could not connect to docker: %s", err)
 	}
-	redisClient = client.Client
-	redisURL = client.url
+
+	opts := dockertest.RunOptions{
+		Name:       "tests-redis-events",
+		Repository: "redis",
+		Tag:        "7.2.0-alpine",
+	}
+	container, err = pool.RunWithOptions(&opts)
+	if err != nil {
+		log.Fatalf("Could not start container: %s", err)
+	}
+
+	handleInterrupt(pool, container)
+
+	redisURL = fmt.Sprintf("redis://localhost:%s/0", container.GetPort("6379/tcp"))
+	ropts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		log.Fatalf("Could not parse redis URL: %s", err)
+
+	}
+
+	if err := pool.Retry(func() error {
+		redisClient = redis.NewClient(ropts)
+
+		return redisClient.Ping(ctx).Err()
+	}); err != nil {
+		log.Fatalf("Could not connect to docker: %s", err)
+	}
 
 	code := m.Run()
 
-	if err := client.pool.Purge(client.container); err != nil {
+	if err := pool.Purge(container); err != nil {
 		log.Fatalf("Could not purge container: %s", err)
 	}
 
 	os.Exit(code)
-}
-
-func startContainer() (client, error) {
-	var cli client
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		return client{}, fmt.Errorf("Could not connect to docker: %s", err)
-	}
-	cli.pool = pool
-
-	container, err := cli.pool.Run("redis", "7.2.0-alpine", nil)
-	if err != nil {
-		return client{}, fmt.Errorf("Could not start container: %s", err)
-	}
-	cli.container = container
-
-	handleInterrupt(cli.pool, cli.container)
-
-	cli.url = fmt.Sprintf("redis://localhost:%s/0", cli.container.GetPort("6379/tcp"))
-	opts, err := redis.ParseURL(cli.url)
-	if err != nil {
-		return client{}, fmt.Errorf("Could not parse redis URL: %s", err)
-	}
-
-	if err := pool.Retry(func() error {
-		cli.Client = redis.NewClient(opts)
-
-		return cli.Client.Ping(ctx).Err()
-	}); err != nil {
-		return client{}, fmt.Errorf("Could not connect to docker: %s", err)
-	}
-
-	return cli, nil
 }
 
 func handleInterrupt(pool *dockertest.Pool, container *dockertest.Resource) {

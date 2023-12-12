@@ -4,6 +4,7 @@
 package sdk_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +21,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerror "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/things"
@@ -197,6 +198,7 @@ func TestListChannels(t *testing.T) {
 		metadata sdk.Metadata
 		err      errors.SDKError
 		response []sdk.Channel
+		ctx      context.Context
 	}{
 		{
 			desc:     "get a list of channels",
@@ -212,7 +214,7 @@ func TestListChannels(t *testing.T) {
 			token:    invalidToken,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -270,8 +272,13 @@ func TestListChannels(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
-		repoCall2 := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		if tc.token == invalidToken {
+			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: invalidToken}).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
+		}
+		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
+		repoCall3 := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
 		pm := sdk.PageMetadata{
 			Offset: tc.offset,
 			Limit:  tc.limit,
@@ -281,12 +288,13 @@ func TestListChannels(t *testing.T) {
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, len(tc.response), len(page.Channels), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		if tc.err == nil {
-			ok := repoCall2.Parent.AssertCalled(t, "RetrieveByIDs", mock.Anything, mock.Anything)
+			ok := repoCall3.Parent.AssertCalled(t, "RetrieveByIDs", mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByIDs was not called on %s", tc.desc))
 		}
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
 	}
 }
 
@@ -327,14 +335,14 @@ func TestViewChannel(t *testing.T) {
 			token:     "wrongtoken",
 			channelID: channel.ID,
 			response:  sdk.Channel{Children: []*sdk.Channel{}},
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc:      "view channel for wrong id",
 			token:     validToken,
 			channelID: mocks.WrongID,
 			response:  sdk.Channel{Children: []*sdk.Channel{}},
-			err:       errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 	}
 
@@ -435,7 +443,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
 			desc: "update channel description with invalid channel id",
@@ -445,7 +453,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
 			desc: "update channel metadata with invalid channel id",
@@ -457,7 +465,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
 			desc: "update channel name with invalid token",
@@ -467,7 +475,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc: "update channel description with invalid token",
@@ -477,7 +485,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc: "update channel metadata with invalid token",
@@ -489,7 +497,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc: "update channel that can't be marshalled",
@@ -619,7 +627,7 @@ func TestListChannelsByThing(t *testing.T) {
 			clientID: testsutil.GenerateUUID(t),
 			page:     sdk.PageMetadata{},
 			response: []sdk.Channel(nil),
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 	}
 
@@ -663,7 +671,7 @@ func TestEnableChannel(t *testing.T) {
 	repoCall1 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
 	repoCall2 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
 	_, err := mgsdk.EnableChannel("wrongID", validToken)
-	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mggroups.ErrEnableGroup, repoerror.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Enable channel with wrong id: expected %v got %v", repoerror.ErrNotFound, err))
+	assert.Equal(t, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), err, fmt.Sprintf("Enable channel with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
 	ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")
 	assert.True(t, ok, "RetrieveByID was not called on enabling channel")
 	repoCall.Unset()
@@ -716,7 +724,7 @@ func TestDisableChannel(t *testing.T) {
 	repoCall1 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(sdk.ErrFailedRemoval)
 	repoCall2 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
 	_, err := mgsdk.DisableChannel("wrongID", validToken)
-	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mggroups.ErrDisableGroup, repoerror.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", repoerror.ErrNotFound, err))
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
 	ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")
 	assert.True(t, ok, "Memberships was not called on disabling channel with wrong id")
 	repoCall.Unset()

@@ -206,7 +206,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-
 	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -224,6 +223,14 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, err
 	}
 	visibility, err := apiutil.ReadStringQuery(r, api.VisibilityKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -254,6 +261,8 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		tag:      t,
 		sharedBy: sharedID,
 		owner:    ownerID,
+		order:    order,
+		dir:      dir,
 	}
 
 	return req, nil

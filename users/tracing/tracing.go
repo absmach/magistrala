@@ -59,7 +59,13 @@ func (tm *tracingMiddleware) ViewClient(ctx context.Context, token, id string) (
 
 // ListClients traces the "ListClients" operation of the wrapped clients.Service.
 func (tm *tracingMiddleware) ListClients(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_list_clients")
+	ctx, span := tm.tracer.Start(ctx, "svc_list_clients", trace.WithAttributes(
+		attribute.Int64("offset", int64(pm.Offset)),
+		attribute.Int64("limit", int64(pm.Limit)),
+		attribute.String("direction", pm.Dir),
+		attribute.String("order", pm.Order),
+	))
+
 	defer span.End()
 
 	return tm.svc.ListClients(ctx, token, pm)

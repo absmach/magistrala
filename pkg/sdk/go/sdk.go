@@ -73,6 +73,8 @@ type PageMetadata struct {
 	Total           uint64   `json:"total"`
 	Offset          uint64   `json:"offset"`
 	Limit           uint64   `json:"limit"`
+	Order           string   `json:"order,omitempty"`
+	Direction       string   `json:"direction,omitempty"`
 	Level           uint64   `json:"level,omitempty"`
 	Identity        string   `json:"identity,omitempty"`
 	Name            string   `json:"name,omitempty"`
@@ -91,7 +93,6 @@ type PageMetadata struct {
 	Topic           string   `json:"topic,omitempty"`
 	Contact         string   `json:"contact,omitempty"`
 	State           string   `json:"state,omitempty"`
-	Order           string   `json:"order,omitempty"`
 	ListPermissions string   `json:"list_perms,omitempty"`
 	InvitedBy       string   `json:"invited_by,omitempty"`
 	UserID          string   `json:"user_id,omitempty"`
@@ -1248,6 +1249,12 @@ func (pm PageMetadata) query() (string, error) {
 	}
 	if pm.Total != 0 {
 		q.Add("total", strconv.FormatUint(pm.Total, 10))
+	}
+	if pm.Order != "" {
+		q.Add("order", pm.Order)
+	}
+	if pm.Direction != "" {
+		q.Add("dir", pm.Direction)
 	}
 	if pm.Level != 0 {
 		q.Add("level", strconv.FormatUint(pm.Level, 10))

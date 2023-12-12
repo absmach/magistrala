@@ -47,7 +47,7 @@ const (
 	DefPermission    = "view"
 	DefTotal         = uint64(100)
 	DefOffset        = 0
-	DefOrder         = "updated_by"
+	DefOrder         = "updated_at"
 	DefDir           = "asc"
 	DefLimit         = 10
 	DefLevel         = 0

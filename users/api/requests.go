@@ -64,6 +64,8 @@ type listClientsReq struct {
 	owner      string
 	sharedBy   string
 	metadata   mgclients.Metadata
+	order      string
+	dir        string
 }
 
 func (req listClientsReq) validate() error {
@@ -78,6 +80,9 @@ func (req listClientsReq) validate() error {
 		req.visibility != api.MyVisibility &&
 		req.visibility != api.SharedVisibility {
 		return apiutil.ErrInvalidVisibilityType
+	}
+	if req.dir != "" && (req.dir != api.AscDir && req.dir != api.DescDir) {
+		return apiutil.ErrInvalidDirection
 	}
 
 	return nil

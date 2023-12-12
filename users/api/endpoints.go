@@ -80,6 +80,8 @@ func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 			Tag:      req.tag,
 			Metadata: req.metadata,
 			Identity: req.identity,
+			Order:    req.order,
+			Dir:      req.dir,
 		}
 		page, err := svc.ListClients(ctx, req.token, pm)
 		if err != nil {

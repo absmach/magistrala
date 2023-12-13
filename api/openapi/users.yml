@@ -34,6 +34,7 @@ tags:
 paths:
   /users:
     post:
+      operationId: createUser
       tags:
         - Users
       summary: Registers user account
@@ -49,14 +50,19 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "409":
           description: Failed due to using an existing identity.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.          
         "500":
           $ref: "#/components/responses/ServiceError"
 
     get:
+      operationId: listUsers
       tags:
         - Users
       summary: List users
@@ -95,6 +101,7 @@ paths:
 
   /users/profile:
     get:
+      operationId: getProfile
       summary: Gets info on currently logged in user.
       description: |
         Gets info on currently logged in user. Info is obtained using
@@ -115,6 +122,7 @@ paths:
 
   /users/{userID}:
     get:
+      operationId: getUser
       summary: Retrieves a user
       description: |
         Retrieves a specific user that is identifier by the user ID.
@@ -131,6 +139,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -139,6 +149,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     patch:
+      operationId: updateUser
       summary: Updates name and metadata of the user.
       description: |
         Updates name and metadata of the user with provided ID. Name and metadata
@@ -156,15 +167,24 @@ paths:
           $ref: "#/components/responses/UserRes"
         "400":
           description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Failed due to non existing user.
         "401":
           description: Missing or invalid access token provided.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /users/{userID}/tags:
     patch:
+      operationId: updateUserTags
       summary: Updates tags the user.
       description: |
         Updates tags of the user with provided ID. Tags is updated using
@@ -182,15 +202,22 @@ paths:
           $ref: "#/components/responses/UserRes"
         "400":
           description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Failed due to non existing user.
         "401":
           description: Missing or invalid access token provided.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /users/{userID}/identity:
     patch:
+      operationId: updateUserIdentity
       summary: Updates Identity of the user.
       description: |
         Updates identity of the user with provided ID. Identity is
@@ -208,15 +235,24 @@ paths:
           $ref: "#/components/responses/UserRes"
         "400":
           description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Failed due to non existing user.
         "401":
           description: Missing or invalid access token provided.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /users/{userID}/role:
     patch:
+      operationId: updateUserRole
       summary: Updates the user role.
       description: |
         Updates role for the user with provided ID.
@@ -233,15 +269,22 @@ paths:
           $ref: "#/components/responses/UserRes"
         "400":
           description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Failed due to non existing user.
         "401":
           description: Missing or invalid access token provided.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /users/{userID}/disable:
     post:
+      operationId: disableUser
       summary: Disables a user
       description: |
         Disables a specific user that is identifier by the user ID.
@@ -258,8 +301,14 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already disabled user.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -267,6 +316,7 @@ paths:
 
   /users/{userID}/enable:
     post:
+      operationId: enableUser
       summary: Enables a user
       description: |
         Enables a specific user that is identifier by the user ID.
@@ -283,8 +333,14 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already enabled user.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -292,6 +348,7 @@ paths:
 
   /users/secret:
     patch:
+      operationId: updateUserSecret
       summary: Updates Secret of currently logged in user.
       description: |
         Updates secret of currently logged in user. Secret is updated using
@@ -307,15 +364,20 @@ paths:
           $ref: "#/components/responses/UserRes"
         "400":
           description: Failed due to malformed JSON.
-        "404":
-          description: Failed due to non existing user.
         "401":
           description: Missing or invalid access token provided.
+        "404":
+          description: Failed due to non existing user.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /password/reset-request:
     post:
+      operationId: requestPasswordReset
       summary: User password reset request
       description: |
         Generates a reset token and sends and
@@ -333,11 +395,14 @@ paths:
           description: Failed due to malformed JSON.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /password/reset:
     put:
+      operationId: resetPassword
       summary: User password reset endpoint
       description: |
         When user gets reset token, after he submitted
@@ -352,13 +417,18 @@ paths:
           description: User link .
         "400":
           description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /groups/{groupID}/users:
     get:
+      operationId: listUsersInGroup
       tags:
         - Users
       summary: List users in a group
@@ -386,6 +456,8 @@ paths:
           description: |
             Missing or invalid access token provided.
             This endpoint is available only for administrators.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -395,6 +467,7 @@ paths:
 
   /channels/{channelID}/users:
     get:
+      operationId: listUsersInChannel
       tags:
         - Users
       summary: List users in a channel
@@ -422,6 +495,8 @@ paths:
           description: |
             Missing or invalid access token provided.
             This endpoint is available only for administrators.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -431,6 +506,7 @@ paths:
 
   /users/tokens/issue:
     post:
+      operationId: issueToken
       summary: Issue Token
       description: |
         Issue Access and Refresh Token used for authenticating into the system.
@@ -441,8 +517,12 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/TokenRes"
+        "400":
+          description: Failed due to malformed JSON.
         "404":
           description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -450,6 +530,7 @@ paths:
 
   /users/tokens/refresh:
     post:
+      operationId: refreshToken
       summary: Refresh Token
       description: |
         Refreshes Access and Refresh Token used for authenticating into the system.
@@ -460,8 +541,12 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/TokenRes"
+        "400":
+          description: Failed due to malformed JSON.
         "404":
           description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -469,6 +554,7 @@ paths:
 
   /groups:
     post:
+      operationId: createGroup
       tags:
         - Groups
       summary: Creates new group
@@ -486,14 +572,19 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "409":
           description: Failed due to using an existing identity.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
     get:
+      operationId: listGroups
       summary: Lists groups.
       description: |
         Lists groups up to a max level of hierarchy that can be fetched in one
@@ -520,13 +611,18 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Group does not exist.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /groups/{groupID}:
     get:
+      operationId: getGroup
       summary: Gets group info.
       description: |
         Gets info on a group specified by id.
@@ -543,12 +639,17 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Group does not exist.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
     put:
+      operationId: updateGroup
       summary: Updates group data.
       description: |
         Updates Name, Description or Metadata of a group.
@@ -567,8 +668,16 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Group does not exist.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
     delete:
@@ -594,6 +703,7 @@ paths:
 
   /groups/{groupID}/children:
     get:
+      operationId: listChildren
       summary: List children of a certain group
       description: |
         Lists groups up to a max level of hierarchy that can be fetched in one
@@ -621,13 +731,18 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Group does not exist.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /groups/{groupID}/parents:
     get:
+      operationId: listParents
       summary: List parents of a certain group
       description: |
         Lists groups up to a max level of hierarchy that can be fetched in one
@@ -655,13 +770,18 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Group does not exist.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /groups/{groupID}/enable:
     post:
+      operationId: enableGroup
       summary: Enables a group
       description: |
         Enables a specific group that is identifier by the group ID.
@@ -678,8 +798,14 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already enabled group.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -687,6 +813,7 @@ paths:
 
   /groups/{groupID}/disable:
     post:
+      operationId: disableGroup
       summary: Disables a group
       description: |
         Disables a specific group that is identifier by the group ID.
@@ -703,8 +830,14 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already disabled group.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -712,6 +845,7 @@ paths:
 
   /groups/{groupID}/users/assign:
     post:
+      operationId: assignUser
       summary: Assigns a user to a group
       description: |
         Assigns a specific user to a group that is identifier by the group ID.
@@ -730,8 +864,12 @@ paths:
           description: Failed due to malformed group's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -739,6 +877,7 @@ paths:
 
   /groups/{groupID}/users/unassign:
     post:
+      operationId: unassignUser
       summary: Unassigns a user to a group
       description: |
         Unassigns a specific user to a group that is identifier by the group ID.
@@ -757,8 +896,12 @@ paths:
           description: Failed due to malformed group's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -766,6 +909,7 @@ paths:
 
   /channels/{memberID}/groups:
     get:
+      operationId: listGroupsInChannel
       summary: Get group associated with the member
       description: |
         Gets groups associated with the channel member specified by id.
@@ -787,13 +931,18 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Group does not exist.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /users/{memberID}/groups:
     get:
+      operationId: listGroupsByUser
       summary: Get group associated with the member
       description: |
         Gets groups associated with the user member specified by id.
@@ -815,13 +964,18 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Group does not exist.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /health:
     get:
+      operationId: health
       summary: Retrieves service health check info.
       tags:
         - health
@@ -1177,7 +1331,7 @@ components:
       required:
         - groups
         - total
-        - level
+        - offset
 
     MembershipsPage:
       type: object
@@ -1286,7 +1440,7 @@ components:
       properties:
         role:
           type: string
-          enum: ["admin","user"]
+          enum: ["admin", "user"]
           example: user
           description: User role example.
       required:
@@ -1425,6 +1579,9 @@ components:
       schema:
         type: string
         format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
@@ -1452,6 +1609,7 @@ components:
       in: query
       schema:
         type: string
+        pattern: "^[^\u0000-\u001F]*$"
       required: false
       example: "admin@example.com"
 
@@ -1541,6 +1699,9 @@ components:
       schema:
         type: string
         format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
@@ -1551,6 +1712,9 @@ components:
       schema:
         type: string
         format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
@@ -1561,6 +1725,9 @@ components:
       schema:
         type: string
         format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
@@ -1789,6 +1956,43 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
+      links:
+        get:
+          operationId: getUser
+          parameters:
+            userID: $response.body#/id
+        get_groups:
+          operationId: listUsersInGroup
+          parameters:
+            groupID: $response.body#/id
+        get_channels:
+          operationId: listUsersInChannel
+          parameters:
+            channelID: $response.body#/id
+        update:
+          operationId: updateUser
+          parameters:
+            userID: $response.body#/id
+        update_tags:
+          operationId: updateUserTags
+          parameters:
+            userID: $response.body#/id
+        update_identity:
+          operationId: updateUserIdentity
+          parameters:
+            userID: $response.body#/id
+        update_role:
+          operationId: updateUserRole
+          parameters:
+            userID: $response.body#/id
+        disable:
+          operationId: disableUser
+          parameters:
+            userID: $response.body#/id
+        enable:
+          operationId: enableUser
+          parameters:
+            userID: $response.body#/id
 
     UserRes:
       description: Data retrieved.
@@ -1796,6 +2000,15 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
+      links:
+        get_groups:
+          operationId: listUsersInGroup
+          parameters:
+            groupID: $response.body#/id
+        get_channels:
+          operationId: listUsersInChannel
+          parameters:
+            channelID: $response.body#/id
 
     UserPageRes:
       description: Data retrieved.
@@ -1823,6 +2036,47 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Group"
+      links:
+        get:
+          operationId: getGroup
+          parameters:
+            groupID: $response.body#/id
+        get_children:
+          operationId: listChildren
+          parameters:
+            groupID: $response.body#/id
+        get_parent:
+          operationId: listParents
+          parameters:
+            groupID: $response.body#/id
+        get_channels:
+          operationId: listGroupsInChannel
+          parameters:
+            memberID: $response.body#/id
+        get_users:
+          operationId: listGroupsByUser
+          parameters:
+            memberID: $response.body#/id
+        update:
+          operationId: updateGroup
+          parameters:
+            groupID: $response.body#/id
+        disable:
+          operationId: disableGroup
+          parameters:
+            groupID: $response.body#/id
+        enable:
+          operationId: enableGroup
+          parameters:
+            groupID: $response.body#/id
+        assign:
+          operationId: assignUser
+          parameters:
+            groupID: $response.body#/id
+        unassign:
+          operationId: unassignUser
+          parameters:
+            groupID: $response.body#/id
 
     GroupRes:
       description: Data retrieved.
@@ -1830,6 +2084,31 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Group"
+      links:
+        get_children:
+          operationId: listChildren
+          parameters:
+            groupID: $response.body#/id
+        get_parent:
+          operationId: listParents
+          parameters:
+            groupID: $response.body#/id
+        get_channels:
+          operationId: listGroupsInChannel
+          parameters:
+            memberID: $response.body#/id
+        get_users:
+          operationId: listGroupsByUser
+          parameters:
+            memberID: $response.body#/id
+        assign:
+          operationId: assignUser
+          parameters:
+            groupID: $response.body#/id
+        unassign:
+          operationId: unassignUser
+          parameters:
+            groupID: $response.body#/id
 
     GroupPageRes:
       description: Data retrieved.

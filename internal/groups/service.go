@@ -13,6 +13,8 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"golang.org/x/sync/errgroup"
 )
@@ -20,8 +22,6 @@ import (
 var (
 	errParentUnAuthz  = errors.New("failed to authorize parent group")
 	errMemberKind     = errors.New("invalid member kind")
-	errAddPolicies    = errors.New("failed to add policies")
-	errDeletePolicies = errors.New("failed to delete policies")
 	errRetrieveGroups = errors.New("failed to retrieve groups")
 	errGroupIDs       = errors.New("invalid group ids")
 )
@@ -292,10 +292,10 @@ func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
 		Object:      auth.MagistralaObject,
 	})
 	if err != nil {
-		return err
+		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !res.Authorized {
-		return errors.ErrAuthorization
+		return svcerr.ErrAuthorization
 	}
 	return nil
 }
@@ -453,7 +453,7 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 	}
 
 	if _, err := svc.auth.AddPolicies(ctx, &policies); err != nil {
-		return errors.Wrap(errAddPolicies, err)
+		return errors.Wrap(repoerr.ErrAddPolicies, err)
 	}
 
 	return nil
@@ -604,7 +604,7 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 	}
 
 	if _, err := svc.auth.DeletePolicies(ctx, &policies); err != nil {
-		return errors.Wrap(errDeletePolicies, err)
+		return errors.Wrap(repoerr.ErrDeletePolicies, err)
 	}
 	return nil
 }
@@ -702,7 +702,7 @@ func (svc service) changeGroupStatus(ctx context.Context, token string, group gr
 		return groups.Group{}, err
 	}
 	if dbGroup.Status == group.Status {
-		return groups.Group{}, mgclients.ErrStatusAlreadyAssigned
+		return groups.Group{}, errors.ErrStatusAlreadyAssigned
 	}
 
 	group.UpdatedBy = id
@@ -731,10 +731,10 @@ func (svc service) authorizeToken(ctx context.Context, subjectType, subject, per
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
-		return "", errors.ErrAuthorization
+		return "", svcerr.ErrAuthorization
 	}
 	return res.GetId(), nil
 }
@@ -751,10 +751,10 @@ func (svc service) authorizeKind(ctx context.Context, domainID, subjectType, sub
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
-		return "", errors.ErrAuthorization
+		return "", svcerr.ErrAuthorization
 	}
 	return res.GetId(), nil
 }

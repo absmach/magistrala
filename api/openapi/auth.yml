@@ -16,8 +16,8 @@ info:
   version: 0.14.0
 
 servers:
-  - url: http://localhost:8180
-  - url: https://localhost:8180
+  - url: http://localhost:8189
+  - url: https://localhost:8189
 
 tags:
   - name: Auth

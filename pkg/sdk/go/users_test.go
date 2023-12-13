@@ -86,7 +86,7 @@ func TestCreateClient(t *testing.T) {
 			client:   user,
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedCreation), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedCreation), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty user",
@@ -367,7 +367,6 @@ func TestListClients(t *testing.T) {
 	for _, tc := range cases {
 		pm := sdk.PageMetadata{
 			Status:   tc.status,
-			Total:    total,
 			Offset:   tc.offset,
 			Limit:    tc.limit,
 			Name:     tc.name,
@@ -920,7 +919,7 @@ func TestUpdateClientRole(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(users.ErrFailedOwnerUpdate, users.ErrFailedOwnerUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrFailedOwnerUpdate, svcerr.ErrFailedOwnerUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",

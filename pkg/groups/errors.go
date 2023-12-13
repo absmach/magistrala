@@ -14,7 +14,4 @@ var (
 
 	// ErrDisableGroup indicates error in disabling group.
 	ErrDisableGroup = errors.New("failed to disable group")
-
-	// ErrStatusAlreadyAssigned indicated that the group has already been assigned the status.
-	ErrStatusAlreadyAssigned = errors.New("status already assigned")
 )

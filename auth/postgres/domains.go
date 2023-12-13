@@ -103,13 +103,13 @@ func (repo domainRepo) RetrievePermissions(ctx context.Context, subject, id stri
 
 	rows, err := repo.db.QueryxContext(ctx, q, id, subject)
 	if err != nil {
-		return []string{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return []string{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	defer rows.Close()
 
 	domains, err := repo.processRows(rows)
 	if err != nil {
-		return []string{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return []string{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	permissions := []string{}
@@ -141,18 +141,18 @@ func (repo domainRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth
 
 	dbPage, err := toDBClientsPage(pm)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	defer rows.Close()
 
 	domains, err := repo.processRows(rows)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	cq := "SELECT COUNT(*) FROM domains d"
@@ -162,7 +162,7 @@ func (repo domainRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth
 
 	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	pm.Total = total
@@ -201,18 +201,18 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 
 	dbPage, err := toDBClientsPage(pm)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	defer rows.Close()
 
 	domains, err := repo.processRows(rows)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	cq := "SELECT COUNT(*) FROM domains d JOIN policies pc ON pc.object_id = d.id"
@@ -222,7 +222,7 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 
 	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
 	if err != nil {
-		return auth.DomainsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	pm.Total = total

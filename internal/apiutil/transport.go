@@ -135,16 +135,28 @@ func ReadNumQuery[N number](r *http.Request, key string, def N) (N, error) {
 	switch any(def).(type) {
 	case int64:
 		v, err := strconv.ParseInt(val, 10, 64)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	case uint64:
 		v, err := strconv.ParseUint(val, 10, 64)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	case uint16:
 		v, err := strconv.ParseUint(val, 10, 16)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	case float64:
 		v, err := strconv.ParseFloat(val, 64)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	default:
 		return def, nil
 	}

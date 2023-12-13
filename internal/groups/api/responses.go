@@ -86,9 +86,9 @@ type groupPageRes struct {
 }
 
 type pageRes struct {
-	Limit  uint64 `json:"limit"`
+	Limit  uint64 `json:"limit,omitempty"`
 	Offset uint64 `json:"offset"`
-	Total  uint64 `json:"total,omitempty"`
+	Total  uint64 `json:"total"`
 	Level  uint64 `json:"level,omitempty"`
 }
 

@@ -97,7 +97,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release run run_addons grpc_mtls_certs check_mtls check_certs
+.PHONY: all $(SERVICES) dockers dockers_dev latest release run run_addons grpc_mtls_certs check_mtls check_certs test_api
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -128,6 +128,16 @@ test: mocks
         go test -v --race -count 1 -tags test -coverprofile=coverage/$$dir.out $$(go list ./... | grep $$dir | grep -v 'cmd'); \
     done
 	go test -v --race -count 1 -tags test -coverprofile=coverage/coverage.out $$(go list ./... | grep -v 'consumers\|readers\|postgres\|internal\|opcua\|cmd')
+
+test_api:
+	@which st > /dev/null || (echo "schemathesis not found, please install it from https://github.com/schemathesis/schemathesis#getting-started" && exit 1)
+	st run api/openapi/users.yml \
+	--checks all \
+	--base-url http://localhost:9002 \
+	--header "Authorization: Bearer $(USER_TOKEN)" \
+	--contrib-unique-data --contrib-openapi-formats-uuid \
+	--hypothesis-suppress-health-check=filter_too_much \
+	--stateful=links
 
 proto:
 	protoc -I. --go_out=. --go_opt=paths=source_relative pkg/messaging/*.proto

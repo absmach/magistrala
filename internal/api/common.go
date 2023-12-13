@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/gofrs/uuid"
 )
@@ -116,9 +117,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrBearerKey),
 		errors.Contains(err, apiutil.ErrNameSize),
 		errors.Contains(err, apiutil.ErrInvalidIDFormat),
-		errors.Contains(err, apiutil.ErrInvalidStatus),
 		errors.Contains(err, svcerr.ErrInvalidStatus),
 		errors.Contains(err, apiutil.ErrValidation),
+		errors.Contains(err, apiutil.ErrInvalidStatus),
 		errors.Contains(err, apiutil.ErrInvitationState),
 		errors.Contains(err, apiutil.ErrInvalidRole),
 		errors.Contains(err, apiutil.ErrMissingEmail),
@@ -153,6 +154,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, svcerr.ErrViewEntity),
 		errors.Contains(err, svcerr.ErrAddPolicies),
 		errors.Contains(err, svcerr.ErrDeletePolicies),
+		errors.Contains(err, repoerr.ErrFailedToRetrieveAllGroups),
 		errors.Contains(err, svcerr.ErrRemoveEntity):
 		w.WriteHeader(http.StatusUnprocessableEntity)
 	default:

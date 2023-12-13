@@ -81,7 +81,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  sdk.ErrFailedCreation,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrCreateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrCreateEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty thing",
@@ -231,7 +231,7 @@ func TestCreateThings(t *testing.T) {
 			things:   thingsList,
 			response: []sdk.Thing{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty things",

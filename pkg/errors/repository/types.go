@@ -48,4 +48,13 @@ var (
 
 	// ErrInvalidSecret indicates invalid secret.
 	ErrInvalidSecret = errors.New("missing secret")
+
+	// ErrAddPolicies indicates failed to add policies.
+	ErrAddPolicies = errors.New("failed to add policies")
+
+	// ErrDeletePolicies indicates failed to delete policies.
+	ErrDeletePolicies = errors.New("failed to delete policies")
+
+	// ErrFailedToRetrieveAllGroups failed to retrieve groups.
+	ErrFailedToRetrieveAllGroups = errors.New("failed to retrieve all groups")
 )

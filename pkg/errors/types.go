@@ -45,9 +45,15 @@ var (
 	// ErrLogin indicates wrong login credentials.
 	ErrLogin = New("invalid user id or secret")
 
+	// ErrPasswordFormat indicates weak password.
+	ErrPasswordFormat = errors.New("password does not meet the requirements")
+
 	// ErrUnsupportedContentType indicates invalid content type.
 	ErrUnsupportedContentType = errors.New("invalid content type")
 
 	// ErrUnidentified indicates unidentified error.
 	ErrUnidentified = errors.New("unidentified error")
+
+	// ErrStatusAlreadyAssigned indicated that the client or group has already been assigned the status.
+	ErrStatusAlreadyAssigned = errors.New("status already assigned")
 )

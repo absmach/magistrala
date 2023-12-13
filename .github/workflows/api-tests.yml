@@ -53,6 +53,15 @@ jobs:
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
+      - name: Run Things API tests
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/things.yml
+          base-url: http://localhost:9000
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
       - name: Stop containers
         if: always()
         run: make run down args="-v"

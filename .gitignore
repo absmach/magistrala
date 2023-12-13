@@ -12,3 +12,6 @@ tools/provision/mgconn.toml
 
 # coverage files
 coverage
+
+# Schemathesis
+.hypothesis

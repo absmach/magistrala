@@ -1183,7 +1183,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret:        "weak",
 			token:            validToken,
 			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			err:              users.ErrPasswordFormat,
+			err:              errors.ErrPasswordFormat,
 		},
 		{
 			desc:                 "update client secret with failed to retrieve client by ID",
@@ -1349,7 +1349,7 @@ func TestEnableClient(t *testing.T) {
 			identifyResponse:     &magistrala.IdentityRes{UserId: enabledClient1.ID},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
 			retrieveByIDResponse: enabledClient1,
-			err:                  mgclients.ErrStatusAlreadyAssigned,
+			err:                  errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:                 "enable disabled client with failed to change status",
@@ -1536,7 +1536,7 @@ func TestDisableClient(t *testing.T) {
 			identifyResponse:     &magistrala.IdentityRes{UserId: disabledClient1.ID},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
 			retrieveByIDResponse: disabledClient1,
-			err:                  mgclients.ErrStatusAlreadyAssigned,
+			err:                  errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:                 "disable enabled client with failed to change status",
@@ -2278,7 +2278,7 @@ func TestGenerateResetToken(t *testing.T) {
 			retrieveByIdentityResponse: client,
 			issueResponse:              &magistrala.Token{},
 			issueErr:                   svcerr.ErrAuthorization,
-			err:                        users.ErrRecoveryToken,
+			err:                        svcerr.ErrRecoveryToken,
 		},
 	}
 
@@ -2367,7 +2367,7 @@ func TestResetSecret(t *testing.T) {
 			newSecret:            "weak",
 			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
 			retrieveByIDResponse: client,
-			err:                  users.ErrPasswordFormat,
+			err:                  errors.ErrPasswordFormat,
 		},
 		{
 			desc:                 "reset secret with failed to update secret",

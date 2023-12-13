@@ -12,9 +12,11 @@ on:
       - main
 
 env:
-  TOKEN_URL: http://localhost:9002/users/tokens/issue
+  TOKENS_URL: http://localhost:9002/users/tokens/issue
+  DOMAINS_URL: http://localhost:8189/domains
   USER_IDENTITY: admin@example.com
   USER_SECRET: 12345678
+  DOMAIN_NAME: demo-test
 
 jobs:
   api-test:
@@ -37,7 +39,9 @@ jobs:
 
       - name: Set access token
         run: |
-          export USER_TOKEN=$(curl -sSX POST $TOKEN_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\"}" | jq -r .access_token)
+          export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\"}" | jq -r .access_token)
+          export DOMAIN_ID=$(curl -sSX POST $DOMAINS_URL -H "Content-Type: application/json" -H "Authorization: Bearer $USER_TOKEN" -d "{\"name\":\"$DOMAIN_NAME\",\"alias\":\"$DOMAIN_NAME\"}" | jq -r .id)
+          export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\",\"domain_id\": \"$DOMAIN_ID\"}" | jq -r .access_token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
 
       - name: Run Users API tests
@@ -45,6 +49,15 @@ jobs:
         with:
           schema: api/openapi/users.yml
           base-url: http://localhost:9002
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Things API tests
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/things.yml
+          base-url: http://localhost:9000
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'

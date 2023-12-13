@@ -114,11 +114,11 @@ var (
 	// ErrMissingRelation indicates missing relation.
 	ErrMissingRelation = errors.New("missing relation")
 
+	// ErrInvalidRelation indicates an invalid relation.
+	ErrInvalidRelation = errors.New("invalid relation")
+
 	// ErrInvalidAPIKey indicates an invalid API key type.
 	ErrInvalidAPIKey = errors.New("invalid api key type")
-
-	// ErrMaxLevelExceeded indicates an invalid group level.
-	ErrMaxLevelExceeded = errors.New("invalid group level (should be lower than 5)")
 
 	// ErrBootstrapState indicates an invalid bootstrap state.
 	ErrBootstrapState = errors.New("invalid bootstrap state")

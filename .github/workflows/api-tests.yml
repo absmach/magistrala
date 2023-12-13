@@ -1,0 +1,54 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+name: Property Based Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  TOKEN_URL: http://localhost:9002/users/tokens/issue
+  USER_IDENTITY: admin@example.com
+  USER_SECRET: 12345678
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21.x
+          cache-dependency-path: "go.sum"
+
+      - name: Build images
+        run: make all -j $(nproc) && make dockers_dev -j $(nproc)
+
+      - name: Start containers
+        run: make run up args="-d" && sleep 10
+
+      - name: Set access token
+        run: |
+          export USER_TOKEN=$(curl -sSX POST $TOKEN_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\"}" | jq -r .access_token)
+          echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
+
+      - name: Run Users API tests
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/users.yml
+          base-url: http://localhost:9002
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Stop containers
+        if: always()
+        run: make run down args="-v"

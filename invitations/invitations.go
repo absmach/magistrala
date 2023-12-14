@@ -19,14 +19,14 @@ var (
 
 // Invitation is an invitation to join a domain.
 type Invitation struct {
-	InvitedBy   string    `json:"invited_by" db:"invited_by"`
-	UserID      string    `json:"user_id" db:"user_id"`
-	DomainID    string    `json:"domain_id" db:"domain_id"`
-	Token       string    `json:"token,omitempty" db:"token"`
-	Relation    string    `json:"relation,omitempty" db:"relation"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty" db:"updated_at,omitempty"`
-	ConfirmedAt time.Time `json:"confirmed_at,omitempty" db:"confirmed_at,omitempty"`
+	InvitedBy   string    `json:"invited_by"`
+	UserID      string    `json:"user_id"`
+	DomainID    string    `json:"domain_id"`
+	Token       string    `json:"token,omitempty"`
+	Relation    string    `json:"relation,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	ConfirmedAt time.Time `json:"confirmed_at,omitempty"`
 	Resend      bool      `json:"resend,omitempty"`
 }
 
@@ -39,6 +39,7 @@ type Page struct {
 	DomainID          string `json:"domain_id,omitempty" db:"domain_id,omitempty"`
 	Relation          string `json:"relation,omitempty" db:"relation,omitempty"`
 	InvitedByOrUserID string `db:"invited_by_or_user_id,omitempty"`
+	State             State  `json:"state,omitempty"`
 }
 
 // InvitationPage is a page of invitations.

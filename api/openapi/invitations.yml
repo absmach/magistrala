@@ -68,6 +68,7 @@ paths:
         - $ref: "#/components/parameters/InvitedBy"
         - $ref: "#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Relation"
+        - $ref: "#/components/parameters/State"
       security:
         - bearerAuth: []
       responses:
@@ -405,6 +406,19 @@ components:
           - platform
       required: false
       example: editor
+
+    State:
+      name: state
+      description: Invitation state.
+      in: query
+      schema:
+        type: string
+        enum:
+          - pending
+          - accepted
+          - all
+      required: false
+      example: accepted
 
   requestBodies:
     SendInvitationReq:

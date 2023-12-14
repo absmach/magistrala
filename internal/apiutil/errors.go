@@ -120,8 +120,11 @@ var (
 	// ErrMaxLevelExceeded indicates an invalid group level.
 	ErrMaxLevelExceeded = errors.New("invalid group level (should be lower than 5)")
 
-	// ErrBootstrapState indicates an invalid boostrap state.
+	// ErrBootstrapState indicates an invalid bootstrap state.
 	ErrBootstrapState = errors.New("invalid bootstrap state")
+
+	// ErrInvitationState indicates an invalid invitation state.
+	ErrInvitationState = errors.New("invalid invitation state")
 
 	// ErrMissingIdentity indicates missing entity Identity.
 	ErrMissingIdentity = errors.New("missing entity identity")

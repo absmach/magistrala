@@ -26,6 +26,7 @@ const (
 	domainIDKey  = "domain_id"
 	invitedByKey = "invited_by"
 	relationKey  = "relation"
+	stateKey     = "state"
 )
 
 func MakeHandler(svc invitations.Service, logger mglog.Logger, instanceID string) http.Handler {
@@ -115,6 +116,14 @@ func decodeListInvitationsReq(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	st, err := apiutil.ReadStringQuery(r, stateKey, invitations.All.String())
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	state, err := invitations.ToState(st)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	req := listInvitationsReq{
 		token: apiutil.ExtractBearerToken(r),
@@ -125,6 +134,7 @@ func decodeListInvitationsReq(_ context.Context, r *http.Request) (interface{}, 
 			UserID:    userID,
 			Relation:  relation,
 			DomainID:  domainID,
+			State:     state,
 		},
 	}
 

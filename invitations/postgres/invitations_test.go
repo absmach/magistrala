@@ -286,6 +286,13 @@ func TestInvitationRetrieveAll(t *testing.T) {
 		invitation.Token = ""
 		items = append(items, invitation)
 	}
+	items[100].ConfirmedAt = time.Now().UTC().Truncate(time.Microsecond)
+	err := repo.UpdateConfirmation(context.Background(), items[100])
+	require.Nil(t, err, fmt.Sprintf("update invitation unexpected error: %s", err))
+
+	swap := items[100]
+	items = append(items[:100], items[101:]...)
+	items = append(items, swap)
 
 	cases := []struct {
 		desc     string
@@ -599,11 +606,42 @@ func TestInvitationRetrieveAll(t *testing.T) {
 				Invitations: []invitations.Invitation(nil),
 			},
 		},
+		{
+			desc: "retrieve invitations with accepted state",
+			page: invitations.Page{
+				State:  invitations.Accepted,
+				Offset: 0,
+				Limit:  10,
+			},
+			response: invitations.InvitationPage{
+				Total:       1,
+				Offset:      0,
+				Limit:       10,
+				Invitations: []invitations.Invitation{items[num-1]},
+			},
+		},
+		{
+			desc: "retrieve invitations with pending state",
+			page: invitations.Page{
+				State:  invitations.Pending,
+				Offset: 0,
+				Limit:  10,
+			},
+			response: invitations.InvitationPage{
+				Total:       uint64(num - 1),
+				Offset:      0,
+				Limit:       10,
+				Invitations: items[0:10],
+			},
+		},
 	}
 	for _, tc := range cases {
 		page, err := repo.RetrieveAll(context.Background(), tc.page)
+		assert.Equal(t, tc.response.Total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, page.Total))
+		assert.Equal(t, tc.response.Offset, page.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Offset, page.Offset))
+		assert.Equal(t, tc.response.Limit, page.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Limit, page.Limit))
+		assert.ElementsMatch(t, page.Invitations, tc.response.Invitations, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response.Invitations, page.Invitations))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.response, page, fmt.Sprintf("desc: %s\n", tc.desc))
 	}
 }
 

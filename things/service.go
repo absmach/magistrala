@@ -44,7 +44,7 @@ func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo
 func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) (string, error) {
 	thingID, err := svc.Identify(ctx, req.GetSubject())
 	if err != nil {
-		return "", errors.Wrap(svcerr.ErrAuthentication, err)
+		return "", err
 	}
 
 	r := &magistrala.AuthorizeReq{
@@ -59,7 +59,7 @@ func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) 
 		return "", errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !resp.GetAuthorized() {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", errors.ErrAuthorization
 	}
 
 	return thingID, nil
@@ -68,7 +68,7 @@ func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) 
 func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclients.Client) ([]mgclients.Client, error) {
 	user, err := svc.identify(ctx, token)
 	if err != nil {
-		return []mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return []mgclients.Client{}, err
 	}
 	var clients []mgclients.Client
 	for _, c := range cls {
@@ -156,7 +156,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 
 	res, err := svc.identify(ctx, token)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.ClientsPage{}, err
 	}
 
 	switch {
@@ -178,7 +178,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 		switch {
 		case err == nil:
 			if res.GetDomainId() == "" {
-				return mgclients.ClientsPage{}, svcerr.ErrMalformedEntity
+				return mgclients.ClientsPage{}, errors.ErrDomainAuthorization
 			}
 			pm.Owner = res.GetDomainId()
 		default:

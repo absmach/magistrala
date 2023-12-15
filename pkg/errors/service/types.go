@@ -42,4 +42,7 @@ var (
 
 	// ErrInvalidRole indicates that an invalid role.
 	ErrInvalidRole = errors.New("invalid client role")
+
+	// ErrInvalidPolicy indicates that an invalid policy.
+	ErrInvalidPolicy = errors.New("invalid policy")
 )

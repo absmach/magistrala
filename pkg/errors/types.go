@@ -47,4 +47,7 @@ var (
 
 	// ErrUnsupportedContentType indicates invalid content type.
 	ErrUnsupportedContentType = errors.New("invalid content type")
+
+	// ErrUnidentified indicates unidentified error.
+	ErrUnidentified = errors.New("unidentified error")
 )

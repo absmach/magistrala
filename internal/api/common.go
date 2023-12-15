@@ -122,7 +122,8 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusNotFound)
 	case errors.Contains(err, svcerr.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, svcerr.ErrAuthorization):
+	case errors.Contains(err, svcerr.ErrAuthorization),
+		errors.Contains(err, errors.ErrDomainAuthorization):
 		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, postgres.ErrMemberAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)

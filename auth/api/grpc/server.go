@@ -10,6 +10,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -530,6 +531,7 @@ func encodeError(err error) error {
 	case errors.Contains(err, nil):
 		return nil
 	case errors.Contains(err, errors.ErrMalformedEntity),
+		errors.Contains(err, svcerr.ErrInvalidPolicy),
 		err == apiutil.ErrInvalidAuthKey,
 		err == apiutil.ErrMissingID,
 		err == apiutil.ErrMissingMemberType,
@@ -542,8 +544,13 @@ func encodeError(err error) error {
 		err == apiutil.ErrMissingEmail,
 		err == apiutil.ErrBearerToken:
 		return status.Error(codes.Unauthenticated, err.Error())
-	case errors.Contains(err, errors.ErrAuthorization):
+	case errors.Contains(err, errors.ErrAuthorization),
+		errors.Contains(err, errors.ErrDomainAuthorization):
 		return status.Error(codes.PermissionDenied, err.Error())
+	case errors.Contains(err, errors.ErrNotFound):
+		return status.Error(codes.NotFound, err.Error())
+	case errors.Contains(err, errors.ErrConflict):
+		return status.Error(codes.AlreadyExists, err.Error())
 	default:
 		return status.Error(codes.Internal, err.Error())
 	}

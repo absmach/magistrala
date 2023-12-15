@@ -67,10 +67,10 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	if !svc.selfRegister {
 		userID, err := svc.Identify(ctx, token)
 		if err != nil {
-			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+			return mgclients.Client{}, err
 		}
 		if err := svc.checkSuperAdmin(ctx, userID); err != nil {
-			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+			return mgclients.Client{}, err
 		}
 	}
 
@@ -97,7 +97,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	cli.CreatedAt = time.Now()
 
 	if err := svc.addClientPolicy(ctx, cli.ID, cli.Role); err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return mgclients.Client{}, err
 	}
 	defer func() {
 		if err != nil {
@@ -137,12 +137,12 @@ func (svc service) RefreshToken(ctx context.Context, refreshToken, domainID stri
 func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 
 	if tokenUserID != id {
 		if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+			return mgclients.Client{}, err
 		}
 	}
 
@@ -158,7 +158,7 @@ func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.
 func (svc service) ViewProfile(ctx context.Context, token string) (mgclients.Client, error) {
 	id, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
@@ -172,7 +172,7 @@ func (svc service) ViewProfile(ctx context.Context, token string) (mgclients.Cli
 func (svc service) ListClients(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	userID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.ClientsPage{}, err
 	}
 	if err := svc.checkSuperAdmin(ctx, userID); err == nil {
 		return svc.clients.RetrieveAll(ctx, pm)
@@ -192,12 +192,12 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 
 	if tokenUserID != cli.ID {
 		if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+			return mgclients.Client{}, err
 		}
 	}
 
@@ -215,12 +215,12 @@ func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients
 func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 
 	if tokenUserID != cli.ID {
 		if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+			return mgclients.Client{}, err
 		}
 	}
 
@@ -237,12 +237,12 @@ func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgcli
 func (svc service) UpdateClientIdentity(ctx context.Context, token, clientID, identity string) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 
 	if tokenUserID != clientID {
 		if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+			return mgclients.Client{}, err
 		}
 	}
 
@@ -277,7 +277,7 @@ func (svc service) GenerateResetToken(ctx context.Context, email, host string) e
 func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) error {
 	id, err := svc.Identify(ctx, resetToken)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrAuthentication, err)
+		return err
 	}
 	c, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
@@ -310,7 +310,7 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, newSecret string) (mgclients.Client, error) {
 	id, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 	if !svc.passRegex.MatchString(newSecret) {
 		return mgclients.Client{}, ErrPasswordFormat
@@ -341,11 +341,11 @@ func (svc service) SendPasswordReset(_ context.Context, host, email, user, token
 func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 
 	if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 	client := mgclients.Client{
 		ID:        cli.ID,
@@ -399,10 +399,10 @@ func (svc service) DisableClient(ctx context.Context, token, id string) (mgclien
 func (svc service) changeClientStatus(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 	if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgclients.Client{}, err
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
@@ -474,6 +474,7 @@ func (svc *service) checkSuperAdmin(ctx context.Context, adminID string) error {
 		if err := svc.clients.CheckSuperAdmin(ctx, adminID); err != nil {
 			return errors.Wrap(svcerr.ErrAuthorization, err)
 		}
+		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
 	return nil

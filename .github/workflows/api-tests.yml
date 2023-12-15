@@ -7,9 +7,38 @@ on:
   push:
     branches:
       - main
+    paths:
+      - ".github/workflows/api-tests.yml"
+      - "api/**"
+      - "auth/api/http/**"
+      - "bootstrap/api**"
+      - "certs/api/**"
+      - "consumers/notifiers/api/**"
+      - "http/api/**"
+      - "invitations/api/**"
+      - "provision/api/**"
+      - "readers/api/**"
+      - "things/api/**"
+      - "twins/api/**"
+      - "users/api/**"
+
   pull_request:
     branches:
       - main
+    paths:
+      - ".github/workflows/api-tests.yml"
+      - "api/**"
+      - "auth/api/http/**"
+      - "bootstrap/api**"
+      - "certs/api/**"
+      - "consumers/notifiers/api/**"
+      - "http/api/**"
+      - "invitations/api/**"
+      - "provision/api/**"
+      - "readers/api/**"
+      - "things/api/**"
+      - "twins/api/**"
+      - "users/api/**"
 
 env:
   TOKENS_URL: http://localhost:9002/users/tokens/issue
@@ -17,6 +46,8 @@ env:
   USER_IDENTITY: admin@example.com
   USER_SECRET: 12345678
   DOMAIN_NAME: demo-test
+  USERS_URL: http://localhost:9002
+  THINGS_URL: http://localhost:9000
 
 jobs:
   api-test:
@@ -44,20 +75,82 @@ jobs:
           export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\",\"domain_id\": \"$DOMAIN_ID\"}" | jq -r .access_token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
 
+      - name: Check for changes in specific paths
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            auth:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/auth.yml"
+              - "auth/api/http/**"
+              
+            bootstrap:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/bootstrap.yml"
+              - "bootstrap/api/**"
+
+            certs:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/certs.yml"
+              - "certs/api/**"
+
+            notifiers:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/notifiers.yml"
+              - "consumers/notifiers/api/**"
+
+            http:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/http.yml"
+              - "http/api/**"
+
+            invitations:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/invitations.yml"
+              - "invitations/api/**"
+
+            provision:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/provision.yml"
+              - "provision/api/**"
+
+            readers:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/readers.yml"
+              - "readers/api/**"
+
+            things:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/things.yml"
+              - "things/api/**"
+
+            twins:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/twins.yml"
+              - "twins/api/**"
+
+            users:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/users.yml"
+              - "users/api/**"
+
       - name: Run Users API tests
+        if: steps.changes.outputs.users == 'true'
         uses: schemathesis/action@v1
         with:
           schema: api/openapi/users.yml
-          base-url: http://localhost:9002
+          base-url: ${{ env.USERS_URL }}
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
       - name: Run Things API tests
+        if: steps.changes.outputs.things == 'true'
         uses: schemathesis/action@v1
         with:
           schema: api/openapi/things.yml
-          base-url: http://localhost:9000
+          base-url: ${{ env.THINGS_URL }}
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'

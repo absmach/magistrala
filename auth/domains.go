@@ -128,8 +128,25 @@ type Page struct {
 }
 
 type DomainsPage struct {
-	Page
-	Domains []Domain `json:"domains,omitempty"`
+	Total   uint64   `json:"total"`
+	Offset  uint64   `json:"offset"`
+	Limit   uint64   `json:"limit"`
+	Domains []Domain `json:"domains"`
+}
+
+func (page DomainsPage) MarshalJSON() ([]byte, error) {
+	type Alias DomainsPage
+	a := struct {
+		Alias
+	}{
+		Alias: Alias(page),
+	}
+
+	if a.Domains == nil {
+		a.Domains = make([]Domain, 0)
+	}
+
+	return json.Marshal(a)
 }
 
 type Policy struct {

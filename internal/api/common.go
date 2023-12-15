@@ -132,7 +132,10 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingRelation),
 		errors.Contains(err, svcerr.ErrPasswordFormat),
 		errors.Contains(err, apiutil.ErrInvalidLevel),
-		errors.Contains(err, apiutil.ErrInvalidQueryParams):
+		errors.Contains(err, apiutil.ErrInvalidQueryParams),
+		errors.Contains(err, apiutil.ErrMalformedPolicy),
+		errors.Contains(err, apiutil.ErrInvalidAPIKey),
+		errors.Contains(err, apiutil.ErrMissingName):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, svcerr.ErrLogin),

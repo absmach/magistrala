@@ -131,7 +131,7 @@ func (svc service) RetrieveKey(ctx context.Context, token, id string) (Key, erro
 
 	key, err := svc.keys.Retrieve(ctx, issuerID, id)
 	if err != nil {
-		return Key{}, errors.Wrap(errRetrieve, err)
+		return Key{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return key, nil
 }
@@ -207,7 +207,7 @@ func (svc service) checkPolicy(ctx context.Context, pr PolicyReq) error {
 func (svc service) checkDomain(ctx context.Context, subjectType, subject, domainID string) error {
 	d, err := svc.domains.RetrieveByID(ctx, domainID)
 	if err != nil {
-		return errors.Wrap(errors.ErrUnidentified, err)
+		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	switch d.Status {
@@ -573,7 +573,7 @@ func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain
 	}
 	dom, err := svc.domains.RetrieveByID(ctx, id)
 	if err != nil {
-		return Domain{}, errors.Wrap(svcerr.ErrNotFound, err)
+		return Domain{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return dom, nil
 }
@@ -602,7 +602,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 		ObjectType:  DomainType,
 	}, []string{AdminPermission, EditPermission, ViewPermission, MembershipPermission})
 	if err != nil {
-		return []string{}, err
+		return []string{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return lp, nil
 }

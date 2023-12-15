@@ -104,7 +104,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	dbUser, err := svc.clients.RetrieveByIdentity(ctx, identity)
 	if err != nil {
-		return &magistrala.Token{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return &magistrala.Token{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
 		return &magistrala.Token{}, errors.Wrap(svcerr.ErrLogin, err)
@@ -139,7 +139,7 @@ func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.
 
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	client.Credentials.Secret = ""
 
@@ -153,7 +153,7 @@ func (svc service) ViewProfile(ctx context.Context, token string) (mgclients.Cli
 	}
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	client.Credentials.Secret = ""
 
@@ -168,7 +168,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	if err := svc.checkSuperAdmin(ctx, userID); err == nil {
 		pg, err := svc.clients.RetrieveAll(ctx, pm)
 		if err != nil {
-			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 		}
 		return pg, err
 	}
@@ -183,7 +183,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	}
 	pg, err := svc.clients.RetrieveAll(ctx, p)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return pg, nil
 }
@@ -292,7 +292,7 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 	}
 	c, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return errors.Wrap(repoerr.ErrNotFound, err)
+		return errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	if c.Credentials.Identity == "" {
 		return repoerr.ErrNotFound
@@ -322,7 +322,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	if _, err := svc.IssueToken(ctx, dbClient.Credentials.Identity, oldSecret, ""); err != nil {
 		return mgclients.Client{}, errors.Wrap(ErrIssueToken, err)
@@ -416,7 +416,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	if dbClient.Status == client.Status {
 		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned
@@ -479,7 +479,7 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 
 	cp, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
-		return mgclients.MembersPage{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.MembersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	if pm.ListPerms && len(cp.Clients) > 0 {

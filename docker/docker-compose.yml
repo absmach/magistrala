@@ -658,3 +658,26 @@ services:
         target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+
+  ui:
+    image: magistrala/ui:${MG_RELEASE_TAG}
+    container_name: magistrala-ui
+    restart: on-failure
+    environment:
+      MG_UI_LOG_LEVEL: ${MG_UI_LOG_LEVEL}
+      MG_UI_PORT: ${MG_UI_PORT}
+      MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
+      MG_READER_URL: ${MG_READER_URL}
+      MG_THINGS_URL: ${MG_THINGS_URL}
+      MG_USERS_URL: ${MG_USERS_URL}
+      MG_INVITATIONS_URL: ${MG_INVITATIONS_URL}
+      MG_DOMAINS_URL: ${MG_DOMAINS_URL}
+      MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
+      MG_UI_HOST_URL: ${MG_UI_HOST_URL}
+      MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
+      MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
+      MG_UI_INSTANCE_ID: ${MG_UI_INSTANCE_ID}
+    ports:
+      - ${MG_UI_PORT}:${MG_UI_PORT}
+    networks:
+      - magistrala-base-net

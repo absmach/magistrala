@@ -52,6 +52,7 @@ env:
   AUTH_URL: http://localhost:8189
   BOOTSTRAP_URL: http://localhost:9013
   CERTS_URL: http://localhost:9019
+  TWINS_URL: http://localhost:9018
 
 jobs:
   api-test:
@@ -195,6 +196,16 @@ jobs:
         with:
           schema: api/openapi/certs.yml
           base-url: ${{ env.CERTS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Twins API tests
+        if: steps.changes.outputs.twins == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/twins.yml
+          base-url: ${{ env.TWINS_URL }}
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'

@@ -448,7 +448,7 @@ func TestUpdateClientCredentialsReqValidate(t *testing.T) {
 				id:     validID,
 				Secret: "",
 			},
-			err: apiutil.ErrBearerKey,
+			err: apiutil.ErrMissingSecret,
 		},
 	}
 	for _, c := range cases {

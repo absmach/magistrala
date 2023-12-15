@@ -53,6 +53,7 @@ env:
   BOOTSTRAP_URL: http://localhost:9013
   CERTS_URL: http://localhost:9019
   TWINS_URL: http://localhost:9018
+  PROVISION_URL: http://localhost:9016
 
 jobs:
   api-test:
@@ -206,6 +207,16 @@ jobs:
         with:
           schema: api/openapi/twins.yml
           base-url: ${{ env.TWINS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Provision API tests
+        if: steps.changes.outputs.provision == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/provision.yml
+          base-url: ${{ env.PROVISION_URL }}
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'

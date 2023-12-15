@@ -58,7 +58,7 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger mglog.Logger) http.Ha
 			decodeViewClientPerms,
 			api.EncodeResponse,
 			opts...,
-		), "view_thing").ServeHTTP)
+		), "view_thing_permissions").ServeHTTP)
 
 		r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 			updateClientEndpoint(svc),
@@ -100,14 +100,14 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger mglog.Logger) http.Ha
 			decodeThingShareRequest,
 			api.EncodeResponse,
 			opts...,
-		), "thing_share").ServeHTTP)
+		), "share_thing").ServeHTTP)
 
 		r.Post("/{thingID}/unshare", otelhttp.NewHandler(kithttp.NewServer(
 			thingUnshareEndpoint(svc),
 			decodeThingUnshareRequest,
 			api.EncodeResponse,
 			opts...,
-		), "thing_delete_share").ServeHTTP)
+		), "unshare_thing").ServeHTTP)
 	})
 
 	// Ideal location: things service,  channels endpoint

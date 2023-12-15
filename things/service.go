@@ -607,7 +607,7 @@ func (svc *service) authorize(ctx context.Context, domainID, subjType, subjKind,
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
 		return "", errors.Wrap(svcerr.ErrAuthorization, err)

@@ -299,7 +299,7 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 		return repoerr.ErrNotFound
 	}
 	if !svc.passRegex.MatchString(secret) {
-		return errors.ErrPasswordFormat
+		return svcerr.ErrPasswordFormat
 	}
 	secret, err = svc.hasher.Hash(secret)
 	if err != nil {
@@ -325,7 +325,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 		return mgclients.Client{}, err
 	}
 	if !svc.passRegex.MatchString(newSecret) {
-		return mgclients.Client{}, errors.ErrPasswordFormat
+		return mgclients.Client{}, svcerr.ErrPasswordFormat
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {

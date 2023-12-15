@@ -15,9 +15,9 @@ import (
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging/mocks"
 	"github.com/absmach/magistrala/ws"
 	"github.com/absmach/magistrala/ws/api"
-	"github.com/absmach/magistrala/ws/mocks"
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/mainflux/mproxy/pkg/websockets"
@@ -36,8 +36,8 @@ const (
 
 var msg = []byte(`[{"n":"current","t":-1,"v":1.6}]`)
 
-func newService(auth magistrala.AuthzServiceClient) (ws.Service, mocks.MockPubSub) {
-	pubsub := mocks.NewPubSub()
+func newService(auth magistrala.AuthzServiceClient) (ws.Service, *mocks.PubSub) {
+	pubsub := new(mocks.PubSub)
 	return ws.New(auth, pubsub), pubsub
 }
 
@@ -101,6 +101,8 @@ func TestHandshake(t *testing.T) {
 	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: id, Domain: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: "1"}, nil)
 	auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: id, Domain: "", SubjectType: "thing", Permission: "subscribe", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: "2"}, nil)
 	auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false, Id: "3"}, nil)
+	pubsub.On("Subscribe", mock.Anything, mock.Anything).Return(nil)
+	pubsub.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	cases := []struct {
 		desc     string

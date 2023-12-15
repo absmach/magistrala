@@ -12,8 +12,8 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging/mocks"
 	"github.com/absmach/magistrala/ws"
-	"github.com/absmach/magistrala/ws/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,8 +34,8 @@ var msg = messaging.Message{
 	Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
 }
 
-func newService() (ws.Service, mocks.MockPubSub, *authmocks.Service) {
-	pubsub := mocks.NewPubSub()
+func newService() (ws.Service, *mocks.PubSub, *authmocks.Service) {
+	pubsub := new(mocks.PubSub)
 	auth := new(authmocks.Service)
 
 	return ws.New(auth, pubsub), pubsub, auth
@@ -51,7 +51,6 @@ func TestSubscribe(t *testing.T) {
 		thingKey string
 		chanID   string
 		subtopic string
-		fail     bool
 		err      error
 	}{
 		{
@@ -59,7 +58,6 @@ func TestSubscribe(t *testing.T) {
 			thingKey: thingKey,
 			chanID:   chanID,
 			subtopic: subTopic,
-			fail:     false,
 			err:      nil,
 		},
 		{
@@ -67,7 +65,6 @@ func TestSubscribe(t *testing.T) {
 			thingKey: thingKey,
 			chanID:   chanID,
 			subtopic: subTopic,
-			fail:     false,
 			err:      nil,
 		},
 		{
@@ -75,7 +72,6 @@ func TestSubscribe(t *testing.T) {
 			thingKey: thingKey,
 			chanID:   chanID,
 			subtopic: subTopic,
-			fail:     true,
 			err:      ws.ErrFailedSubscription,
 		},
 		{
@@ -83,7 +79,6 @@ func TestSubscribe(t *testing.T) {
 			thingKey: authmocks.InvalidValue,
 			chanID:   authmocks.InvalidValue,
 			subtopic: subTopic,
-			fail:     false,
 			err:      ws.ErrUnauthorizedAccess,
 		},
 		{
@@ -91,7 +86,6 @@ func TestSubscribe(t *testing.T) {
 			thingKey: thingKey,
 			chanID:   "",
 			subtopic: subTopic,
-			fail:     false,
 			err:      ws.ErrUnauthorizedAccess,
 		},
 		{
@@ -99,7 +93,6 @@ func TestSubscribe(t *testing.T) {
 			thingKey: "",
 			chanID:   chanID,
 			subtopic: subTopic,
-			fail:     false,
 			err:      ws.ErrUnauthorizedAccess,
 		},
 		{
@@ -107,16 +100,23 @@ func TestSubscribe(t *testing.T) {
 			thingKey: "",
 			chanID:   "",
 			subtopic: subTopic,
-			fail:     false,
 			err:      ws.ErrUnauthorizedAccess,
 		},
 	}
 
 	for _, tc := range cases {
-		pubsub.SetFail(tc.fail)
-		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
+		thingID := testsutil.GenerateUUID(t)
+		subConfig := messaging.SubscriberConfig{
+			ID:      thingID,
+			Topic:   "channels." + chanID + "." + subTopic,
+			Handler: c,
+		}
+		repocall := pubsub.On("Subscribe", mock.Anything, subConfig).Return(tc.err)
+		repocall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: thingID}, nil)
 		err := svc.Subscribe(context.Background(), tc.thingKey, tc.chanID, tc.subtopic, c)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repocall1.Parent.AssertCalled(t, "Authorize", mock.Anything, mock.Anything)
 		repocall.Unset()
+		repocall1.Unset()
 	}
 }

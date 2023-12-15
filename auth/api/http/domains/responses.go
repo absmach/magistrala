@@ -54,6 +54,10 @@ func (res retrieveDomainRes) Empty() bool {
 	return false
 }
 
+func (res retrieveDomainRes) MarshalJSON() ([]byte, error) {
+	return json.Marshal(res.Data)
+}
+
 type retrieveDomainPermissionsRes struct {
 	Permissions []string `json:"permissions"`
 }

@@ -49,6 +49,7 @@ env:
   USERS_URL: http://localhost:9002
   THINGS_URL: http://localhost:9000
   INVITATIONS_URL: http://localhost:9020
+  AUTH_URL: http://localhost:8189
 
 jobs:
   api-test:
@@ -162,6 +163,16 @@ jobs:
         with:
           schema: api/openapi/invitations.yml
           base-url: ${{ env.INVITATIONS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Auth API tests
+        if: steps.changes.outputs.auth == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/auth.yml
+          base-url: ${{ env.AUTH_URL }}
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'

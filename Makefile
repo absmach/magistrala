@@ -163,6 +163,7 @@ test_api_bootstrap: TEST_API_URL := http://localhost:9013
 test_api_certs: TEST_API_URL := http://localhost:9019
 test_api_twins: TEST_API_URL := http://localhost:9018
 test_api_provision: TEST_API_URL := http://localhost:9016
+test_api_notifiers: TEST_API_URL := http://localhost:9014 # Either smtp (http://localhost:9015) or smpp (http://localhost:9014)
 
 $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))

@@ -152,6 +152,7 @@ endef
 
 test_api_users: TEST_API_URL := http://localhost:9002
 test_api_things: TEST_API_URL := http://localhost:9000
+test_api_invitations: TEST_API_URL := http://localhost:9020
 
 $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))

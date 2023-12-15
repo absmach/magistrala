@@ -37,9 +37,11 @@ jobs:
               - "pkg/messaging/message.proto"
               - "pkg/messaging/*.pb.go"
 
-            sdk:
+            mocks:
               - ".github/workflows/check-generated-files.yml"
               - "pkg/sdk/go/sdk.go"
+              - "users/postgres/clients.go"
+              - "pkg/clients/clients.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -80,18 +82,28 @@ jobs:
             fi
           done
 
-      - name: Check SDK is up to Date
-        if: steps.changes.outputs.sdk == 'true'
+      - name: Check Mocks are up to Date
+        if: steps.changes.outputs.mocks == 'true'
         run: |
           MOCKERY_VERSION=v2.38.0
           go install github.com/vektra/mockery/v2@$MOCKERY_VERSION
-           
-          mv ./pkg/sdk/go/mocks.go ./pkg/sdk/go/mocks.go.tmp
+
+          mv ./pkg/sdk/mocks/sdk.go ./pkg/sdk/mocks/sdk.go.tmp
+          mv ./users/mocks/repository.go ./users/mocks/repository.go.tmp
 
           make mocks
 
-          if ! cmp -s ./pkg/sdk/go/mocks.go ./pkg/sdk/go/mocks.go.tmp; then
-            echo "Error: Generated mocks for SDK ./pkg/sdk/go/mocks.go are out of sync!"
-            echo "Please run 'make mocks' with mockery version $MOCKERY_VERSION and commit the changes."
-            exit 1
-          fi
+          check_mock_changes() {
+            local file_path=$1
+            local tmp_file_path=$1.tmp
+            local entity_name=$2
+
+            if ! cmp -s "$file_path" "$tmp_file_path"; then
+              echo "Error: Generated mocks for $entity_name are out of sync!"
+              echo "Please run 'make mocks' with mockery version $MOCKERY_VERSION and commit the changes."
+              exit 1
+            fi
+          }
+
+          check_mock_changes ./pkg/sdk/mocks/sdk.go "SDK ./pkg/sdk/mocks/sdk.go"
+          check_mock_changes ./users/mocks/repository.go "Users Repository ./users/mocks/repository.go"

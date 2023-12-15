@@ -22,6 +22,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -55,10 +56,10 @@ var (
 	}
 )
 
-func newService() (bootstrap.Service, *authmocks.Service, *mgsdk.MockSDK) {
+func newService() (bootstrap.Service, *authmocks.Service, *sdkmocks.SDK) {
 	things := mocks.NewConfigsRepository()
 	auth := new(authmocks.Service)
-	sdk := &mgsdk.MockSDK{}
+	sdk := new(sdkmocks.SDK)
 
 	return bootstrap.New(auth, things, sdk, encKey), auth, sdk
 }

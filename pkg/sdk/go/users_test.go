@@ -24,7 +24,7 @@ import (
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/users"
 	"github.com/absmach/magistrala/users/api"
-	"github.com/absmach/magistrala/users/mocks"
+	umocks "github.com/absmach/magistrala/users/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -34,10 +34,11 @@ var (
 	id         = generateUUID(&testing.T{})
 	validToken = "token"
 	validID    = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	wrongID    = testsutil.GenerateUUID(&testing.T{})
 )
 
-func newClientServer() (*httptest.Server, *mocks.Repository, *gmocks.Repository, *authmocks.Service) {
-	crepo := new(mocks.Repository)
+func newClientServer() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *authmocks.Service) {
+	crepo := new(umocks.Repository)
 	gRepo := new(gmocks.Repository)
 
 	auth := new(authmocks.Service)
@@ -113,7 +114,7 @@ func TestCreateClient(t *testing.T) {
 			desc: "register user with invalid identity",
 			client: sdk.User{
 				Credentials: sdk.Credentials{
-					Identity: mocks.WrongID,
+					Identity: wrongID,
 					Secret:   "password",
 				},
 			},
@@ -428,14 +429,14 @@ func TestClient(t *testing.T) {
 			desc:     "view client with valid token and invalid client id",
 			response: sdk.User{},
 			token:    validToken,
-			clientID: mocks.WrongID,
+			clientID: wrongID,
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrNotFound, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "view client with an invalid token and invalid client id",
 			response: sdk.User{},
 			token:    invalidToken,
-			clientID: mocks.WrongID,
+			clientID: wrongID,
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 	}
@@ -830,7 +831,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			token:     "non-existent",
 			response:  sdk.User{},
 			repoErr:   errors.ErrAuthentication,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "update client secret with wrong old secret",
@@ -1008,7 +1009,7 @@ func TestEnableClient(t *testing.T) {
 		},
 		{
 			desc:     "enable non-existing client",
-			id:       mocks.WrongID,
+			id:       wrongID,
 			token:    validToken,
 			client:   sdk.User{},
 			response: sdk.User{},
@@ -1137,7 +1138,7 @@ func TestDisableClient(t *testing.T) {
 		},
 		{
 			desc:     "disable non-existing client",
-			id:       mocks.WrongID,
+			id:       wrongID,
 			client:   sdk.User{},
 			token:    validToken,
 			response: sdk.User{},

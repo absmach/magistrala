@@ -26,6 +26,9 @@ linters-settings:
         alias: svcerr
       - pkg: github.com/absmach/magistrala/pkg/errors/repository
         alias: repoerr
+      - pkg: github.com/absmach/magistrala/pkg/sdk/mocks
+        alias: sdkmocks
+
   gocritic:
     enabled-checks:
       - captLocal

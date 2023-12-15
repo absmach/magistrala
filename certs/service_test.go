@@ -17,6 +17,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -41,10 +42,10 @@ const (
 	instanceID        = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
-func newService(t *testing.T) (certs.Service, *authmocks.Service, *mgsdk.MockSDK) {
+func newService(t *testing.T) (certs.Service, *authmocks.Service, *sdkmocks.SDK) {
 	auth := new(authmocks.Service)
 
-	sdk := &mgsdk.MockSDK{}
+	sdk := new(sdkmocks.SDK)
 	repo := mocks.NewCertsRepository()
 
 	tlsCert, caCert, err := certs.LoadCertificates(caPath, caKeyPath)

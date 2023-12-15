@@ -339,7 +339,7 @@ func TestListThings(t *testing.T) {
 			token:    authmocks.InvalidValue,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -347,7 +347,7 @@ func TestListThings(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
 			response: nil,
 		},
 		{

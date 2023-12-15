@@ -28,6 +28,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -175,10 +176,10 @@ func dec(in []byte) ([]byte, error) {
 	return in, nil
 }
 
-func newService() (bootstrap.Service, *authmocks.Service, *mgsdk.MockSDK) {
+func newService() (bootstrap.Service, *authmocks.Service, *sdkmocks.SDK) {
 	things := mocks.NewConfigsRepository()
 	auth := new(authmocks.Service)
-	sdk := &mgsdk.MockSDK{}
+	sdk := new(sdkmocks.SDK)
 
 	return bootstrap.New(auth, things, sdk, encKey), auth, sdk
 }

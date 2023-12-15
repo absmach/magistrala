@@ -164,6 +164,7 @@ test_api_certs: TEST_API_URL := http://localhost:9019
 test_api_twins: TEST_API_URL := http://localhost:9018
 test_api_provision: TEST_API_URL := http://localhost:9016
 test_api_notifiers: TEST_API_URL := http://localhost:9014 # Either smtp (http://localhost:9015) or smpp (http://localhost:9014)
+test_api_readers: TEST_API_URL := http://localhost:9005 # Either influxdb (http://localhost:9005) or mongodb (http://localhost:9007) or cassandra (http://localhost:9003) or postgres (http://localhost:9009) or timescale (http://localhost:9011)
 
 $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))

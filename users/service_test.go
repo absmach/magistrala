@@ -1183,7 +1183,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret:        "weak",
 			token:            validToken,
 			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			err:              errors.ErrPasswordFormat,
+			err:              svcerr.ErrPasswordFormat,
 		},
 		{
 			desc:                 "update client secret with failed to retrieve client by ID",
@@ -2367,7 +2367,7 @@ func TestResetSecret(t *testing.T) {
 			newSecret:            "weak",
 			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
 			retrieveByIDResponse: client,
-			err:                  errors.ErrPasswordFormat,
+			err:                  svcerr.ErrPasswordFormat,
 		},
 		{
 			desc:                 "reset secret with failed to update secret",

@@ -7,7 +7,7 @@ import (
 	"context"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	repoerror "github.com/absmach/magistrala/pkg/errors/repository"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/stretchr/testify/mock"
 )
@@ -24,11 +24,11 @@ func (m *Repository) ChangeStatus(ctx context.Context, group mggroups.Group) (mg
 	ret := m.Called(ctx, group)
 
 	if group.ID == WrongID {
-		return mggroups.Group{}, repoerror.ErrNotFound
+		return mggroups.Group{}, repoerr.ErrNotFound
 	}
 
 	if group.Status != mgclients.EnabledStatus && group.Status != mgclients.DisabledStatus {
-		return mggroups.Group{}, repoerror.ErrMalformedEntity
+		return mggroups.Group{}, repoerr.ErrMalformedEntity
 	}
 
 	return ret.Get(0).(mggroups.Group), ret.Error(1)
@@ -56,7 +56,7 @@ func (m *Repository) RetrieveByID(ctx context.Context, id string) (mggroups.Grou
 	ret := m.Called(ctx, id)
 
 	if id == WrongID {
-		return mggroups.Group{}, repoerror.ErrNotFound
+		return mggroups.Group{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(mggroups.Group), ret.Error(1)
@@ -66,11 +66,11 @@ func (m *Repository) Save(ctx context.Context, g mggroups.Group) (mggroups.Group
 	ret := m.Called(ctx, g)
 
 	if g.Parent == WrongID {
-		return mggroups.Group{}, repoerror.ErrCreateEntity
+		return mggroups.Group{}, repoerr.ErrCreateEntity
 	}
 
 	if g.Owner == WrongID {
-		return mggroups.Group{}, repoerror.ErrCreateEntity
+		return mggroups.Group{}, repoerr.ErrCreateEntity
 	}
 
 	return g, ret.Error(1)
@@ -80,7 +80,7 @@ func (m *Repository) Update(ctx context.Context, g mggroups.Group) (mggroups.Gro
 	ret := m.Called(ctx, g)
 
 	if g.ID == WrongID {
-		return mggroups.Group{}, repoerror.ErrNotFound
+		return mggroups.Group{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(mggroups.Group), ret.Error(1)

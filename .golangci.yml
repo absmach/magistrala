@@ -22,6 +22,10 @@ linters-settings:
         alias: chclient
       - pkg: github.com/absmach/magistrala/logger
         alias: mglog
+      - pkg: github.com/absmach/magistrala/pkg/errors/service
+        alias: svcerr
+      - pkg: github.com/absmach/magistrala/pkg/errors/repository
+        alias: repoerr
   gocritic:
     enabled-checks:
       - captLocal

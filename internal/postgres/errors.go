@@ -5,7 +5,7 @@ package postgres
 
 import (
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerror "github.com/absmach/magistrala/pkg/errors/repository"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -23,11 +23,11 @@ func HandleError(wrapper, err error) error {
 	if ok {
 		switch pqErr.Code {
 		case errDuplicate:
-			return errors.Wrap(repoerror.ErrConflict, err)
+			return errors.Wrap(repoerr.ErrConflict, err)
 		case errInvalid, errTruncation:
-			return errors.Wrap(repoerror.ErrMalformedEntity, err)
+			return errors.Wrap(repoerr.ErrMalformedEntity, err)
 		case errFK:
-			return errors.Wrap(repoerror.ErrCreateEntity, err)
+			return errors.Wrap(repoerr.ErrCreateEntity, err)
 		}
 	}
 

@@ -12,7 +12,7 @@ import (
 
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerror "github.com/absmach/magistrala/pkg/errors/repository"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/twins"
 	"github.com/absmach/magistrala/twins/mocks"
@@ -76,7 +76,7 @@ func TestTwinsSave(t *testing.T) {
 				Owner: email,
 				Name:  invalidName,
 			},
-			err: repoerror.ErrMalformedEntity,
+			err: repoerr.ErrMalformedEntity,
 		},
 	}
 
@@ -124,7 +124,7 @@ func TestTwinsUpdate(t *testing.T) {
 			twin: twins.Twin{
 				ID: nonexistentTwinID,
 			},
-			err: repoerror.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc: "update twin with invalid name",
@@ -133,7 +133,7 @@ func TestTwinsUpdate(t *testing.T) {
 				Owner: email,
 				Name:  invalidName,
 			},
-			err: repoerror.ErrMalformedEntity,
+			err: repoerr.ErrMalformedEntity,
 		},
 	}
 
@@ -177,7 +177,7 @@ func TestTwinsRetrieveByID(t *testing.T) {
 		{
 			desc: "retrieve a non-existing twin",
 			id:   nonexistentTwinID,
-			err:  repoerror.ErrNotFound,
+			err:  repoerr.ErrNotFound,
 		},
 	}
 

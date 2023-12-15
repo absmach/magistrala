@@ -14,7 +14,7 @@ import (
 	"github.com/absmach/magistrala/internal/postgres"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerror "github.com/absmach/magistrala/pkg/errors/repository"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/jmoiron/sqlx"
 )
@@ -43,7 +43,7 @@ func (repo groupRepository) Save(ctx context.Context, g mggroups.Group) (mggroup
 	}
 	row, err := repo.db.NamedQueryContext(ctx, q, dbg)
 	if err != nil {
-		return mggroups.Group{}, postgres.HandleError(repoerror.ErrCreateEntity, err)
+		return mggroups.Group{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
 
 	defer row.Close()
@@ -78,21 +78,21 @@ func (repo groupRepository) Update(ctx context.Context, g mggroups.Group) (mggro
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
-		return mggroups.Group{}, errors.Wrap(repoerror.ErrUpdateEntity, err)
+		return mggroups.Group{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	row, err := repo.db.NamedQueryContext(ctx, q, dbu)
 	if err != nil {
-		return mggroups.Group{}, postgres.HandleError(repoerror.ErrUpdateEntity, err)
+		return mggroups.Group{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 
 	defer row.Close()
 	if ok := row.Next(); !ok {
-		return mggroups.Group{}, errors.Wrap(repoerror.ErrNotFound, row.Err())
+		return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
 	}
 	dbu = dbGroup{}
 	if err := row.StructScan(&dbu); err != nil {
-		return mggroups.Group{}, errors.Wrap(err, repoerror.ErrUpdateEntity)
+		return mggroups.Group{}, errors.Wrap(err, repoerr.ErrUpdateEntity)
 	}
 	return toGroup(dbu)
 }
@@ -103,20 +103,20 @@ func (repo groupRepository) ChangeStatus(ctx context.Context, group mggroups.Gro
 
 	dbg, err := toDBGroup(group)
 	if err != nil {
-		return mggroups.Group{}, errors.Wrap(repoerror.ErrUpdateEntity, err)
+		return mggroups.Group{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 	row, err := repo.db.NamedQueryContext(ctx, qc, dbg)
 	if err != nil {
-		return mggroups.Group{}, postgres.HandleError(repoerror.ErrUpdateEntity, err)
+		return mggroups.Group{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 
 	defer row.Close()
 	if ok := row.Next(); !ok {
-		return mggroups.Group{}, errors.Wrap(repoerror.ErrNotFound, row.Err())
+		return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
 	}
 	dbg = dbGroup{}
 	if err := row.StructScan(&dbg); err != nil {
-		return mggroups.Group{}, errors.Wrap(err, repoerror.ErrUpdateEntity)
+		return mggroups.Group{}, errors.Wrap(err, repoerr.ErrUpdateEntity)
 	}
 
 	return toGroup(dbg)
@@ -133,16 +133,16 @@ func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggrou
 	row, err := repo.db.NamedQueryContext(ctx, q, dbg)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return mggroups.Group{}, errors.Wrap(repoerror.ErrNotFound, err)
+			return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, err)
 		}
-		return mggroups.Group{}, errors.Wrap(repoerror.ErrViewEntity, err)
+		return mggroups.Group{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	defer row.Close()
 	row.Next()
 	dbg = dbGroup{}
 	if err := row.StructScan(&dbg); err != nil {
-		return mggroups.Group{}, errors.Wrap(repoerror.ErrNotFound, err)
+		return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 
 	return toGroup(dbg)
@@ -269,7 +269,7 @@ func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID
 
 	row, err := repo.db.QueryContext(ctx, query)
 	if err != nil {
-		return postgres.HandleError(repoerror.ErrUpdateEntity, err)
+		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 	defer row.Close()
 
@@ -296,7 +296,7 @@ func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroup
 
 	row, err := repo.db.QueryContext(ctx, query)
 	if err != nil {
-		return postgres.HandleError(repoerror.ErrUpdateEntity, err)
+		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 	defer row.Close()
 
@@ -405,7 +405,7 @@ func toGroup(g dbGroup) (mggroups.Group, error) {
 	var metadata mgclients.Metadata
 	if g.Metadata != nil {
 		if err := json.Unmarshal(g.Metadata, &metadata); err != nil {
-			return mggroups.Group{}, errors.Wrap(repoerror.ErrMalformedEntity, err)
+			return mggroups.Group{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
 		}
 	}
 	var parentID string

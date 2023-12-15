@@ -15,8 +15,8 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerror "github.com/absmach/magistrala/pkg/errors/repository"
-	svcerror "github.com/absmach/magistrala/pkg/errors/service"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
 	"github.com/absmach/magistrala/things/mocks"
@@ -73,7 +73,7 @@ func TestRegisterClient(t *testing.T) {
 			desc:   "register existing client",
 			client: client,
 			token:  validToken,
-			err:    svcerror.ErrConflict,
+			err:    svcerr.ErrConflict,
 		},
 		{
 			desc: "register a new enabled client with name",
@@ -199,7 +199,7 @@ func TestRegisterClient(t *testing.T) {
 					Secret: secret,
 				},
 			},
-			err:   repoerror.ErrMalformedEntity,
+			err:   repoerr.ErrMalformedEntity,
 			token: validToken,
 		},
 		{
@@ -211,7 +211,7 @@ func TestRegisterClient(t *testing.T) {
 					Secret:   secret,
 				},
 			},
-			err:   repoerror.ErrMalformedEntity,
+			err:   repoerr.ErrMalformedEntity,
 			token: validToken,
 		},
 		{
@@ -222,7 +222,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "newclientwithemptysecret@example.com",
 				},
 			},
-			err:   repoerror.ErrMissingSecret,
+			err:   repoerr.ErrMissingSecret,
 			token: validToken,
 		},
 		{
@@ -234,7 +234,7 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
-			err:   svcerror.ErrInvalidStatus,
+			err:   svcerr.ErrInvalidStatus,
 			token: validToken,
 		},
 	}
@@ -285,28 +285,28 @@ func TestViewClient(t *testing.T) {
 			response: mgclients.Client{},
 			token:    authmocks.InvalidValue,
 			clientID: "",
-			err:      svcerror.ErrAuthorization,
+			err:      svcerr.ErrAuthorization,
 		},
 		{
 			desc:     "view client with valid token and invalid client id",
 			response: mgclients.Client{},
 			token:    validToken,
 			clientID: mocks.WrongID,
-			err:      svcerror.ErrNotFound,
+			err:      svcerr.ErrNotFound,
 		},
 		{
 			desc:     "view client with an invalid token and invalid client id",
 			response: mgclients.Client{},
 			token:    authmocks.InvalidValue,
 			clientID: mocks.WrongID,
-			err:      svcerror.ErrAuthorization,
+			err:      svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, tc.err)
 		if tc.token == authmocks.InvalidValue {
-			repoCall = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerror.ErrAuthorization)
+			repoCall = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall1 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		rClient, err := svc.ViewClient(context.Background(), tc.token, tc.clientID)
@@ -381,7 +381,7 @@ func TestListClients(t *testing.T) {
 					Limit:  0,
 				},
 			},
-			err: svcerror.ErrAuthentication,
+			err: svcerr.ErrAuthentication,
 		},
 		{
 			desc:  "list clients that are shared with me",
@@ -578,9 +578,9 @@ func TestListClients(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		if tc.token == authmocks.InvalidValue {
-			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: authmocks.InvalidValue}).Return(&magistrala.IdentityRes{}, svcerror.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerror.ErrAuthorization)
-			repoCall2 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, svcerror.ErrAuthorization)
+			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: authmocks.InvalidValue}).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
+			repoCall2 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, svcerr.ErrAuthorization)
 		}
 		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		page, err := svc.ListClients(context.Background(), tc.token, "", tc.page)
@@ -620,7 +620,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client1,
 			response: mgclients.Client{},
 			token:    "non-existent",
-			err:      svcerror.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
 			desc: "update client name with invalid ID",
@@ -630,7 +630,7 @@ func TestUpdateClient(t *testing.T) {
 			},
 			response: mgclients.Client{},
 			token:    validToken,
-			err:      svcerror.ErrNotFound,
+			err:      svcerr.ErrNotFound,
 		},
 		{
 			desc:     "update client metadata with valid token",
@@ -644,7 +644,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client2,
 			response: mgclients.Client{},
 			token:    "non-existent",
-			err:      svcerror.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 	}
 
@@ -687,7 +687,7 @@ func TestUpdateClientTags(t *testing.T) {
 			client:   client,
 			token:    "non-existent",
 			response: mgclients.Client{},
-			err:      svcerror.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
 			desc: "update client name with invalid ID",
@@ -697,7 +697,7 @@ func TestUpdateClientTags(t *testing.T) {
 			},
 			response: mgclients.Client{},
 			token:    validToken,
-			err:      svcerror.ErrNotFound,
+			err:      svcerr.ErrNotFound,
 		},
 	}
 
@@ -741,7 +741,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newPassword",
 			token:     "non-existent",
 			response:  mgclients.Client{},
-			err:       svcerror.ErrAuthentication,
+			err:       svcerr.ErrAuthentication,
 		},
 	}
 
@@ -796,7 +796,7 @@ func TestEnableClient(t *testing.T) {
 			token:    validToken,
 			client:   mgclients.Client{},
 			response: mgclients.Client{},
-			err:      repoerror.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 	}
 
@@ -919,7 +919,7 @@ func TestDisableClient(t *testing.T) {
 			client:   mgclients.Client{},
 			token:    validToken,
 			response: mgclients.Client{},
-			err:      repoerror.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 	}
 
@@ -1084,7 +1084,7 @@ func TestListMembers(t *testing.T) {
 					Limit:  0,
 				},
 			},
-			err: svcerror.ErrAuthentication,
+			err: svcerr.ErrAuthentication,
 		},
 		{
 			desc:    "list clients with an invalid id",
@@ -1100,7 +1100,7 @@ func TestListMembers(t *testing.T) {
 					Limit:  0,
 				},
 			},
-			err: svcerror.ErrNotFound,
+			err: svcerr.ErrNotFound,
 		},
 		{
 			desc:    "list clients for an owner",

@@ -47,6 +47,10 @@ func (ce *sdkError) StatusCode() int {
 
 // NewSDKError returns an SDK Error that formats as the given text.
 func NewSDKError(err error) SDKError {
+	if err == nil {
+		return nil
+	}
+
 	if e, ok := err.(Error); ok {
 		return &sdkError{
 			statusCode: 0,

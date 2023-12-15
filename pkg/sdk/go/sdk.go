@@ -109,6 +109,8 @@ type Credentials struct {
 }
 
 // SDK contains Magistrala API.
+//
+//go:generate mockery --name SDK --inpackage --filename mocks.go --quiet --note "Copyright (c) Abstract Machines"
 type SDK interface {
 	// CreateUser registers magistrala user.
 	//

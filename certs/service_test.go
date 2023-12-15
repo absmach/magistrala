@@ -6,7 +6,6 @@ package certs_test
 import (
 	"context"
 	"fmt"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -15,17 +14,9 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/certs/mocks"
-	chmocks "github.com/absmach/magistrala/internal/groups/mocks"
-	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
-	"github.com/absmach/magistrala/pkg/uuid"
-	"github.com/absmach/magistrala/things"
-	httpapi "github.com/absmach/magistrala/things/api/http"
-	thmocks "github.com/absmach/magistrala/things/mocks"
-	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -50,23 +41,10 @@ const (
 	instanceID        = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
-func newThingsServer(svc things.Service) *httptest.Server {
-	logger := mglog.NewMock()
-	mux := chi.NewMux()
-	httpapi.MakeHandler(svc, nil, mux, logger, instanceID)
-	return httptest.NewServer(mux)
-}
-
-func newService(t *testing.T) (certs.Service, *authmocks.Service, *thmocks.Repository) {
+func newService(t *testing.T) (certs.Service, *authmocks.Service, *mgsdk.MockSDK) {
 	auth := new(authmocks.Service)
-	tsvc, trepo := newThingsService(auth)
-	server := newThingsServer(tsvc)
 
-	config := mgsdk.Config{
-		ThingsURL: server.URL,
-	}
-
-	sdk := mgsdk.NewSDK(config)
+	sdk := &mgsdk.MockSDK{}
 	repo := mocks.NewCertsRepository()
 
 	tlsCert, caCert, err := certs.LoadCertificates(caPath, caKeyPath)
@@ -77,20 +55,11 @@ func newService(t *testing.T) (certs.Service, *authmocks.Service, *thmocks.Repos
 
 	pki := mocks.NewPkiAgent(tlsCert, caCert, cfgSignHoursValid, authTimeout)
 
-	return certs.New(auth, repo, sdk, pki), auth, trepo
-}
-
-func newThingsService(auth *authmocks.Service) (things.Service, *thmocks.Repository) {
-	thingCache := thmocks.NewCache()
-	idProvider := uuid.NewMock()
-	cRepo := new(thmocks.Repository)
-	gRepo := new(chmocks.Repository)
-
-	return things.NewService(auth, cRepo, gRepo, thingCache, idProvider), cRepo
+	return certs.New(auth, repo, sdk, pki), auth, sdk
 }
 
 func TestIssueCert(t *testing.T) {
-	svc, auth, trepo := newService(t)
+	svc, auth, sdk := newService(t)
 
 	cases := []struct {
 		token   string
@@ -126,7 +95,7 @@ func TestIssueCert(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, tc.err)
-		repoCall2 := trepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(clients.Client{ID: tc.thingID, Credentials: clients.Credentials{Secret: thingKey}}, tc.err)
+		repoCall2 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: tc.thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, errors.NewSDKError(tc.err))
 		c, err := svc.IssueCert(context.Background(), tc.token, tc.thingID, tc.ttl)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		cert, _ := certs.ReadCert([]byte(c.ClientCert))
@@ -140,11 +109,11 @@ func TestIssueCert(t *testing.T) {
 }
 
 func TestRevokeCert(t *testing.T) {
-	svc, auth, trepo := newService(t)
+	svc, auth, sdk := newService(t)
 
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-	repoCall2 := trepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(clients.Client{ID: thingID, Credentials: clients.Credentials{Secret: thingKey}}, nil)
+	repoCall2 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, nil)
 	_, err := svc.IssueCert(context.Background(), token, thingID, ttl)
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 	repoCall.Unset()
@@ -180,7 +149,7 @@ func TestRevokeCert(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, tc.err)
-		repoCall2 := trepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(clients.Client{ID: tc.thingID, Credentials: clients.Credentials{Secret: thingKey}}, tc.err)
+		repoCall2 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: tc.thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, errors.NewSDKError(tc.err))
 		_, err := svc.RevokeCert(context.Background(), tc.token, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -190,12 +159,12 @@ func TestRevokeCert(t *testing.T) {
 }
 
 func TestListCerts(t *testing.T) {
-	svc, auth, trepo := newService(t)
+	svc, auth, sdk := newService(t)
 
 	for i := 0; i < certNum; i++ {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := trepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(clients.Client{ID: thingID, Credentials: clients.Credentials{Secret: thingKey}}, nil)
+		repoCall2 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, nil)
 		_, err := svc.IssueCert(context.Background(), token, thingID, ttl)
 		require.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 		repoCall.Unset()
@@ -261,13 +230,13 @@ func TestListCerts(t *testing.T) {
 }
 
 func TestListSerials(t *testing.T) {
-	svc, auth, trepo := newService(t)
+	svc, auth, sdk := newService(t)
 
 	var issuedCerts []certs.Cert
 	for i := 0; i < certNum; i++ {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := trepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(clients.Client{ID: thingID, Credentials: clients.Credentials{Secret: thingKey}}, nil)
+		repoCall2 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, nil)
 		cert, err := svc.IssueCert(context.Background(), token, thingID, ttl)
 		assert.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 		repoCall.Unset()
@@ -340,11 +309,11 @@ func TestListSerials(t *testing.T) {
 }
 
 func TestViewCert(t *testing.T) {
-	svc, auth, trepo := newService(t)
+	svc, auth, sdk := newService(t)
 
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-	repoCall2 := trepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(clients.Client{ID: thingID, Credentials: clients.Credentials{Secret: thingKey}}, nil)
+	repoCall2 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, nil)
 	ic, err := svc.IssueCert(context.Background(), token, thingID, ttl)
 	require.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 	repoCall.Unset()

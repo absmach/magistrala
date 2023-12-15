@@ -122,8 +122,12 @@ install:
 		cp $$file $(GOBIN)/magistrala-`basename $$file`; \
 	done
 
+mocks:
+	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@latest
+	go generate ./...
+
 DIRS = consumers readers postgres internal opcua
-test:
+test: mocks
 	mkdir -p coverage
 	@for dir in $(DIRS); do \
         go test -v --race -count 1 -tags test -coverprofile=coverage/$$dir.out $$(go list ./... | grep $$dir | grep -v 'cmd'); \

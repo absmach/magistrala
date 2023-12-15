@@ -115,7 +115,6 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingMemberType),
 		errors.Contains(err, apiutil.ErrMissingMemberKind),
 		errors.Contains(err, apiutil.ErrLimitSize),
-		errors.Contains(err, apiutil.ErrBearerKey),
 		errors.Contains(err, apiutil.ErrNameSize),
 		errors.Contains(err, apiutil.ErrInvalidIDFormat),
 		errors.Contains(err, svcerr.ErrInvalidStatus),
@@ -143,6 +142,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, svcerr.ErrLogin),
+		errors.Contains(err, apiutil.ErrBearerKey),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, svcerr.ErrNotFound):
@@ -151,9 +151,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, errors.ErrStatusAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, svcerr.ErrAuthorization),
-		errors.Contains(err, svcerr.ErrDomainAuthorization),
 		errors.Contains(err, bootstrap.ErrExternalKey),
-		errors.Contains(err, bootstrap.ErrExternalKeySecure):
+		errors.Contains(err, bootstrap.ErrExternalKeySecure),
+		errors.Contains(err, svcerr.ErrDomainAuthorization):
 		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)

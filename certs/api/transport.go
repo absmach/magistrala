@@ -11,9 +11,9 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -31,7 +31,7 @@ const (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc certs.Service, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	r := chi.NewRouter()
@@ -40,26 +40,26 @@ func MakeHandler(svc certs.Service, logger *slog.Logger, instanceID string) http
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 			issueCert(svc),
 			decodeCerts,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "issue").ServeHTTP)
 		r.Get("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
 			viewCert(svc),
 			decodeViewCert,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "view").ServeHTTP)
 		r.Delete("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
 			revokeCert(svc),
 			decodeRevokeCerts,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "revoke").ServeHTTP)
 	})
 	r.Get("/serials/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 		listSerials(svc),
 		decodeListCerts,
-		encodeResponse,
+		api.EncodeResponse,
 		opts...,
 	), "list_serials").ServeHTTP)
 
@@ -67,24 +67,6 @@ func MakeHandler(svc certs.Service, logger *slog.Logger, instanceID string) http
 	r.Get("/health", magistrala.Health("certs", instanceID))
 
 	return r
-}
-
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", contentType)
-
-	if ar, ok := response.(magistrala.Response); ok {
-		for k, v := range ar.Headers() {
-			w.Header().Set(k, v)
-		}
-
-		w.WriteHeader(ar.Code())
-
-		if ar.Empty() {
-			return nil
-		}
-	}
-
-	return json.NewEncoder(w).Encode(response)
 }
 
 func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
@@ -135,45 +117,4 @@ func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 
 	return req, nil
-}
-
-func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	var wrapper error
-	if errors.Contains(err, apiutil.ErrValidation) {
-		wrapper, err = errors.Unwrap(err)
-	}
-
-	switch {
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, apiutil.ErrBearerToken):
-		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, svcerr.ErrMalformedEntity),
-		errors.Contains(err, apiutil.ErrMissingID),
-		errors.Contains(err, apiutil.ErrMissingCertData),
-		errors.Contains(err, apiutil.ErrInvalidCertData),
-		errors.Contains(err, apiutil.ErrLimitSize):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, svcerr.ErrConflict):
-		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, svcerr.ErrCreateEntity),
-		errors.Contains(err, svcerr.ErrViewEntity),
-		errors.Contains(err, svcerr.ErrRemoveEntity):
-		w.WriteHeader(http.StatusInternalServerError)
-
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	if wrapper != nil {
-		err = errors.Wrap(wrapper, err)
-	}
-
-	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
 }

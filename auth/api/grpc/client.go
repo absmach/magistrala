@@ -217,7 +217,6 @@ func (client grpcClient) Identify(ctx context.Context, token *magistrala.Identit
 	if err != nil {
 		return nil, err
 	}
-
 	ir := res.(identityRes)
 	return &magistrala.IdentityRes{Id: ir.id, UserId: ir.userID, DomainId: ir.domainID}, nil
 }

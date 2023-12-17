@@ -79,7 +79,6 @@ func authorizeEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return authorizeRes{}, err
 		}
-
 		err := svc.Authorize(ctx, auth.PolicyReq{
 			Domain:      req.Domain,
 			SubjectType: req.SubjectType,

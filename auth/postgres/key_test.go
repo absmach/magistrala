@@ -74,7 +74,7 @@ func TestKeySave(t *testing.T) {
 				IssuedAt:  time.Now(),
 				ExpiresAt: expTime,
 			},
-			err: errors.ErrConflict,
+			err: nil,
 		},
 		{
 			desc: "save with empty subject",

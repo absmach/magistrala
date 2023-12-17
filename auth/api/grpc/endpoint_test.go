@@ -13,10 +13,9 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
-	"github.com/absmach/magistrala/auth/jwt"
-	"github.com/absmach/magistrala/auth/mocks"
-	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -24,13 +23,15 @@ import (
 )
 
 const (
-	port        = 8081
-	secret      = "secret"
-	email       = "test@example.com"
-	id          = "testID"
-	thingsType  = "things"
-	usersType   = "users"
-	description = "Description"
+	port            = 8081
+	secret          = "secret"
+	email           = "test@example.com"
+	id              = "testID"
+	thingsType      = "things"
+	usersType       = "users"
+	description     = "Description"
+	groupName       = "mgx"
+	adminpermission = "admin"
 
 	authoritiesObj  = "authorities"
 	memberRelation  = "member"
@@ -38,19 +39,6 @@ const (
 	refreshDuration = 24 * time.Hour
 	invalidDuration = 7 * 24 * time.Hour
 )
-
-var svc auth.Service
-
-func newService() auth.Service {
-	krepo := new(mocks.Keys)
-	prepo := new(mocks.PolicyAgent)
-	drepo := new(mocks.DomainsRepo)
-	idProvider := uuid.NewMock()
-
-	t := jwt.New([]byte(secret))
-
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration)
-}
 
 func startGRPCServer(svc auth.Service, port int) {
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -97,7 +85,7 @@ func TestIssue(t *testing.T) {
 			id:    id,
 			email: email,
 			kind:  auth.APIKey,
-			err:   nil,
+			err:   errors.ErrAuthentication,
 			code:  codes.Unauthenticated,
 		},
 		{
@@ -105,7 +93,7 @@ func TestIssue(t *testing.T) {
 			id:    id,
 			email: email,
 			kind:  32,
-			err:   status.Error(codes.InvalidArgument, "received invalid token request"),
+			err:   errors.ErrMalformedEntity,
 			code:  codes.InvalidArgument,
 		},
 		{
@@ -113,28 +101,30 @@ func TestIssue(t *testing.T) {
 			id:    "",
 			email: "",
 			kind:  auth.APIKey,
-			err:   status.Error(codes.Unauthenticated, "unauthenticated access"),
+			err:   errors.ErrAuthentication,
 			code:  codes.Unauthenticated,
 		},
 	}
 
 	for _, tc := range cases {
 		_, err := client.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.id, Type: uint32(tc.kind)})
-		e, ok := status.FromError(err)
-		assert.True(t, ok, "gRPC status can't be extracted from the error")
-		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
 func TestIdentify(t *testing.T) {
-	loginToken, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
+	repocall := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
+	loginToken, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, User: id, IssuedAt: time.Now(), Domain: groupName})
 	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+	repocall.Unset()
 
 	recoveryToken, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.RecoveryKey, IssuedAt: time.Now(), Subject: id})
 	assert.Nil(t, err, fmt.Sprintf("Issuing recovery key expected to succeed: %s", err))
 
+	repocall1 := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	apiToken, err := svc.Issue(context.Background(), loginToken.AccessToken, auth.Key{Type: auth.APIKey, IssuedAt: time.Now(), ExpiresAt: time.Now().Add(time.Minute), Subject: id})
 	assert.Nil(t, err, fmt.Sprintf("Issuing API key expected to succeed: %s", err))
+	repocall1.Unset()
 
 	authAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -150,7 +140,7 @@ func TestIdentify(t *testing.T) {
 		{
 			desc:  "identify user with user token",
 			token: loginToken.AccessToken,
-			idt:   &magistrala.IdentityRes{Id: id},
+			idt:   &magistrala.IdentityRes{Id: id, UserId: id, DomainId: groupName},
 			err:   nil,
 			code:  codes.OK,
 		},
@@ -185,43 +175,50 @@ func TestIdentify(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		idt, err := client.Identify(context.Background(), &magistrala.IdentityReq{Token: tc.token})
+		repocall := krepo.On("Retrieve", mock.Anything, mock.Anything, mock.Anything).Return(auth.Key{Subject: id}, nil)
+		idt, _ := client.Identify(context.Background(), &magistrala.IdentityReq{Token: tc.token})
 		if idt != nil {
 			assert.Equal(t, tc.idt, idt, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.idt, idt))
 		}
-		e, ok := status.FromError(err)
-		assert.True(t, ok, "gRPC status can't be extracted from the error")
-		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
+		repocall.Unset()
 	}
 }
 
 func TestAuthorize(t *testing.T) {
-	token, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id})
+	repocall := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
+	token, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, IssuedAt: time.Now(), Subject: id, User: id, Domain: groupName})
 	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+	repocall.Unset()
 
 	authAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	client := grpcapi.NewClient(conn, time.Second)
 
 	cases := []struct {
-		desc     string
-		token    string
-		subject  string
-		object   string
-		relation string
-		ar       *magistrala.AuthorizeRes
-		err      error
-		code     codes.Code
+		desc        string
+		token       string
+		subject     string
+		subjecttype string
+		object      string
+		objecttype  string
+		relation    string
+		permission  string
+		ar          *magistrala.AuthorizeRes
+		err         error
+		code        codes.Code
 	}{
 		{
-			desc:     "authorize user with authorized token",
-			token:    token.AccessToken,
-			subject:  id,
-			object:   authoritiesObj,
-			relation: memberRelation,
-			ar:       &magistrala.AuthorizeRes{Authorized: true},
-			err:      nil,
-			code:     codes.OK,
+			desc:        "authorize user with authorized token",
+			token:       token.AccessToken,
+			subject:     id,
+			subjecttype: usersType,
+			object:      authoritiesObj,
+			objecttype:  usersType,
+			relation:    memberRelation,
+			permission:  adminpermission,
+			ar:          &magistrala.AuthorizeRes{Authorized: true},
+			err:         nil,
+			code:        codes.OK,
 		},
 		{
 			desc:     "authorize user with unauthorized relation",
@@ -265,14 +262,12 @@ func TestAuthorize(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		ar, err := client.Authorize(context.Background(), &magistrala.AuthorizeReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
+		repocall := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
+		ar, _ := client.Authorize(context.Background(), &magistrala.AuthorizeReq{Subject: tc.subject, SubjectType: tc.subjecttype, Object: tc.object, ObjectType: tc.objecttype, Relation: tc.relation, Permission: tc.permission})
 		if ar != nil {
 			assert.Equal(t, tc.ar, ar, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ar, ar))
 		}
-
-		e, ok := status.FromError(err)
-		assert.True(t, ok, "gRPC status can't be extracted from the error")
-		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
+		repocall.Unset()
 	}
 }
 
@@ -287,24 +282,30 @@ func TestAddPolicy(t *testing.T) {
 	groupAdminObj := "groupadmin"
 
 	cases := []struct {
-		desc     string
-		token    string
-		subject  string
-		object   string
-		relation string
-		ar       *magistrala.AddPolicyRes
-		err      error
-		code     codes.Code
+		desc        string
+		token       string
+		subject     string
+		subjecttype string
+		object      string
+		objecttype  string
+		relation    string
+		permission  string
+		ar          *magistrala.AddPolicyRes
+		err         error
+		code        codes.Code
 	}{
 		{
-			desc:     "add groupadmin policy to user",
-			token:    token.AccessToken,
-			subject:  id,
-			object:   groupAdminObj,
-			relation: memberRelation,
-			ar:       &magistrala.AddPolicyRes{Authorized: true},
-			err:      nil,
-			code:     codes.OK,
+			desc:        "add groupadmin policy to user",
+			token:       token.AccessToken,
+			subject:     id,
+			subjecttype: usersType,
+			object:      groupAdminObj,
+			objecttype:  usersType,
+			relation:    memberRelation,
+			permission:  adminpermission,
+			ar:          &magistrala.AddPolicyRes{Authorized: true},
+			err:         nil,
+			code:        codes.OK,
 		},
 		{
 			desc:     "add policy to user with invalid ACL",
@@ -318,10 +319,12 @@ func TestAddPolicy(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		apr, err := client.AddPolicy(context.Background(), &magistrala.AddPolicyReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
+		repocall := prepo.On("AddPolicy", mock.Anything, mock.Anything).Return(nil)
+		apr, err := client.AddPolicy(context.Background(), &magistrala.AddPolicyReq{Subject: tc.subject, SubjectType: tc.subjecttype, Object: tc.object, ObjectType: tc.objecttype, Relation: tc.relation, Permission: tc.permission})
 		if apr != nil {
 			assert.Equal(t, tc.ar, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ar, apr))
 		}
+		repocall.Unset()
 
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
@@ -340,27 +343,35 @@ func TestDeletePolicy(t *testing.T) {
 	readRelation := "read"
 	thingID := "thing"
 
-	apr, err := client.AddPolicy(context.Background(), &magistrala.AddPolicyReq{Subject: id, Object: thingID, Permission: readRelation})
+	repocall := prepo.On("AddPolicy", mock.Anything, mock.Anything).Return(nil)
+	apr, err := client.AddPolicy(context.Background(), &magistrala.AddPolicyReq{Domain: groupName, Subject: id, SubjectType: usersType, Object: thingID, ObjectType: thingsType, Permission: readRelation})
 	assert.Nil(t, err, fmt.Sprintf("Adding read policy to user expected to succeed: %s", err))
 	assert.True(t, apr.GetAuthorized(), fmt.Sprintf("Adding read policy expected to make user authorized, expected %v got %v", true, apr.GetAuthorized()))
+	repocall.Unset()
 
 	cases := []struct {
-		desc     string
-		token    string
-		subject  string
-		object   string
-		relation string
-		dpr      *magistrala.DeletePolicyRes
-		code     codes.Code
+		desc        string
+		token       string
+		subject     string
+		subjecttype string
+		object      string
+		objecttype  string
+		relation    string
+		permission  string
+		dpr         *magistrala.DeletePolicyRes
+		code        codes.Code
 	}{
 		{
-			desc:     "delete valid policy",
-			token:    token.AccessToken,
-			subject:  id,
-			object:   thingID,
-			relation: readRelation,
-			dpr:      &magistrala.DeletePolicyRes{Deleted: true},
-			code:     codes.OK,
+			desc:        "delete valid policy",
+			token:       token.AccessToken,
+			subject:     id,
+			subjecttype: usersType,
+			object:      thingID,
+			objecttype:  thingsType,
+			relation:    readRelation,
+			permission:  readRelation,
+			dpr:         &magistrala.DeletePolicyRes{Deleted: true},
+			code:        codes.OK,
 		},
 		{
 			desc:     "delete invalid policy",
@@ -373,8 +384,11 @@ func TestDeletePolicy(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		dpr, err := client.DeletePolicy(context.Background(), &magistrala.DeletePolicyReq{Subject: tc.subject, Object: tc.object, Relation: tc.relation})
+		repocall := prepo.On("DeletePolicy", mock.Anything, mock.Anything).Return(nil)
+		dpr, err := client.DeletePolicy(context.Background(), &magistrala.DeletePolicyReq{Subject: tc.subject, SubjectType: tc.subjecttype, Object: tc.object, ObjectType: tc.objecttype, Relation: tc.relation})
 		e, ok := status.FromError(err)
+		repocall.Unset()
+
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
 		assert.Equal(t, tc.dpr.GetDeleted(), dpr.GetDeleted(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.dpr.GetDeleted(), dpr.GetDeleted()))

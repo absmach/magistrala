@@ -989,7 +989,7 @@ func TestEnableClient(t *testing.T) {
 			token:    validToken,
 			client:   enabledClient1,
 			response: enabledClient1,
-			err:      mgclients.ErrStatusAlreadyAssigned,
+			err:      errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:     "enable non-existing client",
@@ -1119,7 +1119,7 @@ func TestDisableClient(t *testing.T) {
 			token:    validToken,
 			client:   disabledClient1,
 			response: mgclients.Client{},
-			err:      mgclients.ErrStatusAlreadyAssigned,
+			err:      errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:     "disable non-existing client",

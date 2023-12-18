@@ -31,15 +31,6 @@ var (
 
 	// ErrFailedToRetrieveMembership failed to retrieve memberships.
 	ErrFailedToRetrieveMembership = errors.New("failed to retrieve memberships")
-
-	// ErrFailedToRetrieveAll failed to retrieve groups.
-	ErrFailedToRetrieveAll = errors.New("failed to retrieve all groups")
-
-	// ErrFailedToRetrieveParents failed to retrieve groups.
-	ErrFailedToRetrieveParents = errors.New("failed to retrieve all groups")
-
-	// ErrFailedToRetrieveChildren failed to retrieve groups.
-	ErrFailedToRetrieveChildren = errors.New("failed to retrieve all groups")
 )
 
 func CreateMetadataQuery(entity string, um map[string]interface{}) (string, []byte, error) {

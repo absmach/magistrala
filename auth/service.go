@@ -31,15 +31,6 @@ var (
 	// ErrFailedToRetrieveMembership failed to retrieve memberships.
 	ErrFailedToRetrieveMembership = errors.New("failed to retrieve memberships")
 
-	// ErrFailedToRetrieveAll failed to retrieve groups.
-	ErrFailedToRetrieveAll = errors.New("failed to retrieve all groups")
-
-	// ErrFailedToRetrieveParents failed to retrieve groups.
-	ErrFailedToRetrieveParents = errors.New("failed to retrieve all groups")
-
-	// ErrFailedToRetrieveChildren failed to retrieve groups.
-	ErrFailedToRetrieveChildren = errors.New("failed to retrieve all groups")
-
 	errIssueUser          = errors.New("failed to issue new login key")
 	errIssueTmp           = errors.New("failed to issue new temporary key")
 	errRevoke             = errors.New("failed to remove key")

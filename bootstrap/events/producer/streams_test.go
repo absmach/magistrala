@@ -48,7 +48,7 @@ const (
 	thingUpdateConnections = thingPrefix + "update_connections"
 	thingDisconnect        = thingPrefix + "disconnect"
 
-	channelPrefix        = "channel."
+	channelPrefix        = "group."
 	channelHandlerRemove = channelPrefix + "remove_handler"
 	channelUpdateHandler = channelPrefix + "update_handler"
 

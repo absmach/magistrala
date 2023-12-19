@@ -153,7 +153,7 @@ func (svc service) Identify(ctx context.Context, token string) (Key, error) {
 		return Key{}, errors.Wrap(ErrAPIKeyExpired, err)
 	}
 	if err != nil {
-		return Key{}, errors.Wrap(errIdentify, err)
+		return Key{}, errors.Wrap(svcerr.ErrAuthentication, errors.Wrap(errIdentify, err))
 	}
 
 	switch key.Type {

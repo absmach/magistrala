@@ -215,3 +215,17 @@ func (res listMembersRes) Headers() map[string]string {
 func (res listMembersRes) Empty() bool {
 	return false
 }
+
+type deleteGroupRes struct{}
+
+func (res deleteGroupRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res deleteGroupRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res deleteGroupRes) Empty() bool {
+	return true
+}

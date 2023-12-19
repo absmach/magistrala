@@ -466,6 +466,26 @@ paths:
           description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete channel for given channel id.
+      description: |
+        Delete channel remove given channel id from repo
+        and removes all the policies related to channel.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          $ref: "#/components/responses/ChannelDeleteRes"
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to thing id.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
   /channels/{chanID}/enable:
     post:
@@ -1750,6 +1770,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Channel"
+
+    ChannelDeleteRes:
+      description: Channel Deleted.
 
     ChannelPageRes:
       description: Data retrieved.

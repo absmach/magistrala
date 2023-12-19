@@ -82,6 +82,24 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
+		Use:   "delete <channel_id> <user_auth_token>",
+		Short: "Delete channel",
+		Long: "Delete channel by id.\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli channels delete <channel_id> $USERTOKEN - delete the given channel ID\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+			if err := sdk.DeleteChannel(args[0], args[1]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+	{
 		Use:   "update <channel_id> <JSON_string> <user_auth_token>",
 		Short: "Update channel",
 		Long:  `Updates channel record`,

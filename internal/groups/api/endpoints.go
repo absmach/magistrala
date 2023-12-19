@@ -198,6 +198,19 @@ func UnassignMembersEndpoint(svc groups.Service, relation, memberKind string) en
 	}
 }
 
+func DeleteGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		if err := svc.DeleteGroup(ctx, req.token, req.id); err != nil {
+			return nil, err
+		}
+		return deleteGroupRes{}, nil
+	}
+}
+
 func buildGroupsResponseTree(page groups.Page) groupPageRes {
 	groupsMap := map[string]*groups.Group{}
 	// Parents' map keeps its array of children.

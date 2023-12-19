@@ -17,7 +17,7 @@ const (
 	thingRemove     = "thing.remove"
 	thingDisconnect = "policy.delete"
 
-	channelPrefix = "channel."
+	channelPrefix = "group."
 	channelUpdate = channelPrefix + "update"
 	channelRemove = channelPrefix + "remove"
 )
@@ -95,20 +95,8 @@ func decodeUpdateChannel(event map[string]interface{}) updateChannelEvent {
 }
 
 func decodeRemoveChannel(event map[string]interface{}) removeEvent {
-	status := read(event, "status", "")
-	st, err := clients.ToStatus(status)
-	if err != nil {
-		return removeEvent{}
-	}
-	switch st {
-	case clients.EnabledStatus:
-		return removeEvent{}
-	case clients.DisabledStatus:
-		return removeEvent{
-			id: read(event, "id", ""),
-		}
-	default:
-		return removeEvent{}
+	return removeEvent{
+		id: read(event, "id", ""),
 	}
 }
 

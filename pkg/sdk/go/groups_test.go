@@ -889,3 +889,45 @@ func TestDisableGroup(t *testing.T) {
 	repoCall1.Unset()
 	repoCall2.Unset()
 }
+
+func TestDeleteGroup(t *testing.T) {
+	ts, grepo, auth := newGroupsServer()
+	defer ts.Close()
+
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	creationTime := time.Now().UTC()
+	group := sdk.Group{
+		ID:        generateUUID(t),
+		Name:      gName,
+		OwnerID:   generateUUID(t),
+		CreatedAt: creationTime,
+		UpdatedAt: creationTime,
+		Status:    clients.Enabled,
+	}
+
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, nil)
+	repoCall2 := grepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	err := mgsdk.DeleteGroup("wrongID", validToken)
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden), fmt.Sprintf("Delete group with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+
+	repoCall = auth.On("DeletePolicy", mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
+	repoCall1 = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall2 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+	repoCall3 := grepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	err = mgsdk.DeleteGroup(group.ID, validToken)
+	assert.Nil(t, err, fmt.Sprintf("Delete group with correct id: expected %v got %v", nil, err))
+	ok := repoCall3.Parent.AssertCalled(t, "Delete", mock.Anything, group.ID)
+	assert.True(t, ok, "Delete was not called on deleting group with correct id")
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+	repoCall3.Unset()
+}

@@ -463,7 +463,7 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 	var deletePolicies magistrala.DeletePoliciesReq
 	for _, group := range groupsPage.Groups {
 		if group.Parent != "" {
-			return fmt.Errorf("%s group already have parent", group.ID)
+			return errors.Wrap(errors.ErrConflict, fmt.Errorf("%s group already have parent", group.ID))
 		}
 		addPolicies.AddPoliciesReq = append(addPolicies.AddPoliciesReq, &magistrala.AddPolicyReq{
 			Domain:      domain,
@@ -598,6 +598,59 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 	if _, err := svc.auth.DeletePolicies(ctx, &policies); err != nil {
 		return errors.Wrap(errDeletePolicies, err)
 	}
+	return nil
+}
+
+func (svc service) DeleteGroup(ctx context.Context, token, groupID string) error {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return err
+	}
+	if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.GroupType, groupID); err != nil {
+		return err
+	}
+
+	// Remove policy of child groups
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.GroupType,
+		Subject:     groupID,
+		ObjectType:  auth.GroupType,
+	}); err != nil {
+		return err
+	}
+
+	// Remove policy of things
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.GroupType,
+		Subject:     groupID,
+		ObjectType:  auth.ThingType,
+	}); err != nil {
+		return err
+	}
+
+	// Remove policy from domain
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.DomainType,
+		Object:      groupID,
+		ObjectType:  auth.GroupType,
+	}); err != nil {
+		return err
+	}
+
+	// Remove group from database
+	if err := svc.groups.Delete(ctx, groupID); err != nil {
+		return err
+	}
+
+	// Remove policy of users
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.UserType,
+		Object:      groupID,
+		ObjectType:  auth.GroupType,
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

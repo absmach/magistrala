@@ -85,9 +85,14 @@ type Repository interface {
 	// ChangeStatus changes groups status to active or inactive
 	ChangeStatus(ctx context.Context, group Group) (Group, error)
 
+	// AssignParentGroup assigns parent group id to a given group id
 	AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error
 
+	// UnassignParentGroup unassign parent group id fr given group id
 	UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error
+
+	// Delete a group
+	Delete(ctx context.Context, groupID string) error
 }
 
 type Service interface {
@@ -114,6 +119,9 @@ type Service interface {
 
 	// DisableGroup logically disables the group identified with the provided ID.
 	DisableGroup(ctx context.Context, token, id string) (Group, error)
+
+	// DeleteGroup delete the given group id
+	DeleteGroup(ctx context.Context, token, id string) error
 
 	// Assign member to group
 	Assign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) (err error)

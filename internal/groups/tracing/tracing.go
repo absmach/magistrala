@@ -102,3 +102,11 @@ func (tm *tracingMiddleware) Unassign(ctx context.Context, token, groupID, relat
 
 	return tm.gsvc.Unassign(ctx, token, groupID, relation, memberKind, memberIDs...)
 }
+
+// DeleteGroup traces the "DeleteGroup" operation of the wrapped groups.Service.
+func (tm *tracingMiddleware) DeleteGroup(ctx context.Context, token, id string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_delete_group", trace.WithAttributes(attribute.String("id", id)))
+	defer span.End()
+
+	return tm.gsvc.DeleteGroup(ctx, token, id)
+}

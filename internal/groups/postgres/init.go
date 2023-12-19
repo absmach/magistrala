@@ -26,7 +26,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						updated_by  VARCHAR(254),
 						status		SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						UNIQUE		(owner_id, name),
-						FOREIGN KEY	(parent_id) REFERENCES groups (id) ON DELETE CASCADE
+						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE SET NULL
 					)`,
 				},
 				Down: []string{

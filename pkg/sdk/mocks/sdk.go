@@ -700,6 +700,46 @@ func (_m *SDK) CreateUser(user sdk.User, token string) (sdk.User, errors.SDKErro
 	return r0, r1
 }
 
+// DeleteChannel provides a mock function with given fields: id, token
+func (_m *SDK) DeleteChannel(id string, token string) errors.SDKError {
+	ret := _m.Called(id, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteChannel")
+	}
+
+	var r0 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string) errors.SDKError); ok {
+		r0 = rf(id, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+
+	return r0
+}
+
+// DeleteGroup provides a mock function with given fields: id, token
+func (_m *SDK) DeleteGroup(id string, token string) errors.SDKError {
+	ret := _m.Called(id, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteGroup")
+	}
+
+	var r0 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string) errors.SDKError); ok {
+		r0 = rf(id, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+
+	return r0
+}
+
 // DeleteInvitation provides a mock function with given fields: userID, domainID, token
 func (_m *SDK) DeleteInvitation(userID string, domainID string, token string) error {
 	ret := _m.Called(userID, domainID, token)

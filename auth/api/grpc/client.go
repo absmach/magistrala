@@ -175,7 +175,7 @@ func (client grpcClient) Issue(ctx context.Context, req *magistrala.IssueReq, _ 
 
 	res, err := client.issue(ctx, issueReq{userID: req.GetUserId(), domainID: req.GetDomainId(), keyType: auth.KeyType(req.Type)})
 	if err != nil {
-		return nil, decodeError(err)
+		return &magistrala.Token{}, decodeError(err)
 	}
 	return res.(*magistrala.Token), nil
 }
@@ -195,7 +195,7 @@ func (client grpcClient) Refresh(ctx context.Context, req *magistrala.RefreshReq
 
 	res, err := client.refresh(ctx, refreshReq{refreshToken: req.GetRefreshToken(), domainID: req.GetDomainId()})
 	if err != nil {
-		return nil, decodeError(err)
+		return &magistrala.Token{}, decodeError(err)
 	}
 	return res.(*magistrala.Token), nil
 }
@@ -215,7 +215,7 @@ func (client grpcClient) Identify(ctx context.Context, token *magistrala.Identit
 
 	res, err := client.identify(ctx, identityReq{token: token.GetToken()})
 	if err != nil {
-		return nil, err
+		return &magistrala.IdentityRes{}, decodeError(err)
 	}
 	ir := res.(identityRes)
 	return &magistrala.IdentityRes{Id: ir.id, UserId: ir.userID, DomainId: ir.domainID}, nil
@@ -246,11 +246,11 @@ func (client grpcClient) Authorize(ctx context.Context, req *magistrala.Authoriz
 		Object:      req.GetObject(),
 	})
 	if err != nil {
-		return &magistrala.AuthorizeRes{}, err
+		return &magistrala.AuthorizeRes{}, decodeError(err)
 	}
 
 	ar := res.(authorizeRes)
-	return &magistrala.AuthorizeRes{Authorized: ar.authorized, Id: ar.id}, err
+	return &magistrala.AuthorizeRes{Authorized: ar.authorized, Id: ar.id}, nil
 }
 
 func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -288,11 +288,11 @@ func (client grpcClient) AddPolicy(ctx context.Context, in *magistrala.AddPolicy
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &magistrala.AddPolicyRes{}, err
+		return &magistrala.AddPolicyRes{}, decodeError(err)
 	}
 
 	apr := res.(addPolicyRes)
-	return &magistrala.AddPolicyRes{Authorized: apr.authorized}, err
+	return &magistrala.AddPolicyRes{Authorized: apr.authorized}, nil
 }
 
 func decodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -337,11 +337,11 @@ func (client grpcClient) AddPolicies(ctx context.Context, in *magistrala.AddPoli
 
 	res, err := client.addPolicies(ctx, r)
 	if err != nil {
-		return &magistrala.AddPoliciesRes{}, err
+		return &magistrala.AddPoliciesRes{}, decodeError(err)
 	}
 
 	apr := res.(addPoliciesRes)
-	return &magistrala.AddPoliciesRes{Authorized: apr.authorized}, err
+	return &magistrala.AddPoliciesRes{Authorized: apr.authorized}, nil
 }
 
 func decodeAddPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -386,11 +386,11 @@ func (client grpcClient) DeletePolicy(ctx context.Context, in *magistrala.Delete
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &magistrala.DeletePolicyRes{}, err
+		return &magistrala.DeletePolicyRes{}, decodeError(err)
 	}
 
 	dpr := res.(deletePolicyRes)
-	return &magistrala.DeletePolicyRes{Deleted: dpr.deleted}, err
+	return &magistrala.DeletePolicyRes{Deleted: dpr.deleted}, nil
 }
 
 func decodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -435,11 +435,11 @@ func (client grpcClient) DeletePolicies(ctx context.Context, in *magistrala.Dele
 	}
 	res, err := client.deletePolicies(ctx, r)
 	if err != nil {
-		return &magistrala.DeletePoliciesRes{}, err
+		return &magistrala.DeletePoliciesRes{}, decodeError(err)
 	}
 
 	dpr := res.(deletePoliciesRes)
-	return &magistrala.DeletePoliciesRes{Deleted: dpr.deleted}, err
+	return &magistrala.DeletePoliciesRes{Deleted: dpr.deleted}, nil
 }
 
 func decodeDeletePoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -482,11 +482,11 @@ func (client grpcClient) ListObjects(ctx context.Context, in *magistrala.ListObj
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &magistrala.ListObjectsRes{}, err
+		return &magistrala.ListObjectsRes{}, decodeError(err)
 	}
 
 	lpr := res.(listObjectsRes)
-	return &magistrala.ListObjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListObjectsRes{Policies: lpr.policies}, nil
 }
 
 func decodeListObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -521,11 +521,11 @@ func (client grpcClient) ListAllObjects(ctx context.Context, in *magistrala.List
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &magistrala.ListObjectsRes{}, err
+		return &magistrala.ListObjectsRes{}, decodeError(err)
 	}
 
 	lpr := res.(listObjectsRes)
-	return &magistrala.ListObjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListObjectsRes{Policies: lpr.policies}, nil
 }
 
 func (client grpcClient) CountObjects(ctx context.Context, in *magistrala.CountObjectsReq, opts ...grpc.CallOption) (*magistrala.CountObjectsRes, error) {
@@ -542,11 +542,11 @@ func (client grpcClient) CountObjects(ctx context.Context, in *magistrala.CountO
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &magistrala.CountObjectsRes{}, err
+		return &magistrala.CountObjectsRes{}, decodeError(err)
 	}
 
 	cp := res.(countObjectsRes)
-	return &magistrala.CountObjectsRes{Count: int64(cp.count)}, err
+	return &magistrala.CountObjectsRes{Count: int64(cp.count)}, nil
 }
 
 func decodeCountObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -582,11 +582,11 @@ func (client grpcClient) ListSubjects(ctx context.Context, in *magistrala.ListSu
 		NextPageToken: in.GetNextPageToken(),
 	})
 	if err != nil {
-		return &magistrala.ListSubjectsRes{}, err
+		return &magistrala.ListSubjectsRes{}, decodeError(err)
 	}
 
 	lpr := res.(listSubjectsRes)
-	return &magistrala.ListSubjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListSubjectsRes{Policies: lpr.policies}, nil
 }
 
 func decodeListSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -621,11 +621,11 @@ func (client grpcClient) ListAllSubjects(ctx context.Context, in *magistrala.Lis
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &magistrala.ListSubjectsRes{}, err
+		return &magistrala.ListSubjectsRes{}, decodeError(err)
 	}
 
 	lpr := res.(listSubjectsRes)
-	return &magistrala.ListSubjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListSubjectsRes{Policies: lpr.policies}, nil
 }
 
 func (client grpcClient) CountSubjects(ctx context.Context, in *magistrala.CountSubjectsReq, opts ...grpc.CallOption) (*magistrala.CountSubjectsRes, error) {
@@ -681,7 +681,7 @@ func (client grpcClient) ListPermissions(ctx context.Context, in *magistrala.Lis
 		FilterPermissions: in.GetFilterPermissions(),
 	})
 	if err != nil {
-		return &magistrala.ListPermissionsRes{}, err
+		return &magistrala.ListPermissionsRes{}, decodeError(err)
 	}
 
 	lp := res.(listPermissionsRes)

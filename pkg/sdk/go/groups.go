@@ -220,6 +220,12 @@ func (sdk mgSDK) ListGroupChannels(groupID string, pm PageMetadata, token string
 	return gp, nil
 }
 
+func (sdk mgSDK) DeleteGroup(id, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, groupsEndpoint, id)
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
+	return sdkerr
+}
+
 func (sdk mgSDK) changeGroupStatus(id, status, token string) (Group, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.usersURL, groupsEndpoint, id, status)
 

@@ -755,6 +755,48 @@ func TestDisableChannel(t *testing.T) {
 	repoCall2.Unset()
 }
 
+func TestDeleteChannel(t *testing.T) {
+	ts, grepo, auth := newChannelsServer()
+	defer ts.Close()
+
+	conf := sdk.Config{
+		ThingsURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	creationTime := time.Now().UTC()
+	channel := sdk.Channel{
+		ID:        generateUUID(t),
+		Name:      gName,
+		OwnerID:   generateUUID(t),
+		CreatedAt: creationTime,
+		UpdatedAt: creationTime,
+		Status:    mgclients.Enabled,
+	}
+
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, nil)
+	repoCall2 := grepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	err := mgsdk.DeleteChannel("wrongID", validToken)
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden), fmt.Sprintf("Delete channel with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+
+	repoCall = auth.On("DeletePolicy", mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
+	repoCall1 = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall2 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+	repoCall3 := grepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	err = mgsdk.DeleteChannel(channel.ID, validToken)
+	assert.Nil(t, err, fmt.Sprintf("Delete channel with correct id: expected %v got %v", nil, err))
+	ok := repoCall3.Parent.AssertCalled(t, "Delete", mock.Anything, channel.ID)
+	assert.True(t, ok, "Delete was not called on deleting channel with correct id")
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+	repoCall3.Unset()
+}
+
 func toIDs(objects interface{}) []string {
 	v := reflect.ValueOf(objects)
 	if v.Kind() != reflect.Slice {

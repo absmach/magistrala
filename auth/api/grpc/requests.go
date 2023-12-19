@@ -94,18 +94,6 @@ type policyReq struct {
 }
 
 func (req policyReq) validate() error {
-	if req.Subject == "" || req.SubjectType == "" {
-		return apiutil.ErrMissingPolicySub
-	}
-
-	if req.Object == "" || req.ObjectType == "" {
-		return apiutil.ErrMissingPolicyObj
-	}
-
-	if req.Relation == "" && req.Permission == "" {
-		return apiutil.ErrMalformedPolicyRel
-	}
-
 	return nil
 }
 

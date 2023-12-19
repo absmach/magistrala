@@ -295,6 +295,12 @@ func (sdk mgSDK) DisableChannel(id, token string) (Channel, errors.SDKError) {
 	return sdk.changeChannelStatus(id, disableEndpoint, token)
 }
 
+func (sdk mgSDK) DeleteChannel(id, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, channelsEndpoint, id)
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
+	return sdkerr
+}
+
 func (sdk mgSDK) changeChannelStatus(id, status, token string) (Channel, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, id, status)
 

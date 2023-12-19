@@ -119,3 +119,11 @@ func (ms *metricsMiddleware) Unassign(ctx context.Context, token, groupID, relat
 
 	return ms.svc.Unassign(ctx, token, groupID, relation, memberKind, memberIDs...)
 }
+
+func (ms *metricsMiddleware) DeleteGroup(ctx context.Context, token, id string) (err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "delete_group").Add(1)
+		ms.latency.With("method", "delete_group").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.DeleteGroup(ctx, token, id)
+}

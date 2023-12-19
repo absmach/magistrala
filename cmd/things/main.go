@@ -19,6 +19,7 @@ import (
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	mggroups "github.com/absmach/magistrala/internal/groups"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
+	gevents "github.com/absmach/magistrala/internal/groups/events"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
 	"github.com/absmach/magistrala/internal/postgres"
@@ -58,6 +59,8 @@ const (
 	defDB              = "things"
 	defSvcHTTPPort     = "9000"
 	defSvcAuthGRPCPort = "7000"
+
+	streamID = "magistrala.things"
 )
 
 type config struct {
@@ -228,6 +231,11 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	gsvc := mggroups.NewService(gRepo, idp, authClient)
 
 	csvc, err := thevents.NewEventStoreMiddleware(ctx, csvc, esURL)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	gsvc, err = gevents.NewEventStoreMiddleware(ctx, gsvc, esURL, streamID)
 	if err != nil {
 		return nil, nil, err
 	}

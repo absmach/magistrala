@@ -590,6 +590,13 @@ type SDK interface {
 	//  fmt.Println(groups)
 	ListGroupChannels(groupID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
 
+	// DeleteGroup delete given group id.
+	//
+	// example:
+	//  err := sdk.DeleteGroup("groupID", "token")
+	//  fmt.Println(err)
+	DeleteGroup(id, token string) errors.SDKError
+
 	// CreateChannel creates new channel and returns its id.
 	//
 	// example:
@@ -755,6 +762,13 @@ type SDK interface {
 	//  groups, _ := sdk.ListChannelUserGroups("channel_id_1", pm, "token")
 	//  fmt.Println(groups)
 	ListChannelUserGroups(channelID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+
+	// DeleteChannel delete given group id.
+	//
+	// example:
+	//  err := sdk.DeleteChannel("channelID", "token")
+	//  fmt.Println(err)
+	DeleteChannel(id, token string) errors.SDKError
 
 	// Connect bulk connects things to channels specified by id.
 	//

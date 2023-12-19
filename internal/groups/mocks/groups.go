@@ -97,3 +97,11 @@ func (m *Repository) AssignParentGroup(ctx context.Context, parentGroupID string
 
 	return ret.Error(0)
 }
+
+func (m *Repository) Delete(ctx context.Context, groupID string) error {
+	ret := m.Called(ctx, groupID)
+	if groupID == WrongID {
+		return repoerr.ErrNotFound
+	}
+	return ret.Error(0)
+}

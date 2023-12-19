@@ -55,6 +55,8 @@ const (
 	envPrefixAuth  = "MG_AUTH_GRPC_"
 	defDB          = "users"
 	defSvcHTTPPort = "9002"
+
+	streamID = "magistrala.users"
 )
 
 type config struct {
@@ -210,7 +212,7 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 	if err != nil {
 		return nil, nil, err
 	}
-	gsvc, err = gevents.NewEventStoreMiddleware(ctx, gsvc, c.ESURL)
+	gsvc, err = gevents.NewEventStoreMiddleware(ctx, gsvc, c.ESURL, streamID)
 	if err != nil {
 		return nil, nil, err
 	}

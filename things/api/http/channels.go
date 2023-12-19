@@ -40,6 +40,13 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger mglog.Logger) http.Han
 			opts...,
 		), "view_channel").ServeHTTP)
 
+		r.Delete("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
+			gapi.DeleteGroupEndpoint(svc),
+			gapi.DecodeGroupRequest,
+			api.EncodeResponse,
+			opts...,
+		), "delete_channel").ServeHTTP)
+
 		r.Get("/{groupID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ViewGroupPermsEndpoint(svc),
 			gapi.DecodeGroupPermsRequest,

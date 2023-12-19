@@ -1,6 +1,7 @@
 # Magistrala
-[![Build Status](https://github.com/absmach/magistrala/actions/workflows/tests.yml/badge.svg)](https://github.com/absmach/magistrala/actions?query=workflow%3A"CI%20Pipeline")
-[![Push Status](https://github.com/absmach/magistrala/actions/workflows/build.yml/badge.svg)](https://github.com/absmach/magistrala/actions?query=workflow%3A"Continuous%20Delivery")
+[![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
+[![Check the consistency of generated files](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yml)
+[![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yml)
 [![go report card][grc-badge]][grc-url]
 [![coverage][cov-badge]][cov-url]
 [![license][license]](LICENSE)

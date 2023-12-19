@@ -130,8 +130,30 @@ jobs:
               - "auth/service.go"
               - "auth/api/grpc/client.go"
 
-            pkg:
-              - "pkg/**"
+            pkg-clients:
+              - "pkg/clients/**"
+
+            pkg-errors:
+              - "pkg/errors/**"
+
+            pkg-events:
+              - "pkg/events/**"
+              - "pkg/messaging/**"
+
+            pkg-messaging:
+              - "pkg/messaging/**"
+
+            pkg-sdk:
+              - "pkg/sdk/**"
+
+            pkg-transformers:
+              - "pkg/transformers/**"
+
+            pkg-ulid:
+              - "pkg/ulid/**"
+
+            pkg-uuid:
+              - "pkg/uuid/**"
 
             provision:
               - "provision/**"
@@ -244,11 +266,53 @@ jobs:
           go test --race -v -count=1 -coverprofile=coverage/opcua.out ./opcua/...
           go tool cover -html=coverage/opcua.out -o coverage/opcua.html
 
-      - name: Run pkg tests
-        if: steps.changes.outputs.pkg == 'true'
+      - name: Run pkg clients tests
+        if: steps.changes.outputs.pkg-clients == 'true'
         run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg.out ./pkg/...
-          go tool cover -html=coverage/pkg.out -o coverage/pkg.html
+          go test --race -v -count=1 -coverprofile=coverage/pkg-clients.out ./pkg/clients/...
+          go tool cover -html=coverage/pkg-clients.out -o coverage/pkg-clients.html
+
+      - name: Run pkg errors tests
+        if: steps.changes.outputs.pkg-errors == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-errors.out ./pkg/errors/...
+          go tool cover -html=coverage/pkg-errors.out -o coverage/pkg-errors.html
+
+      - name: Run pkg events tests
+        if: steps.changes.outputs.pkg-events == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-events.out ./pkg/events/...
+          go tool cover -html=coverage/pkg-events.out -o coverage/pkg-events.html
+
+      - name: Run pkg messaging tests
+        if: steps.changes.outputs.pkg-messaging == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-messaging.out ./pkg/messaging/...
+          go tool cover -html=coverage/pkg-messaging.out -o coverage/pkg-messaging.html
+
+      - name: Run pkg sdk tests
+        if: steps.changes.outputs.pkg-sdk == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-sdk.out ./pkg/sdk/...
+          go tool cover -html=coverage/pkg-sdk.out -o coverage/pkg-sdk.html
+
+      - name: Run pkg transformers tests
+        if: steps.changes.outputs.pkg-transformers == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-transformers.out ./pkg/transformers/...
+          go tool cover -html=coverage/pkg-transformers.out -o coverage/pkg-transformers.html
+
+      - name: Run pkg ulid tests
+        if: steps.changes.outputs.pkg-ulid == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-ulid.out ./pkg/ulid/...
+          go tool cover -html=coverage/pkg-ulid.out -o coverage/pkg-ulid.html
+
+      - name: Run pkg uuid tests
+        if: steps.changes.outputs.pkg-uuid == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-uuid.out ./pkg/uuid/...
+          go tool cover -html=coverage/pkg-uuid.out -o coverage/pkg-uuid.html
 
       - name: Run provision tests
         if: steps.changes.outputs.provision == 'true'

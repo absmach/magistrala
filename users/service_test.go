@@ -47,11 +47,15 @@ var (
 	wrongID      = testsutil.GenerateUUID(&testing.T{})
 )
 
-func TestRegisterClient(t *testing.T) {
+func newService() (users.Service, *mocks.Repository, *authmocks.Service, users.Emailer) {
 	cRepo := new(mocks.Repository)
 	auth := new(authmocks.Service)
 	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	return users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true), cRepo, auth, e
+}
+
+func TestRegisterClient(t *testing.T) {
+	svc, cRepo, auth, _ := newService()
 
 	cases := []struct {
 		desc   string
@@ -264,10 +268,7 @@ func TestRegisterClient(t *testing.T) {
 }
 
 func TestViewClient(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	cases := []struct {
 		desc     string
@@ -331,10 +332,7 @@ func TestViewClient(t *testing.T) {
 }
 
 func TestListClients(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	nClients := uint64(200)
 	aClients := []mgclients.Client{}
@@ -615,10 +613,7 @@ func TestListClients(t *testing.T) {
 }
 
 func TestUpdateClient(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	client1 := client
 	client2 := client
@@ -694,10 +689,7 @@ func TestUpdateClient(t *testing.T) {
 }
 
 func TestUpdateClientTags(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	client.Tags = []string{"updated"}
 
@@ -756,10 +748,7 @@ func TestUpdateClientTags(t *testing.T) {
 }
 
 func TestUpdateClientIdentity(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	client2 := client
 	client2.Credentials.Identity = "updated@example.com"
@@ -820,10 +809,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 }
 
 func TestUpdateClientRole(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	client.Role = mgclients.AdminRole
 
@@ -886,10 +872,7 @@ func TestUpdateClientRole(t *testing.T) {
 }
 
 func TestUpdateClientSecret(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	rClient := client
 	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
@@ -957,10 +940,7 @@ func TestUpdateClientSecret(t *testing.T) {
 }
 
 func TestEnableClient(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -1087,10 +1067,7 @@ func TestEnableClient(t *testing.T) {
 }
 
 func TestDisableClient(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -1217,10 +1194,7 @@ func TestDisableClient(t *testing.T) {
 }
 
 func TestListMembers(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	nClients := uint64(10)
 	aClients := []mgclients.Client{}
@@ -1338,10 +1312,7 @@ func TestListMembers(t *testing.T) {
 }
 
 func TestIssueToken(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, cRepo, auth, _ := newService()
 
 	rClient := client
 	rClient2 := client
@@ -1393,10 +1364,7 @@ func TestIssueToken(t *testing.T) {
 }
 
 func TestRefreshToken(t *testing.T) {
-	cRepo := new(mocks.Repository)
-	auth := new(authmocks.Service)
-	e := mocks.NewEmailer()
-	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex, true)
+	svc, _, auth, _ := newService()
 
 	rClient := client
 	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
@@ -1448,6 +1416,159 @@ func TestRefreshToken(t *testing.T) {
 			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
 		}
 		repoCall.Unset()
+	}
+}
+
+func TestGenerateResetToken(t *testing.T) {
+	svc, cRepo, auth, e := newService()
+
+	cases := []struct {
+		desc  string
+		email string
+		host  string
+		err   error
+	}{
+		{
+			desc:  "generate reset token for existing client",
+			email: "existingemail@example.com",
+			host:  "examplehost",
+			err:   nil,
+		},
+		{
+			desc:  "generate reset token for non-existing client",
+			email: "nonexistingemail@example.com",
+			host:  "examplehost",
+			err:   errors.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		client := mgclients.Client{
+			Credentials: mgclients.Credentials{Identity: tc.email},
+		}
+		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.email).Return(client, tc.err)
+		repoCall1 := auth.On("Issue", mock.Anything, mock.Anything).Return(&magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"}, tc.err)
+		err := e.SendPasswordReset([]string{tc.host}, tc.email, mock.Anything, mock.Anything)
+		assert.NoError(t, err, fmt.Sprintf("%s: expected no error, got %v", tc.desc, err))
+		err = svc.GenerateResetToken(context.Background(), tc.email, tc.host)
+		if tc.err != nil {
+			assert.ErrorIs(t, err, tc.err, fmt.Sprintf("%s: expected error %v, got %v", tc.desc, tc.err, err))
+		}
+		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.email)
+
+		repoCall.Unset()
+		repoCall1.Unset()
+	}
+}
+
+func TestResetSecret(t *testing.T) {
+	svc, cRepo, auth, _ := newService()
+
+	client := mgclients.Client{
+		ID: "clientID",
+		Credentials: mgclients.Credentials{
+			Identity: "existingIdentity",
+			Secret:   "existingSecret",
+		},
+	}
+	cases := []struct {
+		desc      string
+		token     string
+		newSecret string
+		err       error
+	}{
+		{
+			desc:      "reset secret with valid token",
+			token:     validToken,
+			newSecret: "newStrongSecret",
+			err:       nil,
+		},
+		{
+			desc:      "reset secret with invalid token",
+			token:     inValidToken,
+			newSecret: "newStrongSecret",
+			err:       svcerr.ErrAuthentication,
+		},
+		{
+			desc:      "reset secret with invalid secret format",
+			token:     validToken,
+			newSecret: "weak",
+			err:       users.ErrPasswordFormat,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: client.ID}, nil)
+		if tc.token == inValidToken {
+			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: inValidToken}).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
+		}
+		repoCall1 := cRepo.On("RetrieveByID", context.Background(), client.ID).Return(client, nil)
+		repoCall2 := cRepo.On("UpdateSecret", context.Background(), mock.Anything).Return(client, nil)
+		err := svc.ResetSecret(context.Background(), tc.token, tc.newSecret)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+
+		repoCall2.Parent.AssertCalled(t, "UpdateSecret", context.Background(), mock.Anything)
+		repoCall1.Parent.AssertCalled(t, "RetrieveByID", context.Background(), client.ID)
+		repoCall.Parent.AssertCalled(t, "Identify", mock.Anything, mock.Anything)
+		repoCall.Unset()
+		repoCall2.Unset()
+		repoCall1.Unset()
+	}
+}
+
+func TestViewProfile(t *testing.T) {
+	svc, cRepo, auth, _ := newService()
+
+	client := mgclients.Client{
+		ID: "clientID",
+		Credentials: mgclients.Credentials{
+			Identity: "existingIdentity",
+			Secret:   "Strongsecret",
+		},
+	}
+	cases := []struct {
+		desc     string
+		token    string
+		client   mgclients.Client
+		response mgclients.Client
+		err      error
+	}{
+		{
+			desc:     "view profile with valid token",
+			token:    validToken,
+			client:   client,
+			response: client,
+			err:      nil,
+		},
+		{
+			desc:     "view profile with invalid token",
+			token:    inValidToken,
+			client:   client,
+			response: mgclients.Client{},
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "view profile with invalid ID",
+			token:    validToken,
+			client:   client,
+			response: mgclients.Client{},
+			err:      repoerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{UserId: validID}, nil)
+		if tc.token == inValidToken {
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
+		}
+		repoCall1 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.response, tc.err)
+		_, err := svc.ViewProfile(context.Background(), tc.token)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+
+		repoCall.Parent.AssertCalled(t, "Identify", mock.Anything, mock.Anything)
+		repoCall1.Parent.AssertCalled(t, "RetrieveByID", context.Background(), mock.Anything)
+		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 

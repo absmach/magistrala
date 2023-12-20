@@ -18,7 +18,7 @@ import (
 )
 
 func TestIssueToken(t *testing.T) {
-	ts, cRepo, _, auth := newClientServer()
+	ts, cRepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -90,7 +90,7 @@ func TestIssueToken(t *testing.T) {
 }
 
 func TestRefreshToken(t *testing.T) {
-	ts, cRepo, _, auth := newClientServer()
+	ts, cRepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{

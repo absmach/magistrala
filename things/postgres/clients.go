@@ -21,6 +21,10 @@ type clientRepo struct {
 	pgclients.ClientRepository
 }
 
+// Repository is the interface that wraps the basic methods for
+// a client repository.
+//
+//go:generate mockery --name Repository --output=../mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
 type Repository interface {
 	mgclients.Repository
 

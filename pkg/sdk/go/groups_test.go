@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func newGroupsServer() (*httptest.Server, *mocks.Repository, *authmocks.Service) {
+func setupGroups() (*httptest.Server, *mocks.Repository, *authmocks.Service) {
 	crepo := new(umocks.Repository)
 	grepo := new(mocks.Repository)
 
@@ -46,7 +46,7 @@ func newGroupsServer() (*httptest.Server, *mocks.Repository, *authmocks.Service)
 }
 
 func TestCreateGroup(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 	group := sdk.Group{
 		Name:     "groupName",
@@ -164,7 +164,7 @@ func TestCreateGroup(t *testing.T) {
 }
 
 func TestListGroups(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	var grps []sdk.Group
@@ -292,7 +292,7 @@ func TestListGroups(t *testing.T) {
 }
 
 func TestListParentGroups(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	var grps []sdk.Group
@@ -423,7 +423,7 @@ func TestListParentGroups(t *testing.T) {
 }
 
 func TestListChildrenGroups(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	var grps []sdk.Group
@@ -555,7 +555,7 @@ func TestListChildrenGroups(t *testing.T) {
 }
 
 func TestViewGroup(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	group := sdk.Group{
@@ -624,7 +624,7 @@ func TestViewGroup(t *testing.T) {
 }
 
 func TestUpdateGroup(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	group := sdk.Group{
@@ -784,7 +784,7 @@ func TestUpdateGroup(t *testing.T) {
 }
 
 func TestEnableGroup(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -837,7 +837,7 @@ func TestEnableGroup(t *testing.T) {
 }
 
 func TestDisableGroup(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -891,7 +891,7 @@ func TestDisableGroup(t *testing.T) {
 }
 
 func TestDeleteGroup(t *testing.T) {
-	ts, grepo, auth := newGroupsServer()
+	ts, grepo, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{

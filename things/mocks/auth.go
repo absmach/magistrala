@@ -12,6 +12,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const WrongID = "wrongID"
+
 var _ magistrala.AuthzServiceClient = (*Service)(nil)
 
 type Service struct {

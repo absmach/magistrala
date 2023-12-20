@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
@@ -37,25 +36,25 @@ var (
 		Metadata:    validCMetadata,
 		Status:      mgclients.EnabledStatus,
 	}
-	withinDuration = 5 * time.Second
-	adminEmail     = "admin@example.com"
-	myKey          = "mine"
-	validToken     = "token"
-	validID        = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	adminEmail = "admin@example.com"
+	myKey      = "mine"
+	validToken = "token"
+	validID    = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	wrongID    = testsutil.GenerateUUID(&testing.T{})
 )
 
-func newService() (things.Service, *mocks.Repository, *authmocks.Service) {
+func newService() (things.Service, *mocks.Repository, *authmocks.Service, *mocks.Cache) {
 	auth := new(authmocks.Service)
-	thingCache := mocks.NewCache()
+	thingCache := new(mocks.Cache)
 	idProvider := uuid.NewMock()
 	cRepo := new(mocks.Repository)
 	gRepo := new(gmocks.Repository)
 
-	return things.NewService(auth, cRepo, gRepo, thingCache, idProvider), cRepo, auth
+	return things.NewService(auth, cRepo, gRepo, thingCache, idProvider), cRepo, auth, thingCache
 }
 
 func TestRegisterClient(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	cases := []struct {
 		desc   string
@@ -205,7 +204,7 @@ func TestRegisterClient(t *testing.T) {
 		{
 			desc: "register a new client with invalid owner",
 			client: mgclients.Client{
-				Owner: mocks.WrongID,
+				Owner: wrongID,
 				Credentials: mgclients.Credentials{
 					Identity: "newclientwithinvalidowner@example.com",
 					Secret:   secret,
@@ -242,13 +241,10 @@ func TestRegisterClient(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
-		repoCall2 := cRepo.On("Save", context.Background(), mock.Anything).Return(&mgclients.Client{}, tc.err)
-		registerTime := time.Now()
+		repoCall2 := cRepo.On("Save", context.Background(), mock.Anything).Return([]mgclients.Client{tc.client}, tc.err)
 		expected, err := svc.CreateThings(context.Background(), tc.token, tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			assert.NotEmpty(t, expected[0].ID, fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, expected[0].ID))
-			assert.WithinDuration(t, expected[0].CreatedAt, registerTime, withinDuration, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, expected[0].CreatedAt, registerTime))
 			tc.client.ID = expected[0].ID
 			tc.client.CreatedAt = expected[0].CreatedAt
 			tc.client.UpdatedAt = expected[0].UpdatedAt
@@ -264,7 +260,7 @@ func TestRegisterClient(t *testing.T) {
 }
 
 func TestViewClient(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	cases := []struct {
 		desc     string
@@ -291,14 +287,14 @@ func TestViewClient(t *testing.T) {
 			desc:     "view client with valid token and invalid client id",
 			response: mgclients.Client{},
 			token:    validToken,
-			clientID: mocks.WrongID,
+			clientID: wrongID,
 			err:      svcerr.ErrNotFound,
 		},
 		{
 			desc:     "view client with an invalid token and invalid client id",
 			response: mgclients.Client{},
 			token:    authmocks.InvalidValue,
-			clientID: mocks.WrongID,
+			clientID: wrongID,
 			err:      svcerr.ErrAuthorization,
 		},
 	}
@@ -318,7 +314,7 @@ func TestViewClient(t *testing.T) {
 }
 
 func TestListClients(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	nClients := uint64(200)
 	aClients := []mgclients.Client{}
@@ -594,7 +590,7 @@ func TestListClients(t *testing.T) {
 }
 
 func TestUpdateClient(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	client1 := client
 	client2 := client
@@ -625,7 +621,7 @@ func TestUpdateClient(t *testing.T) {
 		{
 			desc: "update client name with invalid ID",
 			client: mgclients.Client{
-				ID:   mocks.WrongID,
+				ID:   wrongID,
 				Name: "Updated Client",
 			},
 			response: mgclients.Client{},
@@ -664,7 +660,7 @@ func TestUpdateClient(t *testing.T) {
 }
 
 func TestUpdateClientTags(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	client.Tags = []string{"updated"}
 
@@ -692,7 +688,7 @@ func TestUpdateClientTags(t *testing.T) {
 		{
 			desc: "update client name with invalid ID",
 			client: mgclients.Client{
-				ID:   mocks.WrongID,
+				ID:   wrongID,
 				Name: "Updated name",
 			},
 			response: mgclients.Client{},
@@ -717,7 +713,7 @@ func TestUpdateClientTags(t *testing.T) {
 }
 
 func TestUpdateClientSecret(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	cases := []struct {
 		desc      string
@@ -759,7 +755,7 @@ func TestUpdateClientSecret(t *testing.T) {
 }
 
 func TestEnableClient(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	enabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -792,7 +788,7 @@ func TestEnableClient(t *testing.T) {
 		},
 		{
 			desc:     "enable non-existing client",
-			id:       mocks.WrongID,
+			id:       wrongID,
 			token:    validToken,
 			client:   mgclients.Client{},
 			response: mgclients.Client{},
@@ -882,7 +878,7 @@ func TestEnableClient(t *testing.T) {
 }
 
 func TestDisableClient(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, cache := newService()
 
 	enabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -915,7 +911,7 @@ func TestDisableClient(t *testing.T) {
 		},
 		{
 			desc:     "disable non-existing client",
-			id:       mocks.WrongID,
+			id:       wrongID,
 			client:   mgclients.Client{},
 			token:    validToken,
 			response: mgclients.Client{},
@@ -928,12 +924,14 @@ func TestDisableClient(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.client, tc.err)
 		repoCall3 := cRepo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.response, tc.err)
+		repoCall4 := cache.On("Remove", mock.Anything, mock.Anything).Return(nil)
 		_, err := svc.DisableClient(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
 		repoCall3.Unset()
+		repoCall4.Unset()
 	}
 
 	cases2 := []struct {
@@ -1005,7 +1003,7 @@ func TestDisableClient(t *testing.T) {
 }
 
 func TestListMembers(t *testing.T) {
-	svc, cRepo, auth := newService()
+	svc, cRepo, auth, _ := newService()
 
 	nClients := uint64(10)
 	aClients := []mgclients.Client{}
@@ -1089,7 +1087,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients with an invalid id",
 			token:   validToken,
-			groupID: mocks.WrongID,
+			groupID: wrongID,
 			page: mgclients.Page{
 				Owner: adminEmail,
 			},

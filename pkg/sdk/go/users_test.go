@@ -37,7 +37,7 @@ var (
 	wrongID    = testsutil.GenerateUUID(&testing.T{})
 )
 
-func newClientServer() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *authmocks.Service) {
+func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *authmocks.Service) {
 	crepo := new(umocks.Repository)
 	gRepo := new(gmocks.Repository)
 
@@ -53,7 +53,7 @@ func newClientServer() (*httptest.Server, *umocks.Repository, *gmocks.Repository
 }
 
 func TestCreateClient(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	user := sdk.User{
@@ -86,7 +86,7 @@ func TestCreateClient(t *testing.T) {
 			client:   user,
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedCreation), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusInternalServerError),
 		},
 		{
 			desc:     "register empty user",
@@ -209,7 +209,7 @@ func TestCreateClient(t *testing.T) {
 }
 
 func TestListClients(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	var cls []sdk.User
@@ -266,7 +266,7 @@ func TestListClients(t *testing.T) {
 			token:    invalidToken,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
 			response: nil,
 		},
 		{
@@ -274,7 +274,7 @@ func TestListClients(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
 			response: nil,
 		},
 		{
@@ -282,7 +282,7 @@ func TestListClients(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    0,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
 			response: nil,
 		},
 		{
@@ -389,7 +389,7 @@ func TestListClients(t *testing.T) {
 }
 
 func TestClient(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	user = sdk.User{
@@ -465,7 +465,7 @@ func TestClient(t *testing.T) {
 }
 
 func TestProfile(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	user = sdk.User{
@@ -520,7 +520,7 @@ func TestProfile(t *testing.T) {
 }
 
 func TestUpdateClient(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -570,7 +570,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -612,7 +612,7 @@ func TestUpdateClient(t *testing.T) {
 }
 
 func TestUpdateClientTags(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -661,7 +661,7 @@ func TestUpdateClientTags(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -704,7 +704,7 @@ func TestUpdateClientTags(t *testing.T) {
 }
 
 func TestUpdateClientIdentity(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -751,7 +751,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -767,7 +767,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, fmt.Errorf("json: unsupported type: chan int")), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
 		},
 	}
 
@@ -794,7 +794,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 }
 
 func TestUpdateClientSecret(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -873,7 +873,7 @@ func TestUpdateClientSecret(t *testing.T) {
 }
 
 func TestUpdateClientRole(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -966,7 +966,7 @@ func TestUpdateClientRole(t *testing.T) {
 }
 
 func TestEnableClient(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1095,7 +1095,7 @@ func TestEnableClient(t *testing.T) {
 }
 
 func TestDisableClient(t *testing.T) {
-	ts, crepo, _, auth := newClientServer()
+	ts, crepo, _, auth := setupUsers()
 	defer ts.Close()
 
 	conf := sdk.Config{

@@ -30,10 +30,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func newThingsServer() (*httptest.Server, *mocks.Repository, *gmocks.Repository, *authmocks.Service) {
+func setupThings() (*httptest.Server, *mocks.Repository, *gmocks.Repository, *authmocks.Service, *mocks.Cache) {
 	cRepo := new(mocks.Repository)
 	gRepo := new(gmocks.Repository)
-	thingCache := mocks.NewCache()
+	thingCache := new(mocks.Cache)
 
 	auth := new(authmocks.Service)
 	csvc := things.NewService(auth, cRepo, gRepo, thingCache, idProvider)
@@ -43,11 +43,27 @@ func newThingsServer() (*httptest.Server, *mocks.Repository, *gmocks.Repository,
 	mux := chi.NewRouter()
 	api.MakeHandler(csvc, gsvc, mux, logger, "")
 
-	return httptest.NewServer(mux), cRepo, gRepo, auth
+	return httptest.NewServer(mux), cRepo, gRepo, auth, thingCache
+}
+
+func setupThingsMinimal() (*httptest.Server, *authmocks.Service) {
+	cRepo := new(mocks.Repository)
+	gRepo := new(gmocks.Repository)
+	thingCache := new(mocks.Cache)
+
+	auth := new(authmocks.Service)
+	csvc := things.NewService(auth, cRepo, gRepo, thingCache, idProvider)
+	gsvc := groups.NewService(gRepo, idProvider, auth)
+
+	logger := mglog.NewMock()
+	mux := chi.NewRouter()
+	api.MakeHandler(csvc, gsvc, mux, logger, "")
+
+	return httptest.NewServer(mux), auth
 }
 
 func TestCreateThing(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	thing := sdk.Thing{
@@ -172,7 +188,7 @@ func TestCreateThing(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
-		repoCall2 := cRepo.On("Save", mock.Anything, mock.Anything).Return(tc.response, tc.repoErr)
+		repoCall2 := cRepo.On("Save", mock.Anything, mock.Anything).Return(convertThings(tc.response), tc.repoErr)
 		rThing, err := mgsdk.CreateThing(tc.client, tc.token)
 
 		tc.response.ID = rThing.ID
@@ -194,7 +210,7 @@ func TestCreateThing(t *testing.T) {
 }
 
 func TestCreateThings(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	thingsList := []sdk.Thing{
@@ -258,7 +274,10 @@ func TestCreateThings(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
-		repoCall2 := cRepo.On("Save", mock.Anything, mock.Anything).Return(tc.response, tc.err)
+		repoCall2 := cRepo.On("Save", mock.Anything, mock.Anything).Return(convertThings(tc.response...), tc.err)
+		if len(tc.things) > 0 {
+			repoCall2 = cRepo.On("Save", mock.Anything, mock.Anything, mock.Anything).Return(convertThings(tc.response...), tc.err)
+		}
 		rThing, err := mgsdk.CreateThings(tc.things, tc.token)
 		for i, t := range rThing {
 			tc.response[i].ID = t.ID
@@ -271,8 +290,14 @@ func TestCreateThings(t *testing.T) {
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, rThing, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rThing))
 		if tc.err == nil {
-			ok := repoCall2.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
-			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
+			switch len(tc.things) {
+			case 1:
+				ok := repoCall2.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
+				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
+			case 2:
+				ok := repoCall2.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything, mock.Anything)
+				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
+			}
 		}
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -281,7 +306,7 @@ func TestCreateThings(t *testing.T) {
 }
 
 func TestListThings(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	var ths []sdk.Thing
@@ -456,7 +481,7 @@ func TestListThings(t *testing.T) {
 			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 			repoCall2 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, errors.ErrAuthorization)
 		}
-		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(pm), Clients: convertThings(tc.response)}, tc.err)
+		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(pm), Clients: convertThings(tc.response...)}, tc.err)
 		page, err := mgsdk.Things(pm, validToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Things, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
@@ -468,7 +493,7 @@ func TestListThings(t *testing.T) {
 }
 
 func TestListThingsByChannel(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -579,7 +604,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with an invalid id",
 			token:     validToken,
-			channelID: mocks.WrongID,
+			channelID: wrongID,
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrNotFound, svcerr.ErrNotFound), http.StatusNotFound),
@@ -590,7 +615,7 @@ func TestListThingsByChannel(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, nil)
-		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(tc.page), Clients: convertThings(tc.response)}, tc.err)
+		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(tc.page), Clients: convertThings(tc.response...)}, tc.err)
 		membersPage, err := mgsdk.ThingsByChannel(tc.channelID, tc.page, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, membersPage.Things, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, membersPage.Things))
@@ -606,7 +631,7 @@ func TestListThingsByChannel(t *testing.T) {
 }
 
 func TestThing(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	thing := sdk.Thing{
@@ -646,14 +671,14 @@ func TestThing(t *testing.T) {
 			desc:     "view thing with valid token and invalid thing id",
 			response: sdk.Thing{},
 			token:    validToken,
-			thingID:  mocks.WrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrNotFound, http.StatusNotFound),
+			thingID:  wrongID,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "view thing with an invalid token and invalid thing id",
 			response: sdk.Thing{},
 			token:    invalidToken,
-			thingID:  mocks.WrongID,
+			thingID:  wrongID,
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 	}
@@ -677,7 +702,7 @@ func TestThing(t *testing.T) {
 }
 
 func TestUpdateThing(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -726,7 +751,7 @@ func TestUpdateThing(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -763,7 +788,7 @@ func TestUpdateThing(t *testing.T) {
 }
 
 func TestUpdateThingTags(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -811,7 +836,7 @@ func TestUpdateThingTags(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -848,7 +873,7 @@ func TestUpdateThingTags(t *testing.T) {
 }
 
 func TestUpdateThingSecret(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -885,7 +910,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     "non-existent",
 			response:  sdk.Thing{},
 			repoErr:   errors.ErrAuthorization,
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, errors.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc:      "update thing secret with wrong old secret",
@@ -894,7 +919,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     validToken,
 			response:  sdk.Thing{},
 			repoErr:   apiutil.ErrInvalidSecret,
-			err:       errors.NewSDKErrorWithStatus(apiutil.ErrInvalidSecret, http.StatusBadRequest),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, apiutil.ErrInvalidSecret), http.StatusBadRequest),
 		},
 	}
 	for _, tc := range cases {
@@ -918,7 +943,7 @@ func TestUpdateThingSecret(t *testing.T) {
 }
 
 func TestEnableThing(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -961,7 +986,7 @@ func TestEnableThing(t *testing.T) {
 		},
 		{
 			desc:     "enable non-existing thing",
-			id:       mocks.WrongID,
+			id:       wrongID,
 			token:    validToken,
 			thing:    sdk.Thing{},
 			response: sdk.Thing{},
@@ -1053,7 +1078,7 @@ func TestEnableThing(t *testing.T) {
 }
 
 func TestDisableThing(t *testing.T) {
-	ts, cRepo, _, auth := newThingsServer()
+	ts, cRepo, _, auth, cache := setupThings()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1096,7 +1121,7 @@ func TestDisableThing(t *testing.T) {
 		},
 		{
 			desc:     "disable non-existing thing",
-			id:       mocks.WrongID,
+			id:       wrongID,
 			thing:    sdk.Thing{},
 			token:    validToken,
 			response: sdk.Thing{},
@@ -1113,6 +1138,7 @@ func TestDisableThing(t *testing.T) {
 		}
 		repoCall2 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertThing(tc.thing), tc.repoErr)
 		repoCall3 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.repoErr)
+		repoCall4 := cache.On("Remove", mock.Anything, mock.Anything).Return(nil)
 		dThing, err := mgsdk.DisableThing(tc.id, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, dThing, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, dThing))
@@ -1126,6 +1152,7 @@ func TestDisableThing(t *testing.T) {
 		repoCall1.Unset()
 		repoCall2.Unset()
 		repoCall3.Unset()
+		repoCall4.Unset()
 	}
 
 	cases2 := []struct {
@@ -1188,7 +1215,7 @@ func TestDisableThing(t *testing.T) {
 }
 
 func TestShareThing(t *testing.T) {
-	ts, _, _, auth := newThingsServer()
+	ts, auth := setupThingsMinimal()
 	auth.Test(t)
 	defer ts.Close()
 

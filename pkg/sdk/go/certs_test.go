@@ -37,8 +37,8 @@ var (
 	cfgSignHoursValid = "24h"
 )
 
-func newCertService() (certs.Service, *authmocks.Service, *thmocks.Repository, error) {
-	server, trepo, _, auth := newThingsServer()
+func setupCerts() (*httptest.Server, *authmocks.Service, *thmocks.Repository, error) {
+	server, trepo, _, auth, _ := setupThings()
 	config := sdk.Config{
 		ThingsURL: server.URL,
 	}
@@ -58,19 +58,16 @@ func newCertService() (certs.Service, *authmocks.Service, *thmocks.Repository, e
 
 	pki := mocks.NewPkiAgent(tlsCert, caCert, cfgSignHoursValid, authTimeout)
 
-	return certs.New(auth, repo, mgsdk, pki), auth, trepo, nil
-}
-
-func newCertServer(svc certs.Service) *httptest.Server {
+	svc := certs.New(auth, repo, mgsdk, pki)
 	logger := mglog.NewMock()
 	mux := httpapi.MakeHandler(svc, logger, instanceID)
-	return httptest.NewServer(mux)
+
+	return httptest.NewServer(mux), auth, trepo, nil
 }
 
 func TestIssueCert(t *testing.T) {
-	svc, auth, trepo, err := newCertService()
+	ts, auth, trepo, err := setupCerts()
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating service: %s", err))
-	ts := newCertServer(svc)
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -162,9 +159,8 @@ func TestIssueCert(t *testing.T) {
 }
 
 func TestViewCert(t *testing.T) {
-	svc, auth, trepo, err := newCertService()
+	ts, auth, trepo, err := setupCerts()
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating service: %s", err))
-	ts := newCertServer(svc)
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -226,9 +222,8 @@ func TestViewCert(t *testing.T) {
 }
 
 func TestViewCertByThing(t *testing.T) {
-	svc, auth, trepo, err := newCertService()
+	ts, auth, trepo, err := setupCerts()
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating service: %s", err))
-	ts := newCertServer(svc)
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -290,9 +285,8 @@ func TestViewCertByThing(t *testing.T) {
 }
 
 func TestRevokeCert(t *testing.T) {
-	svc, auth, trepo, err := newCertService()
+	ts, auth, trepo, err := setupCerts()
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating service: %s", err))
-	ts := newCertServer(svc)
 	defer ts.Close()
 
 	sdkConf := sdk.Config{

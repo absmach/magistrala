@@ -73,7 +73,7 @@ func convertClientsPage(cp sdk.UsersPage) mgclients.ClientsPage {
 
 func convertThingsPage(cp sdk.ThingsPage) mgclients.ClientsPage {
 	return mgclients.ClientsPage{
-		Clients: convertThings(cp.Things),
+		Clients: convertThings(cp.Things...),
 	}
 }
 
@@ -87,7 +87,7 @@ func convertClients(cs []sdk.User) []mgclients.Client {
 	return ccs
 }
 
-func convertThings(cs []sdk.Thing) []mgclients.Client {
+func convertThings(cs ...sdk.Thing) []mgclients.Client {
 	ccs := []mgclients.Client{}
 
 	for _, c := range cs {

@@ -15,17 +15,16 @@ import (
 )
 
 func TestHealth(t *testing.T) {
-	ths, _, _, auth := newThingsServer()
+	ths, auth := setupThingsMinimal()
 	auth.Test(t)
 	defer ths.Close()
 
-	usclsv, _, _, auth := newClientServer()
+	usclsv, _, _, auth := setupUsers()
 	auth.Test(t)
 	defer usclsv.Close()
 
-	certSvc, _, _, err := newCertService()
+	CertTs, _, _, err := setupCerts()
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating service: %s", err))
-	CertTs := newCertServer(certSvc)
 	defer CertTs.Close()
 
 	sdkConf := sdk.Config{

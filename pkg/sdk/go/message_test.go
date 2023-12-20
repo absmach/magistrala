@@ -20,28 +20,24 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	mproxy "github.com/mainflux/mproxy/pkg/http"
-	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func newMessageService(cc magistrala.AuthzServiceClient) session.Handler {
+func setupMessages() (*httptest.Server, *authmocks.Service) {
+	auth := new(authmocks.Service)
 	pub := mocks.NewPublisher()
+	handler := adapter.NewHandler(pub, mglog.NewMock(), auth)
 
-	return adapter.NewHandler(pub, mglog.NewMock(), cc)
-}
-
-func newTargetHTTPServer() *httptest.Server {
 	mux := api.MakeHandler("")
-	return httptest.NewServer(mux)
-}
+	target := httptest.NewServer(mux)
 
-func newProxyHTTPServer(svc session.Handler, targetServer *httptest.Server) (*httptest.Server, error) {
-	mp, err := mproxy.NewProxy("", targetServer.URL, svc, mglog.NewMock())
+	mp, err := mproxy.NewProxy("", target.URL, handler, mglog.NewMock())
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
-	return httptest.NewServer(http.HandlerFunc(mp.Handler)), nil
+
+	return httptest.NewServer(http.HandlerFunc(mp.Handler)), auth
 }
 
 func TestSendMessage(t *testing.T) {
@@ -49,11 +45,8 @@ func TestSendMessage(t *testing.T) {
 	atoken := "auth_token"
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
-	auth := new(authmocks.Service)
-	pub := newMessageService(auth)
-	target := newTargetHTTPServer()
-	ts, err := newProxyHTTPServer(pub, target)
-	assert.Nil(t, err, fmt.Sprintf("failed to create proxy server with err: %v", err))
+
+	ts, auth := setupMessages()
 	defer ts.Close()
 	sdkConf := sdk.Config{
 		HTTPAdapterURL:  ts.URL,
@@ -122,12 +115,7 @@ func TestSendMessage(t *testing.T) {
 }
 
 func TestSetContentType(t *testing.T) {
-	auth := new(authmocks.Service)
-
-	pub := newMessageService(auth)
-	target := newTargetHTTPServer()
-	ts, err := newProxyHTTPServer(pub, target)
-	assert.Nil(t, err, fmt.Sprintf("failed to create proxy server with err: %v", err))
+	ts, _ := setupMessages()
 	defer ts.Close()
 
 	sdkConf := sdk.Config{

@@ -34,26 +34,22 @@ var (
 	exampleUser1      = "email1@example.com"
 )
 
-func newSubscriptionService() (notifiers.Service, *authmocks.Service) {
+func setupSubscriptions() (*httptest.Server, *authmocks.Service) {
 	repo := mocks.NewRepo(make(map[string]notifiers.Subscription))
 	auth := new(authmocks.Service)
 	notifier := mocks.NewNotifier()
 	idp := uuid.NewMock()
 	from := "exampleFrom"
 
-	return notifiers.New(auth, repo, idp, notifier, from), auth
-}
-
-func newSubscriptionServer(svc notifiers.Service) *httptest.Server {
+	svc := notifiers.New(auth, repo, idp, notifier, from)
 	logger := mglog.NewMock()
 	mux := httpapi.MakeHandler(svc, logger, instanceID)
 
-	return httptest.NewServer(mux)
+	return httptest.NewServer(mux), auth
 }
 
 func TestCreateSubscription(t *testing.T) {
-	svc, auth := newSubscriptionService()
-	ts := newSubscriptionServer(svc)
+	ts, auth := setupSubscriptions()
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -111,8 +107,7 @@ func TestCreateSubscription(t *testing.T) {
 }
 
 func TestViewSubscription(t *testing.T) {
-	svc, auth := newSubscriptionService()
-	ts := newSubscriptionServer(svc)
+	ts, auth := setupSubscriptions()
 	defer ts.Close()
 	sdkConf := sdk.Config{
 		UsersURL:        ts.URL,
@@ -168,8 +163,7 @@ func TestViewSubscription(t *testing.T) {
 }
 
 func TestListSubscription(t *testing.T) {
-	svc, auth := newSubscriptionService()
-	ts := newSubscriptionServer(svc)
+	ts, auth := setupSubscriptions()
 	defer ts.Close()
 	sdkConf := sdk.Config{
 		UsersURL:        ts.URL,
@@ -232,8 +226,7 @@ func TestListSubscription(t *testing.T) {
 }
 
 func TestDeleteSubscription(t *testing.T) {
-	svc, auth := newSubscriptionService()
-	ts := newSubscriptionServer(svc)
+	ts, auth := setupSubscriptions()
 	defer ts.Close()
 	sdkConf := sdk.Config{
 		UsersURL:        ts.URL,

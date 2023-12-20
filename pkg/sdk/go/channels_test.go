@@ -32,10 +32,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func newChannelsServer() (*httptest.Server, *mocks.Repository, *authmocks.Service) {
+func setupChannels() (*httptest.Server, *mocks.Repository, *authmocks.Service) {
 	cRepo := new(thmocks.Repository)
 	grepo := new(mocks.Repository)
-	thingCache := thmocks.NewCache()
+	thingCache := new(thmocks.Cache)
 
 	auth := new(authmocks.Service)
 	csvc := things.NewService(auth, cRepo, grepo, thingCache, idProvider)
@@ -49,7 +49,7 @@ func newChannelsServer() (*httptest.Server, *mocks.Repository, *authmocks.Servic
 }
 
 func TestCreateChannel(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	defer ts.Close()
 
 	channel := sdk.Channel{
@@ -166,7 +166,7 @@ func TestCreateChannel(t *testing.T) {
 }
 
 func TestListChannels(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	defer ts.Close()
 
 	var chs []sdk.Channel
@@ -299,7 +299,7 @@ func TestListChannels(t *testing.T) {
 }
 
 func TestViewChannel(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	defer ts.Close()
 
 	channel := sdk.Channel{
@@ -368,7 +368,7 @@ func TestViewChannel(t *testing.T) {
 }
 
 func TestUpdateChannel(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	defer ts.Close()
 
 	channel := sdk.Channel{
@@ -528,7 +528,7 @@ func TestUpdateChannel(t *testing.T) {
 }
 
 func TestListChannelsByThing(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	auth.Test(t)
 	defer ts.Close()
 
@@ -649,7 +649,7 @@ func TestListChannelsByThing(t *testing.T) {
 }
 
 func TestEnableChannel(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -702,7 +702,7 @@ func TestEnableChannel(t *testing.T) {
 }
 
 func TestDisableChannel(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -756,7 +756,7 @@ func TestDisableChannel(t *testing.T) {
 }
 
 func TestDeleteChannel(t *testing.T) {
-	ts, grepo, auth := newChannelsServer()
+	ts, grepo, auth := setupChannels()
 	defer ts.Close()
 
 	conf := sdk.Config{

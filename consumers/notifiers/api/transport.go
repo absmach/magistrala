@@ -116,13 +116,13 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		req.contact = vals[0]
 	}
 
-	offset, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
+	offset, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
 	if err != nil {
 		return listSubsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req.offset = uint(offset)
 
-	limit, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
+	limit, err := apiutil.ReadNumQuery[uint64](r, limitKey, defLimit)
 	if err != nil {
 		return listSubsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}

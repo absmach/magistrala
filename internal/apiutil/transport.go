@@ -24,26 +24,6 @@ func LoggingErrorEncoder(logger mglog.Logger, enc kithttp.ErrorEncoder) kithttp.
 	}
 }
 
-// ReadUintQuery reads the value of uint64 http query parameters for a given key.
-func ReadUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
-	vals := r.URL.Query()[key]
-	if len(vals) > 1 {
-		return 0, ErrInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return def, nil
-	}
-
-	strval := vals[0]
-	val, err := strconv.ParseUint(strval, 10, 64)
-	if err != nil {
-		return 0, ErrInvalidQueryParams
-	}
-
-	return val, nil
-}
-
 // ReadStringQuery reads the value of string http query parameters for a given key.
 func ReadStringQuery(r *http.Request, key, def string) (string, error) {
 	vals := r.URL.Query()[key]
@@ -91,30 +71,10 @@ func ReadBoolQuery(r *http.Request, key string, def bool) (bool, error) {
 
 	b, err := strconv.ParseBool(vals[0])
 	if err != nil {
-		return false, ErrInvalidQueryParams
+		return false, errors.Wrap(ErrInvalidQueryParams, err)
 	}
 
 	return b, nil
-}
-
-// ReadFloatQuery reads the value of float64 http query parameters for a given key.
-func ReadFloatQuery(r *http.Request, key string, def float64) (float64, error) {
-	vals := r.URL.Query()[key]
-	if len(vals) > 1 {
-		return 0, ErrInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return def, nil
-	}
-
-	fval := vals[0]
-	val, err := strconv.ParseFloat(fval, 64)
-	if err != nil {
-		return 0, ErrInvalidQueryParams
-	}
-
-	return val, nil
 }
 
 type number interface {
@@ -135,16 +95,28 @@ func ReadNumQuery[N number](r *http.Request, key string, def N) (N, error) {
 	switch any(def).(type) {
 	case int64:
 		v, err := strconv.ParseInt(val, 10, 64)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	case uint64:
 		v, err := strconv.ParseUint(val, 10, 64)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	case uint16:
 		v, err := strconv.ParseUint(val, 10, 16)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	case float64:
 		v, err := strconv.ParseFloat(val, 64)
-		return N(v), err
+		if err != nil {
+			return 0, errors.Wrap(ErrInvalidQueryParams, err)
+		}
+		return N(v), nil
 	default:
 		return def, nil
 	}

@@ -70,12 +70,12 @@ func MakeHandler(svc readers.MessageRepository, uauth magistrala.AuthServiceClie
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	offset, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
+	offset, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	limit, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
+	limit, err := apiutil.ReadNumQuery[uint64](r, limitKey, defLimit)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -105,7 +105,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	v, err := apiutil.ReadFloatQuery(r, valueKey, 0)
+	v, err := apiutil.ReadNumQuery[float64](r, valueKey, 0)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -130,12 +130,12 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	from, err := apiutil.ReadFloatQuery(r, fromKey, 0)
+	from, err := apiutil.ReadNumQuery[float64](r, fromKey, 0)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	to, err := apiutil.ReadFloatQuery(r, toKey, 0)
+	to, err := apiutil.ReadNumQuery[float64](r, toKey, 0)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}

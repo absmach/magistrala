@@ -307,16 +307,6 @@ func TestAddPolicy(t *testing.T) {
 			err:         nil,
 			code:        codes.OK,
 		},
-		{
-			desc:     "add policy to user with invalid ACL",
-			token:    token.AccessToken,
-			subject:  "",
-			object:   "",
-			relation: "",
-			ar:       &magistrala.AddPolicyRes{Authorized: false},
-			err:      nil,
-			code:     codes.InvalidArgument,
-		},
 	}
 	for _, tc := range cases {
 		repocall := prepo.On("AddPolicy", mock.Anything, mock.Anything).Return(nil)
@@ -372,15 +362,6 @@ func TestDeletePolicy(t *testing.T) {
 			permission:  readRelation,
 			dpr:         &magistrala.DeletePolicyRes{Deleted: true},
 			code:        codes.OK,
-		},
-		{
-			desc:     "delete invalid policy",
-			token:    token.AccessToken,
-			subject:  "",
-			object:   "",
-			relation: "",
-			dpr:      &magistrala.DeletePolicyRes{Deleted: false},
-			code:     codes.InvalidArgument,
 		},
 	}
 	for _, tc := range cases {

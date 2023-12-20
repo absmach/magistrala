@@ -27,16 +27,12 @@ jobs:
       - name: Run tests
         run: |
           make test
-          echo "mode: atomic" > coverage.txt
-          for f in ./coverage/*.out; do
-            tail -n +2 "$f" >> coverage.txt
-          done
-          go tool cover -html=coverage.txt -o coverage.html
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV }}
+          directory: ./coverage/
           name: codecov-umbrella
           verbose: true
 

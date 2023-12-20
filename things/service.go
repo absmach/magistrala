@@ -442,6 +442,55 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 	return nil
 }
 
+func (svc service) DeleteClient(ctx context.Context, token, id string) error {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return err
+	}
+	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
+		return err
+	}
+
+	// Remove from cache
+	if err := svc.clientCache.Remove(ctx, id); err != nil {
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	}
+
+	// Remove policy of groups
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.GroupType,
+		Object:      id,
+		ObjectType:  auth.ThingType,
+	}); err != nil {
+		return err
+	}
+
+	// Remove policy from domain
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.DomainType,
+		Object:      id,
+		ObjectType:  auth.ThingType,
+	}); err != nil {
+		return err
+	}
+
+	// Remove thing from database
+	if err := svc.clients.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	// Remove policy of users
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.UserType,
+		Object:      id,
+		ObjectType:  auth.ThingType,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (svc service) changeClientStatus(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
 	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.DeletePermission, auth.ThingType, client.ID)
 	if err != nil {

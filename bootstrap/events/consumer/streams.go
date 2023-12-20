@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/events"
 )
 
@@ -61,20 +60,8 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 }
 
 func decodeRemoveThing(event map[string]interface{}) removeEvent {
-	status := read(event, "status", "")
-	st, err := clients.ToStatus(status)
-	if err != nil {
-		return removeEvent{}
-	}
-	switch st {
-	case clients.EnabledStatus:
-		return removeEvent{}
-	case clients.DisabledStatus:
-		return removeEvent{
-			id: read(event, "id", ""),
-		}
-	default:
-		return removeEvent{}
+	return removeEvent{
+		id: read(event, "id", ""),
 	}
 }
 

@@ -365,3 +365,18 @@ func (req *thingUnshareRequest) validate() error {
 	}
 	return nil
 }
+
+type deleteClientReq struct {
+	token string
+	id    string
+}
+
+func (req deleteClientReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}

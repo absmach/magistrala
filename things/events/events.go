@@ -14,22 +14,23 @@ import (
 )
 
 const (
-	clientPrefix      = "thing."
-	clientCreate      = clientPrefix + "create"
-	clientUpdate      = clientPrefix + "update"
-	clientRemove      = clientPrefix + "remove"
-	clientView        = clientPrefix + "view"
-	clientViewPerms   = clientPrefix + "view_perms"
-	clientList        = clientPrefix + "list"
-	clientListByGroup = clientPrefix + "list_by_channel"
-	clientIdentify    = clientPrefix + "identify"
-	clientAuthorize   = clientPrefix + "authorize"
+	clientPrefix       = "thing."
+	clientCreate       = clientPrefix + "create"
+	clientUpdate       = clientPrefix + "update"
+	clientChangeStatus = clientPrefix + "change_status"
+	clientRemove       = clientPrefix + "remove"
+	clientView         = clientPrefix + "view"
+	clientViewPerms    = clientPrefix + "view_perms"
+	clientList         = clientPrefix + "list"
+	clientListByGroup  = clientPrefix + "list_by_channel"
+	clientIdentify     = clientPrefix + "identify"
+	clientAuthorize    = clientPrefix + "authorize"
 )
 
 var (
 	_ events.Event = (*createClientEvent)(nil)
 	_ events.Event = (*updateClientEvent)(nil)
-	_ events.Event = (*removeClientEvent)(nil)
+	_ events.Event = (*changeStatusClientEvent)(nil)
 	_ events.Event = (*viewClientEvent)(nil)
 	_ events.Event = (*viewClientPermsEvent)(nil)
 	_ events.Event = (*listClientEvent)(nil)
@@ -37,6 +38,7 @@ var (
 	_ events.Event = (*identifyClientEvent)(nil)
 	_ events.Event = (*authorizeClientEvent)(nil)
 	_ events.Event = (*shareClientEvent)(nil)
+	_ events.Event = (*removeClientEvent)(nil)
 )
 
 type createClientEvent struct {
@@ -125,16 +127,16 @@ func (uce updateClientEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
-type removeClientEvent struct {
+type changeStatusClientEvent struct {
 	id        string
 	status    string
 	updatedAt time.Time
 	updatedBy string
 }
 
-func (rce removeClientEvent) Encode() (map[string]interface{}, error) {
+func (rce changeStatusClientEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation":  clientRemove,
+		"operation":  clientChangeStatus,
 		"id":         rce.id,
 		"status":     rce.status,
 		"updated_at": rce.updatedAt,
@@ -378,5 +380,16 @@ func (sce shareClientEvent) Encode() (map[string]interface{}, error) {
 		"id":        sce.id,
 		"relation":  sce.relation,
 		"user_ids":  strings.Join(sce.userIDs, ","),
+	}, nil
+}
+
+type removeClientEvent struct {
+	id string
+}
+
+func (dce removeClientEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": clientRemove,
+		"id":        dce.id,
 	}, nil
 }

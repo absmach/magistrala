@@ -192,3 +192,15 @@ func (lm *loggingMiddleware) Unshare(ctx context.Context, token, id, relation st
 	}(time.Now())
 	return lm.svc.Unshare(ctx, token, id, relation, userids...)
 }
+
+func (lm *loggingMiddleware) DeleteClient(ctx context.Context, token, id string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method delete_client for thing id %s took %s to complete", id, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+	return lm.svc.DeleteClient(ctx, token, id)
+}

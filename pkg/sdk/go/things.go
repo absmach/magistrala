@@ -294,3 +294,9 @@ func (sdk mgSDK) ListThingUsers(thingID string, pm PageMetadata, token string) (
 
 	return up, nil
 }
+
+func (sdk mgSDK) DeleteThing(id, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, id)
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
+	return sdkerr
+}

@@ -216,7 +216,7 @@ func enableClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return deleteClientRes{Client: client}, nil
+		return changeClientStatusRes{Client: client}, nil
 	}
 }
 
@@ -232,7 +232,7 @@ func disableClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return deleteClientRes{Client: client}, nil
+		return changeClientStatusRes{Client: client}, nil
 	}
 }
 
@@ -399,5 +399,20 @@ func thingUnshareEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		return thingUnshareRes{}, nil
+	}
+}
+
+func deleteClientEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(deleteClientReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		if err := svc.DeleteClient(ctx, req.token, req.id); err != nil {
+			return nil, err
+		}
+
+		return deleteClientRes{}, nil
 	}
 }

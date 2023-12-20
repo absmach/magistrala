@@ -571,6 +571,26 @@ paths:
           description: Group does not exist.
         "500":
           $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete group for a group with the given id.
+      description: |
+        Delete group removes a group with the given id from repo
+        and removes all the policies related to this group.
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Group deleted.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to group id.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
   /groups/{groupID}/children:
     get:

@@ -22,6 +22,7 @@ var (
 	_ magistrala.Response = (*unassignUsersGroupsRes)(nil)
 	_ magistrala.Response = (*connectChannelThingRes)(nil)
 	_ magistrala.Response = (*disconnectChannelThingRes)(nil)
+	_ magistrala.Response = (*changeClientStatusRes)(nil)
 )
 
 type pageRes struct {
@@ -138,12 +139,26 @@ func (res viewMembersRes) Empty() bool {
 	return false
 }
 
-type deleteClientRes struct {
+type changeClientStatusRes struct {
 	mgclients.Client
 }
 
-func (res deleteClientRes) Code() int {
+func (res changeClientStatusRes) Code() int {
 	return http.StatusOK
+}
+
+func (res changeClientStatusRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res changeClientStatusRes) Empty() bool {
+	return false
+}
+
+type deleteClientRes struct{}
+
+func (res deleteClientRes) Code() int {
+	return http.StatusNoContent
 }
 
 func (res deleteClientRes) Headers() map[string]string {
@@ -151,7 +166,7 @@ func (res deleteClientRes) Headers() map[string]string {
 }
 
 func (res deleteClientRes) Empty() bool {
-	return false
+	return true
 }
 
 type assignUsersGroupsRes struct{}

@@ -162,7 +162,7 @@ func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mgcli
 		return cli, err
 	}
 
-	return es.delete(ctx, cli)
+	return es.changeStatus(ctx, cli)
 }
 
 func (es *eventStore) DisableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
@@ -171,11 +171,11 @@ func (es *eventStore) DisableClient(ctx context.Context, token, id string) (mgcl
 		return cli, err
 	}
 
-	return es.delete(ctx, cli)
+	return es.changeStatus(ctx, cli)
 }
 
-func (es *eventStore) delete(ctx context.Context, cli mgclients.Client) (mgclients.Client, error) {
-	event := removeClientEvent{
+func (es *eventStore) changeStatus(ctx context.Context, cli mgclients.Client) (mgclients.Client, error) {
+	event := changeStatusClientEvent{
 		id:        cli.ID,
 		updatedAt: cli.UpdatedAt,
 		updatedBy: cli.UpdatedBy,
@@ -250,4 +250,18 @@ func (es *eventStore) Unshare(ctx context.Context, token, id, relation string, u
 	}
 
 	return es.Publish(ctx, event)
+}
+
+func (es *eventStore) DeleteClient(ctx context.Context, token, id string) error {
+	if err := es.svc.DeleteClient(ctx, token, id); err != nil {
+		return err
+	}
+
+	event := removeClientEvent{id}
+
+	if err := es.Publish(ctx, event); err != nil {
+		return err
+	}
+
+	return nil
 }

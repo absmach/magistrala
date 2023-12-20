@@ -133,3 +133,10 @@ func (tm *tracingMiddleware) Unshare(ctx context.Context, token, id, relation st
 	defer span.End()
 	return tm.svc.Unshare(ctx, token, id, relation, userids...)
 }
+
+// DeleteClient traces the "DeleteClient" operation of the wrapped things.Service.
+func (tm *tracingMiddleware) DeleteClient(ctx context.Context, token, id string) error {
+	ctx, span := tm.tracer.Start(ctx, "delete_client", trace.WithAttributes(attribute.String("id", id)))
+	defer span.End()
+	return tm.svc.DeleteClient(ctx, token, id)
+}

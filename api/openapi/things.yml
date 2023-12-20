@@ -169,7 +169,26 @@ paths:
           description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
-
+    delete:
+      summary: Delete thing for a thing with the given id.
+      description: |
+        Delete thing removes a thing with the given id from repo
+        and removes all the policies related to this thing.
+      tags:
+        - Things
+      parameters:
+        - $ref: "#/components/parameters/ThingID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Thing deleted.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to thing id.
+        "500":
+          $ref: "#/components/responses/ServiceError"
   /things/{thingID}/tags:
     patch:
       summary: Updates tags the thing.
@@ -479,7 +498,7 @@ paths:
         - bearerAuth: []
       responses:
         "204":
-          $ref: "#/components/responses/ChannelDeleteRes"
+          description: Channel deleted.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -1770,9 +1789,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Channel"
-
-    ChannelDeleteRes:
-      description: Channel Deleted.
 
     ChannelPageRes:
       description: Data retrieved.

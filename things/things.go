@@ -57,6 +57,9 @@ type Service interface {
 
 	// Authorize used for AuthZ gRPC server implementation and Things authorization.
 	Authorize(ctx context.Context, req *magistrala.AuthorizeReq) (string, error)
+
+	// DeleteClient deletes client with given ID.
+	DeleteClient(ctx context.Context, token, id string) error
 }
 
 // Cache contains thing caching interface.

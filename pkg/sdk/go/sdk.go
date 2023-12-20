@@ -453,6 +453,13 @@ type SDK interface {
 	//  fmt.Println(users)
 	ListThingUsers(thingID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
+	// DeleteThing deletes a thing with the given id.
+	//
+	// example:
+	//  err := sdk.DeleteThing("thingID", "token")
+	//  fmt.Println(err)
+	DeleteThing(id, token string) errors.SDKError
+
 	// CreateGroup creates new group and returns its id.
 	//
 	// example:

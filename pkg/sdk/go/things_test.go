@@ -1276,3 +1276,46 @@ func TestShareThing(t *testing.T) {
 		repoCall3.Unset()
 	}
 }
+
+func TestDeleteThing(t *testing.T) {
+	ts, cRepo, _, auth, cache := setupThings()
+
+	defer ts.Close()
+
+	conf := sdk.Config{
+		ThingsURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	thing := sdk.Thing{
+		ID:          generateUUID(t),
+		Name:        "clientname",
+		Tags:        []string{"tag1", "tag2"},
+		Credentials: sdk.Credentials{Secret: generateUUID(t)},
+		Status:      mgclients.EnabledStatus.String(),
+	}
+
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, nil)
+	repoCall2 := cRepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	repoCall4 := cache.On("Remove", mock.Anything, thing.ID).Return(nil)
+	err := mgsdk.DeleteThing("wrongID", validToken)
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden), fmt.Sprintf("Delete thing with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+
+	repoCall = auth.On("DeletePolicy", mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
+	repoCall1 = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall2 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+	repoCall3 := cRepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	err = mgsdk.DeleteThing(thing.ID, validToken)
+	assert.Nil(t, err, fmt.Sprintf("Delete thing with correct id: expected %v got %v", nil, err))
+	ok := repoCall3.Parent.AssertCalled(t, "Delete", mock.Anything, thing.ID)
+	assert.True(t, ok, "Delete was not called on deleting thing with correct id")
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
+}

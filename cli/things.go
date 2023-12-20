@@ -82,6 +82,24 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
+		Use:   "delete <thing_id> <user_auth_token>",
+		Short: "Delete thing",
+		Long: "Delete thing by id\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli things delete <thing_id> $USERTOKEN - delete thing with <thing_id>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+			if err := sdk.DeleteThing(args[0], args[1]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+	{
 		Use:   "identify <thing_key>",
 		Short: "Identify thing",
 		Long: "Validates thing's key and returns its ID\n" +

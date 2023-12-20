@@ -141,3 +141,11 @@ func (ms *metricsMiddleware) Unshare(ctx context.Context, token, id, relation st
 	}(time.Now())
 	return ms.svc.Unshare(ctx, token, id, relation, userids...)
 }
+
+func (ms *metricsMiddleware) DeleteClient(ctx context.Context, token, id string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "delete_client").Add(1)
+		ms.latency.With("method", "delete_client").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.DeleteClient(ctx, token, id)
+}

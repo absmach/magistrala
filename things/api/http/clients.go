@@ -108,6 +108,13 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger mglog.Logger) http.Ha
 			api.EncodeResponse,
 			opts...,
 		), "unshare_thing").ServeHTTP)
+
+		r.Delete("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+			deleteClientEndpoint(svc),
+			decodeDeleteClientReq,
+			api.EncodeResponse,
+			opts...,
+		), "delete_thing").ServeHTTP)
 	})
 
 	// Ideal location: things service,  channels endpoint
@@ -372,6 +379,15 @@ func decodeThingUnshareRequest(_ context.Context, r *http.Request) (interface{},
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
+}
+
+func decodeDeleteClientReq(_ context.Context, r *http.Request) (interface{}, error) {
+	req := deleteClientReq{
+		token: apiutil.ExtractBearerToken(r),
+		id:    chi.URLParam(r, "thingID"),
 	}
 
 	return req, nil

@@ -131,8 +131,11 @@ func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
-
-	return svc.clients.RetrieveByID(ctx, id)
+	client, err := svc.clients.RetrieveByID(ctx, id)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+	return client, nil
 }
 
 func (svc service) ViewClientPerms(ctx context.Context, token, id string) ([]string, error) {
@@ -301,7 +304,11 @@ func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
 	}
-	return svc.clients.Update(ctx, client)
+	client, err = svc.clients.Update(ctx, client)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return client, nil
 }
 
 func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
@@ -316,7 +323,11 @@ func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgcli
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
 	}
-	return svc.clients.UpdateTags(ctx, client)
+	client, err = svc.clients.UpdateTags(ctx, client)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return client, nil
 }
 
 func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string) (mgclients.Client, error) {
@@ -334,7 +345,11 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string
 		UpdatedBy: userID,
 		Status:    mgclients.EnabledStatus,
 	}
-	return svc.clients.UpdateSecret(ctx, client)
+	client, err = svc.clients.UpdateSecret(ctx, client)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return client, nil
 }
 
 func (svc service) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
@@ -441,7 +456,12 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	}
 
 	client.UpdatedBy = userID
-	return svc.clients.ChangeStatus(ctx, client)
+
+	client, err = svc.clients.ChangeStatus(ctx, client)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return client, nil
 }
 
 func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string, pm mgclients.Page) (mgclients.MembersPage, error) {

@@ -133,7 +133,7 @@ func (repo ClientRepository) RetrieveByIdentity(ctx context.Context, identity st
 		if err == sql.ErrNoRows {
 			return clients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 		}
-		return clients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		return clients.Client{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
 
 	defer row.Close()

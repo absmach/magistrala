@@ -106,8 +106,11 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 			}
 		}
 	}()
-
-	return svc.clients.Save(ctx, cli)
+	client, err := svc.clients.Save(ctx, cli)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
+	return client, nil
 }
 
 func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
@@ -175,7 +178,11 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		return mgclients.ClientsPage{}, err
 	}
 	if err := svc.checkSuperAdmin(ctx, userID); err == nil {
-		return svc.clients.RetrieveAll(ctx, pm)
+		pg, err := svc.clients.RetrieveAll(ctx, pm)
+		if err != nil {
+			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+		}
+		return pg, err
 	}
 	role := mgclients.UserRole
 	p := mgclients.Page{
@@ -186,7 +193,11 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		Identity: pm.Identity,
 		Role:     &role,
 	}
-	return svc.clients.RetrieveAllBasicInfo(ctx, p)
+	pg, err := svc.clients.RetrieveAll(ctx, p)
+	if err != nil {
+		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+	return pg, nil
 }
 
 func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
@@ -209,7 +220,11 @@ func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients
 		UpdatedBy: tokenUserID,
 	}
 
-	return svc.clients.Update(ctx, client)
+	client, err = svc.clients.Update(ctx, client)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return client, nil
 }
 
 func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
@@ -230,8 +245,12 @@ func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgcli
 		UpdatedAt: time.Now(),
 		UpdatedBy: tokenUserID,
 	}
+	client, err = svc.clients.UpdateTags(ctx, client)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
 
-	return svc.clients.UpdateTags(ctx, client)
+	return client, nil
 }
 
 func (svc service) UpdateClientIdentity(ctx context.Context, token, clientID, identity string) (mgclients.Client, error) {
@@ -254,7 +273,11 @@ func (svc service) UpdateClientIdentity(ctx context.Context, token, clientID, id
 		UpdatedAt: time.Now(),
 		UpdatedBy: tokenUserID,
 	}
-	return svc.clients.UpdateIdentity(ctx, cli)
+	cli, err = svc.clients.UpdateIdentity(ctx, cli)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return cli, nil
 }
 
 func (svc service) GenerateResetToken(ctx context.Context, email, host string) error {
@@ -330,7 +353,12 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 	dbClient.UpdatedAt = time.Now()
 	dbClient.UpdatedBy = id
 
-	return svc.clients.UpdateSecret(ctx, dbClient)
+	dbClient, err = svc.clients.UpdateSecret(ctx, dbClient)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return dbClient, nil
 }
 
 func (svc service) SendPasswordReset(_ context.Context, host, email, user, token string) error {
@@ -412,7 +440,12 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 		return mgclients.Client{}, mgclients.ErrStatusAlreadyAssigned
 	}
 	client.UpdatedBy = tokenUserID
-	return svc.clients.ChangeStatus(ctx, client)
+
+	client, err = svc.clients.ChangeStatus(ctx, client)
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return client, err
 }
 
 func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {

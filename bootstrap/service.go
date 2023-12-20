@@ -172,8 +172,11 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-
-	return bs.configs.RetrieveByID(ctx, owner, id)
+	cfg, err := bs.configs.RetrieveByID(ctx, owner, id)
+	if err != nil {
+		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	return cfg, nil
 }
 
 func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config) error {
@@ -183,8 +186,10 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 	}
 
 	cfg.Owner = owner
-
-	return bs.configs.Update(ctx, cfg)
+	if err = bs.configs.Update(ctx, cfg); err != nil {
+		return errors.Wrap(errUpdateConnections, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) (Config, error) {
@@ -249,8 +254,10 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 			return ErrThings
 		}
 	}
-
-	return bs.configs.UpdateConnections(ctx, owner, id, channels, connections)
+	if err := bs.configs.UpdateConnections(ctx, owner, id, channels, connections); err != nil {
+		return errors.Wrap(errUpdateConnections, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
@@ -258,7 +265,6 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-
 	return bs.configs.RetrieveAll(ctx, owner, filter, offset, limit), nil
 }
 

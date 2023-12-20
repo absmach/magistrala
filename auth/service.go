@@ -143,7 +143,11 @@ func (svc service) RetrieveKey(ctx context.Context, token, id string) (Key, erro
 		return Key{}, errors.Wrap(errRetrieve, err)
 	}
 
-	return svc.keys.Retrieve(ctx, issuerID, id)
+	key, err := svc.keys.Retrieve(ctx, issuerID, id)
+	if err != nil {
+		return Key{}, errors.Wrap(errRetrieve, err)
+	}
+	return key, nil
 }
 
 func (svc service) Identify(ctx context.Context, token string) (Key, error) {
@@ -499,8 +503,12 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 			}
 		}
 	}()
+	dom, err := svc.domains.Save(ctx, d)
+	if err != nil {
+		return Domain{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
 
-	return svc.domains.Save(ctx, d)
+	return dom, nil
 }
 
 func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain, error) {
@@ -514,8 +522,11 @@ func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain
 	}); err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
-
-	return svc.domains.RetrieveByID(ctx, id)
+	dom, err := svc.domains.RetrieveByID(ctx, id)
+	if err != nil {
+		return Domain{}, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+	return dom, nil
 }
 
 func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id string) (Permissions, error) {
@@ -562,7 +573,12 @@ func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainR
 	}); err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
-	return svc.domains.Update(ctx, id, key.User, d)
+
+	dom, err := svc.domains.RetrieveByID(ctx, id)
+	if err != nil {
+		return Domain{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return dom, nil
 }
 
 func (svc service) ChangeDomainStatus(ctx context.Context, token, id string, d DomainReq) (Domain, error) {
@@ -580,7 +596,12 @@ func (svc service) ChangeDomainStatus(ctx context.Context, token, id string, d D
 	}); err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
-	return svc.domains.Update(ctx, id, key.User, d)
+
+	dom, err := svc.domains.Update(ctx, id, key.User, d)
+	if err != nil {
+		return Domain{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return dom, nil
 }
 
 func (svc service) ListDomains(ctx context.Context, token string, p Page) (DomainsPage, error) {
@@ -671,7 +692,10 @@ func (svc service) UnassignUsers(ctx context.Context, token, id string, userIds 
 		return err
 	}
 
-	return svc.removeDomainPolicies(ctx, id, relation, userIds...)
+	if err := svc.removeDomainPolicies(ctx, id, relation, userIds...); err != nil {
+		return errors.Wrap(errRemovePolicies, err)
+	}
+	return nil
 }
 
 // IMPROVEMENT NOTE: Take decision: Only Patform admin or both Patform and domain admins can see others users domain.
@@ -694,7 +718,11 @@ func (svc service) ListUserDomains(ctx context.Context, token, userID string, p 
 	} else {
 		p.SubjectID = res.User
 	}
-	return svc.domains.ListDomains(ctx, p)
+	dp, err := svc.domains.ListDomains(ctx, p)
+	if err != nil {
+		return DomainsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	return dp, nil
 }
 
 func (svc service) addDomainPolicies(ctx context.Context, domainID, relation string, userIDs ...string) (err error) {
@@ -728,7 +756,11 @@ func (svc service) addDomainPolicies(ctx context.Context, domainID, relation str
 			}
 		}
 	}()
-	return svc.domains.SavePolicies(ctx, pcs...)
+
+	if err = svc.domains.SavePolicies(ctx, pcs...); err != nil {
+		return errors.Wrap(errAddPolicies, err)
+	}
+	return nil
 }
 
 func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, relation string) (err error) {
@@ -759,13 +791,17 @@ func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, rel
 			}
 		}
 	}()
-	return svc.domains.SavePolicies(ctx, Policy{
+	err = svc.domains.SavePolicies(ctx, Policy{
 		SubjectType: UserType,
 		SubjectID:   userID,
 		Relation:    relation,
 		ObjectType:  DomainType,
 		ObjectID:    domainID,
 	})
+	if err != nil {
+		return errors.Wrap(errCreateDomainPolicy, err)
+	}
+	return err
 }
 
 func (svc service) createDomainPolicyRollback(ctx context.Context, userID, domainID, relation string) error {
@@ -827,8 +863,11 @@ func (svc service) removeDomainPolicies(ctx context.Context, domainID, relation 
 	if err := svc.agent.DeletePolicies(ctx, prs); err != nil {
 		return errors.Wrap(errRemovePolicies, err)
 	}
-
-	return svc.domains.DeletePolicies(ctx, pcs...)
+	err = svc.domains.DeletePolicies(ctx, pcs...)
+	if err != nil {
+		return errors.Wrap(errRemovePolicies, err)
+	}
+	return err
 }
 
 func EncodeDomainUserID(domainID, userID string) string {

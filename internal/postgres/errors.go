@@ -12,10 +12,12 @@ import (
 // Postgres error codes:
 // https://www.postgresql.org/docs/current/errcodes-appendix.html
 const (
-	errDuplicate  = "23505" // unique_violation
-	errTruncation = "22001" // string_data_right_truncation
-	errFK         = "23503" // foreign_key_violation
-	errInvalid    = "22P02" // invalid_text_representation
+	errDuplicate      = "23505" // unique_violation
+	errTruncation     = "22001" // string_data_right_truncation
+	errFK             = "23503" // foreign_key_violation
+	errInvalid        = "22P02" // invalid_text_representation
+	errUntranslatable = "22P05" // untranslatable_character
+	errInvalidChar    = "22021" // character_not_in_repertoire
 )
 
 func HandleError(wrapper, err error) error {
@@ -24,7 +26,7 @@ func HandleError(wrapper, err error) error {
 		switch pqErr.Code {
 		case errDuplicate:
 			return errors.Wrap(repoerr.ErrConflict, err)
-		case errInvalid, errTruncation:
+		case errInvalid, errInvalidChar, errTruncation, errUntranslatable:
 			return errors.Wrap(repoerr.ErrMalformedEntity, err)
 		case errFK:
 			return errors.Wrap(repoerr.ErrCreateEntity, err)

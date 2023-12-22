@@ -122,7 +122,7 @@ func enableDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		enable := clients.EnabledStatus
+		enable := auth.EnabledStatus
 		d := auth.DomainReq{
 			Status: &enable,
 		}
@@ -140,7 +140,7 @@ func disableDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		disable := clients.DisabledStatus
+		disable := auth.DisabledStatus
 		d := auth.DomainReq{
 			Status: &disable,
 		}

@@ -5,17 +5,96 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"strings"
 	"time"
 
+	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/clients"
 )
+
+// Status represents Domain status.
+type Status uint8
+
+// Possible Domain status values.
+const (
+	// EnabledStatus represents enabled Domain.
+	EnabledStatus Status = iota
+	// DisabledStatus represents disabled Domain.
+	DisabledStatus
+	// FreezeStatus represents domain is in freezed state.
+	FreezeStatus
+
+	// AllStatus is used for querying purposes to list Domains irrespective
+	// of their status - enabled, disabled, freezed, deleting. It is never stored in the
+	// database as the actual domain status and should always be the larger than freeze status
+	// value in this enumeration.
+	AllStatus
+)
+
+// String representation of the possible status values.
+const (
+	Disabled = "disabled"
+	Enabled  = "enabled"
+	Freezed  = "freezed"
+	All      = "all"
+	Unknown  = "unknown"
+)
+
+// ErrStatusAlreadyAssigned indicated that the client or group has already been assigned the status.
+var ErrStatusAlreadyAssigned = errors.New("status already assigned")
+
+// String converts client/group status to string literal.
+func (s Status) String() string {
+	switch s {
+	case DisabledStatus:
+		return Disabled
+	case EnabledStatus:
+		return Enabled
+	case AllStatus:
+		return All
+	case FreezeStatus:
+		return Freezed
+	default:
+		return Unknown
+	}
+}
+
+// ToStatus converts string value to a valid Domain status.
+func ToStatus(status string) (Status, error) {
+	switch status {
+	case "", Enabled:
+		return EnabledStatus, nil
+	case Disabled:
+		return DisabledStatus, nil
+	case Freezed:
+		return FreezeStatus, nil
+	case All:
+		return AllStatus, nil
+	}
+	return Status(0), apiutil.ErrInvalidStatus
+}
+
+// Custom Marshaller for Domains status.
+func (s Status) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+// Custom Unmarshaler for Domains status.
+func (s *Status) UnmarshalJSON(data []byte) error {
+	str := strings.Trim(string(data), "\"")
+	val, err := ToStatus(str)
+	*s = val
+	return err
+}
 
 type DomainReq struct {
 	Name     *string           `json:"name,omitempty"`
 	Metadata *clients.Metadata `json:"metadata,omitempty"`
 	Tags     *[]string         `json:"tags,omitempty"`
 	Alias    *string           `json:"alias,omitempty"`
-	Status   *clients.Status   `json:"status,omitempty"`
+	Status   *Status           `json:"status,omitempty"`
 }
 type Domain struct {
 	ID         string           `json:"id"`
@@ -23,7 +102,7 @@ type Domain struct {
 	Metadata   clients.Metadata `json:"metadata,omitempty"`
 	Tags       []string         `json:"tags,omitempty"`
 	Alias      string           `json:"alias,omitempty"`
-	Status     clients.Status   `json:"status"`
+	Status     Status           `json:"status"`
 	Permission string           `json:"permission,omitempty"`
 	CreatedBy  string           `json:"created_by,omitempty"`
 	CreatedAt  time.Time        `json:"created_at"`
@@ -41,7 +120,7 @@ type Page struct {
 	Metadata   clients.Metadata `json:"metadata,omitempty"`
 	Tag        string           `json:"tag,omitempty"`
 	Permission string           `json:"permission,omitempty"`
-	Status     clients.Status   `json:"status,omitempty"`
+	Status     Status           `json:"status,omitempty"`
 	ID         string           `json:"id,omitempty"`
 	IDs        []string         `json:"-"`
 	Identity   string           `json:"identity,omitempty"`

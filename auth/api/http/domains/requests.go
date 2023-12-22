@@ -4,8 +4,8 @@
 package domains
 
 import (
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mfclients "github.com/absmach/magistrala/pkg/clients"
 )
 
 type page struct {
@@ -17,7 +17,7 @@ type page struct {
 	metadata   map[string]interface{}
 	tag        string
 	permission string
-	status     mfclients.Status
+	status     auth.Status
 }
 
 type createDomainReq struct {

@@ -11,7 +11,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/postgres"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
@@ -191,9 +190,64 @@ func (svc service) Authorize(ctx context.Context, pr PolicyReq) error {
 		}
 		pr.Subject = key.Subject
 	}
+	if err := svc.checkPolicy(ctx, pr); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (svc service) checkPolicy(ctx context.Context, pr PolicyReq) error {
+	// Domain status is required for if user sent authorization request on things, channels, groups and domains
+	if pr.SubjectType == UserType && (pr.ObjectType == GroupType || pr.ObjectType == ThingType || pr.ObjectType == DomainType) {
+		domainID := pr.Domain
+		if domainID == "" {
+			if pr.ObjectType != DomainType {
+				return errors.ErrDomainAuthorization
+			}
+			domainID = pr.Object
+		}
+		if err := svc.checkDomain(ctx, pr.SubjectType, pr.Subject, domainID); err != nil {
+			return err
+		}
+	}
 	if err := svc.agent.CheckPolicy(ctx, pr); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
+	return nil
+}
+
+func (svc service) checkDomain(ctx context.Context, subjectType, subject, domainID string) error {
+	d, err := svc.domains.RetrieveByID(ctx, domainID)
+	if err != nil {
+		return errors.Wrap(errors.ErrUnidentified, err)
+	}
+
+	switch d.Status {
+	case EnabledStatus:
+	case DisabledStatus:
+		if err := svc.agent.CheckPolicy(ctx, PolicyReq{
+			Subject:     subject,
+			SubjectType: subjectType,
+			Permission:  AdminPermission,
+			Object:      domainID,
+			ObjectType:  DomainType,
+		}); err != nil {
+			return errors.ErrDomainAuthorization
+		}
+	case FreezeStatus:
+		if err := svc.agent.CheckPolicy(ctx, PolicyReq{
+			Subject:     subject,
+			SubjectType: subjectType,
+			Permission:  AdminPermission,
+			Object:      MagistralaObject,
+			ObjectType:  PlatformType,
+		}); err != nil {
+			return errors.ErrDomainAuthorization
+		}
+	default:
+		return errors.ErrDomainAuthorization
+	}
+
 	return nil
 }
 
@@ -487,7 +541,7 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 	}
 	d.ID = domainID
 
-	if d.Status != clients.DisabledStatus && d.Status != clients.EnabledStatus {
+	if d.Status != DisabledStatus && d.Status != EnabledStatus {
 		return Domain{}, svcerr.ErrInvalidStatus
 	}
 

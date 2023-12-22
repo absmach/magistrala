@@ -45,6 +45,7 @@ const (
 	defSvcHTTPPort = "9013"
 
 	thingsStream = "magistrala.things"
+	streamID     = "magistrala.bootstrap"
 )
 
 type config struct {
@@ -179,11 +180,12 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 
 	svc := bootstrap.New(authClient, repoConfig, sdk, []byte(cfg.EncKey))
 
-	var err error
-	svc, err = producer.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)
+	publisher, err := store.NewPublisher(ctx, cfg.ESURL, streamID)
 	if err != nil {
 		return nil, err
 	}
+
+	svc = producer.NewEventStoreMiddleware(svc, publisher)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

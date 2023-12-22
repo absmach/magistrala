@@ -22,6 +22,8 @@ type Event interface {
 }
 
 // Publisher specifies events publishing API.
+//
+//go:generate mockery --name Publisher --output=./mocks --filename publisher.go --quiet --note "Copyright (c) Abstract Machines"
 type Publisher interface {
 	// Publish publishes event to stream.
 	Publish(ctx context.Context, event Event) error
@@ -37,6 +39,8 @@ type EventHandler interface {
 }
 
 // Subscriber specifies event subscription API.
+//
+//go:generate mockery --name Subscriber --output=./mocks --filename subscriber.go --quiet --note "Copyright (c) Abstract Machines"
 type Subscriber interface {
 	// Subscribe subscribes to the event stream and consumes events.
 	Subscribe(ctx context.Context, handler EventHandler) error

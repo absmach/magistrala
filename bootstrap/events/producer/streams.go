@@ -8,10 +8,7 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/pkg/events"
-	"github.com/absmach/magistrala/pkg/events/store"
 )
-
-const streamID = "magistrala.bootstrap"
 
 var _ bootstrap.Service = (*eventStore)(nil)
 
@@ -22,16 +19,11 @@ type eventStore struct {
 
 // NewEventStoreMiddleware returns wrapper around bootstrap service that sends
 // events to event store.
-func NewEventStoreMiddleware(ctx context.Context, svc bootstrap.Service, url string) (bootstrap.Service, error) {
-	publisher, err := store.NewPublisher(ctx, url, streamID)
-	if err != nil {
-		return nil, err
-	}
-
+func NewEventStoreMiddleware(svc bootstrap.Service, publisher events.Publisher) bootstrap.Service {
 	return &eventStore{
 		svc:       svc,
 		Publisher: publisher,
-	}, nil
+	}
 }
 
 func (es *eventStore) Add(ctx context.Context, token string, cfg bootstrap.Config) (bootstrap.Config, error) {

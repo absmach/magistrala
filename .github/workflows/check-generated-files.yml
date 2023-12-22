@@ -48,6 +48,7 @@ jobs:
               - "auth/domains.go"
               - "auth/keys.go"
               - "auth/policies.go"
+              - "pkg/events/events.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -103,6 +104,8 @@ jobs:
           mv ./auth/mocks/authz.go ./auth/mocks/authz.go.tmp
           mv ./auth/mocks/domains.go ./auth/mocks/domains.go.tmp
           mv ./auth/mocks/keys.go ./auth/mocks/keys.go.tmp
+          mv ./pkg/events/mocks/publisher.go ./pkg/events/mocks/publisher.go.tmp
+          mv ./pkg/events/mocks/subscriber.go ./pkg/events/mocks/subscriber.go.tmp
 
           make mocks
 
@@ -127,3 +130,5 @@ jobs:
           check_mock_changes ./auth/mocks/authz.go "Auth Authz ./auth/mocks/authz.go"
           check_mock_changes ./auth/mocks/domains.go "Auth Domains ./auth/mocks/domains.go"
           check_mock_changes ./auth/mocks/keys.go "Auth Keys ./auth/mocks/keys.go"
+          check_mock_changes ./pkg/events/mocks/publisher.go "ES Publisher ./pkg/events/mocks/publisher.go"
+          check_mock_changes ./pkg/events/mocks/subscriber.go "EE Subscriber ./pkg/events/mocks/subscriber.go"

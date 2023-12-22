@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
@@ -56,9 +57,9 @@ type adapterService struct {
 }
 
 // New instantiates the WS adapter implementation.
-func New(auth magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(authClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	return &adapterService{
-		auth:   auth,
+		auth:   authClient,
 		pubsub: pubsub,
 	}
 }
@@ -68,7 +69,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 		return ErrUnauthorizedAccess
 	}
 
-	thingID, err := svc.authorize(ctx, thingKey, chanID, "subscribe")
+	thingID, err := svc.authorize(ctx, thingKey, chanID, auth.SubscribePermission)
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
@@ -96,12 +97,11 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 // and returns the thingID if it is.
 func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, action string) (string, error) {
 	ar := &magistrala.AuthorizeReq{
-		Domain:      "",
-		SubjectType: "thing",
+		SubjectType: auth.ThingType,
 		Permission:  action,
 		Subject:     thingKey,
 		Object:      chanID,
-		ObjectType:  "group",
+		ObjectType:  auth.GroupType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {

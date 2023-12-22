@@ -9,9 +9,9 @@ package coap
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
@@ -39,17 +39,15 @@ var _ Service = (*adapterService)(nil)
 
 // Observers is a map of maps,.
 type adapterService struct {
-	auth    magistrala.AuthzServiceClient
-	pubsub  messaging.PubSub
-	obsLock sync.Mutex
+	auth   magistrala.AuthzServiceClient
+	pubsub messaging.PubSub
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(auth magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(authClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	as := &adapterService{
-		auth:    auth,
-		pubsub:  pubsub,
-		obsLock: sync.Mutex{},
+		auth:   authClient,
+		pubsub: pubsub,
 	}
 
 	return as
@@ -57,12 +55,11 @@ func New(auth magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 
 func (svc *adapterService) Publish(ctx context.Context, key string, msg *messaging.Message) error {
 	ar := &magistrala.AuthorizeReq{
-		Domain:      "",
-		SubjectType: "thing",
-		Permission:  "publish",
+		SubjectType: auth.ThingType,
+		Permission:  auth.PublishPermission,
 		Subject:     key,
 		Object:      msg.Channel,
-		ObjectType:  "group",
+		ObjectType:  auth.GroupType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {
@@ -78,12 +75,11 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
 	ar := &magistrala.AuthorizeReq{
-		Domain:      "",
-		SubjectType: "thing",
-		Permission:  "subscribe",
+		SubjectType: auth.ThingType,
+		Permission:  auth.SubscribePermission,
 		Subject:     key,
 		Object:      chanID,
-		ObjectType:  "group",
+		ObjectType:  auth.GroupType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {
@@ -107,11 +103,11 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
 	ar := &magistrala.AuthorizeReq{
 		Domain:      "",
-		SubjectType: "thing",
-		Permission:  "subscribe",
+		SubjectType: auth.ThingType,
+		Permission:  auth.SubscribePermission,
 		Subject:     key,
 		Object:      chanID,
-		ObjectType:  "group",
+		ObjectType:  auth.GroupType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {

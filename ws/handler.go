@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -60,11 +61,11 @@ type handler struct {
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(pubsub messaging.PubSub, logger mglog.Logger, auth magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(pubsub messaging.PubSub, logger mglog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		logger: logger,
 		pubsub: pubsub,
-		auth:   auth,
+		auth:   authClient,
 	}
 }
 
@@ -93,7 +94,7 @@ func (h *handler) AuthPublish(ctx context.Context, topic *string, payload *[]byt
 		token = string(s.Password)
 	}
 
-	return h.authAccess(ctx, token, *topic, "publish")
+	return h.authAccess(ctx, token, *topic, auth.PublishPermission)
 }
 
 // AuthSubscribe is called on device publish,
@@ -116,7 +117,7 @@ func (h *handler) AuthSubscribe(ctx context.Context, topics *[]string) error {
 	}
 
 	for _, v := range *topics {
-		if err := h.authAccess(ctx, token, v, "subscribe"); err != nil {
+		if err := h.authAccess(ctx, token, v, auth.SubscribePermission); err != nil {
 			return err
 		}
 	}
@@ -165,12 +166,11 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	}
 
 	ar := &magistrala.AuthorizeReq{
-		Domain:      "",
-		SubjectType: "thing",
-		Permission:  "publish",
+		SubjectType: auth.ThingType,
+		Permission:  auth.PublishPermission,
 		Subject:     token,
 		Object:      chanID,
-		ObjectType:  "group",
+		ObjectType:  auth.GroupType,
 	}
 	res, err := h.auth.Authorize(ctx, ar)
 	if err != nil {
@@ -237,12 +237,11 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 	chanID := channelParts[1]
 
 	ar := &magistrala.AuthorizeReq{
-		Domain:      "",
-		SubjectType: "thing",
+		SubjectType: auth.ThingType,
 		Permission:  action,
 		Subject:     password,
 		Object:      chanID,
-		ObjectType:  "group",
+		ObjectType:  auth.GroupType,
 	}
 	res, err := h.auth.Authorize(ctx, ar)
 	if err != nil {

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -55,11 +56,11 @@ type handler struct {
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publisher messaging.Publisher, logger mglog.Logger, auth magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, logger mglog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		logger:    logger,
 		publisher: publisher,
-		auth:      auth,
+		auth:      authClient,
 	}
 }
 
@@ -146,10 +147,9 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	ar := &magistrala.AuthorizeReq{
 		Subject:     tok,
 		Object:      msg.Channel,
-		Domain:      "",
-		SubjectType: "thing",
-		Permission:  "publish",
-		ObjectType:  "group",
+		SubjectType: auth.ThingType,
+		Permission:  auth.PublishPermission,
+		ObjectType:  auth.GroupType,
 	}
 	res, err := h.auth.Authorize(ctx, ar)
 	if err != nil {

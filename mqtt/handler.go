@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt/events"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -62,12 +63,12 @@ type handler struct {
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publisher messaging.Publisher, es events.EventStore, logger mglog.Logger, auth magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, es events.EventStore, logger mglog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		es:        es,
 		logger:    logger,
 		publisher: publisher,
-		auth:      auth,
+		auth:      authClient,
 	}
 }
 
@@ -103,7 +104,7 @@ func (h *handler) AuthPublish(ctx context.Context, topic *string, payload *[]byt
 		return ErrClientNotInitialized
 	}
 
-	return h.authAccess(ctx, string(s.Password), *topic, "publish")
+	return h.authAccess(ctx, string(s.Password), *topic, auth.PublishPermission)
 }
 
 // AuthSubscribe is called on device subscribe,
@@ -118,7 +119,7 @@ func (h *handler) AuthSubscribe(ctx context.Context, topics *[]string) error {
 	}
 
 	for _, v := range *topics {
-		if err := h.authAccess(ctx, string(s.Password), v, "subscribe"); err != nil {
+		if err := h.authAccess(ctx, string(s.Password), v, auth.SubscribePermission); err != nil {
 			return err
 		}
 	}
@@ -223,12 +224,11 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 	chanID := channelParts[1]
 
 	ar := &magistrala.AuthorizeReq{
-		Domain:      "",
-		SubjectType: "thing",
+		SubjectType: auth.ThingType,
 		Permission:  action,
 		Subject:     password,
 		Object:      chanID,
-		ObjectType:  "group",
+		ObjectType:  auth.GroupType,
 	}
 	res, err := h.auth.Authorize(ctx, ar)
 	if err != nil {

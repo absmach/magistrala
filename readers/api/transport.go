@@ -44,6 +44,7 @@ const (
 	thingType           = "thing"
 	userType            = "user"
 	subscribePermission = "subscribe"
+	viewPermission      = "view"
 	groupType           = "group"
 )
 
@@ -226,7 +227,7 @@ func authorize(ctx context.Context, req listMessagesReq, uauth magistrala.AuthSe
 			SubjectType: userType,
 			SubjectKind: tokenKind,
 			Subject:     req.token,
-			Permission:  subscribePermission,
+			Permission:  viewPermission,
 			ObjectType:  groupType,
 			Object:      req.chanID,
 		}); err != nil {

@@ -66,10 +66,10 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newService() (auth.Service, *mocks.Keys) {
-	krepo := new(mocks.Keys)
+func newService() (auth.Service, *mocks.KeyRepository) {
+	krepo := new(mocks.KeyRepository)
 	prepo := new(mocks.PolicyAgent)
-	drepo := new(mocks.DomainsRepo)
+	drepo := new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))

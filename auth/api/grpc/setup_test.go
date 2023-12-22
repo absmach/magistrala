@@ -15,14 +15,14 @@ import (
 
 var (
 	svc   auth.Service
-	krepo *mocks.Keys
+	krepo *mocks.KeyRepository
 	prepo *mocks.PolicyAgent
 )
 
 func TestMain(m *testing.M) {
-	krepo = new(mocks.Keys)
+	krepo = new(mocks.KeyRepository)
 	prepo = new(mocks.PolicyAgent)
-	drepo := new(mocks.DomainsRepo)
+	drepo := new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))

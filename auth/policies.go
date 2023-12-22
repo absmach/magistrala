@@ -122,6 +122,8 @@ type Permissions []string
 
 // Authz represents a authorization service. It exposes
 // functionalities through `auth` to perform authorization.
+//
+//go:generate mockery --name Authz --output=./mocks --filename authz.go --quiet --note "Copyright (c) Abstract Machines"
 type Authz interface {
 	// Authorize checks authorization of the given `subject`. Basically,
 	// Authorize verifies that Is `subject` allowed to `relation` on
@@ -171,6 +173,8 @@ type Authz interface {
 // PolicyAgent facilitates the communication to authorization
 // services and implements Authz functionalities for certain
 // authorization services (e.g. ORY Keto).
+//
+//go:generate mockery --name PolicyAgent --output=./mocks --filename agent.go --quiet --note "Copyright (c) Abstract Machines"
 type PolicyAgent interface {
 	// CheckPolicy checks if the subject has a relation on the object.
 	// It returns a non-nil error if the subject has no relation on

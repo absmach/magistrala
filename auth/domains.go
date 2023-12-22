@@ -74,6 +74,9 @@ type Domains interface {
 	ListUserDomains(ctx context.Context, token string, userID string, page Page) (DomainsPage, error)
 }
 
+// DomainsRepository specifies Domain persistence API.
+//
+//go:generate mockery --name DomainsRepository --output=./mocks --filename domains.go --quiet --note "Copyright (c) Abstract Machines"
 type DomainsRepository interface {
 	// Save creates db insert transaction for the given domain.
 	Save(ctx context.Context, d Domain) (Domain, error)

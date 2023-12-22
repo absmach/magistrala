@@ -40,10 +40,10 @@ var (
 	ErrExpiry = errors.New("token is expired")
 )
 
-func newService() (auth.Service, *mocks.Keys, string, *mocks.PolicyAgent) {
-	krepo := new(mocks.Keys)
+func newService() (auth.Service, *mocks.KeyRepository, string, *mocks.PolicyAgent) {
+	krepo := new(mocks.KeyRepository)
 	prepo := new(mocks.PolicyAgent)
-	drepo := new(mocks.DomainsRepo)
+	drepo := new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))

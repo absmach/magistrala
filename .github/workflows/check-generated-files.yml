@@ -45,6 +45,9 @@ jobs:
               - "pkg/messaging/pubsub.go"
               - "things/postgres/clients.go"
               - "things/things.go"
+              - "auth/domains.go"
+              - "auth/keys.go"
+              - "auth/policies.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -96,6 +99,10 @@ jobs:
           mv ./pkg/messaging/mocks/pubsub.go ./pkg/messaging/mocks/pubsub.go.tmp
           mv ./things/mocks/repository.go ./things/mocks/repository.go.tmp
           mv ./things/mocks/cache.go ./things/mocks/cache.go.tmp
+          mv ./auth/mocks/agent.go ./auth/mocks/agent.go.tmp
+          mv ./auth/mocks/authz.go ./auth/mocks/authz.go.tmp
+          mv ./auth/mocks/domains.go ./auth/mocks/domains.go.tmp
+          mv ./auth/mocks/keys.go ./auth/mocks/keys.go.tmp
 
           make mocks
 
@@ -116,3 +123,7 @@ jobs:
           check_mock_changes ./pkg/messaging/mocks/pubsub.go "PubSub ./pkg/messaging/mocks/pubsub.go"
           check_mock_changes ./things/mocks/repository.go "Things Repository ./things/mocks/repository.go"
           check_mock_changes ./things/mocks/cache.go "Things Cache ./things/mocks/cache.go"
+          check_mock_changes ./auth/mocks/agent.go "Auth Agent ./auth/mocks/agent.go"
+          check_mock_changes ./auth/mocks/authz.go "Auth Authz ./auth/mocks/authz.go"
+          check_mock_changes ./auth/mocks/domains.go "Auth Domains ./auth/mocks/domains.go"
+          check_mock_changes ./auth/mocks/keys.go "Auth Keys ./auth/mocks/keys.go"

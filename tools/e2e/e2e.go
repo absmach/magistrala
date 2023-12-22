@@ -32,7 +32,7 @@ const (
 
 var (
 	namesgenerator = namegenerator.NewNameGenerator()
-	msgFormat      = `[{"bn":"demo", "bu":"V", "t": %d, "bver":5, "n":"voltage", "u":"V", "v":%d}]`
+	msgFormat      = `'[{"bn":"demo", "bu":"V", "t": %d, "bver":5, "n":"voltage", "u":"V", "v":%d}]'`
 )
 
 // Config - test configuration.

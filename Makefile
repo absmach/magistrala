@@ -22,6 +22,7 @@ DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
 DOCKER_PROFILE ?= $(MG_MQTT_BROKER_TYPE)_$(MG_MESSAGE_BROKER_TYPE)
+MOCKERY_VERSION=v2.38.0
 ifneq ($(MG_MESSAGE_BROKER_TYPE),)
     MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
 else
@@ -123,8 +124,9 @@ install:
 	done
 
 mocks:
-	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@latest
-	go generate ./...
+	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
+	@unset MOCKERY_VERSION && go generate ./...
+
 
 DIRS = consumers readers postgres internal opcua
 test: mocks

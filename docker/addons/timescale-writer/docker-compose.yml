@@ -25,6 +25,8 @@ services:
       POSTGRES_PASSWORD: ${MG_TIMESCALE_PASS}
       POSTGRES_USER: ${MG_TIMESCALE_USER}
       POSTGRES_DB: ${MG_TIMESCALE_NAME}
+    ports:
+      - 5433:5432
     networks:
       - magistrala-base-net
     volumes:

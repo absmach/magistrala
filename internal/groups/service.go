@@ -47,7 +47,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		return groups.Group{}, err
 	}
 	// If domain is disabled , then this authorization will fail for all non-admin domain users
-	if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
+	if _, err := svc.authorizeKind(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
 		return groups.Group{}, err
 	}
 	groupID, err := svc.idProvider.ID()
@@ -224,7 +224,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 				gm.PageMeta.OwnerID = res.GetDomainId()
 			default:
 				// If domain is disabled , then this authorization will fail for all non-admin domain users
-				if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
+				if _, err := svc.authorizeKind(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
 					return groups.Page{}, err
 				}
 				ids, err = svc.listAllGroupsOfUserID(ctx, res.GetId(), gm.Permission)

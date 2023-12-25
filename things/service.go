@@ -71,7 +71,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 		return []mgclients.Client{}, err
 	}
 	// If domain is disabled , then this authorization will fail for all non-admin domain users
-	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
+	if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
 		return []mgclients.Client{}, err
 	}
 
@@ -132,7 +132,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 }
 
 func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.Client, error) {
-	_, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.ViewPermission, auth.ThingType, id)
+	_, err := svc.authorize(ctx, "", auth.UserType, auth.TokenKind, token, auth.ViewPermission, auth.ThingType, id)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -170,7 +170,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 	switch {
 	case (reqUserID != "" && reqUserID != res.GetUserId()):
 		// Check user is admin of domain, if yes then show listing on domain context
-		if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.DomainType, res.GetDomainId()); err != nil {
+		if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.DomainType, res.GetDomainId()); err != nil {
 			return mgclients.ClientsPage{}, err
 		}
 		rtids, err := svc.listClientIDs(ctx, auth.EncodeDomainUserID(res.GetDomainId(), reqUserID), pm.Permission)
@@ -191,7 +191,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 			pm.Owner = res.GetDomainId()
 		default:
 			// If domain is disabled , then this authorization will fail for all non-admin domain users
-			if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
+			if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
 				return mgclients.ClientsPage{}, err
 			}
 			ids, err = svc.listClientIDs(ctx, res.GetId(), pm.Permission)
@@ -301,7 +301,7 @@ func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
 }
 
 func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
+	userID, err := svc.authorize(ctx, "", auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -321,7 +321,7 @@ func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients
 }
 
 func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
+	userID, err := svc.authorize(ctx, "", auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, cli.ID)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -340,7 +340,7 @@ func (svc service) UpdateClientTags(ctx context.Context, token string, cli mgcli
 }
 
 func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, id)
+	userID, err := svc.authorize(ctx, "", auth.UserType, auth.TokenKind, token, auth.EditPermission, auth.ThingType, id)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -398,7 +398,7 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 	if err != nil {
 		return err
 	}
-	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
+	if _, err := svc.authorize(ctx, user.GetDomainId(), auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
@@ -427,7 +427,7 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 	if err != nil {
 		return nil
 	}
-	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
+	if _, err := svc.authorize(ctx, user.GetDomainId(), auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
@@ -456,7 +456,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
+	if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return err
 	}
 
@@ -501,7 +501,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 }
 
 func (svc service) changeClientStatus(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
-	userID, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, auth.DeletePermission, auth.ThingType, client.ID)
+	userID, err := svc.authorize(ctx, "", auth.UserType, auth.TokenKind, token, auth.DeletePermission, auth.ThingType, client.ID)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -527,7 +527,7 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	if err != nil {
 		return mgclients.MembersPage{}, err
 	}
-	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), pm.Permission, auth.GroupType, groupID); err != nil {
+	if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), pm.Permission, auth.GroupType, groupID); err != nil {
 		return mgclients.MembersPage{}, err
 	}
 
@@ -598,8 +598,9 @@ func (svc service) identify(ctx context.Context, token string) (*magistrala.Iden
 	return res, nil
 }
 
-func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, perm, objType, obj string) (string, error) {
+func (svc *service) authorize(ctx context.Context, domainID, subjType, subjKind, subj, perm, objType, obj string) (string, error) {
 	req := &magistrala.AuthorizeReq{
+		Domain:      domainID,
 		SubjectType: subjType,
 		SubjectKind: subjKind,
 		Subject:     subj,

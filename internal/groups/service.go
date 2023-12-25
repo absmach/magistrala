@@ -139,7 +139,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 	}
 	switch memberKind {
 	case auth.ThingsKind:
-		if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, memberID); err != nil {
+		if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, memberID); err != nil {
 			return groups.Page{}, err
 		}
 		cids, err := svc.auth.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
@@ -156,7 +156,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			return groups.Page{}, err
 		}
 	case auth.GroupsKind:
-		if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), gm.Permission, auth.GroupType, memberID); err != nil {
+		if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), gm.Permission, auth.GroupType, memberID); err != nil {
 			return groups.Page{}, err
 		}
 
@@ -174,7 +174,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			return groups.Page{}, err
 		}
 	case auth.ChannelsKind:
-		if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, memberID); err != nil {
+		if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, memberID); err != nil {
 			return groups.Page{}, err
 		}
 		gids, err := svc.auth.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
@@ -194,7 +194,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 	case auth.UsersKind:
 		switch {
 		case memberID != "" && res.GetUserId() != memberID:
-			if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.DomainType, res.GetDomainId()); err != nil {
+			if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.DomainType, res.GetDomainId()); err != nil {
 				return groups.Page{}, err
 			}
 			gids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
@@ -397,7 +397,7 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 	if err != nil {
 		return err
 	}
-	if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.EditPermission, auth.GroupType, groupID); err != nil {
+	if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.EditPermission, auth.GroupType, groupID); err != nil {
 		return err
 	}
 
@@ -548,7 +548,7 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 	if err != nil {
 		return err
 	}
-	if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.EditPermission, auth.GroupType, groupID); err != nil {
+	if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.EditPermission, auth.GroupType, groupID); err != nil {
 		return err
 	}
 
@@ -606,7 +606,7 @@ func (svc service) DeleteGroup(ctx context.Context, token, groupID string) error
 	if err != nil {
 		return err
 	}
-	if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.GroupType, groupID); err != nil {
+	if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.GroupType, groupID); err != nil {
 		return err
 	}
 
@@ -731,8 +731,9 @@ func (svc service) authorize(ctx context.Context, subjectType, subject, permissi
 	return res.GetId(), nil
 }
 
-func (svc service) authorizeKind(ctx context.Context, subjectType, subjectKind, subject, permission, objectType, object string) (string, error) {
+func (svc service) authorizeKind(ctx context.Context, domainID, subjectType, subjectKind, subject, permission, objectType, object string) (string, error) {
 	req := &magistrala.AuthorizeReq{
+		Domain:      domainID,
 		SubjectType: subjectType,
 		SubjectKind: subjectKind,
 		Subject:     subject,

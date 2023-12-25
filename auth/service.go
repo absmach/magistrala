@@ -189,6 +189,7 @@ func (svc service) Authorize(ctx context.Context, pr PolicyReq) error {
 			return svcerr.ErrAuthentication
 		}
 		pr.Subject = key.Subject
+		pr.Domain = key.Domain
 	}
 	if err := svc.checkPolicy(ctx, pr); err != nil {
 		return err

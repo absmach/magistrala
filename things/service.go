@@ -70,6 +70,11 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 	if err != nil {
 		return []mgclients.Client{}, err
 	}
+	// If domain is disabled , then this authorization will fail for all non-admin domain users
+	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
+		return []mgclients.Client{}, err
+	}
+
 	var clients []mgclients.Client
 	for _, c := range cls {
 		if c.ID == "" {
@@ -185,6 +190,10 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 			}
 			pm.Owner = res.GetDomainId()
 		default:
+			// If domain is disabled , then this authorization will fail for all non-admin domain users
+			if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
+				return mgclients.ClientsPage{}, err
+			}
 			ids, err = svc.listClientIDs(ctx, res.GetId(), pm.Permission)
 			if err != nil {
 				return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrNotFound, err)

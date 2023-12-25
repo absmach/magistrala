@@ -46,6 +46,10 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 	if err != nil {
 		return groups.Group{}, err
 	}
+	// If domain is disabled , then this authorization will fail for all non-admin domain users
+	if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
+		return groups.Group{}, err
+	}
 	groupID, err := svc.idProvider.ID()
 	if err != nil {
 		return groups.Group{}, err
@@ -58,7 +62,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 	g.CreatedAt = time.Now()
 	g.Owner = res.GetDomainId()
 	if g.Parent != "" {
-		_, err := svc.authorize(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, g.Parent)
+		_, err := svc.authorizeToken(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, g.Parent)
 		if err != nil {
 			return groups.Group{}, errors.Wrap(errParentUnAuthz, err)
 		}
@@ -107,7 +111,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 }
 
 func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
-	_, err := svc.authorize(ctx, auth.UserType, token, auth.ViewPermission, auth.GroupType, id)
+	_, err := svc.authorizeToken(ctx, auth.UserType, token, auth.ViewPermission, auth.GroupType, id)
 	if err != nil {
 		return groups.Group{}, err
 	}
@@ -219,6 +223,10 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 				}
 				gm.PageMeta.OwnerID = res.GetDomainId()
 			default:
+				// If domain is disabled , then this authorization will fail for all non-admin domain users
+				if _, err := svc.authorizeKind(ctx, auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
+					return groups.Page{}, err
+				}
 				ids, err = svc.listAllGroupsOfUserID(ctx, res.GetId(), gm.Permission)
 				if err != nil {
 					return groups.Page{}, err
@@ -294,7 +302,7 @@ func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
 
 // IMPROVEMENT NOTE: remove this function and all its related auxiliary function, ListMembers are moved to respective service.
 func (svc service) ListMembers(ctx context.Context, token, groupID, permission, memberKind string) (groups.MembersPage, error) {
-	_, err := svc.authorize(ctx, auth.UserType, token, auth.ViewPermission, auth.GroupType, groupID)
+	_, err := svc.authorizeToken(ctx, auth.UserType, token, auth.ViewPermission, auth.GroupType, groupID)
 	if err != nil {
 		return groups.MembersPage{}, err
 	}
@@ -355,7 +363,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID, permission, 
 }
 
 func (svc service) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
-	id, err := svc.authorize(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, g.ID)
+	id, err := svc.authorizeToken(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, g.ID)
 	if err != nil {
 		return groups.Group{}, err
 	}
@@ -685,7 +693,7 @@ func (svc service) listAllGroupsOfUserID(ctx context.Context, userID, permission
 }
 
 func (svc service) changeGroupStatus(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
-	id, err := svc.authorize(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, group.ID)
+	id, err := svc.authorizeToken(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, group.ID)
 	if err != nil {
 		return groups.Group{}, err
 	}
@@ -712,7 +720,7 @@ func (svc service) identify(ctx context.Context, token string) (*magistrala.Iden
 	return res, nil
 }
 
-func (svc service) authorize(ctx context.Context, subjectType, subject, permission, objectType, object string) (string, error) {
+func (svc service) authorizeToken(ctx context.Context, subjectType, subject, permission, objectType, object string) (string, error) {
 	req := &magistrala.AuthorizeReq{
 		SubjectType: subjectType,
 		SubjectKind: auth.TokenKind,

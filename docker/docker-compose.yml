@@ -35,7 +35,7 @@ services:
       - magistrala-base-net
     ports:
       - "8080:8080"
-      - "9090:9090"
+      - "9091:9090"
       - "50051:50051"
     environment:
       SPICEDB_GRPC_PRESHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}

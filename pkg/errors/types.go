@@ -50,4 +50,7 @@ var (
 
 	// ErrUnidentified indicates unidentified error.
 	ErrUnidentified = errors.New("unidentified error")
+
+	// ErrEmptyPath indicates empty file path.
+	ErrEmptyPath = errors.New("empty file path")
 )

@@ -13,6 +13,8 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
+var errFailedToReadConfig = errors.New("failed to read config file")
+
 // ServiceConf represents service config.
 type ServiceConf struct {
 	Port           string `toml:"port"          env:"MG_PROVISION_HTTP_PORT"            envDefault:"9016"`
@@ -71,26 +73,32 @@ type Config struct {
 
 // Save - store config in a file.
 func Save(c Config, file string) error {
+	if file == "" {
+		return errors.ErrEmptyPath
+	}
+
 	b, err := toml.Marshal(c)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Error reading config file: %s", err))
+		return errors.Wrap(errFailedToReadConfig, err)
 	}
 	if err := os.WriteFile(file, b, 0o644); err != nil {
-		return errors.New(fmt.Sprintf("Error writing toml: %s", err))
+		return fmt.Errorf("Error writing toml: %w", err)
 	}
+
 	return nil
 }
 
 // Read - retrieve config from a file.
 func Read(file string) (Config, error) {
 	data, err := os.ReadFile(file)
-	c := Config{}
 	if err != nil {
-		return c, errors.New(fmt.Sprintf("Error reading config file: %s", err))
+		return Config{}, errors.Wrap(errFailedToReadConfig, err)
 	}
 
+	var c Config
 	if err := toml.Unmarshal(data, &c); err != nil {
-		return Config{}, errors.New(fmt.Sprintf("Error unmarshaling toml: %s", err))
+		return Config{}, fmt.Errorf("Error unmarshaling toml: %w", err)
 	}
+
 	return c, nil
 }

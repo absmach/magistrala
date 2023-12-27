@@ -12,7 +12,6 @@ jobs:
   build-and-push:
     name: Build and Push
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -27,6 +26,7 @@ jobs:
       - name: Run tests
         run: |
           make test
+        continue-on-error: true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -49,10 +49,12 @@ jobs:
       - name: Compile check for rabbitmq
         run: |
           MG_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
+        continue-on-error: true
 
       - name: Compile check for redis
         run: |
           MG_ES_TYPE=redis make mqtt
+        continue-on-error: true
 
       - name: Build and push Dockers
         run: |

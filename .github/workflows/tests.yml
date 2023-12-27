@@ -58,26 +58,44 @@ jobs:
         uses: dorny/paths-filter@v2
         id: changes
         with:
+          base: main
           filters: |
+            workflow:
+              - ".github/workflows/tests.yml"
+
+            auth:
+              - "auth/**"
+              - "cmd/auth/**"
+              - "auth.proto"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "pkg/ulid/**"
+              - "pkg/uuid/**"
+
             bootstrap:
               - "bootstrap/**"
               - "cmd/bootstrap/**"
-              - "things/policies/postgres/polices.go"
-              - "things/policies/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "auth/**"
+              - "pkg/sdk/**"
+              - "pkg/events/**"
 
             certs:
               - "certs/**"
               - "cmd/certs/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "auth/**"
+              - "pkg/sdk/**"
 
             coap:
               - "coap/**"
               - "cmd/coap/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "things/**"
+              - "pkg/messaging/**"
 
             consumers:
               - "consumers/**"
@@ -88,16 +106,21 @@ jobs:
               - "cmd/timescale-writer/**"
               - "cmd/smpp-notifier/**"
               - "cmd/smtp-notifier/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "auth/**"
+              - "pkg/ulid/**"
+              - "pkg/uuid/**"
+              - "pkg/messaging/**"
 
             http:
               - "http/**"
               - "cmd/http/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "things/**"
+              - "pkg/messaging/**"
+              - "logger/**"
 
             internal:
               - "internal/**"
@@ -105,13 +128,15 @@ jobs:
             invitations:
               - "invitations/**"
               - "cmd/invitations/**"
-              - "auth.proto"
               - "auth.pb.go"
               - "auth_grpc.pb.go"
+              - "auth/**"
+              - "pkg/sdk/**"
               
             lora:
               - "lora/**"
               - "cmd/lora/**"
+              - "pkg/messaging/**"
               
             logger:
               - "logger/**"
@@ -119,16 +144,17 @@ jobs:
             mqtt:
               - "mqtt/**"
               - "cmd/mqtt/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "things/**"
+              - "pkg/messaging/**"
+              - "logger/**"
+              - "pkg/events/**"
 
             opcua:
               - "opcua/**"
               - "cmd/opcua/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "logger/**"
 
             pkg-clients:
               - "pkg/clients/**"
@@ -145,6 +171,19 @@ jobs:
 
             pkg-sdk:
               - "pkg/sdk/**"
+              - "pkg/clients/**"
+              - "pkg/errors/**"
+              - "auth/**"
+              - "bootstrap/**"
+              - "certs/**"
+              - "consumers/**"
+              - "http/**"
+              - "invitations/**"
+              - "provision/**"
+              - "readers/**"
+              - "things/**"
+              - "twins/**"
+              - "users/**"
 
             pkg-transformers:
               - "pkg/transformers/**"
@@ -158,6 +197,8 @@ jobs:
             provision:
               - "provision/**"
               - "cmd/provision/**"
+              - "logger/**"
+              - "pkg/sdk/**"
 
             readers:
               - "readers/**"
@@ -166,162 +207,183 @@ jobs:
               - "cmd/mongodb-reader/**"
               - "cmd/postgres-reader/**"
               - "cmd/timescale-reader/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "things/**"
+              - "auth/**"
 
             things:
               - "things/**"
               - "cmd/things/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "auth/**"
+              - "pkg/clients/**"
+              - "pkg/ulid/**"
+              - "pkg/uuid/**"
+              - "pkg/events/**"
 
             twins:
               - "twins/**"
               - "cmd/twins/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "auth/**"
+              - "pkg/messaging/**"
+              - "pkg/ulid/**"
+              - "pkg/uuid/**"
+              - "logger/**"
 
             users:
               - "users/**"
               - "cmd/users/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "auth/**"
+              - "pkg/clients/**"
+              - "pkg/ulid/**"
+              - "pkg/uuid/**"
+              - "pkg/events/**"
 
             ws:
               - "ws/**"
               - "cmd/ws/**"
-              - "things/api/grpc/**"
-              - "auth/service.go"
-              - "auth/api/grpc/client.go"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "things/**"
+              - "pkg/messaging/**"
 
       - name: Create coverage directory
         run: |
           mkdir coverage
 
+      - name: Run auth tests
+        if: steps.changes.outputs.auth == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/auth.out ./auth/...
+
       - name: Run bootstrap tests
-        if: steps.changes.outputs.bootstrap == 'true'
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/bootstrap.out ./bootstrap/...
 
       - name: Run certs tests
-        if: steps.changes.outputs.certs == 'true'
+        if: steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/certs.out ./certs/...
 
       - name: Run CoAP tests
-        if: steps.changes.outputs.coap == 'true'
+        if: steps.changes.outputs.coap == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/coap.out ./coap/...
 
       - name: Run consumers tests
-        if: steps.changes.outputs.consumers == 'true'
+        if: steps.changes.outputs.consumers == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/consumers.out ./consumers/...
 
       - name: Run HTTP tests
-        if: steps.changes.outputs.http == 'true'
+        if: steps.changes.outputs.http == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/http.out ./http/...
 
       - name: Run internal tests
-        if: steps.changes.outputs.internal == 'true'
+        if: steps.changes.outputs.internal == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/internal.out ./internal/...
 
       - name: Run invitations tests
-        if: steps.changes.outputs.invitations == 'true'
+        if: steps.changes.outputs.invitations == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/invitations.out ./invitations/...
 
       - name: Run logger tests
-        if: steps.changes.outputs.logger == 'true'
+        if: steps.changes.outputs.logger == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/logger.out ./logger/...
 
       - name: Run LoRa tests
-        if: steps.changes.outputs.lora == 'true'
+        if: steps.changes.outputs.lora == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/lora.out ./lora/...
 
       - name: Run MQTT tests
-        if: steps.changes.outputs.mqtt == 'true'
+        if: steps.changes.outputs.mqtt == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/mqtt.out ./mqtt/...
 
       - name: Run OPC-UA tests
-        if: steps.changes.outputs.opcua == 'true'
+        if: steps.changes.outputs.opcua == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/opcua.out ./opcua/...
 
       - name: Run pkg clients tests
-        if: steps.changes.outputs.pkg-clients == 'true'
+        if: steps.changes.outputs.pkg-clients == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-clients.out ./pkg/clients/...
 
       - name: Run pkg errors tests
-        if: steps.changes.outputs.pkg-errors == 'true'
+        if: steps.changes.outputs.pkg-errors == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-errors.out ./pkg/errors/...
 
       - name: Run pkg events tests
-        if: steps.changes.outputs.pkg-events == 'true'
+        if: steps.changes.outputs.pkg-events == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-events.out ./pkg/events/...
 
       - name: Run pkg messaging tests
-        if: steps.changes.outputs.pkg-messaging == 'true'
+        if: steps.changes.outputs.pkg-messaging == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-messaging.out ./pkg/messaging/...
 
       - name: Run pkg sdk tests
-        if: steps.changes.outputs.pkg-sdk == 'true'
+        if: steps.changes.outputs.pkg-sdk == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-sdk.out ./pkg/sdk/...
 
       - name: Run pkg transformers tests
-        if: steps.changes.outputs.pkg-transformers == 'true'
+        if: steps.changes.outputs.pkg-transformers == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-transformers.out ./pkg/transformers/...
 
       - name: Run pkg ulid tests
-        if: steps.changes.outputs.pkg-ulid == 'true'
+        if: steps.changes.outputs.pkg-ulid == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-ulid.out ./pkg/ulid/...
 
       - name: Run pkg uuid tests
-        if: steps.changes.outputs.pkg-uuid == 'true'
+        if: steps.changes.outputs.pkg-uuid == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-uuid.out ./pkg/uuid/...
 
       - name: Run provision tests
-        if: steps.changes.outputs.provision == 'true'
+        if: steps.changes.outputs.provision == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/provision.out ./provision/...
 
       - name: Run readers tests
-        if: steps.changes.outputs.readers == 'true'
+        if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/readers.out ./readers/...
 
       - name: Run things tests
-        if: steps.changes.outputs.things == 'true'
+        if: steps.changes.outputs.things == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/things.out ./things/...
 
       - name: Run twins tests
-        if: steps.changes.outputs.twins == 'true'
+        if: steps.changes.outputs.twins == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/twins.out ./twins/...
 
       - name: Run users tests
-        if: steps.changes.outputs.users == 'true'
+        if: steps.changes.outputs.users == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/users.out ./users/...
 
       - name: Run WebSocket tests
-        if: steps.changes.outputs.ws == 'true'
+        if: steps.changes.outputs.ws == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/ws.out ./ws/...
 

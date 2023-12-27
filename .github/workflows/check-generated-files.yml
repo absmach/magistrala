@@ -31,7 +31,7 @@ jobs:
           base: main
           filters: |
             proto:
-              # - ".github/workflows/check-generated-files.yml"
+              - ".github/workflows/check-generated-files.yml"
               - "auth.proto"
               - "auth/*.pb.go"
               - "pkg/messaging/message.proto"

@@ -46,7 +46,6 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-        continue-on-error: true
 
       - name: Compile check for rabbitmq
         run: |

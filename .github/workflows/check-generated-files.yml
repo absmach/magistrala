@@ -41,6 +41,7 @@ jobs:
               - ".github/workflows/check-generated-files.yml"
               - "pkg/sdk/go/sdk.go"
               - "users/postgres/clients.go"
+              - "users/clients.go"
               - "pkg/clients/clients.go"
               - "pkg/messaging/pubsub.go"
               - "things/postgres/clients.go"
@@ -97,6 +98,7 @@ jobs:
 
           mv ./pkg/sdk/mocks/sdk.go ./pkg/sdk/mocks/sdk.go.tmp
           mv ./users/mocks/repository.go ./users/mocks/repository.go.tmp
+          mv ./users/mocks/service.go ./users/mocks/service.go.tmp
           mv ./pkg/messaging/mocks/pubsub.go ./pkg/messaging/mocks/pubsub.go.tmp
           mv ./things/mocks/repository.go ./things/mocks/repository.go.tmp
           mv ./things/mocks/cache.go ./things/mocks/cache.go.tmp
@@ -123,6 +125,7 @@ jobs:
 
           check_mock_changes ./pkg/sdk/mocks/sdk.go "SDK ./pkg/sdk/mocks/sdk.go"
           check_mock_changes ./users/mocks/repository.go "Users Repository ./users/mocks/repository.go"
+          check_mock_changes ./users/mocks/service.go "Users Service ./users/mocks/service.go"
           check_mock_changes ./pkg/messaging/mocks/pubsub.go "PubSub ./pkg/messaging/mocks/pubsub.go"
           check_mock_changes ./things/mocks/repository.go "Things Repository ./things/mocks/repository.go"
           check_mock_changes ./things/mocks/cache.go "Things Cache ./things/mocks/cache.go"

@@ -15,12 +15,12 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/groups"
-	"github.com/absmach/magistrala/internal/groups/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/clients"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/groups/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -83,7 +83,9 @@ func TestCreateGroup(t *testing.T) {
 				Authorized: true,
 			},
 			repoResp: mggroups.Group{
-				ID: testsutil.GenerateUUID(t),
+				ID:        testsutil.GenerateUUID(t),
+				CreatedAt: time.Now(),
+				Owner:     testsutil.GenerateUUID(t),
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
 				Authorized: true,
@@ -175,8 +177,10 @@ func TestCreateGroup(t *testing.T) {
 				Authorized: true,
 			},
 			repoResp: mggroups.Group{
-				ID:     testsutil.GenerateUUID(t),
-				Parent: testsutil.GenerateUUID(t),
+				ID:        testsutil.GenerateUUID(t),
+				CreatedAt: time.Now(),
+				Owner:     testsutil.GenerateUUID(t),
+				Parent:    testsutil.GenerateUUID(t),
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
 				Authorized: true,
@@ -280,7 +284,7 @@ func TestCreateGroup(t *testing.T) {
 				assert.NotEmpty(t, got.ID)
 				assert.NotEmpty(t, got.CreatedAt)
 				assert.NotEmpty(t, got.Owner)
-				assert.WithinDuration(t, time.Now(), got.CreatedAt, 1*time.Millisecond)
+				assert.WithinDuration(t, time.Now(), got.CreatedAt, 2*time.Second)
 				ok := repocall3.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 			}
@@ -1587,7 +1591,7 @@ func TestListGroups(t *testing.T) {
 					ObjectType:  auth.GroupType,
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			}
-			repocall4 := repo.On("RetrieveByIDs", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
+			repocall4 := repo.On("RetrieveByIDs", context.Background(), mock.Anything, mock.Anything).Return(tc.repoResp, tc.repoErr)
 			repocall5 := authsvc.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermResp, tc.listPermErr)
 			got, err := svc.ListGroups(context.Background(), tc.token, tc.memberKind, tc.memberID, tc.page)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))

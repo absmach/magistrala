@@ -66,6 +66,8 @@ type Page struct {
 }
 
 // Repository specifies a group persistence API.
+//
+//go:generate mockery --name Repository --output=./mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines" --unroll-variadic=false
 type Repository interface {
 	// Save group.
 	Save(ctx context.Context, g Group) (Group, error)

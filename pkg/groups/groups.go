@@ -10,12 +10,8 @@ import (
 	"github.com/absmach/magistrala/pkg/clients"
 )
 
-const (
-	// MaxLevel represents the maximum group hierarchy level.
-	MaxLevel = uint64(5)
-	// MinLevel represents the minimum group hierarchy level.
-	MinLevel = uint64(0)
-)
+// MaxLevel represents the maximum group hierarchy level.
+const MaxLevel = uint64(5)
 
 // Group represents the group of Clients.
 // Indicates a level in tree hierarchy. Root node is level 1.
@@ -97,6 +93,7 @@ type Repository interface {
 	Delete(ctx context.Context, groupID string) error
 }
 
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines" --unroll-variadic=false
 type Service interface {
 	// CreateGroup creates new  group.
 	CreateGroup(ctx context.Context, token, kind string, g Group) (Group, error)

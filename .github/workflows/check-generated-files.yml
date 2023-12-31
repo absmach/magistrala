@@ -110,6 +110,7 @@ jobs:
           mv ./pkg/events/mocks/publisher.go ./pkg/events/mocks/publisher.go.tmp
           mv ./pkg/events/mocks/subscriber.go ./pkg/events/mocks/subscriber.go.tmp
           mv ./pkg/groups/mocks/repository.go ./pkg/groups/mocks/repository.go.tmp
+          mv ./pkg/groups/mocks/service.go ./pkg/groups/mocks/service.go.tmp
 
           make mocks
 
@@ -138,3 +139,4 @@ jobs:
           check_mock_changes ./pkg/events/mocks/publisher.go "ES Publisher ./pkg/events/mocks/publisher.go"
           check_mock_changes ./pkg/events/mocks/subscriber.go "EE Subscriber ./pkg/events/mocks/subscriber.go"
           check_mock_changes ./pkg/groups/mocks/repository.go "Groups Repository ./pkg/groups/mocks/repository.go"
+          check_mock_changes ./pkg/groups/mocks/service.go "Groups Service ./pkg/groups/mocks/service.go"

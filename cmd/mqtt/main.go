@@ -44,6 +44,7 @@ const (
 
 type config struct {
 	LogLevel              string        `env:"MG_MQTT_ADAPTER_LOG_LEVEL"                    envDefault:"info"`
+	MQTTBrokerType        string        `env:"MG_MQTT_BROKER_TYPE"                          envDefault:""`
 	MQTTPort              string        `env:"MG_MQTT_ADAPTER_MQTT_PORT"                    envDefault:"1883"`
 	MQTTTargetHost        string        `env:"MG_MQTT_ADAPTER_MQTT_TARGET_HOST"             envDefault:"localhost"`
 	MQTTTargetPort        string        `env:"MG_MQTT_ADAPTER_MQTT_TARGET_PORT"             envDefault:"1883"`
@@ -177,7 +178,11 @@ func main() {
 
 	logger.Info("Successfully connected to things grpc server " + authHandler.Secure())
 
-	h := mqtt.NewHandler(np, es, logger, authClient)
+	pubAsProtoMsg := false
+	if cfg.MQTTBrokerType == "nats" {
+		pubAsProtoMsg = true
+	}
+	h := mqtt.NewHandler(np, es, logger, authClient, pubAsProtoMsg)
 	h = handler.NewTracing(tracer, h)
 
 	if cfg.SendTelemetry {

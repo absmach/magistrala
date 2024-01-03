@@ -18,6 +18,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/mainflux/mproxy/pkg/session"
+	"google.golang.org/protobuf/proto"
 )
 
 var _ session.Handler = (*handler)(nil)
@@ -56,19 +57,21 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 
 // Event implements events.Event interface.
 type handler struct {
-	publisher messaging.Publisher
-	auth      magistrala.AuthzServiceClient
-	logger    mglog.Logger
-	es        events.EventStore
+	publisher     messaging.Publisher
+	auth          magistrala.AuthzServiceClient
+	logger        mglog.Logger
+	es            events.EventStore
+	pubAsProtoMsg bool
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publisher messaging.Publisher, es events.EventStore, logger mglog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, es events.EventStore, logger mglog.Logger, authClient magistrala.AuthzServiceClient, pubAsProtoMsg bool) session.Handler {
 	return &handler{
-		es:        es,
-		logger:    logger,
-		publisher: publisher,
-		auth:      authClient,
+		es:            es,
+		logger:        logger,
+		publisher:     publisher,
+		auth:          authClient,
+		pubAsProtoMsg: pubAsProtoMsg,
 	}
 }
 
@@ -104,7 +107,43 @@ func (h *handler) AuthPublish(ctx context.Context, topic *string, payload *[]byt
 		return ErrClientNotInitialized
 	}
 
-	return h.authAccess(ctx, string(s.Password), *topic, auth.PublishPermission)
+	if err := h.authAccess(ctx, string(s.Password), *topic, auth.PublishPermission); err != nil {
+		return err
+	}
+
+	if h.pubAsProtoMsg {
+		channelParts := channelRegExp.FindStringSubmatch(*topic)
+		if len(channelParts) < 2 {
+			return errors.Wrap(ErrFailedPublish, ErrMalformedTopic)
+		}
+
+		chanID := channelParts[1]
+		subtopic := channelParts[2]
+
+		subtopic, err := parseSubtopic(subtopic)
+		if err != nil {
+			return errors.Wrap(ErrFailedParseSubtopic, err)
+		}
+
+		pay := *payload
+		msg := messaging.Message{
+			Protocol:  protocol,
+			Channel:   chanID,
+			Subtopic:  subtopic,
+			Publisher: s.Username,
+			Payload:   pay,
+			Created:   time.Now().UnixNano(),
+		}
+
+		newPayload, err := proto.Marshal(&msg)
+		if err != nil {
+			return errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+
+		*payload = newPayload
+	}
+
+	return nil
 }
 
 // AuthSubscribe is called on device subscribe,
@@ -147,30 +186,32 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 
-	channelParts := channelRegExp.FindStringSubmatch(*topic)
-	if len(channelParts) < 2 {
-		return errors.Wrap(ErrFailedPublish, ErrMalformedTopic)
-	}
+	if !h.pubAsProtoMsg {
+		channelParts := channelRegExp.FindStringSubmatch(*topic)
+		if len(channelParts) < 2 {
+			return errors.Wrap(ErrFailedPublish, ErrMalformedTopic)
+		}
 
-	chanID := channelParts[1]
-	subtopic := channelParts[2]
+		chanID := channelParts[1]
+		subtopic := channelParts[2]
 
-	subtopic, err := parseSubtopic(subtopic)
-	if err != nil {
-		return errors.Wrap(ErrFailedParseSubtopic, err)
-	}
+		subtopic, err := parseSubtopic(subtopic)
+		if err != nil {
+			return errors.Wrap(ErrFailedParseSubtopic, err)
+		}
 
-	msg := messaging.Message{
-		Protocol:  protocol,
-		Channel:   chanID,
-		Subtopic:  subtopic,
-		Publisher: s.Username,
-		Payload:   *payload,
-		Created:   time.Now().UnixNano(),
-	}
+		msg := messaging.Message{
+			Protocol:  protocol,
+			Channel:   chanID,
+			Subtopic:  subtopic,
+			Publisher: s.Username,
+			Payload:   *payload,
+			Created:   time.Now().UnixNano(),
+		}
 
-	if err := h.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
-		return errors.Wrap(ErrFailedPublishToMsgBroker, err)
+		if err := h.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
+			return errors.Wrap(ErrFailedPublishToMsgBroker, err)
+		}
 	}
 
 	return nil

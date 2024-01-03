@@ -11,7 +11,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
-	mgsenml "github.com/mainflux/senml"
+	mgsenml "github.com/absmach/senml"
 	"github.com/stretchr/testify/assert"
 )
 

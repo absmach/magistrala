@@ -25,10 +25,10 @@ import (
 	"github.com/absmach/magistrala/ws"
 	"github.com/absmach/magistrala/ws/api"
 	"github.com/absmach/magistrala/ws/tracing"
+	"github.com/absmach/mproxy/pkg/session"
+	"github.com/absmach/mproxy/pkg/websockets"
 	"github.com/caarlos0/env/v10"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mproxy/pkg/session"
-	"github.com/mainflux/mproxy/pkg/websockets"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )

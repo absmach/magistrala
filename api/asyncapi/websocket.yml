@@ -5,7 +5,7 @@ asyncapi: 2.6.0
 id: 'https://github.com/absmach/magistrala/blob/master/api/asyncapi/websocket.yml'
 info:
   title: Magistrala WebSocket adapter
-  description: WebSocket API for sending messages through communication channels
+  description: WebSocket adapter provides a WebSocket API for sending messages through communication channels. WebSocket adapter uses [mProxy](https://github.com/absmach/mproxy) for proxying traffic between client and MQTT broker.
   version: '1.0.0'
   contact:
     name: Magistrala Team

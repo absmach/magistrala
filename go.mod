@@ -4,6 +4,8 @@ go 1.21
 
 require (
 	github.com/0x6flab/namegenerator v1.1.0
+	github.com/absmach/mproxy v0.3.1-0.20231221215510-0ffbc4fc2337
+	github.com/absmach/senml v1.0.5
 	github.com/authzed/authzed-go v0.10.1
 	github.com/authzed/grpcutil v0.0.0-20230908193239-4286bb1d6403
 	github.com/caarlos0/env/v10 v10.0.0
@@ -31,8 +33,6 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lestrrat-go/jwx/v2 v2.0.16
 	github.com/mainflux/callhome v0.0.0-20230920140432-33c5663382ce
-	github.com/mainflux/mproxy v0.3.1-0.20231022160500-0e0db9e1642c
-	github.com/mainflux/senml v1.5.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nats-io/nats.go v1.31.0
 	github.com/oklog/ulid/v2 v2.1.0

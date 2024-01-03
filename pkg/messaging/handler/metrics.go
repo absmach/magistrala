@@ -9,8 +9,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/mproxy/pkg/session"
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mproxy/pkg/session"
 )
 
 var _ session.Handler = (*metricsMiddleware)(nil)

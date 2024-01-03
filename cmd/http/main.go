@@ -26,10 +26,10 @@ import (
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/messaging/handler"
 	"github.com/absmach/magistrala/pkg/uuid"
+	mproxy "github.com/absmach/mproxy/pkg/http"
+	"github.com/absmach/mproxy/pkg/session"
 	"github.com/caarlos0/env/v10"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	mproxy "github.com/mainflux/mproxy/pkg/http"
-	"github.com/mainflux/mproxy/pkg/session"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )

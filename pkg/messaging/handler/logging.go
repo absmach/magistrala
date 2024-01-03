@@ -11,7 +11,7 @@ import (
 	"time"
 
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/mainflux/mproxy/pkg/session"
+	"github.com/absmach/mproxy/pkg/session"
 )
 
 var _ session.Handler = (*loggingMiddleware)(nil)

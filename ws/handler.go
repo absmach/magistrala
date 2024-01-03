@@ -17,7 +17,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/mainflux/mproxy/pkg/session"
+	"github.com/absmach/mproxy/pkg/session"
 )
 
 var _ session.Handler = (*handler)(nil)

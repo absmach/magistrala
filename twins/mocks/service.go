@@ -12,7 +12,7 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/twins"
-	"github.com/mainflux/senml"
+	"github.com/absmach/senml"
 )
 
 const publisher = "twins"

@@ -80,6 +80,10 @@ github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWX
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
+github.com/absmach/mproxy v0.3.1-0.20231221215510-0ffbc4fc2337 h1:OW2WIn094hQCwrkXZ2KHgoOzsKAwqPaxZvRZ94VTc5U=
+github.com/absmach/mproxy v0.3.1-0.20231221215510-0ffbc4fc2337/go.mod h1:HmXsnuSWIN0OKrcscIxBzDO/GRjvqYxUTnd6vpuo+MQ=
+github.com/absmach/senml v1.0.5 h1:zNPRYpGr2Wsb8brAusz8DIfFqemy1a2dNbmMnegY3GE=
+github.com/absmach/senml v1.0.5/go.mod h1:NDEjk3O4V4YYu9Bs2/+t/AZ/F+0wu05ikgecp+/FsSU=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
 github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
@@ -788,11 +792,8 @@ github.com/mainflux/mproxy v0.1.5/go.mod h1:MBLtv/RvhT8QsmXz4g3GxkRaP8PqlVqBWeqv
 github.com/mainflux/mproxy v0.1.8/go.mod h1:NnhrUDytvV4pCI5LDuet86/WrymrUaX0/x1tlUHTKhU=
 github.com/mainflux/mproxy v0.2.1-0.20200603122422-b08e1fa2cf5c/go.mod h1:lFD56bDgNTslCLoTlZfo2DyQbkQOnoxEXmbE4VumRm4=
 github.com/mainflux/mproxy v0.2.2/go.mod h1:+T8h6ZupYPl6Lx9A0hqpcUQtcLyOBdzm/lfkjvPfGXo=
-github.com/mainflux/mproxy v0.3.1-0.20231022160500-0e0db9e1642c h1:iF14azUs+lEzWPgVe6+lPqSjKGuN0d66cCFd2Cxt9Mo=
-github.com/mainflux/mproxy v0.3.1-0.20231022160500-0e0db9e1642c/go.mod h1:NruAIEwk3udRzb8ZOrbA77Zo0eix3W8pTGOA8E6hvpg=
 github.com/mainflux/senml v1.0.0/go.mod h1:g9i8pj4WMs29KkUpXivbe/PP0qJd1kt3b1CF77S8A3s=
 github.com/mainflux/senml v1.0.1/go.mod h1:SMX76mM5yenjLVjZOM27+njCGkP+AA64O46nRQiBRlE=
-github.com/mainflux/senml v1.5.0 h1:GAd1y1eMohfa6sVYcr2iQfVfkkh9l/q7B1TWF5L68xs=
 github.com/mainflux/senml v1.5.0/go.mod h1:SMX76mM5yenjLVjZOM27+njCGkP+AA64O46nRQiBRlE=
 github.com/markbates/errx v1.1.0 h1:QDFeR+UP95dO12JgW+tgi2UVfo0V8YBHiUIOaeBPiEI=
 github.com/markbates/errx v1.1.0/go.mod h1:PLa46Oex9KNbVDZhKel8v1OT7hD5JZ2eI7AHhA0wswc=

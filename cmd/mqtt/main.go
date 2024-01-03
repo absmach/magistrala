@@ -28,12 +28,12 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging/handler"
 	mqttpub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	"github.com/absmach/magistrala/pkg/uuid"
+	mp "github.com/absmach/mproxy/pkg/mqtt"
+	"github.com/absmach/mproxy/pkg/mqtt/websocket"
+	"github.com/absmach/mproxy/pkg/session"
 	"github.com/caarlos0/env/v10"
 	"github.com/cenkalti/backoff/v4"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	mp "github.com/mainflux/mproxy/pkg/mqtt"
-	"github.com/mainflux/mproxy/pkg/mqtt/websocket"
-	"github.com/mainflux/mproxy/pkg/session"
 	"golang.org/x/sync/errgroup"
 )
 

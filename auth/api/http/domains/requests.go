@@ -141,6 +141,23 @@ func (req disableDomainReq) validate() error {
 	return nil
 }
 
+type freezeDomainReq struct {
+	token    string
+	domainID string
+}
+
+func (req freezeDomainReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}
+
 type assignUsersReq struct {
 	token    string
 	domainID string

@@ -142,6 +142,20 @@ func (res disableDomainRes) Empty() bool {
 	return true
 }
 
+type freezeDomainRes struct{}
+
+func (res freezeDomainRes) Code() int {
+	return http.StatusOK
+}
+
+func (res freezeDomainRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res freezeDomainRes) Empty() bool {
+	return true
+}
+
 type assignUsersRes struct{}
 
 func (res assignUsersRes) Code() int {

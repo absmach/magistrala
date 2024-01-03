@@ -92,6 +92,14 @@ func decodeDisableDomainRequest(_ context.Context, r *http.Request) (interface{}
 	return req, nil
 }
 
+func decodeFreezeDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := freezeDomainReq{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}
+	return req, nil
+}
+
 func decodeAssignUsersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)

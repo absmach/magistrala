@@ -151,6 +151,24 @@ func disableDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
+func freezeDomainEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(freezeDomainReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		freeze := auth.FreezeStatus
+		d := auth.DomainReq{
+			Status: &freeze,
+		}
+		if _, err := svc.ChangeDomainStatus(ctx, req.token, req.domainID, d); err != nil {
+			return nil, err
+		}
+		return freezeDomainRes{}, nil
+	}
+}
+
 func assignDomainUsersEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignUsersReq)

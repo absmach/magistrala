@@ -14,13 +14,13 @@ import (
 
 const WrongID = "wrongID"
 
-var _ magistrala.AuthzServiceClient = (*Service)(nil)
+var _ magistrala.AuthzServiceClient = (*ThingAuthzService)(nil)
 
-type Service struct {
+type ThingAuthzService struct {
 	mock.Mock
 }
 
-func (m *Service) Authorize(ctx context.Context, in *magistrala.AuthorizeReq, opts ...grpc.CallOption) (*magistrala.AuthorizeRes, error) {
+func (m *ThingAuthzService) Authorize(ctx context.Context, in *magistrala.AuthorizeReq, opts ...grpc.CallOption) (*magistrala.AuthorizeRes, error) {
 	ret := m.Called(ctx, in)
 	if in.GetSubject() == WrongID || in.GetSubject() == "" {
 		return &magistrala.AuthorizeRes{}, svcerr.ErrAuthorization

@@ -101,6 +101,7 @@ jobs:
           mv ./users/mocks/service.go ./users/mocks/service.go.tmp
           mv ./pkg/messaging/mocks/pubsub.go ./pkg/messaging/mocks/pubsub.go.tmp
           mv ./things/mocks/repository.go ./things/mocks/repository.go.tmp
+          mv ./things/mocks/service.go ./things/mocks/service.go.tmp
           mv ./things/mocks/cache.go ./things/mocks/cache.go.tmp
           mv ./auth/mocks/agent.go ./auth/mocks/agent.go.tmp
           mv ./auth/mocks/authz.go ./auth/mocks/authz.go.tmp
@@ -128,6 +129,7 @@ jobs:
           check_mock_changes ./users/mocks/service.go "Users Service ./users/mocks/service.go"
           check_mock_changes ./pkg/messaging/mocks/pubsub.go "PubSub ./pkg/messaging/mocks/pubsub.go"
           check_mock_changes ./things/mocks/repository.go "Things Repository ./things/mocks/repository.go"
+          check_mock_changes ./things/mocks/service.go "Things Service ./things/mocks/service.go"
           check_mock_changes ./things/mocks/cache.go "Things Cache ./things/mocks/cache.go"
           check_mock_changes ./auth/mocks/agent.go "Auth Agent ./auth/mocks/agent.go"
           check_mock_changes ./auth/mocks/authz.go "Auth Authz ./auth/mocks/authz.go"

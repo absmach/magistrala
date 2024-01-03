@@ -12,6 +12,8 @@ import (
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
+//
+//go:generate mockery --name Service --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// CreateThings creates new client. In case of the failed registration, a
 	// non-nil error value is returned.

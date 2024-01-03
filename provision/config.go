@@ -27,6 +27,7 @@ type ServiceConf struct {
 	HTTPPort       string `toml:"http_port"     env:"MG_PROVISION_HTTP_PORT"            envDefault:"9016"`
 	MgUser         string `toml:"mg_user"       env:"MG_PROVISION_USER"                 envDefault:"test@example.com"`
 	MgPass         string `toml:"mg_pass"       env:"MG_PROVISION_PASS"                 envDefault:"test"`
+	MgDomainID     string `toml:"mg_domain_id"  env:"MG_PROVISION_DOMAIN_ID"            envDefault:""`
 	MgAPIKey       string `toml:"mg_api_key"    env:"MG_PROVISION_API_KEY"              envDefault:""`
 	MgBSURL        string `toml:"mg_bs_url"     env:"MG_PROVISION_BS_SVC_URL"           envDefault:"http://localhost:9000/things/configs"`
 	MgWhiteListURL string `toml:"mg_white_list" env:"MG_PROVISION_BS_SVC_WHITELIST_URL" envDefault:"http://localhost:9000/things/state"`

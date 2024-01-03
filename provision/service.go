@@ -95,16 +95,15 @@ func New(cfg Config, mgsdk sdk.SDK, logger mglog.Logger) Service {
 
 // Mapping retrieves current configuration.
 func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
-	userFilter := sdk.PageMetadata{
-		Identity: "",
-		Offset:   uint64(offset),
-		Limit:    uint64(limit),
-		Metadata: make(map[string]interface{}),
+	pm := sdk.PageMetadata{
+		Offset: uint64(offset),
+		Limit:  uint64(limit),
 	}
 
-	if _, err := ps.sdk.Users(userFilter, token); err != nil {
+	if _, err := ps.sdk.Users(pm, token); err != nil {
 		return map[string]interface{}{}, errors.Wrap(ErrUnauthorized, err)
 	}
+
 	return ps.conf.Bootstrap.Content, nil
 }
 
@@ -287,6 +286,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	u := sdk.Login{
 		Identity: ps.conf.Server.MgUser,
 		Secret:   ps.conf.Server.MgPass,
+		DomainID: ps.conf.Server.MgDomainID,
 	}
 	tkn, err := ps.sdk.CreateToken(u)
 	if err != nil {

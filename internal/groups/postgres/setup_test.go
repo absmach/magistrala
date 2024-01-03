@@ -12,8 +12,8 @@ import (
 	"time"
 
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	"github.com/absmach/magistrala/internal/postgres"
-	upostgres "github.com/absmach/magistrala/users/postgres"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -76,7 +76,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	if db, err = pgclient.Setup(dbConfig, *upostgres.Migration()); err != nil {
+	if db, err = pgclient.Setup(dbConfig, *gpostgres.Migration()); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 

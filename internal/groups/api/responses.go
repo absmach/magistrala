@@ -12,8 +12,6 @@ import (
 )
 
 var (
-	_ magistrala.Response = (*viewMembershipRes)(nil)
-	_ magistrala.Response = (*membershipPageRes)(nil)
 	_ magistrala.Response = (*createGroupRes)(nil)
 	_ magistrala.Response = (*groupPageRes)(nil)
 	_ magistrala.Response = (*changeStatusRes)(nil)
@@ -22,39 +20,6 @@ var (
 	_ magistrala.Response = (*assignRes)(nil)
 	_ magistrala.Response = (*unassignRes)(nil)
 )
-
-type viewMembershipRes struct {
-	groups.Group `json:",inline"`
-}
-
-func (res viewMembershipRes) Code() int {
-	return http.StatusOK
-}
-
-func (res viewMembershipRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res viewMembershipRes) Empty() bool {
-	return false
-}
-
-type membershipPageRes struct {
-	pageRes
-	Members []groups.Member `json:"members"`
-}
-
-func (res membershipPageRes) Code() int {
-	return http.StatusOK
-}
-
-func (res membershipPageRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res membershipPageRes) Empty() bool {
-	return false
-}
 
 type viewGroupRes struct {
 	groups.Group `json:",inline"`
@@ -171,10 +136,16 @@ func (res changeStatusRes) Empty() bool {
 	return false
 }
 
-type assignRes struct{}
+type assignRes struct {
+	assigned bool
+}
 
 func (res assignRes) Code() int {
-	return http.StatusCreated
+	if res.assigned {
+		return http.StatusCreated
+	}
+
+	return http.StatusBadRequest
 }
 
 func (res assignRes) Headers() map[string]string {
@@ -185,10 +156,16 @@ func (res assignRes) Empty() bool {
 	return true
 }
 
-type unassignRes struct{}
+type unassignRes struct {
+	unassigned bool
+}
 
 func (res unassignRes) Code() int {
-	return http.StatusNoContent
+	if res.unassigned {
+		return http.StatusCreated
+	}
+
+	return http.StatusBadRequest
 }
 
 func (res unassignRes) Headers() map[string]string {
@@ -216,10 +193,16 @@ func (res listMembersRes) Empty() bool {
 	return false
 }
 
-type deleteGroupRes struct{}
+type deleteGroupRes struct {
+	deleted bool
+}
 
 func (res deleteGroupRes) Code() int {
-	return http.StatusNoContent
+	if res.deleted {
+		return http.StatusNoContent
+	}
+
+	return http.StatusBadRequest
 }
 
 func (res deleteGroupRes) Headers() map[string]string {

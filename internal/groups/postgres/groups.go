@@ -98,7 +98,7 @@ func (repo groupRepository) Update(ctx context.Context, g mggroups.Group) (mggro
 }
 
 func (repo groupRepository) ChangeStatus(ctx context.Context, group mggroups.Group) (mggroups.Group, error) {
-	qc := `UPDATE groups SET status = :status WHERE id = :id
+	qc := `UPDATE groups SET status = :status, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
 	RETURNING id, name, description, owner_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status`
 
 	dbg, err := toDBGroup(group)
@@ -109,7 +109,6 @@ func (repo groupRepository) ChangeStatus(ctx context.Context, group mggroups.Gro
 	if err != nil {
 		return mggroups.Group{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
-
 	defer row.Close()
 	if ok := row.Next(); !ok {
 		return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
@@ -132,17 +131,15 @@ func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggrou
 
 	row, err := repo.db.NamedQueryContext(ctx, q, dbg)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, err)
-		}
 		return mggroups.Group{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
-
 	defer row.Close()
-	row.Next()
+
 	dbg = dbGroup{}
-	if err := row.StructScan(&dbg); err != nil {
-		return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, err)
+	if row.Next() {
+		if err := row.StructScan(&dbg); err != nil {
+			return mggroups.Group{}, errors.Wrap(repoerr.ErrNotFound, err)
+		}
 	}
 
 	return toGroup(dbg)
@@ -150,10 +147,7 @@ func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggrou
 
 func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
 	var q string
-	query, err := buildQuery(gm)
-	if err != nil {
-		return mggroups.Page{}, err
-	}
+	query := buildQuery(gm)
 
 	if gm.ID != "" {
 		q = buildHierachy(gm)
@@ -162,7 +156,7 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 		q = `SELECT DISTINCT g.id, g.owner_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
 		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
 	}
-	q = fmt.Sprintf("%s %s ORDER BY g.updated_at LIMIT :limit OFFSET :offset;", q, query)
+	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
 
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {
@@ -201,10 +195,7 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 	if (len(ids) <= 0) && (gm.PageMeta.OwnerID == "") {
 		return mggroups.Page{PageMeta: mggroups.PageMeta{Offset: gm.Offset, Limit: gm.Limit}}, nil
 	}
-	query, err := buildQuery(gm, ids...)
-	if err != nil {
-		return mggroups.Page{}, err
-	}
+	query := buildQuery(gm, ids...)
 
 	if gm.ID != "" {
 		q = buildHierachy(gm)
@@ -213,10 +204,8 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 		q = `SELECT DISTINCT g.id, g.owner_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
 		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
 	}
-	q = fmt.Sprintf("%s %s ORDER BY g.updated_at LIMIT :limit OFFSET :offset;", q, query)
+	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
 
-	fmt.Println(q)
-	fmt.Printf("%+v\n", gm)
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
@@ -304,9 +293,14 @@ func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroup
 }
 
 func (repo groupRepository) Delete(ctx context.Context, groupID string) error {
-	q := "DELETE FROM groups AS g  WHERE g.id = $1 ;"
-	if _, err := repo.db.ExecContext(ctx, q, groupID); err != nil {
+	q := "DELETE FROM groups AS g WHERE g.id = $1;"
+
+	result, err := repo.db.ExecContext(ctx, q, groupID)
+	if err != nil {
 		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
 	}
 	return nil
 }
@@ -331,7 +325,7 @@ func buildHierachy(gm mggroups.Page) string {
 	return query
 }
 
-func buildQuery(gm mggroups.Page, ids ...string) (string, error) {
+func buildQuery(gm mggroups.Page, ids ...string) string {
 	queries := []string{}
 
 	if len(ids) > 0 {
@@ -346,16 +340,14 @@ func buildQuery(gm mggroups.Page, ids ...string) (string, error) {
 	if gm.OwnerID != "" {
 		queries = append(queries, "g.owner_id = :owner_id")
 	}
-	if gm.Tag != "" {
-		queries = append(queries, ":tag = ANY(c.tags)")
-	}
 	if len(gm.Metadata) > 0 {
-		queries = append(queries, "'g.metadata @> :metadata'")
+		queries = append(queries, "g.metadata @> :metadata")
 	}
 	if len(queries) > 0 {
-		return fmt.Sprintf("WHERE %s", strings.Join(queries, " AND ")), nil
+		return fmt.Sprintf("WHERE %s", strings.Join(queries, " AND "))
 	}
-	return "", nil
+
+	return ""
 }
 
 type dbGroup struct {

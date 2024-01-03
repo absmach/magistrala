@@ -104,7 +104,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		})
 	}
 	if _, err := svc.auth.AddPolicies(ctx, &policies); err != nil {
-		return groups.Group{}, err
+		return g, err
 	}
 
 	return g, nil
@@ -125,14 +125,7 @@ func (svc service) ViewGroupPerms(ctx context.Context, token, id string) ([]stri
 		return nil, err
 	}
 
-	permissions, err := svc.listUserGroupPermission(ctx, res.GetId(), id)
-	if err != nil {
-		return nil, err
-	}
-	if len(permissions) == 0 {
-		return nil, errors.ErrAuthorization
-	}
-	return permissions, nil
+	return svc.listUserGroupPermission(ctx, res.GetId(), id)
 }
 
 func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID string, gm groups.Page) (groups.Page, error) {
@@ -215,12 +208,8 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 				return groups.Page{}, err
 			}
 		default:
-			err := svc.checkSuperAdmin(ctx, res.GetUserId())
-			switch {
-			case err == nil:
-				if res.GetDomainId() == "" {
-					return groups.Page{}, errors.ErrMalformedEntity
-				}
+			switch svc.checkSuperAdmin(ctx, res.GetUserId()) {
+			case nil:
 				gm.PageMeta.OwnerID = res.GetDomainId()
 			default:
 				// If domain is disabled , then this authorization will fail for all non-admin domain users
@@ -279,6 +268,9 @@ func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID 
 	})
 	if err != nil {
 		return []string{}, err
+	}
+	if len(lp.GetPermissions()) == 0 {
+		return []string{}, errors.ErrAuthorization
 	}
 	return lp.GetPermissions(), nil
 }
@@ -505,7 +497,7 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 	return svc.groups.AssignParentGroup(ctx, parentGroupID, groupIDs...)
 }
 
-func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) error {
+func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) (err error) {
 	groupsPage, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
 	if err != nil {
 		return errors.Wrap(errRetrieveGroups, err)
@@ -517,7 +509,7 @@ func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupI
 	var deletePolicies magistrala.DeletePoliciesReq
 	for _, group := range groupsPage.Groups {
 		if group.Parent != "" && group.Parent != parentGroupID {
-			return fmt.Errorf("%s group doesn't have same parent", group.ID)
+			return errors.Wrap(errors.ErrConflict, fmt.Errorf("%s group doesn't have same parent", group.ID))
 		}
 		addPolicies.AddPoliciesReq = append(addPolicies.AddPoliciesReq, &magistrala.AddPolicyReq{
 			Domain:      domain,

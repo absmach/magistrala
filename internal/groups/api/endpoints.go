@@ -16,12 +16,12 @@ func CreateGroupEndpoint(svc groups.Service, kind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return createGroupRes{created: false}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		group, err := svc.CreateGroup(ctx, req.token, kind, req.Group)
 		if err != nil {
-			return nil, err
+			return createGroupRes{created: false}, err
 		}
 
 		return createGroupRes{created: true, Group: group}, nil
@@ -32,12 +32,12 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return viewGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		group, err := svc.ViewGroup(ctx, req.token, req.id)
 		if err != nil {
-			return nil, err
+			return viewGroupRes{}, err
 		}
 
 		return viewGroupRes{Group: group}, nil
@@ -48,12 +48,12 @@ func ViewGroupPermsEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupPermsReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return viewGroupPermsRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		p, err := svc.ViewGroupPerms(ctx, req.token, req.id)
 		if err != nil {
-			return nil, err
+			return viewGroupPermsRes{}, err
 		}
 
 		return viewGroupPermsRes{Permissions: p}, nil
@@ -64,7 +64,7 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return updateGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		group := groups.Group{
@@ -76,7 +76,7 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 
 		group, err := svc.UpdateGroup(ctx, req.token, group)
 		if err != nil {
-			return nil, err
+			return updateGroupRes{}, err
 		}
 
 		return updateGroupRes{Group: group}, nil
@@ -87,11 +87,11 @@ func EnableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeGroupStatusReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return changeStatusRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		group, err := svc.EnableGroup(ctx, req.token, req.id)
 		if err != nil {
-			return nil, err
+			return changeStatusRes{}, err
 		}
 		return changeStatusRes{Group: group}, nil
 	}
@@ -101,11 +101,11 @@ func DisableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeGroupStatusReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return changeStatusRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		group, err := svc.DisableGroup(ctx, req.token, req.id)
 		if err != nil {
-			return nil, err
+			return changeStatusRes{}, err
 		}
 		return changeStatusRes{Group: group}, nil
 	}
@@ -118,11 +118,11 @@ func ListGroupsEndpoint(svc groups.Service, memberKind string) endpoint.Endpoint
 			req.memberKind = memberKind
 		}
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return groupPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		page, err := svc.ListGroups(ctx, req.token, req.memberKind, req.memberID, req.Page)
 		if err != nil {
-			return nil, err
+			return groupPageRes{}, err
 		}
 
 		if req.tree {
@@ -140,12 +140,12 @@ func ListMembersEndpoint(svc groups.Service, memberKind string) endpoint.Endpoin
 			req.memberKind = memberKind
 		}
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return listMembersRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.permission, req.memberKind)
 		if err != nil {
-			return nil, err
+			return listMembersRes{}, err
 		}
 
 		return listMembersRes{
@@ -169,12 +169,12 @@ func AssignMembersEndpoint(svc groups.Service, relation, memberKind string) endp
 			req.MemberKind = memberKind
 		}
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return assignRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		if err := svc.Assign(ctx, req.token, req.groupID, req.Relation, req.MemberKind, req.Members...); err != nil {
-			return nil, err
+			return assignRes{}, err
 		}
-		return assignRes{}, nil
+		return assignRes{assigned: true}, nil
 	}
 }
 
@@ -188,13 +188,13 @@ func UnassignMembersEndpoint(svc groups.Service, relation, memberKind string) en
 			req.MemberKind = memberKind
 		}
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return unassignRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		if err := svc.Unassign(ctx, req.token, req.groupID, req.Relation, req.MemberKind, req.Members...); err != nil {
-			return nil, err
+			return unassignRes{}, err
 		}
-		return unassignRes{}, nil
+		return unassignRes{unassigned: true}, nil
 	}
 }
 
@@ -202,12 +202,12 @@ func DeleteGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return deleteGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		if err := svc.DeleteGroup(ctx, req.token, req.id); err != nil {
-			return nil, err
+			return deleteGroupRes{}, err
 		}
-		return deleteGroupRes{}, nil
+		return deleteGroupRes{deleted: true}, nil
 	}
 }
 

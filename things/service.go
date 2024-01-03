@@ -244,7 +244,7 @@ func (svc service) listUserThingPermission(ctx context.Context, userID, thingID 
 		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
-		return []string{}, err
+		return []string{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	return lp.GetPermissions(), nil
 }
@@ -510,7 +510,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 	if dbClient.Status == client.Status {
-		return mgclients.Client{}, mgclients.ErrStatusAlreadyAssigned
+		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned
 	}
 
 	client.UpdatedBy = userID
@@ -610,7 +610,7 @@ func (svc *service) authorize(ctx context.Context, domainID, subjType, subjKind,
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
 		return "", errors.Wrap(errors.ErrAuthorization, err)

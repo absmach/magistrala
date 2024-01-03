@@ -97,7 +97,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  sdk.ErrFailedCreation,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrCreateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrCreateEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty thing",
@@ -249,7 +249,7 @@ func TestCreateThings(t *testing.T) {
 			things:   thingsList,
 			response: []sdk.Thing{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty things",
@@ -755,7 +755,7 @@ func TestUpdateThing(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -840,7 +840,7 @@ func TestUpdateThingTags(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update thing that can't be marshalled",

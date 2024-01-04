@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"context"
 
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +89,7 @@ func TestDebug(t *testing.T) {
 		writer := mockWriter{}
 		logger, err = mglog.New(&writer, tc.level)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		logger.Debug(tc.input)
+		logger.Debug(context.Background(),tc.input)
 		output, err = writer.Read()
 		assert.Equal(t, tc.output, output, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.output, output))
 	}
@@ -131,7 +132,7 @@ func TestInfo(t *testing.T) {
 		writer := mockWriter{}
 		logger, err = mglog.New(&writer, tc.level)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		logger.Info(tc.input)
+		logger.Info(context.Background(), tc.input)
 		output, err = writer.Read()
 		assert.Equal(t, tc.output, output, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.output, output))
 	}
@@ -174,7 +175,7 @@ func TestWarn(t *testing.T) {
 		writer := mockWriter{}
 		logger, err = mglog.New(&writer, tc.level)
 		require.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		logger.Warn(tc.input)
+		logger.Warn(context.Background(),tc.input)
 		output, err = writer.Read()
 		assert.Equal(t, tc.output, output, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.output, output))
 	}
@@ -202,7 +203,7 @@ func TestError(t *testing.T) {
 	logger, err := mglog.New(&writer, mglog.Error.String())
 	require.Nil(t, err)
 	for _, tc := range cases {
-		logger.Error(tc.input)
+		logger.Error(context.Background(),tc.input)
 		output, err := writer.Read()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.output, output, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.output, output))

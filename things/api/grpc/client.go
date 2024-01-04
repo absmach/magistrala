@@ -51,10 +51,7 @@ func (client grpcClient) Authorize(ctx context.Context, req *magistrala.Authoriz
 		return &magistrala.AuthorizeRes{}, decodeError(err)
 	}
 
-	ar, ok := res.(authorizeRes)
-	if !ok {
-		return &magistrala.AuthorizeRes{}, errors.ErrUnidentified
-	}
+	ar := res.(authorizeRes)
 	return &magistrala.AuthorizeRes{Authorized: ar.authorized, Id: ar.id}, nil
 }
 

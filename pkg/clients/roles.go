@@ -17,6 +17,12 @@ type Role uint8
 const (
 	UserRole Role = iota
 	AdminRole
+
+	// AllRole is used for querying purposes to list clients irrespective
+	// of their role - both admin and user. It is never stored in the
+	// database as the actual Client role and should always be the largest
+	// value in this enumeration.
+	AllRole
 )
 
 // String representation of the possible role values.
@@ -32,6 +38,8 @@ func (cs Role) String() string {
 		return Admin
 	case UserRole:
 		return User
+	case AllRole:
+		return All
 	default:
 		return Unknown
 	}
@@ -44,8 +52,11 @@ func ToRole(status string) (Role, error) {
 		return UserRole, nil
 	case Admin:
 		return AdminRole, nil
+	case All:
+		return AllRole, nil
+	default:
+		return Role(0), apiutil.ErrInvalidRole
 	}
-	return Role(0), apiutil.ErrInvalidRole
 }
 
 func (r Role) MarshalJSON() ([]byte, error) {

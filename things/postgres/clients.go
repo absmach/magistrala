@@ -18,7 +18,7 @@ import (
 var _ mgclients.Repository = (*clientRepo)(nil)
 
 type clientRepo struct {
-	pgclients.ClientRepository
+	pgclients.Repository
 }
 
 // Repository is the interface that wraps the basic methods for
@@ -43,12 +43,12 @@ type Repository interface {
 // implementation of Clients repository.
 func NewRepository(db postgres.Database) Repository {
 	return &clientRepo{
-		ClientRepository: pgclients.ClientRepository{DB: db},
+		Repository: pgclients.Repository{DB: db},
 	}
 }
 
 func (repo clientRepo) Save(ctx context.Context, cs ...mgclients.Client) ([]mgclients.Client, error) {
-	tx, err := repo.ClientRepository.DB.BeginTxx(ctx, nil)
+	tx, err := repo.DB.BeginTxx(ctx, nil)
 	if err != nil {
 		return []mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
@@ -64,7 +64,7 @@ func (repo clientRepo) Save(ctx context.Context, cs ...mgclients.Client) ([]mgcl
 			return []mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 		}
 
-		row, err := repo.ClientRepository.DB.NamedQueryContext(ctx, q, dbcli)
+		row, err := repo.DB.NamedQueryContext(ctx, q, dbcli)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
 				return []mgclients.Client{}, postgres.HandleError(repoerr.ErrCreateEntity, err)

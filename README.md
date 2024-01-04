@@ -40,7 +40,7 @@ For more details, check out the [official documentation][docs].
 The following are needed to run Magistrala:
 
 - [Docker](https://docs.docker.com/install/) (version 20.10)
-- [Docker compose](https://docs.docker.com/compose/install/) (version 1.29)
+- [Docker compose](https://docs.docker.com/compose/install/) (version 2.20)
 
 Developing Magistrala will also require:
 

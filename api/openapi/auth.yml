@@ -49,7 +49,7 @@ paths:
         "401":
           description: Missing or invalid access token provided.
         "409":
-          description: Failed due to using an existing identity.
+          description: Failed due to using an existing alias.
         "415":
           description: Missing or invalid content type.
         "422":

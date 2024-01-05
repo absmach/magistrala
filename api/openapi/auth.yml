@@ -87,7 +87,7 @@ paths:
     get:
       summary: Retrieves domain information
       description: |
-        Retrieves a specific domain that is identifier by the domain ID.
+        Retrieves a specific domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -107,9 +107,9 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     patch:
-      summary: Updates name and alias of the domain.
+      summary: Updates name, metadata, tags and alias of the domain.
       description: |
-        Updates name and alias of the domain.
+        Updates name, metadata, tags and alias of the domain.
       tags:
         - Domains
       parameters:
@@ -158,7 +158,7 @@ paths:
     post:
       summary: Enables a domain
       description: |
-        Enables a specific domain that is identifier by the domain ID.
+        Enables a specific domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -185,7 +185,7 @@ paths:
     post:
       summary: Disable a domain
       description: |
-        Disable a specific domain that is identifier by the domain ID.
+        Disable a specific domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -212,7 +212,7 @@ paths:
     post:
       summary: Freeze a domain
       description: |
-        Freeze a specific domain that is identifier by the domain ID.
+        Freeze a specific domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -239,7 +239,7 @@ paths:
     post:
       summary: Assign users to domain
       description: |
-        Assign users to domain that is identifier by the domain ID.
+        Assign users to domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -270,7 +270,7 @@ paths:
     post:
       summary: Unassign users from domain
       description: |
-        Unassign users from domain that is identifier by the domain ID.
+        Unassign users from domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -300,7 +300,7 @@ paths:
     get:
       summary: List users assigned to domain
       description: |
-        List users assigned to domain that is identifier by the domain ID.
+        List users assigned to domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -325,8 +325,6 @@ paths:
           description: Unauthorized access the domain ID.
         "404":
           description: A non-existent entity request.
-        "409":
-          description: Conflict of data.
         "422":
           description: Database can't process request.
         "500":
@@ -510,7 +508,7 @@ components:
           type: string
           format: uuid
           example: "0d837f56-3f8a-4e2a-9359-6347d0fc9f06 "
-          description: User ID of user created domain.
+          description: User ID of the user who created the domain.
         created_at:
           type: string
           format: date-time
@@ -520,12 +518,12 @@ components:
           type: string
           format: uuid
           example: "80f66b77-ed74-4e74-9f88-6cce9a0a3049"
-          description: User ID of user last updated domain.
+          description: User ID of the user who last updated the domain.
         updated_at:
           type: string
           format: date-time
           example: "2019-11-26 13:31:52"
-          description: Time when the domain was last update.
+          description: Time when the domain was last updated.
       xml:
         name: domain
 
@@ -750,7 +748,7 @@ components:
           schema:
             $ref: "#/components/schemas/DomainReqObj"
     DomainUpdateReq:
-      description: JSON-formated document describing the metadata and name of domain to be update
+      description: JSON-formated document describing the name, alias, tags, and metadata of the domain to be updated
       required: true
       content:
         application/json:
@@ -765,7 +763,7 @@ components:
             $ref: "#/components/schemas/UserDomainRelationReq"
 
     UnassignUsersReq:
-      description: JSON-formated document describing the policy related to assigning users to a domain
+      description: JSON-formated document describing the policy related to unassigning users to a domain
       required: true
       content:
         application/json:

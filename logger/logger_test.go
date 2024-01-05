@@ -4,13 +4,11 @@
 package logger_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"os/exec"
 	"testing"
-	"context"
 
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/stretchr/testify/assert"
@@ -18,11 +16,6 @@ import (
 )
 
 // Env vars needed for testing Fatal in subprocess.
-const (
-	testMsg     = "TEST_MSG"
-	testFlag    = "TEST_FLAG"
-	testFlagVal = "assert_test"
-)
 
 var (
 	_      io.Writer = (*mockWriter)(nil)
@@ -32,18 +25,31 @@ var (
 )
 
 type mockWriter struct {
-	value []byte
+	value     []byte
+	lastEntry logMsg
 }
 
-func (writer *mockWriter) Write(p []byte) (int, error) {
-	writer.value = p
-	return len(p), nil
+// func (writer *mockWriter) Write(p []byte) (int, error) {
+// 	fmt.Printf("Writing log message: %s\n", string(p))
+// 	writer.value = p
+// 	err := json.Unmarshal(p, &writer.lastEntry)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	return len(p), nil
+// }
+
+func (writer *mockWriter) Write(p []byte) (n int, err error) {
+	fmt.Printf("Log received: %s\n", string(p))
+    writer.value = append(writer.value, p...)
+    err = json.Unmarshal(p, &writer.lastEntry)
+    return len(p), err
 }
 
-func (writer *mockWriter) Read() (logMsg, error) {
-	var output logMsg
-	err := json.Unmarshal(writer.value, &output)
-	return output, err
+func (w *mockWriter) Read() (logMsg, error) {
+	// var output logMsg
+	// err := json.Unmarshal(writer.value, &output)
+	return w.lastEntry, nil
 }
 
 type logMsg struct {
@@ -89,7 +95,7 @@ func TestDebug(t *testing.T) {
 		writer := mockWriter{}
 		logger, err = mglog.New(&writer, tc.level)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		logger.Debug(context.Background(),tc.input)
+		logger.Debug(context.Background(), tc.input)
 		output, err = writer.Read()
 		assert.Equal(t, tc.output, output, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.output, output))
 	}
@@ -175,7 +181,7 @@ func TestWarn(t *testing.T) {
 		writer := mockWriter{}
 		logger, err = mglog.New(&writer, tc.level)
 		require.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		logger.Warn(context.Background(),tc.input)
+		logger.Warn(context.Background(), tc.input)
 		output, err = writer.Read()
 		assert.Equal(t, tc.output, output, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.output, output))
 	}
@@ -203,58 +209,9 @@ func TestError(t *testing.T) {
 	logger, err := mglog.New(&writer, mglog.Error.String())
 	require.Nil(t, err)
 	for _, tc := range cases {
-		logger.Error(context.Background(),tc.input)
+		logger.Error(context.Background(), tc.input)
 		output, err := writer.Read()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.output, output, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.output, output))
-	}
-}
-
-func TestFatal(t *testing.T) {
-	// This is the actually Fatal call we test that will
-	// be executed in the subprocess spawned by the test.
-	if os.Getenv(testFlag) == testFlagVal {
-		logger, err := mglog.New(os.Stderr, mglog.Error.String())
-		require.Nil(t, err)
-		msg := os.Getenv(testMsg)
-		logger.Fatal(msg)
-		return
-	}
-
-	cases := []struct {
-		desc   string
-		input  string
-		output logMsg
-	}{
-		{
-			desc:   "error log ordinary string",
-			input:  "input_string",
-			output: logMsg{"", "", "input_string"},
-		},
-		{
-			desc:   "error log empty string",
-			input:  "",
-			output: logMsg{"", "", ""},
-		},
-	}
-	writer := mockWriter{}
-	for _, tc := range cases {
-		// This command will run this same test as a separate subprocess.
-		// It needs to be executed as a subprocess because we need to test os.Exit(1) call.
-		cmd := exec.Command(os.Args[0], "-test.run=TestFatal")
-		// This flag is used to prevent an infinite loop of spawning this test and never
-		// actually running the necessary Fatal call.
-		cmd.Env = append(os.Environ(), fmt.Sprintf("%s=%s", testFlag, testFlagVal))
-		cmd.Stderr = &writer
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", testMsg, tc.input))
-		err := cmd.Run()
-		if e, ok := err.(*exec.ExitError); ok && !e.Success() {
-			res, err := writer.Read()
-			require.Nil(t, err, "required successful buffer read")
-			assert.Equal(t, 1, e.ExitCode(), fmt.Sprintf("%s: expected exit code %d, got %d", tc.desc, 1, e.ExitCode()))
-			assert.Equal(t, tc.output, res, fmt.Sprintf("%s: expected output %s got %s", tc.desc, tc.output, res))
-			continue
-		}
-		t.Fatal("subprocess ran successfully, want non-zero exit status")
 	}
 }

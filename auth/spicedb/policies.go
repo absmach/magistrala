@@ -408,25 +408,25 @@ func (pa *policyAgent) Watch(ctx context.Context, continueToken string) {
 		OptionalStartCursor: &v1.ZedToken{Token: continueToken},
 	})
 	if err != nil {
-		pa.logger.Error(fmt.Sprintf("got error while watching: %s", err.Error()))
+		pa.logger.Error(ctx, fmt.Sprintf("got error while watching: %s", err.Error()))
 	}
 	for {
 		watchResp, err := stream.Recv()
 		switch err {
 		case nil:
-			pa.publishToStream(watchResp)
+			pa.publishToStream(ctx, watchResp)
 		case io.EOF:
-			pa.logger.Info("got EOF while watch streaming")
+			pa.logger.Info(ctx, "got EOF while watch streaming")
 			return
 		default:
-			pa.logger.Error(fmt.Sprintf("got error while watch streaming : %s", err.Error()))
+			pa.logger.Error(ctx, fmt.Sprintf("got error while watch streaming : %s", err.Error()))
 			return
 		}
 	}
 }
 
-func (pa *policyAgent) publishToStream(resp *v1.WatchResponse) {
-	pa.logger.Info(fmt.Sprintf("Publish next token %s", resp.ChangesThrough.Token))
+func (pa *policyAgent) publishToStream(ctx context.Context, resp *v1.WatchResponse) {
+	pa.logger.Info(ctx, fmt.Sprintf("Publish next token %s", resp.ChangesThrough.Token))
 
 	for _, update := range resp.Updates {
 		operation := v1.RelationshipUpdate_Operation_name[int32(update.Operation)]
@@ -437,7 +437,7 @@ func (pa *policyAgent) publishToStream(resp *v1.WatchResponse) {
 		subjectRelation := update.Relationship.Subject.OptionalRelation
 		subjectID := update.Relationship.Subject.Object.ObjectId
 
-		pa.logger.Info(fmt.Sprintf(`
+		pa.logger.Info(ctx, fmt.Sprintf(`
 		Operation : %s	object_type: %s		object_id: %s 	relation: %s 	subject_type: %s 	subject_relation: %s	subject_id: %s
 		`, operation, objectType, objectID, relation, subjectType, subjectRelation, subjectID))
 	}

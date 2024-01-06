@@ -28,7 +28,7 @@ type Publisher interface {
 // MessageHandler represents Message handler for Subscriber.
 type MessageHandler interface {
 	// Handle handles messages passed by underlying implementation.
-	Handle(msg *Message) error
+	Handle(ctx context.Context, msg *Message) error
 
 	// Cancel is used for cleanup during unsubscribing and it's optional.
 	Cancel() error

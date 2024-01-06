@@ -126,7 +126,7 @@ func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig)
 	if err != nil {
 		return err
 	}
-	go ps.handle(msgs, cfg.Handler)
+	go ps.handle(ctx, msgs, cfg.Handler)
 	s[cfg.ID] = subscription{
 		cancel: func() error {
 			if err := ps.channel.Cancel(clientID, false); err != nil {
@@ -176,15 +176,15 @@ func (ps *pubsub) Unsubscribe(ctx context.Context, id, topic string) error {
 	return nil
 }
 
-func (ps *pubsub) handle(deliveries <-chan amqp.Delivery, h messaging.MessageHandler) {
+func (ps *pubsub) handle(ctx context.Context, deliveries <-chan amqp.Delivery, h messaging.MessageHandler) {
 	for d := range deliveries {
 		var msg messaging.Message
 		if err := proto.Unmarshal(d.Body, &msg); err != nil {
-			ps.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
+			ps.logger.Warn(ctx, fmt.Sprintf("Failed to unmarshal received message: %s", err))
 			return
 		}
-		if err := h.Handle(&msg); err != nil {
-			ps.logger.Warn(fmt.Sprintf("Failed to handle Magistrala message: %s", err))
+		if err := h.Handle(ctx, &msg); err != nil {
+			ps.logger.Warn(ctx, fmt.Sprintf("Failed to handle Magistrala message: %s", err))
 			return
 		}
 	}

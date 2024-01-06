@@ -17,7 +17,7 @@ import (
 var _ users.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	slogLogger mglog.Logger
+	logger mglog.Logger
 	svc    users.Service
 }
 
@@ -39,10 +39,10 @@ func (lm *loggingMiddleware) RegisterClient(ctx context.Context, token string, c
 		message := fmt.Sprintf("Method %s with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.slogLogger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.slogLogger.Info(ctx,fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx,fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.RegisterClient(ctx, token, client)
 }
@@ -64,10 +64,10 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, d
 		message = fmt.Sprintf("%s for client %s took %s to complete", message, fields["identity"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.IssueToken(ctx, identity, secret, domainID)
 }
@@ -89,10 +89,10 @@ func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken, dom
 		message = fmt.Sprintf("%s for refresh token %s took %s to complete", message, fields["refreshToken"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.RefreshToken(ctx, refreshToken, domainID)
 }
@@ -109,10 +109,10 @@ func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (
 		message := fmt.Sprintf("Method %s using token %s took %s to complete", fields["method"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ViewClient(ctx, token, id)
 }
@@ -130,10 +130,10 @@ func (lm *loggingMiddleware) ViewProfile(ctx context.Context, token string) (c m
 		message := fmt.Sprintf("Method %s with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ViewProfile(ctx, token)
 }
@@ -151,10 +151,10 @@ func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, pm m
 		message := fmt.Sprintf("Method %s listed %d clients using token %s took %s to complete", fields["method"], fields["total"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ListClients(ctx, token, pm)
 }
@@ -172,10 +172,10 @@ func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, cli
 		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClient(ctx, token, client)
 }
@@ -193,10 +193,10 @@ func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, token string,
 		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientTags(ctx, token, client)
 }
@@ -214,10 +214,10 @@ func (lm *loggingMiddleware) UpdateClientIdentity(ctx context.Context, token, id
 		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientIdentity(ctx, token, id, identity)
 }
@@ -235,10 +235,10 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
@@ -255,10 +255,10 @@ func (lm *loggingMiddleware) GenerateResetToken(ctx context.Context, email, host
 		}
 		message := fmt.Sprintf("Method %s for email %s and host %s took %s to complete", fields["method"], fields["email"], fields["host"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.GenerateResetToken(ctx, email, host)
 }
@@ -274,10 +274,10 @@ func (lm *loggingMiddleware) ResetSecret(ctx context.Context, token, secret stri
 		}
 		message := fmt.Sprintf("Method %s using token %s took %s to complete", fields["method"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ResetSecret(ctx, token, secret)
 }
@@ -293,10 +293,10 @@ func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email,
 		}
 		message := fmt.Sprintf("Method %s using token %s took %s to complete", fields["method"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.SendPasswordReset(ctx, host, email, user, token)
 }
@@ -314,10 +314,10 @@ func (lm *loggingMiddleware) UpdateClientRole(ctx context.Context, token string,
 		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientRole(ctx, token, client)
 }
@@ -335,10 +335,10 @@ func (lm *loggingMiddleware) EnableClient(ctx context.Context, token, id string)
 		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.EnableClient(ctx, token, id)
 }
@@ -356,10 +356,10 @@ func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string
 		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.DisableClient(ctx, token, id)
 }
@@ -379,10 +379,10 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, objectKind,
 		message := fmt.Sprintf("Method list_members %d members for object kind %s and object id %s and token %s took %s to complete", fields["page"], fields["objectKind"], fields["objectID"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ListMembers(ctx, token, objectKind, objectID, cp)
 }
@@ -399,10 +399,10 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, token string) (id str
 		message := fmt.Sprintf("Method %s for token %s with id %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
 			fields["error"] = err.Error()
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, fields["error"]))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.Identify(ctx, token)
 }

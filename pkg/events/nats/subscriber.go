@@ -124,7 +124,7 @@ type eventHandler struct {
 	logger  mglog.Logger
 }
 
-func (eh *eventHandler) Handle(msg *messaging.Message) error {
+func (eh *eventHandler) Handle(ctx context.Context, msg *messaging.Message) error {
 	event := event{
 		Data: make(map[string]interface{}),
 	}
@@ -134,7 +134,7 @@ func (eh *eventHandler) Handle(msg *messaging.Message) error {
 	}
 
 	if err := eh.handler.Handle(eh.ctx, event); err != nil {
-		eh.logger.Warn(fmt.Sprintf("failed to handle redis event: %s", err))
+		eh.logger.Warn(ctx, fmt.Sprintf("failed to handle redis event: %s", err))
 	}
 
 	return nil

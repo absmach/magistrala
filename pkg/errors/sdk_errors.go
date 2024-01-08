@@ -71,6 +71,10 @@ func NewSDKError(err error) SDKError {
 
 // NewSDKErrorWithStatus returns an SDK Error setting the status code.
 func NewSDKErrorWithStatus(err error, statusCode int) SDKError {
+	if err == nil {
+		return nil
+	}
+
 	if e, ok := err.(Error); ok {
 		return &sdkError{
 			statusCode: statusCode,
@@ -93,6 +97,10 @@ func NewSDKErrorWithStatus(err error, statusCode int) SDKError {
 // Since multiple status codes can be valid, we can pass multiple status codes to the function.
 // The function then checks for errors in the HTTP response.
 func CheckError(resp *http.Response, expectedStatusCodes ...int) SDKError {
+	if resp == nil {
+		return nil
+	}
+
 	for _, expectedStatusCode := range expectedStatusCodes {
 		if resp.StatusCode == expectedStatusCode {
 			return nil

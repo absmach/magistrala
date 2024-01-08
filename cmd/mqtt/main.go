@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/absmach/magistrala"
@@ -196,11 +198,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		if sig := errors.SignalHandler(ctx); sig != nil {
-			cancel()
-			logger.Info(fmt.Sprintf("mProxy shutdown by signal: %s", sig))
-		}
-		return nil
+		return stopSignalHandler(ctx, cancel, logger)
 	})
 
 	if err := g.Wait(); err != nil {
@@ -261,6 +259,19 @@ func healthcheck(cfg config) func() error {
 		if res.StatusCode != http.StatusOK {
 			return errors.New(string(body))
 		}
+		return nil
+	}
+}
+
+func stopSignalHandler(ctx context.Context, cancel context.CancelFunc, logger mglog.Logger) error {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGABRT)
+	select {
+	case sig := <-c:
+		defer cancel()
+		logger.Info(fmt.Sprintf("%s service shutdown by signal: %s", svcName, sig))
+		return nil
+	case <-ctx.Done():
 		return nil
 	}
 }

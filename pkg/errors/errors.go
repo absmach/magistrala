@@ -4,12 +4,7 @@
 package errors
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 // Error specifies an API that must be fullfiled by error type.
@@ -33,6 +28,14 @@ var _ Error = (*customError)(nil)
 type customError struct {
 	msg string
 	err Error
+}
+
+// New returns an Error that formats as the given text.
+func New(text string) Error {
+	return &customError{
+		msg: text,
+		err: nil,
+	}
 }
 
 func (ce *customError) Error() string {
@@ -121,24 +124,5 @@ func cast(err error) Error {
 	return &customError{
 		msg: err.Error(),
 		err: nil,
-	}
-}
-
-// New returns an Error that formats as the given text.
-func New(text string) Error {
-	return &customError{
-		msg: text,
-		err: nil,
-	}
-}
-
-func SignalHandler(ctx context.Context) error {
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGABRT)
-	select {
-	case sig := <-c:
-		return fmt.Errorf("%s", sig)
-	case <-ctx.Done():
-		return nil
 	}
 }

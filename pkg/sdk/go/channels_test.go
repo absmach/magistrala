@@ -109,7 +109,7 @@ func TestCreateChannel(t *testing.T) {
 				Status:   mgclients.EnabledStatus.String(),
 			},
 			token: token,
-			err:   errors.NewSDKErrorWithStatus(errors.ErrCreateEntity, http.StatusInternalServerError),
+			err:   errors.NewSDKErrorWithStatus(errors.ErrCreateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "create channel with invalid owner",
@@ -119,7 +119,7 @@ func TestCreateChannel(t *testing.T) {
 				Status:  mgclients.EnabledStatus.String(),
 			},
 			token: token,
-			err:   errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
+			err:   errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "create channel with missing name",
@@ -475,7 +475,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc: "update channel description with invalid token",
@@ -485,7 +485,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc: "update channel metadata with invalid token",
@@ -497,7 +497,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc: "update channel that can't be marshalled",

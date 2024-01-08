@@ -104,14 +104,14 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release run run_addons grpc_mtls_certs check_mtls check_certs
+.PHONY: all $(SERVICES) dockers dockers_dev latest release run run_addons grpc_mtls_certs check_mtls check_certs test_api
 
 clean:
 	rm -rf ${BUILD_DIR}
 
 cleandocker:
 	# Stops containers and removes containers, networks, volumes, and images created by up
-	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
+	docker compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
 
 ifdef pv
 	# Remove unused volumes
@@ -135,6 +135,16 @@ test: mocks
         go test -v --race -count 1 -tags test -coverprofile=coverage/$$dir.out $$(go list ./... | grep $$dir | grep -v 'cmd'); \
     done
 	go test -v --race -count 1 -tags test -coverprofile=coverage/coverage.out $$(go list ./... | grep -v 'consumers\|readers\|postgres\|internal\|opcua\|cmd')
+
+test_api:
+	@which st > /dev/null || (echo "schemathesis not found, please install it from https://github.com/schemathesis/schemathesis#getting-started" && exit 1)
+	st run api/openapi/users.yml \
+	--checks all \
+	--base-url http://localhost:9002 \
+	--header "Authorization: Bearer $(USER_TOKEN)" \
+	--contrib-unique-data --contrib-openapi-formats-uuid \
+	--hypothesis-suppress-health-check=filter_too_much \
+	--stateful=links
 
 proto:
 	protoc -I. --go_out=. --go_opt=paths=source_relative pkg/messaging/*.proto
@@ -246,16 +256,16 @@ run: check_certs change_config
 ifeq ($(MG_ES_TYPE), redis)
 	sed -i "s/MG_ES_TYPE=.*/MG_ES_TYPE=redis/" docker/.env
 	sed -i "s/MG_ES_URL=.*/MG_ES_URL=$$\{MG_REDIS_URL}/" docker/.env
-	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) --profile redis -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	docker compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) --profile redis -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 else
 	sed -i "s,MG_ES_TYPE=.*,MG_ES_TYPE=$$\{MG_MESSAGE_BROKER_TYPE}," docker/.env
 	sed -i "s,MG_ES_URL=.*,MG_ES_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
-	docker-compose -f docker/docker-compose.yml --env-file docker/.env --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	docker compose -f docker/docker-compose.yml --env-file docker/.env --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 endif
 
 run_addons: check_certs
 	$(call change_config)
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker-compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done

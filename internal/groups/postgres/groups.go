@@ -160,17 +160,17 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	defer rows.Close()
 
 	items, err := repo.processRows(rows)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	cq := "SELECT COUNT(*) FROM groups g"
@@ -180,7 +180,7 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 
 	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	page := gm
@@ -208,17 +208,17 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	defer rows.Close()
 
 	items, err := repo.processRows(rows)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	cq := "SELECT COUNT(*) FROM groups g"
@@ -228,7 +228,7 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 
 	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
 	if err != nil {
-		return mggroups.Page{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
 	page := gm

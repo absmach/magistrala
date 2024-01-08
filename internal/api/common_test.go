@@ -294,14 +294,14 @@ func TestEncodeError(t *testing.T) {
 			code: http.StatusUnsupportedMediaType,
 		},
 		{
-			desc: "InternalServerError",
+			desc: "StatusUnprocessableEntity",
 			errs: []error{
 				svcerr.ErrCreateEntity,
 				svcerr.ErrUpdateEntity,
 				svcerr.ErrViewEntity,
 				svcerr.ErrRemoveEntity,
 			},
-			code: http.StatusInternalServerError,
+			code: http.StatusUnprocessableEntity,
 		},
 		{
 			desc: "InternalServerError",

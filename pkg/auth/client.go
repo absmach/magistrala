@@ -15,7 +15,7 @@ import (
 //
 //	authClient, authHandler, err := auth.Setup(auth.Config{})
 func Setup(cfg Config) (magistrala.AuthServiceClient, Handler, error) {
-	client, err := newClient(cfg)
+	client, err := newHandler(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -29,7 +29,7 @@ func Setup(cfg Config) (magistrala.AuthServiceClient, Handler, error) {
 //
 //	authzClient, authzHandler, err := auth.Setup(auth.Config{})
 func SetupAuthz(cfg Config) (magistrala.AuthzServiceClient, Handler, error) {
-	client, err := newClient(cfg)
+	client, err := newHandler(cfg)
 	if err != nil {
 		return nil, nil, err
 	}

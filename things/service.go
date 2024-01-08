@@ -425,7 +425,7 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 func (svc service) Unshare(ctx context.Context, token, id, relation string, userids ...string) error {
 	user, err := svc.identify(ctx, token)
 	if err != nil {
-		return nil
+		return err
 	}
 	if _, err := svc.authorize(ctx, user.GetDomainId(), auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)

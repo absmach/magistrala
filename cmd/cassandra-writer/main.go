@@ -22,6 +22,7 @@ import (
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -58,9 +59,16 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
+	var logger mglog.Logger
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
+	}
+
+	var chClientLogger mflog.Logger
+	chClientLogger, err = mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+    	logger.Error(ctx, fmt.Sprintf("failed to create logger: %s", err.Error()))
 	}
 
 	var exitCode int
@@ -68,7 +76,7 @@ func main() {
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			logger.Error(ctx, fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -76,7 +84,7 @@ func main() {
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
@@ -84,7 +92,7 @@ func main() {
 	// Create new to cassandra client
 	csdSession, err := cassandraclient.SetupDB(envPrefixDB, cassandra.Table)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(ctx, err.Error())
 		exitCode = 1
 		return
 	}
@@ -92,13 +100,13 @@ func main() {
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
 		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+			logger.Error(ctx, fmt.Sprintf("Error shutting down tracer provider: %v", err))
 		}
 	}()
 	tracer := tp.Tracer(svcName)
@@ -110,7 +118,7 @@ func main() {
 	// Create new pub sub broker
 	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to connect to message broker: %s", err))
 		exitCode = 1
 		return
 	}
@@ -119,7 +127,7 @@ func main() {
 
 	// Start new consumer
 	if err := consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
-		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 		exitCode = 1
 		return
 	}
@@ -127,7 +135,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, chClientLogger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -141,7 +149,7 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("Cassandra writer service terminated: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Cassandra writer service terminated: %s", err))
 	}
 }
 

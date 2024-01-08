@@ -23,7 +23,7 @@ type Client interface {
 	Token() string
 
 	// Handle handles incoming messages.
-	Handle(m *messaging.Message) error
+	Handle(ctx context.Context, m *messaging.Message) error
 
 	// Cancel cancels the client.
 	Cancel() error
@@ -64,7 +64,7 @@ func (c *client) Cancel() error {
 		Options: make(message.Options, 0, 16),
 	}
 	if err := c.client.WriteMessage(&m); err != nil {
-		c.logger.Error(fmt.Sprintf("Error sending message: %s.", err))
+		c.logger.Error(c.client.Context(), fmt.Sprintf("Error sending message: %s.", err))
 	}
 	return c.client.Close()
 }
@@ -73,7 +73,7 @@ func (c *client) Token() string {
 	return c.token.String()
 }
 
-func (c *client) Handle(msg *messaging.Message) error {
+func (c *client) Handle(ctx context.Context, msg *messaging.Message) error {
 	m := message.Message{
 		Code:    codes.Content,
 		Token:   c.token,
@@ -90,7 +90,7 @@ func (c *client) Handle(msg *messaging.Message) error {
 		_, _, err = opts.SetContentFormat(buff, message.TextPlain)
 	}
 	if err != nil {
-		c.logger.Error(fmt.Sprintf("Can't set content format: %s.", err))
+		c.logger.Error(ctx, fmt.Sprintf("Can't set content format: %s.", err))
 		return errors.Wrap(ErrOption, err)
 	}
 	opts = append(opts, message.Option{ID: message.Observe, Value: []byte{byte(c.observe)}})

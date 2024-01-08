@@ -286,7 +286,7 @@ func TestPubsub(t *testing.T) {
 
 type handler struct{}
 
-func (h handler) Handle(msg *messaging.Message) error {
+func (h handler) Handle(ctx context.Context, msg *messaging.Message) error {
 	msgChan <- msg
 
 	return nil

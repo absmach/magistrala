@@ -420,6 +420,6 @@ func (ts *twinsService) publish(ctx context.Context, twinID *string, err *error,
 	}
 
 	if err := ts.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
-		ts.logger.Warn(fmt.Sprintf("Failed to publish notification on Message Broker: %s", err))
+		ts.logger.Warn(ctx, fmt.Sprintf("Failed to publish notification on Message Broker: %s", err))
 	}
 }

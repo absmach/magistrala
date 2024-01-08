@@ -12,13 +12,14 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"context"
 
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/pelletier/go-toml"
 )
 
 // Benchmark - main benchmarking function.
-func Benchmark(cfg Config) error {
+func Benchmark(ctx context.Context, cfg Config) error {
 	if err := checkConnection(cfg.MQTT.Broker.URL, 1); err != nil {
 		return err
 	}
@@ -34,11 +35,11 @@ func Benchmark(cfg Config) error {
 
 		defer func() {
 			if err = caFile.Close(); err != nil {
-				logger.Warn(fmt.Sprintf("Could  not close file: %s", err))
+				logger.Warn(ctx, fmt.Sprintf("Could  not close file: %s", err))
 			}
 		}()
 		if err != nil {
-			logger.Warn(err.Error())
+			logger.Warn(ctx, err.Error())
 		}
 		caByte, _ = io.ReadAll(caFile)
 	}

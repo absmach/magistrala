@@ -82,7 +82,7 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 		tok = string(s.Password)
 	}
 
-	h.logger.Info(fmt.Sprintf(LogInfoConnected, tok))
+	h.logger.Info(ctx, fmt.Sprintf(LogInfoConnected, tok))
 	return nil
 }
 
@@ -111,7 +111,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	if !ok {
 		return errors.Wrap(ErrFailedPublish, ErrClientNotInitialized)
 	}
-	h.logger.Info(fmt.Sprintf(LogInfoPublished, s.ID, *topic))
+	h.logger.Info(ctx, fmt.Sprintf(LogInfoPublished, s.ID, *topic))
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 

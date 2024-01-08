@@ -115,12 +115,12 @@ func (c client) Subscribe(ctx context.Context, cfg opcua.Config) error {
 	}
 	defer func() {
 		if err = sub.Cancel(); err != nil {
-			c.logger.Error(fmt.Sprintf("subscription could not be cancelled: %s", err))
+			c.logger.Error(ctx, fmt.Sprintf("subscription could not be cancelled: %s", err))
 		}
 	}()
 
 	if err := c.runHandler(ctx, sub, cfg.ServerURI, cfg.NodeID); err != nil {
-		c.logger.Warn(fmt.Sprintf("Unsubscribed from OPC-UA node %s.%s: %s", cfg.ServerURI, cfg.NodeID, err))
+		c.logger.Warn(ctx, fmt.Sprintf("Unsubscribed from OPC-UA node %s.%s: %s", cfg.ServerURI, cfg.NodeID, err))
 	}
 
 	return nil
@@ -145,7 +145,7 @@ func (c client) runHandler(ctx context.Context, sub *opcuagopcua.Subscription, u
 
 	go sub.Run(ctx)
 
-	c.logger.Info(fmt.Sprintf("subscribed to server %s and node_id %s", uri, node))
+	c.logger.Info(ctx, fmt.Sprintf("subscribed to server %s and node_id %s", uri, node))
 
 	for {
 		select {
@@ -153,7 +153,7 @@ func (c client) runHandler(ctx context.Context, sub *opcuagopcua.Subscription, u
 			return nil
 		case res := <-sub.Notifs:
 			if res.Error != nil {
-				c.logger.Error(res.Error.Error())
+				c.logger.Error(ctx, res.Error.Error())
 				continue
 			}
 
@@ -197,13 +197,13 @@ func (c client) runHandler(ctx context.Context, sub *opcuagopcua.Subscription, u
 						case errNotFoundServerURI, errNotFoundNodeID, errNotFoundConn:
 							return err
 						default:
-							c.logger.Error(fmt.Sprintf("Failed to publish: %s", err))
+							c.logger.Error(ctx, fmt.Sprintf("Failed to publish: %s", err))
 						}
 					}
 				}
 
 			default:
-				c.logger.Info(fmt.Sprintf("unknown publish result: %T", res.Value))
+				c.logger.Info(ctx, fmt.Sprintf("unknown publish result: %T", res.Value))
 			}
 		}
 	}
@@ -246,6 +246,6 @@ func (c client) publish(ctx context.Context, token string, m message) error {
 		return err
 	}
 
-	c.logger.Info(fmt.Sprintf("publish from server %s and node_id %s with value %v", m.ServerURI, m.NodeID, m.Data))
+	c.logger.Info(ctx, fmt.Sprintf("publish from server %s and node_id %s with value %v", m.ServerURI, m.NodeID, m.Data))
 	return nil
 }

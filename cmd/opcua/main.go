@@ -18,6 +18,7 @@ import (
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/absmach/magistrala/opcua"
 	"github.com/absmach/magistrala/opcua/api"
 	"github.com/absmach/magistrala/opcua/db"
@@ -75,13 +76,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
+	
+	var chClientLogger mflog.Logger
+	chClientLogger, err = mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+    	logger.Error(ctx, fmt.Sprintf("failed to create logger: %s", err.Error()))
+	}
 
 	var exitCode int
 	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			logger.Error(ctx, fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -89,39 +96,39 @@ func main() {
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
 	rmConn, err := redisclient.Connect(cfg.RouteMapURL)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 	defer rmConn.Close()
 
-	thingRM := newRouteMapRepositoy(rmConn, thingsRMPrefix, logger)
-	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
-	connRM := newRouteMapRepositoy(rmConn, connectionRMPrefix, logger)
+	thingRM := newRouteMapRepositoy(ctx, rmConn, thingsRMPrefix, logger)
+	chanRM := newRouteMapRepositoy(ctx, rmConn, channelsRMPrefix, logger)
+	connRM := newRouteMapRepositoy(ctx, rmConn, connectionRMPrefix, logger)
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
 		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+			logger.Error(ctx, fmt.Sprintf("Error shutting down tracer provider: %v", err))
 		}
 	}()
 	tracer := tp.Tracer(svcName)
 
 	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to connect to message broker: %s", err))
 		exitCode = 1
 		return
 	}
@@ -136,7 +143,7 @@ func main() {
 	go subscribeToStoredSubs(ctx, sub, opcConfig, logger)
 
 	if err = subscribeToThingsES(ctx, svc, cfg, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to things event store: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to subscribe to things event store: %s", err))
 		exitCode = 1
 		return
 	}
@@ -144,7 +151,7 @@ func main() {
 	hs := httpserver.New(ctx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, httpCancel)
+		chc := chclient.New(svcName, magistrala.Version, chClientLogger, httpCancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -157,7 +164,7 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("OPC-UA adapter service terminated: %s", err))
+		logger.Error(ctx, fmt.Sprintf("OPC-UA adapter service terminated: %s", err))
 	}
 }
 
@@ -165,7 +172,7 @@ func subscribeToStoredSubs(ctx context.Context, sub opcua.Subscriber, cfg opcua.
 	// Get all stored subscriptions
 	nodes, err := db.ReadAll()
 	if err != nil {
-		logger.Warn(fmt.Sprintf("Read stored subscriptions failed: %s", err))
+		logger.Warn(ctx, fmt.Sprintf("Read stored subscriptions failed: %s", err))
 	}
 
 	for _, n := range nodes {
@@ -173,7 +180,7 @@ func subscribeToStoredSubs(ctx context.Context, sub opcua.Subscriber, cfg opcua.
 		cfg.NodeID = n.NodeID
 		go func() {
 			if err := sub.Subscribe(ctx, cfg); err != nil {
-				logger.Warn(fmt.Sprintf("Subscription failed: %s", err))
+				logger.Warn(ctx, fmt.Sprintf("Subscription failed: %s", err))
 			}
 		}()
 	}
@@ -187,13 +194,13 @@ func subscribeToThingsES(ctx context.Context, svc opcua.Service, cfg config, log
 
 	handler := events.NewEventHandler(svc)
 
-	logger.Info("Subscribed to Redis Event Store")
+	logger.Info(ctx, "Subscribed to Redis Event Store")
 
 	return subscriber.Subscribe(ctx, handler)
 }
 
-func newRouteMapRepositoy(client *redis.Client, prefix string, logger mglog.Logger) opcua.RouteMapRepository {
-	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
+func newRouteMapRepositoy(ctx context.Context, client *redis.Client, prefix string, logger mglog.Logger) opcua.RouteMapRepository {
+	logger.Info(ctx, fmt.Sprintf("Connected to %s Redis Route-map", prefix))
 	return events.NewRouteMapRepository(client, prefix)
 }
 

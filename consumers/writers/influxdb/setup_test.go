@@ -35,9 +35,11 @@ const (
 var address string
 
 func TestMain(m *testing.M) {
+	ctx := context.Background()
+
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
+		testLog.Error(ctx, fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
 	cfg := []string{
@@ -52,7 +54,7 @@ func TestMain(m *testing.M) {
 	}
 	container, err := pool.Run(broker, brokerVersion, cfg)
 	if err != nil {
-		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
+		testLog.Error(ctx, fmt.Sprintf("Could not start container: %s", err))
 	}
 
 	handleInterrupt(m, pool, container)
@@ -65,12 +67,12 @@ func TestMain(m *testing.M) {
 		_, err = client.Ready(context.Background())
 		return err
 	}); err != nil {
-		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
+		testLog.Error(ctx, fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
 	code := m.Run()
 	if err := pool.Purge(container); err != nil {
-		testLog.Error(fmt.Sprintf("Could not purge container: %s", err))
+		testLog.Error(ctx, fmt.Sprintf("Could not purge container: %s", err))
 	}
 
 	os.Exit(code)

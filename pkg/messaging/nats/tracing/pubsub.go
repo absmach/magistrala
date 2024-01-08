@@ -81,13 +81,13 @@ type traceHandler struct {
 }
 
 // Handle instruments the message handling operation.
-func (h *traceHandler) Handle(msg *messaging.Message) error {
+func (h *traceHandler) Handle(ctx context.Context, msg *messaging.Message) error {
 	_, span := tracing.CreateSpan(h.ctx, processOp, h.clientID, h.topic, msg.Subtopic, len(msg.Payload), h.host, trace.SpanKindConsumer, h.tracer)
 	defer span.End()
 
 	span.SetAttributes(defaultAttributes...)
 
-	return h.handler.Handle(msg)
+	return h.handler.Handle(ctx, msg)
 }
 
 // Cancel cancels the message handling operation.

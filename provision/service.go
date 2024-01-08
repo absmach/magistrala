@@ -4,6 +4,7 @@
 package provision
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -331,8 +332,9 @@ func (ps *provisionService) updateGateway(token string, bs sdk.BootstrapConfig, 
 }
 
 func (ps *provisionService) errLog(err error) {
+	ctx := context.Background()
 	if err != nil {
-		ps.logger.Error(fmt.Sprintf("Error recovering: %s", err))
+		ps.logger.Error(ctx, fmt.Sprintf("Error recovering: %s", err))
 	}
 }
 

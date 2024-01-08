@@ -75,7 +75,6 @@ func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 			Status:   req.status,
 			Offset:   req.offset,
 			Limit:    req.limit,
-			Owner:    req.owner,
 			Name:     req.name,
 			Tag:      req.tag,
 			Metadata: req.metadata,

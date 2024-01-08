@@ -12,7 +12,7 @@ type Page struct {
 	Order      string   `json:"order,omitempty"`
 	Dir        string   `json:"dir,omitempty"`
 	Metadata   Metadata `json:"metadata,omitempty"`
-	Owner      string   `json:"owner,omitempty"`
+	Domain     string   `json:"domain,omitempty"`
 	Tag        string   `json:"tag,omitempty"`
 	Permission string   `json:"permission,omitempty"`
 	Status     Status   `json:"status,omitempty"`

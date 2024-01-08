@@ -324,34 +324,6 @@ func (_m *Repository) UpdateIdentity(ctx context.Context, client clients.Client)
 	return r0, r1
 }
 
-// UpdateOwner provides a mock function with given fields: ctx, client
-func (_m *Repository) UpdateOwner(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateOwner")
-	}
-
-	var r0 clients.Client
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
-	} else {
-		r0 = ret.Get(0).(clients.Client)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateRole provides a mock function with given fields: ctx, client
 func (_m *Repository) UpdateRole(ctx context.Context, client clients.Client) (clients.Client, error) {
 	ret := _m.Called(ctx, client)

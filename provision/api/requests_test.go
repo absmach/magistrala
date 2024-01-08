@@ -8,33 +8,79 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidate(t *testing.T) {
-	cases := map[string]struct {
-		ExternalID  string
-		ExternalKey string
-		err         error
+func TestProvisioReq(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  provisionReq
+		err  error
 	}{
-		"mac address for device": {
-			ExternalID:  "11:22:33:44:55:66",
-			ExternalKey: "key12345678",
-			err:         nil,
+		{
+			desc: "valid request",
+			req: provisionReq{
+				token:       "token",
+				Name:        "name",
+				ExternalID:  testsutil.GenerateUUID(t),
+				ExternalKey: testsutil.GenerateUUID(t),
+			},
+			err: nil,
 		},
-		"external id for device empty": {
+		{
+			desc: "empty external id",
+			req: provisionReq{
+				token:       "token",
+				Name:        "name",
+				ExternalID:  "",
+				ExternalKey: testsutil.GenerateUUID(t),
+			},
 			err: apiutil.ErrMissingID,
+		},
+		{
+			desc: "empty external key",
+			req: provisionReq{
+				token:       "token",
+				Name:        "name",
+				ExternalID:  testsutil.GenerateUUID(t),
+				ExternalKey: "",
+			},
+			err: apiutil.ErrBearerKey,
 		},
 	}
 
-	for desc, tc := range cases {
-		req := provisionReq{
-			ExternalID:  tc.ExternalID,
-			ExternalKey: tc.ExternalKey,
-		}
+	for _, tc := range cases {
+		err := tc.req.validate()
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", tc.desc, tc.err, err))
+	}
+}
 
-		err := req.validate()
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", desc, tc.err, err))
+func TestMappingReq(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  mappingReq
+		err  error
+	}{
+		{
+			desc: "valid request",
+			req: mappingReq{
+				token: "token",
+			},
+			err: nil,
+		},
+		{
+			desc: "empty token",
+			req: mappingReq{
+				token: "",
+			},
+			err: apiutil.ErrBearerToken,
+		},
+	}
+
+	for _, tc := range cases {
+		err := tc.req.validate()
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", tc.desc, tc.err, err))
 	}
 }

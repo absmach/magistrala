@@ -46,6 +46,8 @@ var (
 var _ Service = (*provisionService)(nil)
 
 // Service specifies Provision service API.
+//
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// Provision is the only method this API specifies. Depending on the configuration,
 	// the following actions will can be executed:

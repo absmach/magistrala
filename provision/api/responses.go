@@ -6,8 +6,11 @@ package api
 import (
 	"net/http"
 
+	"github.com/absmach/magistrala"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
+
+var _ magistrala.Response = (*provisionRes)(nil)
 
 type provisionRes struct {
 	Things      []sdk.Thing       `json:"things"`
@@ -16,7 +19,6 @@ type provisionRes struct {
 	ClientKey   map[string]string `json:"client_key,omitempty"`
 	CACert      string            `json:"ca_cert,omitempty"`
 	Whitelisted map[string]bool   `json:"whitelisted,omitempty"`
-	Error       string            `json:"error,omitempty"`
 }
 
 func (res provisionRes) Code() int {

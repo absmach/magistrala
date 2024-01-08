@@ -555,7 +555,7 @@ func buildPageQuery(pm auth.Page) (string, error) {
 	if pm.Status != auth.AllStatus {
 		query = append(query, "d.status = :status")
 	} else {
-		query = append(query, fmt.Sprintf("d.status < %s", auth.AllStatus))
+		query = append(query, fmt.Sprintf("d.status < %d", auth.AllStatus))
 	}
 
 	if pm.Name != "" {

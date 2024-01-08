@@ -146,7 +146,7 @@ func decodeListUserDomainsRequest(ctx context.Context, r *http.Request) (interfa
 }
 
 func decodePageRequest(_ context.Context, r *http.Request) (page, error) {
-	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
+	s, err := apiutil.ReadStringQuery(r, api.StatusKey, auth.All)
 	if err != nil {
 		return page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}

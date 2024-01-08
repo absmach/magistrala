@@ -8,6 +8,7 @@ package api
 import (
 	"fmt"
 	"time"
+	"context"
 
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/readers"
@@ -30,12 +31,13 @@ func LoggingMiddleware(svc readers.MessageRepository, logger mglog.Logger) reade
 
 func (lm *loggingMiddleware) ReadAll(chanID string, rpm readers.PageMetadata) (page readers.MessagesPage, err error) {
 	defer func(begin time.Time) {
+		ctx := context.Background()
 		message := fmt.Sprintf("Method read_all for channel %s with query %v took %s to complete", chanID, rpm, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.ReadAll(chanID, rpm)

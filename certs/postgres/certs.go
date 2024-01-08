@@ -42,7 +42,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE owner_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
 	rows, err := cr.db.QueryContext(ctx, q, ownerID, limit, offset)
 	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to retrieve configs due to %s", err))
 		return certs.Page{}, err
 	}
 	defer rows.Close()
@@ -51,7 +51,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 	for rows.Next() {
 		c := certs.Cert{}
 		if err := rows.Scan(&c.ThingID, &c.OwnerID, &c.Serial, &c.Expire); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return certs.Page{}, err
 		}
 		certificates = append(certificates, c)
@@ -60,7 +60,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 	q = `SELECT COUNT(*) FROM certs WHERE owner_id = $1`
 	var total uint64
 	if err := cr.db.QueryRowxContext(ctx, q, ownerID).Scan(&total); err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to count certs due to %s", err))
 		return certs.Page{}, err
 	}
 
@@ -88,13 +88,13 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 			e = errors.New("error conflict")
 		}
 
-		cr.rollback("Failed to insert a Cert", tx, err)
+		cr.rollback(ctx, "Failed to insert a Cert", tx, err)
 
 		return "", errors.Wrap(errors.ErrCreateEntity, e)
 	}
 
 	if err := tx.Commit(); err != nil {
-		cr.rollback("Failed to commit Config save", tx, err)
+		cr.rollback(ctx, "Failed to commit Config save", tx, err)
 	}
 
 	return cert.Serial, nil
@@ -118,7 +118,7 @@ func (cr certsRepository) RetrieveByThing(ctx context.Context, ownerID, thingID 
 	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE owner_id = $1 AND thing_id = $2 ORDER BY expire LIMIT $3 OFFSET $4;`
 	rows, err := cr.db.QueryContext(ctx, q, ownerID, thingID, limit, offset)
 	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to retrieve configs due to %s", err))
 		return certs.Page{}, err
 	}
 	defer rows.Close()
@@ -127,7 +127,7 @@ func (cr certsRepository) RetrieveByThing(ctx context.Context, ownerID, thingID 
 	for rows.Next() {
 		c := certs.Cert{}
 		if err := rows.Scan(&c.ThingID, &c.OwnerID, &c.Serial, &c.Expire); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return certs.Page{}, err
 		}
 		certificates = append(certificates, c)
@@ -136,7 +136,7 @@ func (cr certsRepository) RetrieveByThing(ctx context.Context, ownerID, thingID 
 	q = `SELECT COUNT(*) FROM certs WHERE owner_id = $1 AND thing_id = $2`
 	var total uint64
 	if err := cr.db.QueryRowxContext(ctx, q, ownerID, thingID).Scan(&total); err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to count certs due to %s", err))
 		return certs.Page{}, err
 	}
 
@@ -166,11 +166,11 @@ func (cr certsRepository) RetrieveBySerial(ctx context.Context, ownerID, serialI
 	return c, nil
 }
 
-func (cr certsRepository) rollback(content string, tx *sqlx.Tx, err error) {
-	cr.log.Error(fmt.Sprintf("%s %s", content, err))
+func (cr certsRepository) rollback(ctx context.Context, content string, tx *sqlx.Tx, err error) {
+	cr.log.Error(ctx, fmt.Sprintf("%s %s", content, err))
 
 	if err := tx.Rollback(); err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to rollback due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to rollback due to %s", err))
 	}
 }
 

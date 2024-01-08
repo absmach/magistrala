@@ -18,7 +18,7 @@ import (
 func LoggingErrorEncoder(logger mglog.Logger, enc kithttp.ErrorEncoder) kithttp.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
 		if errors.Contains(err, ErrValidation) {
-			logger.Error(err.Error())
+			logger.Error(ctx,err.Error())
 		}
 		enc(ctx, err, w)
 	}

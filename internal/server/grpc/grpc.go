@@ -105,12 +105,12 @@ func (s *Server) Start() error {
 		creds = grpc.Creds(credentials.NewTLS(tlsConfig))
 		switch {
 		case len(mtlsCA) > 0:
-			s.Logger.Info(fmt.Sprintf("%s service gRPC server listening at %s with TLS/mTLS cert %s , key %s and %s", s.Name, s.Address, s.Config.CertFile, s.Config.KeyFile, mtlsCA))
+			s.Logger.Info(s.Ctx, fmt.Sprintf("%s service gRPC server listening at %s with TLS/mTLS cert %s , key %s and %s", s.Name, s.Address, s.Config.CertFile, s.Config.KeyFile, mtlsCA))
 		default:
-			s.Logger.Info(fmt.Sprintf("%s service gRPC server listening at %s with TLS cert %s and key %s", s.Name, s.Address, s.Config.CertFile, s.Config.KeyFile))
+			s.Logger.Info(s.Ctx ,fmt.Sprintf("%s service gRPC server listening at %s with TLS cert %s and key %s", s.Name, s.Address, s.Config.CertFile, s.Config.KeyFile))
 		}
 	default:
-		s.Logger.Info(fmt.Sprintf("%s service gRPC server listening at %s without TLS", s.Name, s.Address))
+		s.Logger.Info(s.Ctx, fmt.Sprintf("%s service gRPC server listening at %s without TLS", s.Name, s.Address))
 	}
 
 	grpcServerOptions = append(grpcServerOptions, creds)
@@ -142,7 +142,7 @@ func (s *Server) Stop() error {
 	case <-c:
 	case <-time.After(stopWaitTime):
 	}
-	s.Logger.Info(fmt.Sprintf("%s gRPC service shutdown at %s", s.Name, s.Address))
+	s.Logger.Info(s.Ctx, fmt.Sprintf("%s gRPC service shutdown at %s", s.Name, s.Address))
 
 	return nil
 }

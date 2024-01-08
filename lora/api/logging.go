@@ -33,10 +33,10 @@ func (lm loggingMiddleware) CreateThing(ctx context.Context, thingID, loraDevEUI
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("create_thing for thing %s and lora-dev-eui %s took %s to complete", thingID, loraDevEUI, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.CreateThing(ctx, thingID, loraDevEUI)
@@ -46,10 +46,10 @@ func (lm loggingMiddleware) UpdateThing(ctx context.Context, thingID, loraDevEUI
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("update_thing for thing %s and lora-dev-eui %s took %s to complete", thingID, loraDevEUI, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.UpdateThing(ctx, thingID, loraDevEUI)
@@ -59,10 +59,10 @@ func (lm loggingMiddleware) RemoveThing(ctx context.Context, thingID string) (er
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("remove_thing for thing %s took %s to complete", thingID, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.RemoveThing(ctx, thingID)
@@ -72,10 +72,10 @@ func (lm loggingMiddleware) CreateChannel(ctx context.Context, chanID, loraApp s
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("create_channel for channel %s and lora-app %s took %s to complete", chanID, loraApp, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.CreateChannel(ctx, chanID, loraApp)
@@ -85,10 +85,10 @@ func (lm loggingMiddleware) UpdateChannel(ctx context.Context, chanID, loraApp s
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("update_channel for channel %s and lora-app %s took %s to complete", chanID, loraApp, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.UpdateChannel(ctx, chanID, loraApp)
@@ -98,10 +98,10 @@ func (lm loggingMiddleware) RemoveChannel(ctx context.Context, chanID string) (e
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("remove_channel for channel %s took %s to complete", chanID, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.RemoveChannel(ctx, chanID)
@@ -111,10 +111,10 @@ func (lm loggingMiddleware) ConnectThing(ctx context.Context, chanID, thingID st
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("connect_thing for channel %s and thing %s, took %s to complete", chanID, thingID, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.ConnectThing(ctx, chanID, thingID)
@@ -124,10 +124,10 @@ func (lm loggingMiddleware) DisconnectThing(ctx context.Context, chanID, thingID
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("disconnect_thing mgx-%s : mgx-%s, took %s to complete", chanID, thingID, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.DisconnectThing(ctx, chanID, thingID)
@@ -137,10 +137,10 @@ func (lm loggingMiddleware) Publish(ctx context.Context, msg *lora.Message) (err
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("publish application/%s/device/%s/rx took %s to complete", msg.ApplicationID, msg.DevEUI, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.Publish(ctx, msg)

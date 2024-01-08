@@ -23,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/invitations/middleware"
 	invitationspg "github.com/absmach/magistrala/invitations/postgres"
 	mglog "github.com/absmach/magistrala/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/absmach/magistrala/pkg/auth"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -65,12 +66,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
+
+	var chClientLogger mflog.Logger
+	chClientLogger, err = mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+    	logger.Error(ctx, fmt.Sprintf("failed to create logger: %s", err.Error()))
+	}
+
 	var exitCode int
 	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			logger.Error(ctx, fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -78,13 +86,13 @@ func main() {
 
 	dbConfig := clientspg.Config{Name: defDB}
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s database configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s database configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 	db, err := clientspg.Setup(dbConfig, *invitationspg.Migration())
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(ctx, err.Error())
 		exitCode = 1
 		return
 	}
@@ -92,42 +100,42 @@ func main() {
 
 	authConfig := auth.Config{}
 	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load auth configuration : %s", err.Error()))
+		logger.Error(ctx, fmt.Sprintf("failed to load auth configuration : %s", err.Error()))
 		exitCode = 1
 		return
 	}
 	authClient, authHandler, err := auth.Setup(authConfig)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(ctx, err.Error())
 		exitCode = 1
 		return
 	}
 	defer authHandler.Close()
-	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
+	logger.Info(ctx, "Successfully connected to auth grpc server " + authHandler.Secure())
 
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1
 		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
+			logger.Error(ctx,fmt.Sprintf("error shutting down tracer provider: %v", err))
 		}
 	}()
 	tracer := tp.Tracer(svcName)
 
 	svc, err := newService(db, dbConfig, authClient, tracer, cfg, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
@@ -135,7 +143,7 @@ func main() {
 	httpSvr := http.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, chClientLogger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -148,7 +156,7 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("%s service terminated: %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("%s service terminated: %s", svcName, err))
 	}
 }
 

@@ -30,12 +30,19 @@ func LoggingMiddleware(svc users.Service, logger mglog.Logger) users.Service {
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) RegisterClient(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method register_client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "register_client",
+			"id":       c.ID,
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx,fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.RegisterClient(ctx, token, client)
 }
@@ -44,16 +51,23 @@ func (lm *loggingMiddleware) RegisterClient(ctx context.Context, token string, c
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
-		message := "Method issue_token"
-		if t != nil {
-			message = fmt.Sprintf("%s of type %s", message, t.AccessType)
+		fields := map[string]interface{}{
+			"method":   "issue_token",
+			"access":   t.AccessType,
+			"identity": identity,
+			"duration": time.Since(begin),
 		}
-		message = fmt.Sprintf("%s for client %s took %s to complete", message, identity, time.Since(begin))
+		message := fmt.Sprintf("Method %s", fields["method"])
+		if t != nil {
+			message = fmt.Sprintf("%s of type %s", message, fields["access"])
+		}
+		message = fmt.Sprintf("%s for client %s took %s to complete", message, fields["identity"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.IssueToken(ctx, identity, secret, domainID)
 }
@@ -62,16 +76,23 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, d
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
-		message := "Method refresh_token"
-		if t != nil {
-			message = fmt.Sprintf("%s of type %s", message, t.AccessType)
+		fields := map[string]interface{}{
+			"method":       "refresh_token",
+			"access":       t.AccessType,
+			"refreshToken": refreshToken,
+			"duration":     time.Since(begin),
 		}
-		message = fmt.Sprintf("%s for refresh token %s took %s to complete", message, refreshToken, time.Since(begin))
+		message := fmt.Sprintf("Method %s", fields["method"])
+		if t != nil {
+			message = fmt.Sprintf("%s of type %s", message, fields["access"])
+		}
+		message = fmt.Sprintf("%s for refresh token %s took %s to complete", message, fields["refreshToken"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.RefreshToken(ctx, refreshToken, domainID)
 }
@@ -80,12 +101,18 @@ func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken, dom
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method view_client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "view_client",
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s using token %s took %s to complete", fields["method"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ViewClient(ctx, token, id)
 }
@@ -94,12 +121,19 @@ func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ViewProfile(ctx context.Context, token string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method view_profile with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "view_client",
+			"id":       c.ID,
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ViewProfile(ctx, token)
 }
@@ -108,12 +142,19 @@ func (lm *loggingMiddleware) ViewProfile(ctx context.Context, token string) (c m
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_clients %d clients using token %s took %s to complete", cp.Total, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "list_client",
+			"token":    token,
+			"total":    cp.Total,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s listed %d clients using token %s took %s to complete", fields["method"], fields["total"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ListClients(ctx, token, pm)
 }
@@ -122,12 +163,19 @@ func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, pm m
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_client_name_and_metadata for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "update_client_name_and_metadata",
+			"token":    token,
+			"id":       c.ID,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClient(ctx, token, client)
 }
@@ -136,12 +184,19 @@ func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, cli
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_client_tags for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "update_client_tags",
+			"token":    token,
+			"id":       c.ID,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientTags(ctx, token, client)
 }
@@ -150,12 +205,19 @@ func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, token string,
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClientIdentity(ctx context.Context, token, id, identity string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_client_identity for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "update_client_identity",
+			"token":    token,
+			"id":       c.ID,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientIdentity(ctx, token, id, identity)
 }
@@ -164,12 +226,19 @@ func (lm *loggingMiddleware) UpdateClientIdentity(ctx context.Context, token, id
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldSecret, newSecret string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_client_secret for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "update_client_secret",
+			"token":    token,
+			"id":       c.ID,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
@@ -178,12 +247,18 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) GenerateResetToken(ctx context.Context, email, host string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method generate_reset_token for email %s and host %s took %s to complete", email, host, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "generate_reset_token",
+			"email":    email,
+			"host":     host,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for email %s and host %s took %s to complete", fields["method"], fields["email"], fields["host"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.GenerateResetToken(ctx, email, host)
 }
@@ -192,12 +267,17 @@ func (lm *loggingMiddleware) GenerateResetToken(ctx context.Context, email, host
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ResetSecret(ctx context.Context, token, secret string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method reset_secret using token %s took %s to complete", token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "reset_secret",
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s using token %s took %s to complete", fields["method"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ResetSecret(ctx, token, secret)
 }
@@ -206,12 +286,17 @@ func (lm *loggingMiddleware) ResetSecret(ctx context.Context, token, secret stri
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email, user, token string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method send_password_reset using token %s took %s to complete", token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "send_password_reset",
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s using token %s took %s to complete", fields["method"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.SendPasswordReset(ctx, host, email, user, token)
 }
@@ -220,12 +305,19 @@ func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email,
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClientRole(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_client_role for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "update_client_role",
+			"id":       c.ID,
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateClientRole(ctx, token, client)
 }
@@ -234,12 +326,19 @@ func (lm *loggingMiddleware) UpdateClientRole(ctx context.Context, token string,
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) EnableClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method enable_client for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "enable_client",
+			"id":       c.ID,
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.EnableClient(ctx, token, id)
 }
@@ -248,12 +347,19 @@ func (lm *loggingMiddleware) EnableClient(ctx context.Context, token, id string)
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method disable_client for client with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "disable_client",
+			"id":       c.ID,
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for client with id %s using token %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.DisableClient(ctx, token, id)
 }
@@ -262,12 +368,21 @@ func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, objectKind, objectID string, cp mgclients.Page) (mp mgclients.MembersPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_members %d members for object kind %s and object id %s and token %s took %s to complete", mp.Total, objectKind, objectID, token, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":     "list_members",
+			"page":       mp.Total,
+			"objectKind": objectKind,
+			"objectID":   objectID,
+			"token":      token,
+			"duration":   time.Since(begin),
+		}
+		message := fmt.Sprintf("Method list_members %d members for object kind %s and object id %s and token %s took %s to complete", fields["page"], fields["objectKind"], fields["objectID"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ListMembers(ctx, token, objectKind, objectID, cp)
 }
@@ -275,12 +390,19 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, objectKind,
 // Identify logs the identify request. It logs the token and the time it took to complete the request.
 func (lm *loggingMiddleware) Identify(ctx context.Context, token string) (id string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method identify for token %s with id %s took %s to complete", token, id, time.Since(begin))
+		fields := map[string]interface{}{
+			"method":   "identify",
+			"id":       id,
+			"token":    token,
+			"duration": time.Since(begin),
+		}
+		message := fmt.Sprintf("Method %s for token %s with id %s took %s to complete", fields["method"], fields["id"], fields["token"], fields["duration"])
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			fields["error"] = err.Error()
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, fields["error"]))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.Identify(ctx, token)
 }

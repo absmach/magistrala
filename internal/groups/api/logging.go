@@ -30,10 +30,10 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token, kind string
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method create_group for %s %s  with id %s using token %s took %s to complete", g.Name, kind, g.ID, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.CreateGroup(ctx, token, kind, group)
 }
@@ -44,10 +44,10 @@ func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, grou
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_group for group %s with id %s using token %s took %s to complete", g.Name, g.ID, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.UpdateGroup(ctx, token, group)
 }
@@ -58,10 +58,10 @@ func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method view_group for group %s with id %s using token %s took %s to complete", g.Name, g.ID, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ViewGroup(ctx, token, id)
 }
@@ -72,10 +72,10 @@ func (lm *loggingMiddleware) ViewGroupPerms(ctx context.Context, token, id strin
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method view_group_perms for group with id %s using token %s took %s to complete", id, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ViewGroupPerms(ctx, token, id)
 }
@@ -86,10 +86,10 @@ func (lm *loggingMiddleware) ListGroups(ctx context.Context, token, memberKind, 
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_groups %d groups using token %s took %s to complete", cg.Total, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ListGroups(ctx, token, memberKind, memberID, gp)
 }
@@ -100,10 +100,10 @@ func (lm *loggingMiddleware) EnableGroup(ctx context.Context, token, id string) 
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method enable_group for group with id %s using token %s took %s to complete", g.ID, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.EnableGroup(ctx, token, id)
 }
@@ -114,10 +114,10 @@ func (lm *loggingMiddleware) DisableGroup(ctx context.Context, token, id string)
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method disable_group for group with id %s using token %s took %s to complete", g.ID, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.DisableGroup(ctx, token, id)
 }
@@ -128,10 +128,10 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID, pe
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_memberships for group with id %s using token %s took %s to complete", groupID, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.ListMembers(ctx, token, groupID, permission, memberKind)
 }
@@ -140,10 +140,10 @@ func (lm *loggingMiddleware) Assign(ctx context.Context, token, groupID, relatio
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method assign for token %s and member %s group id %s took %s to complete", token, memberIDs, groupID, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.Assign(ctx, token, groupID, relation, memberKind, memberIDs...)
@@ -153,10 +153,10 @@ func (lm *loggingMiddleware) Unassign(ctx context.Context, token, groupID, relat
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method unassign for token %s and member %s group id %s took %s to complete", token, memberIDs, groupID, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.Unassign(ctx, token, groupID, relation, memberKind, memberIDs...)
@@ -166,10 +166,10 @@ func (lm *loggingMiddleware) DeleteGroup(ctx context.Context, token, id string) 
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method delete_group for group with id %s using token %s took %s to complete", id, token, time.Since(begin))
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			lm.logger.Warn(ctx, fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(ctx, fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 	return lm.svc.DeleteGroup(ctx, token, id)
 }

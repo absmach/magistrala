@@ -32,6 +32,7 @@ import (
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
+	mflog "github.com/mainflux/mainflux/logger"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -69,9 +70,16 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
+	var logger mglog.Logger
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
+	}
+
+	var chClientLogger mflog.Logger
+	chClientLogger, err = mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		logger.Error(ctx, fmt.Sprintf("failed to create logger: %s", err.Error()))
 	}
 
 	var exitCode int
@@ -79,7 +87,7 @@ func main() {
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			logger.Error(ctx, fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -88,11 +96,11 @@ func main() {
 	// Create new postgres client
 	dbConfig := pgclient.Config{Name: defDB}
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(ctx, err.Error())
 	}
 	db, err := pgclient.Setup(dbConfig, *bootstrappg.Migration())
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(ctx, err.Error())
 		exitCode = 1
 		return
 	}
@@ -100,29 +108,29 @@ func main() {
 
 	authConfig := auth.Config{}
 	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
 	authClient, authHandler, err := auth.Setup(authConfig)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(ctx, err.Error())
 		exitCode = 1
 		return
 	}
 	defer authHandler.Close()
-	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
+	logger.Info(ctx, "Successfully connected to auth grpc server "+authHandler.Secure())
 
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1
 		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
+			logger.Error(ctx, fmt.Sprintf("error shutting down tracer provider: %v", err))
 		}
 	}()
 	tracer := tp.Tracer(svcName)
@@ -130,27 +138,27 @@ func main() {
 	// Create new service
 	svc, err := newService(ctx, authClient, db, tracer, logger, cfg, dbConfig)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
 	if err = subscribeToThingsES(ctx, svc, cfg, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to things event store: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to subscribe to things event store: %s", err))
 		exitCode = 1
 		return
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, chClientLogger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -163,7 +171,7 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("Bootstrap service terminated: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Bootstrap service terminated: %s", err))
 	}
 }
 
@@ -202,7 +210,7 @@ func subscribeToThingsES(ctx context.Context, svc bootstrap.Service, cfg config,
 
 	handler := consumer.NewEventHandler(svc)
 
-	logger.Info("Subscribed to Redis Event Store")
+	logger.Info(ctx, "Subscribed to Redis Event Store")
 
 	return subscriber.Subscribe(ctx, handler)
 }

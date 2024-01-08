@@ -22,6 +22,7 @@ import (
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -63,12 +64,18 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var chClientLogger mflog.Logger
+	chClientLogger, err = mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+    	logger.Error(ctx, fmt.Sprintf("failed to create logger: %s", err.Error()))
+	}
+
 	var exitCode int
 	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			logger.Error(ctx, fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -76,20 +83,20 @@ func main() {
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
 	dbConfig := pgclient.Config{Name: defDB}
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s Postgres configuration : %s", svcName, err))
+		logger.Error(ctx, fmt.Sprintf("failed to load %s Postgres configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 	db, err := pgclient.Setup(dbConfig, *timescale.Migration())
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(ctx, err.Error())
 		exitCode = 1
 		return
 	}
@@ -97,13 +104,13 @@ func main() {
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
 		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+			logger.Error(ctx, fmt.Sprintf("Error shutting down tracer provider: %v", err))
 		}
 	}()
 	tracer := tp.Tracer(svcName)
@@ -113,7 +120,7 @@ func main() {
 
 	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to connect to message broker: %s", err))
 		exitCode = 1
 		return
 	}
@@ -121,7 +128,7 @@ func main() {
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
 	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create Timescale writer: %s", err))
+		logger.Error(ctx, fmt.Sprintf("failed to create Timescale writer: %s", err))
 		exitCode = 1
 		return
 	}
@@ -129,7 +136,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, chClientLogger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -142,7 +149,7 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("Timescale writer service terminated: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Timescale writer service terminated: %s", err))
 	}
 }
 

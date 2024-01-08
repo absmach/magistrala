@@ -118,7 +118,7 @@ func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (
 
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to retrieve connected due to %s", err))
 		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
@@ -127,7 +127,7 @@ func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (
 	for rows.Next() {
 		dbch := dbChannel{}
 		if err := rows.StructScan(&dbch); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to read connected thing due to %s", err))
 			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 		dbch.Owner = nullString(dbcfg.Owner)
@@ -155,7 +155,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, owner string, filter
 
 	rows, err := cr.db.QueryContext(ctx, q, append(params, limit, offset)...)
 	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to retrieve configs due to %s", err))
 		return bootstrap.ConfigsPage{}
 	}
 	defer rows.Close()
@@ -166,7 +166,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, owner string, filter
 	for rows.Next() {
 		c := bootstrap.Config{Owner: owner}
 		if err := rows.Scan(&c.ThingID, &c.ThingKey, &c.ExternalID, &c.ExternalKey, &name, &content, &c.State); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return bootstrap.ConfigsPage{}
 		}
 
@@ -179,7 +179,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, owner string, filter
 
 	var total uint64
 	if err := cr.db.QueryRowxContext(ctx, q, params...).Scan(&total); err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to count configs due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to count configs due to %s", err))
 		return bootstrap.ConfigsPage{}
 	}
 
@@ -222,7 +222,7 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to retrieve connected due to %s", err))
 		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
@@ -231,13 +231,13 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 	for rows.Next() {
 		dbch := dbChannel{}
 		if err := rows.StructScan(&dbch); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to read connected thing due to %s", err))
 			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		ch, err := toChannel(dbch)
 		if err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to deserialize channel due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to deserialize channel due to %s", err))
 			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
@@ -347,7 +347,7 @@ func (cr configRepository) Remove(ctx context.Context, owner, id string) error {
 	}
 
 	if _, err := cr.db.ExecContext(ctx, cleanupQuery); err != nil {
-		cr.log.Warn("Failed to clean dangling channels after removal")
+		cr.log.Warn(ctx, "Failed to clean dangling channels after removal")
 	}
 
 	return nil
@@ -399,13 +399,13 @@ func (cr configRepository) ListExisting(ctx context.Context, owner string, ids [
 	for rows.Next() {
 		var dbch dbChannel
 		if err := rows.StructScan(&dbch); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read retrieved channels due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to read retrieved channels due to %s", err))
 			return []bootstrap.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		ch, err := toChannel(dbch)
 		if err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to deserialize channel due to %s", err))
+			cr.log.Error(ctx, fmt.Sprintf("Failed to deserialize channel due to %s", err))
 			return []bootstrap.Channel{}, err
 		}
 
@@ -420,7 +420,7 @@ func (cr configRepository) RemoveThing(ctx context.Context, id string) error {
 	_, err := cr.db.ExecContext(ctx, q, id)
 
 	if _, err := cr.db.ExecContext(ctx, cleanupQuery); err != nil {
-		cr.log.Warn("Failed to clean dangling channels after removal")
+		cr.log.Warn(ctx, "Failed to clean dangling channels after removal")
 	}
 	if err != nil {
 		return errors.Wrap(errors.ErrRemoveEntity, err)
@@ -483,8 +483,9 @@ func (cr configRepository) retrieveAll(owner string, filter bootstrap.Filter) (s
 }
 
 func (cr configRepository) rollback(content string, tx *sqlx.Tx) {
+	ctx := context.Background()
 	if err := tx.Rollback(); err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to rollback due to %s", err))
+		cr.log.Error(ctx, fmt.Sprintf("Failed to rollback due to %s", err))
 	}
 }
 

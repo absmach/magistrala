@@ -94,7 +94,7 @@ func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig)
 		return ErrEmptyTopic
 	}
 
-	nh := ps.natsHandler(cfg.Handler)
+	nh := ps.natsHandler(ctx, cfg.Handler)
 
 	consumerConfig := jetstream.ConsumerConfig{
 		Name:          formatConsumerName(cfg.Topic, cfg.ID),
@@ -140,20 +140,20 @@ func (ps *pubsub) Unsubscribe(ctx context.Context, id, topic string) error {
 	}
 }
 
-func (ps *pubsub) natsHandler(h messaging.MessageHandler) func(m jetstream.Msg) {
+func (ps *pubsub) natsHandler(ctx context.Context, h messaging.MessageHandler) func(m jetstream.Msg) {
 	return func(m jetstream.Msg) {
 		var msg messaging.Message
 		if err := proto.Unmarshal(m.Data(), &msg); err != nil {
-			ps.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
+			ps.logger.Warn(ctx, fmt.Sprintf("Failed to unmarshal received message: %s", err))
 
 			return
 		}
 
-		if err := h.Handle(&msg); err != nil {
-			ps.logger.Warn(fmt.Sprintf("Failed to handle Magistrala message: %s", err))
+		if err := h.Handle(ctx, &msg); err != nil {
+			ps.logger.Warn(ctx, fmt.Sprintf("Failed to handle Magistrala message: %s", err))
 		}
 		if err := m.Ack(); err != nil {
-			ps.logger.Warn(fmt.Sprintf("Failed to ack message: %s", err))
+			ps.logger.Warn(ctx, fmt.Sprintf("Failed to ack message: %s", err))
 		}
 	}
 }

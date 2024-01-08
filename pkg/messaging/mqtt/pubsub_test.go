@@ -459,7 +459,7 @@ type handler struct {
 	msgChan   chan *messaging.Message
 }
 
-func (h handler) Handle(msg *messaging.Message) error {
+func (h handler) Handle(ctx context.Context, msg *messaging.Message) error {
 	if msg.Publisher != h.publisher {
 		h.msgChan <- msg
 	}

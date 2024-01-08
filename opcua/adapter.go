@@ -123,7 +123,7 @@ func (as *adapterService) ConnectThing(ctx context.Context, chanID, thingID stri
 
 	go func() {
 		if err := as.subscriber.Subscribe(ctx, as.cfg); err != nil {
-			as.logger.Warn(fmt.Sprintf("subscription failed: %s", err))
+			as.logger.Warn(ctx, fmt.Sprintf("subscription failed: %s", err))
 		}
 	}()
 

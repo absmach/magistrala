@@ -4,6 +4,7 @@
 package rabbitmq_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -89,15 +90,15 @@ func newConn() (*amqp.Connection, *amqp.Channel, error) {
 	return conn, ch, nil
 }
 
-func rabbitHandler(deliveries <-chan amqp.Delivery, h messaging.MessageHandler) {
+func rabbitHandler(ctx context.Context,deliveries <-chan amqp.Delivery, h messaging.MessageHandler) {
 	for d := range deliveries {
 		var msg messaging.Message
 		if err := proto.Unmarshal(d.Body, &msg); err != nil {
-			logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
+			logger.Warn(ctx, fmt.Sprintf("Failed to unmarshal received message: %s", err))
 			return
 		}
-		if err := h.Handle(&msg); err != nil {
-			logger.Warn(fmt.Sprintf("Failed to handle Magistrala message: %s", err))
+		if err := h.Handle(ctx, &msg); err != nil {
+			logger.Warn(ctx, fmt.Sprintf("Failed to handle Magistrala message: %s", err))
 			return
 		}
 	}

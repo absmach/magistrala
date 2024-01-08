@@ -34,14 +34,15 @@ var errFailedHandleMessage = errors.New("failed to handle magistrala message")
 
 func TestPublisher(t *testing.T) {
 	// Subscribing with topic, and with subtopic, so that we can publish messages.
+	ctx := context.Background()
 	conn, ch, err := newConn()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	topicChan := subscribe(t, ch, fmt.Sprintf("%s.%s", chansPrefix, topic))
 	subtopicChan := subscribe(t, ch, fmt.Sprintf("%s.%s.%s", chansPrefix, topic, subtopic))
 
-	go rabbitHandler(topicChan, handler{})
-	go rabbitHandler(subtopicChan, handler{})
+	go rabbitHandler(ctx, topicChan, handler{})
+	go rabbitHandler(ctx, subtopicChan, handler{})
 
 	t.Cleanup(func() {
 		conn.Close()
@@ -445,7 +446,7 @@ type handler struct {
 	publisher string
 }
 
-func (h handler) Handle(msg *messaging.Message) error {
+func (h handler) Handle(ctx context.Context, msg *messaging.Message) error {
 	if msg.Publisher != h.publisher {
 		msgChan <- msg
 	}

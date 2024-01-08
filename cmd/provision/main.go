@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/internal/server"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
@@ -53,24 +54,30 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
+	var chClientLogger mflog.Logger
+	chClientLogger, err = mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+    	logger.Error(ctx, fmt.Sprintf("failed to create logger: %s", err.Error()))
+	}
+
 	var exitCode int
 	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			logger.Error(ctx, fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
 	}
 
 	if cfgFromFile, err := loadConfigFromFile(cfg.File); err != nil {
-		logger.Warn(fmt.Sprintf("Continue with settings from env, failed to load from: %s: %s", cfg.File, err))
+		logger.Warn(ctx, fmt.Sprintf("Continue with settings from env, failed to load from: %s: %s", cfg.File, err))
 	} else {
 		// Merge environment variables and file settings.
 		mergeConfigs(&cfgFromFile, &cfg)
 		cfg = cfgFromFile
-		logger.Info("Continue with settings from file: " + cfg.File)
+		logger.Info(ctx, "Continue with settings from file: " + cfg.File)
 	}
 
 	SDKCfg := mgsdk.Config{
@@ -90,7 +97,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, chClientLogger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -103,7 +110,7 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("Provision service terminated: %s", err))
+		logger.Error(ctx, fmt.Sprintf("Provision service terminated: %s", err))
 	}
 }
 

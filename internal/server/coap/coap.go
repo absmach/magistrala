@@ -43,10 +43,10 @@ func New(ctx context.Context, cancel context.CancelFunc, name string, config ser
 
 func (s *Server) Start() error {
 	errCh := make(chan error)
-	s.Logger.Info(fmt.Sprintf("%s service started using http, exposed port %s", s.Name, s.Address))
+	s.Logger.Info(s.Ctx, fmt.Sprintf("%s service started using http, exposed port %s", s.Name, s.Address))
 	switch {
 	case s.Config.CertFile != "" || s.Config.KeyFile != "":
-		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s with TLS cert %s and key %s", s.Name, s.Protocol, s.Address, s.Config.CertFile, s.Config.KeyFile))
+		s.Logger.Info(s.Ctx, fmt.Sprintf("%s service %s server listening at %s with TLS cert %s and key %s", s.Name, s.Protocol, s.Address, s.Config.CertFile, s.Config.KeyFile))
 		certificate, err := tls.LoadX509KeyPair(s.Config.CertFile, s.Config.KeyFile)
 		if err != nil {
 			return fmt.Errorf("failed to load auth certificates: %w", err)
@@ -59,7 +59,7 @@ func (s *Server) Start() error {
 			errCh <- gocoap.ListenAndServeTCPTLS("udp", s.Address, tlsConfig, s.handler)
 		}()
 	default:
-		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s without TLS", s.Name, s.Protocol, s.Address))
+		s.Logger.Info(s.Ctx, fmt.Sprintf("%s service %s server listening at %s without TLS", s.Name, s.Protocol, s.Address))
 		go func() {
 			errCh <- gocoap.ListenAndServe("udp", s.Address, s.handler)
 		}()
@@ -81,6 +81,6 @@ func (s *Server) Stop() error {
 	case <-c:
 	case <-time.After(stopWaitTime):
 	}
-	s.Logger.Info(fmt.Sprintf("%s service shutdown of http at %s", s.Name, s.Address))
+	s.Logger.Info(s.Ctx, fmt.Sprintf("%s service shutdown of http at %s", s.Name, s.Address))
 	return nil
 }

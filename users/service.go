@@ -15,6 +15,7 @@ import (
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/users/postgres"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -496,10 +497,48 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 		return mgclients.MembersPage{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 
+	if pm.ListPerms && len(cp.Clients) > 0 {
+		g, ctx := errgroup.WithContext(ctx)
+
+		for i := range cp.Clients {
+			// Copying loop variable "i" to avoid "loop variable captured by func literal"
+			iter := i
+			g.Go(func() error {
+				return svc.retrieveObjectUsersPermissions(ctx, objectType, objectID, &cp.Clients[iter])
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			return mgclients.MembersPage{}, err
+		}
+	}
+
 	return mgclients.MembersPage{
 		Page:    cp.Page,
 		Members: cp.Clients,
 	}, nil
+}
+
+func (svc service) retrieveObjectUsersPermissions(ctx context.Context, objectType, objectID string, client *mgclients.Client) error {
+	permissions, err := svc.listObjectUserPermission(ctx, client.ID, objectType, objectID)
+	if err != nil {
+		return err
+	}
+	client.Permissions = permissions
+	return nil
+}
+
+func (svc service) listObjectUserPermission(ctx context.Context, userID, objectType, objectID string) ([]string, error) {
+	lp, err := svc.auth.ListPermissions(ctx, &magistrala.ListPermissionsReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Object:      objectID,
+		ObjectType:  objectType,
+	})
+	if err != nil {
+		return []string{}, err
+	}
+	return lp.GetPermissions(), nil
 }
 
 func (svc *service) checkSuperAdmin(ctx context.Context, adminID string) error {

@@ -530,6 +530,10 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	return mgclients.Page{
 		Status:     st,
 		Offset:     o,
@@ -540,5 +544,6 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 		Tag:        t,
 		Owner:      oid,
 		Permission: p,
+		ListPerms:  lp,
 	}, nil
 }

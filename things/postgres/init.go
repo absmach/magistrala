@@ -19,7 +19,7 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS clients (
 						id			VARCHAR(36) PRIMARY KEY,
 						name		VARCHAR(1024),
-						owner_id	VARCHAR(36),
+						domain_id	VARCHAR(36),
 						identity	VARCHAR(254),
 						secret		VARCHAR(4096) NOT NULL,
 						tags		TEXT[],
@@ -28,8 +28,8 @@ func Migration() *migrate.MemoryMigrationSource {
 						updated_at	TIMESTAMP,
 						updated_by  VARCHAR(254),
 						status		SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
-						UNIQUE		(owner_id, secret),
-						UNIQUE		(owner_id, name)
+						UNIQUE		(domain_id, secret),
+						UNIQUE		(domain_id, name)
 					)`,
 				},
 				Down: []string{

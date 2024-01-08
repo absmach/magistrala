@@ -189,7 +189,6 @@ func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) {
-	var sharedID, ownerID string
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -218,14 +217,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
-	if err != nil {
-		return nil, err
-	}
-	visibility, err := apiutil.ReadStringQuery(r, api.VisibilityKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
+
 	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -234,18 +226,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	switch visibility {
-	case api.MyVisibility:
-		ownerID = api.MyVisibility
-	case api.SharedVisibility:
-		sharedID = api.MyVisibility
-	case api.AllVisibility:
-		sharedID = api.MyVisibility
-		ownerID = api.MyVisibility
-	}
-	if oid != "" {
-		ownerID = oid
-	}
+
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -259,8 +240,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		name:     n,
 		identity: i,
 		tag:      t,
-		sharedBy: sharedID,
-		owner:    ownerID,
 		order:    order,
 		dir:      dir,
 	}
@@ -518,10 +497,6 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
-	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
-	}
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -538,7 +513,6 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 		Identity:   i,
 		Name:       n,
 		Tag:        t,
-		Owner:      oid,
 		Permission: p,
 	}, nil
 }

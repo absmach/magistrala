@@ -60,8 +60,8 @@ func (cce createClientEvent) Encode() (map[string]interface{}, error) {
 		tags := fmt.Sprintf("[%s]", strings.Join(cce.Tags, ","))
 		val["tags"] = tags
 	}
-	if cce.Owner != "" {
-		val["owner"] = cce.Owner
+	if cce.Domain != "" {
+		val["domain"] = cce.Domain
 	}
 	if cce.Metadata != nil {
 		metadata, err := json.Marshal(cce.Metadata)
@@ -103,8 +103,8 @@ func (uce updateClientEvent) Encode() (map[string]interface{}, error) {
 		tags := fmt.Sprintf("[%s]", strings.Join(uce.Tags, ","))
 		val["tags"] = tags
 	}
-	if uce.Owner != "" {
-		val["owner"] = uce.Owner
+	if uce.Domain != "" {
+		val["domain"] = uce.Domain
 	}
 	if uce.Credentials.Identity != "" {
 		val["identity"] = uce.Credentials.Identity
@@ -161,8 +161,8 @@ func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
 		tags := fmt.Sprintf("[%s]", strings.Join(vce.Tags, ","))
 		val["tags"] = tags
 	}
-	if vce.Owner != "" {
-		val["owner"] = vce.Owner
+	if vce.Domain != "" {
+		val["domain"] = vce.Domain
 	}
 	if vce.Credentials.Identity != "" {
 		val["identity"] = vce.Credentials.Identity
@@ -234,8 +234,8 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 
 		val["metadata"] = metadata
 	}
-	if lce.Owner != "" {
-		val["owner"] = lce.Owner
+	if lce.Domain != "" {
+		val["domain"] = lce.Domain
 	}
 	if lce.Tag != "" {
 		val["tag"] = lce.Tag
@@ -288,8 +288,8 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 
 		val["metadata"] = metadata
 	}
-	if lcge.Owner != "" {
-		val["owner"] = lcge.Owner
+	if lcge.Domain != "" {
+		val["domain"] = lcge.Domain
 	}
 	if lcge.Tag != "" {
 		val["tag"] = lcge.Tag

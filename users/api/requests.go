@@ -61,7 +61,6 @@ type listClientsReq struct {
 	tag        string
 	identity   string
 	visibility string
-	owner      string
 	sharedBy   string
 	metadata   mgclients.Metadata
 	order      string

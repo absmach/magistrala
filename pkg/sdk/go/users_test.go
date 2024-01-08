@@ -920,7 +920,7 @@ func TestUpdateClientRole(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(users.ErrFailedOwnerUpdate, users.ErrFailedOwnerUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(users.ErrFailedUpdateRole, users.ErrFailedUpdateRole), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",

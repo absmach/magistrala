@@ -28,7 +28,7 @@ type Thing struct {
 	Name        string                 `json:"name,omitempty"`
 	Credentials Credentials            `json:"credentials"`
 	Tags        []string               `json:"tags,omitempty"`
-	Owner       string                 `json:"owner,omitempty"`
+	Domain      string                 `json:"domain,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 	CreatedAt   time.Time              `json:"created_at,omitempty"`
 	UpdatedAt   time.Time              `json:"updated_at,omitempty"`

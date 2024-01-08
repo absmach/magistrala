@@ -69,7 +69,7 @@ func (m *Repository) Save(ctx context.Context, g mggroups.Group) (mggroups.Group
 		return mggroups.Group{}, repoerr.ErrCreateEntity
 	}
 
-	if g.Owner == WrongID {
+	if g.Domain == WrongID {
 		return mggroups.Group{}, repoerr.ErrCreateEntity
 	}
 

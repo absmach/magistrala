@@ -42,7 +42,7 @@ type Client struct {
 	ID          string      `json:"id"`
 	Name        string      `json:"name,omitempty"`
 	Tags        []string    `json:"tags,omitempty"`
-	Owner       string      `json:"owner,omitempty"` // nullable
+	Domain      string      `json:"domain,omitempty"`
 	Credentials Credentials `json:"credentials,omitempty"`
 	Metadata    Metadata    `json:"metadata,omitempty"`
 	CreatedAt   time.Time   `json:"created_at,omitempty"`
@@ -95,9 +95,6 @@ type Repository interface {
 
 	// UpdateSecret updates secret for client with given identity.
 	UpdateSecret(ctx context.Context, client Client) (Client, error)
-
-	// UpdateOwner updates owner for client with given id.
-	UpdateOwner(ctx context.Context, client Client) (Client, error)
 
 	// UpdateRole updates role for client with given id.
 	UpdateRole(ctx context.Context, client Client) (Client, error)

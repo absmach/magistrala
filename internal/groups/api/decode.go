@@ -267,10 +267,6 @@ func decodePageMeta(r *http.Request) (mggroups.PageMeta, error) {
 	if err != nil {
 		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	ownerID, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
-	if err != nil {
-		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
-	}
 	name, err := apiutil.ReadStringQuery(r, api.NameKey, "")
 	if err != nil {
 		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -284,7 +280,6 @@ func decodePageMeta(r *http.Request) (mggroups.PageMeta, error) {
 		Offset:   offset,
 		Limit:    limit,
 		Name:     name,
-		OwnerID:  ownerID,
 		Metadata: meta,
 		Status:   st,
 	}

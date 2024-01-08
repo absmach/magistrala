@@ -21,7 +21,7 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS clients (
 						id          VARCHAR(36) PRIMARY KEY,
 						name        VARCHAR(254) NOT NULL UNIQUE,
-						owner_id    VARCHAR(36),
+						domain_id    VARCHAR(36),
 						identity    VARCHAR(254) NOT NULL UNIQUE,
 						secret      TEXT NOT NULL,
 						tags        TEXT[],

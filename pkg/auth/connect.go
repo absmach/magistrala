@@ -59,7 +59,7 @@ type client struct {
 
 var _ Handler = (*client)(nil)
 
-func newClient(cfg Config) (Handler, error) {
+func newHandler(cfg Config) (Handler, error) {
 	conn, secure, err := connect(cfg)
 	if err != nil {
 		return nil, err
@@ -78,17 +78,6 @@ func (c *client) Close() error {
 	}
 
 	return nil
-}
-
-func (c *client) IsSecure() bool {
-	switch c.secure {
-	case withTLS, withmTLS:
-		return true
-	case withoutTLS:
-		fallthrough
-	default:
-		return true
-	}
 }
 
 func (c *client) Connection() *grpc.ClientConn {

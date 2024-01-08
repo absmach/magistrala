@@ -156,6 +156,9 @@ jobs:
               - "cmd/opcua/**"
               - "logger/**"
 
+            pkg-auth:
+              - "pkg/auth/**"
+
             pkg-clients:
               - "pkg/clients/**"
 
@@ -316,6 +319,11 @@ jobs:
         if: steps.changes.outputs.opcua == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/opcua.out ./opcua/...
+
+      - name: Run pkg auth tests
+        if: steps.changes.outputs.pkg-auth == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-auth.out ./pkg/auth/...
 
       - name: Run pkg clients tests
         if: steps.changes.outputs.pkg-clients == 'true' || steps.changes.outputs.workflow == 'true'

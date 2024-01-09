@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
 package kafka
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/proto"
 )

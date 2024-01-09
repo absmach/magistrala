@@ -1,17 +1,17 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
 //go:build kafka
 // +build kafka
-
-// Copyright (c) Mainflux
-// SPDX-License-Identifier: Apache-2.0
 
 package brokers
 
 import (
 	"log"
 
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/messaging/kafka"
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging/kafka"
 )
 
 // SubjectAllChannels represents subject to subscribe for all the channels.

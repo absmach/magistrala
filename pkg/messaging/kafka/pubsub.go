@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
 package kafka
@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-zookeeper/zk"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/messaging"
 	kafka "github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/proto"
 )
@@ -49,13 +49,13 @@ type subscription struct {
 type pubsub struct {
 	publisher
 	zkConn        *zk.Conn
-	logger        mflog.Logger
+	logger        mglog.Logger
 	mu            sync.Mutex
 	subscriptions map[string]map[string]subscription
 }
 
 // NewPubSub returns Kafka message publisher/subscriber.
-func NewPubSub(url, _ string, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url, _ string, logger mglog.Logger) (messaging.PubSub, error) {
 	conn, err := kafka.Dial("tcp", url)
 	if err != nil {
 		return &pubsub{}, err
@@ -82,25 +82,25 @@ func NewPubSub(url, _ string, logger mflog.Logger) (messaging.PubSub, error) {
 	}, nil
 }
 
-func (ps *pubsub) Subscribe(ctx context.Context, id, topic string, handler messaging.MessageHandler) error {
-	if id == "" {
+func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig) error {
+	if cfg.ID == "" {
 		return ErrEmptyID
 	}
-	if topic == "" {
+	if cfg.Topic == "" {
 		return ErrEmptyTopic
 	}
-	topic = formatTopic(topic)
+	cfg.Topic = formatTopic(cfg.Topic)
 
-	if topic == SubjectAllChannels {
-		go ps.subscribeToAllChannels(ctx, id, handler)
+	if cfg.Topic == SubjectAllChannels {
+		go ps.subscribeToAllChannels(ctx, cfg.ID, cfg.Handler)
 		return nil
 	}
 
-	s, err := ps.checkSubscribed(topic, id)
+	s, err := ps.checkSubscribed(cfg.Topic, cfg.ID)
 	if err != nil {
 		return err
 	}
-	ps.configReader(ctx, id, topic, s, handler)
+	ps.configReader(ctx, cfg.ID, cfg.Topic, s, cfg.Handler)
 
 	return nil
 }
@@ -126,8 +126,10 @@ func (ps *pubsub) Unsubscribe(ctx context.Context, id, topic string) error {
 	if !ok {
 		return ErrNotSubscribed
 	}
-	if err := s.close(); err != nil {
-		return err
+	if s.cancel != nil {
+		if err := s.cancel(); err != nil {
+			return err
+		}
 	}
 	delete(subs, id)
 	if len(subs) == 0 {
@@ -141,8 +143,10 @@ func (ps *pubsub) Close() error {
 
 	for _, subs := range ps.subscriptions {
 		for _, s := range subs {
-			if err := s.close(); err != nil {
-				return err
+			if s.cancel != nil {
+				if err := s.cancel(); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -157,15 +161,6 @@ func (ps *pubsub) handle(message kafka.Message, h messaging.MessageHandler) {
 	if err := h.Handle(&msg); err != nil {
 		ps.logger.Warn(fmt.Sprintf("Failed to handle Mainflux message: %s", err))
 	}
-}
-
-func (s subscription) close() error {
-	if s.cancel != nil {
-		if err := s.cancel(); err != nil {
-			return err
-		}
-	}
-	return s.Close()
 }
 
 // checkSubscribed checks if topic and topic ID are already subscribed.

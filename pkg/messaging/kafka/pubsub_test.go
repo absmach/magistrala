@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
 package kafka_test
@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/messaging/kafka"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging/kafka"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,12 @@ func TestPubsub(t *testing.T) {
 	err = publisher.Publish(context.TODO(), fmt.Sprintf("%s.%s", channel, subtopic), &expectedMsg)
 	require.Nil(t, err, fmt.Sprintf("failed to publish message: %s", err))
 
-	err = pubsub.Subscribe(context.TODO(), clientID, fmt.Sprintf("%s.*", chansPrefix), handler{})
+	cfg := messaging.SubscriberConfig{
+		ID:      clientID,
+		Topic:   fmt.Sprintf("%s.*", chansPrefix),
+		Handler: handler{},
+	}
+	err = pubsub.Subscribe(context.TODO(), cfg)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
@@ -219,7 +224,12 @@ func TestPubsub(t *testing.T) {
 
 	for _, pc := range subcases {
 		if pc.pubsub == true {
-			err := pubsub.Subscribe(context.TODO(), pc.topicID, pc.topic, handler{})
+			cfg := messaging.SubscriberConfig{
+				ID:      pc.topicID,
+				Topic:   pc.topic,
+				Handler: handler{},
+			}
+			err := pubsub.Subscribe(context.TODO(), cfg)
 			if pc.errorMessage == nil {
 				require.Nil(t, err, fmt.Sprintf("%s got unexpected error: %s", pc.desc, err))
 			} else {

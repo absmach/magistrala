@@ -3,7 +3,10 @@
 
 package cli
 
-import "github.com/spf13/cobra"
+import (
+	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/spf13/cobra"
+)
 
 var cmdMessages = []cobra.Command{
 	{
@@ -27,14 +30,20 @@ var cmdMessages = []cobra.Command{
 	{
 		Use:   "read <channel_id.subtopic> <user_token>",
 		Short: "Read messages",
-		Long:  `Reads all channel messages`,
+		Long: "Reads all channel messages\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli messages read <channel_id.subtopic> <user_token> --offset <offset> --limit <limit> - lists all messages with provided offset and limit\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
+			pageMetadata := mgxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
 
-			m, err := sdk.ReadMessages(args[0], args[1])
+			m, err := sdk.ReadMessages(pageMetadata, args[0], args[1])
 			if err != nil {
 				logError(err)
 				return

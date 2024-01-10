@@ -828,9 +828,13 @@ type SDK interface {
 	// ReadMessages read messages of specified channel.
 	//
 	// example:
-	//  msgs, _ := sdk.ReadMessages("channelID", "token")
+	//  pm := sdk.PageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//  }
+	//  msgs, _ := sdk.ReadMessages(pm,"channelID", "token")
 	//  fmt.Println(msgs)
-	ReadMessages(chanID, token string) (MessagesPage, errors.SDKError)
+	ReadMessages(pm PageMetadata, chanID, token string) (MessagesPage, errors.SDKError)
 
 	// SetContentType sets message content type.
 	//

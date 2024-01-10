@@ -30,7 +30,7 @@ func (sdk mgSDK) SendMessage(chanName, msg, key string) errors.SDKError {
 	return err
 }
 
-func (sdk mgSDK) ReadMessages(chanName, token string) (MessagesPage, errors.SDKError) {
+func (sdk mgSDK) ReadMessages(pm PageMetadata, chanName, token string) (MessagesPage, errors.SDKError) {
 	chanNameParts := strings.SplitN(chanName, ".", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
@@ -38,14 +38,18 @@ func (sdk mgSDK) ReadMessages(chanName, token string) (MessagesPage, errors.SDKE
 		subtopicPart = fmt.Sprintf("?subtopic=%s", chanNameParts[1])
 	}
 
-	url := fmt.Sprintf("%s/channels/%s/messages%s", sdk.readerURL, chanID, subtopicPart)
+	readMessagesEndpoint := fmt.Sprintf("channels/%s/messages%s", chanID, subtopicPart)
+	url, err := sdk.withQueryParams(sdk.readerURL, readMessagesEndpoint, pm)
+	if err != nil {
+		return MessagesPage{}, errors.NewSDKError(err)
+	}
 
 	header := make(map[string]string)
 	header["Content-Type"] = string(sdk.msgContentType)
 
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, header, http.StatusOK)
-	if err != nil {
-		return MessagesPage{}, err
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, header, http.StatusOK)
+	if sdkerr != nil {
+		return MessagesPage{}, sdkerr
 	}
 
 	var mp MessagesPage

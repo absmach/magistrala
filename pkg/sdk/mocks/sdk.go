@@ -1804,9 +1804,9 @@ func (_m *SDK) Parents(id string, pm sdk.PageMetadata, token string) (sdk.Groups
 	return r0, r1
 }
 
-// ReadMessages provides a mock function with given fields: chanID, token
-func (_m *SDK) ReadMessages(chanID string, token string) (sdk.MessagesPage, errors.SDKError) {
-	ret := _m.Called(chanID, token)
+// ReadMessages provides a mock function with given fields: pm, chanID, token
+func (_m *SDK) ReadMessages(pm sdk.PageMetadata, chanID string, token string) (sdk.MessagesPage, errors.SDKError) {
+	ret := _m.Called(pm, chanID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReadMessages")
@@ -1814,17 +1814,17 @@ func (_m *SDK) ReadMessages(chanID string, token string) (sdk.MessagesPage, erro
 
 	var r0 sdk.MessagesPage
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.MessagesPage, errors.SDKError)); ok {
-		return rf(chanID, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) (sdk.MessagesPage, errors.SDKError)); ok {
+		return rf(pm, chanID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.MessagesPage); ok {
-		r0 = rf(chanID, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) sdk.MessagesPage); ok {
+		r0 = rf(pm, chanID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.MessagesPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(chanID, token)
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = rf(pm, chanID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)

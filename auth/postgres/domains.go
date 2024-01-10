@@ -552,10 +552,10 @@ func buildPageQuery(pm auth.Page) (string, error) {
 		query = append(query, fmt.Sprintf("d.id IN ('%s')", strings.Join(pm.IDs, "','")))
 	}
 
-	if pm.Status != auth.AllStatus {
+	if (pm.Status >= auth.EnabledStatus) && (pm.Status <= auth.AllStatus) {
 		query = append(query, "d.status = :status")
 	} else {
-		query = append(query, fmt.Sprintf("d.status < %s", auth.AllStatus))
+		query = append(query, fmt.Sprintf("d.status < %d", auth.AllStatus))
 	}
 
 	if pm.Name != "" {

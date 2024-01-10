@@ -16,13 +16,13 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/groups"
-	"github.com/absmach/magistrala/internal/groups/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/groups/mocks"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/things"
 	api "github.com/absmach/magistrala/things/api/http"
@@ -105,7 +105,7 @@ func TestCreateChannel(t *testing.T) {
 			desc: "create channel with invalid parent",
 			channel: sdk.Channel{
 				Name:     gName,
-				ParentID: mocks.WrongID,
+				ParentID: wrongID,
 				Status:   mgclients.EnabledStatus.String(),
 			},
 			token: token,
@@ -115,7 +115,7 @@ func TestCreateChannel(t *testing.T) {
 			desc: "create channel with invalid owner",
 			channel: sdk.Channel{
 				Name:    gName,
-				OwnerID: mocks.WrongID,
+				OwnerID: wrongID,
 				Status:  mgclients.EnabledStatus.String(),
 			},
 			token: token,
@@ -278,7 +278,7 @@ func TestListChannels(t *testing.T) {
 			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
-		repoCall3 := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
+		repoCall3 := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
 		pm := sdk.PageMetadata{
 			Offset: tc.offset,
 			Limit:  tc.limit,
@@ -288,7 +288,7 @@ func TestListChannels(t *testing.T) {
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, len(tc.response), len(page.Channels), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		if tc.err == nil {
-			ok := repoCall3.Parent.AssertCalled(t, "RetrieveByIDs", mock.Anything, mock.Anything)
+			ok := repoCall3.Parent.AssertCalled(t, "RetrieveByIDs", mock.Anything, mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByIDs was not called on %s", tc.desc))
 		}
 		repoCall.Unset()
@@ -340,7 +340,7 @@ func TestViewChannel(t *testing.T) {
 		{
 			desc:      "view channel for wrong id",
 			token:     validToken,
-			channelID: mocks.WrongID,
+			channelID: wrongID,
 			response:  sdk.Channel{Children: []*sdk.Channel{}},
 			err:       errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
@@ -438,7 +438,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc: "update channel name with invalid channel id",
 			channel: sdk.Channel{
-				ID:   mocks.WrongID,
+				ID:   wrongID,
 				Name: "NewName",
 			},
 			response: sdk.Channel{},
@@ -448,7 +448,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc: "update channel description with invalid channel id",
 			channel: sdk.Channel{
-				ID:          mocks.WrongID,
+				ID:          wrongID,
 				Description: "NewDescription",
 			},
 			response: sdk.Channel{},
@@ -458,7 +458,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc: "update channel metadata with invalid channel id",
 			channel: sdk.Channel{
-				ID: mocks.WrongID,
+				ID: wrongID,
 				Metadata: sdk.Metadata{
 					"field": "value2",
 				},
@@ -636,7 +636,7 @@ func TestListChannelsByThing(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllSubjects", mock.Anything, mock.Anything).Return(&magistrala.ListSubjectsRes{Policies: toIDs(tc.response)}, nil)
 		repoCall3 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
-		repoCall4 := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
+		repoCall4 := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
 		page, err := mgsdk.ChannelsByThing(tc.clientID, tc.page, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page.Channels))
@@ -668,7 +668,7 @@ func TestEnableChannel(t *testing.T) {
 	}
 
 	repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-	repoCall1 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
+	repoCall1 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, errors.ErrNotFound)
 	repoCall2 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
 	_, err := mgsdk.EnableChannel("wrongID", validToken)
 	assert.Equal(t, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), err, fmt.Sprintf("Enable channel with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
@@ -721,8 +721,8 @@ func TestDisableChannel(t *testing.T) {
 	}
 
 	repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-	repoCall1 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(sdk.ErrFailedRemoval)
-	repoCall2 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
+	repoCall1 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
+	repoCall2 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, errors.ErrNotFound)
 	_, err := mgsdk.DisableChannel("wrongID", validToken)
 	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
 	ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")

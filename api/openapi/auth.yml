@@ -32,6 +32,291 @@ tags:
       url: http://docs.mainflux.io/
 
 paths:
+  /domains:
+    post:
+      tags:
+        - Domains
+      summary: Adds new domain
+      description: |
+        Adds new domain.
+      requestBody:
+        $ref: "#/components/requestBodies/DomainCreateReq"
+      responses:
+        "201":
+          $ref: "#/components/responses/DomainCreateRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "409":
+          description: Failed due to using an existing alias.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    get:
+      summary: Retrieves list of domains.
+      description: |
+        Retrieves list of domains that the user have access.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/DomainName"
+        - $ref: "#/components/parameters/Permission"
+      tags:
+        - Domains
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/DomainsPageRes"
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /domains/{domainID}:
+    get:
+      summary: Retrieves domain information
+      description: |
+        Retrieves a specific domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/DomainRes"
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+    patch:
+      summary: Updates name, metadata, tags and alias of the domain.
+      description: |
+        Updates name, metadata, tags and alias of the domain.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      requestBody:
+        $ref: "#/components/requestBodies/DomainUpdateReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/DomainRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to domain id.
+        "404":
+          description: Failed due to non existing domain.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete domain for a domain with the given id.
+      description: |
+        Delete domain removes a domain with the given id from repo
+        and removes all the things, channels, assigned users, policies related to this domain.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Domain deleted.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to domain id.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+  /domains/{domainID}/permissions:
+    get:
+      summary: Retrieves user permissions on domain.
+      description: |
+        Retrieves user permissions on domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/DomainPermissionRes"
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+  /domains/{domainID}/enable:
+    post:
+      summary: Enables a domain
+      description: |
+        Enables a specific domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully enabled domain.
+        "400":
+          description: Failed due to malformed domain's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access the domain ID.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /domains/{domainID}/disable:
+    post:
+      summary: Disable a domain
+      description: |
+        Disable a specific domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully disabled domain.
+        "400":
+          description: Failed due to malformed domain's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access the domain ID.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /domains/{domainID}/freeze:
+    post:
+      summary: Freeze a domain
+      description: |
+        Freeze a specific domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successfully freezed domain.
+        "400":
+          description: Failed due to malformed domain's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access the domain ID.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /domains/{domainID}/users/assign:
+    post:
+      summary: Assign users to domain
+      description: |
+        Assign users to domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      requestBody:
+        $ref: "#/components/requestBodies/AssignUserReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Users successfully assigned to domain.
+        "400":
+          description: Failed due to malformed domain's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access the domain ID.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Conflict of data.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /domains/{domainID}/users/unassign:
+    post:
+      summary: Unassign users from domain
+      description: |
+        Unassign users from domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      requestBody:
+        $ref: "#/components/requestBodies/UnassignUsersReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Users successfully unassigned from domain.
+        "400":
+          description: Failed due to malformed domain's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access the domain ID.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Conflict of data.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
   /keys:
     post:
       tags:
@@ -136,6 +421,39 @@ paths:
           description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
+  /users/{memberID}/domains:
+    get:
+      tags:
+        - Domains
+      summary: List users in a group
+      description: |
+        Retrieves a list of users in a domain. Due to performance concerns, data
+        is retrieved in subsets. The API must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      parameters:
+        - $ref: "users.yml#/components/parameters/MemberID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "users.yml#/components/responses/UserPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: |
+            Missing or invalid access token provided.
+            This endpoint is available only for administrators.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
   /health:
     get:
@@ -150,6 +468,164 @@ paths:
 
 components:
   schemas:
+    DomainReqObj:
+      type: object
+      properties:
+        name:
+          type: string
+          example: domainName
+          description: Domain name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["tag1", "tag2"]
+          description: domain tags.
+        metadata:
+          type: object
+          example: { "domain": "example.com" }
+          description: Arbitrary, object-encoded domain's data.
+        alias:
+          type: string
+          example: domain alias
+          description: Domain alias.
+      required:
+        - name
+        - alias
+    Domain:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Domain unique identifier.
+        name:
+          type: string
+          example: domainName
+          description: Domain name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["tag1", "tag2"]
+          description: domain tags.
+        metadata:
+          type: object
+          example: { "domain": "example.com" }
+          description: Arbitrary, object-encoded domain's data.
+        alias:
+          type: string
+          example: domain alias
+          description: Domain alias.
+        status:
+          type: string
+          description: Domain Status
+          format: string
+          example: enabled
+        created_by:
+          type: string
+          format: uuid
+          example: "0d837f56-3f8a-4e2a-9359-6347d0fc9f06 "
+          description: User ID of the user who created the domain.
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the domain was created.
+        updated_by:
+          type: string
+          format: uuid
+          example: "80f66b77-ed74-4e74-9f88-6cce9a0a3049"
+          description: User ID of the user who last updated the domain.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the domain was last updated.
+      xml:
+        name: domain
+
+    DomainsPage:
+      type: object
+      properties:
+        domains:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Domain"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - domain
+        - total
+        - offset
+    DomainUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: domainName
+          description: Domain name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["tag1", "tag2"]
+          description: domain tags.
+        metadata:
+          type: object
+          example: { "domain": "example.com" }
+          description: Arbitrary, object-encoded thing's data.
+        alias:
+          type: string
+          example: domain alias
+          description: Domain alias.
+    Permissions:
+      type: object
+      properties:
+        permissions:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          description: Permissions
+
+    UserDomainRelationReq:
+      type: object
+      properties:
+        users_ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+          description: Users IDs
+          example:
+            [
+              "5dc1ce4b-7cc9-4f12-98a6-9d74cc4980bb",
+              "c01ed106-e52d-4aa4-bed3-39f360177cfa",
+            ]
+        relation:
+          type: string
+          enum: ["administrator", "editor","viewer","member"]
+          example: "administrator"
+          description: Policy relations.
+      required:
+        - users_ids
+        - relation
     Key:
       type: object
       properties:
@@ -206,6 +682,40 @@ components:
             type: string
 
   parameters:
+    DomainID:
+      name: domainID
+      description: Unique domain identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+    Status:
+      name: status
+      description: Domain status.
+      in: query
+      schema:
+        type: string
+        default: enabled
+      required: false
+      example: enabled
+    DomainName:
+      name: name
+      description: Domain's name.
+      in: query
+      schema:
+        type: string
+      required: false
+      example: "domainName"
+    Permission:
+      name: permission
+      description: permission.
+      in: query
+      schema:
+        type: string
+      required: false
+      example: "edit"
     ApiKeyId:
       name: keyID
       description: API Key ID.
@@ -259,6 +769,36 @@ components:
       required: false
 
   requestBodies:
+    DomainCreateReq:
+      description: JSON-formatted document describing the new domain to be registered
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DomainReqObj"
+    DomainUpdateReq:
+      description: JSON-formated document describing the name, alias, tags, and metadata of the domain to be updated
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DomainUpdate"
+    AssignUserReq:
+      description: JSON-formated document describing the policy related to assigning users to a domain
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserDomainRelationReq"
+
+    UnassignUsersReq:
+      description: JSON-formated document describing the policy related to unassigning users to a domain
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserDomainRelationReq"
+
     KeyRequest:
       description: JSON-formatted document describing key request.
       required: true
@@ -288,6 +828,38 @@ components:
   responses:
     ServiceError:
       description: Unexpected server-side error occurred.
+
+    DomainCreateRes:
+      description: Create new domain.
+      headers:
+        Location:
+          schema:
+            type: string
+            format: url
+          description: Registered domain relative URL in the format `/domains/<domainID_id>`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Domain"
+
+    DomainRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Domain"
+    DomainPermissionRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Permissions"
+    DomainsPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DomainsPage"
 
     KeyRes:
       description: Data retrieved.

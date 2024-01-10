@@ -1297,7 +1297,7 @@ func TestListMembers(t *testing.T) {
 					Limit:  0,
 				},
 			},
-			err: errors.ErrAuthorization,
+			err: svcerr.ErrAuthentication,
 		},
 		{
 			desc:    "list clients for an owner",
@@ -1317,23 +1317,25 @@ func TestListMembers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, nil)
 		if tc.token == inValidToken {
-			repoCall = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
 		}
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: validID}, nil)
 
-		repoCall1 := auth.On("ListAllSubjects", mock.Anything, mock.Anything).Return(&magistrala.ListSubjectsRes{Policies: prefixClientUUIDSWithDomain(tc.response.Members)}, nil)
-		repoCall2 := cRepo.On("RetrieveAll", context.Background(), tc.page).Return(mgclients.ClientsPage{Page: tc.response.Page, Clients: tc.response.Members}, tc.err)
+		repoCall2 := auth.On("ListAllSubjects", mock.Anything, mock.Anything).Return(&magistrala.ListSubjectsRes{Policies: prefixClientUUIDSWithDomain(tc.response.Members)}, nil)
+		repoCall3 := cRepo.On("RetrieveAll", context.Background(), tc.page).Return(mgclients.ClientsPage{Page: tc.response.Page, Clients: tc.response.Members}, tc.err)
 		page, err := svc.ListMembers(context.Background(), tc.token, "groups", tc.groupID, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		if tc.err == nil {
-			ok := repoCall2.Parent.AssertCalled(t, "RetrieveAll", context.Background(), tc.page)
+			ok := repoCall3.Parent.AssertCalled(t, "RetrieveAll", context.Background(), tc.page)
 			assert.True(t, ok, fmt.Sprintf("RetrieveAll was not called on %s", tc.desc))
 		}
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
 	}
 }
 

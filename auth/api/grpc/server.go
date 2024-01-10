@@ -40,7 +40,6 @@ var (
 
 	defDomainsFilterPermissions = []string{
 		auth.AdminPermission,
-		auth.DeletePermission,
 		auth.EditPermission,
 		auth.ViewPermission,
 		auth.MembershipPermission,

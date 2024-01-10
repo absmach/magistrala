@@ -56,10 +56,10 @@ func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) 
 	}
 	resp, err := svc.auth.Authorize(ctx, r)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !resp.GetAuthorized() {
-		return "", errors.ErrAuthorization
+		return "", svcerr.ErrAuthorization
 	}
 
 	return thingID, nil
@@ -578,10 +578,10 @@ func (svc service) Identify(ctx context.Context, key string) (string, error) {
 
 	client, err := svc.clients.RetrieveBySecret(ctx, key)
 	if err != nil {
-		return "", errors.Wrap(repoerr.ErrNotFound, err)
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if err := svc.clientCache.Save(ctx, key, client.ID); err != nil {
-		return "", errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
 	return client.ID, nil

@@ -5,12 +5,16 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const svcName = "magistrala.AuthzService"
@@ -44,11 +48,11 @@ func (client grpcClient) Authorize(ctx context.Context, req *magistrala.Authoriz
 
 	res, err := client.authorize(ctx, req)
 	if err != nil {
-		return &magistrala.AuthorizeRes{}, err
+		return &magistrala.AuthorizeRes{}, decodeError(err)
 	}
 
 	ar := res.(authorizeRes)
-	return &magistrala.AuthorizeRes{Authorized: ar.authorized, Id: ar.id}, err
+	return &magistrala.AuthorizeRes{Authorized: ar.authorized, Id: ar.id}, nil
 }
 
 func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -68,4 +72,31 @@ func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}
 		ObjectType:  req.GetObjectType(),
 		Object:      req.GetObject(),
 	}, nil
+}
+
+func decodeError(err error) error {
+	if st, ok := status.FromError(err); ok {
+		switch st.Code() {
+		case codes.Unauthenticated:
+			return errors.Wrap(errors.ErrAuthentication, errors.New(st.Message()))
+		case codes.PermissionDenied:
+			return errors.Wrap(errors.ErrAuthorization, errors.New(st.Message()))
+		case codes.InvalidArgument:
+			return errors.Wrap(errors.ErrMalformedEntity, errors.New(st.Message()))
+		case codes.FailedPrecondition:
+			return errors.Wrap(errors.ErrMalformedEntity, errors.New(st.Message()))
+		case codes.NotFound:
+			return errors.Wrap(errors.ErrNotFound, errors.New(st.Message()))
+		case codes.AlreadyExists:
+			return errors.Wrap(errors.ErrConflict, errors.New(st.Message()))
+		case codes.OK:
+			if msg := st.Message(); msg != "" {
+				return errors.Wrap(errors.ErrUnidentified, errors.New(msg))
+			}
+			return nil
+		default:
+			return errors.Wrap(fmt.Errorf("unexpected gRPC status: %s (status code:%v)", st.Code().String(), st.Code()), errors.New(st.Message()))
+		}
+	}
+	return err
 }

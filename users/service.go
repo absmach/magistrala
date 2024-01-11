@@ -318,12 +318,13 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 		return err
 	}
 	c = mgclients.Client{
+		ID: id,
 		Credentials: mgclients.Credentials{
-			Identity: c.Credentials.Identity,
-			Secret:   secret,
+			Secret: secret,
 		},
 		UpdatedAt: time.Now(),
 		UpdatedBy: id,
+		Status:    c.Status,
 	}
 	if _, err := svc.clients.UpdateSecret(ctx, c); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)

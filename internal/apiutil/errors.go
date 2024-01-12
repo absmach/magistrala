@@ -176,4 +176,10 @@ var (
 
 	// ErrMissingTo indicates missing to value.
 	ErrMissingTo = errors.New("missing to time value")
+
+	// ErrMissingEntityType indicates missing entity type.
+	ErrMissingEntityType = errors.New("missing entity type")
+
+	// ErrInvalidEntityType indicates invalid entity type.
+	ErrInvalidEntityType = errors.New("invalid entity type")
 )

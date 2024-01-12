@@ -27,6 +27,7 @@ const (
 	defCertsURL        string = defURL + ":9019"
 	defInvitationsURL  string = defURL + ":9020"
 	defHTTPURL         string = defURL + ":9016/http"
+	defEventsURL       string = defURL + ":9021"
 	defTLSVerification bool   = false
 	defOffset          string = "0"
 	defLimit           string = "10"
@@ -42,6 +43,8 @@ type remotes struct {
 	HTTPAdapterURL  string `toml:"http_adapter_url"`
 	BootstrapURL    string `toml:"bootstrap_url"`
 	CertsURL        string `toml:"certs_url"`
+	InvitationsURL  string `toml:"invitations_url"`
+	EventsURL       string `toml:"events_url"`
 	TLSVerification bool   `toml:"tls_verification"`
 }
 
@@ -110,6 +113,8 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 				HTTPAdapterURL:  defHTTPURL,
 				BootstrapURL:    defBootstrapURL,
 				CertsURL:        defCertsURL,
+				InvitationsURL:  defInvitationsURL,
+				EventsURL:       defEventsURL,
 				TLSVerification: defTLSVerification,
 			},
 			Filter: filter{
@@ -186,6 +191,14 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 
 	if sdkConf.CertsURL == "" && config.Remotes.CertsURL != "" {
 		sdkConf.CertsURL = config.Remotes.CertsURL
+	}
+
+	if sdkConf.InvitationsURL == "" && config.Remotes.InvitationsURL != "" {
+		sdkConf.InvitationsURL = config.Remotes.InvitationsURL
+	}
+
+	if sdkConf.EventsURL == "" && config.Remotes.EventsURL != "" {
+		sdkConf.EventsURL = config.Remotes.EventsURL
 	}
 
 	sdkConf.TLSVerification = config.Remotes.TLSVerification || sdkConf.TLSVerification

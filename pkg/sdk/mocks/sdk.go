@@ -1208,6 +1208,34 @@ func (_m *SDK) EnableUser(id string, token string) (sdk.User, errors.SDKError) {
 	return r0, r1
 }
 
+// Events provides a mock function with given fields: pm, id, entityType, token
+func (_m *SDK) Events(pm sdk.PageMetadata, id string, entityType string, token string) (sdk.EventsPage, error) {
+	ret := _m.Called(pm, id, entityType, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Events")
+	}
+
+	var r0 sdk.EventsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string, string) (sdk.EventsPage, error)); ok {
+		return rf(pm, id, entityType, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string, string) sdk.EventsPage); ok {
+		r0 = rf(pm, id, entityType, token)
+	} else {
+		r0 = ret.Get(0).(sdk.EventsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string, string, string) error); ok {
+		r1 = rf(pm, id, entityType, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Group provides a mock function with given fields: id, token
 func (_m *SDK) Group(id string, token string) (sdk.Group, errors.SDKError) {
 	ret := _m.Called(id, token)

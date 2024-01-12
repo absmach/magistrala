@@ -629,7 +629,7 @@ func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainR
 		return Domain{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
-	dom, err := svc.domains.RetrieveByID(ctx, id)
+	dom, err := svc.domains.Update(ctx, id, key.User, d)
 	if err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}

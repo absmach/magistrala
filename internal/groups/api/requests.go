@@ -4,13 +4,10 @@
 package api
 
 import (
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
-)
-
-const (
-	thingsKind = "things"
 )
 
 type createGroupReq struct {
@@ -67,10 +64,10 @@ func (req listGroupsReq) validate() error {
 	if req.memberKind == "" {
 		return apiutil.ErrMissingMemberKind
 	}
-	if req.memberKind == thingsKind && req.memberID == "" {
+	if req.memberKind == auth.ThingsKind && req.memberID == "" {
 		return apiutil.ErrMissingID
 	}
-	if req.Level < mggroups.MinLevel || req.Level > mggroups.MaxLevel {
+	if req.Level > mggroups.MaxLevel {
 		return apiutil.ErrInvalidLevel
 	}
 	if req.Limit > api.MaxLimitSize || req.Limit < 1 {

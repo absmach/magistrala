@@ -10,12 +10,8 @@ import (
 	"github.com/absmach/magistrala/pkg/clients"
 )
 
-const (
-	// MaxLevel represents the maximum group hierarchy level.
-	MaxLevel = uint64(5)
-	// MinLevel represents the minimum group hierarchy level.
-	MinLevel = uint64(0)
-)
+// MaxLevel represents the maximum group hierarchy level.
+const MaxLevel = uint64(5)
 
 // Group represents the group of Clients.
 // Indicates a level in tree hierarchy. Root node is level 1.

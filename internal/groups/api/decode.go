@@ -17,11 +17,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const (
-	defRelation   = "viewer"
-	defPermission = "view"
-)
-
 func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	pm, err := decodePageMeta(r)
 	if err != nil {
@@ -211,6 +206,9 @@ func DecodeChangeGroupStatus(_ context.Context, r *http.Request) (interface{}, e
 }
 
 func DecodeAssignMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
 	req := assignReq{
 		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
@@ -222,6 +220,9 @@ func DecodeAssignMembersRequest(_ context.Context, r *http.Request) (interface{}
 }
 
 func DecodeUnassignMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
 	req := unassignReq{
 		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
@@ -235,11 +236,11 @@ func DecodeUnassignMembersRequest(_ context.Context, r *http.Request) (interface
 func DecodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	memberKind, err := apiutil.ReadStringQuery(r, api.MemberKindKey, "")
 	if err != nil {
-		return nil, apiutil.ErrInvalidQueryParams
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, defPermission)
+	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
 	if err != nil {
-		return nil, apiutil.ErrInvalidQueryParams
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listMembersReq{
 		token:      apiutil.ExtractBearerToken(r),

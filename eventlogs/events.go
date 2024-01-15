@@ -27,13 +27,14 @@ type EventsPage struct {
 
 // Page is used to filter events.
 type Page struct {
-	Offset     uint64    `json:"offset" db:"offset"`
-	Limit      uint64    `json:"limit" db:"limit"`
-	ID         string    `json:"id,omitempty" db:"id,omitempty"`
-	EntityType string    `json:"entity_type,omitempty"`
-	Operation  string    `json:"operation,omitempty" db:"operation,omitempty"`
-	From       time.Time `json:"from,omitempty" db:"from,omitempty"`
-	To         time.Time `json:"to,omitempty" db:"to,omitempty"`
+	Offset      uint64    `json:"offset" db:"offset"`
+	Limit       uint64    `json:"limit" db:"limit"`
+	ID          string    `json:"id,omitempty" db:"id,omitempty"`
+	EntityType  string    `json:"entity_type,omitempty"`
+	Operation   string    `json:"operation,omitempty" db:"operation,omitempty"`
+	From        time.Time `json:"from,omitempty" db:"from,omitempty"`
+	To          time.Time `json:"to,omitempty" db:"to,omitempty"`
+	WithPayload bool      `json:"with_payload,omitempty"`
 }
 
 func (page EventsPage) MarshalJSON() ([]byte, error) {

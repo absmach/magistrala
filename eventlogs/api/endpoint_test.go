@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -157,6 +158,20 @@ func TestListEventsEndpoint(t *testing.T) {
 			desc:   "with invalid to",
 			token:  validToken,
 			url:    validID + "/" + auth.UserType + "?to=ten",
+			status: http.StatusBadRequest,
+			svcErr: nil,
+		},
+		{
+			desc:   "with payload",
+			token:  validToken,
+			url:    validID + "/" + auth.UserType + fmt.Sprintf("?payload=%s", strconv.FormatBool(true)),
+			status: http.StatusOK,
+			svcErr: nil,
+		},
+		{
+			desc:   "with invalid payload",
+			token:  validToken,
+			url:    validID + "/" + auth.UserType + "?payload=ten",
 			status: http.StatusBadRequest,
 			svcErr: nil,
 		},

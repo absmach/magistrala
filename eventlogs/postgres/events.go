@@ -43,7 +43,11 @@ func (repo *repository) Save(ctx context.Context, event eventlogs.Event) (err er
 func (repo *repository) RetrieveAll(ctx context.Context, page eventlogs.Page) (eventlogs.EventsPage, error) {
 	query := pageQuery(page)
 
-	q := fmt.Sprintf("SELECT id, operation, occurred_at, payload FROM events %s ORDER BY occurred_at LIMIT :limit OFFSET :offset;", query)
+	sq := "id, operation, occurred_at"
+	if page.WithPayload {
+		sq += ", payload"
+	}
+	q := fmt.Sprintf("SELECT %s FROM events %s ORDER BY occurred_at LIMIT :limit OFFSET :offset;", sq, query)
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, page)
 	if err != nil {

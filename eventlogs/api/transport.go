@@ -22,6 +22,7 @@ import (
 
 const (
 	operationKey = "operation"
+	payloadKey   = "with_payload"
 	fromKey      = "from"
 	toKey        = "to"
 )
@@ -74,17 +75,22 @@ func decodeListEventsReq(_ context.Context, r *http.Request) (interface{}, error
 	if to == 0 {
 		to = time.Now().UnixNano()
 	}
+	payload, err := apiutil.ReadBoolQuery(r, payloadKey, false)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	req := listEventsReq{
 		token: apiutil.ExtractBearerToken(r),
 		page: eventlogs.Page{
-			Offset:     offset,
-			Limit:      limit,
-			ID:         chi.URLParam(r, "id"),
-			EntityType: chi.URLParam(r, "type"),
-			Operation:  operation,
-			From:       time.Unix(0, from),
-			To:         time.Unix(0, to),
+			Offset:      offset,
+			Limit:       limit,
+			ID:          chi.URLParam(r, "id"),
+			EntityType:  chi.URLParam(r, "type"),
+			Operation:   operation,
+			From:        time.Unix(0, from),
+			To:          time.Unix(0, to),
+			WithPayload: payload,
 		},
 	}
 

@@ -43,6 +43,7 @@ paths:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/offset"
         - $ref: "#/components/parameters/operation"
+        - $ref: "#/components/parameters/with_payload"
         - $ref: "#/components/parameters/from"
         - $ref: "#/components/parameters/to"
       security:
@@ -223,6 +224,15 @@ components:
         type: string
       required: false
       example: users.create
+    
+    with_payload:
+      name: with_payload
+      description: Include event payload.
+      in: query
+      schema:
+        type: boolean
+      required: false
+      example: true
 
     from:
       name: from

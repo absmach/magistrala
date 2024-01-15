@@ -222,6 +222,7 @@ func TestEventsRetrieveAll(t *testing.T) {
 		}
 		err := repo.Save(context.Background(), event)
 		require.Nil(t, err, fmt.Sprintf("create event unexpected error: %s", err))
+		event.Payload = nil
 		items = append(items, event)
 	}
 
@@ -360,6 +361,20 @@ func TestEventsRetrieveAll(t *testing.T) {
 			},
 		},
 		{
+			desc: "with payload",
+			page: eventlogs.Page{
+				WithPayload: true,
+				Offset:      0,
+				Limit:       10,
+			},
+			response: eventlogs.EventsPage{
+				Total:  uint64(num),
+				Offset: 0,
+				Limit:  10,
+				Events: items[:10],
+			},
+		},
+		{
 			desc: "with from",
 			page: eventlogs.Page{
 				From:   items[0].OccurredAt,
@@ -405,12 +420,13 @@ func TestEventsRetrieveAll(t *testing.T) {
 		{
 			desc: "with all filters",
 			page: eventlogs.Page{
-				ID:        items[0].ID,
-				Operation: items[0].Operation,
-				From:      items[0].OccurredAt,
-				To:        items[num-1].OccurredAt,
-				Offset:    0,
-				Limit:     10,
+				ID:          items[0].ID,
+				Operation:   items[0].Operation,
+				From:        items[0].OccurredAt,
+				To:          items[num-1].OccurredAt,
+				WithPayload: true,
+				Offset:      0,
+				Limit:       10,
 			},
 			response: eventlogs.EventsPage{
 				Total:  1,
@@ -482,17 +498,10 @@ func TestEventsRetrieveAll(t *testing.T) {
 			assert.Equal(t, tc.response.Total, page.Total)
 			assert.Equal(t, tc.response.Offset, page.Offset)
 			assert.Equal(t, tc.response.Limit, page.Limit)
-			assert.ElementsMatch(t, removePayload(t, page.Events), removePayload(t, tc.response.Events))
+			if !tc.page.WithPayload {
+				assert.ElementsMatch(t, page.Events, tc.response.Events)
+			}
 			assert.Equal(t, tc.err, err)
 		})
 	}
-}
-
-func removePayload(t *testing.T, events []eventlogs.Event) []eventlogs.Event {
-	var items []eventlogs.Event
-	for _, e := range events {
-		e.Payload = nil
-		items = append(items, e)
-	}
-	return items
 }

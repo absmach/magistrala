@@ -117,6 +117,7 @@ type PageMetadata struct {
 	Operation       string   `json:"operation,omitempty"`
 	From            int64    `json:"from,omitempty"`
 	To              int64    `json:"to,omitempty"`
+	WithPayload     bool     `json:"with_payload,omitempty"`
 }
 
 // Credentials represent client credentials: it contains
@@ -1382,6 +1383,16 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Relation != "" {
 		q.Add("relation", pm.Relation)
 	}
+	if pm.Operation != "" {
+		q.Add("operation", pm.Operation)
+	}
+	if pm.From != 0 {
+		q.Add("from", strconv.FormatInt(pm.From, 10))
+	}
+	if pm.To != 0 {
+		q.Add("to", strconv.FormatInt(pm.To, 10))
+	}
+	q.Add("with_payload", strconv.FormatBool(pm.WithPayload))
 
 	return q.Encode(), nil
 }

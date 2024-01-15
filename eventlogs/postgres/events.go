@@ -47,7 +47,7 @@ func (repo *repository) RetrieveAll(ctx context.Context, page eventlogs.Page) (e
 	if page.WithPayload {
 		sq += ", payload"
 	}
-	q := fmt.Sprintf("SELECT %s FROM events %s ORDER BY occurred_at LIMIT :limit OFFSET :offset;", sq, query)
+	q := fmt.Sprintf("SELECT %s FROM events %s ORDER BY occurred_at %s LIMIT :limit OFFSET :offset;", sq, query, page.Direction)
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, page)
 	if err != nil {

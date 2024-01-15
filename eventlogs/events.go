@@ -35,6 +35,7 @@ type Page struct {
 	From        time.Time `json:"from,omitempty" db:"from,omitempty"`
 	To          time.Time `json:"to,omitempty" db:"to,omitempty"`
 	WithPayload bool      `json:"with_payload,omitempty"`
+	Direction   string    `json:"direction,omitempty"`
 }
 
 func (page EventsPage) MarshalJSON() ([]byte, error) {

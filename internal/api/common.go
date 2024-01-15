@@ -132,7 +132,8 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidQueryParams),
 		errors.Contains(err, apiutil.ErrValidation),
 		errors.Contains(err, apiutil.ErrMissingEntityType),
-		errors.Contains(err, apiutil.ErrInvalidEntityType):
+		errors.Contains(err, apiutil.ErrInvalidEntityType),
+		errors.Contains(err, apiutil.ErrInvalidDirection):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, svcerr.ErrLogin),

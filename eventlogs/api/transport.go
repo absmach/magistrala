@@ -79,6 +79,10 @@ func decodeListEventsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DescDir)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	req := listEventsReq{
 		token: apiutil.ExtractBearerToken(r),
@@ -91,6 +95,7 @@ func decodeListEventsReq(_ context.Context, r *http.Request) (interface{}, error
 			From:        time.Unix(0, from),
 			To:          time.Unix(0, to),
 			WithPayload: payload,
+			Direction:   dir,
 		},
 	}
 

@@ -6,6 +6,7 @@ package api
 import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/eventlogs"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 )
 
@@ -26,11 +27,14 @@ func (req listEventsReq) validate() error {
 	if req.page.EntityType == "" {
 		return apiutil.ErrMissingEntityType
 	}
-	if req.page.EntityType != auth.UserType && req.page.EntityType != auth.GroupType && req.page.EntityType != auth.ThingType && req.page.EntityType != auth.DomainType && req.page.EntityType != auth.PlatformType {
+	if req.page.EntityType != auth.UserType && req.page.EntityType != auth.GroupType && req.page.EntityType != auth.ThingType {
 		return apiutil.ErrInvalidEntityType
 	}
 	if req.page.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
+	}
+	if req.page.Direction != "" && req.page.Direction != api.AscDir && req.page.Direction != api.DescDir {
+		return apiutil.ErrInvalidDirection
 	}
 
 	return nil

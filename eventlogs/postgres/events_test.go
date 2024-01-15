@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -226,6 +227,12 @@ func TestEventsRetrieveAll(t *testing.T) {
 		items = append(items, event)
 	}
 
+	reversedItems := make([]eventlogs.Event, len(items))
+	copy(reversedItems, items)
+	sort.Slice(reversedItems, func(i, j int) bool {
+		return reversedItems[i].OccurredAt.After(reversedItems[j].OccurredAt)
+	})
+
 	cases := []struct {
 		desc     string
 		page     eventlogs.Page
@@ -418,6 +425,34 @@ func TestEventsRetrieveAll(t *testing.T) {
 			},
 		},
 		{
+			desc: "with asc direction",
+			page: eventlogs.Page{
+				Direction: "asc",
+				Offset:    0,
+				Limit:     10,
+			},
+			response: eventlogs.EventsPage{
+				Total:  uint64(num),
+				Offset: 0,
+				Limit:  10,
+				Events: items[:10],
+			},
+		},
+		{
+			desc: "with desc direction",
+			page: eventlogs.Page{
+				Direction: "desc",
+				Offset:    0,
+				Limit:     10,
+			},
+			response: eventlogs.EventsPage{
+				Total:  uint64(num),
+				Offset: 0,
+				Limit:  10,
+				Events: reversedItems[:10],
+			},
+		},
+		{
 			desc: "with all filters",
 			page: eventlogs.Page{
 				ID:          items[0].ID,
@@ -425,6 +460,7 @@ func TestEventsRetrieveAll(t *testing.T) {
 				From:        items[0].OccurredAt,
 				To:          items[num-1].OccurredAt,
 				WithPayload: true,
+				Direction:   "asc",
 				Offset:      0,
 				Limit:       10,
 			},

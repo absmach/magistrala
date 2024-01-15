@@ -46,6 +46,7 @@ paths:
         - $ref: "#/components/parameters/with_payload"
         - $ref: "#/components/parameters/from"
         - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/dir"
       security:
         - bearerAuth: []
       responses:
@@ -179,16 +180,13 @@ components:
 
     type:
       name: type
-      description: Type of entity, e.g. user, group, domain, etc.
+      description: Type of entity, e.g. user, group, thing, etc.
       in: path
       schema:
         type: string
         enum:
           - user
           - group
-          - domain
-          - thing
-          - platform
           - thing
       required: true
       example: user
@@ -224,7 +222,7 @@ components:
         type: string
       required: false
       example: users.create
-    
+
     with_payload:
       name: with_payload
       description: Include event payload.
@@ -253,6 +251,18 @@ components:
         format: int64
       required: false
       example: 1704974066014408296
+
+    dir:
+      name: dir
+      description: Sort direction.
+      in: query
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+      required: false
+      example: desc
 
   responses:
     EventPageRes:

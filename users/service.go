@@ -185,14 +185,14 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		}
 		return pg, err
 	}
-	role := mgclients.UserRole
+
 	p := mgclients.Page{
 		Status:   mgclients.EnabledStatus,
 		Offset:   pm.Offset,
 		Limit:    pm.Limit,
 		Name:     pm.Name,
 		Identity: pm.Identity,
-		Role:     &role,
+		Role:     mgclients.UserRole,
 	}
 	pg, err := svc.clients.RetrieveAll(ctx, p)
 	if err != nil {

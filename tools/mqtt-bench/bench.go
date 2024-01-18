@@ -22,7 +22,7 @@ func Benchmark(cfg Config) error {
 	if err := checkConnection(cfg.MQTT.Broker.URL, 1); err != nil {
 		return err
 	}
-	logger, err := mglog.New(os.Stdout, mglog.Debug.String())
+	logger, err := mglog.New(os.Stdout, "debug")
 	if err != nil {
 		return err
 	}

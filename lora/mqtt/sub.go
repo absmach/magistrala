@@ -8,9 +8,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/lora"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -24,12 +24,12 @@ type Subscriber interface {
 type broker struct {
 	svc     lora.Service
 	client  mqtt.Client
-	logger  mglog.Logger
+	logger  *slog.Logger
 	timeout time.Duration
 }
 
 // NewBroker returns new MQTT broker instance.
-func NewBroker(svc lora.Service, client mqtt.Client, t time.Duration, log mglog.Logger) Subscriber {
+func NewBroker(svc lora.Service, client mqtt.Client, t time.Duration, log *slog.Logger) Subscriber {
 	return broker{
 		svc:     svc,
 		client:  client,

@@ -8,9 +8,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers"
 	consumertracing "github.com/absmach/magistrala/consumers/tracing"
@@ -26,7 +28,6 @@ import (
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/sync/errgroup"
 )
@@ -59,7 +60,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -138,7 +139,7 @@ func main() {
 	}
 }
 
-func newService(db *mongo.Database, logger mglog.Logger) consumers.BlockingConsumer {
+func newService(db *mongo.Database, logger *slog.Logger) consumers.BlockingConsumer {
 	repo := mongodb.New(db)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("mongodb", "message_writer")

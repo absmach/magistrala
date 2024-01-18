@@ -9,8 +9,8 @@ package brokers
 import (
 	"context"
 	"log"
+	"log/slog"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/nats"
 )
@@ -31,7 +31,7 @@ func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (me
 	return pb, nil
 }
 
-func NewPubSub(ctx context.Context, url string, logger mglog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
+func NewPubSub(ctx context.Context, url string, logger *slog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
 	pb, err := nats.NewPubSub(ctx, url, logger, opts...)
 	if err != nil {
 		return nil, err

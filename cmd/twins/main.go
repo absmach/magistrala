@@ -8,9 +8,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
@@ -33,7 +35,6 @@ import (
 	"github.com/absmach/magistrala/twins/tracing"
 	"github.com/caarlos0/env/v10"
 	"github.com/go-redis/redis/v8"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -72,7 +73,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -180,7 +181,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config, users magistrala.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, logger mglog.Logger) (twins.Service, error) {
+func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config, users magistrala.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, logger *slog.Logger) (twins.Service, error) {
 	twinRepo := twmongodb.NewTwinRepository(db)
 	twinRepo = tracing.TwinRepositoryMiddleware(tracer, twinRepo)
 
@@ -209,13 +210,13 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config,
 		Handler: handle(ctx, logger, cfg.ChannelID, svc),
 	}
 	if err = ps.Subscribe(ctx, subCfg); err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
 	}
 
 	return svc, nil
 }
 
-func handle(ctx context.Context, logger mglog.Logger, chanID string, svc twins.Service) handlerFunc {
+func handle(ctx context.Context, logger *slog.Logger, chanID string, svc twins.Service) handlerFunc {
 	return func(msg *messaging.Message) error {
 		if msg.GetChannel() == chanID {
 			return nil

@@ -8,12 +8,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/internal/postgres"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/jackc/pgerrcode"
@@ -37,12 +37,12 @@ var _ bootstrap.ConfigRepository = (*configRepository)(nil)
 
 type configRepository struct {
 	db  postgres.Database
-	log mglog.Logger
+	log *slog.Logger
 }
 
 // NewConfigRepository instantiates a PostgreSQL implementation of config
 // repository.
-func NewConfigRepository(db postgres.Database, log mglog.Logger) bootstrap.ConfigRepository {
+func NewConfigRepository(db postgres.Database, log *slog.Logger) bootstrap.ConfigRepository {
 	return &configRepository{db: db, log: log}
 }
 

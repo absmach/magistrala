@@ -9,8 +9,8 @@ package store
 import (
 	"context"
 	"log"
+	"log/slog"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/rabbitmq"
 )
@@ -28,7 +28,7 @@ func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, er
 	return pb, nil
 }
 
-func NewSubscriber(_ context.Context, url, stream, consumer string, logger mglog.Logger) (events.Subscriber, error) {
+func NewSubscriber(_ context.Context, url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
 	pb, err := rabbitmq.NewSubscriber(url, stream, consumer, logger)
 	if err != nil {
 		return nil, err

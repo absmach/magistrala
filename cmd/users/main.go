@@ -8,11 +8,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 	"regexp"
 	"time"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	authSvc "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal"
@@ -43,7 +45,6 @@ import (
 	"github.com/caarlos0/env/v10"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -90,7 +91,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init logger: %s", err.Error()))
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -192,7 +193,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger mglog.Logger) (users.Service, groups.Service, error) {
+func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := clientspg.NewRepository(database)
 	gRepo := gpostgres.New(database)

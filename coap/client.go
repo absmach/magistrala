@@ -7,9 +7,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"sync/atomic"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/plgd-dev/go-coap/v2/message"
@@ -39,11 +39,11 @@ type client struct {
 	client  mux.Client
 	token   message.Token
 	observe uint32
-	logger  mglog.Logger
+	logger  *slog.Logger
 }
 
 // NewClient instantiates a new Observer.
-func NewClient(c mux.Client, tkn message.Token, l mglog.Logger) Client {
+func NewClient(c mux.Client, tkn message.Token, l *slog.Logger) Client {
 	return &client{
 		client:  c,
 		token:   tkn,

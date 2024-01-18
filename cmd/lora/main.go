@@ -8,10 +8,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 	"time"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	"github.com/absmach/magistrala/internal/clients/jaeger"
@@ -31,7 +33,6 @@ import (
 	"github.com/caarlos0/env/v10"
 	mqttpaho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/go-redis/redis/v8"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -74,7 +75,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -166,7 +167,7 @@ func main() {
 	}
 }
 
-func connectToMQTTBroker(burl, user, password string, timeout time.Duration, logger mglog.Logger) (mqttpaho.Client, error) {
+func connectToMQTTBroker(burl, user, password string, timeout time.Duration, logger *slog.Logger) (mqttpaho.Client, error) {
 	opts := mqttpaho.NewClientOptions()
 	opts.AddBroker(burl)
 	opts.SetUsername(user)
@@ -187,7 +188,7 @@ func connectToMQTTBroker(burl, user, password string, timeout time.Duration, log
 	return client, nil
 }
 
-func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Duration, topic string, logger mglog.Logger) error {
+func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Duration, topic string, logger *slog.Logger) error {
 	mqttBroker := mqtt.NewBroker(svc, mc, timeout, logger)
 	logger.Info("Subscribed to Lora MQTT broker")
 	if err := mqttBroker.Subscribe(topic); err != nil {
@@ -196,7 +197,7 @@ func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Du
 	return nil
 }
 
-func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logger mglog.Logger) error {
+func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logger *slog.Logger) error {
 	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, thingsStream, cfg.ESConsumerName, logger)
 	if err != nil {
 		return err
@@ -209,12 +210,12 @@ func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logg
 	return subscriber.Subscribe(ctx, handler)
 }
 
-func newRouteMapRepository(client *redis.Client, prefix string, logger mglog.Logger) lora.RouteMapRepository {
+func newRouteMapRepository(client *redis.Client, prefix string, logger *slog.Logger) lora.RouteMapRepository {
 	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
 	return events.NewRouteMapRepository(client, prefix)
 }
 
-func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger mglog.Logger) lora.Service {
+func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger *slog.Logger) lora.Service {
 	thingsRM := newRouteMapRepository(rmConn, thingsRMPrefix, logger)
 	chansRM := newRouteMapRepository(rmConn, channelsRMPrefix, logger)
 	connsRM := newRouteMapRepository(rmConn, connsRMPrefix, logger)

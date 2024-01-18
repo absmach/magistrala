@@ -7,11 +7,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/internal/postgres"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -29,12 +29,12 @@ type Cert struct {
 
 type certsRepository struct {
 	db  postgres.Database
-	log mglog.Logger
+	log *slog.Logger
 }
 
 // NewRepository instantiates a PostgreSQL implementation of certs
 // repository.
-func NewRepository(db postgres.Database, log mglog.Logger) certs.Repository {
+func NewRepository(db postgres.Database, log *slog.Logger) certs.Repository {
 	return &certsRepository{db: db, log: log}
 }
 

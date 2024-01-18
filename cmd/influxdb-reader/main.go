@@ -8,8 +8,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	influxdbclient "github.com/absmach/magistrala/internal/clients/influxdb"
@@ -23,7 +25,6 @@ import (
 	"github.com/absmach/magistrala/readers/influxdb"
 	"github.com/caarlos0/env/v10"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -53,7 +54,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -150,7 +151,7 @@ func main() {
 	}
 }
 
-func newService(client influxdb2.Client, repocfg influxdb.RepoConfig, logger mglog.Logger) readers.MessageRepository {
+func newService(client influxdb2.Client, repocfg influxdb.RepoConfig, logger *slog.Logger) readers.MessageRepository {
 	repo := influxdb.New(client, repocfg)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("influxdb", "message_reader")

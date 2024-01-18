@@ -4,10 +4,10 @@
 package http
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/absmach/magistrala"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/things"
 	"github.com/go-chi/chi/v5"
@@ -15,7 +15,7 @@ import (
 )
 
 // MakeHandler returns a HTTP handler for Things and Groups API endpoints.
-func MakeHandler(tsvc things.Service, grps groups.Service, mux *chi.Mux, logger mglog.Logger, instanceID string) http.Handler {
+func MakeHandler(tsvc things.Service, grps groups.Service, mux *chi.Mux, logger *slog.Logger, instanceID string) http.Handler {
 	clientsHandler(tsvc, mux, logger)
 	groupsHandler(grps, mux, logger)
 

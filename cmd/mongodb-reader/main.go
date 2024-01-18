@@ -8,8 +8,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	mongoclient "github.com/absmach/magistrala/internal/clients/mongo"
@@ -22,7 +24,6 @@ import (
 	"github.com/absmach/magistrala/readers/api"
 	"github.com/absmach/magistrala/readers/mongodb"
 	"github.com/caarlos0/env/v10"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/sync/errgroup"
 )
@@ -53,7 +54,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -85,7 +86,7 @@ func main() {
 
 	ac, acHandler, err := auth.Setup(authConfig)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
@@ -136,7 +137,7 @@ func main() {
 	}
 }
 
-func newService(db *mongo.Database, logger mglog.Logger) readers.MessageRepository {
+func newService(db *mongo.Database, logger *slog.Logger) readers.MessageRepository {
 	repo := mongodb.New(db)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("mongodb", "message_reader")

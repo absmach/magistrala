@@ -8,22 +8,22 @@ package api
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/coap"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 var _ coap.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    coap.Service
 }
 
 // LoggingMiddleware adds logging facilities to the adapter.
-func LoggingMiddleware(svc coap.Service, logger mglog.Logger) coap.Service {
+func LoggingMiddleware(svc coap.Service, logger *slog.Logger) coap.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

@@ -8,9 +8,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
@@ -28,7 +30,6 @@ import (
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/absmach/mproxy/pkg/websockets"
 	"github.com/caarlos0/env/v10"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -62,7 +63,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -153,7 +154,7 @@ func main() {
 	}
 }
 
-func newService(tc magistrala.AuthzServiceClient, nps messaging.PubSub, logger mglog.Logger, tracer trace.Tracer) ws.Service {
+func newService(tc magistrala.AuthzServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
 	svc := ws.New(tc, nps)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)
@@ -162,7 +163,7 @@ func newService(tc magistrala.AuthzServiceClient, nps messaging.PubSub, logger m
 	return svc
 }
 
-func proxyWS(ctx context.Context, hostConfig, targetConfig server.Config, logger mglog.Logger, handler session.Handler) error {
+func proxyWS(ctx context.Context, hostConfig, targetConfig server.Config, logger *slog.Logger, handler session.Handler) error {
 	target := fmt.Sprintf("ws://%s:%s", targetConfig.Host, targetConfig.Port)
 	address := fmt.Sprintf("%s:%s", hostConfig.Host, hostConfig.Port)
 	wp, err := websockets.NewProxy(address, target, logger, handler)

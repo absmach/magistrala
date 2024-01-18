@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	"github.com/absmach/magistrala/internal/server"
@@ -35,7 +37,6 @@ import (
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/caarlos0/env/v10"
 	"github.com/cenkalti/backoff/v4"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -76,7 +77,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -187,14 +188,15 @@ func main() {
 		go chc.CallHome(ctx)
 	}
 
+	var interceptor session.Interceptor
 	logger.Info(fmt.Sprintf("Starting MQTT proxy on port %s", cfg.MQTTPort))
 	g.Go(func() error {
-		return proxyMQTT(ctx, cfg, logger, h)
+		return proxyMQTT(ctx, cfg, logger, h, interceptor)
 	})
 
 	logger.Info(fmt.Sprintf("Starting MQTT over WS  proxy on port %s", cfg.HTTPPort))
 	g.Go(func() error {
-		return proxyWS(ctx, cfg, logger, h)
+		return proxyWS(ctx, cfg, logger, h, interceptor)
 	})
 
 	g.Go(func() error {
@@ -206,10 +208,10 @@ func main() {
 	}
 }
 
-func proxyMQTT(ctx context.Context, cfg config, logger mglog.Logger, sessionHandler session.Handler) error {
+func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
 	address := fmt.Sprintf(":%s", cfg.MQTTPort)
 	target := fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort)
-	mproxy := mp.New(address, target, sessionHandler, logger)
+	mproxy := mp.New(address, target, sessionHandler, interceptor, logger)
 
 	errCh := make(chan error)
 	go func() {
@@ -225,9 +227,9 @@ func proxyMQTT(ctx context.Context, cfg config, logger mglog.Logger, sessionHand
 	}
 }
 
-func proxyWS(ctx context.Context, cfg config, logger mglog.Logger, sessionHandler session.Handler) error {
+func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
 	target := fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort)
-	wp := websocket.New(target, cfg.HTTPTargetPath, "ws", sessionHandler, logger)
+	wp := websocket.New(target, cfg.HTTPTargetPath, "ws", sessionHandler, interceptor, logger)
 	http.Handle("/mqtt", wp.Handler())
 
 	errCh := make(chan error)
@@ -263,7 +265,7 @@ func healthcheck(cfg config) func() error {
 	}
 }
 
-func stopSignalHandler(ctx context.Context, cancel context.CancelFunc, logger mglog.Logger) error {
+func stopSignalHandler(ctx context.Context, cancel context.CancelFunc, logger *slog.Logger) error {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGABRT)
 	select {

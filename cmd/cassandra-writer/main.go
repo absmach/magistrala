@@ -8,9 +8,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers"
 	consumertracing "github.com/absmach/magistrala/consumers/tracing"
@@ -27,7 +29,6 @@ import (
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
 	"github.com/gocql/gocql"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -60,7 +61,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -145,7 +146,7 @@ func main() {
 	}
 }
 
-func newService(session *gocql.Session, logger mglog.Logger) consumers.BlockingConsumer {
+func newService(session *gocql.Session, logger *slog.Logger) consumers.BlockingConsumer {
 	repo := cassandra.New(session)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("cassandra", "message_writer")

@@ -56,8 +56,8 @@ func (tr testRequest) make() (*http.Response, error) {
 
 func newIvitationsServer() (*httptest.Server, *mocks.Service) {
 	svc := new(mocks.Service)
-
 	logger := mglog.NewMock()
+
 	mux := api.MakeHandler(svc, logger, "test")
 	return httptest.NewServer(mux), svc
 }

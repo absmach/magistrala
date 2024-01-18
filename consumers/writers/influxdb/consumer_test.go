@@ -23,7 +23,7 @@ import (
 const valueFields = 5
 
 var (
-	testLog, _    = mglog.New(os.Stdout, mglog.Info.String())
+	testLog, _    = mglog.New(os.Stdout, "info")
 	streamsSize   = 250
 	rowCountSenml = fmt.Sprintf(`from(bucket: "%s") 
 	|> range(start: -1h, stop: 1h) 

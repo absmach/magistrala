@@ -9,6 +9,7 @@ import (
 	"time"
 
 	authmocks "github.com/absmach/magistrala/auth/mocks"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/twins"
@@ -29,7 +30,7 @@ func NewService() (twins.Service, *authmocks.Service) {
 	subs := map[string]string{"chanID": "chanID"}
 	broker := NewBroker(subs)
 
-	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", nil), auth
+	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", mglog.NewMock()), auth
 }
 
 // CreateDefinition creates twin definition.

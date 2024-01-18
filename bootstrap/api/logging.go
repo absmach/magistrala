@@ -8,21 +8,21 @@ package api
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/bootstrap"
-	mglog "github.com/absmach/magistrala/logger"
 )
 
 var _ bootstrap.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    bootstrap.Service
 }
 
 // LoggingMiddleware adds logging facilities to the bootstrap service.
-func LoggingMiddleware(svc bootstrap.Service, logger mglog.Logger) bootstrap.Service {
+func LoggingMiddleware(svc bootstrap.Service, logger *slog.Logger) bootstrap.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

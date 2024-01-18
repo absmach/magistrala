@@ -14,7 +14,7 @@ import (
 	"github.com/ory/dockertest/v3"
 )
 
-var logger, _ = mglog.New(os.Stdout, mglog.Info.String())
+var logger, _ = mglog.New(os.Stdout, "info")
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 
 		return nil
 	}); err != nil {
-		logger.Fatal(fmt.Sprintf("Could not connect to docker: %s", err))
+		logger.Error(fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
 	code := m.Run()

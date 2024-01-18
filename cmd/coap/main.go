@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/coap"
 	"github.com/absmach/magistrala/coap/api"
@@ -26,7 +27,6 @@ import (
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -59,7 +59,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int

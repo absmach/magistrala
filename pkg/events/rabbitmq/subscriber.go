@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/messaging"
 	broker "github.com/absmach/magistrala/pkg/messaging/rabbitmq"
@@ -34,10 +34,10 @@ type subEventStore struct {
 	pubsub   messaging.PubSub
 	stream   string
 	consumer string
-	logger   mglog.Logger
+	logger   *slog.Logger
 }
 
-func NewSubscriber(url, stream, consumer string, logger mglog.Logger) (events.Subscriber, error) {
+func NewSubscriber(url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
 	if stream == "" {
 		return nil, ErrEmptyStream
 	}
@@ -103,7 +103,7 @@ func (re event) Encode() (map[string]interface{}, error) {
 type eventHandler struct {
 	handler events.EventHandler
 	ctx     context.Context
-	logger  mglog.Logger
+	logger  *slog.Logger
 }
 
 func (eh *eventHandler) Handle(msg *messaging.Message) error {

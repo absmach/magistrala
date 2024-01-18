@@ -6,6 +6,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"regexp"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/mproxy/pkg/session"
@@ -52,11 +52,11 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 type handler struct {
 	publisher messaging.Publisher
 	auth      magistrala.AuthzServiceClient
-	logger    mglog.Logger
+	logger    *slog.Logger
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publisher messaging.Publisher, logger mglog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, logger *slog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		logger:    logger,
 		publisher: publisher,

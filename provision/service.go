@@ -6,8 +6,8 @@ package provision
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
@@ -70,7 +70,7 @@ type Service interface {
 }
 
 type provisionService struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	sdk    sdk.SDK
 	conf   Config
 }
@@ -87,7 +87,7 @@ type Result struct {
 }
 
 // New returns new provision service.
-func New(cfg Config, mgsdk sdk.SDK, logger mglog.Logger) Service {
+func New(cfg Config, mgsdk sdk.SDK, logger *slog.Logger) Service {
 	return &provisionService{
 		logger: logger,
 		conf:   cfg,

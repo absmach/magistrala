@@ -6,6 +6,7 @@ package mqtt
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"regexp"
 	"strings"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt/events"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -58,12 +58,12 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 type handler struct {
 	publisher messaging.Publisher
 	auth      magistrala.AuthzServiceClient
-	logger    mglog.Logger
+	logger    *slog.Logger
 	es        events.EventStore
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publisher messaging.Publisher, es events.EventStore, logger mglog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, es events.EventStore, logger *slog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		es:        es,
 		logger:    logger,

@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	testLog, _ = mglog.New(os.Stdout, mglog.Info.String())
+	testLog, _ = mglog.New(os.Stdout, "info")
 	db         *sqlx.DB
 )
 

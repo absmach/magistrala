@@ -8,8 +8,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
@@ -23,7 +25,6 @@ import (
 	"github.com/absmach/magistrala/readers/postgres"
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -54,7 +55,7 @@ func main() {
 
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -144,7 +145,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, logger mglog.Logger) readers.MessageRepository {
+func newService(db *sqlx.DB, logger *slog.Logger) readers.MessageRepository {
 	svc := postgres.New(db)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("postgres", "message_reader")

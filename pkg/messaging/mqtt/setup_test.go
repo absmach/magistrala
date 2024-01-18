@@ -6,6 +6,7 @@ package mqtt_test
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,7 +22,7 @@ import (
 
 var (
 	pubsub  messaging.PubSub
-	logger  mglog.Logger
+	logger  *slog.Logger
 	address string
 )
 
@@ -51,7 +52,7 @@ func TestMain(m *testing.M) {
 	address = fmt.Sprintf("%s:%s", "localhost", container.GetPort(port))
 	pool.MaxWait = poolMaxWait
 
-	logger, err = mglog.New(os.Stdout, mglog.Debug.String())
+	logger, err = mglog.New(os.Stdout, "debug")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

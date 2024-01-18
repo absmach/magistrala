@@ -7,21 +7,21 @@ package api
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/readers"
 )
 
 var _ readers.MessageRepository = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    readers.MessageRepository
 }
 
 // LoggingMiddleware adds logging facilities to the core service.
-func LoggingMiddleware(svc readers.MessageRepository, logger mglog.Logger) readers.MessageRepository {
+func LoggingMiddleware(svc readers.MessageRepository, logger *slog.Logger) readers.MessageRepository {
 	return &loggingMiddleware{
 		logger: logger,
 		svc:    svc,

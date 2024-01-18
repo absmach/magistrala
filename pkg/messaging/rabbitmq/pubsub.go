@@ -7,9 +7,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/protobuf/proto"
@@ -40,13 +40,13 @@ type subscription struct {
 }
 type pubsub struct {
 	publisher
-	logger        mglog.Logger
+	logger        *slog.Logger
 	subscriptions map[string]map[string]subscription
 	mu            sync.Mutex
 }
 
 // NewPubSub returns RabbitMQ message publisher/subscriber.
-func NewPubSub(url string, logger mglog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
+func NewPubSub(url string, logger *slog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err

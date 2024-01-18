@@ -333,8 +333,6 @@ func TestReadNumQuery(t *testing.T) {
 }
 
 func TestLoggingErrorEncoder(t *testing.T) {
-	logger := mglog.NewMock()
-
 	cases := []struct {
 		desc string
 		err  error
@@ -356,7 +354,7 @@ func TestLoggingErrorEncoder(t *testing.T) {
 				encCalled = true
 			}
 
-			errorEncoder := apiutil.LoggingErrorEncoder(logger, encFunc)
+			errorEncoder := apiutil.LoggingErrorEncoder(mglog.NewMock(), encFunc)
 			errorEncoder(context.Background(), c.err, httptest.NewRecorder())
 
 			assert.True(t, encCalled)

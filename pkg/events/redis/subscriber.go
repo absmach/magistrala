@@ -10,8 +10,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/go-redis/redis/v8"
 )
@@ -36,10 +36,10 @@ type subEventStore struct {
 	client   *redis.Client
 	stream   string
 	consumer string
-	logger   mglog.Logger
+	logger   *slog.Logger
 }
 
-func NewSubscriber(url, stream, consumer string, logger mglog.Logger) (events.Subscriber, error) {
+func NewSubscriber(url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
 	if stream == "" {
 		return nil, ErrEmptyStream
 	}

@@ -6,6 +6,7 @@ package rabbitmq_test
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,7 +30,7 @@ const (
 var (
 	publisher messaging.Publisher
 	pubsub    messaging.PubSub
-	logger    mglog.Logger
+	logger    *slog.Logger
 	address   string
 )
 
@@ -53,7 +54,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	logger, err = mglog.New(os.Stdout, mglog.Debug.String())
+	logger, err = mglog.New(os.Stdout, "debug")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

@@ -6,10 +6,10 @@ package api
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/absmach/magistrala"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/ws"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
@@ -32,11 +32,11 @@ var (
 		WriteBufferSize: readwriteBufferSize,
 		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
-	logger mglog.Logger
+	logger *slog.Logger
 )
 
 // MakeHandler returns http handler with handshake endpoint.
-func MakeHandler(ctx context.Context, svc ws.Service, l mglog.Logger, instanceID string) http.Handler {
+func MakeHandler(ctx context.Context, svc ws.Service, l *slog.Logger, instanceID string) http.Handler {
 	logger = l
 
 	mux := chi.NewRouter()

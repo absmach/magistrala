@@ -6,10 +6,10 @@ package api
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala"
-	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/users"
 )
@@ -17,12 +17,12 @@ import (
 var _ users.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    users.Service
 }
 
 // LoggingMiddleware adds logging facilities to the clients service.
-func LoggingMiddleware(svc users.Service, logger mglog.Logger) users.Service {
+func LoggingMiddleware(svc users.Service, logger *slog.Logger) users.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

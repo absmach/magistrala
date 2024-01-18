@@ -8,16 +8,16 @@ package handler
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/mproxy/pkg/session"
 )
 
 var _ session.Handler = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    session.Handler
 }
 
@@ -135,6 +135,6 @@ func (lm *loggingMiddleware) Unsubscribe(ctx context.Context, topics *[]string) 
 }
 
 // LoggingMiddleware adds logging facilities to the adapter.
-func LoggingMiddleware(svc session.Handler, logger mglog.Logger) session.Handler {
+func LoggingMiddleware(svc session.Handler, logger *slog.Logger) session.Handler {
 	return &loggingMiddleware{logger, svc}
 }

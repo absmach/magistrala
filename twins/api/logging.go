@@ -8,9 +8,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/twins"
 )
@@ -18,12 +18,12 @@ import (
 var _ twins.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    twins.Service
 }
 
 // LoggingMiddleware adds logging facilities to the core service.
-func LoggingMiddleware(svc twins.Service, logger mglog.Logger) twins.Service {
+func LoggingMiddleware(svc twins.Service, logger *slog.Logger) twins.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

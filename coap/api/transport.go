@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/coap"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-chi/chi/v5"
@@ -44,7 +44,7 @@ var (
 )
 
 var (
-	logger  mglog.Logger
+	logger  *slog.Logger
 	service coap.Service
 )
 
@@ -58,7 +58,7 @@ func MakeHandler(instanceID string) http.Handler {
 }
 
 // MakeCoAPHandler creates handler for CoAP messages.
-func MakeCoAPHandler(svc coap.Service, l mglog.Logger) mux.HandlerFunc {
+func MakeCoAPHandler(svc coap.Service, l *slog.Logger) mux.HandlerFunc {
 	logger = l
 	service = svc
 

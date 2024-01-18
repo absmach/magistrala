@@ -6,20 +6,20 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/invitations"
-	mglog "github.com/absmach/magistrala/logger"
 )
 
 var _ invitations.Service = (*logging)(nil)
 
 type logging struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    invitations.Service
 }
 
-func Logging(logger mglog.Logger, svc invitations.Service) invitations.Service {
+func Logging(logger *slog.Logger, svc invitations.Service) invitations.Service {
 	return &logging{logger, svc}
 }
 

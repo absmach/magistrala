@@ -6,16 +6,16 @@ package apiutil
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	kithttp "github.com/go-kit/kit/transport/http"
 )
 
 // LoggingErrorEncoder is a go-kit error encoder logging decorator.
-func LoggingErrorEncoder(logger mglog.Logger, enc kithttp.ErrorEncoder) kithttp.ErrorEncoder {
+func LoggingErrorEncoder(logger *slog.Logger, enc kithttp.ErrorEncoder) kithttp.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
 		if errors.Contains(err, ErrValidation) {
 			logger.Error(err.Error())

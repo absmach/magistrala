@@ -78,8 +78,7 @@ func newService() (auth.Service, *mocks.KeyRepository) {
 }
 
 func newServer(svc auth.Service) *httptest.Server {
-	logger := mglog.NewMock()
-	mux := httpapi.MakeHandler(svc, logger, "")
+	mux := httpapi.MakeHandler(svc, mglog.NewMock(), "")
 	return httptest.NewServer(mux)
 }
 

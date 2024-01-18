@@ -8,21 +8,21 @@ package api
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/opcua"
 )
 
 var _ opcua.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    opcua.Service
 }
 
 // LoggingMiddleware adds logging facilities to the core service.
-func LoggingMiddleware(svc opcua.Service, logger mglog.Logger) opcua.Service {
+func LoggingMiddleware(svc opcua.Service, logger *slog.Logger) opcua.Service {
 	return &loggingMiddleware{
 		logger: logger,
 		svc:    svc,

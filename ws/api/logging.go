@@ -6,21 +6,21 @@ package api
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/ws"
 )
 
 var _ ws.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger mglog.Logger
+	logger *slog.Logger
 	svc    ws.Service
 }
 
 // LoggingMiddleware adds logging facilities to the websocket service.
-func LoggingMiddleware(svc ws.Service, logger mglog.Logger) ws.Service {
+func LoggingMiddleware(svc ws.Service, logger *slog.Logger) ws.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

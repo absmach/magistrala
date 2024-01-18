@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/absmach/magistrala/auth"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
@@ -33,10 +33,10 @@ var (
 type policyAgent struct {
 	client           *authzed.ClientWithExperimental
 	permissionClient v1.PermissionsServiceClient
-	logger           mglog.Logger
+	logger           *slog.Logger
 }
 
-func NewPolicyAgent(client *authzed.ClientWithExperimental, logger mglog.Logger) auth.PolicyAgent {
+func NewPolicyAgent(client *authzed.ClientWithExperimental, logger *slog.Logger) auth.PolicyAgent {
 	return &policyAgent{
 		client:           client,
 		permissionClient: client.PermissionsServiceClient,

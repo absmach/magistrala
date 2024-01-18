@@ -5,7 +5,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/absmach/magistrala/internal/postgres"
@@ -73,17 +72,19 @@ func (repo clientRepo) Save(ctx context.Context, cs ...mgclients.Client) ([]mgcl
 		}
 
 		defer row.Close()
-		row.Next()
-		dbcli = pgclients.DBClient{}
-		if err := row.StructScan(&dbcli); err != nil {
-			return []mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
-		}
 
-		client, err := pgclients.ToClient(dbcli)
-		if err != nil {
-			return []mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		if row.Next() {
+			dbcli = pgclients.DBClient{}
+			if err := row.StructScan(&dbcli); err != nil {
+				return []mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+			}
+
+			client, err := pgclients.ToClient(dbcli)
+			if err != nil {
+				return []mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+			}
+			clients = append(clients, client)
 		}
-		clients = append(clients, client)
 	}
 	if err = tx.Commit(); err != nil {
 		return []mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -95,26 +96,45 @@ func (repo clientRepo) Save(ctx context.Context, cs ...mgclients.Client) ([]mgcl
 func (repo clientRepo) RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error) {
 	q := fmt.Sprintf(`SELECT id, name, tags, COALESCE(owner_id, '') AS owner_id, identity, secret, metadata, created_at, updated_at, updated_by, status
         FROM clients
-        WHERE secret = $1 AND status = %d`, mgclients.EnabledStatus)
+        WHERE secret = :secret AND status = %d`, mgclients.EnabledStatus)
 
 	dbc := pgclients.DBClient{
 		Secret: key,
 	}
 
-	if err := repo.DB.QueryRowxContext(ctx, q, key).StructScan(&dbc); err != nil {
-		if err == sql.ErrNoRows {
-			return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+	rows, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	if err != nil {
+		return mgclients.Client{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	dbc = pgclients.DBClient{}
+	if rows.Next() {
+		if err = rows.StructScan(&dbc); err != nil {
+			return mgclients.Client{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 		}
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
+
+		client, err := pgclients.ToClient(dbc)
+		if err != nil {
+			return mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		}
+
+		return client, nil
 	}
 
-	return pgclients.ToClient(dbc)
+	return mgclients.Client{}, repoerr.ErrNotFound
 }
 
 func (repo clientRepo) Delete(ctx context.Context, id string) error {
 	q := "DELETE FROM clients AS c  WHERE c.id = $1 ;"
-	if _, err := repo.DB.ExecContext(ctx, q, id); err != nil {
+
+	result, err := repo.DB.ExecContext(ctx, q, id)
+	if err != nil {
 		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
 	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
+	}
+
 	return nil
 }

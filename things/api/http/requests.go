@@ -110,9 +110,6 @@ func (req listClientsReq) validate() error {
 		req.visibility != api.SharedVisibility {
 		return apiutil.ErrInvalidVisibilityType
 	}
-	if req.limit > api.MaxLimitSize || req.limit < 1 {
-		return apiutil.ErrLimitSize
-	}
 	if len(req.name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}

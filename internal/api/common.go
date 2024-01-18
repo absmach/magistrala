@@ -115,7 +115,13 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingMemberKind),
 		errors.Contains(err, apiutil.ErrLimitSize),
 		errors.Contains(err, apiutil.ErrBearerKey),
-		errors.Contains(err, apiutil.ErrNameSize):
+		errors.Contains(err, apiutil.ErrNameSize),
+		errors.Contains(err, svcerr.ErrInvalidStatus),
+		errors.Contains(err, apiutil.ErrInvalidIDFormat),
+		errors.Contains(err, apiutil.ErrInvalidQueryParams),
+		errors.Contains(err, apiutil.ErrInvalidStatus),
+		errors.Contains(err, apiutil.ErrMissingRelation),
+		errors.Contains(err, apiutil.ErrValidation):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, errors.ErrAuthentication),

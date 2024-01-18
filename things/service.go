@@ -185,9 +185,6 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 		err := svc.checkSuperAdmin(ctx, res.GetUserId())
 		switch {
 		case err == nil:
-			if res.GetDomainId() == "" {
-				return mgclients.ClientsPage{}, errors.ErrDomainAuthorization
-			}
 			pm.Owner = res.GetDomainId()
 		default:
 			// If domain is disabled , then this authorization will fail for all non-admin domain users
@@ -425,7 +422,7 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 func (svc service) Unshare(ctx context.Context, token, id, relation string, userids ...string) error {
 	user, err := svc.identify(ctx, token)
 	if err != nil {
-		return nil
+		return err
 	}
 	if _, err := svc.authorize(ctx, user.GetDomainId(), auth.UserType, auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)

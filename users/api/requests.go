@@ -53,19 +53,17 @@ func (req viewProfileReq) validate() error {
 }
 
 type listClientsReq struct {
-	token      string
-	status     mgclients.Status
-	offset     uint64
-	limit      uint64
-	name       string
-	tag        string
-	identity   string
-	visibility string
-	owner      string
-	sharedBy   string
-	metadata   mgclients.Metadata
-	order      string
-	dir        string
+	token    string
+	status   mgclients.Status
+	offset   uint64
+	limit    uint64
+	name     string
+	tag      string
+	identity string
+	owner    string
+	metadata mgclients.Metadata
+	order    string
+	dir      string
 }
 
 func (req listClientsReq) validate() error {
@@ -74,12 +72,6 @@ func (req listClientsReq) validate() error {
 	}
 	if req.limit > maxLimitSize || req.limit < 1 {
 		return apiutil.ErrLimitSize
-	}
-	if req.visibility != "" &&
-		req.visibility != api.AllVisibility &&
-		req.visibility != api.MyVisibility &&
-		req.visibility != api.SharedVisibility {
-		return apiutil.ErrInvalidVisibilityType
 	}
 	if req.dir != "" && (req.dir != api.AscDir && req.dir != api.DescDir) {
 		return apiutil.ErrInvalidDirection

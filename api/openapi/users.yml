@@ -1458,15 +1458,6 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
-    Visibility:
-      name: visibility
-      description: The visibility specifier when listing users. Either all, shared or mine.
-      in: path
-      schema:
-        type: string
-      required: true
-      example: all
-
     UserName:
       name: name
       description: User's name.
@@ -1504,15 +1495,6 @@ components:
         format: uuid
       required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
-    UserVisibility:
-      name: visibility
-      description: visibility to list either users I own or users that are shared with me or both users I own and shared with me
-      in: query
-      schema:
-        type: string
-      required: false
-      example: shared
 
     Status:
       name: status

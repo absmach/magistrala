@@ -189,7 +189,6 @@ func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) {
-	var sharedID, ownerID string
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -222,10 +221,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
-	visibility, err := apiutil.ReadStringQuery(r, api.VisibilityKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
 	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -233,18 +228,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	switch visibility {
-	case api.MyVisibility:
-		ownerID = api.MyVisibility
-	case api.SharedVisibility:
-		sharedID = api.MyVisibility
-	case api.AllVisibility:
-		sharedID = api.MyVisibility
-		ownerID = api.MyVisibility
-	}
-	if oid != "" {
-		ownerID = oid
 	}
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
@@ -259,8 +242,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		name:     n,
 		identity: i,
 		tag:      t,
-		sharedBy: sharedID,
-		owner:    ownerID,
+		owner:    oid,
 		order:    order,
 		dir:      dir,
 	}
@@ -473,13 +455,7 @@ func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{},
 	if err != nil {
 		return nil, err
 	}
-	// For domains default permission in membership, In "queryPageParams" default is view,
-	// so overwriting the permission given by queryPageParams function with default membership permission.
-	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, auth.MembershipPermission)
-	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	page.Permission = p
+
 	req := listMembersByObjectReq{
 		token:    apiutil.ExtractBearerToken(r),
 		Page:     page,

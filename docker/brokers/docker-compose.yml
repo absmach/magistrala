@@ -16,7 +16,7 @@
 #
 
 include:
-  - path: profiles/nats.yml
+  - path: brokers/profiles/nats.yml
     env_file: docker/.env
 
 services:
@@ -37,7 +37,7 @@ services:
 
   broker:
     extends:
-      file: nats.yml
+      file: brokers/nats.yml
       service: broker
     container_name: magistrala-broker
     restart: on-failure

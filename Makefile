@@ -111,7 +111,7 @@ clean:
 
 cleandocker:
 	# Stops containers and removes containers, networks, volumes, and images created by up
-	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
+	docker compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
 
 ifdef pv
 	# Remove unused volumes
@@ -213,7 +213,7 @@ define edit_docker_config
 	sed -i "s/MG_MQTT_BROKER_HEALTH_CHECK=.*/MG_MQTT_BROKER_HEALTH_CHECK=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_HEALTH_CHECK}/" docker/.env
 	sed -i "s/MG_MQTT_ADAPTER_WS_TARGET_PATH=.*/MG_MQTT_ADAPTER_WS_TARGET_PATH=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_WS_TARGET_PATH}/" docker/.env
 	sed -i "s/MG_MESSAGE_BROKER_TYPE=.*/MG_MESSAGE_BROKER_TYPE=$(2)/" docker/.env
-	sed -i "s,file: .*.yml,file: $(2).yml," docker/brokers/docker-compose.yml
+	sed -i "s,file: .*.yml,file: brokers/$(2).yml," docker/brokers/docker-compose.yml
 	sed -i "s,MG_MESSAGE_BROKER_URL=.*,MG_MESSAGE_BROKER_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
 	sed -i "s,MG_MQTT_ADAPTER_MQTT_QOS=.*,MG_MQTT_ADAPTER_MQTT_QOS=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_MQTT_QOS\}," docker/.env
 endef
@@ -246,16 +246,16 @@ run: check_certs change_config
 ifeq ($(MG_ES_TYPE), redis)
 	sed -i "s/MG_ES_TYPE=.*/MG_ES_TYPE=redis/" docker/.env
 	sed -i "s/MG_ES_URL=.*/MG_ES_URL=$$\{MG_REDIS_URL}/" docker/.env
-	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) --profile redis -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	docker compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) --profile redis -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 else
 	sed -i "s,MG_ES_TYPE=.*,MG_ES_TYPE=$$\{MG_MESSAGE_BROKER_TYPE}," docker/.env
 	sed -i "s,MG_ES_URL=.*,MG_ES_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
-	docker-compose -f docker/docker-compose.yml --env-file docker/.env --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	docker compose -f docker/docker-compose.yml --env-file docker/.env --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 endif
 
 run_addons: check_certs
 	$(call change_config)
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker-compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done

@@ -6,7 +6,7 @@
 services:
   nats:
     extends:
-      file: ../nats.yml
+      file: brokers/nats.yml
       service: broker
     container_name: magistrala-nats
     restart: on-failure

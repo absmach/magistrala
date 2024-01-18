@@ -1,4 +1,5 @@
 # Magistrala
+
 [![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
 [![Check the consistency of generated files](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yml)
 [![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yml)
@@ -11,9 +12,7 @@
 
 Magistrala is modern, scalable, secure, open-source, and patent-free IoT cloud platform written in Go.
 
-It accepts user and thing (sensor, actuator, application) connections over various network protocols (i.e. HTTP,
-MQTT, WebSocket, CoAP), thus making a seamless bridge between them. It is used as the IoT middleware
-for building complex IoT solutions.
+It accepts user and thing (sensor, actuator, application) connections over various network protocols (i.e. HTTP, MQTT, WebSocket, CoAP), thus making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
 For more details, check out the [official documentation][docs].
 
@@ -28,8 +27,8 @@ For more details, check out the [official documentation][docs].
 - Event sourcing
 - Container-based deployment using [Docker][docker] and [Kubernetes][kubernetes]
 - [LoRaWAN][lora] network integration
-- [OPC UA](opcua) integration
-- Edge [Agent](agent) and [Export](export) services for remote IoT gateway management and edge computing
+- [OPC UA][opcua] integration
+- Edge [Agent][agent] and [Export][export] services for remote IoT gateway management and edge computing
 - SDK
 - CLI
 - Small memory footprint and fast execution
@@ -39,20 +38,20 @@ For more details, check out the [official documentation][docs].
 
 The following are needed to run Magistrala:
 
-- [Docker](https://docs.docker.com/install/) (version 20.10)
-- [Docker compose](https://docs.docker.com/compose/install/) (version 2.20)
+- [Docker](https://docs.docker.com/install/) (version 24.0.7)
+- [Docker compose](https://docs.docker.com/compose/install/) (version 2.24.0)
 
 Developing Magistrala will also require:
 
-- [Go](https://golang.org/doc/install) (version 1.19.2)
-- [Protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) (version 3.6.1)
+- [Go](https://golang.org/doc/install) (version 1.21)
+- [Protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) (version 25.1)
 
 ## Install
 
 Once the prerequisites are installed, execute the following commands from the project's root:
 
 ```bash
-docker-compose -f docker/docker-compose.yml --env-file docker/.env --profile nats_nats up
+docker compose -f docker/docker-compose.yml --env-file docker/.env --profile nats_nats -p git_github_com_absmach_magistrala_git_  up
 ```
 
 This will bring up the Magistrala docker services and interconnect them. This command can also be executed using the project's included Makefile:
@@ -75,11 +74,11 @@ Check that `.env` file contains:
 MG_RELEASE_TAG=<release_number>
 ```
 
->`docker-compose` should be used for development and testing deployments. For production we suggest using [Kubernetes](https://docs.mainflux.io/kubernetes).
+> `docker-compose` should be used for development and testing deployments. For production we suggest using [Kubernetes](https://docs.mainflux.io/kubernetes).
 
 ## Usage
 
-The quickest way to start using Magistrala is via the CLI. The latest version can be downloaded from the [official releases page][rel].
+The quickest way to start using Magistrala is via the CLI. The latest version can be downloaded from the [official releases page][releases].
 
 It can also be built and used from the project's root directory:
 
@@ -100,19 +99,13 @@ If you spot an error or a need for corrections, please let us know - or even bet
 
 Main architect and BDFL of Magistrala project is [@drasko][drasko].
 
-Additionally, [@nmarcetic][nikola] and [@janko-isidorovic][janko] assured
-overall architecture and design, while [@manuio][manu] and [@darkodraskovic][darko]
-helped with crafting initial implementation and continuously worked on the project evolutions.
+Additionally, [@nmarcetic][nikola] and [@janko-isidorovic][janko] assured overall architecture and design, while [@manuio][manu] and [@darkodraskovic][darko] helped with crafting initial implementation and continuously worked on the project evolutions.
 
-Besides them, Magistrala is constantly improved and actively
-developed by [@anovakovic01][alex], [@dusanb94][dusan], [@srados][sava],
-[@gsaleh][george], [@blokovi][iva], [@chombium][kole], [@mteodor][mirko] and a large set of contributors.
+Besides them, Magistrala is constantly improved and actively developed by [@anovakovic01][alex], [@dusanb94][dusan], [@srados][sava], [@gsaleh][george], [@blokovi][iva], [@chombium][kole], [@mteodor][mirko], [@rodneyosodo][rodneyosodo] and a large set of contributors.
 
 Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
 
-The Magistrala team would like to give special thanks to [@mijicd][dejan] for his monumental work
-on designing and implementing a highly improved and optimized version of the platform,
-and [@malidukica][dusanm] for his effort on implementing the initial user interface.
+The Magistrala team would like to give special thanks to [@mijicd][dejan] for his monumental work on designing and implementing a highly improved and optimized version of the platform, and [@malidukica][dusanm] for his effort on implementing the initial user interface.
 
 ## Professional Support
 
@@ -132,7 +125,7 @@ Thank you for your interest in Magistrala and the desire to contribute!
 
 You like Magistrala and you would like to make it your day job? We're always looking for talented engineers interested in open-source, IoT and distributed systems. If you recognize yourself, reach out to [@drasko][drasko] - he will contact you back.
 
->The best way to grab our attention is, of course, by sending PRs :sunglasses:.
+> The best way to grab our attention is, of course, by sending PRs :sunglasses:.
 
 ## Community
 
@@ -147,9 +140,11 @@ You like Magistrala and you would like to make it your day job? We're always loo
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmainflux%2Fmainflux.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmainflux%2Fmainflux?ref=badge_large)
 
 ## Data Collection for Magistrala
+
 Magistrala is committed to continuously improving its services and ensuring a seamless experience for its users. To achieve this, we collect certain data from your deployments. Rest assured, this data is collected solely for the purpose of enhancing Magistrala and is not used with any malicious intent. The deployment summary can be found on our [website][callhome].
 
 The collected data includes:
+
 - **IP Address** - Used for approximate location information on deployments.
 - **Services Used** - To understand which features are popular and prioritize future developments.
 - **Last Seen Time** - To ensure the stability and availability of Magistrala.
@@ -179,12 +174,7 @@ By utilizing Magistrala, you actively contribute to its improvement. Together, w
 [agent]: https://github.com/mainflux/agent
 [export]: https://github.com/mainflux/export
 [kubernetes]: https://kubernetes.io/
-[rel]: https://github.com/absmach/magistrala/releases
-[careers]: https://www.mainflux.com/careers.html
-[lf]: https://www.linuxfoundation.org/
-[edgex]: https://www.edgexfoundry.org/
-[company]: https://abstractmachines.fr
-[blog]: https://medium.com/abstract-machines-blog
+[releases]: https://github.com/absmach/magistrala/releases
 [drasko]: https://github.com/drasko
 [nikola]: https://github.com/nmarcetic
 [dejan]: https://github.com/mijicd
@@ -199,4 +189,5 @@ By utilizing Magistrala, you actively contribute to its improvement. Together, w
 [kole]: https://github.com/chombium
 [dusanm]: https://github.com/malidukica
 [mirko]: https://github.com/mteodor
+[rodneyosodo]: https://github.com/rodneyosodo
 [callhome]: https://deployments.mainflux.io

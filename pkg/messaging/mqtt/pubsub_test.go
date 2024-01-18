@@ -460,7 +460,7 @@ type handler struct {
 }
 
 func (h handler) Handle(msg *messaging.Message) error {
-	if msg.Publisher != h.publisher {
+	if msg.GetPublisher() != h.publisher {
 		h.msgChan <- msg
 	}
 	return nil

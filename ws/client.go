@@ -36,5 +36,6 @@ func (c *Client) Handle(msg *messaging.Message) error {
 	if msg.GetPublisher() == c.id {
 		return nil
 	}
-	return c.conn.WriteMessage(websocket.TextMessage, msg.Payload)
+
+	return c.conn.WriteMessage(websocket.TextMessage, msg.GetPayload())
 }

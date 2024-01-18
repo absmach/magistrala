@@ -58,7 +58,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 		SubjectType: auth.ThingType,
 		Permission:  auth.PublishPermission,
 		Subject:     key,
-		Object:      msg.Channel,
+		Object:      msg.GetChannel(),
 		ObjectType:  auth.GroupType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
@@ -70,7 +70,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 	}
 	msg.Publisher = res.GetId()
 
-	return svc.pubsub.Publish(ctx, msg.Channel, msg)
+	return svc.pubsub.Publish(ctx, msg.GetChannel(), msg)
 }
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {

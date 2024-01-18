@@ -31,9 +31,9 @@ func LoggingMiddleware(svc coap.Service, logger mglog.Logger) coap.Service {
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) Publish(ctx context.Context, key string, msg *messaging.Message) (err error) {
 	defer func(begin time.Time) {
-		destChannel := msg.Channel
-		if msg.Subtopic != "" {
-			destChannel = fmt.Sprintf("%s.%s", destChannel, msg.Subtopic)
+		destChannel := msg.GetChannel()
+		if msg.GetSubtopic() != "" {
+			destChannel = fmt.Sprintf("%s.%s", destChannel, msg.GetSubtopic())
 		}
 		message := fmt.Sprintf("Method publish to %s took %s to complete", destChannel, time.Since(begin))
 		if err != nil {

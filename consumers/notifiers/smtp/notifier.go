@@ -28,13 +28,13 @@ func New(agent *email.Agent) notifiers.Notifier {
 }
 
 func (n *notifier) Notify(from string, to []string, msg *messaging.Message) error {
-	subject := fmt.Sprintf(`Notification for Channel %s`, msg.Channel)
-	if msg.Subtopic != "" {
-		subject = fmt.Sprintf("%s and subtopic %s", subject, msg.Subtopic)
+	subject := fmt.Sprintf(`Notification for Channel %s`, msg.GetChannel())
+	if msg.GetSubtopic() != "" {
+		subject = fmt.Sprintf("%s and subtopic %s", subject, msg.GetSubtopic())
 	}
 
-	values := string(msg.Payload)
-	content := fmt.Sprintf(contentTemplate, msg.Publisher, msg.Protocol, values)
+	values := string(msg.GetPayload())
+	content := fmt.Sprintf(contentTemplate, msg.GetPublisher(), msg.GetProtocol(), values)
 
 	return n.agent.Send(to, from, subject, "", "", content, footer)
 }

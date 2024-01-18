@@ -40,7 +40,7 @@ func NewPublisher(config server.Config, tracer trace.Tracer, publisher messaging
 }
 
 func (pm *publisherMiddleware) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
-	ctx, span := tracing.CreateSpan(ctx, publishOP, msg.Publisher, topic, msg.Subtopic, len(msg.Payload), pm.host, trace.SpanKindClient, pm.tracer)
+	ctx, span := tracing.CreateSpan(ctx, publishOP, msg.GetPublisher(), topic, msg.GetSubtopic(), len(msg.GetPayload()), pm.host, trace.SpanKindClient, pm.tracer)
 	defer span.End()
 	span.SetAttributes(defaultAttributes...)
 

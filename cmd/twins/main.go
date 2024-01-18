@@ -217,7 +217,7 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config,
 
 func handle(ctx context.Context, logger mglog.Logger, chanID string, svc twins.Service) handlerFunc {
 	return func(msg *messaging.Message) error {
-		if msg.Channel == chanID {
+		if msg.GetChannel() == chanID {
 			return nil
 		}
 

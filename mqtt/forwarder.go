@@ -44,14 +44,14 @@ func (f forwarder) Forward(ctx context.Context, id string, sub messaging.Subscri
 
 func handle(ctx context.Context, pub messaging.Publisher, logger mglog.Logger) handleFunc {
 	return func(msg *messaging.Message) error {
-		if msg.Protocol == protocol {
+		if msg.GetProtocol() == protocol {
 			return nil
 		}
 		// Use concatenation instead of fmt.Sprintf for the
 		// sake of simplicity and performance.
-		topic := "channels/" + msg.Channel + "/messages"
-		if msg.Subtopic != "" {
-			topic = topic + "/" + strings.ReplaceAll(msg.Subtopic, ".", "/")
+		topic := "channels/" + msg.GetChannel() + "/messages"
+		if msg.GetSubtopic() != "" {
+			topic = topic + "/" + strings.ReplaceAll(msg.GetSubtopic(), ".", "/")
 		}
 
 		go func() {

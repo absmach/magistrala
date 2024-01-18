@@ -56,7 +56,7 @@ func (n *notifier) Notify(from string, to []string, msg *messaging.Message) erro
 		DestAddrTON:   n.destAddrTON,
 		SourceAddrNPI: n.sourceAddrNPI,
 		DestAddrNPI:   n.destAddrNPI,
-		Text:          pdutext.Raw(msg.Payload),
+		Text:          pdutext.Raw(msg.GetPayload()),
 		Register:      pdufield.NoDeliveryReceipt,
 	}
 	_, err := n.transmitter.Submit(send)

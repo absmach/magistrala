@@ -24,7 +24,7 @@ func NewBroker(sub map[string]string) messaging.Publisher {
 }
 
 func (mb mockBroker) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
-	if len(msg.Payload) == 0 {
+	if len(msg.GetPayload()) == 0 {
 		return errors.New("failed to publish")
 	}
 	return nil

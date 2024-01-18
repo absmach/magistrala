@@ -44,7 +44,7 @@ func New(contentFormat string) transformers.Transformer {
 }
 
 func (t transformer) Transform(msg *messaging.Message) (interface{}, error) {
-	raw, err := senml.Decode(msg.Payload, t.format)
+	raw, err := senml.Decode(msg.GetPayload(), t.format)
 	if err != nil {
 		return nil, errors.Wrap(errDecode, err)
 	}
@@ -60,14 +60,14 @@ func (t transformer) Transform(msg *messaging.Message) (interface{}, error) {
 		t := v.Time
 		if t == 0 {
 			// Convert the Unix timestamp in nanoseconds to float64
-			t = float64(msg.Created) / float64(1e9)
+			t = float64(msg.GetCreated()) / float64(1e9)
 		}
 
 		msgs[i] = Message{
-			Channel:     msg.Channel,
-			Subtopic:    msg.Subtopic,
-			Publisher:   msg.Publisher,
-			Protocol:    msg.Protocol,
+			Channel:     msg.GetChannel(),
+			Subtopic:    msg.GetSubtopic(),
+			Publisher:   msg.GetPublisher(),
+			Protocol:    msg.GetProtocol(),
 			Name:        v.Name,
 			Unit:        v.Unit,
 			Time:        t,

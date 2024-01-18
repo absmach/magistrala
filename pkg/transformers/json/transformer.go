@@ -50,11 +50,11 @@ func New(tfs []TimeField) transformers.Transformer {
 // Transform transforms Magistrala message to a list of JSON messages.
 func (ts *transformerService) Transform(msg *messaging.Message) (interface{}, error) {
 	ret := Message{
-		Publisher: msg.Publisher,
-		Created:   msg.Created,
-		Protocol:  msg.Protocol,
-		Channel:   msg.Channel,
-		Subtopic:  msg.Subtopic,
+		Publisher: msg.GetPublisher(),
+		Created:   msg.GetCreated(),
+		Protocol:  msg.GetProtocol(),
+		Channel:   msg.GetChannel(),
+		Subtopic:  msg.GetSubtopic(),
 	}
 
 	if ret.Subtopic == "" {
@@ -68,7 +68,7 @@ func (ts *transformerService) Transform(msg *messaging.Message) (interface{}, er
 
 	format := subs[len(subs)-1]
 	var payload interface{}
-	if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+	if err := json.Unmarshal(msg.GetPayload(), &payload); err != nil {
 		return nil, errors.Wrap(ErrTransform, err)
 	}
 

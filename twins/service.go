@@ -248,7 +248,7 @@ func (ts *twinsService) ListStates(ctx context.Context, token string, offset, li
 func (ts *twinsService) SaveStates(ctx context.Context, msg *messaging.Message) error {
 	var ids []string
 
-	channel, subtopic := msg.Channel, msg.Subtopic
+	channel, subtopic := msg.GetChannel(), msg.GetSubtopic()
 	ids, err := ts.twinCache.IDs(ctx, channel, subtopic)
 	if err != nil {
 		return err
@@ -283,17 +283,17 @@ func (ts *twinsService) saveState(ctx context.Context, msg *messaging.Message, t
 
 	tw, err := ts.twins.RetrieveByID(ctx, twinID)
 	if err != nil {
-		return fmt.Errorf("retrieving twin for %s failed: %s", msg.Publisher, err)
+		return fmt.Errorf("retrieving twin for %s failed: %s", msg.GetPublisher(), err)
 	}
 
 	var recs []senml.Record
-	if err := json.Unmarshal(msg.Payload, &recs); err != nil {
-		return fmt.Errorf("unmarshal payload for %s failed: %s", msg.Publisher, err)
+	if err := json.Unmarshal(msg.GetPayload(), &recs); err != nil {
+		return fmt.Errorf("unmarshal payload for %s failed: %s", msg.GetPublisher(), err)
 	}
 
 	st, err := ts.states.RetrieveLast(ctx, tw.ID)
 	if err != nil {
-		return fmt.Errorf("retrieve last state for %s failed: %s", msg.Publisher, err)
+		return fmt.Errorf("retrieve last state for %s failed: %s", msg.GetPublisher(), err)
 	}
 
 	for _, rec := range recs {
@@ -303,17 +303,17 @@ func (ts *twinsService) saveState(ctx context.Context, msg *messaging.Message, t
 			return nil
 		case update:
 			if err := ts.states.Update(ctx, st); err != nil {
-				return fmt.Errorf("update state for %s failed: %s", msg.Publisher, err)
+				return fmt.Errorf("update state for %s failed: %s", msg.GetPublisher(), err)
 			}
 		case save:
 			if err := ts.states.Save(ctx, st); err != nil {
-				return fmt.Errorf("save state for %s failed: %s", msg.Publisher, err)
+				return fmt.Errorf("save state for %s failed: %s", msg.GetPublisher(), err)
 			}
 		}
 	}
 
-	twinID = msg.Publisher
-	b = msg.Payload
+	twinID = msg.GetPublisher()
+	b = msg.GetPayload()
 
 	return nil
 }
@@ -345,7 +345,7 @@ func (ts *twinsService) prepareState(st *State, tw *Twin, rec senml.Record, msg 
 		if !attr.PersistState {
 			continue
 		}
-		if attr.Channel == msg.Channel && (attr.Subtopic == SubtopicWildcard || attr.Subtopic == msg.Subtopic) {
+		if attr.Channel == msg.GetChannel() && (attr.Subtopic == SubtopicWildcard || attr.Subtopic == msg.GetSubtopic()) {
 			action = update
 			delta := math.Abs(float64(st.Created.UnixNano()) - recNano)
 			if recNano == 0 || delta > float64(def.Delta) {
@@ -419,7 +419,7 @@ func (ts *twinsService) publish(ctx context.Context, twinID *string, err *error,
 		Created:   time.Now().UnixNano(),
 	}
 
-	if err := ts.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
+	if err := ts.publisher.Publish(ctx, msg.GetChannel(), &msg); err != nil {
 		ts.logger.Warn(fmt.Sprintf("Failed to publish notification on Message Broker: %s", err))
 	}
 }

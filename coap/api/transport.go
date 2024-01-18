@@ -124,9 +124,9 @@ func handleGet(ctx context.Context, m *mux.Message, c mux.Client, msg *messaging
 	}
 	if obs == startObserve {
 		c := coap.NewClient(c, m.Token, logger)
-		return service.Subscribe(ctx, key, msg.Channel, msg.Subtopic, c)
+		return service.Subscribe(ctx, key, msg.GetChannel(), msg.GetSubtopic(), c)
 	}
-	return service.Unsubscribe(ctx, key, msg.Channel, msg.Subtopic, m.Token.String())
+	return service.Unsubscribe(ctx, key, msg.GetChannel(), msg.GetSubtopic(), m.Token.String())
 }
 
 func decodeMessage(msg *mux.Message) (*messaging.Message, error) {

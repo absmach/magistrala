@@ -73,8 +73,8 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 	}
 
 	subject := fmt.Sprintf("%s.%s", pub.prefix, topic)
-	if msg.Subtopic != "" {
-		subject = fmt.Sprintf("%s.%s", subject, msg.Subtopic)
+	if msg.GetSubtopic() != "" {
+		subject = fmt.Sprintf("%s.%s", subject, msg.GetSubtopic())
 	}
 
 	_, err = pub.js.Publish(ctx, subject, data)

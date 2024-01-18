@@ -82,7 +82,7 @@ type traceHandler struct {
 
 // Handle instruments the message handling operation.
 func (h *traceHandler) Handle(msg *messaging.Message) error {
-	_, span := tracing.CreateSpan(h.ctx, processOp, h.clientID, h.topic, msg.Subtopic, len(msg.Payload), h.host, trace.SpanKindConsumer, h.tracer)
+	_, span := tracing.CreateSpan(h.ctx, processOp, h.clientID, h.topic, msg.GetSubtopic(), len(msg.GetPayload()), h.host, trace.SpanKindConsumer, h.tracer)
 	defer span.End()
 
 	span.SetAttributes(defaultAttributes...)

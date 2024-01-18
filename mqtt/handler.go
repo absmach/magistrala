@@ -169,7 +169,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		Created:   time.Now().UnixNano(),
 	}
 
-	if err := h.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
+	if err := h.publisher.Publish(ctx, msg.GetChannel(), &msg); err != nil {
 		return errors.Wrap(ErrFailedPublishToMsgBroker, err)
 	}
 

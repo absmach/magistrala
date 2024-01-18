@@ -102,9 +102,9 @@ func (ns *notifierService) ConsumeBlocking(ctx context.Context, message interfac
 	if !ok {
 		return ErrMessage
 	}
-	topic := msg.Channel
-	if msg.Subtopic != "" {
-		topic = fmt.Sprintf("%s.%s", msg.Channel, msg.Subtopic)
+	topic := msg.GetChannel()
+	if msg.GetSubtopic() != "" {
+		topic = fmt.Sprintf("%s.%s", msg.GetChannel(), msg.GetSubtopic())
 	}
 	pm := PageMetadata{
 		Topic:  topic,
@@ -136,9 +136,9 @@ func (ns *notifierService) ConsumeAsync(ctx context.Context, message interface{}
 		ns.errCh <- ErrMessage
 		return
 	}
-	topic := msg.Channel
-	if msg.Subtopic != "" {
-		topic = fmt.Sprintf("%s.%s", msg.Channel, msg.Subtopic)
+	topic := msg.GetChannel()
+	if msg.GetSubtopic() != "" {
+		topic = fmt.Sprintf("%s.%s", msg.GetChannel(), msg.GetSubtopic())
 	}
 	pm := PageMetadata{
 		Topic:  topic,

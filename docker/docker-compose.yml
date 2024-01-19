@@ -462,6 +462,7 @@ services:
     container_name: magistrala-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: ${MG_JAEGER_COLLECTOR_OTLP_ENABLED}
+    command: --memory.max-traces ${MG_JAEGER_MEMORY_MAX_TRACES}
     ports:
       - ${MG_JAEGER_FRONTEND}:${MG_JAEGER_FRONTEND}
       - ${MG_JAEGER_OLTP_HTTP}:${MG_JAEGER_OLTP_HTTP}

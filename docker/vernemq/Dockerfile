@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Builder
-FROM erlang:24.3.3.0-alpine AS builder
+FROM erlang:25.3.2.8-alpine AS builder
 RUN apk add --update git build-base bsd-compat-headers openssl-dev snappy-dev curl \
-    && git clone -b 1.12.5 https://github.com/vernemq/vernemq \
+    && git clone -b 1.13.0 https://github.com/vernemq/vernemq \
     && cd vernemq \
     && make -j 16 rel
 
 # Executor
-FROM alpine:3.13
+FROM alpine:3.19
 
 COPY --from=builder /vernemq/_build/default/rel /
 
@@ -23,7 +23,7 @@ RUN apk --no-cache --update --available upgrade && \
 ENV DOCKER_VERNEMQ_KUBERNETES_LABEL_SELECTOR="app=vernemq" \
     DOCKER_VERNEMQ_LOG__CONSOLE=console \
     PATH="/vernemq/bin:$PATH" \
-    VERNEMQ_VERSION="1.12.5"
+    VERNEMQ_VERSION="1.13.0"
 
 WORKDIR /vernemq
 
@@ -41,16 +41,16 @@ RUN chown -R 10000:10000 /vernemq && \
 # 8080  MQTT WebSockets
 # 44053 VerneMQ Message Distribution
 # 4369  EPMD - Erlang Port Mapper Daemon
-# 8888  Prometheus Metrics
+# 8888  Health, API, Prometheus Metrics
 # 9100 9101 9102 9103 9104 9105 9106 9107 9108 9109  Specific Distributed Erlang Port Range
 
 EXPOSE 1883 8883 8080 44053 4369 8888 \
-    9100 9101 9102 9103 9104 9105 9106 9107 9108 9109
+       9100 9101 9102 9103 9104 9105 9106 9107 9108 9109
 
 
 VOLUME ["/vernemq/log", "/vernemq/data", "/vernemq/etc"]
 
-HEALTHCHECK CMD curl -s -f http://localhost:8888/health || false
+HEALTHCHECK CMD vernemq ping | grep -q pong
 
 USER vernemq
 CMD ["start_vernemq"]

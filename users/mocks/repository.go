@@ -63,6 +63,24 @@ func (_m *Repository) CheckSuperAdmin(ctx context.Context, adminID string) error
 	return r0
 }
 
+// Delete provides a mock function with given fields: ctx, id
+func (_m *Repository) Delete(ctx context.Context, id string) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RetrieveAll provides a mock function with given fields: ctx, pm
 func (_m *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	ret := _m.Called(ctx, pm)

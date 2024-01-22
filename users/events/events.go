@@ -29,6 +29,7 @@ const (
 	resetSecret        = clientPrefix + "reset_secret"
 	sendPasswordReset  = clientPrefix + "send_password_reset"
 	oauthCallback      = clientPrefix + "oauth_callback"
+	deleteClient       = clientPrefix + "delete"
 )
 
 var (
@@ -46,6 +47,7 @@ var (
 	_ events.Event = (*resetSecretEvent)(nil)
 	_ events.Event = (*sendPasswordResetEvent)(nil)
 	_ events.Event = (*oauthCallbackEvent)(nil)
+	_ events.Event = (*deleteClientEvent)(nil)
 )
 
 type createClientEvent struct {
@@ -423,5 +425,16 @@ func (oce oauthCallbackEvent) Encode() (map[string]interface{}, error) {
 		"operation": oauthCallback,
 		"state":     oce.state,
 		"client_id": oce.clientID,
+	}, nil
+}
+
+type deleteClientEvent struct {
+	id string
+}
+
+func (dce deleteClientEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": deleteClient,
+		"id":        dce.id,
 	}, nil
 }

@@ -314,3 +314,15 @@ func (es *eventStore) OAuthCallback(ctx context.Context, state mgoauth2.State, c
 
 	return token, nil
 }
+
+func (es *eventStore) DeleteClient(ctx context.Context, token, id string) error {
+	if err := es.svc.DeleteClient(ctx, token, id); err != nil {
+		return err
+	}
+
+	event := deleteClientEvent{
+		id: id,
+	}
+
+	return es.Publish(ctx, event)
+}

@@ -204,3 +204,11 @@ func (tm *tracingMiddleware) OAuthCallback(ctx context.Context, state mgoauth2.S
 
 	return tm.svc.OAuthCallback(ctx, state, client)
 }
+
+// DeleteClient traces the "DeleteClient" operation of the wrapped clients.Service.
+func (tm *tracingMiddleware) DeleteClient(ctx context.Context, token, id string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_delete_client", trace.WithAttributes(attribute.String("id", id)))
+	defer span.End()
+
+	return tm.svc.DeleteClient(ctx, token, id)
+}

@@ -430,6 +430,46 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	return client, err
 }
 
+func (svc service) DeleteClient(ctx context.Context, token, id string) error {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return err
+	}
+	if err := svc.checkSuperAdmin(ctx, res.GetId()); err != nil {
+		return err
+	}
+
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.GroupType,
+		Object:      id,
+		ObjectType:  auth.ThingType,
+	}); err != nil {
+		return err
+	}
+
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.DomainType,
+		Object:      id,
+		ObjectType:  auth.ThingType,
+	}); err != nil {
+		return err
+	}
+
+	if err := svc.clients.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		SubjectType: auth.UserType,
+		Object:      id,
+		ObjectType:  auth.ThingType,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
 	res, err := svc.identify(ctx, token)
 	if err != nil {

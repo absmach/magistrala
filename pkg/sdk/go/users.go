@@ -344,3 +344,9 @@ func (sdk mgSDK) changeClientStatus(token, id, status string) (User, errors.SDKE
 
 	return user, nil
 }
+
+func (sdk mgSDK) DeleteUser(id, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, id)
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
+	return sdkerr
+}

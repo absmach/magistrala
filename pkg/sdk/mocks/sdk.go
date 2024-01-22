@@ -798,6 +798,26 @@ func (_m *SDK) DeleteThing(id string, token string) errors.SDKError {
 	return r0
 }
 
+// DeleteUser provides a mock function with given fields: id, token
+func (_m *SDK) DeleteUser(id string, token string) errors.SDKError {
+	ret := _m.Called(id, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUser")
+	}
+
+	var r0 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string) errors.SDKError); ok {
+		r0 = rf(id, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+
+	return r0
+}
+
 // DisableChannel provides a mock function with given fields: id, token
 func (_m *SDK) DisableChannel(id string, token string) (sdk.Channel, errors.SDKError) {
 	ret := _m.Called(id, token)

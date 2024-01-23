@@ -16,7 +16,7 @@ volumes:
 
 services:
   smpp-notifier-db:
-    image: postgres:10.2-alpine
+    image: postgres:16.1-alpine
     container_name: magistrala-smpp-notifier-db
     restart: on-failure
     environment:

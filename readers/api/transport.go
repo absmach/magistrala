@@ -162,7 +162,6 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 			To:          to,
 		},
 	}
-
 	return req, nil
 }
 

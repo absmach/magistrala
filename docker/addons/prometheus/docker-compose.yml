@@ -17,7 +17,7 @@ volumes:
 
 services:
   promethues:
-    image: prom/prometheus:v2.42.0
+    image: prom/prometheus:v2.49.1
     container_name: magistrala-prometheus
     restart: on-failure
     ports:
@@ -31,7 +31,7 @@ services:
       - magistrala-prometheus-volume:/prometheus
 
   grafana:
-    image: grafana/grafana:9.4.7
+    image: grafana/grafana:10.2.3
     container_name: magistrala-grafana
     depends_on:
       - promethues

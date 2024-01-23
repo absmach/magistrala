@@ -17,7 +17,7 @@ volumes:
 
 services:
   opcua-redis:
-    image: redis:7.2.0-alpine
+    image: redis:7.2.4-alpine
     container_name: magistrala-opcua-redis
     restart: on-failure
     networks:

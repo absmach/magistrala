@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 
 	container, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "nats",
-		Tag:        "2.9.21-alpine",
+		Tag:        "2.10.9-alpine",
 		Cmd:        []string{"-DVV", "-js"},
 	})
 	if err != nil {

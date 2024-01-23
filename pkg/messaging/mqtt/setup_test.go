@@ -31,7 +31,7 @@ const (
 	qos           = 2
 	port          = "1883/tcp"
 	broker        = "eclipse-mosquitto"
-	brokerVersion = "1.6.13"
+	brokerVersion = "2.0.18"
 	brokerTimeout = 30 * time.Second
 	poolMaxWait   = 120 * time.Second
 )

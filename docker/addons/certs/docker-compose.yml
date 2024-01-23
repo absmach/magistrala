@@ -17,7 +17,7 @@ volumes:
 
 services:
   certs-db:
-    image: postgres:13.3-alpine
+    image: postgres:16.1-alpine
     container_name: magistrala-certs-db
     restart: on-failure
     environment:

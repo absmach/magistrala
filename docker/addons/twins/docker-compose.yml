@@ -17,7 +17,7 @@ volumes:
 
 services:
   twins-redis:
-    image: redis:7.2.0-alpine
+    image: redis:7.2.4-alpine
     container_name: magistrala-twins-redis
     restart: on-failure
     networks:

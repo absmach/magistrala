@@ -16,7 +16,7 @@ volumes:
 
 services:
   cassandra:
-    image: cassandra:3.11.10
+    image: cassandra:3.11.16
     container_name: magistrala-cassandra
     restart: on-failure
     networks:
@@ -27,7 +27,7 @@ services:
       - magistrala-cassandra-volume:/var/lib/cassandra
 
   cassandra-init-keyspace:
-    image: cassandra:3.11.10
+    image: cassandra:3.11.16
     depends_on:
       - cassandra
     restart: on-failure

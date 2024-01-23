@@ -6,11 +6,13 @@ package mongodb_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -23,13 +25,18 @@ func TestMain(m *testing.M) {
 		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
-	cfg := []string{
-		"MONGO_INITDB_DATABASE=test",
-	}
-
-	container, err := pool.Run("mongo", "4.4.3-bionic", cfg)
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "mongo",
+		Tag:        "6.0.13",
+		Env: []string{
+			"MONGO_INITDB_DATABASE=test",
+		},
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	})
 	if err != nil {
-		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
+		log.Fatalf("Could not start container: %s", err)
 	}
 
 	port = container.GetPort("27017/tcp")

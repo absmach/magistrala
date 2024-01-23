@@ -19,7 +19,7 @@ volumes:
 
 services:
   mongodb:
-    image: mongo:4.4.6
+    image: mongo:7.0.5
     container_name: magistrala-mongodb
     restart: on-failure
     environment:

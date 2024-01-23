@@ -16,6 +16,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	influxdata "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 )
 
 var (
@@ -33,8 +34,8 @@ const (
 	dbFluxEnabled = "true"
 	dbBindAddress = ":8088"
 	port          = "8086/tcp"
-	broker        = "influxdb"
-	brokerVersion = "2.2-alpine"
+	db            = "influxdb"
+	dbVersion     = "2.7-alpine"
 	poolMaxWait   = 120 * time.Second
 )
 
@@ -44,19 +45,25 @@ func TestMain(m *testing.M) {
 		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
-	cfg := []string{
-		fmt.Sprintf("DOCKER_INFLUXDB_INIT_MODE=%s", dbInitMode),
-		fmt.Sprintf("DOCKER_INFLUXDB_INIT_USERNAME=%s", dbAdmin),
-		fmt.Sprintf("DOCKER_INFLUXDB_INIT_PASSWORD=%s", dbPass),
-		fmt.Sprintf("DOCKER_INFLUXDB_INIT_ORG=%s", dbOrg),
-		fmt.Sprintf("DOCKER_INFLUXDB_INIT_BUCKET=%s", dbBucket),
-		fmt.Sprintf("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=%s", dbToken),
-		fmt.Sprintf("INFLUXDB_HTTP_FLUX_ENABLED=%s", dbFluxEnabled),
-		fmt.Sprintf("INFLUXDB_BIND_ADDRESS=%s", dbBindAddress),
-	}
-	container, err := pool.Run(broker, brokerVersion, cfg)
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: db,
+		Tag:        dbVersion,
+		Env: []string{
+			fmt.Sprintf("DOCKER_INFLUXDB_INIT_MODE=%s", dbInitMode),
+			fmt.Sprintf("DOCKER_INFLUXDB_INIT_USERNAME=%s", dbAdmin),
+			fmt.Sprintf("DOCKER_INFLUXDB_INIT_PASSWORD=%s", dbPass),
+			fmt.Sprintf("DOCKER_INFLUXDB_INIT_ORG=%s", dbOrg),
+			fmt.Sprintf("DOCKER_INFLUXDB_INIT_BUCKET=%s", dbBucket),
+			fmt.Sprintf("DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=%s", dbToken),
+			fmt.Sprintf("INFLUXDB_HTTP_FLUX_ENABLED=%s", dbFluxEnabled),
+			fmt.Sprintf("INFLUXDB_BIND_ADDRESS=%s", dbBindAddress),
+		},
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	})
 	if err != nil {
-		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
+		log.Fatalf("Could not start container: %s", err)
 	}
 
 	handleInterrupt(m, pool, container)

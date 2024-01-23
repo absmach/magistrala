@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Name:       "test-rabbitmq-events",
 		Repository: "rabbitmq",
-		Tag:        "3.9.20",
+		Tag:        "3.12.12",
 	}
 	container, err = pool.RunWithOptions(&opts)
 	if err != nil {

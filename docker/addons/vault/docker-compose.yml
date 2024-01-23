@@ -18,7 +18,7 @@ volumes:
 
 services:
   vault:
-    image: vault:1.12.2
+    image: hashicorp/vault:1.15.4
     container_name: magistrala-vault
     ports:
       - ${MG_VAULT_PORT}:8200

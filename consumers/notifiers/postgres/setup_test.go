@@ -17,6 +17,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 )
 
 var (
@@ -30,12 +31,19 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	cfg := []string{
-		"POSTGRES_USER=test",
-		"POSTGRES_PASSWORD=test",
-		"POSTGRES_DB=test",
-	}
-	container, err := pool.Run("postgres", "13.3-alpine", cfg)
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "postgres",
+		Tag:        "16.1-alpine",
+		Env: []string{
+			"POSTGRES_USER=test",
+			"POSTGRES_PASSWORD=test",
+			"POSTGRES_DB=test",
+			"listen_addresses = '*'",
+		},
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}

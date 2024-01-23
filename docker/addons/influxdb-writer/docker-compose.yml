@@ -16,7 +16,7 @@ volumes:
 
 services:
   influxdb:
-    image: influxdb:2.5
+    image: influxdb:2.7-alpine
     container_name: magistrala-influxdb
     restart: on-failure
     environment:

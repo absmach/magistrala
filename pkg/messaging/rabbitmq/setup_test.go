@@ -24,7 +24,7 @@ import (
 const (
 	port          = "5672/tcp"
 	brokerName    = "rabbitmq"
-	brokerVersion = "3.12.10-alpine"
+	brokerVersion = "3.12.12-alpine"
 )
 
 var (

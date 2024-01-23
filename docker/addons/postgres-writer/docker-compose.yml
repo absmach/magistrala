@@ -18,7 +18,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:13.3-alpine
+    image: postgres:16.1-alpine
     container_name: magistrala-postgres
     restart: on-failure
     environment:

@@ -27,7 +27,7 @@ include:
 
 services:
   spicedb:
-    image: "authzed/spicedb"
+    image: "authzed/spicedb:v1.29.0"
     container_name: magistrala-spicedb
     command: "serve"
     restart: "always"
@@ -45,7 +45,7 @@ services:
       - spicedb-migrate
 
   spicedb-migrate:
-    image: "authzed/spicedb"
+    image: "authzed/spicedb:v1.29.0"
     container_name: magistrala-spicedb-migrate
     command: "migrate head"
     restart: "on-failure"
@@ -58,7 +58,7 @@ services:
       - spicedb-db
 
   spicedb-db:
-    image: "postgres:15.3-alpine"
+    image: "postgres:16.1-alpine"
     container_name: magistrala-spicedb-db
     networks:
       - magistrala-base-net
@@ -72,7 +72,7 @@ services:
       - magistrala-spicedb-db-volume:/var/lib/postgresql/data
 
   auth-db:
-    image: postgres:13.3-alpine
+    image: postgres:16.1-alpine
     container_name: magistrala-auth-db
     restart: on-failure
     ports:
@@ -161,7 +161,7 @@ services:
           create_host_path: true
 
   invitations-db:
-    image: postgres:15.3-alpine
+    image: postgres:16.1-alpine
     container_name: magistrala-invitations-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -232,7 +232,7 @@ services:
           create_host_path: true
 
   nginx:
-    image: nginx:1.23.3-alpine
+    image: nginx:1.25.0-alpine
     container_name: magistrala-nginx
     restart: on-failure
     volumes:
@@ -261,7 +261,7 @@ services:
       - ws-adapter
 
   things-db:
-    image: postgres:13.3-alpine
+    image: postgres:16.1-alpine
     container_name: magistrala-things-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -278,7 +278,7 @@ services:
       - magistrala-things-db-volume:/var/lib/postgresql/data
 
   things-redis:
-    image: redis:6.2.2-alpine
+    image: redis:7.2.4-alpine
     container_name: magistrala-things-redis
     restart: on-failure
     networks:
@@ -373,7 +373,7 @@ services:
           create_host_path: true
 
   users-db:
-    image: postgres:15.1-alpine
+    image: postgres:16.1-alpine
     container_name: magistrala-users-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -458,7 +458,7 @@ services:
           create_host_path: true
 
   jaeger:
-    image: jaegertracing/all-in-one:1.38.0
+    image: jaegertracing/all-in-one:1.53.0
     container_name: magistrala-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: ${MG_JAEGER_COLLECTOR_OTLP_ENABLED}

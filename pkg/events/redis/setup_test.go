@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Name:       "tests-redis-events",
 		Repository: "redis",
-		Tag:        "7.2.0-alpine",
+		Tag:        "7.2.4-alpine",
 	}
 	container, err = pool.RunWithOptions(&opts)
 	if err != nil {
@@ -48,7 +48,6 @@ func TestMain(m *testing.M) {
 	ropts, err := redis.ParseURL(redisURL)
 	if err != nil {
 		log.Fatalf("Could not parse redis URL: %s", err)
-
 	}
 
 	if err := pool.Retry(func() error {

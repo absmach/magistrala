@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 		"MONGO_INITDB_DATABASE=test",
 	}
 
-	container, err := pool.Run("mongo", "4.4.3-bionic", cfg)
+	container, err := pool.Run("mongo", "7.0.5", cfg)
 	if err != nil {
 		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
 	}

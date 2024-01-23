@@ -15,6 +15,7 @@ import (
 	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 )
 
 var db *sqlx.DB
@@ -25,12 +26,19 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	cfg := []string{
-		"POSTGRES_USER=test",
-		"POSTGRES_PASSWORD=test",
-		"POSTGRES_DB=test",
-	}
-	container, err := pool.Run("timescale/timescaledb", "2.4.0-pg12", cfg)
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "timescale/timescaledb",
+		Tag:        "2.13.1-pg16",
+		Env: []string{
+			"POSTGRES_USER=test",
+			"POSTGRES_PASSWORD=test",
+			"POSTGRES_DB=test",
+			"listen_addresses = '*'",
+		},
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}

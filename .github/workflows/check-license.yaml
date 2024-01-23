@@ -20,7 +20,7 @@ jobs:
 
       - name: Check License Header
         run: |
-          CHECK=$(grep -rcL --exclude-dir={.git,build} \
+          CHECK=$(grep -rcL --exclude-dir={.git,build,**vernemq**} \
             --exclude=\*.{crt,key,pem,zed,hcl,md,json,csv,mod,sum,tmpl,args} \
             --exclude={CODEOWNERS,LICENSE,MAINTAINERS} \
             --regexp "Copyright (c) Abstract Machines" .)

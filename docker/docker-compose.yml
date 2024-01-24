@@ -474,7 +474,7 @@ services:
     container_name: magistrala-mqtt
     depends_on:
       - things
-      - nats
+      - broker
     restart: on-failure
     environment:
       MG_MQTT_ADAPTER_LOG_LEVEL: ${MG_MQTT_ADAPTER_LOG_LEVEL}
@@ -525,7 +525,7 @@ services:
     container_name: magistrala-http
     depends_on:
       - things
-      - nats
+      - broker
     restart: on-failure
     environment:
       MG_HTTP_ADAPTER_LOG_LEVEL: ${MG_HTTP_ADAPTER_LOG_LEVEL}
@@ -570,7 +570,7 @@ services:
     container_name: magistrala-coap
     depends_on:
       - things
-      - nats
+      - broker
     restart: on-failure
     environment:
       MG_COAP_ADAPTER_LOG_LEVEL: ${MG_COAP_ADAPTER_LOG_LEVEL}
@@ -620,7 +620,7 @@ services:
     container_name: magistrala-ws
     depends_on:
       - things
-      - nats
+      - broker
     restart: on-failure
     environment:
       MG_WS_ADAPTER_LOG_LEVEL: ${MG_WS_ADAPTER_LOG_LEVEL}

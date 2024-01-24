@@ -5,7 +5,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -28,16 +27,19 @@ func LoggingMiddleware(svc ws.Service, logger *slog.Logger) ws.Service {
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) Subscribe(ctx context.Context, thingKey, chanID, subtopic string, c *ws.Client) (err error) {
 	defer func(begin time.Time) {
-		destChannel := chanID
-		if subtopic != "" {
-			destChannel = fmt.Sprintf("%s.%s", destChannel, subtopic)
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", chanID),
 		}
-		message := fmt.Sprintf("Method subscribe to channel %s took %s to complete", destChannel, time.Since(begin))
+		if subtopic != "" {
+			args = append(args, "subtopic", subtopic)
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Subscibe failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Subscribe completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Subscribe(ctx, thingKey, chanID, subtopic, c)

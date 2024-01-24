@@ -7,7 +7,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -26,76 +25,106 @@ func LoggingMiddleware(svc notifiers.Service, logger *slog.Logger) notifiers.Ser
 	return &loggingMiddleware{logger, svc}
 }
 
-// CreateSubscription logs the create_subscription request. It logs token and subscription ID and the time it took to complete the request.
+// CreateSubscription logs the create_subscription request. It logs subscription ID and topic and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) CreateSubscription(ctx context.Context, token string, sub notifiers.Subscription) (id string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method create_subscription with the id %s for token %s took %s to complete", id, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("subscription",
+				slog.String("topic", sub.Topic),
+				slog.String("id", id),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Create subscription failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Create subscription completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.CreateSubscription(ctx, token, sub)
 }
 
-// ViewSubscription logs the view_subscription request. It logs token and subscription topic and the time it took to complete the request.
+// ViewSubscription logs the view_subscription request. It logs subscription topic and id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ViewSubscription(ctx context.Context, token, topic string) (sub notifiers.Subscription, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method view_subscription with the topic %s for token %s took %s to complete", topic, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("subscription",
+				slog.String("topic", topic),
+				slog.String("id", sub.ID),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("View subscription failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("View subscription completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.ViewSubscription(ctx, token, topic)
 }
 
-// ListSubscriptions logs the list_subscriptions request. It logs token and subscription topic and the time it took to complete the request.
+// ListSubscriptions logs the list_subscriptions request. It logs page metadata and subscription topic and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ListSubscriptions(ctx context.Context, token string, pm notifiers.PageMetadata) (res notifiers.Page, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_subscriptions for topic %s and token %s took %s to complete", pm.Topic, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("page",
+				slog.String("topic", pm.Topic),
+				slog.Int("limit", pm.Limit),
+				slog.Uint64("offset", uint64(pm.Offset)),
+				slog.Uint64("total", uint64(res.Total)),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("List subscriptions failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("List subscriptions completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.ListSubscriptions(ctx, token, pm)
 }
 
-// RemoveSubscription logs the remove_subscription request. It logs token and subscription ID and the time it took to complete the request.
+// RemoveSubscription logs the remove_subscription request. It logs subscription ID and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) RemoveSubscription(ctx context.Context, token, id string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method remove_subscription for subscription %s took %s to complete", id, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("subscription_id", id),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Remove subscription failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Remove subscription completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.RemoveSubscription(ctx, token, id)
 }
 
-// ConsumeBlocking logs the consume_blocking request. It logs the message and the time it took to complete the request.
+// ConsumeBlocking logs the consume_blocking request. It logs the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) ConsumeBlocking(ctx context.Context, msg interface{}) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method consume took %s to complete", time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Blocking consumer failed to consume messages successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Blocking consumer consumed messages successfully", args...)
 	}(time.Now())
 
 	return lm.svc.ConsumeBlocking(ctx, msg)

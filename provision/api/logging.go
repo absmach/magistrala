@@ -6,7 +6,6 @@
 package api
 
 import (
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -27,12 +26,17 @@ func NewLoggingMiddleware(svc provision.Service, logger *slog.Logger) provision.
 
 func (lm *loggingMiddleware) Provision(token, name, externalID, externalKey string) (res provision.Result, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method provision for token: %s and things: %v took %s to complete", token, res.Things, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("name", name),
+			slog.String("external_id", externalID),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Provision failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors", message))
+		lm.logger.Info("Provision completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Provision(token, name, externalID, externalKey)
@@ -40,12 +44,17 @@ func (lm *loggingMiddleware) Provision(token, name, externalID, externalKey stri
 
 func (lm *loggingMiddleware) Cert(token, thingID, duration string) (cert, key string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method cert for token: %s and thing: %v took %s to complete", token, thingID, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("thing_id", thingID),
+			slog.String("ttl", duration),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Thing certificate failed to create successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors", message))
+		lm.logger.Info("Thing certificate created successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Cert(token, thingID, duration)
@@ -53,12 +62,15 @@ func (lm *loggingMiddleware) Cert(token, thingID, duration string) (cert, key st
 
 func (lm *loggingMiddleware) Mapping(token string) (res map[string]interface{}, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method mapping for token: %s took %s to complete", token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Mapping failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors", message))
+		lm.logger.Info("Mapping completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Mapping(token)

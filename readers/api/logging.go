@@ -6,7 +6,6 @@
 package api
 
 import (
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -30,12 +29,27 @@ func LoggingMiddleware(svc readers.MessageRepository, logger *slog.Logger) reade
 
 func (lm *loggingMiddleware) ReadAll(chanID string, rpm readers.PageMetadata) (page readers.MessagesPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method read_all for channel %s with query %v took %s to complete", chanID, rpm, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", chanID),
+			slog.Group("page",
+				slog.Uint64("offset", rpm.Offset),
+				slog.Uint64("limit", rpm.Limit),
+				slog.Uint64("total", page.Total),
+			),
+		}
+		if rpm.Subtopic != "" {
+			args = append(args, slog.String("subtopic", rpm.Subtopic))
+		}
+		if rpm.Publisher != "" {
+			args = append(args, slog.String("publisher", rpm.Publisher))
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Read all failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Read all completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.ReadAll(chanID, rpm)

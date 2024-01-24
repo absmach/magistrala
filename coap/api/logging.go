@@ -7,7 +7,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -31,16 +30,19 @@ func LoggingMiddleware(svc coap.Service, logger *slog.Logger) coap.Service {
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) Publish(ctx context.Context, key string, msg *messaging.Message) (err error) {
 	defer func(begin time.Time) {
-		destChannel := msg.GetChannel()
-		if msg.GetSubtopic() != "" {
-			destChannel = fmt.Sprintf("%s.%s", destChannel, msg.GetSubtopic())
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", msg.GetChannel()),
 		}
-		message := fmt.Sprintf("Method publish to %s took %s to complete", destChannel, time.Since(begin))
+		if msg.GetSubtopic() != "" {
+			args = append(args, slog.String("subtopic", msg.GetSubtopic()))
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Publish message failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Publish message completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Publish(ctx, key, msg)
@@ -50,16 +52,19 @@ func (lm *loggingMiddleware) Publish(ctx context.Context, key string, msg *messa
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) Subscribe(ctx context.Context, key, chanID, subtopic string, c coap.Client) (err error) {
 	defer func(begin time.Time) {
-		destChannel := chanID
-		if subtopic != "" {
-			destChannel = fmt.Sprintf("%s.%s", destChannel, subtopic)
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", chanID),
 		}
-		message := fmt.Sprintf("Method subscribe to %s for client %s took %s to complete", destChannel, c.Token(), time.Since(begin))
+		if subtopic != "" {
+			args = append(args, slog.String("subtopic", subtopic))
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Subscribe failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Subscribe completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Subscribe(ctx, key, chanID, subtopic, c)
@@ -69,16 +74,19 @@ func (lm *loggingMiddleware) Subscribe(ctx context.Context, key, chanID, subtopi
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) (err error) {
 	defer func(begin time.Time) {
-		destChannel := chanID
-		if subtopic != "" {
-			destChannel = fmt.Sprintf("%s.%s", destChannel, subtopic)
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", chanID),
 		}
-		message := fmt.Sprintf("Method unsubscribe for the client %s from the channel %s took %s to complete", token, destChannel, time.Since(begin))
+		if subtopic != "" {
+			args = append(args, slog.String("subtopic", subtopic))
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Unsubscribe failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Unsubscribe completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Unsubscribe(ctx, key, chanID, subtopic, token)

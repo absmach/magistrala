@@ -27,180 +27,276 @@ func LoggingMiddleware(svc things.Service, logger *slog.Logger) things.Service {
 
 func (lm *loggingMiddleware) CreateThings(ctx context.Context, token string, clients ...mgclients.Client) (cs []mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method create_things %d things using token %s took %s to complete", len(cs), token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn(fmt.Sprintf("Create %d things failed to complete successfully", len(clients)), args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info(fmt.Sprintf("Create %d things completed successfully", len(clients)), args...)
 	}(time.Now())
 	return lm.svc.CreateThings(ctx, token, clients...)
 }
 
 func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method view_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("thing",
+				slog.String("id", c.ID),
+				slog.String("name", c.Name),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("View thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("View thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.ViewClient(ctx, token, id)
 }
 
 func (lm *loggingMiddleware) ViewClientPerms(ctx context.Context, token, id string) (p []string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method view_thing_permissions for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("thing_id", id),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("View thing permissions failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("View thing permissions completed successfully", args...)
 	}(time.Now())
 	return lm.svc.ViewClientPerms(ctx, token, id)
 }
 
 func (lm *loggingMiddleware) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_things using token %s took %s to complete", token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("user_id", reqUserID),
+			slog.Group("page",
+				slog.Uint64("limit", pm.Limit),
+				slog.Uint64("offset", pm.Offset),
+				slog.Uint64("total", cp.Total),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("List things failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("List things completed successfully", args...)
 	}(time.Now())
 	return lm.svc.ListClients(ctx, token, reqUserID, pm)
 }
 
 func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_thing_name_and_metadata for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("thing",
+				slog.String("id", client.ID),
+				slog.String("name", client.Name),
+				slog.Any("metadata", client.Metadata),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Update thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Update thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.UpdateClient(ctx, token, client)
 }
 
 func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_thing_tags for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("thing",
+				slog.String("id", c.ID),
+				slog.String("name", c.Name),
+				slog.Any("tags", c.Tags),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args := append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Update thing tags failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Update thing tags completed successfully", args...)
 	}(time.Now())
 	return lm.svc.UpdateClientTags(ctx, token, client)
 }
 
 func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, token, oldSecret, newSecret string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_thing_secret for thing with id %s using token %s took %s to complete", c.ID, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("thing",
+				slog.String("id", c.ID),
+				slog.String("name", c.Name),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Update thing secret failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Update thing secret completed successfully", args...)
 	}(time.Now())
 	return lm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
 }
 
 func (lm *loggingMiddleware) EnableClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method enable_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("thing",
+				slog.String("id", id),
+				slog.String("name", c.Name),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Enable thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Enable thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.EnableClient(ctx, token, id)
 }
 
 func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method disable_thing for thing with id %s using token %s took %s to complete", id, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("thing",
+				slog.String("id", id),
+				slog.String("name", c.Name),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Disable thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Disable thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.DisableClient(ctx, token, id)
 }
 
 func (lm *loggingMiddleware) ListClientsByGroup(ctx context.Context, token, channelID string, cp mgclients.Page) (mp mgclients.MembersPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_things_by_channel for channel with id %s using token %s took %s to complete", channelID, token, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", channelID),
+			slog.Group("page",
+				slog.Uint64("offset", cp.Offset),
+				slog.Uint64("limit", cp.Limit),
+				slog.Uint64("total", mp.Total),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("List things by group failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("List things by group completed successfully", args...)
 	}(time.Now())
 	return lm.svc.ListClientsByGroup(ctx, token, channelID, cp)
 }
 
 func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method identify for thing with id %s and key %s took %s to complete", id, key, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("thing_id", id),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Identify thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Identify thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.Identify(ctx, key)
 }
 
 func (lm *loggingMiddleware) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) (id string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method authorize for thing key %s and channnel %s took %s to complete", req.Subject, req.Object, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("object", req.GetObject()),
+			slog.String("object_type", req.GetObjectType()),
+			slog.String("subject_type", req.GetSubjectType()),
+			slog.String("permission", req.GetPermission()),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Authorize failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Authorize completed successfully", args...)
 	}(time.Now())
 	return lm.svc.Authorize(ctx, req)
 }
 
 func (lm *loggingMiddleware) Share(ctx context.Context, token, id, relation string, userids ...string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method share for thing id %s with relation %s for users %v took %s to complete", id, relation, userids, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("thing_id", id),
+			slog.Any("user_ids", userids),
+			slog.String("relation", relation),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Share thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Share thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.Share(ctx, token, id, relation, userids...)
 }
 
 func (lm *loggingMiddleware) Unshare(ctx context.Context, token, id, relation string, userids ...string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method unshare for thing id %s with relation %s for users %v took %s to complete", id, relation, userids, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("thing_id", id),
+			slog.Any("user_ids", userids),
+			slog.String("relation", relation),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Unshare thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Unshare thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.Unshare(ctx, token, id, relation, userids...)
 }
 
 func (lm *loggingMiddleware) DeleteClient(ctx context.Context, token, id string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method delete_client for thing id %s took %s to complete", id, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("thing_id", id),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Delete thing failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Delete thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.DeleteClient(ctx, token, id)
 }

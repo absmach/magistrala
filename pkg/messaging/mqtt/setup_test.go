@@ -18,6 +18,7 @@ import (
 	mqttpubsub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 )
 
 var (
@@ -30,8 +31,6 @@ const (
 	username      = "magistrala-mqtt"
 	qos           = 2
 	port          = "1883/tcp"
-	broker        = "eclipse-mosquitto"
-	brokerVersion = "2.0.18"
 	brokerTimeout = 30 * time.Second
 	poolMaxWait   = 120 * time.Second
 )
@@ -42,7 +41,13 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	container, err := pool.Run(broker, brokerVersion, nil)
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "eclipse-mosquitto",
+		Tag:        "1.6.15",
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}

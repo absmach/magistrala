@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 
 	container, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "mongo",
-		Tag:        "6.0.13",
+		Tag:        "7.0.5",
 		Env: []string{
 			"MONGO_INITDB_DATABASE=test",
 		},

@@ -24,7 +24,7 @@ tags:
     description: Everything about your Invitations
     externalDocs:
       description: Find out more about Invitations
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
   /invitations:

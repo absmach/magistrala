@@ -32,7 +32,7 @@ tags:
     description: Everything about your Readers
     externalDocs:
       description: Find out more about readers
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
   /channels/{chanId}/messages:

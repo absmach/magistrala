@@ -24,12 +24,12 @@ tags:
     description: Everything about your Authentication and Authorization.
     externalDocs:
       description: Find out more about auth
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
   - name: Keys
     description: Everything about your Keys.
     externalDocs:
       description: Find out more about keys
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
   /domains:

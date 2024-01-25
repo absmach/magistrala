@@ -26,7 +26,7 @@ tags:
     description: Everything about your Notifiers
     externalDocs:
       description: Find out more about notifiers
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
       
 paths:
   /subscriptions:

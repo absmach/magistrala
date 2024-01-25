@@ -24,17 +24,17 @@ tags:
     description: Everything about your Things
     externalDocs:
       description: Find out more about things
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
   - name: Channels
     description: Everything about your Channels
     externalDocs:
       description: Find out more about things channels
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
   - name: Policies
     description: Access to things policies
     externalDocs:
       description: Find out more about things policies
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
   /things:

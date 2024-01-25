@@ -24,12 +24,12 @@ tags:
     description: Everything about your Users
     externalDocs:
       description: Find out more about users
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
   - name: Groups
     description: Everything about your Groups
     externalDocs:
       description: Find out more about users groups
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
   /users:

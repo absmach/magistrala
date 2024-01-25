@@ -24,7 +24,7 @@ tags:
     description: Everything about your Messages
     externalDocs:
       description: Find out more about messages
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
       
 paths:
   /channels/{id}/messages:

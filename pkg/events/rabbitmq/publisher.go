@@ -6,7 +6,6 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/absmach/magistrala/pkg/events"
@@ -16,11 +15,9 @@ import (
 )
 
 type pubEventStore struct {
-	conn              *amqp.Connection
-	publisher         messaging.Publisher
-	unpublishedEvents chan amqp.Return
-	stream            string
-	mu                sync.Mutex
+	conn      *amqp.Connection
+	publisher messaging.Publisher
+	stream    string
 }
 
 func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, error) {
@@ -42,15 +39,10 @@ func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, er
 	}
 
 	es := &pubEventStore{
-		conn:              conn,
-		publisher:         publisher,
-		unpublishedEvents: make(chan amqp.Return, events.MaxUnpublishedEvents),
-		stream:            stream,
+		conn:      conn,
+		publisher: publisher,
+		stream:    stream,
 	}
-
-	ch.NotifyReturn(es.unpublishedEvents)
-
-	go es.StartPublishingRoutine(ctx)
 
 	return es, nil
 }
@@ -72,36 +64,6 @@ func (es *pubEventStore) Publish(ctx context.Context, event events.Event) error 
 	}
 
 	return es.publisher.Publish(ctx, es.stream, record)
-}
-
-func (es *pubEventStore) StartPublishingRoutine(ctx context.Context) {
-	defer close(es.unpublishedEvents)
-
-	ticker := time.NewTicker(events.UnpublishedEventsCheckInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if ok := es.conn.IsClosed(); !ok {
-				es.mu.Lock()
-				for i := len(es.unpublishedEvents) - 1; i >= 0; i-- {
-					record := <-es.unpublishedEvents
-					msg := &messaging.Message{
-						Payload: record.Body,
-					}
-					if err := es.publisher.Publish(ctx, es.stream, msg); err != nil {
-						es.unpublishedEvents <- record
-
-						break
-					}
-				}
-				es.mu.Unlock()
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
 }
 
 func (es *pubEventStore) Close() error {

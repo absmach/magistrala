@@ -7,6 +7,7 @@
 package redis_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -32,12 +33,10 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	opts := dockertest.RunOptions{
-		Name:       "tests-redis-events",
+	container, err = pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "redis",
 		Tag:        "7.2.4-alpine",
-	}
-	container, err = pool.RunWithOptions(&opts)
+	})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}
@@ -53,7 +52,7 @@ func TestMain(m *testing.M) {
 	if err := pool.Retry(func() error {
 		redisClient = redis.NewClient(ropts)
 
-		return redisClient.Ping(ctx).Err()
+		return redisClient.Ping(context.Background()).Err()
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}

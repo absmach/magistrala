@@ -20,7 +20,7 @@ func init() {
 }
 
 func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, error) {
-	pb, err := redis.NewPublisher(ctx, url, stream)
+	pb, err := redis.NewPublisher(ctx, url, stream, events.UnpublishedEventsCheckInterval)
 	if err != nil {
 		return nil, err
 	}

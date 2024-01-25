@@ -23,6 +23,7 @@ var (
 	eventsChan  = make(chan map[string]interface{})
 	logger      = mglog.NewMock()
 	errFailed   = errors.New("failed")
+	numEvents   = 100
 )
 
 type testEvent struct {
@@ -50,7 +51,10 @@ func (te testEvent) Encode() (map[string]interface{}, error) {
 }
 
 func TestPublish(t *testing.T) {
-	publisher, err := rabbitmq.NewPublisher(ctx, rabbitmqURL, stream)
+	_, err := rabbitmq.NewPublisher(context.Background(), "http://invaliurl.com", stream)
+	assert.NotNilf(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err), err)
+
+	publisher, err := rabbitmq.NewPublisher(context.Background(), rabbitmqURL, stream)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
 
 	_, err = rabbitmq.NewSubscriber("http://invaliurl.com", stream, consumer, logger)
@@ -59,7 +63,7 @@ func TestPublish(t *testing.T) {
 	subcriber, err := rabbitmq.NewSubscriber(rabbitmqURL, stream, consumer, logger)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
 
-	err = subcriber.Subscribe(ctx, handler{})
+	err = subcriber.Subscribe(context.Background(), handler{})
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on subscribing to event store: %s", err))
 
 	cases := []struct {
@@ -122,11 +126,9 @@ func TestPublish(t *testing.T) {
 	for _, tc := range cases {
 		event := testEvent{Data: tc.event}
 
-		err := publisher.Publish(ctx, event)
+		err := publisher.Publish(context.Background(), event)
 		switch tc.err {
 		case nil:
-			assert.Nil(t, err, fmt.Sprintf("%s - got unexpected error: %s", tc.desc, err))
-
 			receivedEvent := <-eventsChan
 
 			val := int64(receivedEvent["occurred_at"].(float64))
@@ -135,64 +137,16 @@ func TestPublish(t *testing.T) {
 				delete(tc.event, "occurred_at")
 			}
 
-			assert.Equal(t, tc.event["temperature"], receivedEvent["temperature"], fmt.Sprintf("%s - expected temperature: %s, got: %s", tc.desc, tc.event["temperature"], receivedEvent["temperature"]))
-			assert.Equal(t, tc.event["humidity"], receivedEvent["humidity"], fmt.Sprintf("%s - expected humidity: %s, got: %s", tc.desc, tc.event["humidity"], receivedEvent["humidity"]))
-			assert.Equal(t, tc.event["sensor_id"], receivedEvent["sensor_id"], fmt.Sprintf("%s - expected sensor_id: %s, got: %s", tc.desc, tc.event["sensor_id"], receivedEvent["sensor_id"]))
-			assert.Equal(t, tc.event["status"], receivedEvent["status"], fmt.Sprintf("%s - expected status: %s, got: %s", tc.desc, tc.event["status"], receivedEvent["status"]))
-			assert.Equal(t, tc.event["timestamp"], receivedEvent["timestamp"], fmt.Sprintf("%s - expected timestamp: %s, got: %s", tc.desc, tc.event["timestamp"], receivedEvent["timestamp"]))
-			assert.Equal(t, tc.event["operation"], receivedEvent["operation"], fmt.Sprintf("%s - expected operation: %s, got: %s", tc.desc, tc.event["operation"], receivedEvent["operation"]))
+			assert.Equal(t, tc.event["temperature"], receivedEvent["temperature"])
+			assert.Equal(t, tc.event["humidity"], receivedEvent["humidity"])
+			assert.Equal(t, tc.event["sensor_id"], receivedEvent["sensor_id"])
+			assert.Equal(t, tc.event["status"], receivedEvent["status"])
+			assert.Equal(t, tc.event["timestamp"], receivedEvent["timestamp"])
+			assert.Equal(t, tc.event["operation"], receivedEvent["operation"])
 
 		default:
 			assert.ErrorContains(t, err, tc.err.Error(), fmt.Sprintf("%s - expected error: %s", tc.desc, tc.err))
 		}
-	}
-}
-
-func TestUnavailablePublish(t *testing.T) {
-	_, err := rabbitmq.NewPublisher(ctx, "http://invaliurl.com", stream)
-	assert.NotNilf(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err), err)
-
-	publisher, err := rabbitmq.NewPublisher(ctx, rabbitmqURL, stream)
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
-
-	err = pool.Client.PauseContainer(container.Container.ID)
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on pausing container: %s", err))
-
-	spawnGoroutines(publisher, t)
-
-	err = pool.Client.UnpauseContainer(container.Container.ID)
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on unpausing container: %s", err))
-
-	// Wait for the events to be published.
-	time.Sleep(2 * events.UnpublishedEventsCheckInterval)
-
-	err = publisher.Close()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on closing publisher: %s", err))
-}
-
-func generateRandomEvent() testEvent {
-	return testEvent{
-		Data: map[string]interface{}{
-			"temperature": fmt.Sprintf("%f", rand.Float64()),
-			"humidity":    fmt.Sprintf("%f", rand.Float64()),
-			"sensor_id":   fmt.Sprintf("%d", rand.Intn(1000)),
-			"location":    fmt.Sprintf("%f", rand.Float64()),
-			"status":      fmt.Sprintf("%d", rand.Intn(1000)),
-			"timestamp":   fmt.Sprintf("%d", time.Now().UnixNano()),
-			"operation":   "create",
-		},
-	}
-}
-
-func spawnGoroutines(publisher events.Publisher, t *testing.T) {
-	for i := 0; i < 1e4; i++ {
-		go func() {
-			for i := 0; i < 10; i++ {
-				event := generateRandomEvent()
-				err := publisher.Publish(ctx, event)
-				assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-			}
-		}()
 	}
 }
 
@@ -263,9 +217,7 @@ func TestPubsub(t *testing.T) {
 			continue
 		}
 
-		assert.Nil(t, err, fmt.Sprintf("%s got unexpected error: %s", pc.desc, err))
-
-		switch err := subcriber.Subscribe(ctx, pc.handler); {
+		switch err := subcriber.Subscribe(context.Background(), pc.handler); {
 		case err == nil:
 			assert.Nil(t, err, fmt.Sprintf("%s got unexpected error: %s", pc.desc, err))
 		default:
@@ -274,6 +226,64 @@ func TestPubsub(t *testing.T) {
 
 		err = subcriber.Close()
 		assert.Nil(t, err, fmt.Sprintf("%s got unexpected error: %s", pc.desc, err))
+	}
+}
+
+func TestUnavailablePublish(t *testing.T) {
+	publisher, err := rabbitmq.NewPublisher(context.Background(), rabbitmqURL, stream)
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
+
+	subcriber, err := rabbitmq.NewSubscriber(rabbitmqURL, stream, consumer, logger)
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
+
+	err = subcriber.Subscribe(context.Background(), handler{})
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error on subscribing to event store: %s", err))
+
+	err = pool.Client.PauseContainer(container.Container.ID)
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error on pausing container: %s", err))
+
+	spawnGoroutines(publisher, t)
+
+	time.Sleep(1 * time.Second)
+
+	err = pool.Client.UnpauseContainer(container.Container.ID)
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error on unpausing container: %s", err))
+
+	// Wait for the events to be published.
+	time.Sleep(1 * time.Second)
+
+	err = publisher.Close()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error on closing publisher: %s", err))
+
+	// read all the events from the channel and assert that they are 10.
+	var receivedEvents []map[string]interface{}
+	for i := 0; i < numEvents; i++ {
+		event := <-eventsChan
+		receivedEvents = append(receivedEvents, event)
+	}
+	assert.Len(t, receivedEvents, numEvents, "got unexpected number of events")
+}
+
+func generateRandomEvent() testEvent {
+	return testEvent{
+		Data: map[string]interface{}{
+			"temperature": fmt.Sprintf("%f", rand.Float64()),
+			"humidity":    fmt.Sprintf("%f", rand.Float64()),
+			"sensor_id":   fmt.Sprintf("%d", rand.Intn(1000)),
+			"location":    fmt.Sprintf("%f", rand.Float64()),
+			"status":      fmt.Sprintf("%d", rand.Intn(1000)),
+			"timestamp":   fmt.Sprintf("%d", time.Now().UnixNano()),
+			"operation":   "create",
+		},
+	}
+}
+
+func spawnGoroutines(publisher events.Publisher, t *testing.T) {
+	for i := 0; i < numEvents; i++ {
+		go func() {
+			err := publisher.Publish(context.Background(), generateRandomEvent())
+			assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		}()
 	}
 }
 

@@ -20,9 +20,8 @@ var (
 	rabbitmqURL string
 	stream      = "tests.events"
 	consumer    = "tests-consumer"
-	ctx         = context.TODO()
-	pool        = &dockertest.Pool{}
-	container   = &dockertest.Resource{}
+	pool        *dockertest.Pool
+	container   *dockertest.Resource
 )
 
 func TestMain(m *testing.M) {
@@ -32,12 +31,10 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	opts := dockertest.RunOptions{
-		Name:       "test-rabbitmq-events",
+	container, err = pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "rabbitmq",
 		Tag:        "3.12.12",
-	}
-	container, err = pool.RunWithOptions(&opts)
+	})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}
@@ -47,7 +44,7 @@ func TestMain(m *testing.M) {
 	rabbitmqURL = fmt.Sprintf("amqp://%s:%s", "localhost", container.GetPort("5672/tcp"))
 
 	if err := pool.Retry(func() error {
-		_, err = rabbitmq.NewPublisher(ctx, rabbitmqURL, stream)
+		_, err = rabbitmq.NewPublisher(context.Background(), rabbitmqURL, stream)
 		return err
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)

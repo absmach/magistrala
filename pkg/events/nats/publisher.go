@@ -50,8 +50,6 @@ func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, er
 		stream:    stream,
 	}
 
-	go es.StartPublishingRoutine(ctx)
-
 	return es, nil
 }
 
@@ -72,15 +70,6 @@ func (es *pubEventStore) Publish(ctx context.Context, event events.Event) error 
 	}
 
 	return es.publisher.Publish(ctx, es.stream, record)
-}
-
-func (es *pubEventStore) StartPublishingRoutine(ctx context.Context) {
-	// Nats doesn't need to check for unpublished events
-	// since the events are published to a buffer.
-	// The buffer is flushed when the connection is reestablished.
-	// https://docs.nats.io/using-nats/developer/connecting/reconnect/buffer
-
-	<-ctx.Done()
 }
 
 func (es *pubEventStore) Close() error {

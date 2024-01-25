@@ -98,9 +98,9 @@ message AddPoliciesReq{
   repeated AddPolicyReq addPoliciesReq= 1;
 }
 
-message AddPolicyRes { bool authorized = 1; }
+message AddPolicyRes { bool added = 1; }
 
-message AddPoliciesRes { bool authorized = 1; }
+message AddPoliciesRes { bool added = 1; }
 
 message DeletePolicyReq {
   string domain = 1;

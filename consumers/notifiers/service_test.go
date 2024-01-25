@@ -29,9 +29,9 @@ const (
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
-func newService() (notifiers.Service, *authmocks.Service) {
+func newService() (notifiers.Service, *authmocks.AuthClient) {
 	repo := mocks.NewRepo(make(map[string]notifiers.Subscription))
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 	notifier := mocks.NewNotifier()
 	idp := uuid.NewMock()
 	from := "exampleFrom"

@@ -42,8 +42,8 @@ const (
 	instanceID        = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
-func newService(t *testing.T) (certs.Service, *authmocks.Service, *sdkmocks.SDK) {
-	auth := new(authmocks.Service)
+func newService(t *testing.T) (certs.Service, *authmocks.AuthClient, *sdkmocks.SDK) {
+	auth := new(authmocks.AuthClient)
 
 	sdk := new(sdkmocks.SDK)
 	repo := mocks.NewCertsRepository()

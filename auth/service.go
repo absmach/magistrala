@@ -39,6 +39,9 @@ var (
 	// ErrFailedToRetrieveChildren failed to retrieve groups.
 	ErrFailedToRetrieveChildren = errors.New("failed to retrieve all groups")
 
+	// ErrExpiry indicates that the token is expired.
+	ErrExpiry = errors.New("token is expired")
+
 	errIssueUser          = errors.New("failed to issue new login key")
 	errIssueTmp           = errors.New("failed to issue new temporary key")
 	errRevoke             = errors.New("failed to remove key")
@@ -76,6 +79,8 @@ type Authn interface {
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
 // an Auth service request.
+
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	Authn
 	Authz
@@ -151,9 +156,9 @@ func (svc service) RetrieveKey(ctx context.Context, token, id string) (Key, erro
 
 func (svc service) Identify(ctx context.Context, token string) (Key, error) {
 	key, err := svc.tokenizer.Parse(token)
-	if err == ErrAPIKeyExpired {
+	if errors.Contains(err, ErrExpiry) {
 		err = svc.keys.Remove(ctx, key.Issuer, key.ID)
-		return Key{}, errors.Wrap(ErrAPIKeyExpired, err)
+		return Key{}, errors.Wrap(ErrKeyExpired, err)
 	}
 	if err != nil {
 		return Key{}, errors.Wrap(svcerr.ErrAuthentication, errors.Wrap(errIdentify, err))

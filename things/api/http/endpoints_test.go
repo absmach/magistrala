@@ -91,7 +91,7 @@ func toJSON(data interface{}) string {
 
 func newThingsServer() (*httptest.Server, *mocks.Service) {
 	gRepo := new(gmocks.Repository)
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 
 	svc := new(mocks.Service)
 	gsvc := groups.NewService(gRepo, idProvider, auth)

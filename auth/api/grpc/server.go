@@ -337,7 +337,7 @@ func decodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}
 
 func encodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(addPolicyRes)
-	return &magistrala.AddPolicyRes{Authorized: res.authorized}, nil
+	return &magistrala.AddPolicyRes{Added: res.added}, nil
 }
 
 func decodeAddPoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -361,7 +361,7 @@ func decodeAddPoliciesRequest(_ context.Context, grpcReq interface{}) (interface
 
 func encodeAddPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(addPoliciesRes)
-	return &magistrala.AddPoliciesRes{Authorized: res.authorized}, nil
+	return &magistrala.AddPoliciesRes{Added: res.added}, nil
 }
 
 func decodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -478,8 +478,8 @@ func decodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interfa
 }
 
 func encodeCountSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(countObjectsRes)
-	return &magistrala.CountObjectsRes{Count: int64(res.count)}, nil
+	res := grpcRes.(countSubjectsRes)
+	return &magistrala.CountSubjectsRes{Count: int64(res.count)}, nil
 }
 
 func decodeListPermissionsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

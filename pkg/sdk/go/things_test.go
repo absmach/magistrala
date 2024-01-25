@@ -30,12 +30,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupThings() (*httptest.Server, *mocks.Repository, *gmocks.Repository, *authmocks.Service, *mocks.Cache) {
+func setupThings() (*httptest.Server, *mocks.Repository, *gmocks.Repository, *authmocks.AuthClient, *mocks.Cache) {
 	cRepo := new(mocks.Repository)
 	gRepo := new(gmocks.Repository)
 	thingCache := new(mocks.Cache)
 
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 	csvc := things.NewService(auth, cRepo, gRepo, thingCache, idProvider)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 
@@ -46,12 +46,12 @@ func setupThings() (*httptest.Server, *mocks.Repository, *gmocks.Repository, *au
 	return httptest.NewServer(mux), cRepo, gRepo, auth, thingCache
 }
 
-func setupThingsMinimal() (*httptest.Server, *authmocks.Service) {
+func setupThingsMinimal() (*httptest.Server, *authmocks.AuthClient) {
 	cRepo := new(mocks.Repository)
 	gRepo := new(gmocks.Repository)
 	thingCache := new(mocks.Cache)
 
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 	csvc := things.NewService(auth, cRepo, gRepo, thingCache, idProvider)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 
@@ -187,7 +187,7 @@ func TestCreateThing(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
+		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		repoCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall3 := cRepo.On("Save", mock.Anything, mock.Anything).Return(convertThings(tc.response), tc.repoErr)
 		rThing, err := mgsdk.CreateThing(tc.client, tc.token)
@@ -275,7 +275,7 @@ func TestCreateThings(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
+		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		repoCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall3 := cRepo.On("Save", mock.Anything, mock.Anything).Return(convertThings(tc.response...), tc.err)
 		if len(tc.things) > 0 {
@@ -1263,11 +1263,11 @@ func TestShareThing(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, tc.repoErr)
-		repoCall2 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
+		repoCall2 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		if tc.token != validToken {
 			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
 		}
-		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Authorized: true}, nil)
+		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Added: true}, nil)
 		req := sdk.UsersRelationRequest{
 			Relation: "viewer",
 			UserIDs:  []string{tc.channelID},

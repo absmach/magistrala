@@ -9,13 +9,26 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/auth/jwt"
+	authjwt "github.com/absmach/magistrala/auth/jwt"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const secret = "test"
+const (
+	tokenType   = "type"
+	userField   = "user"
+	domainField = "domain"
+	issuerName  = "magistrala.auth"
+	secret      = "test"
+)
+
+var (
+	errInvalidIssuer = errors.New("invalid token issuer value")
+	reposecret       = []byte("test")
+)
 
 func key() auth.Key {
 	exp := time.Now().UTC().Add(10 * time.Minute).Round(time.Second)
@@ -29,8 +42,26 @@ func key() auth.Key {
 	}
 }
 
+func newToken(issuerName string, key auth.Key) string {
+	builder := jwt.NewBuilder()
+	builder.
+		Issuer(issuerName).
+		IssuedAt(key.IssuedAt).
+		Subject(key.Subject).
+		Claim(tokenType, "r").
+		Expiration(key.ExpiresAt)
+	builder.Claim(userField, key.User)
+	builder.Claim(domainField, key.Domain)
+	if key.ID != "" {
+		builder.JwtID(key.ID)
+	}
+	tkn, _ := builder.Build()
+	tokn, _ := jwt.Sign(tkn, jwt.WithKey(jwa.HS512, reposecret))
+	return string(tokn)
+}
+
 func TestIssue(t *testing.T) {
-	tokenizer := jwt.New([]byte(secret))
+	tokenizer := authjwt.New([]byte(secret))
 
 	cases := []struct {
 		desc string
@@ -54,7 +85,7 @@ func TestIssue(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	tokenizer := jwt.New([]byte(secret))
+	tokenizer := authjwt.New([]byte(secret))
 
 	token, err := tokenizer.Issue(key())
 	require.Nil(t, err, fmt.Sprintf("issuing key expected to succeed: %s", err))
@@ -70,6 +101,8 @@ func TestParse(t *testing.T) {
 	expToken, err := tokenizer.Issue(expKey)
 	require.Nil(t, err, fmt.Sprintf("issuing expired key expected to succeed: %s", err))
 
+	inValidToken := newToken("invalid", key())
+
 	cases := []struct {
 		desc  string
 		key   auth.Key
@@ -83,7 +116,7 @@ func TestParse(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc:  "parse ivalid key",
+			desc:  "parse invalid key",
 			key:   auth.Key{},
 			token: "invalid",
 			err:   errors.ErrAuthentication,
@@ -92,13 +125,25 @@ func TestParse(t *testing.T) {
 			desc:  "parse expired key",
 			key:   auth.Key{},
 			token: expToken,
-			err:   jwt.ErrExpiry,
+			err:   authjwt.ErrExpiry,
 		},
 		{
 			desc:  "parse expired API key",
 			key:   apiKey,
 			token: apiToken,
-			err:   jwt.ErrExpiry,
+			err:   authjwt.ErrExpiry,
+		},
+		{
+			desc:  "parse token with invalid issuer",
+			key:   auth.Key{},
+			token: inValidToken,
+			err:   errInvalidIssuer,
+		},
+		{
+			desc:  "parse token with invalid content",
+			key:   auth.Key{},
+			token: newToken(issuerName, key()),
+			err:   authjwt.ErrJSONHandle,
 		},
 	}
 

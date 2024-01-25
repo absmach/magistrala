@@ -67,8 +67,8 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newService() (notifiers.Service, *authmocks.Service) {
-	auth := new(authmocks.Service)
+func newService() (notifiers.Service, *authmocks.AuthClient) {
+	auth := new(authmocks.AuthClient)
 	repo := mocks.NewRepo(make(map[string]notifiers.Subscription))
 	idp := uuid.NewMock()
 	notif := mocks.NewNotifier()

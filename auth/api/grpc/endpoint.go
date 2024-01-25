@@ -117,7 +117,7 @@ func addPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err != nil {
 			return addPolicyRes{}, err
 		}
-		return addPolicyRes{authorized: true}, err
+		return addPolicyRes{added: true}, err
 	}
 }
 
@@ -147,7 +147,7 @@ func addPoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err := svc.AddPolicies(ctx, prs); err != nil {
 			return addPoliciesRes{}, err
 		}
-		return addPoliciesRes{authorized: true}, nil
+		return addPoliciesRes{added: true}, nil
 	}
 }
 

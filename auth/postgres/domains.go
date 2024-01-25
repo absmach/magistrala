@@ -40,7 +40,7 @@ func (repo domainRepo) Save(ctx context.Context, d auth.Domain) (ad auth.Domain,
 	VALUES (:id, :name, :tags, :alias, :metadata, :created_at, :updated_at, :updated_by, :created_by, :status)
 	RETURNING id, name, tags, alias, metadata, created_at, updated_at, updated_by, created_by, status;`
 
-	dbd, err := toDBDomains(d)
+	dbd, err := toDBDomain(d)
 	if err != nil {
 		return auth.Domain{}, errors.Wrap(repoerr.ErrCreateEntity, repoerr.ErrRollbackTx)
 	}
@@ -74,22 +74,26 @@ func (repo domainRepo) RetrieveByID(ctx context.Context, id string) (auth.Domain
 		ID: id,
 	}
 
-	row, err := repo.db.NamedQueryContext(ctx, q, dbdp)
+	rows, err := repo.db.NamedQueryContext(ctx, q, dbdp)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return auth.Domain{}, errors.Wrap(errors.ErrNotFound, err)
-		}
-		return auth.Domain{}, errors.Wrap(errors.ErrViewEntity, err)
+		return auth.Domain{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
+	defer rows.Close()
 
-	defer row.Close()
-	row.Next()
 	dbd := dbDomain{}
-	if err := row.StructScan(&dbd); err != nil {
-		return auth.Domain{}, errors.Wrap(errors.ErrNotFound, err)
-	}
+	if rows.Next() {
+		if err = rows.StructScan(&dbd); err != nil {
+			return auth.Domain{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+		}
 
-	return toDomain(dbd)
+		domain, err := toDomain(dbd)
+		if err != nil {
+			return auth.Domain{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		}
+
+		return domain, nil
+	}
+	return auth.Domain{}, repoerr.ErrNotFound
 }
 
 func (repo domainRepo) RetrievePermissions(ctx context.Context, subject, id string) ([]string, error) {
@@ -130,9 +134,6 @@ func (repo domainRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth
 	query, err := buildPageQuery(pm)
 	if err != nil {
 		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
-	}
-	if query == "" {
-		return auth.DomainsPage{}, nil
 	}
 
 	q = `SELECT d.id as id, d.name as name, d.tags as tags, d.alias as alias, d.metadata as metadata, d.created_at as created_at, d.updated_at as updated_at, d.updated_by as updated_by, d.created_by as created_by, d.status as status
@@ -178,9 +179,6 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 	query, err := buildPageQuery(pm)
 	if err != nil {
 		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
-	}
-	if query == "" {
-		return auth.DomainsPage{}, nil
 	}
 
 	q = `SELECT d.id as id, d.name as name, d.tags as tags, d.alias as alias, d.metadata as metadata, d.created_at as created_at, d.updated_at as updated_at, d.updated_by as updated_by, d.created_by as created_by, d.status as status, pc.relation as relation
@@ -269,7 +267,7 @@ func (repo domainRepo) Update(ctx context.Context, id, userID string, dr auth.Do
         RETURNING id, name, tags, alias, metadata, created_at, updated_at, updated_by, created_by, status;`,
 		upq, ws)
 
-	dbd, err := toDBDomains(d)
+	dbd, err := toDBDomain(d)
 	if err != nil {
 		return auth.Domain{}, errors.Wrap(errors.ErrUpdateEntity, err)
 	}
@@ -295,18 +293,15 @@ func (repo domainRepo) Update(ctx context.Context, id, userID string, dr auth.Do
 
 // Delete delete domain from database.
 func (repo domainRepo) Delete(ctx context.Context, id string) error {
-	q := fmt.Sprintf(`
-		DELETE FROM
-			domains
-		WHERE
-			id = '%s'
-		;`, id)
+	q := "DELETE FROM domains WHERE id = $1;"
 
-	row, err := repo.db.NamedQueryContext(ctx, q, nil)
+	res, err := repo.db.ExecContext(ctx, q, id)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
 	}
-	defer row.Close()
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
+	}
 
 	return nil
 }
@@ -349,7 +344,7 @@ func (repo domainRepo) CheckPolicy(ctx context.Context, pc auth.Policy) error {
 	defer row.Close()
 	row.Next()
 	if err := row.StructScan(&dbpc); err != nil {
-		return err
+		return errors.Wrap(repoerr.ErrNotFound, err)
 	}
 	return nil
 }
@@ -421,7 +416,7 @@ type dbDomain struct {
 	UpdatedAt  sql.NullTime     `db:"updated_at,omitempty"`
 }
 
-func toDBDomains(d auth.Domain) (dbDomain, error) {
+func toDBDomain(d auth.Domain) (dbDomain, error) {
 	data := []byte("{}")
 	if len(d.Metadata) > 0 {
 		b, err := json.Marshal(d.Metadata)

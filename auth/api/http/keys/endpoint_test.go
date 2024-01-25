@@ -218,13 +218,20 @@ func TestRetrieve(t *testing.T) {
 		desc   string
 		id     string
 		token  string
+		key    auth.Key
 		status int
 		err    error
 	}{
 		{
-			desc:   "retrieve an existing key",
-			id:     k.AccessToken,
-			token:  token.AccessToken,
+			desc:  "retrieve an existing key",
+			id:    k.AccessToken,
+			token: token.AccessToken,
+			key: auth.Key{
+				Subject:   id,
+				Type:      auth.AccessKey,
+				IssuedAt:  time.Now(),
+				ExpiresAt: time.Now().Add(refreshDuration),
+			},
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -242,6 +249,13 @@ func TestRetrieve(t *testing.T) {
 			status: http.StatusUnauthorized,
 			err:    errors.ErrAuthentication,
 		},
+		{
+			desc:   "retrieve a key with an empty token",
+			token:  "",
+			id:     k.AccessToken,
+			status: http.StatusUnauthorized,
+			err:    errors.ErrAuthentication,
+		},
 	}
 
 	for _, tc := range cases {
@@ -251,7 +265,7 @@ func TestRetrieve(t *testing.T) {
 			url:    fmt.Sprintf("%s/keys/%s", ts.URL, tc.id),
 			token:  tc.token,
 		}
-		repocall := krepo.On("Retrieve", mock.Anything, mock.Anything, mock.Anything).Return(auth.Key{}, tc.err)
+		repocall := krepo.On("Retrieve", mock.Anything, mock.Anything, mock.Anything).Return(tc.key, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -296,6 +310,12 @@ func TestRevoke(t *testing.T) {
 			desc:   "revoke key with invalid token",
 			id:     k.AccessToken,
 			token:  "wrong",
+			status: http.StatusUnauthorized,
+		},
+		{
+			desc:   "revoke key with empty token",
+			id:     k.AccessToken,
+			token:  "",
 			status: http.StatusUnauthorized,
 		},
 	}

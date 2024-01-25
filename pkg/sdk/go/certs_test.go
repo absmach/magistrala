@@ -37,7 +37,7 @@ var (
 	cfgSignHoursValid = "24h"
 )
 
-func setupCerts() (*httptest.Server, *authmocks.Service, *thmocks.Repository, error) {
+func setupCerts() (*httptest.Server, *authmocks.AuthClient, *thmocks.Repository, error) {
 	server, trepo, _, auth, _ := setupThings()
 	config := sdk.Config{
 		ThingsURL: server.URL,

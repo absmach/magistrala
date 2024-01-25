@@ -17,6 +17,24 @@ type DomainsRepository struct {
 	mock.Mock
 }
 
+// CheckPolicy provides a mock function with given fields: ctx, pc
+func (_m *DomainsRepository) CheckPolicy(ctx context.Context, pc auth.Policy) error {
+	ret := _m.Called(ctx, pc)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckPolicy")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Policy) error); ok {
+		r0 = rf(ctx, pc)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Delete provides a mock function with given fields: ctx, id
 func (_m *DomainsRepository) Delete(ctx context.Context, id string) error {
 	ret := _m.Called(ctx, id)

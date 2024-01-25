@@ -37,11 +37,11 @@ var (
 	wrongID    = testsutil.GenerateUUID(&testing.T{})
 )
 
-func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *authmocks.Service) {
+func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *authmocks.AuthClient) {
 	crepo := new(umocks.Repository)
 	gRepo := new(gmocks.Repository)
 
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, passRegex, true)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 
@@ -186,7 +186,7 @@ func TestCreateClient(t *testing.T) {
 		if tc.token != validToken {
 			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
 		}
-		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
+		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: true}, nil)
 		repoCall3 := crepo.On("Save", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		rClient, err := mgsdk.CreateUser(tc.client, tc.token)
@@ -946,7 +946,7 @@ func TestUpdateClientRole(t *testing.T) {
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("DeletePolicy", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
-		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Authorized: true}, nil)
+		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Added: true}, nil)
 		repoCall4 := crepo.On("UpdateRole", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		uClient, err := mgsdk.UpdateUserRole(tc.client, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))

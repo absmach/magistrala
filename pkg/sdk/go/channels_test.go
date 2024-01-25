@@ -32,12 +32,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupChannels() (*httptest.Server, *mocks.Repository, *authmocks.Service) {
+func setupChannels() (*httptest.Server, *mocks.Repository, *authmocks.AuthClient) {
 	cRepo := new(thmocks.Repository)
 	grepo := new(mocks.Repository)
 	thingCache := new(thmocks.Cache)
 
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 	csvc := things.NewService(auth, cRepo, grepo, thingCache, idProvider)
 	gsvc := groups.NewService(grepo, idProvider, auth)
 
@@ -148,7 +148,7 @@ func TestCreateChannel(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Authorized: true}, nil)
+		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		repoCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall3 := grepo.On("Save", mock.Anything, mock.Anything).Return(convertChannel(sdk.Channel{}), tc.err)
 		rChannel, err := mgsdk.CreateChannel(tc.channel, validToken)

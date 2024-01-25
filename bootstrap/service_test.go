@@ -56,9 +56,9 @@ var (
 	}
 )
 
-func newService() (bootstrap.Service, *authmocks.Service, *sdkmocks.SDK) {
+func newService() (bootstrap.Service, *authmocks.AuthClient, *sdkmocks.SDK) {
 	things := mocks.NewConfigsRepository()
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 	sdk := new(sdkmocks.SDK)
 
 	return bootstrap.New(auth, things, sdk, encKey), auth, sdk

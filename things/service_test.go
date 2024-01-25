@@ -48,8 +48,8 @@ var (
 	errRemovePolicies = errors.New("failed to remove the policies")
 )
 
-func newService() (things.Service, *mocks.Repository, *authmocks.Service, *mocks.Cache) {
-	auth := new(authmocks.Service)
+func newService() (things.Service, *mocks.Repository, *authmocks.AuthClient, *mocks.Cache) {
+	auth := new(authmocks.AuthClient)
 	thingCache := new(mocks.Cache)
 	idProvider := uuid.NewMock()
 	cRepo := new(mocks.Repository)
@@ -100,7 +100,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
 		{
@@ -113,7 +113,7 @@ func TestCreateThings(t *testing.T) {
 				},
 			},
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			token:             validToken,
 			err:               nil,
 		},
@@ -128,7 +128,7 @@ func TestCreateThings(t *testing.T) {
 				Status: mgclients.EnabledStatus,
 			},
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			token:             validToken,
 			err:               nil,
 		},
@@ -144,7 +144,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
 		{
@@ -159,7 +159,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
 		{
@@ -173,7 +173,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
 		{
@@ -186,7 +186,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
 		{
@@ -200,7 +200,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
 		{
@@ -219,7 +219,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
 		{
@@ -233,7 +233,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			saveErr:           repoerr.ErrMalformedEntity,
 			err:               repoerr.ErrCreateEntity,
 		},
@@ -247,7 +247,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			saveErr:           repoerr.ErrMissingSecret,
 			err:               repoerr.ErrCreateEntity,
 		},
@@ -262,7 +262,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               svcerr.ErrInvalidStatus,
 		},
 		{
@@ -303,7 +303,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Authorized: false},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: false},
 			addPolicyErr:      svcerr.ErrInvalidPolicy,
 			err:               svcerr.ErrInvalidPolicy,
 		},
@@ -1788,7 +1788,7 @@ func TestShare(t *testing.T) {
 			clientID:            clientID,
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Authorized: true},
+			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:                 nil,
 		},
 		{
@@ -1824,7 +1824,7 @@ func TestShare(t *testing.T) {
 			clientID:            clientID,
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Authorized: false},
+			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: false},
 			err:                 nil,
 		},
 	}

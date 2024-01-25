@@ -82,7 +82,7 @@ func (tr testRequest) make() (*http.Response, error) {
 
 func newUsersServer() (*httptest.Server, *mocks.Service) {
 	gRepo := new(gmocks.Repository)
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 
 	svc := new(mocks.Service)
 	gsvc := groups.NewService(gRepo, idProvider, auth)

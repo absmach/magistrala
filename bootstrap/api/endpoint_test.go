@@ -176,9 +176,9 @@ func dec(in []byte) ([]byte, error) {
 	return in, nil
 }
 
-func newService() (bootstrap.Service, *authmocks.Service, *sdkmocks.SDK) {
+func newService() (bootstrap.Service, *authmocks.AuthClient, *sdkmocks.SDK) {
 	things := mocks.NewConfigsRepository()
-	auth := new(authmocks.Service)
+	auth := new(authmocks.AuthClient)
 	sdk := new(sdkmocks.SDK)
 
 	return bootstrap.New(auth, things, sdk, encKey), auth, sdk
@@ -720,7 +720,7 @@ func TestUpdateConnections(t *testing.T) {
 		repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: c.ThingID, Credentials: mgsdk.Credentials{Secret: c.ThingKey}}, nil)
 		repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
 		repoCall3 := auth.On("DeletePolicy", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
-		repoCall4 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Authorized: true}, nil)
+		repoCall4 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Added: true}, nil)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPut,

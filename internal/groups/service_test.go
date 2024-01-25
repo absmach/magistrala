@@ -47,7 +47,7 @@ var (
 
 func TestCreateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -88,7 +88,7 @@ func TestCreateGroup(t *testing.T) {
 				Owner:     testsutil.GenerateUUID(t),
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 		},
 		{
@@ -183,7 +183,7 @@ func TestCreateGroup(t *testing.T) {
 				Parent:    testsutil.GenerateUUID(t),
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 		},
 		{
@@ -210,7 +210,7 @@ func TestCreateGroup(t *testing.T) {
 				Parent: testsutil.GenerateUUID(t),
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 			err: errors.ErrAuthorization,
 		},
@@ -299,7 +299,7 @@ func TestCreateGroup(t *testing.T) {
 
 func TestViewGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -367,7 +367,7 @@ func TestViewGroup(t *testing.T) {
 
 func TestViewGroupPerms(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -451,7 +451,7 @@ func TestViewGroupPerms(t *testing.T) {
 
 func TestUpdateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -528,7 +528,7 @@ func TestUpdateGroup(t *testing.T) {
 
 func TestEnableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -628,7 +628,7 @@ func TestEnableGroup(t *testing.T) {
 
 func TestDisableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -728,7 +728,7 @@ func TestDisableGroup(t *testing.T) {
 
 func TestListMembers(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -864,7 +864,7 @@ func TestListMembers(t *testing.T) {
 
 func TestListGroups(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -1616,7 +1616,7 @@ func TestListGroups(t *testing.T) {
 
 func TestAssign(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -1656,7 +1656,7 @@ func TestAssign(t *testing.T) {
 				Authorized: true,
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 		},
 		{
@@ -1674,7 +1674,7 @@ func TestAssign(t *testing.T) {
 				Authorized: true,
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 		},
 		{
@@ -1699,7 +1699,7 @@ func TestAssign(t *testing.T) {
 				},
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 			repoParentGroupErr: nil,
 		},
@@ -1718,7 +1718,7 @@ func TestAssign(t *testing.T) {
 				Authorized: true,
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 		},
 		{
@@ -1804,7 +1804,7 @@ func TestAssign(t *testing.T) {
 				},
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: false,
+				Added: false,
 			},
 			addPoliciesErr: errors.ErrAuthorization,
 			err:            errors.ErrAuthorization,
@@ -1831,7 +1831,7 @@ func TestAssign(t *testing.T) {
 				},
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 			repoParentGroupErr: errors.ErrConflict,
 			err:                errors.ErrConflict,
@@ -1858,7 +1858,7 @@ func TestAssign(t *testing.T) {
 				},
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: true,
+				Added: true,
 			},
 			deleteParentPoliciesRes: &magistrala.DeletePoliciesRes{
 				Deleted: false,
@@ -1926,7 +1926,7 @@ func TestAssign(t *testing.T) {
 				Authorized: true,
 			},
 			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: false,
+				Added: false,
 			},
 			addPoliciesErr: errors.ErrAuthorization,
 			err:            errors.ErrAuthorization,
@@ -2025,7 +2025,7 @@ func TestAssign(t *testing.T) {
 
 func TestUnassign(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
@@ -2271,7 +2271,7 @@ func TestUnassign(t *testing.T) {
 			},
 			repoParentGroupErr: errors.ErrConflict,
 			addParentPoliciesRes: &magistrala.AddPoliciesRes{
-				Authorized: false,
+				Added: false,
 			},
 			addParentPoliciesErr: errors.ErrAuthorization,
 			err:                  errors.ErrConflict,
@@ -2434,7 +2434,7 @@ func TestUnassign(t *testing.T) {
 
 func TestDeleteGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {

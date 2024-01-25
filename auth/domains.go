@@ -183,4 +183,7 @@ type DomainsRepository interface {
 
 	// ListDomains list all the domains
 	ListDomains(ctx context.Context, pm Page) (DomainsPage, error)
+
+	// CheckPolicy check policy in domains database.
+	CheckPolicy(ctx context.Context, pc Policy) error
 }

@@ -617,7 +617,7 @@ func (svc service) addClientPolicy(ctx context.Context, userID string, role mgcl
 	if err != nil {
 		return err
 	}
-	if !resp.Authorized {
+	if !resp.Added {
 		return errors.ErrAuthorization
 	}
 	return nil
@@ -666,7 +666,7 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 		if err != nil {
 			return errors.Wrap(errAddPolicies, err)
 		}
-		if !resp.Authorized {
+		if !resp.Added {
 			return errors.Wrap(svcerr.ErrAuthorization, err)
 		}
 		return nil

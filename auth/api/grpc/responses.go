@@ -21,10 +21,10 @@ type authorizeRes struct {
 }
 
 type addPolicyRes struct {
-	authorized bool
+	added bool
 }
 type addPoliciesRes struct {
-	authorized bool
+	added bool
 }
 
 type deletePolicyRes struct {

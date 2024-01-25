@@ -413,7 +413,7 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 	if err != nil {
 		return errors.Wrap(errAddPolicies, err)
 	}
-	if !res.Authorized {
+	if !res.Added {
 		return err
 	}
 	return nil

@@ -297,7 +297,7 @@ func createAdminPolicy(ctx context.Context, clientID string, authClient magistra
 		if err != nil {
 			return err
 		}
-		if !addPolicyRes.Authorized {
+		if !addPolicyRes.Added {
 			return errors.ErrAuthorization
 		}
 	}

@@ -52,7 +52,7 @@ func New(ctx context.Context, cancel context.CancelFunc, name string, config ser
 func (s *Server) Start() error {
 	errCh := make(chan error)
 	grpcServerOptions := []grpc.ServerOption{
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	}
 
 	listener, err := net.Listen("tcp", s.Address)

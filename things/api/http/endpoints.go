@@ -138,7 +138,7 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-
+		req.Page.Role = mgclients.AllRole // retrieve all things since things don't have roles
 		page, err := svc.ListClientsByGroup(ctx, req.token, req.groupID, req.Page)
 		if err != nil {
 			return nil, err

@@ -24,7 +24,7 @@ var validGroupResp = groups.Group{
 	ID:          testsutil.GenerateUUID(&testing.T{}),
 	Name:        valid,
 	Description: valid,
-	Owner:       testsutil.GenerateUUID(&testing.T{}),
+	Domain:      testsutil.GenerateUUID(&testing.T{}),
 	Parent:      testsutil.GenerateUUID(&testing.T{}),
 	Metadata: clients.Metadata{
 		"name": "test",

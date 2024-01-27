@@ -103,7 +103,6 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			Status:     req.status,
 			Offset:     req.offset,
 			Limit:      req.limit,
-			Owner:      req.owner,
 			Name:       req.name,
 			Tag:        req.tag,
 			Permission: req.permission,

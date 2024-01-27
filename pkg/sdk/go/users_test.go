@@ -159,7 +159,6 @@ func TestCreateClient(t *testing.T) {
 				ID:          id,
 				Name:        "name",
 				Tags:        []string{"tag1", "tag2"},
-				Owner:       id,
 				Credentials: user.Credentials,
 				Metadata:    validMetadata,
 				CreatedAt:   time.Now(),
@@ -170,7 +169,6 @@ func TestCreateClient(t *testing.T) {
 				ID:          id,
 				Name:        "name",
 				Tags:        []string{"tag1", "tag2"},
-				Owner:       id,
 				Credentials: user.Credentials,
 				Metadata:    validMetadata,
 				CreatedAt:   time.Now(),
@@ -191,7 +189,6 @@ func TestCreateClient(t *testing.T) {
 		repoCall3 := crepo.On("Save", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		rClient, err := mgsdk.CreateUser(tc.client, tc.token)
 		tc.response.ID = rClient.ID
-		tc.response.Owner = rClient.Owner
 		tc.response.CreatedAt = rClient.CreatedAt
 		tc.response.UpdatedAt = rClient.UpdatedAt
 		rClient.Credentials.Secret = tc.response.Credentials.Secret
@@ -230,7 +227,6 @@ func TestListClients(t *testing.T) {
 			Status:   mgclients.EnabledStatus.String(),
 		}
 		if i == 50 {
-			cl.Owner = "clientowner"
 			cl.Status = mgclients.DisabledStatus.String()
 			cl.Tags = []string{"tag1", "tag2"}
 		}
@@ -246,7 +242,6 @@ func TestListClients(t *testing.T) {
 		limit      uint64
 		name       string
 		identifier string
-		ownerID    string
 		tag        string
 		metadata   sdk.Metadata
 		err        errors.SDKError
@@ -335,15 +330,7 @@ func TestListClients(t *testing.T) {
 			response: []sdk.User{cls[0]},
 			err:      nil,
 		},
-		{
-			desc:     "list users with given owner",
-			token:    validToken,
-			offset:   0,
-			limit:    1,
-			ownerID:  "clientowner",
-			response: []sdk.User{cls[50]},
-			err:      nil,
-		},
+
 		{
 			desc:     "list users with given status",
 			token:    validToken,
@@ -371,7 +358,6 @@ func TestListClients(t *testing.T) {
 			Offset:   tc.offset,
 			Limit:    tc.limit,
 			Name:     tc.name,
-			OwnerID:  tc.ownerID,
 			Metadata: tc.metadata,
 			Tag:      tc.tag,
 		}
@@ -888,7 +874,6 @@ func TestUpdateClientRole(t *testing.T) {
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validMetadata,
 		Status:      mgclients.EnabledStatus.String(),
-		Owner:       "owner",
 	}
 
 	client2 := user
@@ -920,7 +905,7 @@ func TestUpdateClientRole(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(users.ErrFailedOwnerUpdate, users.ErrFailedOwnerUpdate), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(users.ErrFailedUpdateRole, users.ErrFailedUpdateRole), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",

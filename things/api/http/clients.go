@@ -157,7 +157,6 @@ func decodeViewClientPerms(_ context.Context, r *http.Request) (interface{}, err
 }
 
 func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) {
-	var ownerID string
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -182,11 +181,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
-	if err != nil {
-		return nil, err
-	}
-
 	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -195,10 +189,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	if oid != "" {
-		ownerID = oid
 	}
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
@@ -215,7 +205,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		permission: p,
 		listPerms:  lp,
 		userID:     chi.URLParam(r, "userID"),
-		owner:      ownerID,
 	}
 	return req, nil
 }

@@ -60,7 +60,6 @@ type listClientsReq struct {
 	name     string
 	tag      string
 	identity string
-	owner    string
 	metadata mgclients.Metadata
 	order    string
 	dir      string

@@ -58,21 +58,6 @@ func TestClientsSave(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "add new client with an owner",
-			client: mgclients.Client{
-				ID:    testsutil.GenerateUUID(t),
-				Owner: uid,
-				Name:  namesgen.Generate(),
-				Credentials: mgclients.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
-					Secret:   password,
-				},
-				Metadata: mgclients.Metadata{},
-				Status:   mgclients.EnabledStatus,
-			},
-			err: nil,
-		},
-		{
 			desc: "add client with duplicate client identity",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
@@ -119,20 +104,6 @@ func TestClientsSave(t *testing.T) {
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Name: invalidName,
-				Credentials: mgclients.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
-					Secret:   password,
-				},
-				Metadata: mgclients.Metadata{},
-				Status:   mgclients.EnabledStatus,
-			},
-			err: errors.ErrMalformedEntity,
-		},
-		{
-			desc: "add client with invalid client owner",
-			client: mgclients.Client{
-				ID:    testsutil.GenerateUUID(t),
-				Owner: invalidName,
 				Credentials: mgclients.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
@@ -328,8 +299,6 @@ func TestRetrieveAll(t *testing.T) {
 
 	repo := cpostgres.NewRepository(database)
 
-	ownerID := testsutil.GenerateUUID(t)
-
 	num := 200
 	var items, enabledClients []mgclients.Client
 	for i := 0; i < num; i++ {
@@ -345,7 +314,6 @@ func TestRetrieveAll(t *testing.T) {
 			Tags:     []string{"tag1"},
 		}
 		if i%50 == 0 {
-			client.Owner = ownerID
 			client.Metadata = map[string]interface{}{
 				"key": "value",
 			}
@@ -576,43 +544,6 @@ func TestRetrieveAll(t *testing.T) {
 				},
 				Clients: items,
 			},
-		},
-		{
-			desc: "retrieve with owner id",
-			pageMeta: mgclients.Page{
-				Owner:  ownerID,
-				Offset: 0,
-				Limit:  5,
-				Role:   mgclients.AllRole,
-				Status: mgclients.AllStatus,
-			},
-			page: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  4,
-					Offset: 0,
-					Limit:  5,
-				},
-				Clients: []mgclients.Client{items[0], items[50], items[100], items[150]},
-			},
-			err: nil,
-		},
-		{
-			desc: "retrieve with invalid owner id",
-			pageMeta: mgclients.Page{
-				Owner:  invalidName,
-				Offset: 0,
-				Limit:  200,
-				Role:   mgclients.AllRole,
-			},
-			page: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  200,
-				},
-				Clients: []mgclients.Client{},
-			},
-			err: nil,
 		},
 		{
 			desc: "retrieve by tags",

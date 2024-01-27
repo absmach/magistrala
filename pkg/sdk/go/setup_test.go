@@ -148,7 +148,7 @@ func convertGroup(g sdk.Group) mggroups.Group {
 
 	return mggroups.Group{
 		ID:          g.ID,
-		Owner:       g.OwnerID,
+		Domain:      g.DomainID,
 		Parent:      g.ParentID,
 		Name:        g.Name,
 		Description: g.Description,
@@ -190,7 +190,7 @@ func convertClient(c sdk.User) mgclients.Client {
 		ID:          c.ID,
 		Name:        c.Name,
 		Tags:        c.Tags,
-		Owner:       c.Owner,
+		Domain:      c.Domain,
 		Credentials: mgclients.Credentials(c.Credentials),
 		Metadata:    mgclients.Metadata(c.Metadata),
 		CreatedAt:   c.CreatedAt,
@@ -211,7 +211,7 @@ func convertThing(c sdk.Thing) mgclients.Client {
 		ID:          c.ID,
 		Name:        c.Name,
 		Tags:        c.Tags,
-		Owner:       c.Owner,
+		Domain:      c.DomainID,
 		Credentials: mgclients.Credentials(c.Credentials),
 		Metadata:    mgclients.Metadata(c.Metadata),
 		CreatedAt:   c.CreatedAt,
@@ -230,7 +230,7 @@ func convertChannel(g sdk.Channel) mggroups.Group {
 	}
 	return mggroups.Group{
 		ID:          g.ID,
-		Owner:       g.OwnerID,
+		Domain:      g.DomainID,
 		Parent:      g.ParentID,
 		Name:        g.Name,
 		Description: g.Description,

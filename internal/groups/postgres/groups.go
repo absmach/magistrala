@@ -34,9 +34,9 @@ func New(db postgres.Database) mggroups.Repository {
 }
 
 func (repo groupRepository) Save(ctx context.Context, g mggroups.Group) (mggroups.Group, error) {
-	q := `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, created_at, status)
-		VALUES (:name, :description, :id, :owner_id, :parent_id, :metadata, :created_at, :status)
-		RETURNING id, name, description, owner_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status;`
+	q := `INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status)
+		VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status)
+		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status;`
 	dbg, err := toDBGroup(g)
 	if err != nil {
 		return mggroups.Group{}, err
@@ -74,7 +74,7 @@ func (repo groupRepository) Update(ctx context.Context, g mggroups.Group) (mggro
 	g.Status = mgclients.EnabledStatus
 	q := fmt.Sprintf(`UPDATE groups SET %s updated_at = :updated_at, updated_by = :updated_by
 		WHERE id = :id AND status = :status
-		RETURNING id, name, description, owner_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status`, upq)
+		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status`, upq)
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
@@ -99,7 +99,7 @@ func (repo groupRepository) Update(ctx context.Context, g mggroups.Group) (mggro
 
 func (repo groupRepository) ChangeStatus(ctx context.Context, group mggroups.Group) (mggroups.Group, error) {
 	qc := `UPDATE groups SET status = :status, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
-	RETURNING id, name, description, owner_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status`
+	RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status`
 
 	dbg, err := toDBGroup(group)
 	if err != nil {
@@ -122,7 +122,7 @@ func (repo groupRepository) ChangeStatus(ctx context.Context, group mggroups.Gro
 }
 
 func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggroups.Group, error) {
-	q := `SELECT id, name, owner_id, COALESCE(parent_id, '') AS parent_id, description, metadata, created_at, updated_at, updated_by, status FROM groups
+	q := `SELECT id, name, domain_id, COALESCE(parent_id, '') AS parent_id, description, metadata, created_at, updated_at, updated_by, status FROM groups
 	    WHERE id = :id`
 
 	dbg := dbGroup{
@@ -153,7 +153,7 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 		q = buildHierachy(gm)
 	}
 	if gm.ID == "" {
-		q = `SELECT DISTINCT g.id, g.owner_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
+		q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
 		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
 	}
 	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
@@ -192,7 +192,7 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 
 func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page, ids ...string) (mggroups.Page, error) {
 	var q string
-	if (len(ids) <= 0) && (gm.PageMeta.OwnerID == "") {
+	if (len(ids) <= 0) && (gm.PageMeta.DomainID == "") {
 		return mggroups.Page{PageMeta: mggroups.PageMeta{Offset: gm.Offset, Limit: gm.Limit}}, nil
 	}
 	query := buildQuery(gm, ids...)
@@ -201,7 +201,7 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 		q = buildHierachy(gm)
 	}
 	if gm.ID == "" {
-		q = `SELECT DISTINCT g.id, g.owner_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
+		q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
 		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
 	}
 	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
@@ -310,15 +310,15 @@ func buildHierachy(gm mggroups.Page) string {
 	switch {
 	case gm.Direction >= 0: // ancestors
 		query = `WITH RECURSIVE groups_cte as (
-			SELECT id, COALESCE(parent_id, '') AS parent_id, owner_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level from groups WHERE id = :id
-			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.owner_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level - 1 from groups x
+			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level from groups WHERE id = :id
+			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.domain_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level - 1 from groups x
 			INNER JOIN groups_cte a ON a.parent_id = x.id
 		) SELECT * FROM groups_cte g`
 
 	case gm.Direction < 0: // descendants
 		query = `WITH RECURSIVE groups_cte as (
-			SELECT id, COALESCE(parent_id, '') AS parent_id, owner_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level, CONCAT('', '', id) as path from groups WHERE id = :id
-			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.owner_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level + 1, CONCAT(path, '.', x.id) as path from groups x
+			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level, CONCAT('', '', id) as path from groups WHERE id = :id
+			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.domain_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level + 1, CONCAT(path, '.', x.id) as path from groups x
 			INNER JOIN groups_cte d ON d.id = x.parent_id
 		) SELECT * FROM groups_cte g`
 	}
@@ -337,8 +337,8 @@ func buildQuery(gm mggroups.Page, ids ...string) string {
 	if gm.Status != mgclients.AllStatus {
 		queries = append(queries, "g.status = :status")
 	}
-	if gm.OwnerID != "" {
-		queries = append(queries, "g.owner_id = :owner_id")
+	if gm.DomainID != "" {
+		queries = append(queries, "g.domain_id = :domain_id")
 	}
 	if len(gm.Metadata) > 0 {
 		queries = append(queries, "g.metadata @> :metadata")
@@ -353,7 +353,7 @@ func buildQuery(gm mggroups.Page, ids ...string) string {
 type dbGroup struct {
 	ID          string           `db:"id"`
 	ParentID    *string          `db:"parent_id,omitempty"`
-	OwnerID     string           `db:"owner_id,omitempty"`
+	DomainID    string           `db:"domain_id,omitempty"`
 	Name        string           `db:"name"`
 	Description string           `db:"description,omitempty"`
 	Level       int              `db:"level"`
@@ -390,7 +390,7 @@ func toDBGroup(g mggroups.Group) (dbGroup, error) {
 		ID:          g.ID,
 		Name:        g.Name,
 		ParentID:    parentID,
-		OwnerID:     g.Owner,
+		DomainID:    g.Domain,
 		Description: g.Description,
 		Metadata:    data,
 		Path:        g.Path,
@@ -425,7 +425,7 @@ func toGroup(g dbGroup) (mggroups.Group, error) {
 		ID:          g.ID,
 		Name:        g.Name,
 		Parent:      parentID,
-		Owner:       g.OwnerID,
+		Domain:      g.DomainID,
 		Description: g.Description,
 		Metadata:    metadata,
 		Level:       g.Level,
@@ -460,7 +460,7 @@ func toDBGroupPage(pm mggroups.Page) (dbGroupPage, error) {
 		Offset:   pm.Offset,
 		Limit:    pm.Limit,
 		ParentID: pm.ID,
-		OwnerID:  pm.OwnerID,
+		DomainID: pm.DomainID,
 		Status:   pm.Status,
 	}, nil
 }
@@ -470,7 +470,7 @@ type dbGroupPage struct {
 	ID       string           `db:"id"`
 	Name     string           `db:"name"`
 	ParentID string           `db:"parent_id"`
-	OwnerID  string           `db:"owner_id"`
+	DomainID string           `db:"domain_id"`
 	Metadata []byte           `db:"metadata"`
 	Path     string           `db:"path"`
 	Level    uint64           `db:"level"`

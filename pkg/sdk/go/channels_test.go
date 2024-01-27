@@ -112,16 +112,6 @@ func TestCreateChannel(t *testing.T) {
 			err:   errors.NewSDKErrorWithStatus(errors.ErrCreateEntity, http.StatusInternalServerError),
 		},
 		{
-			desc: "create channel with invalid owner",
-			channel: sdk.Channel{
-				Name:    gName,
-				OwnerID: wrongID,
-				Status:  mgclients.EnabledStatus.String(),
-			},
-			token: token,
-			err:   errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
-		},
-		{
 			desc: "create channel with missing name",
 			channel: sdk.Channel{
 				Status: mgclients.EnabledStatus.String(),
@@ -133,7 +123,6 @@ func TestCreateChannel(t *testing.T) {
 			desc: "create a channel with every field defined",
 			channel: sdk.Channel{
 				ID:          generateUUID(t),
-				OwnerID:     "owner",
 				ParentID:    "parent",
 				Name:        "name",
 				Description: description,
@@ -194,7 +183,6 @@ func TestListChannels(t *testing.T) {
 		limit    uint64
 		level    int
 		name     string
-		ownerID  string
 		metadata sdk.Metadata
 		err      errors.SDKError
 		response []sdk.Channel
@@ -661,7 +649,6 @@ func TestEnableChannel(t *testing.T) {
 	channel := sdk.Channel{
 		ID:        generateUUID(t),
 		Name:      gName,
-		OwnerID:   generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    mgclients.Disabled,
@@ -681,7 +668,6 @@ func TestEnableChannel(t *testing.T) {
 	ch := mggroups.Group{
 		ID:        channel.ID,
 		Name:      channel.Name,
-		Owner:     channel.OwnerID,
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    mgclients.DisabledStatus,
@@ -714,7 +700,7 @@ func TestDisableChannel(t *testing.T) {
 	channel := sdk.Channel{
 		ID:        generateUUID(t),
 		Name:      gName,
-		OwnerID:   generateUUID(t),
+		DomainID:  generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    mgclients.Enabled,
@@ -734,7 +720,7 @@ func TestDisableChannel(t *testing.T) {
 	ch := mggroups.Group{
 		ID:        channel.ID,
 		Name:      channel.Name,
-		Owner:     channel.OwnerID,
+		Domain:    channel.DomainID,
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    mgclients.EnabledStatus,
@@ -768,7 +754,6 @@ func TestDeleteChannel(t *testing.T) {
 	channel := sdk.Channel{
 		ID:        generateUUID(t),
 		Name:      gName,
-		OwnerID:   generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    mgclients.Enabled,

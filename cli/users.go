@@ -142,9 +142,9 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update [<user_id> <JSON_string> | tags <user_id> <tags> | identity <user_id> <identity> | owner <user_id> <owner>] <user_auth_token>",
+		Use:   "update [<user_id> <JSON_string> | tags <user_id> <tags> | identity <user_id> <identity> ] <user_auth_token>",
 		Short: "Update user",
-		Long: "Updates either user name and metadata or user tags or user identity or user owner\n" +
+		Long: "Updates either user name and metadata or user tags or user identity\n" +
 			"Usage:\n" +
 			"\tmagistrala-cli users update <user_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN - updates user name and metadata\n" +
 			"\tmagistrala-cli users update tags <user_id> '[\"tag1\", \"tag2\"]' $USERTOKEN - updates user tags\n" +

@@ -26,7 +26,7 @@ var (
 	invalidID  = strings.Repeat("a", 37)
 	validGroup = mggroups.Group{
 		ID:          testsutil.GenerateUUID(&testing.T{}),
-		Owner:       testsutil.GenerateUUID(&testing.T{}),
+		Domain:      testsutil.GenerateUUID(&testing.T{}),
 		Name:        namegen.Generate(),
 		Description: strings.Repeat("a", 64),
 		Metadata:    map[string]interface{}{"key": "value"},
@@ -62,7 +62,7 @@ func TestSave(t *testing.T) {
 			desc: "add group with invalid ID",
 			group: mggroups.Group{
 				ID:          invalidID,
-				Owner:       testsutil.GenerateUUID(t),
+				Domain:      testsutil.GenerateUUID(t),
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
@@ -72,10 +72,10 @@ func TestSave(t *testing.T) {
 			err: repoerr.ErrMalformedEntity,
 		},
 		{
-			desc: "add group with invalid owner",
+			desc: "add group with invalid domain",
 			group: mggroups.Group{
 				ID:          testsutil.GenerateUUID(t),
-				Owner:       invalidID,
+				Domain:      invalidID,
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
@@ -101,7 +101,7 @@ func TestSave(t *testing.T) {
 			desc: "add group with invalid name",
 			group: mggroups.Group{
 				ID:          testsutil.GenerateUUID(t),
-				Owner:       testsutil.GenerateUUID(t),
+				Domain:      testsutil.GenerateUUID(t),
 				Name:        strings.Repeat("a", 1025),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
@@ -114,7 +114,7 @@ func TestSave(t *testing.T) {
 			desc: "add group with invalid description",
 			group: mggroups.Group{
 				ID:          testsutil.GenerateUUID(t),
-				Owner:       testsutil.GenerateUUID(t),
+				Domain:      testsutil.GenerateUUID(t),
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 1025),
 				Metadata:    map[string]interface{}{"key": "value"},
@@ -127,7 +127,7 @@ func TestSave(t *testing.T) {
 			desc: "add group with invalid metadata",
 			group: mggroups.Group{
 				ID:          testsutil.GenerateUUID(t),
-				Owner:       testsutil.GenerateUUID(t),
+				Domain:      testsutil.GenerateUUID(t),
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata: map[string]interface{}{
@@ -139,7 +139,7 @@ func TestSave(t *testing.T) {
 			err: repoerr.ErrMalformedEntity,
 		},
 		{
-			desc: "add group with empty owner",
+			desc: "add group with empty domain",
 			group: mggroups.Group{
 				ID:          testsutil.GenerateUUID(t),
 				Name:        namegen.Generate(),
@@ -154,7 +154,7 @@ func TestSave(t *testing.T) {
 			desc: "add group with empty name",
 			group: mggroups.Group{
 				ID:          testsutil.GenerateUUID(t),
-				Owner:       testsutil.GenerateUUID(t),
+				Domain:      testsutil.GenerateUUID(t),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
 				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
@@ -394,7 +394,7 @@ func TestRetrieveAll(t *testing.T) {
 		name := namegen.Generate()
 		group := mggroups.Group{
 			ID:          testsutil.GenerateUUID(t),
-			Owner:       testsutil.GenerateUUID(t),
+			Domain:      testsutil.GenerateUUID(t),
 			Parent:      parentID,
 			Name:        name,
 			Description: strings.Repeat("a", 64),
@@ -573,12 +573,12 @@ func TestRetrieveAll(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "retrieve groups with owner",
+			desc: "retrieve groups with domain",
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Offset:  0,
-					Limit:   10,
-					OwnerID: items[0].Owner,
+					Offset:   0,
+					Limit:    10,
+					DomainID: items[0].Domain,
 				},
 			},
 			response: mggroups.Page{
@@ -706,7 +706,7 @@ func TestRetrieveByIDs(t *testing.T) {
 		name := namegen.Generate()
 		group := mggroups.Group{
 			ID:          testsutil.GenerateUUID(t),
-			Owner:       testsutil.GenerateUUID(t),
+			Domain:      testsutil.GenerateUUID(t),
 			Parent:      parentID,
 			Name:        name,
 			Description: strings.Repeat("a", 64),
@@ -765,12 +765,12 @@ func TestRetrieveByIDs(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "retrieve groups with empty ids but with owner",
+			desc: "retrieve groups with empty ids but with domain",
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Offset:  0,
-					Limit:   10,
-					OwnerID: items[0].Owner,
+					Offset:   0,
+					Limit:    10,
+					DomainID: items[0].Domain,
 				},
 			},
 			ids: []string{},
@@ -881,12 +881,12 @@ func TestRetrieveByIDs(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "retrieve groups with owner",
+			desc: "retrieve groups with domain",
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Offset:  0,
-					Limit:   10,
-					OwnerID: items[0].Owner,
+					Offset:   0,
+					Limit:    10,
+					DomainID: items[0].Domain,
 				},
 			},
 			ids: getIDs(items[0:20]),
@@ -1063,7 +1063,7 @@ func TestAssignParentGroup(t *testing.T) {
 		name := namegen.Generate()
 		group := mggroups.Group{
 			ID:          testsutil.GenerateUUID(t),
-			Owner:       testsutil.GenerateUUID(t),
+			Domain:      testsutil.GenerateUUID(t),
 			Parent:      parentID,
 			Name:        name,
 			Description: strings.Repeat("a", 64),
@@ -1141,7 +1141,7 @@ func TestUnassignParentGroup(t *testing.T) {
 		name := namegen.Generate()
 		group := mggroups.Group{
 			ID:          testsutil.GenerateUUID(t),
-			Owner:       testsutil.GenerateUUID(t),
+			Domain:      testsutil.GenerateUUID(t),
 			Parent:      parentID,
 			Name:        name,
 			Description: strings.Repeat("a", 64),

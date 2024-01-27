@@ -457,33 +457,6 @@ func TestListThings(t *testing.T) {
 			err:    apiutil.ErrValidation,
 		},
 		{
-			desc:  "list things with owner_id",
-			token: validToken,
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			query:  fmt.Sprintf("owner_id=%s", validID),
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "list things with duplicate owner_id",
-			token:  validToken,
-			query:  "owner_id=1&owner_id=2",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrInvalidQueryParams,
-		},
-		{
-			desc:   "list things with invalid owner_id",
-			token:  validToken,
-			query:  "owner_id=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
 			desc:  "list things with name",
 			token: validToken,
 			listThingsResponse: mgclients.ClientsPage{

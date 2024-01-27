@@ -60,7 +60,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 
 	g.ID = groupID
 	g.CreatedAt = time.Now()
-	g.Owner = res.GetDomainId()
+	g.Domain = res.GetDomainId()
 	if g.Parent != "" {
 		_, err := svc.authorizeToken(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, g.Parent)
 		if err != nil {
@@ -210,7 +210,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 		default:
 			switch svc.checkSuperAdmin(ctx, res.GetUserId()) {
 			case nil:
-				gm.PageMeta.OwnerID = res.GetDomainId()
+				gm.PageMeta.DomainID = res.GetDomainId()
 			default:
 				// If domain is disabled , then this authorization will fail for all non-admin domain users
 				if _, err := svc.authorizeKind(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {

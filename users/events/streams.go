@@ -68,7 +68,7 @@ func (es *eventStore) UpdateClientRole(ctx context.Context, token string, user m
 		return user, err
 	}
 
-	return es.update(ctx, "owner", user)
+	return es.update(ctx, "role", user)
 }
 
 func (es *eventStore) UpdateClientTags(ctx context.Context, token string, user mgclients.Client) (mgclients.Client, error) {

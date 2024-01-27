@@ -217,10 +217,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
-	if err != nil {
-		return nil, err
-	}
+
 	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -229,6 +226,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -242,7 +240,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		name:     n,
 		identity: i,
 		tag:      t,
-		owner:    oid,
 		order:    order,
 		dir:      dir,
 	}
@@ -494,10 +491,6 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
-	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
-	}
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -518,7 +511,6 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 		Identity:   i,
 		Name:       n,
 		Tag:        t,
-		Owner:      oid,
 		Permission: p,
 		ListPerms:  lp,
 	}, nil

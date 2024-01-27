@@ -85,7 +85,7 @@ func TestCreateGroup(t *testing.T) {
 			repoResp: mggroups.Group{
 				ID:        testsutil.GenerateUUID(t),
 				CreatedAt: time.Now(),
-				Owner:     testsutil.GenerateUUID(t),
+				Domain:    testsutil.GenerateUUID(t),
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
 				Added: true,
@@ -179,7 +179,7 @@ func TestCreateGroup(t *testing.T) {
 			repoResp: mggroups.Group{
 				ID:        testsutil.GenerateUUID(t),
 				CreatedAt: time.Now(),
-				Owner:     testsutil.GenerateUUID(t),
+				Domain:    testsutil.GenerateUUID(t),
 				Parent:    testsutil.GenerateUUID(t),
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
@@ -283,7 +283,7 @@ func TestCreateGroup(t *testing.T) {
 			if err == nil {
 				assert.NotEmpty(t, got.ID)
 				assert.NotEmpty(t, got.CreatedAt)
-				assert.NotEmpty(t, got.Owner)
+				assert.NotEmpty(t, got.Domain)
 				assert.WithinDuration(t, time.Now(), got.CreatedAt, 2*time.Second)
 				ok := repocall3.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))

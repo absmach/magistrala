@@ -17,7 +17,7 @@ const channelsEndpoint = "channels"
 // Channel represents magistrala channel.
 type Channel struct {
 	ID          string     `json:"id,omitempty"`
-	OwnerID     string     `json:"owner_id,omitempty"`
+	DomainID    string     `json:"domain_id,omitempty"`
 	ParentID    string     `json:"parent_id,omitempty"`
 	Name        string     `json:"name,omitempty"`
 	Description string     `json:"description,omitempty"`

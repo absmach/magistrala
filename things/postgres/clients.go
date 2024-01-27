@@ -54,9 +54,9 @@ func (repo clientRepo) Save(ctx context.Context, cs ...mgclients.Client) ([]mgcl
 	var clients []mgclients.Client
 
 	for _, cli := range cs {
-		q := `INSERT INTO clients (id, name, tags, owner_id, identity, secret, metadata, created_at, updated_at, updated_by, status)
-        VALUES (:id, :name, :tags, :owner_id, :identity, :secret, :metadata, :created_at, :updated_at, :updated_by, :status)
-        RETURNING id, name, tags, identity, secret, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at, updated_at, updated_by`
+		q := `INSERT INTO clients (id, name, tags, domain_id, identity, secret, metadata, created_at, updated_at, updated_by, status)
+        VALUES (:id, :name, :tags, :domain_id, :identity, :secret, :metadata, :created_at, :updated_at, :updated_by, :status)
+        RETURNING id, name, tags, identity, secret, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at, updated_at, updated_by`
 
 		dbcli, err := pgclients.ToDBClient(cli)
 		if err != nil {
@@ -94,7 +94,7 @@ func (repo clientRepo) Save(ctx context.Context, cs ...mgclients.Client) ([]mgcl
 }
 
 func (repo clientRepo) RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error) {
-	q := fmt.Sprintf(`SELECT id, name, tags, COALESCE(owner_id, '') AS owner_id, identity, secret, metadata, created_at, updated_at, updated_by, status
+	q := fmt.Sprintf(`SELECT id, name, tags, COALESCE(domain_id, '') AS domain_id, identity, secret, metadata, created_at, updated_at, updated_by, status
         FROM clients
         WHERE secret = :secret AND status = %d`, mgclients.EnabledStatus)
 

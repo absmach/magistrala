@@ -28,8 +28,8 @@ var (
 	// ErrFailedPolicyUpdate indicates a failure to update user policy.
 	ErrFailedPolicyUpdate = errors.New("failed to update user policy")
 
-	// ErrFailedOwnerUpdate indicates a failure to update user policy.
-	ErrFailedOwnerUpdate = errors.New("failed to update user owner")
+	// ErrFailedUpdateRole indicates a failure to update user role.
+	ErrFailedUpdateRole = errors.New("failed to update user role")
 
 	// ErrAddPolicies indictaed a failre to add policies.
 	errAddPolicies = errors.New("failed to add policies")
@@ -392,7 +392,7 @@ func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgcli
 		if errRollback := svc.updateClientPolicy(ctx, cli.ID, mgclients.UserRole); errRollback != nil {
 			return mgclients.Client{}, errors.Wrap(err, errors.Wrap(repoerr.ErrRollbackTx, errRollback))
 		}
-		return mgclients.Client{}, errors.Wrap(ErrFailedOwnerUpdate, err)
+		return mgclients.Client{}, errors.Wrap(ErrFailedUpdateRole, err)
 	}
 	return client, nil
 }

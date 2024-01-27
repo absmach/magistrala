@@ -26,6 +26,7 @@ var (
 	clientIdentity  = "client-identity@example.com"
 	clientName      = "client name"
 	invalidClientID = "invalidClientID"
+	invalidDomainID = strings.Repeat("m", maxNameSize+10)
 	namesgen        = namegenerator.NewNameGenerator()
 )
 
@@ -37,6 +38,8 @@ func TestClientsSave(t *testing.T) {
 	repo := postgres.NewRepository(database)
 
 	uid := testsutil.GenerateUUID(t)
+	domainID := testsutil.GenerateUUID(t)
+	secret := testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc   string
@@ -46,11 +49,12 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add new client successfully",
 			client: clients.Client{
-				ID:   uid,
-				Name: clientName,
+				ID:     uid,
+				Domain: domainID,
+				Name:   clientName,
 				Credentials: clients.Credentials{
 					Identity: clientIdentity,
-					Secret:   testsutil.GenerateUUID(t),
+					Secret:   secret,
 				},
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
@@ -58,13 +62,42 @@ func TestClientsSave(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "add new client with an owner",
+			desc: "add new client with duplicate secret",
 			client: clients.Client{
-				ID:    testsutil.GenerateUUID(t),
-				Owner: uid,
-				Name:  clientName,
+				ID:     uid,
+				Domain: domainID,
+				Name:   clientName,
 				Credentials: clients.Credentials{
-					Identity: "withowner-client@example.com",
+					Identity: clientIdentity,
+					Secret:   secret,
+				},
+				Metadata: clients.Metadata{},
+				Status:   clients.EnabledStatus,
+			},
+			err: errors.ErrCreateEntity,
+		},
+		{
+			desc: "add new client with duplicate secret",
+			client: clients.Client{
+				ID:     uid,
+				Domain: domainID,
+				Name:   clientName,
+				Credentials: clients.Credentials{
+					Identity: clientIdentity,
+					Secret:   testsutil.GenerateUUID(t),
+				},
+				Metadata: clients.Metadata{},
+				Status:   clients.EnabledStatus,
+			},
+			err: errors.ErrCreateEntity,
+		},
+		{
+			desc: "add new client without domain id",
+			client: clients.Client{
+				ID:   testsutil.GenerateUUID(t),
+				Name: clientName,
+				Credentials: clients.Credentials{
+					Identity: "withoutdomain-client@example.com",
 					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
@@ -75,8 +108,9 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client id",
 			client: clients.Client{
-				ID:   invalidName,
-				Name: clientName,
+				ID:     invalidName,
+				Domain: domainID,
+				Name:   clientName,
 				Credentials: clients.Credentials{
 					Identity: "invalidid-client@example.com",
 					Secret:   testsutil.GenerateUUID(t),
@@ -89,8 +123,9 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client name",
 			client: clients.Client{
-				ID:   testsutil.GenerateUUID(t),
-				Name: invalidName,
+				ID:     testsutil.GenerateUUID(t),
+				Name:   invalidName,
+				Domain: domainID,
 				Credentials: clients.Credentials{
 					Identity: "invalidname-client@example.com",
 					Secret:   testsutil.GenerateUUID(t),
@@ -101,12 +136,12 @@ func TestClientsSave(t *testing.T) {
 			err: errors.ErrCreateEntity,
 		},
 		{
-			desc: "add client with invalid client owner",
+			desc: "add client with invalid client domain id",
 			client: clients.Client{
-				ID:    testsutil.GenerateUUID(t),
-				Owner: invalidName,
+				ID:     testsutil.GenerateUUID(t),
+				Domain: invalidDomainID,
 				Credentials: clients.Credentials{
-					Identity: "invalidowner-client@example.com",
+					Identity: "invaliddomainid-client@example.com",
 					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
@@ -131,7 +166,9 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with a missing client identity",
 			client: clients.Client{
-				ID: testsutil.GenerateUUID(t),
+				ID:     testsutil.GenerateUUID(t),
+				Domain: testsutil.GenerateUUID(t),
+				Name:   "missing-client-identity",
 				Credentials: clients.Credentials{
 					Identity: "",
 					Secret:   testsutil.GenerateUUID(t),
@@ -143,7 +180,8 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with a missing client secret",
 			client: clients.Client{
-				ID: testsutil.GenerateUUID(t),
+				ID:     testsutil.GenerateUUID(t),
+				Domain: testsutil.GenerateUUID(t),
 				Credentials: clients.Credentials{
 					Identity: "missing-client-secret@example.com",
 					Secret:   "",

@@ -44,18 +44,17 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 		},
 		{
 			desc: "valid request with all parameters",
-			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&owner_id=random&name=random&metadata={\"test\":\"test\"}&level=2&parent_id=random&tree=true&dir=-1&member_kind=random&permission=random&list_perms=true",
+			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&name=random&metadata={\"test\":\"test\"}&level=2&parent_id=random&tree=true&dir=-1&member_kind=random&permission=random&list_perms=true",
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
 			resp: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
-						Status:  clients.EnabledStatus,
-						Offset:  10,
-						Limit:   10,
-						OwnerID: "random",
-						Name:    "random",
+						Status: clients.EnabledStatus,
+						Offset: 10,
+						Limit:  10,
+						Name:   "random",
 						Metadata: clients.Metadata{
 							"test": "test",
 						},
@@ -161,18 +160,17 @@ func TestDecodeListParentsRequest(t *testing.T) {
 		},
 		{
 			desc: "valid request with all parameters",
-			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&owner_id=random&name=random&metadata={\"test\":\"test\"}&level=2&parent_id=random&tree=true&dir=-1&member_kind=random&permission=random&list_perms=true",
+			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&name=random&metadata={\"test\":\"test\"}&level=2&parent_id=random&tree=true&dir=-1&member_kind=random&permission=random&list_perms=true",
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
 			resp: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
-						Status:  clients.EnabledStatus,
-						Offset:  10,
-						Limit:   10,
-						OwnerID: "random",
-						Name:    "random",
+						Status: clients.EnabledStatus,
+						Offset: 10,
+						Limit:  10,
+						Name:   "random",
 						Metadata: clients.Metadata{
 							"test": "test",
 						},
@@ -258,18 +256,17 @@ func TestDecodeListChildrenRequest(t *testing.T) {
 		},
 		{
 			desc: "valid request with all parameters",
-			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&owner_id=random&name=random&metadata={\"test\":\"test\"}&level=2&parent_id=random&tree=true&dir=-1&member_kind=random&permission=random&list_perms=true",
+			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&name=random&metadata={\"test\":\"test\"}&level=2&parent_id=random&tree=true&dir=-1&member_kind=random&permission=random&list_perms=true",
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
 			resp: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
-						Status:  clients.EnabledStatus,
-						Offset:  10,
-						Limit:   10,
-						OwnerID: "random",
-						Name:    "random",
+						Status: clients.EnabledStatus,
+						Offset: 10,
+						Limit:  10,
+						Name:   "random",
 						Metadata: clients.Metadata{
 							"test": "test",
 						},
@@ -405,13 +402,12 @@ func TestDecodePageMeta(t *testing.T) {
 		},
 		{
 			desc: "valid request with all parameters",
-			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&owner_id=random&name=random&metadata={\"test\":\"test\"}",
+			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&name=random&metadata={\"test\":\"test\"}",
 			resp: groups.PageMeta{
-				Status:  clients.EnabledStatus,
-				Offset:  10,
-				Limit:   10,
-				OwnerID: "random",
-				Name:    "random",
+				Status: clients.EnabledStatus,
+				Offset: 10,
+				Limit:  10,
+				Name:   "random",
 				Metadata: clients.Metadata{
 					"test": "test",
 				},
@@ -439,12 +435,6 @@ func TestDecodePageMeta(t *testing.T) {
 		{
 			desc: "valid request with invalid limit",
 			url:  "http://localhost:8080?limit=random",
-			resp: groups.PageMeta{},
-			err:  apiutil.ErrValidation,
-		},
-		{
-			desc: "valid request with invalid owner_id",
-			url:  "http://localhost:8080?owner_id=random&owner_id=random",
 			resp: groups.PageMeta{},
 			err:  apiutil.ErrValidation,
 		},

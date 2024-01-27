@@ -46,9 +46,9 @@ func NewRepository(db postgres.Database) Repository {
 }
 
 func (repo clientRepo) Save(ctx context.Context, c mgclients.Client) (mgclients.Client, error) {
-	q := `INSERT INTO clients (id, name, tags, owner_id, identity, secret, metadata, created_at, status, role)
-        VALUES (:id, :name, :tags, :owner_id, :identity, :secret, :metadata, :created_at, :status, :role)
-        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at`
+	q := `INSERT INTO clients (id, name, tags, identity, secret, metadata, created_at, status, role)
+        VALUES (:id, :name, :tags, :identity, :secret, :metadata, :created_at, :status, :role)
+        RETURNING id, name, tags, identity, metadata, status, created_at`
 	dbc, err := pgclients.ToDBClient(c)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -92,7 +92,7 @@ func (repo clientRepo) CheckSuperAdmin(ctx context.Context, adminID string) erro
 }
 
 func (repo clientRepo) RetrieveByID(ctx context.Context, id string) (mgclients.Client, error) {
-	q := `SELECT id, name, tags, COALESCE(owner_id, '') AS owner_id, identity, secret, metadata, created_at, updated_at, updated_by, status, role
+	q := `SELECT id, name, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role
         FROM clients WHERE id = :id`
 
 	dbc := pgclients.DBClient{
@@ -128,7 +128,7 @@ func (repo clientRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (mgcl
 		return mgclients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
-	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.owner_id, '') AS owner_id, c.status, c.role,
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata,  c.status, c.role,
 					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
 
 	dbPage, err := pgclients.ToDBClientsPage(pm)
@@ -177,7 +177,7 @@ func (repo clientRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (mgcl
 func (repo clientRepo) UpdateRole(ctx context.Context, client mgclients.Client) (mgclients.Client, error) {
 	query := `UPDATE clients SET role = :role, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
-        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, role, created_at, updated_at, updated_by`
+        RETURNING id, name, tags, identity, metadata, status, role, created_at, updated_at, updated_by`
 
 	dbc, err := pgclients.ToDBClient(client)
 	if err != nil {

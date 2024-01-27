@@ -121,9 +121,9 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update [<thing_id> <JSON_string> | tags <thing_id> <tags> | secret <thing_id> <secret> | owner <thing_id> <owner> ] <user_auth_token>",
+		Use:   "update [<thing_id> <JSON_string> | tags <thing_id> <tags> | secret <thing_id> <secret> ] <user_auth_token>",
 		Short: "Update thing",
-		Long: "Updates thing with provided id, name and metadata, or updates thing tags, secret or owner\n" +
+		Long: "Updates thing with provided id, name and metadata, or updates thing tags, secret\n" +
 			"Usage:\n" +
 			"\tmagistrala-cli things update <thing_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n" +
 			"\tmagistrala-cli things update tags <thing_id> '{\"tag1\":\"value1\", \"tag2\":\"value2\"}' $USERTOKEN\n" +

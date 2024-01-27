@@ -92,7 +92,6 @@ type listClientsReq struct {
 	limit      uint64
 	name       string
 	tag        string
-	owner      string
 	permission string
 	visibility string
 	userID     string

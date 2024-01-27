@@ -46,8 +46,8 @@ func (cge createGroupEvent) Encode() (map[string]interface{}, error) {
 		"created_at": cge.CreatedAt,
 	}
 
-	if cge.Owner != "" {
-		val["owner"] = cge.Owner
+	if cge.Domain != "" {
+		val["domain"] = cge.Domain
 	}
 	if cge.Parent != "" {
 		val["parent"] = cge.Parent
@@ -87,8 +87,8 @@ func (uge updateGroupEvent) Encode() (map[string]interface{}, error) {
 	if uge.ID != "" {
 		val["id"] = uge.ID
 	}
-	if uge.Owner != "" {
-		val["owner"] = uge.Owner
+	if uge.Domain != "" {
+		val["domain"] = uge.Domain
 	}
 	if uge.Parent != "" {
 		val["parent"] = uge.Parent
@@ -144,8 +144,8 @@ func (vge viewGroupEvent) Encode() (map[string]interface{}, error) {
 		"id":        vge.ID,
 	}
 
-	if vge.Owner != "" {
-		val["owner"] = vge.Owner
+	if vge.Domain != "" {
+		val["domain"] = vge.Domain
 	}
 	if vge.Parent != "" {
 		val["parent"] = vge.Parent
@@ -207,8 +207,8 @@ func (lge listGroupEvent) Encode() (map[string]interface{}, error) {
 	if lge.Name != "" {
 		val["name"] = lge.Name
 	}
-	if lge.OwnerID != "" {
-		val["owner_id"] = lge.OwnerID
+	if lge.DomainID != "" {
+		val["domain_id"] = lge.DomainID
 	}
 	if lge.Tag != "" {
 		val["tag"] = lge.Tag

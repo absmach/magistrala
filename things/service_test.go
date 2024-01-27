@@ -37,7 +37,6 @@ var (
 		Metadata:    validCMetadata,
 		Status:      mgclients.EnabledStatus,
 	}
-	adminEmail        = "admin@example.com"
 	validToken        = "token"
 	inValidToken      = invalid
 	valid             = "valid"
@@ -89,6 +88,34 @@ func TestCreateThings(t *testing.T) {
 			err:          svcerr.ErrConflict,
 		},
 		{
+			desc: "create a new thing without secret",
+			thing: mgclients.Client{
+				Name: "clientWithoutSecret",
+				Credentials: mgclients.Credentials{
+					Identity: "newclientwithoutsecret@example.com",
+				},
+				Status: mgclients.EnabledStatus,
+			},
+			token:             validToken,
+			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			err:               nil,
+		},
+		{
+			desc: "create a new thing without identity",
+			thing: mgclients.Client{
+				Name: "clientWithoutIdentity",
+				Credentials: mgclients.Credentials{
+					Identity: "newclientwithoutsecret@example.com",
+				},
+				Status: mgclients.EnabledStatus,
+			},
+			token:             validToken,
+			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
+			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			err:               nil,
+		},
+		{
 			desc: "create a new enabled thing with name",
 			thing: mgclients.Client{
 				Name: "clientWithName",
@@ -103,6 +130,7 @@ func TestCreateThings(t *testing.T) {
 			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			err:               nil,
 		},
+
 		{
 			desc: "create a new disabled thing with name",
 			thing: mgclients.Client{
@@ -223,35 +251,6 @@ func TestCreateThings(t *testing.T) {
 			err:               nil,
 		},
 		{
-			desc: "create a new thing with invalid owner",
-			thing: mgclients.Client{
-				Owner: wrongID,
-				Credentials: mgclients.Credentials{
-					Identity: "newclientwithinvalidowner@example.com",
-					Secret:   secret,
-				},
-			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
-			saveErr:           repoerr.ErrMalformedEntity,
-			err:               repoerr.ErrCreateEntity,
-		},
-		{
-			desc: "create a new thing with empty secret",
-			thing: mgclients.Client{
-				Owner: testsutil.GenerateUUID(t),
-				Credentials: mgclients.Credentials{
-					Identity: "newclientwithemptysecret@example.com",
-				},
-			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
-			saveErr:           repoerr.ErrMissingSecret,
-			err:               repoerr.ErrCreateEntity,
-		},
-		{
 			desc: "create a new thing with invalid status",
 			thing: mgclients.Client{
 				Credentials: mgclients.Credentials{
@@ -321,7 +320,7 @@ func TestCreateThings(t *testing.T) {
 			tc.thing.CreatedAt = expected[0].CreatedAt
 			tc.thing.UpdatedAt = expected[0].UpdatedAt
 			tc.thing.Credentials.Secret = expected[0].Credentials.Secret
-			tc.thing.Owner = expected[0].Owner
+			tc.thing.Domain = expected[0].Domain
 			tc.thing.UpdatedBy = expected[0].UpdatedBy
 			assert.Equal(t, tc.thing, expected[0], fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.thing, expected[0]))
 		}
@@ -1361,21 +1360,19 @@ func TestListMembers(t *testing.T) {
 
 	nClients := uint64(10)
 	aClients := []mgclients.Client{}
-	owner := testsutil.GenerateUUID(t)
+	domainID := testsutil.GenerateUUID(t)
 	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("member_%d@example.com", i)
 		client := mgclients.Client{
-			ID:   testsutil.GenerateUUID(t),
-			Name: identity,
+			ID:     testsutil.GenerateUUID(t),
+			Domain: domainID,
+			Name:   identity,
 			Credentials: mgclients.Credentials{
 				Identity: identity,
 				Secret:   "password",
 			},
 			Tags:     []string{"tag1", "tag2"},
 			Metadata: mgclients.Metadata{"role": "client"},
-		}
-		if i%3 == 0 {
-			client.Owner = owner
 		}
 		aClients = append(aClients, client)
 	}
@@ -1400,12 +1397,9 @@ func TestListMembers(t *testing.T) {
 		err                      error
 	}{
 		{
-			desc:    "list members with authorized token",
-			token:   validToken,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				Owner: adminEmail,
-			},
+			desc:                    "list members with authorized token",
+			token:                   validToken,
+			groupID:                 testsutil.GenerateUUID(t),
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
 			listObjectsResponse:     &magistrala.ListObjectsRes{},
@@ -1436,7 +1430,6 @@ func TestListMembers(t *testing.T) {
 				Offset: 6,
 				Limit:  nClients,
 				Status: mgclients.AllStatus,
-				Owner:  adminEmail,
 			},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
@@ -1457,12 +1450,9 @@ func TestListMembers(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:    "list members with an invalid token",
-			token:   authmocks.InvalidValue,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				Owner: adminEmail,
-			},
+			desc:             "list members with an invalid token",
+			token:            authmocks.InvalidValue,
+			groupID:          testsutil.GenerateUUID(t),
 			identifyResponse: &magistrala.IdentityRes{},
 			response: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1475,12 +1465,9 @@ func TestListMembers(t *testing.T) {
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc:    "list members with an invalid id",
-			token:   validToken,
-			groupID: wrongID,
-			page: mgclients.Page{
-				Owner: adminEmail,
-			},
+			desc:                     "list members with an invalid id",
+			token:                    validToken,
+			groupID:                  wrongID,
 			identifyResponse:         &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:        &magistrala.AuthorizeRes{Authorized: true},
 			listObjectsResponse:      &magistrala.ListObjectsRes{},
@@ -1497,36 +1484,10 @@ func TestListMembers(t *testing.T) {
 			err:                 svcerr.ErrNotFound,
 		},
 		{
-			desc:    "list members for an owner",
+			desc:    "list members with permissions",
 			token:   validToken,
 			groupID: testsutil.GenerateUUID(t),
 			page: mgclients.Page{
-				Owner: adminEmail,
-			},
-			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
-			retreiveAllByIDsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 4,
-				},
-				Clients: []mgclients.Client{aClients[0], aClients[3], aClients[6], aClients[9]},
-			},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total: 4,
-				},
-				Members: []mgclients.Client{aClients[0], aClients[3], aClients[6], aClients[9]},
-			},
-			err: nil,
-		},
-		{
-			desc:    "list members for an owner with permissions",
-			token:   validToken,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				Owner:     adminEmail,
 				ListPerms: true,
 			},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
@@ -1552,7 +1513,6 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: testsutil.GenerateUUID(t),
 			page: mgclients.Page{
-				Owner:     adminEmail,
 				ListPerms: true,
 			},
 			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
@@ -1565,7 +1525,6 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: testsutil.GenerateUUID(t),
 			page: mgclients.Page{
-				Owner:     adminEmail,
 				ListPerms: true,
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
@@ -1579,7 +1538,6 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: testsutil.GenerateUUID(t),
 			page: mgclients.Page{
-				Owner:     adminEmail,
 				ListPerms: true,
 			},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{

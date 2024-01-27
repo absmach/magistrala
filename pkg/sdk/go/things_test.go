@@ -162,7 +162,6 @@ func TestCreateThing(t *testing.T) {
 				ID:          id,
 				Name:        "name",
 				Tags:        []string{"tag1", "tag2"},
-				Owner:       id,
 				Credentials: user.Credentials,
 				Metadata:    validMetadata,
 				CreatedAt:   time.Now(),
@@ -173,7 +172,6 @@ func TestCreateThing(t *testing.T) {
 				ID:          id,
 				Name:        "name",
 				Tags:        []string{"tag1", "tag2"},
-				Owner:       id,
 				Credentials: user.Credentials,
 				Metadata:    validMetadata,
 				CreatedAt:   time.Now(),
@@ -193,7 +191,6 @@ func TestCreateThing(t *testing.T) {
 		rThing, err := mgsdk.CreateThing(tc.client, tc.token)
 
 		tc.response.ID = rThing.ID
-		tc.response.Owner = rThing.Owner
 		tc.response.CreatedAt = rThing.CreatedAt
 		tc.response.UpdatedAt = rThing.UpdatedAt
 		rThing.Credentials.Secret = tc.response.Credentials.Secret
@@ -284,7 +281,6 @@ func TestCreateThings(t *testing.T) {
 		rThing, err := mgsdk.CreateThings(tc.things, tc.token)
 		for i, t := range rThing {
 			tc.response[i].ID = t.ID
-			tc.response[i].Owner = t.Owner
 			tc.response[i].CreatedAt = t.CreatedAt
 			tc.response[i].UpdatedAt = t.UpdatedAt
 			tc.response[i].Credentials.Secret = t.Credentials.Secret
@@ -319,7 +315,6 @@ func TestListThings(t *testing.T) {
 	}
 	mgsdk := sdk.NewSDK(conf)
 
-	owner := generateUUID(t)
 	for i := 10; i < 100; i++ {
 		th := sdk.Thing{
 			ID:   generateUUID(t),
@@ -332,7 +327,6 @@ func TestListThings(t *testing.T) {
 			Status:   mgclients.EnabledStatus.String(),
 		}
 		if i == 50 {
-			th.Owner = owner
 			th.Status = mgclients.DisabledStatus.String()
 			th.Tags = []string{"tag1", "tag2"}
 		}
@@ -348,7 +342,6 @@ func TestListThings(t *testing.T) {
 		limit      uint64
 		name       string
 		identifier string
-		ownerID    string
 		tag        string
 		metadata   sdk.Metadata
 		err        errors.SDKError
@@ -438,15 +431,6 @@ func TestListThings(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "list things with given owner",
-			token:    validToken,
-			offset:   0,
-			limit:    1,
-			ownerID:  owner,
-			response: []sdk.Thing{ths[50]},
-			err:      nil,
-		},
-		{
 			desc:     "list things with given status",
 			token:    validToken,
 			offset:   0,
@@ -473,7 +457,6 @@ func TestListThings(t *testing.T) {
 			Offset:   tc.offset,
 			Limit:    tc.limit,
 			Name:     tc.name,
-			OwnerID:  tc.ownerID,
 			Metadata: tc.metadata,
 			Tag:      tc.tag,
 		}
@@ -556,19 +539,6 @@ func TestListThingsByChannel(t *testing.T) {
 				Name:   Identity,
 				Offset: 6,
 				Limit:  nThing,
-			},
-			response: aThings[6:],
-			err:      nil,
-		},
-
-		{
-			desc:      "list things with given ownerID",
-			token:     validToken,
-			channelID: testsutil.GenerateUUID(t),
-			page: sdk.PageMetadata{
-				OwnerID: user.Owner,
-				Offset:  6,
-				Limit:   nThing,
 			},
 			response: aThings[6:],
 			err:      nil,

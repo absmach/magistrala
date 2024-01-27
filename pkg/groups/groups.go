@@ -16,10 +16,10 @@ const MaxLevel = uint64(5)
 // Group represents the group of Clients.
 // Indicates a level in tree hierarchy. Root node is level 1.
 // Path in a tree consisting of group IDs
-// Paths are unique per owner.
+// Paths are unique per domain.
 type Group struct {
 	ID          string           `json:"id"`
-	Owner       string           `json:"owner_id,omitempty"`
+	Domain      string           `json:"domain_id,omitempty"`
 	Parent      string           `json:"parent_id,omitempty"`
 	Name        string           `json:"name"`
 	Description string           `json:"description,omitempty"`

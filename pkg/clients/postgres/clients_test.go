@@ -143,9 +143,9 @@ func TestRetrieveAll(t *testing.T) {
 	disabledClients := []mgclients.Client{}
 	for i := uint64(0); i < nClients; i++ {
 		client := mgclients.Client{
-			ID:    testsutil.GenerateUUID(t),
-			Owner: testsutil.GenerateUUID(t),
-			Name:  namegen.Generate(),
+			ID:     testsutil.GenerateUUID(t),
+			Domain: testsutil.GenerateUUID(t),
+			Name:   namegen.Generate(),
 			Credentials: mgclients.Credentials{
 				Identity: namegen.Generate() + emailSuffix,
 				Secret:   password,
@@ -420,11 +420,11 @@ func TestRetrieveAll(t *testing.T) {
 			},
 		},
 		{
-			desc: "with owner",
+			desc: "with domain",
 			pm: mgclients.Page{
 				Offset: 0,
 				Limit:  nClients,
-				Owner:  expectedClients[0].Owner,
+				Domain: expectedClients[0].Domain,
 				Status: mgclients.AllStatus,
 				Role:   mgclients.AllRole,
 			},
@@ -438,11 +438,11 @@ func TestRetrieveAll(t *testing.T) {
 			},
 		},
 		{
-			desc: "with wrong owner",
+			desc: "with wrong domain",
 			pm: mgclients.Page{
 				Offset: 0,
 				Limit:  nClients,
-				Owner:  testsutil.GenerateUUID(t),
+				Domain: testsutil.GenerateUUID(t),
 				Status: mgclients.AllStatus,
 				Role:   mgclients.AllRole,
 			},
@@ -635,7 +635,7 @@ func TestRetrieveAll(t *testing.T) {
 				Name:     expectedClients[0].Name,
 				Tag:      expectedClients[0].Tags[0],
 				Identity: expectedClients[0].Credentials.Identity,
-				Owner:    expectedClients[0].Owner,
+				Domain:   expectedClients[0].Domain,
 				Status:   mgclients.AllStatus,
 				Role:     mgclients.AllRole,
 			},
@@ -676,9 +676,9 @@ func TestRetrieveByIDs(t *testing.T) {
 	for i := 0; i < num; i++ {
 		name := namegen.Generate()
 		client := mgclients.Client{
-			ID:    testsutil.GenerateUUID(t),
-			Owner: testsutil.GenerateUUID(t),
-			Name:  name,
+			ID:     testsutil.GenerateUUID(t),
+			Domain: testsutil.GenerateUUID(t),
+			Name:   name,
 			Credentials: mgclients.Credentials{
 				Identity: name + emailSuffix,
 				Secret:   password,
@@ -737,11 +737,11 @@ func TestRetrieveByIDs(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "with empty ids but with owner",
+			desc: "with empty ids but with domain id",
 			page: mgclients.Page{
 				Offset: 0,
 				Limit:  10,
-				Owner:  items[0].Owner,
+				Domain: items[0].Domain,
 				IDs:    []string{},
 			},
 			response: mgclients.ClientsPage{
@@ -856,11 +856,11 @@ func TestRetrieveByIDs(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "with owner",
+			desc: "with domain id",
 			page: mgclients.Page{
 				Offset: 0,
 				Limit:  10,
-				Owner:  items[0].Owner,
+				Domain: items[0].Domain,
 				IDs:    getIDs(items[0:20]),
 			},
 			response: mgclients.ClientsPage{
@@ -1676,66 +1676,6 @@ func TestUpdateIdentity(t *testing.T) {
 	}
 }
 
-func TestUpdateOwner(t *testing.T) {
-	t.Cleanup(func() {
-		_, err := db.Exec("DELETE FROM clients")
-		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
-	})
-	repo := &postgres.Repository{database}
-
-	client1 := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
-	client2 := generateClient(t, mgclients.DisabledStatus, mgclients.UserRole, repo)
-
-	cases := []struct {
-		desc   string
-		client mgclients.Client
-		err    error
-	}{
-		{
-			desc: "for enabled client",
-			client: mgclients.Client{
-				ID:    client1.ID,
-				Owner: testsutil.GenerateUUID(t),
-			},
-			err: nil,
-		},
-		{
-			desc: "for disabled client",
-			client: mgclients.Client{
-				ID:    client2.ID,
-				Owner: testsutil.GenerateUUID(t),
-			},
-			err: errors.ErrNotFound,
-		},
-		{
-			desc: "for invalid client",
-			client: mgclients.Client{
-				ID:    testsutil.GenerateUUID(t),
-				Owner: testsutil.GenerateUUID(t),
-			},
-			err: errors.ErrNotFound,
-		},
-		{
-			desc:   "for empty client",
-			client: mgclients.Client{},
-			err:    errors.ErrNotFound,
-		},
-	}
-	for _, c := range cases {
-		t.Run(c.desc, func(t *testing.T) {
-			c.client.UpdatedAt = time.Now().UTC().Truncate(time.Millisecond)
-			c.client.UpdatedBy = testsutil.GenerateUUID(t)
-			expected, err := repo.UpdateOwner(context.Background(), c.client)
-			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected %s to contain %s\n", err, c.err))
-			if err == nil {
-				assert.Equal(t, c.client.Owner, expected.Owner)
-				assert.Equal(t, c.client.UpdatedAt, expected.UpdatedAt)
-				assert.Equal(t, c.client.UpdatedBy, expected.UpdatedBy)
-			}
-		})
-	}
-}
-
 func TestChangeStatus(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM clients")
@@ -1900,9 +1840,9 @@ func generateClient(t *testing.T, status mgclients.Status, role mgclients.Role, 
 }
 
 func save(ctx context.Context, repo *postgres.Repository, c mgclients.Client) (mgclients.Client, error) {
-	q := `INSERT INTO clients (id, name, tags, owner_id, identity, secret, metadata, created_at, status, role)
-        VALUES (:id, :name, :tags, :owner_id, :identity, :secret, :metadata, :created_at, :status, :role)
-        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at`
+	q := `INSERT INTO clients (id, name, tags, domain_id, identity, secret, metadata, created_at, status, role)
+        VALUES (:id, :name, :tags, :domain_id, :identity, :secret, :metadata, :created_at, :status, :role)
+        RETURNING id, name, tags, identity, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at`
 	dbc, err := pgclients.ToDBClient(c)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)

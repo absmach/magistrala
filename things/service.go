@@ -94,7 +94,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 		if c.Status != mgclients.DisabledStatus && c.Status != mgclients.EnabledStatus {
 			return []mgclients.Client{}, svcerr.ErrInvalidStatus
 		}
-		c.Owner = user.GetDomainId()
+		c.Domain = user.GetDomainId()
 		c.CreatedAt = time.Now()
 		clients = append(clients, c)
 	}
@@ -185,7 +185,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 		err := svc.checkSuperAdmin(ctx, res.GetUserId())
 		switch {
 		case err == nil:
-			pm.Owner = res.GetDomainId()
+			pm.Domain = res.GetDomainId()
 		default:
 			// If domain is disabled , then this authorization will fail for all non-admin domain users
 			if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {

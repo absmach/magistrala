@@ -79,7 +79,6 @@ paths:
         - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/ThingName"
         - $ref: "#/components/parameters/Tags"
-        - $ref: "#/components/parameters/Owner"
       security:
         - bearerAuth: []
       responses:
@@ -382,8 +381,7 @@ paths:
         - Channels
       summary: Creates new channel
       description: |
-        Creates new channel. User identified by the provided access token will
-        be the channel's owner.
+        Creates new channel in domain.
       requestBody:
         $ref: "#/components/requestBodies/ChannelCreateReq"
       security:
@@ -418,7 +416,6 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/ChannelName"
-        - $ref: "#/components/parameters/OwnerId"
       responses:
         "200":
           $ref: "#/components/responses/ChannelPageRes"
@@ -880,14 +877,9 @@ components:
               example: bb7edb32-2eac-4aad-aebe-ed96fe073879
               minimum: 8
               description: Free-form account secret used for acquiring auth token(s).
-        owner:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner must be exsiting in the databse.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "model": "example" }
           description: Arbitrary, object-encoded thing's data.
         status:
           type: string
@@ -914,18 +906,13 @@ components:
           description: Id of parent channel, it must be existing channel.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "location": "example" }
           description: Arbitrary, object-encoded channels's data.
         status:
           type: string
           description: Channel Status
           format: string
           example: enabled
-        owner_id:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Channel owner ID must be exsiting in the databse.
       required:
         - name
 
@@ -1039,11 +1026,11 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: Thing tags.
-        owner:
+        domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner identifier.
+          description: ID of the domain to which thing belongs.
         credentials:
           type: object
           properties:
@@ -1057,7 +1044,7 @@ components:
               description: Thing secret password.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "model": "example" }
           description: Arbitrary, object-encoded thing's data.
         status:
           type: string
@@ -1096,11 +1083,11 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: Thing tags.
-        owner:
+        domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner identifier.
+          description: ID of the domain to which thing belongs.
         credentials:
           type: object
           properties:
@@ -1114,7 +1101,7 @@ components:
               description: Thing secret password.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "model": "example" }
           description: Arbitrary, object-encoded thing's data.
         status:
           type: string
@@ -1146,11 +1133,11 @@ components:
           type: string
           example: channelName
           description: Free-form channel name. Channel name is unique on the given hierarchy level.
-        owner_id:
+        domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Channel owner identifier of thing that created the channel..
+          description: ID of the domain to which the group belongs.
         parent_id:
           type: string
           format: uuid
@@ -1342,16 +1329,6 @@ components:
       required:
         - secret
 
-    ThingOwner:
-      type: object
-      properties:
-        owner:
-          type: string
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner for example email address.
-      required:
-        - owner
-
     ChannelUpdate:
       type: object
       properties:
@@ -1468,35 +1445,6 @@ components:
       required: false
       example: "thingName"
 
-    ThingIdentity:
-      name: identity
-      description: Thing's identity.
-      in: query
-      schema:
-        type: string
-      required: false
-      example: "admin@example.com"
-
-    Owner:
-      name: owner_id
-      description: Thing's owner.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
-    ThingOwner:
-      name: owner
-      description: Unique owner identifier for a thing.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
     Status:
       name: status
       description: Thing account status.
@@ -1576,16 +1524,6 @@ components:
       schema:
         type: boolean
         default: false
-
-    OwnerId:
-      name: ownerId
-      description: Unique owner identifier for a channel.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
     Metadata:
       name: metadata

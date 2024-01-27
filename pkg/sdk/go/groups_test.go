@@ -97,16 +97,6 @@ func TestCreateGroup(t *testing.T) {
 			err: errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusInternalServerError),
 		},
 		{
-			desc:  "create group with invalid owner",
-			token: token,
-			group: sdk.Group{
-				Name:    gName,
-				OwnerID: wrongID,
-				Status:  clients.EnabledStatus.String(),
-			},
-			err: errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
-		},
-		{
 			desc:  "create group with missing name",
 			token: token,
 			group: sdk.Group{
@@ -119,7 +109,6 @@ func TestCreateGroup(t *testing.T) {
 			token: token,
 			group: sdk.Group{
 				ID:          generateUUID(t),
-				OwnerID:     "owner",
 				ParentID:    "parent",
 				Name:        "name",
 				Description: description,
@@ -192,7 +181,6 @@ func TestListGroups(t *testing.T) {
 		limit    uint64
 		level    int
 		name     string
-		ownerID  string
 		metadata sdk.Metadata
 		err      errors.SDKError
 		response []sdk.Group
@@ -323,7 +311,6 @@ func TestListParentGroups(t *testing.T) {
 		limit    uint64
 		level    int
 		name     string
-		ownerID  string
 		metadata sdk.Metadata
 		err      errors.SDKError
 		response []sdk.Group
@@ -455,7 +442,6 @@ func TestListChildrenGroups(t *testing.T) {
 		limit    uint64
 		level    int
 		name     string
-		ownerID  string
 		metadata sdk.Metadata
 		err      errors.SDKError
 		response []sdk.Group
@@ -796,7 +782,7 @@ func TestEnableGroup(t *testing.T) {
 	group := sdk.Group{
 		ID:        generateUUID(t),
 		Name:      gName,
-		OwnerID:   generateUUID(t),
+		DomainID:  generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    clients.Disabled,
@@ -816,7 +802,7 @@ func TestEnableGroup(t *testing.T) {
 	g := mggroups.Group{
 		ID:        group.ID,
 		Name:      group.Name,
-		Owner:     group.OwnerID,
+		Domain:    group.DomainID,
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    clients.DisabledStatus,
@@ -849,7 +835,7 @@ func TestDisableGroup(t *testing.T) {
 	group := sdk.Group{
 		ID:        generateUUID(t),
 		Name:      gName,
-		OwnerID:   generateUUID(t),
+		DomainID:  generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    clients.Enabled,
@@ -869,7 +855,7 @@ func TestDisableGroup(t *testing.T) {
 	g := mggroups.Group{
 		ID:        group.ID,
 		Name:      group.Name,
-		Owner:     group.OwnerID,
+		Domain:    group.DomainID,
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    clients.EnabledStatus,
@@ -903,7 +889,6 @@ func TestDeleteGroup(t *testing.T) {
 	group := sdk.Group{
 		ID:        generateUUID(t),
 		Name:      gName,
-		OwnerID:   generateUUID(t),
 		CreatedAt: creationTime,
 		UpdatedAt: creationTime,
 		Status:    clients.Enabled,

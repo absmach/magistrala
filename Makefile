@@ -21,18 +21,11 @@ DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | tr -c -s '[:aln
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
-DOCKER_PROFILE ?= $(MG_MQTT_BROKER_TYPE)_$(MG_MESSAGE_BROKER_TYPE)
 MOCKERY_VERSION=v2.38.0
 ifneq ($(MG_MESSAGE_BROKER_TYPE),)
     MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
 else
     MG_MESSAGE_BROKER_TYPE=nats
-endif
-
-ifneq ($(MG_MQTT_BROKER_TYPE),)
-    MG_MQTT_BROKER_TYPE := $(MG_MQTT_BROKER_TYPE)
-else
-    MG_MQTT_BROKER_TYPE=nats
 endif
 
 ifneq ($(MG_ES_TYPE),)
@@ -111,7 +104,7 @@ clean:
 
 cleandocker:
 	# Stops containers and removes containers, networks, volumes, and images created by up
-	docker compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
+	docker compose -f docker/docker-compose.yml -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
 
 ifdef pv
 	# Remove unused volumes
@@ -208,53 +201,10 @@ endif
 endif
 endif
 
-define edit_docker_config
-	sed -i "s/MG_MQTT_BROKER_TYPE=.*/MG_MQTT_BROKER_TYPE=$(1)/" docker/.env
-	sed -i "s/MG_MQTT_BROKER_HEALTH_CHECK=.*/MG_MQTT_BROKER_HEALTH_CHECK=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_HEALTH_CHECK}/" docker/.env
-	sed -i "s/MG_MQTT_ADAPTER_WS_TARGET_PATH=.*/MG_MQTT_ADAPTER_WS_TARGET_PATH=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_WS_TARGET_PATH}/" docker/.env
-	sed -i "s/MG_MESSAGE_BROKER_TYPE=.*/MG_MESSAGE_BROKER_TYPE=$(2)/" docker/.env
-	sed -i "s,file: .*.yml,file: brokers/$(2).yml," docker/brokers/docker-compose.yml
-	sed -i "s,MG_MESSAGE_BROKER_URL=.*,MG_MESSAGE_BROKER_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
-	sed -i "s,MG_MQTT_ADAPTER_MQTT_QOS=.*,MG_MQTT_ADAPTER_MQTT_QOS=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_MQTT_QOS\}," docker/.env
-endef
-
-change_config:
-ifeq ($(DOCKER_PROFILE),nats_nats)
-	sed -i "s/- broker/- nats/g" docker/docker-compose.yml
-	sed -i "s/- rabbitmq/- nats/g" docker/docker-compose.yml
-	sed -i "s,MG_NATS_URL=.*,MG_NATS_URL=nats://nats:$$\{MG_NATS_PORT}," docker/.env
-	$(call edit_docker_config,nats,nats)
-else ifeq ($(DOCKER_PROFILE),nats_rabbitmq)
-	sed -i "s/nats/broker/g" docker/docker-compose.yml
-	sed -i "s,MG_NATS_URL=.*,MG_NATS_URL=nats://nats:$$\{MG_NATS_PORT}," docker/.env
-	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
-	$(call edit_docker_config,nats,rabbitmq)
-else ifeq ($(DOCKER_PROFILE),vernemq_nats)
-	sed -i "s/nats/broker/g" docker/docker-compose.yml
-	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
-	sed -i "s,MG_NATS_URL=.*,MG_NATS_URL=nats://broker:$$\{MG_NATS_PORT}," docker/.env
-	$(call edit_docker_config,vernemq,nats)
-else ifeq ($(DOCKER_PROFILE),vernemq_rabbitmq)
-	sed -i "s/nats/broker/g" docker/docker-compose.yml
-	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
-	$(call edit_docker_config,vernemq,rabbitmq)
-else
-	$(error Invalid DOCKER_PROFILE $(DOCKER_PROFILE))
-endif
-
-run: check_certs change_config
-ifeq ($(MG_ES_TYPE), redis)
-	sed -i "s/MG_ES_TYPE=.*/MG_ES_TYPE=redis/" docker/.env
-	sed -i "s/MG_ES_URL=.*/MG_ES_URL=$$\{MG_REDIS_URL}/" docker/.env
-	docker compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) --profile redis -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
-else
-	sed -i "s,MG_ES_TYPE=.*,MG_ES_TYPE=$$\{MG_MESSAGE_BROKER_TYPE}," docker/.env
-	sed -i "s,MG_ES_URL=.*,MG_ES_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
-	docker compose -f docker/docker-compose.yml --env-file docker/.env --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
-endif
+run: check_certs
+	docker compose -f docker/docker-compose.yml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs
-	$(call change_config)
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
 		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \

@@ -12,18 +12,11 @@ volumes:
   magistrala-users-db-volume:
   magistrala-things-db-volume:
   magistrala-things-redis-volume:
-  magistrala-mqtt-broker-volume:
   magistrala-broker-volume:
-  magistrala-es-volume:
+  magistrala-mqtt-broker-volume:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
   magistrala-invitations-db-volume:
-
-include:
-  - path: brokers/docker-compose.yml
-    env_file: docker/.env
-  - path: es/docker-compose.yml
-    env_file: docker/.env
 
 services:
   spicedb:
@@ -259,6 +252,7 @@ services:
       - mqtt-adapter
       - http-adapter
       - ws-adapter
+      - coap-adapter
 
   things-db:
     image: postgres:16.1-alpine
@@ -292,6 +286,8 @@ services:
     depends_on:
       - things-db
       - users
+      - auth
+      - nats
     restart: on-failure
     environment:
       MG_THINGS_LOG_LEVEL: ${MG_THINGS_LOG_LEVEL}
@@ -394,6 +390,8 @@ services:
     container_name: magistrala-users
     depends_on:
       - users-db
+      - auth
+      - nats
     restart: on-failure
     environment:
       MG_USERS_LOG_LEVEL: ${MG_USERS_LOG_LEVEL}
@@ -474,7 +472,8 @@ services:
     container_name: magistrala-mqtt
     depends_on:
       - things
-      - broker
+      - vernemq
+      - nats
     restart: on-failure
     environment:
       MG_MQTT_ADAPTER_LOG_LEVEL: ${MG_MQTT_ADAPTER_LOG_LEVEL}
@@ -525,7 +524,7 @@ services:
     container_name: magistrala-http
     depends_on:
       - things
-      - broker
+      - nats
     restart: on-failure
     environment:
       MG_HTTP_ADAPTER_LOG_LEVEL: ${MG_HTTP_ADAPTER_LOG_LEVEL}
@@ -570,7 +569,7 @@ services:
     container_name: magistrala-coap
     depends_on:
       - things
-      - broker
+      - nats
     restart: on-failure
     environment:
       MG_COAP_ADAPTER_LOG_LEVEL: ${MG_COAP_ADAPTER_LOG_LEVEL}
@@ -620,7 +619,7 @@ services:
     container_name: magistrala-ws
     depends_on:
       - things
-      - broker
+      - nats
     restart: on-failure
     environment:
       MG_WS_ADAPTER_LOG_LEVEL: ${MG_WS_ADAPTER_LOG_LEVEL}
@@ -659,6 +658,36 @@ services:
         target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+
+  vernemq:
+    image: magistrala/vernemq:${MG_RELEASE_TAG}
+    container_name: magistrala-vernemq
+    restart: on-failure
+    environment:
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${MG_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: ${MG_DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-mqtt-broker-volume:/var/lib/vernemq
+
+  nats:
+    image: nats:2.10.9-alpine
+    container_name: magistrala-nats
+    restart: on-failure
+    command: "--config=/etc/nats/nats.conf"
+    environment:
+      - MG_NATS_PORT=${MG_NATS_PORT}
+      - MG_NATS_HTTP_PORT=${MG_NATS_HTTP_PORT}
+      - MG_NATS_JETSTREAM_KEY=${MG_NATS_JETSTREAM_KEY}
+    ports:
+      - ${MG_NATS_PORT}:${MG_NATS_PORT}
+      - ${MG_NATS_HTTP_PORT}:${MG_NATS_HTTP_PORT}
+    volumes:
+      - magistrala-broker-volume:/data
+      - ./nats:/etc/nats
+    networks:
+      - magistrala-base-net
 
   ui:
     image: magistrala/ui:${MG_RELEASE_TAG}

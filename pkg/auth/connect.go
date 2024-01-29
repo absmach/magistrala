@@ -101,7 +101,7 @@ func (c *client) Secure() string {
 // connect creates new gRPC client and connect to gRPC server.
 func connect(cfg Config) (*grpc.ClientConn, security, error) {
 	opts := []grpc.DialOption{
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	}
 	secure := withoutTLS
 	tc := insecure.NewCredentials()

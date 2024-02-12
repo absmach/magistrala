@@ -79,7 +79,6 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 			AppId:       "magistrala-publisher",
 			Body:        data,
 		})
-
 	if err != nil {
 		return err
 	}

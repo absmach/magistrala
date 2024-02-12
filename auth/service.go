@@ -948,7 +948,7 @@ func DecodeDomainUserID(domainUserID string) (string, string) {
 		return duid[0], duid[1]
 	case len(duid) == 1:
 		return duid[0], ""
-	case len(duid) <= 0 || len(duid) > 2:
+	case len(duid) == 0 || len(duid) > 2:
 		fallthrough
 	default:
 		return "", ""

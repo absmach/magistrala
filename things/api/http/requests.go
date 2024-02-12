@@ -339,7 +339,7 @@ func (req *thingShareRequest) validate() error {
 	if req.thingID == "" {
 		return errors.ErrMalformedEntity
 	}
-	if req.Relation == "" || len(req.UserIDs) <= 0 {
+	if req.Relation == "" || len(req.UserIDs) == 0 {
 		return errors.ErrCreateEntity
 	}
 	return nil
@@ -356,7 +356,7 @@ func (req *thingUnshareRequest) validate() error {
 	if req.thingID == "" {
 		return errors.ErrMalformedEntity
 	}
-	if req.Relation == "" || len(req.UserIDs) <= 0 {
+	if req.Relation == "" || len(req.UserIDs) == 0 {
 		return errors.ErrCreateEntity
 	}
 	return nil

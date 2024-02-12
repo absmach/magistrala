@@ -192,7 +192,7 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 
 func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page, ids ...string) (mggroups.Page, error) {
 	var q string
-	if (len(ids) <= 0) && (gm.PageMeta.DomainID == "") {
+	if (len(ids) == 0) && (gm.PageMeta.DomainID == "") {
 		return mggroups.Page{PageMeta: mggroups.PageMeta{Offset: gm.Offset, Limit: gm.Limit}}, nil
 	}
 	query := buildQuery(gm, ids...)

@@ -135,7 +135,6 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	}
 
 	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
-
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)
 	}

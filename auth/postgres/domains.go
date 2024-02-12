@@ -128,7 +128,7 @@ func (repo domainRepo) RetrievePermissions(ctx context.Context, subject, id stri
 // RetrieveAllByIDs retrieves for given Domain IDs .
 func (repo domainRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth.DomainsPage, error) {
 	var q string
-	if len(pm.IDs) <= 0 {
+	if len(pm.IDs) == 0 {
 		return auth.DomainsPage{}, nil
 	}
 	query, err := buildPageQuery(pm)

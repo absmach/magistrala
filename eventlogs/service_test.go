@@ -24,7 +24,7 @@ import (
 
 func TestReadAll(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.Service)
+	authsvc := new(authmocks.AuthClient)
 	svc := eventlogs.NewService(repo, authsvc)
 
 	validToken := "token"

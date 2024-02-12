@@ -6,11 +6,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 
+	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/eventlogs"
 	"github.com/absmach/magistrala/eventlogs/api"
@@ -26,7 +27,6 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
-	chclient "github.com/mainflux/callhome/pkg/client"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -68,7 +68,7 @@ func main() {
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			logger.Error("failed to generate instanceID: %s", err)
 			exitCode = 1
 			return
 		}
@@ -76,20 +76,22 @@ func main() {
 
 	dbConfig := pgclient.Config{Name: defDB}
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s Postgres configuration : %s", svcName, err))
+		logger.Error("failed to load %s Postgres configuration : %s", svcName, err)
 		exitCode = 1
 		return
 	}
 	db, err := pgclient.Setup(dbConfig, *eventlogspg.Migration())
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
 	defer db.Close()
 	repo := eventlogspg.NewRepository(db)
 
 	authConfig := auth.Config{}
 	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		logger.Error("failed to load %s auth configuration : %s", svcName, err)
 		exitCode = 1
 		return
 	}
@@ -106,13 +108,13 @@ func main() {
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+		logger.Error("Failed to init Jaeger: %s", err)
 		exitCode = 1
 		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+			logger.Error("Error shutting down tracer provider: %v", err)
 		}
 	}()
 	tracer := tp.Tracer(svcName)
@@ -121,7 +123,7 @@ func main() {
 
 	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create subscriber: %s", err))
+		logger.Error("failed to create subscriber: %s", err)
 		exitCode = 1
 		return
 	}
@@ -129,14 +131,14 @@ func main() {
 	logger.Info("Subscribed to Event Store")
 
 	if err := eventlogs.Start(ctx, svcName, subscriber, repo); err != nil {
-		logger.Error(fmt.Sprintf("failed to start %s service: %s", svcName, err))
+		logger.Error("failed to start %s service: %s", svcName, err)
 		exitCode = 1
 		return
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error("failed to load %s HTTP server configuration : %s", svcName, err)
 		exitCode = 1
 		return
 	}
@@ -157,11 +159,11 @@ func main() {
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("%s service terminated: %s", svcName, err))
+		logger.Error("%s service terminated: %s", svcName, err)
 	}
 }
 
-func newService(repo eventlogs.Repository, authClient magistrala.AuthServiceClient, logger mglog.Logger, tracer trace.Tracer) eventlogs.Service {
+func newService(repo eventlogs.Repository, authClient magistrala.AuthServiceClient, logger *slog.Logger, tracer trace.Tracer) eventlogs.Service {
 	svc := eventlogs.NewService(repo, authClient)
 	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("eventlogs", "event_writer")

@@ -5,22 +5,21 @@ package middleware
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/eventlogs"
-	mglog "github.com/absmach/magistrala/logger"
 )
 
 var _ eventlogs.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger  mglog.Logger
+	logger  *slog.Logger
 	service eventlogs.Service
 }
 
 // LoggingMiddleware adds logging facilities to the adapter.
-func LoggingMiddleware(service eventlogs.Service, logger mglog.Logger) eventlogs.Service {
+func LoggingMiddleware(service eventlogs.Service, logger *slog.Logger) eventlogs.Service {
 	return &loggingMiddleware{
 		logger:  logger,
 		service: service,
@@ -29,12 +28,21 @@ func LoggingMiddleware(service eventlogs.Service, logger mglog.Logger) eventlogs
 
 func (lm *loggingMiddleware) ReadAll(ctx context.Context, token string, page eventlogs.Page) (eventsPage eventlogs.EventsPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method read_all for operation %s with query %v took %s to complete", page.Operation, page, time.Since(begin))
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("page",
+				slog.String("operation", page.Operation),
+				slog.Uint64("offset", page.Offset),
+				slog.Uint64("limit", page.Limit),
+				slog.Uint64("total", eventsPage.Total),
+			),
+		}
 		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Read all events failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+		lm.logger.Info("Read all events completed successfully", args...)
 	}(time.Now())
 
 	return lm.service.ReadAll(ctx, token, page)

@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/absmach/magistrala/eventlogs"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -28,7 +28,7 @@ const (
 )
 
 // MakeHandler returns a HTTP API handler with health check and metrics.
-func MakeHandler(svc eventlogs.Service, logger mglog.Logger, svcName, instanceID string) http.Handler {
+func MakeHandler(svc eventlogs.Service, logger *slog.Logger, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}

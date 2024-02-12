@@ -116,6 +116,13 @@ jobs:
               - "pkg/uuid/**"
               - "pkg/messaging/**"
 
+            eventlogs:
+              - "eventlogs/**"
+              - "cmd/eventlogs/**"
+              - "auth.pb.go"
+              - "auth_grpc.pb.go"
+              - "auth/**"
+
             http:
               - "http/**"
               - "cmd/http/**"
@@ -287,6 +294,11 @@ jobs:
         if: steps.changes.outputs.consumers == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/consumers.out ./consumers/...
+
+      - name: Run pkg eventlogs tests
+        if: steps.changes.outputs.eventlogs == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/eventlogs.out ./pkg/events/...
 
       - name: Run HTTP tests
         if: steps.changes.outputs.http == 'true' || steps.changes.outputs.workflow == 'true'

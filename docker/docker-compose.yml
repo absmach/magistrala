@@ -17,6 +17,7 @@ volumes:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
   magistrala-invitations-db-volume:
+  magistrala-ui-db-volume:
 
 services:
   spicedb:
@@ -707,7 +708,33 @@ services:
       MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
       MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
       MG_UI_INSTANCE_ID: ${MG_UI_INSTANCE_ID}
+      MG_UI_DB_HOST: ${MG_UI_DB_HOST}
+      MG_UI_DB_PORT: ${MG_UI_DB_PORT}
+      MG_UI_DB_USER: ${MG_UI_DB_USER}
+      MG_UI_DB_PASS: ${MG_UI_DB_PASS}
+      MG_UI_DB_NAME: ${MG_UI_DB_NAME}
+      MG_UI_DB_SSL_MODE: ${MG_UI_DB_SSL_MODE}
+      MG_UI_DB_SSL_CERT: ${MG_UI_DB_SSL_CERT}
+      MG_UI_DB_SSL_KEY: ${MG_UI_DB_SSL_KEY}
+      MG_UI_DB_SSL_ROOT_CERT: ${MG_UI_DB_SSL_ROOT_CERT}      
     ports:
       - ${MG_UI_PORT}:${MG_UI_PORT}
     networks:
       - magistrala-base-net
+
+  ui-db:
+    image: postgres:16.1-alpine
+    container_name: magistrala-ui-db
+    restart: on-failure
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_UI_DB_USER}
+      POSTGRES_PASSWORD: ${MG_UI_DB_PASS}
+      POSTGRES_DB: ${MG_UI_DB_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+    ports:
+      - 6007:5432
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-ui-db-volume:/var/lib/postgresql/data

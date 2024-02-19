@@ -135,26 +135,22 @@ func loadConfig() (provision.Config, error) {
 			return provision.Config{}, errFailedToReadBootstrapContent
 		}
 	}
+	cfg.Bootstrap.Content = content
 
-	cfg = provision.Config{
-		Bootstrap: provision.Bootstrap{
-			Content: content,
+	cfg.Channels = []mggroups.Group{
+		{
+			Name:     "control-channel",
+			Metadata: map[string]interface{}{"type": "control"},
+		}, {
+			Name:     "data-channel",
+			Metadata: map[string]interface{}{"type": "data"},
 		},
-		// This is default conf for provision if there is no config file
-		Channels: []mggroups.Group{
-			{
-				Name:     "control-channel",
-				Metadata: map[string]interface{}{"type": "control"},
-			}, {
-				Name:     "data-channel",
-				Metadata: map[string]interface{}{"type": "data"},
-			},
-		},
-		Things: []mgclients.Client{
-			{
-				Name:     "thing",
-				Metadata: map[string]interface{}{"external_id": "xxxxxx"},
-			},
+	}
+
+	cfg.Things = []mgclients.Client{
+		{
+			Name:     "thing",
+			Metadata: map[string]interface{}{"external_id": "xxxxxx"},
 		},
 	}
 

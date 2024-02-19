@@ -30,9 +30,8 @@ default values.
 | MG_PROVISION_SERVER_KEY             | Magistrala gRPC secure server key                 |                                      |
 | MG_PROVISION_USERS_LOCATION         | Users service URL                                 | <http://users:9002>                  |
 | MG_PROVISION_THINGS_LOCATION        | Things service URL                                | <http://things:9000>                 |
-| MG_PROVISION_BS_SVC_URL             | Magistrala Bootstrap service URL                  | <http://bootstrap:9013/things>       |
-| MG_PROVISION_BS_SVC_WHITELIST_URL   | Magistrala Bootstrap service whitelist URL        | <http://bootstrap:9013/things/state> |
-| MG_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | <http://certs:9019/certs>            |
+| MG_PROVISION_BS_SVC_URL             | Magistrala Bootstrap service URL                  | <http://bootstrap:9013>              |
+| MG_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | <http://certs:9019>                  |
 | MG_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                                |
 | MG_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                                 |
 | MG_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                                 |
@@ -99,7 +98,7 @@ Provision service can be run as a standalone or in docker composition as addon t
 Standalone:
 
 ```bash
-MG_PROVISION_BS_SVC_URL=http://localhost:9013/things \
+MG_PROVISION_BS_SVC_URL=http://localhost:9013 \
 MG_PROVISION_THINGS_LOCATION=http://localhost:9000 \
 MG_PROVISION_USERS_LOCATION=http://localhost:9002 \
 MG_PROVISION_CONFIG_FILE=docker/addons/provision/configs/config.toml \

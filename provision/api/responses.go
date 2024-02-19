@@ -4,6 +4,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/absmach/magistrala"
@@ -31,4 +32,24 @@ func (res provisionRes) Headers() map[string]string {
 
 func (res provisionRes) Empty() bool {
 	return false
+}
+
+type mappingRes struct {
+	Data interface{}
+}
+
+func (res mappingRes) Code() int {
+	return http.StatusOK
+}
+
+func (res mappingRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res mappingRes) Empty() bool {
+	return false
+}
+
+func (res mappingRes) MarshalJSON() ([]byte, error) {
+	return json.Marshal(res.Data)
 }

@@ -44,6 +44,11 @@ func getMapping(svc provision.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		return svc.Mapping(req.token)
+		res, err := svc.Mapping(req.token)
+		if err != nil {
+			return nil, err
+		}
+
+		return mappingRes{Data: res}, nil
 	}
 }

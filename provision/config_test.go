@@ -18,7 +18,6 @@ import (
 
 var (
 	validConfig = provision.Config{
-		LogLevel: "info",
 		Server: provision.ServiceConf{
 			Port:     "9016",
 			LogLevel: "info",

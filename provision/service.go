@@ -158,7 +158,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 
 	for _, channel := range ps.conf.Channels {
 		ch := sdk.Channel{
-			Name:     channel.Name,
+			Name:     name + "_" + channel.Name,
 			Metadata: sdk.Metadata(channel.Metadata),
 		}
 		ch, err := ps.sdk.CreateChannel(ch, token)
@@ -340,11 +340,11 @@ func (ps *provisionService) errLog(err error) {
 
 func clean(ps *provisionService, things []sdk.Thing, channels []sdk.Channel, token string) {
 	for _, t := range things {
-		_, err := ps.sdk.DisableThing(t.ID, token)
+		err := ps.sdk.DeleteThing(t.ID, token)
 		ps.errLog(err)
 	}
 	for _, c := range channels {
-		_, err := ps.sdk.DisableChannel(c.ID, token)
+		err := ps.sdk.DeleteChannel(c.ID, token)
 		ps.errLog(err)
 	}
 }
@@ -357,7 +357,7 @@ func (ps *provisionService) recover(e *error, ths *[]sdk.Thing, chs *[]sdk.Chann
 
 	if errors.Contains(err, ErrFailedThingRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, th := range things {
-			_, err := ps.sdk.DisableThing(th.ID, token)
+			err := ps.sdk.DeleteThing(th.ID, token)
 			ps.errLog(err)
 		}
 		return

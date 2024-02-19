@@ -21,6 +21,10 @@ func (req provisionReq) validate() error {
 		return apiutil.ErrBearerKey
 	}
 
+	if req.Name == "" {
+		return apiutil.ErrMissingName
+	}
+
 	return nil
 }
 

@@ -135,8 +135,8 @@ func loadConfig() (provision.Config, error) {
 			return provision.Config{}, errFailedToReadBootstrapContent
 		}
 	}
-
 	cfg.Bootstrap.Content = content
+
 	// This is default conf for provision if there is no config file
 	cfg.Channels = []mggroups.Group{
 		{
@@ -147,6 +147,7 @@ func loadConfig() (provision.Config, error) {
 			Metadata: map[string]interface{}{"type": "data"},
 		},
 	}
+
 	cfg.Things = []mgclients.Client{
 		{
 			Name:     "thing",

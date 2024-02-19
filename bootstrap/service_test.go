@@ -23,6 +23,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -60,8 +61,9 @@ func newService() (bootstrap.Service, *authmocks.AuthClient, *sdkmocks.SDK) {
 	things := mocks.NewConfigsRepository()
 	auth := new(authmocks.AuthClient)
 	sdk := new(sdkmocks.SDK)
+	idp := uuid.NewMock()
 
-	return bootstrap.New(auth, things, sdk, encKey), auth, sdk
+	return bootstrap.New(auth, things, sdk, encKey, idp), auth, sdk
 }
 
 func enc(in []byte) ([]byte, error) {

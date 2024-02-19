@@ -104,19 +104,21 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	auth    magistrala.AuthServiceClient
-	configs ConfigRepository
-	sdk     mgsdk.SDK
-	encKey  []byte
+	auth       magistrala.AuthServiceClient
+	configs    ConfigRepository
+	sdk        mgsdk.SDK
+	encKey     []byte
+	idProvider magistrala.IDProvider
 }
 
 // New returns new Bootstrap service.
-func New(auth magistrala.AuthServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte) Service {
+func New(auth magistrala.AuthServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
-		configs: configs,
-		sdk:     sdk,
-		auth:    auth,
-		encKey:  encKey,
+		configs:    configs,
+		sdk:        sdk,
+		auth:       auth,
+		encKey:     encKey,
+		idProvider: idp,
 	}
 }
 
@@ -152,8 +154,10 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
+		// If id is empty, then a new thing has been created function - bs.thing(id, token)
+		// So, on bootstrap config save error , delete the newly created thing.
 		if id == "" {
-			if _, errT := bs.sdk.DisableThing(cfg.ThingID, token); errT != nil {
+			if errT := bs.sdk.DeleteThing(cfg.ThingID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
@@ -381,29 +385,24 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (string, 
 
 // Method thing retrieves Magistrala Thing creating one if an empty ID is passed.
 func (bs bootstrapService) thing(id, token string) (mgsdk.Thing, error) {
-	var thing mgsdk.Thing
-	var err error
-	var sdkErr errors.SDKError
-
-	thing.ID = id
+	// If Thing ID is not provided, then create new thing.
 	if id == "" {
-		thing, sdkErr = bs.sdk.CreateThing(mgsdk.Thing{}, token)
+		id, err := bs.idProvider.ID()
 		if err != nil {
+			return mgsdk.Thing{}, errors.Wrap(errCreateThing, err)
+		}
+		thing, sdkErr := bs.sdk.CreateThing(mgsdk.Thing{ID: id, Name: "Bootstrapped Thing " + id}, token)
+		if sdkErr != nil {
 			return mgsdk.Thing{}, errors.Wrap(errCreateThing, errors.New(sdkErr.Err().Msg()))
 		}
+		return thing, nil
 	}
 
-	thing, sdkErr = bs.sdk.Thing(thing.ID, token)
+	// If Thing ID is provided, then retrieve thing
+	thing, sdkErr := bs.sdk.Thing(id, token)
 	if sdkErr != nil {
-		err = errors.New(sdkErr.Error())
-		if id != "" {
-			if _, sdkErr2 := bs.sdk.DisableThing(thing.ID, token); sdkErr2 != nil {
-				err = errors.Wrap(errors.New(sdkErr.Msg()), errors.New(sdkErr2.Msg()))
-			}
-		}
-		return mgsdk.Thing{}, errors.Wrap(ErrThings, err)
+		return mgsdk.Thing{}, errors.Wrap(ErrThings, sdkErr)
 	}
-
 	return thing, nil
 }
 

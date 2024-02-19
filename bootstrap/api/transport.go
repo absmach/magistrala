@@ -23,11 +23,12 @@ import (
 )
 
 const (
-	contentType = "application/json"
-	offsetKey   = "offset"
-	limitKey    = "limit"
-	defOffset   = 0
-	defLimit    = 10
+	contentType     = "application/json"
+	byteContentType = "application/octet-stream"
+	offsetKey       = "offset"
+	limitKey        = "limit"
+	defOffset       = 0
+	defLimit        = 10
 )
 
 var (
@@ -259,7 +260,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Type", byteContentType)
 	w.WriteHeader(http.StatusOK)
 	if b, ok := response.([]byte); ok {
 		if _, err := w.Write(b); err != nil {

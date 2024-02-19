@@ -178,8 +178,9 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 	}
 
 	sdk := mgsdk.NewSDK(config)
+	idp := uuid.New()
 
-	svc := bootstrap.New(authClient, repoConfig, sdk, []byte(cfg.EncKey))
+	svc := bootstrap.New(authClient, repoConfig, sdk, []byte(cfg.EncKey), idp)
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, streamID)
 	if err != nil {

@@ -23,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -81,8 +82,8 @@ func newService(t *testing.T, url string) (bootstrap.Service, *authmocks.AuthCli
 	things := mocks.NewConfigsRepository()
 	auth := new(authmocks.AuthClient)
 	sdk := new(sdkmocks.SDK)
-
-	svc := bootstrap.New(auth, things, sdk, encKey)
+	idp := uuid.NewMock()
+	svc := bootstrap.New(auth, things, sdk, encKey, idp)
 	publisher, err := store.NewPublisher(context.Background(), url, streamID)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)

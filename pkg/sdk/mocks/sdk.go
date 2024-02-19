@@ -176,9 +176,9 @@ func (_m *SDK) Bootstrap(externalID string, externalKey string) (sdk.BootstrapCo
 	return r0, r1
 }
 
-// BootstrapSecure provides a mock function with given fields: externalID, externalKey
-func (_m *SDK) BootstrapSecure(externalID string, externalKey string) (sdk.BootstrapConfig, errors.SDKError) {
-	ret := _m.Called(externalID, externalKey)
+// BootstrapSecure provides a mock function with given fields: externalID, externalKey, cryptoKey
+func (_m *SDK) BootstrapSecure(externalID string, externalKey string, cryptoKey string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _m.Called(externalID, externalKey, cryptoKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BootstrapSecure")
@@ -186,17 +186,17 @@ func (_m *SDK) BootstrapSecure(externalID string, externalKey string) (sdk.Boots
 
 	var r0 sdk.BootstrapConfig
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
-		return rf(externalID, externalKey)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
+		return rf(externalID, externalKey, cryptoKey)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.BootstrapConfig); ok {
-		r0 = rf(externalID, externalKey)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.BootstrapConfig); ok {
+		r0 = rf(externalID, externalKey, cryptoKey)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(externalID, externalKey)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(externalID, externalKey, cryptoKey)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)

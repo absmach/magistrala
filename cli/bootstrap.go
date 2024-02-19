@@ -146,7 +146,7 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "bootstrap [<external_id> <external_key> | secure <external_id> <external_key> ]",
+		Use:   "bootstrap [<external_id> <external_key> | secure <external_id> <external_key> <crypto_key> ]",
 		Short: "Bootstrap config",
 		Long: `Returns Config to the Thing with provided external ID using external key.
 				secure - Retrieves a configuration with given external ID and encrypted external key.`,
@@ -156,7 +156,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 			if args[0] == "secure" {
-				c, err := sdk.BootstrapSecure(args[1], args[2])
+				c, err := sdk.BootstrapSecure(args[1], args[2], args[3])
 				if err != nil {
 					logError(err)
 					return

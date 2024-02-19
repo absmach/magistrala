@@ -29,6 +29,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -180,8 +181,8 @@ func newService() (bootstrap.Service, *authmocks.AuthClient, *sdkmocks.SDK) {
 	things := mocks.NewConfigsRepository()
 	auth := new(authmocks.AuthClient)
 	sdk := new(sdkmocks.SDK)
-
-	return bootstrap.New(auth, things, sdk, encKey), auth, sdk
+	idp := uuid.NewMock()
+	return bootstrap.New(auth, things, sdk, encKey, idp), auth, sdk
 }
 
 func newBootstrapServer(svc bootstrap.Service) *httptest.Server {

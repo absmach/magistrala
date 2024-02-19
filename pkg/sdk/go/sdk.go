@@ -916,9 +916,9 @@ type SDK interface {
 	// BootstrapSecure retrieves a configuration with given external ID and encrypted external key.
 	//
 	// example:
-	//  bootstrap, _ := sdk.BootstrapSecure("externalID", "externalKey")
+	//  bootstrap, _ := sdk.BootstrapSecure("externalID", "externalKey", "cryptoKey")
 	//  fmt.Println(bootstrap)
-	BootstrapSecure(externalID, externalKey string) (BootstrapConfig, errors.SDKError)
+	BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
 
 	// Bootstraps retrieves a list of managed configs.
 	//

@@ -4,8 +4,13 @@
 package sdk
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -233,18 +238,60 @@ func (sdk mgSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, err
 	return bc, nil
 }
 
-func (sdk mgSDK) BootstrapSecure(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
+func (sdk mgSDK) BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, secureEndpoint, externalID)
 
-	_, body, err := sdk.processRequest(http.MethodGet, url, ThingPrefix+externalKey, nil, nil, http.StatusOK)
+	encExtKey, err := bootstrapEncrypt([]byte(externalKey), cryptoKey)
 	if err != nil {
-		return BootstrapConfig{}, err
+		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
+	_, body, sdkErr := sdk.processRequest(http.MethodGet, url, ThingPrefix+encExtKey, nil, nil, http.StatusOK)
+	if sdkErr != nil {
+		return BootstrapConfig{}, sdkErr
+	}
+
+	decBody, decErr := bootstrapDecrypt(body, cryptoKey)
+	if decErr != nil {
+		return BootstrapConfig{}, errors.NewSDKError(decErr)
+	}
 	var bc BootstrapConfig
-	if err := json.Unmarshal(body, &bc); err != nil {
+	if err := json.Unmarshal(decBody, &bc); err != nil {
 		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
 	return bc, nil
+}
+
+func bootstrapEncrypt(in []byte, cryptoKey string) (string, error) {
+	block, err := aes.NewCipher([]byte(cryptoKey))
+	if err != nil {
+		return "", err
+	}
+	ciphertext := make([]byte, aes.BlockSize+len(in))
+	iv := ciphertext[:aes.BlockSize]
+
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
+	}
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], in)
+	return hex.EncodeToString(ciphertext), nil
+}
+
+func bootstrapDecrypt(in []byte, cryptoKey string) ([]byte, error) {
+	ciphertext := in
+
+	block, err := aes.NewCipher([]byte(cryptoKey))
+	if err != nil {
+		return nil, err
+	}
+	if len(ciphertext) < aes.BlockSize {
+		return nil, err
+	}
+	iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(ciphertext, ciphertext)
+	return ciphertext, nil
 }

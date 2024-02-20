@@ -45,10 +45,10 @@ require (
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/rubenv/sql-migrate v1.6.1
+	github.com/segmentio/kafka-go v0.4.42
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	github.com/segmentio/kafka-go v0.4.42
 	go.mongodb.org/mongo-driver v1.13.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.47.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0
@@ -145,8 +145,8 @@ require (
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.1.12 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
-	github.com/pion/dtls/v2 v2.2.9 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+	github.com/pion/dtls/v2 v2.2.9 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/transport/v2 v2.2.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

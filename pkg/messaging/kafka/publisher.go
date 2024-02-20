@@ -109,10 +109,7 @@ func (pub *publisher) Close() error {
 		pub.topics[topic].Close()
 	}
 
-	if err := pub.conn.DeleteTopics(topics...); err != nil {
-		return err
-	}
-	return nil
+	return pub.conn.DeleteTopics(topics...)
 }
 
 // formatTopic replaces all '>' with '*' in topic string

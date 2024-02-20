@@ -8,12 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"strings"
 	"sync"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-zookeeper/zk"
 	kafka "github.com/segmentio/kafka-go"
@@ -49,13 +49,13 @@ type subscription struct {
 type pubsub struct {
 	publisher
 	zkConn        *zk.Conn
-	logger        mglog.Logger
+	logger        *slog.Logger
 	mu            sync.Mutex
 	subscriptions map[string]map[string]subscription
 }
 
 // NewPubSub returns Kafka message publisher/subscriber.
-func NewPubSub(url, _ string, logger mglog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url, _ string, logger *slog.Logger) (messaging.PubSub, error) {
 	conn, err := kafka.Dial("tcp", url)
 	if err != nil {
 		return &pubsub{}, err

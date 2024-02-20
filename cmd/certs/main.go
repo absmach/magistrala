@@ -57,10 +57,12 @@ type config struct {
 	SignCAKeyPath string `env:"MG_CERTS_SIGN_CA_KEY_PATH"    envDefault:"ca.key"`
 
 	// 3rd party PKI API access settings
-	PkiHost  string `env:"MG_CERTS_VAULT_HOST"    envDefault:""`
-	PkiPath  string `env:"MG_VAULT_PKI_INT_PATH"  envDefault:"pki_int"`
-	PkiRole  string `env:"MG_VAULT_CA_ROLE_NAME"  envDefault:"magistrala"`
-	PkiToken string `env:"MG_VAULT_TOKEN"         envDefault:""`
+	PkiHost      string `env:"MG_CERTS_VAULT_HOST"               envDefault:""`
+	PkiAppRoleID string `env:"MG_CERTS_VAULT_APPROLE_ROLEID"     envDefault:""`
+	PkiAppSecret string `env:"MG_CERTS_VAULT_APPROLE_SECRET"     envDefault:""`
+	PkiNamespace string `env:"MG_CERTS_VAULT_NAMESPACE"          envDefault:""`
+	PkiPath      string `env:"MG_CERTS_VAULT_THINGS_CERTS_PKI_PATH"       envDefault:"pki_int"`
+	PkiRole      string `env:"MG_CERTS_VAULT_THINGS_CERTS_PKI_ROLE_NAME"  envDefault:"magistrala"`
 }
 
 func main() {
@@ -94,12 +96,16 @@ func main() {
 		return
 	}
 
-	pkiclient, err := vault.NewVaultClient(cfg.PkiToken, cfg.PkiHost, cfg.PkiPath, cfg.PkiRole)
+	pkiclient, err := vault.NewVaultClient(cfg.PkiAppRoleID, cfg.PkiAppSecret, cfg.PkiHost, cfg.PkiNamespace, cfg.PkiPath, cfg.PkiRole, logger)
 	if err != nil {
 		logger.Error("failed to configure client for PKI engine")
 		exitCode = 1
 		return
 	}
+
+	g.Go(func() error {
+		return pkiclient.LoginAndRenew(ctx)
+	})
 
 	dbConfig := pgclient.Config{Name: defDB}
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {

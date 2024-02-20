@@ -5,11 +5,14 @@
 package pki
 
 import (
+	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/api/auth/approle"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -30,6 +33,13 @@ var (
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
 	errFailedCertDecoding = errors.New("failed to decode response from vault service")
+	errFailedToLogin      = errors.New("failed to login to Vault")
+	errFailedAppRole      = errors.New("failed to create vault new app role")
+	errNoAuthInfo         = errors.New("no auth information from Vault")
+	errNonRenewal         = errors.New("token is not configured to be renewable")
+	errRenewWatcher       = errors.New("unable to initialize new lifetime watcher for renewing auth token")
+	errFailedRenew        = errors.New("failed to renew token")
+	errCouldNotRenew      = errors.New("token can no longer be renewed")
 )
 
 type Cert struct {
@@ -52,10 +62,15 @@ type Agent interface {
 
 	// Revoke revokes certificate from PKI
 	Revoke(serial string) (time.Time, error)
+
+	// Login to PKI and renews token
+	LoginAndRenew(ctx context.Context) error
 }
 
 type pkiAgent struct {
-	token     string
+	appRole   string
+	appSecret string
+	namespace string
 	path      string
 	role      string
 	host      string
@@ -63,6 +78,8 @@ type pkiAgent struct {
 	readURL   string
 	revokeURL string
 	client    *api.Client
+	secret    *api.Secret
+	logger    *slog.Logger
 }
 
 type certReq struct {
@@ -75,7 +92,7 @@ type certRevokeReq struct {
 }
 
 // NewVaultClient instantiates a Vault client.
-func NewVaultClient(token, host, path, role string) (Agent, error) {
+func NewVaultClient(appRole, appSecret, host, namespace, path, role string, logger *slog.Logger) (Agent, error) {
 	conf := api.DefaultConfig()
 	conf.Address = host
 
@@ -83,13 +100,19 @@ func NewVaultClient(token, host, path, role string) (Agent, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.SetToken(token)
+	if namespace != "" {
+		client.SetNamespace(namespace)
+	}
+
 	p := pkiAgent{
-		token:     token,
+		appRole:   appRole,
+		appSecret: appSecret,
 		host:      host,
+		namespace: namespace,
 		role:      role,
 		path:      path,
 		client:    client,
+		logger:    logger,
 		issueURL:  "/" + path + "/" + issue + "/" + role,
 		readURL:   "/" + path + "/" + cert + "/",
 		revokeURL: "/" + path + "/" + revoke,
@@ -161,4 +184,82 @@ func (p *pkiAgent) Revoke(serial string) (time.Time, error) {
 	}
 
 	return time.Unix(0, int64(rev)*int64(time.Second)), nil
+}
+
+func (p *pkiAgent) LoginAndRenew(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			p.logger.Info("pki login and renew function stopping")
+			return nil
+		default:
+			err := p.login(ctx)
+			if err != nil {
+				p.logger.Info("unable to authenticate to Vault", slog.Any("error", err))
+				time.Sleep(5 * time.Second)
+				break
+			}
+			tokenErr := p.manageTokenLifecycle()
+			if tokenErr != nil {
+				p.logger.Info("unable to start managing token lifecycle", slog.Any("error", tokenErr))
+				time.Sleep(5 * time.Second)
+			}
+		}
+	}
+}
+
+func (p *pkiAgent) login(ctx context.Context) error {
+	secretID := &approle.SecretID{FromString: p.appSecret}
+
+	authMethod, err := approle.NewAppRoleAuth(
+		p.appRole,
+		secretID,
+	)
+	if err != nil {
+		return errors.Wrap(errFailedAppRole, err)
+	}
+	if p.namespace != "" {
+		p.client.SetNamespace(p.namespace)
+	}
+	secret, err := p.client.Auth().Login(ctx, authMethod)
+	if err != nil {
+		return errors.Wrap(errFailedToLogin, err)
+	}
+	if secret == nil {
+		return errNoAuthInfo
+	}
+	p.secret = secret
+	return nil
+}
+
+func (p *pkiAgent) manageTokenLifecycle() error {
+	renew := p.secret.Auth.Renewable
+	if !renew {
+		return errNonRenewal
+	}
+
+	watcher, err := p.client.NewLifetimeWatcher(&api.LifetimeWatcherInput{
+		Secret:    p.secret,
+		Increment: 3600, // Requesting token for 3600s = 1h, If this is more than token_max_ttl, then response token will have token_max_ttl
+	})
+	if err != nil {
+		return errors.Wrap(errRenewWatcher, err)
+	}
+
+	go watcher.Start()
+	defer watcher.Stop()
+
+	for {
+		select {
+		case err := <-watcher.DoneCh():
+			if err != nil {
+				return errors.Wrap(errFailedRenew, err)
+			}
+			// This occurs once the token has reached max TTL or if token is disabled for renewal.
+			return errCouldNotRenew
+
+		case renewal := <-watcher.RenewCh():
+			p.logger.Info("Successfully renewed token", slog.Any("renewed_at", renewal.RenewedAt))
+		}
+	}
 }

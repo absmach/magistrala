@@ -6,6 +6,7 @@ package mocks
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
@@ -158,6 +159,10 @@ func (a *agent) Read(serial string) (pki.Cert, error) {
 
 func (a *agent) Revoke(serial string) (time.Time, error) {
 	return time.Now(), nil
+}
+
+func (a *agent) LoginAndRenew(ctx context.Context) error {
+	return nil
 }
 
 func publicKey(priv interface{}) (interface{}, error) {

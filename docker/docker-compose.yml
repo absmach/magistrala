@@ -234,10 +234,18 @@ services:
       - ./nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
       - ./nginx/snippets:/etc/nginx/snippets
       - ./ssl/authorization.js:/etc/nginx/authorization.js
-      - ./ssl/certs/magistrala-server.crt:/etc/ssl/certs/magistrala-server.crt
-      - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
-      - ./ssl/certs/magistrala-server.key:/etc/ssl/private/magistrala-server.key
-      - ./ssl/dhparam.pem:/etc/ssl/certs/dhparam.pem
+      - type: bind
+        source: ${MG_NGINX_SERVER_CERT:-./ssl/certs/magistrala-server.crt}
+        target: /etc/ssl/certs/magistrala-server.crt
+      - type: bind
+        source: ${MG_NGINX_SERVER_KEY:-./ssl/certs/magistrala-server.key}
+        target: /etc/ssl/private/magistrala-server.key
+      - type: bind
+        source: ${MG_NGINX_SERVER_CLIENT_CA:-./ssl/certs/ca.crt}
+        target: /etc/ssl/certs/ca.crt
+      - type: bind
+        source: ${MG_NGINX_SERVER_DHPARAM:-./ssl/dhparam.pem}
+        target: /etc/ssl/certs/dhparam.pem
     ports:
       - ${MG_NGINX_HTTP_PORT}:${MG_NGINX_HTTP_PORT}
       - ${MG_NGINX_SSL_PORT}:${MG_NGINX_SSL_PORT}
@@ -716,7 +724,7 @@ services:
       MG_UI_DB_SSL_MODE: ${MG_UI_DB_SSL_MODE}
       MG_UI_DB_SSL_CERT: ${MG_UI_DB_SSL_CERT}
       MG_UI_DB_SSL_KEY: ${MG_UI_DB_SSL_KEY}
-      MG_UI_DB_SSL_ROOT_CERT: ${MG_UI_DB_SSL_ROOT_CERT}      
+      MG_UI_DB_SSL_ROOT_CERT: ${MG_UI_DB_SSL_ROOT_CERT}
     ports:
       - ${MG_UI_PORT}:${MG_UI_PORT}
     networks:

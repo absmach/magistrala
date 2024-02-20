@@ -30,38 +30,41 @@ curl -s -S -X DELETE http://localhost:9019/certs/revoke -H "Authorization: Beare
 
 The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
-| Variable                  | Description                                                                 | Default                             |
-| ------------------------- | --------------------------------------------------------------------------- | ----------------------------------- |
-| MG_CERTS_LOG_LEVEL        | Log level for the Certs (debug, info, warn, error)                          | info                                |
-| MG_CERTS_HTTP_HOST        | Service Certs host                                                          | ""                                  |
-| MG_CERTS_HTTP_PORT        | Service Certs port                                                          | 9019                                |
-| MG_CERTS_HTTP_SERVER_CERT | Path to the PEM encoded server certificate file                             | ""                                  |
-| MG_CERTS_HTTP_SERVER_KEY  | Path to the PEM encoded server key file                                     | ""                                  |
-| MG_AUTH_GRPC_URL          | Auth service gRPC URL                                                       | <localhost:8181>                    |
-| MG_AUTH_GRPC_TIMEOUT      | Auth service gRPC request timeout in seconds                                | 1s                                  |
-| MG_AUTH_GRPC_CLIENT_CERT  | Path to the PEM encoded auth service gRPC client certificate file           | ""                                  |
-| MG_AUTH_GRPC_CLIENT_KEY   | Path to the PEM encoded auth service gRPC client key file                   | ""                                  |
-| MG_AUTH_GRPC_SERVER_CERTS | Path to the PEM encoded auth server gRPC server trusted CA certificate file | ""                                  |
-| MG_CERTS_SIGN_CA_PATH     | Path to the PEM encoded CA certificate file                                 | ca.crt                              |
-| MG_CERTS_SIGN_CA_KEY_PATH | Path to the PEM encoded CA key file                                         | ca.key                              |
-| MG_CERTS_VAULT_HOST       | Vault host                                                                  | ""                                  |
-| MG_VAULT_PKI_INT_PATH     | Vault PKI intermediate path                                                 | pki_int                             |
-| MG_VAULT_CA_ROLE_NAME     | Vault PKI role name                                                         | magistrala                          |
-| MG_VAULT_TOKEN            | Vault token                                                                 | ""                                  |
-| MG_CERTS_DB_HOST          | Database host                                                               | localhost                           |
-| MG_CERTS_DB_PORT          | Database port                                                               | 5432                                |
-| MG_CERTS_DB_PASS          | Database password                                                           | magistrala                          |
-| MG_CERTS_DB_USER          | Database user                                                               | magistrala                          |
-| MG_CERTS_DB_NAME          | Database name                                                               | certs                               |
-| MG_CERTS_DB_SSL_MODE      | Database SSL mode                                                           | disable                             |
-| MG_CERTS_DB_SSL_CERT      | Database SSL certificate                                                    | ""                                  |
-| MG_CERTS_DB_SSL_KEY       | Database SSL key                                                            | ""                                  |
-| MG_CERTS_DB_SSL_ROOT_CERT | Database SSL root certificate                                               | ""                                  |
-| MG_THINGS_URL             | Things service URL                                                          | <localhost:9000>                    |
-| MG_JAEGER_URL             | Jaeger server URL                                                           | <http://localhost:14268/api/traces> |
-| MG_JAEGER_TRACE_RATIO     | Jaeger sampling ratio                                                       | 1.0                                 |
-| MG_SEND_TELEMETRY         | Send telemetry to magistrala call home server                               | true                                |
-| MG_CERTS_INSTANCE_ID      | Service instance ID                                                         | ""                                  |
+
+| Variable                                  | Description                                                                 | Default                                                                |
+| :---------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| MG_CERTS_LOG_LEVEL                        | Log level for the Certs (debug, info, warn, error)                          | info                                                                   |
+| MG_CERTS_HTTP_HOST                        | Service Certs host                                                          | ""                                                                     |
+| MG_CERTS_HTTP_PORT                        | Service Certs port                                                          | 9019                                                                   |
+| MG_CERTS_HTTP_SERVER_CERT                 | Path to the PEM encoded server certificate file                             | ""                                                                     |
+| MG_CERTS_HTTP_SERVER_KEY                  | Path to the PEM encoded server key file                                     | ""                                                                     |
+| MG_AUTH_GRPC_URL                          | Auth service gRPC URL                                                       | [localhost:8181](localhost:8181)                                       |
+| MG_AUTH_GRPC_TIMEOUT                      | Auth service gRPC request timeout in seconds                                | 1s                                                                     |
+| MG_AUTH_GRPC_CLIENT_CERT                  | Path to the PEM encoded auth service gRPC client certificate file           | ""                                                                     |
+| MG_AUTH_GRPC_CLIENT_KEY                   | Path to the PEM encoded auth service gRPC client key file                   | ""                                                                     |
+| MG_AUTH_GRPC_SERVER_CERTS                 | Path to the PEM encoded auth server gRPC server trusted CA certificate file | ""                                                                     |
+| MG_CERTS_SIGN_CA_PATH                     | Path to the PEM encoded CA certificate file                                 | ca.crt                                                                 |
+| MG_CERTS_SIGN_CA_KEY_PATH                 | Path to the PEM encoded CA key file                                         | ca.key                                                                 |
+| MG_CERTS_VAULT_HOST                       | Vault host                                                                  | http://vault:8200                                                      |
+| MG_CERTS_VAULT_NAMESPACE                  | Vault namespace in which pki is present                                     | magistrala                                                             |
+| MG_CERTS_VAULT_APPROLE_ROLEID             | Vault AppRole auth RoleID                                                   | magistrala                                                             |
+| MG_CERTS_VAULT_APPROLE_SECRET             | Vault AppRole auth Secret                                                   | magistrala                                                             |
+| MG_CERTS_VAULT_THINGS_CERTS_PKI_PATH      | Vault PKI path for issuing Things Certificates                              | pki_int                                                                |
+| MG_CERTS_VAULT_THINGS_CERTS_PKI_ROLE_NAME | Vault PKI Role Name for issuing Things Certificates                         | magistrala_things_certs                                                |
+| MG_CERTS_DB_HOST                          | Database host                                                               | localhost                                                              |
+| MG_CERTS_DB_PORT                          | Database port                                                               | 5432                                                                   |
+| MG_CERTS_DB_PASS                          | Database password                                                           | magistrala                                                             |
+| MG_CERTS_DB_USER                          | Database user                                                               | magistrala                                                             |
+| MG_CERTS_DB_NAME                          | Database name                                                               | certs                                                                  |
+| MG_CERTS_DB_SSL_MODE                      | Database SSL mode                                                           | disable                                                                |
+| MG_CERTS_DB_SSL_CERT                      | Database SSL certificate                                                    | ""                                                                     |
+| MG_CERTS_DB_SSL_KEY                       | Database SSL key                                                            | ""                                                                     |
+| MG_CERTS_DB_SSL_ROOT_CERT                 | Database SSL root certificate                                               | ""                                                                     |
+| MG_THINGS_URL                             | Things service URL                                                          | [localhost:9000](localhost:9000)                                       |
+| MG_JAEGER_URL                             | Jaeger server URL                                                           | [http://localhost:14268/api/traces](http://localhost:14268/api/traces) |
+| MG_JAEGER_TRACE_RATIO                     | Jaeger sampling ratio                                                       | 1.0                                                                    |
+| MG_SEND_TELEMETRY                         | Send telemetry to magistrala call home server                               | true                                                                   |
+| MG_CERTS_INSTANCE_ID                      | Service instance ID                                                         | ""                                                                     |
 
 ## Deployment
 
@@ -95,10 +98,12 @@ MG_AUTH_GRPC_CLIENT_KEY="" \
 MG_AUTH_GRPC_SERVER_CERTS="" \
 MG_CERTS_SIGN_CA_PATH=ca.crt \
 MG_CERTS_SIGN_CA_KEY_PATH=ca.key \
-MG_CERTS_VAULT_HOST="" \
-MG_VAULT_PKI_INT_PATH=pki_int \
-MG_VAULT_CA_ROLE_NAME=magistrala \
-MG_VAULT_TOKEN="" \
+MG_CERTS_VAULT_HOST=http://vault:8200 \
+MG_CERTS_VAULT_NAMESPACE=magistrala \
+MG_CERTS_VAULT_APPROLE_ROLEID=magistrala \
+MG_CERTS_VAULT_APPROLE_SECRET=magistrala \
+MG_CERTS_VAULT_THINGS_CERTS_PKI_PATH=pki_int \
+MG_CERTS_VAULT_THINGS_CERTS_PKI_ROLE_NAME=magistrala_things_certs \
 MG_CERTS_DB_HOST=localhost \
 MG_CERTS_DB_PORT=5432 \
 MG_CERTS_DB_PASS=magistrala \

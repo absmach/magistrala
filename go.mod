@@ -42,8 +42,8 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/rubenv/sql-migrate v1.6.1
+	github.com/segmentio/kafka-go v0.4.47
 	github.com/spf13/cobra v1.8.1
-	github.com/segmentio/kafka-go v0.4.42
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.15.0
@@ -62,7 +62,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240520151616-dc85e6b867a5
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.2
-	github.com/segmentio/kafka-go v0.4.42
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	moul.io/http2curl v1.0.0
 )
@@ -145,9 +144,8 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runc v1.1.12 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
-	github.com/pion/dtls/v2 v2.2.8-0.20240501061905-2c36d63320a0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/pion/dtls/v2 v2.2.10 // indirect
+	github.com/pion/dtls/v2 v2.2.8-0.20240501061905-2c36d63320a0 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/transport/v3 v3.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

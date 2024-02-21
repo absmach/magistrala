@@ -1154,7 +1154,7 @@ func TestBootstrap(t *testing.T) {
 			desc:        "bootstrap a Thing with an empty key",
 			externalID:  c.ExternalID,
 			externalKey: "",
-			status:      http.StatusUnauthorized,
+			status:      http.StatusBadRequest,
 			res:         missingKeyRes,
 			secure:      false,
 		},

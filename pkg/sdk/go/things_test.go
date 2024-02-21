@@ -361,7 +361,7 @@ func TestListThings(t *testing.T) {
 			token:    authmocks.InvalidValue,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -369,7 +369,7 @@ func TestListThings(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -464,9 +464,9 @@ func TestListThings(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
-			repoCall2 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, errors.ErrAuthorization)
+			repoCall2 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, svcerr.ErrAuthorization)
 		}
 		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(pm), Clients: convertThings(tc.response...)}, tc.err)
 		page, err := mgsdk.Things(pm, validToken)
@@ -573,7 +573,7 @@ func TestListThingsByChannel(t *testing.T) {
 			channelID: testsutil.GenerateUUID(t),
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "list things with an invalid id",
@@ -646,7 +646,7 @@ func TestThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    validToken,
 			thingID:  wrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(repoerr.ErrNotFound, repoerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:     "view thing with an invalid token and invalid thing id",
@@ -660,7 +660,7 @@ func TestThing(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.thingID).Return(convertThing(tc.response), tc.err)
 		rClient, err := mgsdk.Thing(tc.thingID, tc.token)
@@ -745,7 +745,7 @@ func TestUpdateThing(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := cRepo.On("Update", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.err)
 		uClient, err := mgsdk.UpdateThing(tc.thing, tc.token)
@@ -830,7 +830,7 @@ func TestUpdateThingTags(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := cRepo.On("UpdateTags", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.err)
 		uClient, err := mgsdk.UpdateThingTags(tc.thing, tc.token)
@@ -883,8 +883,8 @@ func TestUpdateThingSecret(t *testing.T) {
 			newSecret: "newPassword",
 			token:     "non-existent",
 			response:  sdk.Thing{},
-			repoErr:   errors.ErrAuthorization,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, errors.ErrAuthorization), http.StatusForbidden),
+			repoErr:   svcerr.ErrAuthorization,
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrAuthorization), http.StatusForbidden),
 		},
 		{
 			desc:      "update thing secret with wrong old secret",
@@ -900,7 +900,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := cRepo.On("UpdateSecret", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.repoErr)
 		uClient, err := mgsdk.UpdateThingSecret(tc.oldSecret, tc.newSecret, tc.token)
@@ -965,7 +965,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    sdk.Thing{},
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, repoerr.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
@@ -973,7 +973,7 @@ func TestEnableThing(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertThing(tc.thing), tc.repoErr)
 		repoCall3 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.repoErr)
@@ -1036,7 +1036,7 @@ func TestEnableThing(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response.Things)}, nil)
 		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
@@ -1100,7 +1100,7 @@ func TestDisableThing(t *testing.T) {
 			token:    validToken,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, repoerr.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
@@ -1108,7 +1108,7 @@ func TestDisableThing(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertThing(tc.thing), tc.repoErr)
 		repoCall3 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.repoErr)
@@ -1173,7 +1173,7 @@ func TestDisableThing(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response.Things)}, nil)
 		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
@@ -1218,15 +1218,15 @@ func TestShareThing(t *testing.T) {
 			channelID: generateUUID(t),
 			thingID:   "thingID",
 			token:     invalidToken,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "share thing with valid token for unauthorized user",
 			channelID: generateUUID(t),
 			thingID:   "thingID",
 			token:     validToken,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthorization), http.StatusForbidden),
-			repoErr:   errors.ErrAuthorization,
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
+			repoErr:   svcerr.ErrAuthorization,
 		},
 	}
 
@@ -1235,7 +1235,7 @@ func TestShareThing(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, tc.repoErr)
 		repoCall2 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		if tc.token != validToken {
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Added: true}, nil)
 		req := sdk.UsersRelationRequest{

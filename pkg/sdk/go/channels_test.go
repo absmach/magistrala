@@ -20,6 +20,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
@@ -109,7 +110,7 @@ func TestCreateChannel(t *testing.T) {
 				Status:   mgclients.EnabledStatus.String(),
 			},
 			token: token,
-			err:   errors.NewSDKErrorWithStatus(errors.ErrCreateEntity, http.StatusInternalServerError),
+			err:   errors.NewSDKErrorWithStatus(repoerr.ErrCreateEntity, http.StatusInternalServerError),
 		},
 		{
 			desc: "create channel with missing name",
@@ -655,7 +656,7 @@ func TestEnableChannel(t *testing.T) {
 	}
 
 	repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-	repoCall1 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, errors.ErrNotFound)
+	repoCall1 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, repoerr.ErrNotFound)
 	repoCall2 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
 	_, err := mgsdk.EnableChannel("wrongID", validToken)
 	assert.Equal(t, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), err, fmt.Sprintf("Enable channel with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
@@ -708,7 +709,7 @@ func TestDisableChannel(t *testing.T) {
 
 	repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 	repoCall1 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
-	repoCall2 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, errors.ErrNotFound)
+	repoCall2 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, repoerr.ErrNotFound)
 	_, err := mgsdk.DisableChannel("wrongID", validToken)
 	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
 	ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")

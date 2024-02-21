@@ -199,10 +199,10 @@ func TestIssue(t *testing.T) {
 				ObjectType:  auth.PlatformType,
 				Permission:  auth.AdminPermission,
 			},
-			checkPolicyErr:       errors.ErrNotFound,
+			checkPolicyErr:       repoerr.ErrNotFound,
 			retrieveByIDResponse: auth.Domain{},
 			retreiveByIDErr:      repoerr.ErrNotFound,
-			err:                  errors.ErrNotFound,
+			err:                  repoerr.ErrNotFound,
 		},
 		{
 			desc: "issue login key with failed check on platform admin with enabled status",
@@ -351,8 +351,8 @@ func TestIssue(t *testing.T) {
 				IssuedAt: time.Now(),
 			},
 			token:   accessToken,
-			saveErr: errors.ErrNotFound,
-			err:     errors.ErrNotFound,
+			saveErr: repoerr.ErrNotFound,
+			err:     repoerr.ErrNotFound,
 		},
 	}
 	for _, tc := range cases3 {
@@ -406,7 +406,7 @@ func TestIssue(t *testing.T) {
 			},
 			token:           refreshToken,
 			checkPolicyErr:  svcerr.ErrAuthorization,
-			retrieveByIDErr: errors.ErrNotFound,
+			retrieveByIDErr: repoerr.ErrNotFound,
 			err:             svcerr.ErrAuthorization,
 		},
 		{
@@ -463,7 +463,7 @@ func TestIssue(t *testing.T) {
 			},
 			token:           refreshToken,
 			checkPolicyErr:  svcerr.ErrAuthorization,
-			retrieveByIDErr: errors.ErrNotFound,
+			retrieveByIDErr: repoerr.ErrNotFound,
 			err:             svcerr.ErrNotFound,
 		},
 	}
@@ -678,7 +678,7 @@ func TestIdentify(t *testing.T) {
 			desc: "identify invalid key",
 			key:  "invalid",
 			idt:  "",
-			err:  errors.ErrAuthentication,
+			err:  svcerr.ErrAuthentication,
 		},
 		{
 			desc: "identify invalid key type",
@@ -782,7 +782,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.GroupType,
 				Permission:  auth.AdminPermission,
 			},
-			err: errors.ErrDomainAuthorization,
+			err: svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc: "authorize token with disabled domain",
@@ -848,8 +848,8 @@ func TestAuthorize(t *testing.T) {
 				Name:   groupName,
 				Status: auth.DisabledStatus,
 			},
-			checkPolicyErr1: errors.ErrDomainAuthorization,
-			err:             errors.ErrDomainAuthorization,
+			checkPolicyErr1: svcerr.ErrDomainAuthorization,
+			err:             svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc: "authorize token with frozen domain",
@@ -915,8 +915,8 @@ func TestAuthorize(t *testing.T) {
 				Name:   groupName,
 				Status: auth.FreezeStatus,
 			},
-			checkPolicyErr1: errors.ErrDomainAuthorization,
-			err:             errors.ErrDomainAuthorization,
+			checkPolicyErr1: svcerr.ErrDomainAuthorization,
+			err:             svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc: "authorize token with domain with invalid status",
@@ -949,7 +949,7 @@ func TestAuthorize(t *testing.T) {
 				Name:   groupName,
 				Status: auth.AllStatus,
 			},
-			err: errors.ErrDomainAuthorization,
+			err: svcerr.ErrDomainAuthorization,
 		},
 
 		{
@@ -1006,7 +1006,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.PlatformKind,
 				Permission:  auth.AdminPermission,
 			},
-			err: errors.ErrDomainAuthorization,
+			err: svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc: "authorize a user key successfully",
@@ -1043,7 +1043,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.PlatformType,
 				Permission:  auth.AdminPermission,
 			},
-			err: errors.ErrDomainAuthorization,
+			err: svcerr.ErrDomainAuthorization,
 		},
 	}
 	for _, tc := range cases {
@@ -1770,14 +1770,14 @@ func TestRetrieveDomain(t *testing.T) {
 			desc:          "retrieve non-existing domain",
 			token:         accessToken,
 			domainID:      inValid,
-			domainRepoErr: errors.ErrNotFound,
+			domainRepoErr: repoerr.ErrNotFound,
 			err:           svcerr.ErrAuthorization,
 		},
 		{
 			desc:           "retrieve domain with failed to retrieve by id",
 			token:          accessToken,
 			domainID:       validID,
-			domainRepoErr1: errors.ErrNotFound,
+			domainRepoErr1: repoerr.ErrNotFound,
 			err:            svcerr.ErrNotFound,
 		},
 	}
@@ -1829,14 +1829,14 @@ func TestRetrieveDomainPermissions(t *testing.T) {
 			desc:                   "retrieve domain permissions with failed to retrieve permissions",
 			token:                  accessToken,
 			domainID:               validID,
-			retreivePermissionsErr: errors.ErrNotFound,
+			retreivePermissionsErr: repoerr.ErrNotFound,
 			err:                    svcerr.ErrNotFound,
 		},
 		{
 			desc:            "retrieve domain permissions with failed to retrieve by id",
 			token:           accessToken,
 			domainID:        validID,
-			retreiveByIDErr: errors.ErrNotFound,
+			retreiveByIDErr: repoerr.ErrNotFound,
 			err:             svcerr.ErrNotFound,
 		},
 	}
@@ -1905,7 +1905,7 @@ func TestUpdateDomain(t *testing.T) {
 				Name:  &valid,
 				Alias: &valid,
 			},
-			retrieveByIDErr: errors.ErrNotFound,
+			retrieveByIDErr: repoerr.ErrNotFound,
 			err:             svcerr.ErrNotFound,
 		},
 		{
@@ -1973,7 +1973,7 @@ func TestChangeDomainStatus(t *testing.T) {
 			domainReq: auth.DomainReq{
 				Status: &disabledStatus,
 			},
-			retreieveByIDErr: errors.ErrNotFound,
+			retreieveByIDErr: repoerr.ErrNotFound,
 			err:              svcerr.ErrAuthorization,
 		},
 		{
@@ -2607,7 +2607,7 @@ func TestListUsersDomains(t *testing.T) {
 				Limit:      10,
 				Permission: auth.AdminPermission,
 			},
-			listDomainErr: errors.ErrNotFound,
+			listDomainErr: repoerr.ErrNotFound,
 			err:           svcerr.ErrViewEntity,
 		},
 	}

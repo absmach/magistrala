@@ -80,14 +80,14 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 		if c.ID == "" {
 			clientID, err := svc.idProvider.ID()
 			if err != nil {
-				return []mgclients.Client{}, errors.Wrap(svcerr.ErrUniqueID, err)
+				return []mgclients.Client{}, err
 			}
 			c.ID = clientID
 		}
 		if c.Credentials.Secret == "" {
 			key, err := svc.idProvider.ID()
 			if err != nil {
-				return []mgclients.Client{}, errors.Wrap(svcerr.ErrUniqueID, err)
+				return []mgclients.Client{}, err
 			}
 			c.Credentials.Secret = key
 		}
@@ -154,7 +154,7 @@ func (svc service) ViewClientPerms(ctx context.Context, token, id string) ([]str
 		return nil, err
 	}
 	if len(permissions) == 0 {
-		return nil, errors.ErrAuthorization
+		return nil, svcerr.ErrAuthorization
 	}
 	return permissions, nil
 }
@@ -587,10 +587,10 @@ func (svc service) Identify(ctx context.Context, key string) (string, error) {
 func (svc service) identify(ctx context.Context, token string) (*magistrala.IdentityRes, error) {
 	res, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrAuthentication, err)
+		return nil, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if res.GetId() == "" || res.GetDomainId() == "" {
-		return nil, errors.ErrDomainAuthorization
+		return nil, svcerr.ErrDomainAuthorization
 	}
 	return res, nil
 }
@@ -610,7 +610,7 @@ func (svc *service) authorize(ctx context.Context, domainID, subjType, subjKind,
 		return "", err
 	}
 	if !res.GetAuthorized() {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
 	return res.GetId(), nil

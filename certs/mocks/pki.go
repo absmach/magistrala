@@ -20,6 +20,7 @@ import (
 
 	"github.com/absmach/magistrala/certs/pki"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 )
 
 const keyBits = 2048
@@ -151,7 +152,7 @@ func (a *agent) Read(serial string) (pki.Cert, error) {
 
 	crt, ok := a.certs[serial]
 	if !ok {
-		return pki.Cert{}, errors.ErrNotFound
+		return pki.Cert{}, repoerr.ErrNotFound
 	}
 
 	return crt, nil

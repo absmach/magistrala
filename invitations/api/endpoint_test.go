@@ -17,7 +17,7 @@ import (
 	"github.com/absmach/magistrala/invitations/api"
 	"github.com/absmach/magistrala/invitations/mocks"
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -111,7 +111,7 @@ func TestSendInvitation(t *testing.T) {
 			data:        fmt.Sprintf(`{"user_id": "%s", "domain_id": "%s", "relation": "%s"}`, validID, validID, "domain"),
 			status:      http.StatusForbidden,
 			contentType: validContenType,
-			svcErr:      errors.ErrAuthorization,
+			svcErr:      svcerr.ErrAuthorization,
 		},
 	}
 
@@ -283,7 +283,7 @@ func TestListInvitation(t *testing.T) {
 			token:       validToken,
 			status:      http.StatusForbidden,
 			contentType: validContenType,
-			svcErr:      errors.ErrAuthorization,
+			svcErr:      svcerr.ErrAuthorization,
 		},
 	}
 
@@ -341,7 +341,7 @@ func TestViewInvitation(t *testing.T) {
 			domainID:    validID,
 			status:      http.StatusForbidden,
 			contentType: validContenType,
-			svcErr:      errors.ErrAuthorization,
+			svcErr:      svcerr.ErrAuthorization,
 		},
 		{
 			desc:        "with empty user_id",
@@ -426,7 +426,7 @@ func TestDeleteInvitation(t *testing.T) {
 			domainID:    validID,
 			status:      http.StatusForbidden,
 			contentType: validContenType,
-			svcErr:      errors.ErrAuthorization,
+			svcErr:      svcerr.ErrAuthorization,
 		},
 		{
 			desc:        "with empty user_id",
@@ -507,7 +507,7 @@ func TestAcceptInvitation(t *testing.T) {
 			data:        fmt.Sprintf(`{"domain_id": "%s"}`, validID),
 			status:      http.StatusForbidden,
 			contentType: validContenType,
-			svcErr:      errors.ErrAuthorization,
+			svcErr:      svcerr.ErrAuthorization,
 		},
 		{
 			desc:        "invalid content type",

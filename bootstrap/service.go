@@ -12,6 +12,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
@@ -241,7 +242,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 
 	for _, c := range disconnect {
 		if err := bs.sdk.DisconnectThing(id, c, token); err != nil {
-			if errors.Contains(err, errors.ErrNotFound) {
+			if errors.Contains(err, repoerr.ErrNotFound) {
 				continue
 			}
 			return ErrThings
@@ -330,7 +331,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 	case Inactive:
 		for _, c := range cfg.Channels {
 			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, token); err != nil {
-				if errors.Contains(err, errors.ErrNotFound) {
+				if errors.Contains(err, repoerr.ErrNotFound) {
 					continue
 				}
 				return ErrThings

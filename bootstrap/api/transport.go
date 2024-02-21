@@ -295,11 +295,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, bootstrap.ErrExternalKeySecure),
 		errors.Contains(err, svcerr.ErrAuthorization):
 		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, svcerr.ErrConflict):
-		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, bootstrap.ErrThings):
 		w.WriteHeader(http.StatusServiceUnavailable)
-
+	case errors.Contains(err, svcerr.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, svcerr.ErrCreateEntity),
 		errors.Contains(err, svcerr.ErrUpdateEntity),
 		errors.Contains(err, svcerr.ErrViewEntity),

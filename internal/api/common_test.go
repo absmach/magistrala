@@ -256,7 +256,7 @@ func TestEncodeError(t *testing.T) {
 			desc: "Unauthorized",
 			errs: []error{
 				svcerr.ErrAuthentication,
-				errors.ErrAuthentication,
+				svcerr.ErrAuthentication,
 				apiutil.ErrBearerToken,
 			},
 			code: http.StatusUnauthorized,
@@ -273,7 +273,7 @@ func TestEncodeError(t *testing.T) {
 			desc: "Conflict",
 			errs: []error{
 				svcerr.ErrConflict,
-				errors.ErrConflict,
+				svcerr.ErrConflict,
 			},
 			code: http.StatusConflict,
 		},
@@ -281,8 +281,8 @@ func TestEncodeError(t *testing.T) {
 			desc: "Forbidden",
 			errs: []error{
 				svcerr.ErrAuthorization,
-				errors.ErrAuthorization,
-				errors.ErrDomainAuthorization,
+				svcerr.ErrAuthorization,
+				svcerr.ErrDomainAuthorization,
 			},
 			code: http.StatusForbidden,
 		},

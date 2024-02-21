@@ -9,6 +9,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/readers"
 	"github.com/go-kit/kit/endpoint"
 )
@@ -21,7 +22,7 @@ func listMessagesEndpoint(svc readers.MessageRepository, uauth magistrala.AuthSe
 		}
 
 		if err := authorize(ctx, req, uauth, taauth); err != nil {
-			return nil, errors.Wrap(errors.ErrAuthorization, err)
+			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
 
 		page, err := svc.ReadAll(req.chanID, req.pageMeta)

@@ -18,6 +18,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
@@ -789,7 +790,7 @@ func TestEnableGroup(t *testing.T) {
 	}
 
 	repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-	repoCall1 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, errors.ErrNotFound)
+	repoCall1 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, repoerr.ErrNotFound)
 	repoCall2 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
 	_, err := mgsdk.EnableGroup("wrongID", validToken)
 	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), fmt.Sprintf("Enable group with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
@@ -843,7 +844,7 @@ func TestDisableGroup(t *testing.T) {
 
 	repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 	repoCall1 := grepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
-	repoCall2 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, errors.ErrNotFound)
+	repoCall2 := grepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(mggroups.Group{}, repoerr.ErrNotFound)
 	_, err := mgsdk.DisableGroup("wrongID", validToken)
 	assert.Equal(t, err, errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound), fmt.Sprintf("Disable group with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
 	ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")

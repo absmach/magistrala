@@ -77,7 +77,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 
 	clientID, err := svc.idProvider.ID()
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrUniqueID, err)
+		return mgclients.Client{}, err
 	}
 
 	if cli.Credentials.Secret == "" {
@@ -120,7 +120,7 @@ func (svc service) IssueToken(ctx context.Context, identity, secret, domainID st
 		return &magistrala.Token{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
-		return &magistrala.Token{}, errors.Wrap(errors.ErrLogin, err)
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrLogin, err)
 	}
 
 	var d string
@@ -284,7 +284,7 @@ func (svc service) UpdateClientIdentity(ctx context.Context, token, clientID, id
 func (svc service) GenerateResetToken(ctx context.Context, email, host string) error {
 	client, err := svc.clients.RetrieveByIdentity(ctx, email)
 	if err != nil || client.Credentials.Identity == "" {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 	issueReq := &magistrala.IssueReq{
 		UserId: client.ID,
@@ -308,7 +308,7 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 		return errors.Wrap(repoerr.ErrNotFound, err)
 	}
 	if c.Credentials.Identity == "" {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 	if !svc.passRegex.MatchString(secret) {
 		return ErrPasswordFormat
@@ -618,7 +618,7 @@ func (svc service) addClientPolicy(ctx context.Context, userID string, role mgcl
 		return err
 	}
 	if !resp.Added {
-		return errors.ErrAuthorization
+		return svcerr.ErrAuthorization
 	}
 	return nil
 }
@@ -648,7 +648,7 @@ func (svc service) addClientPolicyRollback(ctx context.Context, userID string, r
 		return err
 	}
 	if !resp.Deleted {
-		return errors.ErrAuthorization
+		return svcerr.ErrAuthorization
 	}
 	return nil
 }

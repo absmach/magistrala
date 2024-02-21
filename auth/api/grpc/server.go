@@ -538,19 +538,17 @@ func encodeError(err error) error {
 		err == apiutil.ErrMissingPolicyObj,
 		err == apiutil.ErrMalformedPolicyAct:
 		return status.Error(codes.InvalidArgument, err.Error())
-	case errors.Contains(err, errors.ErrAuthentication),
-		errors.Contains(err, svcerr.ErrAuthentication),
+	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, auth.ErrKeyExpired),
 		err == apiutil.ErrMissingEmail,
 		err == apiutil.ErrBearerToken:
 		return status.Error(codes.Unauthenticated, err.Error())
-	case errors.Contains(err, errors.ErrAuthorization),
-		errors.Contains(err, svcerr.ErrAuthorization),
-		errors.Contains(err, errors.ErrDomainAuthorization):
+	case errors.Contains(err, svcerr.ErrAuthorization),
+		errors.Contains(err, svcerr.ErrDomainAuthorization):
 		return status.Error(codes.PermissionDenied, err.Error())
-	case errors.Contains(err, errors.ErrNotFound):
+	case errors.Contains(err, svcerr.ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())
-	case errors.Contains(err, errors.ErrConflict):
+	case errors.Contains(err, svcerr.ErrConflict):
 		return status.Error(codes.AlreadyExists, err.Error())
 	default:
 		return status.Error(codes.Internal, err.Error())

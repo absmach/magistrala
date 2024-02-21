@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/twins"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -39,7 +40,7 @@ func (tr *twinRepository) Save(ctx context.Context, tw twins.Twin) (string, erro
 	coll := tr.db.Collection(twinsCollection)
 
 	if _, err := coll.InsertOne(ctx, tw); err != nil {
-		return "", errors.Wrap(errors.ErrCreateEntity, err)
+		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
 	return tw.ID, nil
@@ -60,7 +61,7 @@ func (tr *twinRepository) Update(ctx context.Context, tw twins.Twin) error {
 	}
 
 	if res.ModifiedCount < 1 {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return nil
@@ -72,7 +73,7 @@ func (tr *twinRepository) RetrieveByID(ctx context.Context, twinID string) (twin
 
 	filter := bson.M{"id": twinID}
 	if err := coll.FindOne(ctx, filter).Decode(&tw); err != nil {
-		return tw, errors.ErrNotFound
+		return tw, repoerr.ErrNotFound
 	}
 
 	return tw, nil
@@ -108,7 +109,7 @@ func (tr *twinRepository) RetrieveByAttribute(ctx context.Context, channel, subt
 
 	cur, err := coll.Aggregate(ctx, []bson.M{prj1, match, prj2}, findOptions)
 	if err != nil {
-		return []string{}, errors.Wrap(errors.ErrViewEntity, err)
+		return []string{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	defer cur.Close(ctx)
 
@@ -151,17 +152,17 @@ func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset,
 	}
 	cur, err := coll.Find(ctx, filter, findOptions)
 	if err != nil {
-		return twins.Page{}, errors.Wrap(errors.ErrViewEntity, err)
+		return twins.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	results, err := decodeTwins(ctx, cur)
 	if err != nil {
-		return twins.Page{}, errors.Wrap(errors.ErrViewEntity, err)
+		return twins.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	total, err := coll.CountDocuments(ctx, filter)
 	if err != nil {
-		return twins.Page{}, errors.Wrap(errors.ErrViewEntity, err)
+		return twins.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	return twins.Page{
@@ -180,11 +181,11 @@ func (tr *twinRepository) Remove(ctx context.Context, twinID string) error {
 	filter := bson.M{"id": twinID}
 	res, err := coll.DeleteOne(ctx, filter)
 	if err != nil {
-		return errors.Wrap(errors.ErrRemoveEntity, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	if res.DeletedCount < 1 {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return nil

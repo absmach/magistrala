@@ -110,7 +110,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 
 	twin.ID, err = ts.idProvider.ID()
 	if err != nil {
-		return Twin{}, errors.Wrap(svcerr.ErrUniqueID, err)
+		return Twin{}, err
 	}
 
 	twin.Owner = res.GetId()

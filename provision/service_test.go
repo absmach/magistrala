@@ -10,6 +10,8 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/provision"
@@ -41,7 +43,7 @@ func TestMapping(t *testing.T) {
 			desc:    "invalid token",
 			token:   "invalid",
 			content: map[string]interface{}{},
-			sdkerr:  errors.NewSDKErrorWithStatus(errors.ErrAuthentication, 401),
+			sdkerr:  errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, 401),
 			err:     provision.ErrUnauthorized,
 		},
 	}
@@ -138,7 +140,7 @@ func TestCert(t *testing.T) {
 			key:         "",
 			sdkThingErr: nil,
 			sdkCertErr:  nil,
-			sdkTokenErr: errors.NewSDKErrorWithStatus(errors.ErrAuthentication, 401),
+			sdkTokenErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, 401),
 			err:         provision.ErrFailedToCreateToken,
 		},
 		{
@@ -165,7 +167,7 @@ func TestCert(t *testing.T) {
 			ttl:         "1h",
 			cert:        "",
 			key:         "",
-			sdkThingErr: errors.NewSDKErrorWithStatus(errors.ErrAuthentication, 401),
+			sdkThingErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, 401),
 			sdkCertErr:  nil,
 			sdkTokenErr: nil,
 			err:         provision.ErrUnauthorized,
@@ -178,7 +180,7 @@ func TestCert(t *testing.T) {
 			ttl:         "1h",
 			cert:        "",
 			key:         "",
-			sdkThingErr: errors.NewSDKErrorWithStatus(errors.ErrNotFound, 404),
+			sdkThingErr: errors.NewSDKErrorWithStatus(repoerr.ErrNotFound, 404),
 			sdkCertErr:  nil,
 			sdkTokenErr: nil,
 			err:         provision.ErrUnauthorized,
@@ -193,8 +195,8 @@ func TestCert(t *testing.T) {
 			key:         "",
 			sdkThingErr: nil,
 			sdkTokenErr: nil,
-			sdkCertErr:  errors.NewSDKError(errors.ErrCreateEntity),
-			err:         errors.ErrCreateEntity,
+			sdkCertErr:  errors.NewSDKError(repoerr.ErrCreateEntity),
+			err:         repoerr.ErrCreateEntity,
 		},
 	}
 

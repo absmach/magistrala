@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala"
-	svcerr "github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"google.golang.org/grpc"
 )
 

@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
@@ -77,7 +78,7 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrCreateEntity, err)
+		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
 	dbcrt := toDBCert(cert)
@@ -90,7 +91,7 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 
 		cr.rollback("Failed to insert a Cert", tx, err)
 
-		return "", errors.Wrap(errors.ErrCreateEntity, e)
+		return "", errors.Wrap(repoerr.ErrCreateEntity, e)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -102,14 +103,14 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 
 func (cr certsRepository) Remove(ctx context.Context, ownerID, serial string) error {
 	if _, err := cr.RetrieveBySerial(ctx, ownerID, serial); err != nil {
-		return errors.Wrap(errors.ErrRemoveEntity, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 	q := `DELETE FROM certs WHERE serial = :serial`
 	var c certs.Cert
 	c.Serial = serial
 	dbcrt := toDBCert(c)
 	if _, err := cr.db.NamedExecContext(ctx, q, dbcrt); err != nil {
-		return errors.Wrap(errors.ErrRemoveEntity, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 	return nil
 }
@@ -156,10 +157,10 @@ func (cr certsRepository) RetrieveBySerial(ctx context.Context, ownerID, serialI
 	if err := cr.db.QueryRowxContext(ctx, q, ownerID, serialID).StructScan(&dbcrt); err != nil {
 		pqErr, ok := err.(*pgconn.PgError)
 		if err == sql.ErrNoRows || ok && pgerrcode.InvalidTextRepresentation == pqErr.Code {
-			return c, errors.Wrap(errors.ErrNotFound, err)
+			return c, errors.Wrap(repoerr.ErrNotFound, err)
 		}
 
-		return c, errors.Wrap(errors.ErrViewEntity, err)
+		return c, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	c = toCert(dbcrt)
 

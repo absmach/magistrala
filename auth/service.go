@@ -189,7 +189,7 @@ func (svc service) Authorize(ctx context.Context, pr PolicyReq) error {
 		}
 		if key.Subject == "" {
 			if pr.ObjectType == GroupType || pr.ObjectType == ThingType || pr.ObjectType == DomainType {
-				return errors.ErrDomainAuthorization
+				return svcerr.ErrDomainAuthorization
 			}
 			return svcerr.ErrAuthentication
 		}
@@ -208,7 +208,7 @@ func (svc service) checkPolicy(ctx context.Context, pr PolicyReq) error {
 		domainID := pr.Domain
 		if domainID == "" {
 			if pr.ObjectType != DomainType {
-				return errors.ErrDomainAuthorization
+				return svcerr.ErrDomainAuthorization
 			}
 			domainID = pr.Object
 		}
@@ -238,7 +238,7 @@ func (svc service) checkDomain(ctx context.Context, subjectType, subject, domain
 			Object:      domainID,
 			ObjectType:  DomainType,
 		}); err != nil {
-			return errors.ErrDomainAuthorization
+			return svcerr.ErrDomainAuthorization
 		}
 	case FreezeStatus:
 		if err := svc.agent.CheckPolicy(ctx, PolicyReq{
@@ -248,10 +248,10 @@ func (svc service) checkDomain(ctx context.Context, subjectType, subject, domain
 			Object:      MagistralaObject,
 			ObjectType:  PlatformType,
 		}); err != nil {
-			return errors.ErrDomainAuthorization
+			return svcerr.ErrDomainAuthorization
 		}
 	default:
-		return errors.ErrDomainAuthorization
+		return svcerr.ErrDomainAuthorization
 	}
 
 	return nil
@@ -543,7 +543,7 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 
 	domainID, err := svc.idProvider.ID()
 	if err != nil {
-		return Domain{}, errors.Wrap(svcerr.ErrUniqueID, err)
+		return Domain{}, err
 	}
 	d.ID = domainID
 

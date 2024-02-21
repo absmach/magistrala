@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/auth/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,7 +64,7 @@ func TestKeySave(t *testing.T) {
 				IssuedAt:  time.Now(),
 				ExpiresAt: expTime,
 			},
-			err: errors.ErrConflict,
+			err: repoerr.ErrConflict,
 		},
 		{
 			desc: "save with empty id",
@@ -184,19 +185,19 @@ func TestKeyRetrieve(t *testing.T) {
 			desc:   "retrieve key with empty issuer id",
 			id:     key.ID,
 			issuer: "",
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 		{
 			desc:   "retrieve non-existent key",
 			id:     "",
 			issuer: key.Issuer,
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 		{
 			desc:   "retrieve non-existent key with empty issuer id",
 			id:     "",
 			issuer: "",
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 	}
 

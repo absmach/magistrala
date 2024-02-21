@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/twins"
@@ -378,7 +377,7 @@ func TestTwinsRemove(t *testing.T) {
 		{
 			desc: "remove a non-existing twin",
 			id:   nonexistentTwinID,
-			err:  errors.ErrNotFound,
+			err:  repoerr.ErrNotFound,
 		},
 	}
 

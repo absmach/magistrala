@@ -182,7 +182,7 @@ func TestCreateClient(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: true}, nil)
@@ -261,7 +261,7 @@ func TestListClients(t *testing.T) {
 			token:    invalidToken,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(repoerr.ErrNotFound, repoerr.ErrNotFound), http.StatusNotFound),
 			response: nil,
 		},
 		{
@@ -269,7 +269,7 @@ func TestListClients(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(repoerr.ErrNotFound, repoerr.ErrNotFound), http.StatusNotFound),
 			response: nil,
 		},
 		{
@@ -277,7 +277,7 @@ func TestListClients(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    0,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrNotFound, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(repoerr.ErrNotFound, repoerr.ErrNotFound), http.StatusNotFound),
 			response: nil,
 		},
 		{
@@ -430,7 +430,7 @@ func TestClient(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := crepo.On("RetrieveByID", mock.Anything, tc.clientID).Return(convertClient(tc.response), tc.err)
@@ -489,7 +489,7 @@ func TestProfile(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCal1 := crepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		rClient, err := mgsdk.UserProfile(tc.token)
@@ -578,7 +578,7 @@ func TestUpdateClient(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := crepo.On("Update", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
@@ -670,7 +670,7 @@ func TestUpdateClientTags(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := crepo.On("UpdateTags", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
@@ -760,7 +760,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := crepo.On("UpdateIdentity", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
@@ -816,8 +816,8 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newPassword",
 			token:     "non-existent",
 			response:  sdk.User{},
-			repoErr:   errors.ErrAuthentication,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, errors.ErrAuthentication), http.StatusUnauthorized),
+			repoErr:   svcerr.ErrAuthentication,
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "update client secret with wrong old secret",
@@ -833,7 +833,7 @@ func TestUpdateClientSecret(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: user.ID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Issue", mock.Anything, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, nil)
 		repoCall2 := crepo.On("RetrieveByID", mock.Anything, user.ID).Return(convertClient(tc.response), tc.repoErr)
@@ -927,7 +927,7 @@ func TestUpdateClientRole(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, errors.ErrAuthentication)
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("DeletePolicy", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
@@ -999,7 +999,7 @@ func TestEnableClient(t *testing.T) {
 			client:   sdk.User{},
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, repoerr.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
@@ -1128,7 +1128,7 @@ func TestDisableClient(t *testing.T) {
 			token:    validToken,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, errors.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, repoerr.ErrNotFound), http.StatusNotFound),
 		},
 	}
 

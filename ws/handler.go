@@ -177,7 +177,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		return err
 	}
 	if !res.GetAuthorized() {
-		return errors.ErrAuthorization
+		return svcerr.ErrAuthorization
 	}
 
 	msg := messaging.Message{

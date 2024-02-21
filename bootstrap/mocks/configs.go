@@ -11,7 +11,8 @@ import (
 	"sync"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 const emptyState = -1
@@ -39,7 +40,7 @@ func (crm *configRepositoryMock) Save(_ context.Context, config bootstrap.Config
 
 	for _, v := range crm.configs {
 		if v.ThingID == config.ThingID || v.ExternalID == config.ExternalID {
-			return "", errors.ErrConflict
+			return "", repoerr.ErrConflict
 		}
 	}
 
@@ -68,10 +69,10 @@ func (crm *configRepositoryMock) RetrieveByID(_ context.Context, token, id strin
 
 	c, ok := crm.configs[id]
 	if !ok {
-		return bootstrap.Config{}, errors.ErrNotFound
+		return bootstrap.Config{}, repoerr.ErrNotFound
 	}
 	if c.Owner != token {
-		return bootstrap.Config{}, errors.ErrAuthentication
+		return bootstrap.Config{}, svcerr.ErrAuthentication
 	}
 
 	return c, nil
@@ -131,7 +132,7 @@ func (crm *configRepositoryMock) RetrieveByExternalID(_ context.Context, externa
 		}
 	}
 
-	return bootstrap.Config{}, errors.ErrNotFound
+	return bootstrap.Config{}, repoerr.ErrNotFound
 }
 
 func (crm *configRepositoryMock) Update(_ context.Context, config bootstrap.Config) error {
@@ -140,7 +141,7 @@ func (crm *configRepositoryMock) Update(_ context.Context, config bootstrap.Conf
 
 	cfg, ok := crm.configs[config.ThingID]
 	if !ok || cfg.Owner != config.Owner {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	cfg.Name = config.Name
@@ -161,7 +162,7 @@ func (crm *configRepositoryMock) UpdateCert(_ context.Context, owner, thingID, c
 		}
 	}
 	if _, ok := crm.configs[forUpdate.ThingID]; !ok {
-		return bootstrap.Config{}, errors.ErrNotFound
+		return bootstrap.Config{}, repoerr.ErrNotFound
 	}
 	forUpdate.ClientCert = clientCert
 	forUpdate.ClientKey = clientKey
@@ -177,7 +178,7 @@ func (crm *configRepositoryMock) UpdateConnections(_ context.Context, token, id 
 
 	config, ok := crm.configs[id]
 	if !ok {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	for _, ch := range channels {
@@ -188,7 +189,7 @@ func (crm *configRepositoryMock) UpdateConnections(_ context.Context, token, id 
 	for _, conn := range connections {
 		ch, ok := crm.channels[conn]
 		if !ok {
-			return errors.ErrNotFound
+			return repoerr.ErrNotFound
 		}
 		config.Channels = append(config.Channels, ch)
 	}
@@ -217,10 +218,10 @@ func (crm *configRepositoryMock) ChangeState(_ context.Context, token, id string
 
 	config, ok := crm.configs[id]
 	if !ok {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 	if config.Owner != token {
-		return errors.ErrAuthentication
+		return svcerr.ErrAuthentication
 	}
 
 	config.State = state

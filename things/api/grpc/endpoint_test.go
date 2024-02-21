@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	grpcapi "github.com/absmach/magistrala/things/api/grpc"
 	"github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
@@ -87,7 +88,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.GroupType,
 			},
 			res: &magistrala.AuthorizeRes{},
-			err: errors.ErrAuthentication,
+			err: svcerr.ErrAuthentication,
 		},
 		{
 			desc: "authorize with missing ID",
@@ -113,7 +114,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.GroupType,
 			},
 			res: &magistrala.AuthorizeRes{},
-			err: errors.ErrAuthorization,
+			err: svcerr.ErrAuthorization,
 		},
 		{
 			desc: "authorize with invalid permission",
@@ -126,7 +127,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.GroupType,
 			},
 			res: &magistrala.AuthorizeRes{},
-			err: errors.ErrAuthorization,
+			err: svcerr.ErrAuthorization,
 		},
 		{
 			desc: "authorize with invalid channel ID",
@@ -139,7 +140,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.GroupType,
 			},
 			res: &magistrala.AuthorizeRes{},
-			err: errors.ErrAuthorization,
+			err: svcerr.ErrAuthorization,
 		},
 		{
 			desc: "authorize with empty channel ID",
@@ -152,7 +153,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.GroupType,
 			},
 			res: &magistrala.AuthorizeRes{},
-			err: errors.ErrAuthorization,
+			err: svcerr.ErrAuthorization,
 		},
 		{
 			desc: "authorize with empty permission",
@@ -165,7 +166,7 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  auth.GroupType,
 			},
 			res: &magistrala.AuthorizeRes{},
-			err: errors.ErrAuthorization,
+			err: svcerr.ErrAuthorization,
 		},
 	}
 

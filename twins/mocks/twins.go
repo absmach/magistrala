@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/twins"
 )
@@ -35,7 +35,7 @@ func (trm *twinRepositoryMock) Save(ctx context.Context, twin twins.Twin) (strin
 
 	for _, tw := range trm.twins {
 		if tw.ID == twin.ID {
-			return "", errors.ErrConflict
+			return "", repoerr.ErrConflict
 		}
 	}
 
@@ -50,7 +50,7 @@ func (trm *twinRepositoryMock) Update(ctx context.Context, twin twins.Twin) erro
 
 	dbKey := key(twin.Owner, twin.ID)
 	if _, ok := trm.twins[dbKey]; !ok {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	trm.twins[dbKey] = twin
@@ -68,7 +68,7 @@ func (trm *twinRepositoryMock) RetrieveByID(_ context.Context, twinID string) (t
 		}
 	}
 
-	return twins.Twin{}, errors.ErrNotFound
+	return twins.Twin{}, repoerr.ErrNotFound
 }
 
 func (trm *twinRepositoryMock) RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error) {

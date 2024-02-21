@@ -12,6 +12,7 @@ import (
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 var _ mgclients.Repository = (*clientRepo)(nil)
@@ -78,17 +79,17 @@ func (repo clientRepo) CheckSuperAdmin(ctx context.Context, adminID string) erro
 	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
 	rows, err := repo.DB.QueryContext(ctx, q, adminID, mgclients.AdminRole)
 	if err != nil {
-		return errors.Wrap(errors.ErrAuthorization, err)
+		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	defer rows.Close()
 
 	if rows.Next() {
 		if err := rows.Err(); err != nil {
-			return errors.Wrap(errors.ErrAuthorization, err)
+			return errors.Wrap(svcerr.ErrAuthorization, err)
 		}
 		return nil
 	}
-	return errors.ErrAuthorization
+	return svcerr.ErrAuthorization
 }
 
 func (repo clientRepo) RetrieveByID(ctx context.Context, id string) (mgclients.Client, error) {
@@ -125,7 +126,7 @@ func (repo clientRepo) RetrieveByID(ctx context.Context, id string) (mgclients.C
 func (repo clientRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	query, err := pgclients.PageQuery(pm)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata,  c.status, c.role,
@@ -181,17 +182,17 @@ func (repo clientRepo) UpdateRole(ctx context.Context, client mgclients.Client) 
 
 	dbc, err := pgclients.ToDBClient(client)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(errors.ErrUpdateEntity, err)
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	row, err := repo.DB.NamedQueryContext(ctx, query, dbc)
 	if err != nil {
-		return mgclients.Client{}, postgres.HandleError(err, errors.ErrUpdateEntity)
+		return mgclients.Client{}, postgres.HandleError(err, repoerr.ErrUpdateEntity)
 	}
 
 	defer row.Close()
 	if ok := row.Next(); !ok {
-		return mgclients.Client{}, errors.Wrap(errors.ErrNotFound, row.Err())
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
 	}
 	dbc = pgclients.DBClient{}
 	if err := row.StructScan(&dbc); err != nil {

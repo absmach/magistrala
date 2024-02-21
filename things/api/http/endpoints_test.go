@@ -129,7 +129,7 @@ func TestCreateThing(t *testing.T) {
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
-			err:         errors.ErrConflict,
+			err:         svcerr.ErrConflict,
 		},
 		{
 			desc:        "register a new thing with an empty token",

@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -60,7 +61,7 @@ func TestCreateSubscription(t *testing.T) {
 			token: exampleUser1,
 			sub:   notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
 			id:    "",
-			err:   svcerr.ErrConflict,
+			err:   repoerr.ErrConflict,
 		},
 		{
 			desc:  "test with empty token",

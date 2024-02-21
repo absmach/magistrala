@@ -32,7 +32,7 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
@@ -298,7 +298,7 @@ func createAdminPolicy(ctx context.Context, clientID string, authClient magistra
 			return err
 		}
 		if !addPolicyRes.Added {
-			return errors.ErrAuthorization
+			return svcerr.ErrAuthorization
 		}
 	}
 	return nil

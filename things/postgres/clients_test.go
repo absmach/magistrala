@@ -74,7 +74,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
 			},
-			err: errors.ErrCreateEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add new client with duplicate secret",
@@ -89,7 +89,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
 			},
-			err: errors.ErrCreateEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add new client without domain id",
@@ -118,7 +118,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
 			},
-			err: errors.ErrCreateEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with invalid client name",
@@ -133,7 +133,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
 			},
-			err: errors.ErrCreateEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with invalid client domain id",
@@ -147,7 +147,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
 			},
-			err: errors.ErrCreateEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with invalid client identity",
@@ -161,7 +161,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
 			},
-			err: errors.ErrCreateEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with a missing client identity",
@@ -253,13 +253,13 @@ func TestClientsRetrieveBySecret(t *testing.T) {
 			desc:     "retrieve client by invalid secret",
 			secret:   "non-existent-secret",
 			response: clients.Client{},
-			err:      errors.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 		{
 			desc:     "retrieve client by empty secret",
 			secret:   "",
 			response: clients.Client{},
-			err:      errors.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 	}
 

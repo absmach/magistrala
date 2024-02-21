@@ -7,7 +7,8 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/invitations"
-	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -21,7 +22,7 @@ func (svc *Service) SendInvitation(ctx context.Context, token string, invitation
 	ret := svc.Called(ctx, token, invitation)
 
 	if token == Invalid || invitation.UserID == Invalid || invitation.DomainID == Invalid || invitation.InvitedBy == Invalid {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return ret.Error(0)
@@ -31,7 +32,7 @@ func (svc *Service) ViewInvitation(ctx context.Context, token, userID, domainID 
 	ret := svc.Called(ctx, token, userID, domainID)
 
 	if token == Invalid || userID == Invalid || domainID == Invalid {
-		return invitations.Invitation{}, errors.ErrNotFound
+		return invitations.Invitation{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(invitations.Invitation), ret.Error(1)
@@ -41,7 +42,7 @@ func (svc *Service) ListInvitations(ctx context.Context, token string, page invi
 	ret := svc.Called(ctx, token, page)
 
 	if token == Invalid {
-		return invitations.InvitationPage{}, errors.ErrAuthentication
+		return invitations.InvitationPage{}, svcerr.ErrAuthentication
 	}
 
 	return ret.Get(0).(invitations.InvitationPage), ret.Error(1)
@@ -51,7 +52,7 @@ func (svc *Service) AcceptInvitation(ctx context.Context, token, domainID string
 	ret := svc.Called(ctx, token, domainID)
 
 	if token == Invalid {
-		return errors.ErrAuthentication
+		return svcerr.ErrAuthentication
 	}
 
 	return ret.Error(0)
@@ -61,11 +62,11 @@ func (svc *Service) DeleteInvitation(ctx context.Context, token, userID, domainI
 	ret := svc.Called(ctx, token, userID, domainID)
 
 	if token == Invalid {
-		return errors.ErrAuthentication
+		return svcerr.ErrAuthentication
 	}
 
 	if userID == Invalid || domainID == Invalid {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return ret.Error(0)

@@ -13,6 +13,8 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"golang.org/x/sync/errgroup"
 )
@@ -270,7 +272,7 @@ func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID 
 		return []string{}, err
 	}
 	if len(lp.GetPermissions()) == 0 {
-		return []string{}, errors.ErrAuthorization
+		return []string{}, svcerr.ErrAuthorization
 	}
 	return lp.GetPermissions(), nil
 }
@@ -287,7 +289,7 @@ func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
 		return err
 	}
 	if !res.Authorized {
-		return errors.ErrAuthorization
+		return svcerr.ErrAuthorization
 	}
 	return nil
 }
@@ -463,7 +465,7 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 	var deletePolicies magistrala.DeletePoliciesReq
 	for _, group := range groupsPage.Groups {
 		if group.Parent != "" {
-			return errors.Wrap(errors.ErrConflict, fmt.Errorf("%s group already have parent", group.ID))
+			return errors.Wrap(repoerr.ErrConflict, fmt.Errorf("%s group already have parent", group.ID))
 		}
 		addPolicies.AddPoliciesReq = append(addPolicies.AddPoliciesReq, &magistrala.AddPolicyReq{
 			Domain:      domain,
@@ -509,7 +511,7 @@ func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupI
 	var deletePolicies magistrala.DeletePoliciesReq
 	for _, group := range groupsPage.Groups {
 		if group.Parent != "" && group.Parent != parentGroupID {
-			return errors.Wrap(errors.ErrConflict, fmt.Errorf("%s group doesn't have same parent", group.ID))
+			return errors.Wrap(repoerr.ErrConflict, fmt.Errorf("%s group doesn't have same parent", group.ID))
 		}
 		addPolicies.AddPoliciesReq = append(addPolicies.AddPoliciesReq, &magistrala.AddPolicyReq{
 			Domain:      domain,
@@ -707,7 +709,7 @@ func (svc service) identify(ctx context.Context, token string) (*magistrala.Iden
 		return nil, err
 	}
 	if res.GetId() == "" || res.GetDomainId() == "" {
-		return nil, errors.ErrDomainAuthorization
+		return nil, svcerr.ErrDomainAuthorization
 	}
 	return res, nil
 }
@@ -726,7 +728,7 @@ func (svc service) authorizeToken(ctx context.Context, subjectType, subject, per
 		return "", err
 	}
 	if !res.GetAuthorized() {
-		return "", errors.ErrAuthorization
+		return "", svcerr.ErrAuthorization
 	}
 	return res.GetId(), nil
 }
@@ -746,7 +748,7 @@ func (svc service) authorizeKind(ctx context.Context, domainID, subjectType, sub
 		return "", err
 	}
 	if !res.GetAuthorized() {
-		return "", errors.ErrAuthorization
+		return "", svcerr.ErrAuthorization
 	}
 	return res.GetId(), nil
 }

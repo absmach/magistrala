@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/invitations"
-	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -23,7 +23,7 @@ func (m *Repository) Create(ctx context.Context, invitation invitations.Invitati
 	ret := m.Called(ctx, invitation)
 
 	if invitation.UserID == Invalid || invitation.DomainID == Invalid || invitation.InvitedBy == Invalid {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return ret.Error(0)
@@ -33,7 +33,7 @@ func (m *Repository) Retrieve(ctx context.Context, userID, domainID string) (inv
 	ret := m.Called(ctx, userID, domainID)
 
 	if userID == Invalid || domainID == Invalid {
-		return invitations.Invitation{}, errors.ErrNotFound
+		return invitations.Invitation{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(invitations.Invitation), ret.Error(1)
@@ -43,7 +43,7 @@ func (m *Repository) RetrieveAll(ctx context.Context, page invitations.Page) (in
 	ret := m.Called(ctx, page)
 
 	if page.UserID == Invalid || page.DomainID == Invalid {
-		return invitations.InvitationPage{}, errors.ErrNotFound
+		return invitations.InvitationPage{}, repoerr.ErrNotFound
 	}
 
 	return ret.Get(0).(invitations.InvitationPage), ret.Error(1)
@@ -53,7 +53,7 @@ func (m *Repository) UpdateToken(ctx context.Context, invitation invitations.Inv
 	ret := m.Called(ctx, invitation)
 
 	if invitation.UserID == Invalid || invitation.DomainID == Invalid {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return ret.Error(0)
@@ -63,7 +63,7 @@ func (m *Repository) UpdateConfirmation(ctx context.Context, invitation invitati
 	ret := m.Called(ctx, invitation)
 
 	if invitation.UserID == Invalid || invitation.DomainID == Invalid {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return ret.Error(0)
@@ -73,7 +73,7 @@ func (m *Repository) Delete(ctx context.Context, userID, domainID string) error 
 	ret := m.Called(ctx, userID, domainID)
 
 	if userID == Invalid || domainID == Invalid {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return ret.Error(0)

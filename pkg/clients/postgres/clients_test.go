@@ -1353,7 +1353,7 @@ func TestUpdate(t *testing.T) {
 					"update": namegen.Generate(),
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update name for enabled client",
@@ -1371,7 +1371,7 @@ func TestUpdate(t *testing.T) {
 				ID:   client2.ID,
 				Name: namegen.Generate(),
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update name and metadata for enabled client",
@@ -1395,7 +1395,7 @@ func TestUpdate(t *testing.T) {
 					"update": namegen.Generate(),
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update metadata for invalid client",
@@ -1406,7 +1406,7 @@ func TestUpdate(t *testing.T) {
 					"update": namegen.Generate(),
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update name for invalid client",
@@ -1415,7 +1415,7 @@ func TestUpdate(t *testing.T) {
 				ID:   testsutil.GenerateUUID(t),
 				Name: namegen.Generate(),
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update name and metadata for invalid client",
@@ -1427,7 +1427,7 @@ func TestUpdate(t *testing.T) {
 					"update": namegen.Generate(),
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update metadata for empty client",
@@ -1437,7 +1437,7 @@ func TestUpdate(t *testing.T) {
 					"update": namegen.Generate(),
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update name for empty client",
@@ -1445,7 +1445,7 @@ func TestUpdate(t *testing.T) {
 			client: mgclients.Client{
 				Name: namegen.Generate(),
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update name and metadata for empty client",
@@ -1456,7 +1456,7 @@ func TestUpdate(t *testing.T) {
 					"update": namegen.Generate(),
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 	}
 	for _, c := range cases {
@@ -1511,7 +1511,7 @@ func TestUpdateTags(t *testing.T) {
 				ID:   client2.ID,
 				Tags: namegen.GenerateNames(5),
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc: "for invalid client",
@@ -1519,12 +1519,12 @@ func TestUpdateTags(t *testing.T) {
 				ID:   testsutil.GenerateUUID(t),
 				Tags: namegen.GenerateNames(5),
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "for empty client",
 			client: mgclients.Client{},
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 	}
 	for _, c := range cases {
@@ -1575,7 +1575,7 @@ func TestUpdateSecret(t *testing.T) {
 					Secret: "newpassword",
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc: "for invalid client",
@@ -1585,12 +1585,12 @@ func TestUpdateSecret(t *testing.T) {
 					Secret: "newpassword",
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "for empty client",
 			client: mgclients.Client{},
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 	}
 	for _, c := range cases {
@@ -1643,7 +1643,7 @@ func TestUpdateIdentity(t *testing.T) {
 					Identity: namegen.Generate() + emailSuffix,
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc: "for invalid client",
@@ -1653,12 +1653,12 @@ func TestUpdateIdentity(t *testing.T) {
 					Identity: namegen.Generate() + emailSuffix,
 				},
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "for empty client",
 			client: mgclients.Client{},
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 	}
 	for _, c := range cases {
@@ -1713,12 +1713,12 @@ func TestChangeStatus(t *testing.T) {
 				ID:     testsutil.GenerateUUID(t),
 				Status: mgclients.DisabledStatus,
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "for empty client",
 			client: mgclients.Client{},
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 	}
 
@@ -1766,7 +1766,7 @@ func TestUpdateRole(t *testing.T) {
 				ID:   client2.ID,
 				Role: mgclients.AdminRole,
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc: "for invalid client",
@@ -1774,12 +1774,12 @@ func TestUpdateRole(t *testing.T) {
 				ID:   testsutil.GenerateUUID(t),
 				Role: mgclients.AdminRole,
 			},
-			err: errors.ErrNotFound,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc:   "for empty client",
 			client: mgclients.Client{},
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 	}
 

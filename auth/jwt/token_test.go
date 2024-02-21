@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	authjwt "github.com/absmach/magistrala/auth/jwt"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/assert"
@@ -119,7 +120,7 @@ func TestParse(t *testing.T) {
 			desc:  "parse invalid key",
 			key:   auth.Key{},
 			token: "invalid",
-			err:   errors.ErrAuthentication,
+			err:   svcerr.ErrAuthentication,
 		},
 		{
 			desc:  "parse expired key",

@@ -11,6 +11,7 @@ import (
 
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
@@ -76,7 +77,7 @@ func (pa *policyAgent) CheckPolicy(ctx context.Context, pr auth.PolicyReq) error
 	if reason, ok := v1.CheckPermissionResponse_Permissionship_name[int32(resp.Permissionship)]; ok {
 		return errors.Wrap(svcerr.ErrAuthorization, errors.New(reason))
 	}
-	return errors.ErrAuthorization
+	return svcerr.ErrAuthorization
 }
 
 func (pa *policyAgent) AddPolicies(ctx context.Context, prs []auth.PolicyReq) error {
@@ -776,13 +777,13 @@ func convertToGrpcStatus(gst *gstatus.Status) *status.Status {
 func convertGRPCStatusToError(st *status.Status) error {
 	switch st.Code() {
 	case codes.NotFound:
-		return errors.Wrap(errors.ErrNotFound, errors.New(st.Message()))
+		return errors.Wrap(repoerr.ErrNotFound, errors.New(st.Message()))
 	case codes.InvalidArgument:
 		return errors.Wrap(errors.ErrMalformedEntity, errors.New(st.Message()))
 	case codes.AlreadyExists:
-		return errors.Wrap(errors.ErrConflict, errors.New(st.Message()))
+		return errors.Wrap(repoerr.ErrConflict, errors.New(st.Message()))
 	case codes.Unauthenticated:
-		return errors.Wrap(errors.ErrAuthentication, errors.New(st.Message()))
+		return errors.Wrap(svcerr.ErrAuthentication, errors.New(st.Message()))
 	case codes.Internal:
 		return errors.Wrap(errInternal, errors.New(st.Message()))
 	case codes.OK:
@@ -793,7 +794,7 @@ func convertGRPCStatusToError(st *status.Status) error {
 	case codes.FailedPrecondition:
 		return errors.Wrap(errors.ErrMalformedEntity, errors.New(st.Message()))
 	case codes.PermissionDenied:
-		return errors.Wrap(errors.ErrAuthorization, errors.New(st.Message()))
+		return errors.Wrap(svcerr.ErrAuthorization, errors.New(st.Message()))
 	default:
 		return errors.Wrap(fmt.Errorf("unexpected gRPC status: %s (status code:%v)", st.Code().String(), st.Code()), errors.New(st.Message()))
 	}

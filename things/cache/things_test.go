@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/things/cache"
 	"github.com/stretchr/testify/assert"
 )
@@ -55,31 +56,31 @@ func TestSave(t *testing.T) {
 			desc: "Save thing with long key ",
 			key:  strings.Repeat("a", 513*1024*1024),
 			id:   testID,
-			err:  errors.ErrCreateEntity,
+			err:  repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "Save thing with long id ",
 			key:  testKey,
 			id:   strings.Repeat("a", 513*1024*1024),
-			err:  errors.ErrCreateEntity,
+			err:  repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "Save thing with empty key",
 			key:  "",
 			id:   testID,
-			err:  errors.ErrCreateEntity,
+			err:  repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "Save thing with empty id",
 			key:  testKey,
 			id:   "",
-			err:  errors.ErrCreateEntity,
+			err:  repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "Save thing with empty key and id",
 			key:  "",
 			id:   "",
-			err:  errors.ErrCreateEntity,
+			err:  repoerr.ErrCreateEntity,
 		},
 	}
 
@@ -117,13 +118,13 @@ func TestID(t *testing.T) {
 			desc: "Get thing ID from cache for non existing thing",
 			key:  "nonExistingKey",
 			id:   "",
-			err:  errors.ErrNotFound,
+			err:  repoerr.ErrNotFound,
 		},
 		{
 			desc: "Get thing ID from cache for empty key",
 			key:  "",
 			id:   "",
-			err:  errors.ErrNotFound,
+			err:  repoerr.ErrNotFound,
 		},
 	}
 
@@ -167,7 +168,7 @@ func TestRemove(t *testing.T) {
 		{
 			desc: "Remove thing with long id from cache",
 			key:  strings.Repeat("a", 513*1024*1024),
-			err:  errors.ErrRemoveEntity,
+			err:  repoerr.ErrRemoveEntity,
 		},
 	}
 

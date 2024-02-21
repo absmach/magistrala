@@ -7,7 +7,6 @@ import (
 	context "context"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
@@ -54,7 +53,7 @@ func (m *AuthClient) Authorize(ctx context.Context, in *magistrala.AuthorizeReq,
 		return &magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization
 	}
 	if in.GetObject() == InvalidValue || in.GetObject() == "" {
-		return &magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization
+		return &magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization
 	}
 
 	return ret.Get(0).(*magistrala.AuthorizeRes), ret.Error(1)

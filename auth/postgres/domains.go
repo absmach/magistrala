@@ -269,7 +269,7 @@ func (repo domainRepo) Update(ctx context.Context, id, userID string, dr auth.Do
 
 	dbd, err := toDBDomain(d)
 	if err != nil {
-		return auth.Domain{}, errors.Wrap(errors.ErrUpdateEntity, err)
+		return auth.Domain{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 	row, err := repo.db.NamedQueryContext(ctx, q, dbd)
 	if err != nil {
@@ -516,7 +516,7 @@ type dbDomainsPage struct {
 func toDBClientsPage(pm auth.Page) (dbDomainsPage, error) {
 	_, data, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
-		return dbDomainsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		return dbDomainsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	return dbDomainsPage{
 		Total:      pm.Total,
@@ -571,7 +571,7 @@ func buildPageQuery(pm auth.Page) (string, error) {
 
 	mq, _, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrViewEntity, err)
+		return "", errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	if mq != "" {
 		query = append(query, mq)

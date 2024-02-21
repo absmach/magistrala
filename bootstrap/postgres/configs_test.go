@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -75,19 +76,19 @@ func TestSave(t *testing.T) {
 			desc:        "save config with same Thing ID",
 			config:      duplicateThing,
 			connections: nil,
-			err:         errors.ErrConflict,
+			err:         repoerr.ErrConflict,
 		},
 		{
 			desc:        "save config with same external ID",
 			config:      duplicateExternal,
 			connections: nil,
-			err:         errors.ErrConflict,
+			err:         repoerr.ErrConflict,
 		},
 		{
 			desc:        "save config with same Channels",
 			config:      duplicateChannels,
 			connections: channels,
-			err:         errors.ErrConflict,
+			err:         repoerr.ErrConflict,
 		},
 	}
 	for _, tc := range cases {
@@ -134,19 +135,19 @@ func TestRetrieveByID(t *testing.T) {
 			desc:  "retrieve config with wrong owner",
 			owner: "2",
 			id:    id,
-			err:   errors.ErrNotFound,
+			err:   repoerr.ErrNotFound,
 		},
 		{
 			desc:  "retrieve a non-existing config",
 			owner: c.Owner,
 			id:    nonexistentConfID.String(),
-			err:   errors.ErrNotFound,
+			err:   repoerr.ErrNotFound,
 		},
 		{
 			desc:  "retrieve a config with invalid ID",
 			owner: c.Owner,
 			id:    "invalid",
-			err:   errors.ErrNotFound,
+			err:   repoerr.ErrNotFound,
 		},
 	}
 	for _, tc := range cases {
@@ -260,7 +261,7 @@ func TestRetrieveByExternalID(t *testing.T) {
 		{
 			desc:       "retrieve with invalid external ID",
 			externalID: strconv.Itoa(numConfigs + 1),
-			err:        errors.ErrNotFound,
+			err:        repoerr.ErrNotFound,
 		},
 		{
 			desc:       "retrieve with external key",
@@ -305,7 +306,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:   "update with wrong owner",
 			config: wrongOwner,
-			err:    errors.ErrNotFound,
+			err:    repoerr.ErrNotFound,
 		},
 		{
 			desc:   "update a config",
@@ -359,7 +360,7 @@ func TestUpdateCert(t *testing.T) {
 			ca:             "",
 			owner:          "wrong",
 			expectedConfig: bootstrap.Config{},
-			err:            errors.ErrNotFound,
+			err:            repoerr.ErrNotFound,
 		},
 		{
 			desc:    "update a config",
@@ -425,7 +426,7 @@ func TestUpdateConnections(t *testing.T) {
 			id:          "unknown",
 			channels:    nil,
 			connections: []string{channels[1]},
-			err:         errors.ErrNotFound,
+			err:         repoerr.ErrNotFound,
 		},
 		{
 			desc:        "update connections",
@@ -481,7 +482,7 @@ func TestRemove(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%d: failed to remove config due to: %s", i, err))
 
 		_, err = repo.RetrieveByID(context.Background(), c.Owner, id)
-		assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("%d: expected %s got %s", i, errors.ErrNotFound, err))
+		assert.True(t, errors.Contains(err, repoerr.ErrNotFound), fmt.Sprintf("%d: expected %s got %s", i, repoerr.ErrNotFound, err))
 	}
 }
 
@@ -512,13 +513,13 @@ func TestChangeState(t *testing.T) {
 			desc:  "change state with wrong owner",
 			id:    saved,
 			owner: "2",
-			err:   errors.ErrNotFound,
+			err:   repoerr.ErrNotFound,
 		},
 		{
 			desc:  "change state with wrong id",
 			id:    "wrong",
 			owner: c.Owner,
-			err:   errors.ErrNotFound,
+			err:   repoerr.ErrNotFound,
 		},
 		{
 			desc:  "change state to Active",

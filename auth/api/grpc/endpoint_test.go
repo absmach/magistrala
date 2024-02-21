@@ -103,7 +103,7 @@ func TestIssue(t *testing.T) {
 			domainID:      domainID,
 			kind:          auth.APIKey,
 			issueResponse: auth.Token{},
-			err:           errors.ErrAuthentication,
+			err:           svcerr.ErrAuthentication,
 		},
 		{
 			desc:          "issue for invalid key type",
@@ -119,7 +119,7 @@ func TestIssue(t *testing.T) {
 			domainID:      "",
 			kind:          auth.APIKey,
 			issueResponse: auth.Token{},
-			err:           errors.ErrAuthentication,
+			err:           svcerr.ErrAuthentication,
 		},
 	}
 
@@ -158,7 +158,7 @@ func TestRefresh(t *testing.T) {
 			token:         inValidToken,
 			domainID:      domainID,
 			issueResponse: auth.Token{},
-			err:           errors.ErrAuthentication,
+			err:           svcerr.ErrAuthentication,
 		},
 		{
 			desc:          "refresh token with empty token",

@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -731,7 +732,7 @@ func TestConnectChannelThingRequestValidate(t *testing.T) {
 				ChannelID: "",
 				ThingID:   validID,
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 		{
 			desc: "empty thing id",
@@ -740,7 +741,7 @@ func TestConnectChannelThingRequestValidate(t *testing.T) {
 				ChannelID: validID,
 				ThingID:   "",
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 	}
 	for _, c := range cases {
@@ -771,7 +772,7 @@ func TestDisconnectChannelThingRequestValidate(t *testing.T) {
 				ChannelID: "",
 				ThingID:   validID,
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 		{
 			desc: "empty thing id",
@@ -780,7 +781,7 @@ func TestDisconnectChannelThingRequestValidate(t *testing.T) {
 				ChannelID: validID,
 				ThingID:   "",
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 	}
 	for _, c := range cases {
@@ -823,7 +824,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 				UserIDs:  []string{},
 				Relation: valid,
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 		{
 			desc: "empty relation",
@@ -833,7 +834,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 				UserIDs:  []string{validID},
 				Relation: "",
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 	}
 	for _, c := range cases {
@@ -876,7 +877,7 @@ func TestThingUnshareRequestValidate(t *testing.T) {
 				UserIDs:  []string{},
 				Relation: valid,
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 		{
 			desc: "empty relation",
@@ -886,7 +887,7 @@ func TestThingUnshareRequestValidate(t *testing.T) {
 				UserIDs:  []string{validID},
 				Relation: "",
 			},
-			err: errors.ErrCreateEntity,
+			err: svcerr.ErrCreateEntity,
 		},
 	}
 	for _, c := range cases {

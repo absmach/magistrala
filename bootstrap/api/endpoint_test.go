@@ -27,6 +27,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -92,7 +93,7 @@ var (
 
 	missingIDRes  = toJSON(apiutil.ErrorRes{Err: apiutil.ErrMissingID.Error(), Msg: apiutil.ErrValidation.Error()})
 	missingKeyRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerKey.Error(), Msg: apiutil.ErrValidation.Error()})
-	bsErrorRes    = toJSON(apiutil.ErrorRes{Err: errors.ErrNotFound.Error(), Msg: bootstrap.ErrBootstrap.Error()})
+	bsErrorRes    = toJSON(apiutil.ErrorRes{Err: svcerr.ErrNotFound.Error(), Msg: bootstrap.ErrBootstrap.Error()})
 	extKeyRes     = toJSON(apiutil.ErrorRes{Msg: bootstrap.ErrExternalKey.Error()})
 	extSecKeyRes  = toJSON(apiutil.ErrorRes{Err: "encoding/hex: invalid byte: U+002D '-'", Msg: bootstrap.ErrExternalKeySecure.Error()})
 )

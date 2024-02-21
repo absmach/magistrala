@@ -14,7 +14,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/magistrala/provision/api"
 	"github.com/absmach/magistrala/provision/mocks"
@@ -126,7 +126,7 @@ func TestProvision(t *testing.T) {
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusForbidden,
 			contentType: validContenType,
-			svcErr:      errors.ErrAuthorization,
+			svcErr:      svcerr.ErrAuthorization,
 		},
 	}
 
@@ -186,7 +186,7 @@ func TestMapping(t *testing.T) {
 			token:       validToken,
 			status:      http.StatusForbidden,
 			contentType: validContenType,
-			svcErr:      errors.ErrAuthorization,
+			svcErr:      svcerr.ErrAuthorization,
 		},
 	}
 

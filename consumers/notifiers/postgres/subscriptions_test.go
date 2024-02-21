@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -59,7 +60,7 @@ func TestSave(t *testing.T) {
 			desc: "save duplicate",
 			sub:  sub2,
 			id:   "",
-			err:  errors.ErrConflict,
+			err:  repoerr.ErrConflict,
 		},
 	}
 
@@ -104,7 +105,7 @@ func TestView(t *testing.T) {
 			desc: "retrieve not existing",
 			sub:  notifiers.Subscription{},
 			id:   "non-existing",
-			err:  errors.ErrNotFound,
+			err:  repoerr.ErrNotFound,
 		},
 	}
 

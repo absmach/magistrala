@@ -55,7 +55,7 @@ func TestAddPolicyCopy(t *testing.T) {
 				ObjectType:  "unknown",
 				ObjectID:    "unknown",
 			},
-			err: errors.ErrConflict,
+			err: repoerr.ErrConflict,
 		},
 	}
 
@@ -174,7 +174,7 @@ func TestSave(t *testing.T) {
 				UpdatedBy: userID,
 				Status:    auth.EnabledStatus,
 			},
-			err: errors.ErrCreateEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 	}
 
@@ -226,13 +226,13 @@ func TestRetrieveByID(t *testing.T) {
 			desc:     "retrieve non-existing client",
 			domainID: inValid,
 			response: auth.Domain{},
-			err:      errors.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 		{
 			desc:     "retrieve with empty client id",
 			domainID: "",
 			response: auth.Domain{},
-			err:      errors.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 	}
 
@@ -530,7 +530,7 @@ func TestRetrieveAllByIDs(t *testing.T) {
 			response: auth.DomainsPage{
 				Page: auth.Page{},
 			},
-			err: errors.ErrViewEntity,
+			err: repoerr.ErrViewEntity,
 		},
 		{
 			desc: "retrieve all by ids and id",
@@ -851,7 +851,7 @@ func TestListDomains(t *testing.T) {
 			response: auth.DomainsPage{
 				Page: auth.Page{},
 			},
-			err: errors.ErrViewEntity,
+			err: repoerr.ErrViewEntity,
 		},
 	}
 
@@ -976,7 +976,7 @@ func TestUpdate(t *testing.T) {
 				Metadata: &clients.Metadata{"key": make(chan int)},
 			},
 			response: auth.Domain{},
-			err:      errors.ErrUpdateEntity,
+			err:      repoerr.ErrUpdateEntity,
 		},
 	}
 

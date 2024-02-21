@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -52,7 +53,7 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrCreateEntity, err)
+		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
 	dbcfg := toDBConfig(cfg)
@@ -60,11 +61,11 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 	if _, err := tx.NamedExec(q, dbcfg); err != nil {
 		e := err
 		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
-			e = errors.ErrConflict
+			e = repoerr.ErrConflict
 		}
 
 		cr.rollback("Failed to insert a Config", tx)
-		return "", errors.Wrap(errors.ErrCreateEntity, e)
+		return "", errors.Wrap(repoerr.ErrCreateEntity, e)
 	}
 
 	if err := insertChannels(ctx, cfg.Owner, cfg.Channels, tx); err != nil {
@@ -97,14 +98,14 @@ func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (
 	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, err)
+			return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, err)
 		}
 
-		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	if ok := row.Next(); !ok {
-		return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, row.Err())
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
 	}
 
 	if err := row.StructScan(&dbcfg); err != nil {
@@ -119,7 +120,7 @@ func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
-		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -128,13 +129,13 @@ func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (
 		dbch := dbChannel{}
 		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 		dbch.Owner = nullString(dbcfg.Owner)
 
 		ch, err := toChannel(dbch)
 		if err != nil {
-			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 		chans = append(chans, ch)
 	}
@@ -202,17 +203,17 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, err)
+			return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, err)
 		}
-		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	if ok := row.Next(); !ok {
-		return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, row.Err())
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
 	}
 
 	if err := row.StructScan(&dbcfg); err != nil {
-		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q = `SELECT magistrala_channel, name, metadata FROM channels ch
@@ -223,7 +224,7 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
-		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -232,13 +233,13 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 		dbch := dbChannel{}
 		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
 		ch, err := toChannel(dbch)
 		if err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to deserialize channel due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
 		channels = append(channels, ch)
@@ -262,16 +263,16 @@ func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) err
 
 	res, err := cr.db.NamedExecContext(ctx, q, dbcfg)
 	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	if cnt == 0 {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return nil
@@ -291,12 +292,12 @@ func (cr configRepository) UpdateCert(ctx context.Context, owner, thingID, clien
 
 	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
-		return bootstrap.Config{}, errors.Wrap(errors.ErrUpdateEntity, err)
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 	defer row.Close()
 
 	if ok := row.Next(); !ok {
-		return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, row.Err())
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
 	}
 
 	if err := row.StructScan(&dbcfg); err != nil {
@@ -309,27 +310,27 @@ func (cr configRepository) UpdateCert(ctx context.Context, owner, thingID, clien
 func (cr configRepository) UpdateConnections(ctx context.Context, owner, id string, channels []bootstrap.Channel, connections []string) error {
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	if err := insertChannels(ctx, owner, channels, tx); err != nil {
 		cr.rollback("Failed to insert Channels during the update", tx)
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	if err := updateConnections(ctx, owner, id, connections, tx); err != nil {
 		if e, ok := err.(*pgconn.PgError); ok {
 			if e.Code == pgerrcode.ForeignKeyViolation {
-				return errors.ErrNotFound
+				return repoerr.ErrNotFound
 			}
 		}
 		cr.rollback("Failed to update connections during the update", tx)
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	if err := tx.Commit(); err != nil {
 		cr.rollback("Failed to commit Config update", tx)
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	return nil
@@ -343,7 +344,7 @@ func (cr configRepository) Remove(ctx context.Context, owner, id string) error {
 	}
 
 	if _, err := cr.db.NamedExecContext(ctx, q, dbcfg); err != nil {
-		return errors.Wrap(errors.ErrRemoveEntity, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	if _, err := cr.db.ExecContext(ctx, cleanupQuery); err != nil {
@@ -364,16 +365,16 @@ func (cr configRepository) ChangeState(ctx context.Context, owner, id string, st
 
 	res, err := cr.db.NamedExecContext(ctx, q, dbcfg)
 	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	if cnt == 0 {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 
 	return nil
@@ -393,14 +394,14 @@ func (cr configRepository) ListExisting(ctx context.Context, owner string, ids [
 	q := "SELECT magistrala_channel, name, metadata FROM channels WHERE owner = $1 AND magistrala_channel = ANY ($2)"
 	rows, err := cr.db.QueryxContext(ctx, q, owner, chans)
 	if err != nil {
-		return []bootstrap.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
+		return []bootstrap.Channel{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	for rows.Next() {
 		var dbch dbChannel
 		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved channels due to %s", err))
-			return []bootstrap.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
+			return []bootstrap.Channel{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
 		ch, err := toChannel(dbch)
@@ -423,7 +424,7 @@ func (cr configRepository) RemoveThing(ctx context.Context, id string) error {
 		cr.log.Warn("Failed to clean dangling channels after removal")
 	}
 	if err != nil {
-		return errors.Wrap(errors.ErrRemoveEntity, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 	return nil
 }
@@ -431,7 +432,7 @@ func (cr configRepository) RemoveThing(ctx context.Context, id string) error {
 func (cr configRepository) UpdateChannel(ctx context.Context, c bootstrap.Channel) error {
 	dbch, err := toDBChannel("", c)
 	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by 
@@ -506,7 +507,7 @@ func insertChannels(_ context.Context, owner string, channels []bootstrap.Channe
 	if _, err := tx.NamedExec(q, chans); err != nil {
 		e := err
 		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
-			e = errors.ErrConflict
+			e = repoerr.ErrConflict
 		}
 		return e
 	}

@@ -124,18 +124,15 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrValidation):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, errors.ErrAuthentication),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, svcerr.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, svcerr.ErrConflict),
-		errors.Contains(err, postgres.ErrMemberAlreadyAssigned),
-		errors.Contains(err, errors.ErrConflict):
+	case errors.Contains(err, postgres.ErrMemberAlreadyAssigned),
+		errors.Contains(err, svcerr.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, svcerr.ErrAuthorization),
-		errors.Contains(err, errors.ErrAuthorization),
-		errors.Contains(err, errors.ErrDomainAuthorization):
+		errors.Contains(err, svcerr.ErrDomainAuthorization):
 		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)

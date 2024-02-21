@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/mqtt/events"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/mproxy/pkg/session"
 )
@@ -235,7 +236,7 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 		return err
 	}
 	if !res.GetAuthorized() {
-		return errors.ErrAuthorization
+		return svcerr.ErrAuthorization
 	}
 
 	return nil

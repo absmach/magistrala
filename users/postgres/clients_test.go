@@ -13,6 +13,8 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	cpostgres "github.com/absmach/magistrala/users/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,7 +71,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: mgclients.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
-			err: errors.ErrConflict,
+			err: repoerr.ErrConflict,
 		},
 		{
 			desc: "add client with duplicate client name",
@@ -83,7 +85,7 @@ func TestClientsSave(t *testing.T) {
 				Metadata: mgclients.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
-			err: errors.ErrConflict,
+			err: repoerr.ErrConflict,
 		},
 		{
 			desc: "add client with invalid client id",
@@ -230,7 +232,7 @@ func TestIsPlatformAdmin(t *testing.T) {
 				Status:   mgclients.EnabledStatus,
 				Role:     mgclients.UserRole,
 			},
-			err: errors.ErrAuthorization,
+			err: svcerr.ErrAuthorization,
 		},
 	}
 
@@ -276,12 +278,12 @@ func TestRetrieveByID(t *testing.T) {
 		{
 			desc:     "retrieve non-existing client",
 			clientID: invalidName,
-			err:      errors.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 		{
 			desc:     "retrieve with empty client id",
 			clientID: "",
-			err:      errors.ErrNotFound,
+			err:      repoerr.ErrNotFound,
 		},
 	}
 
@@ -737,7 +739,7 @@ func TestUpdateRole(t *testing.T) {
 			desc:    "update role with invalid client id",
 			client:  mgclients.Client{ID: invalidName},
 			newRole: mgclients.AdminRole,
-			err:     errors.ErrNotFound,
+			err:     repoerr.ErrNotFound,
 		},
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 )
 
 var (
@@ -48,7 +49,7 @@ func (kr *repo) Retrieve(ctx context.Context, issuerID, id string) (auth.Key, er
 	key := dbKey{}
 	if err := kr.db.QueryRowxContext(ctx, q, issuerID, id).StructScan(&key); err != nil {
 		if err == sql.ErrNoRows {
-			return auth.Key{}, errors.ErrNotFound
+			return auth.Key{}, repoerr.ErrNotFound
 		}
 
 		return auth.Key{}, postgres.HandleError(errRetrieve, err)

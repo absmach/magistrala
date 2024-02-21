@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
 	"github.com/stretchr/testify/assert"
@@ -96,9 +97,9 @@ func TestCreateGroupEndpoint(t *testing.T) {
 				},
 			},
 			svcResp: groups.Group{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    createGroupRes{created: false},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -157,9 +158,9 @@ func TestViewGroupEndpoint(t *testing.T) {
 				id:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Group{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    viewGroupRes{},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -214,9 +215,9 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 				id:    testsutil.GenerateUUID(t),
 			},
 			svcResp: []string{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    viewGroupPermsRes{},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -269,9 +270,9 @@ func TestEnableGroupEndpoint(t *testing.T) {
 				id:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Group{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    changeStatusRes{},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -324,9 +325,9 @@ func TestDisableGroupEndpoint(t *testing.T) {
 				id:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Group{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    changeStatusRes{},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -376,9 +377,9 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 				token: valid,
 				id:    testsutil.GenerateUUID(t),
 			},
-			svcErr: errors.ErrAuthorization,
+			svcErr: svcerr.ErrAuthorization,
 			resp:   deleteGroupRes{},
-			err:    errors.ErrAuthorization,
+			err:    svcerr.ErrAuthorization,
 		},
 	}
 
@@ -439,9 +440,9 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 				Name:  valid,
 			},
 			svcResp: groups.Group{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    updateGroupRes{},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -574,9 +575,9 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    groupPageRes{},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -676,9 +677,9 @@ func TestListMembersEndpoint(t *testing.T) {
 				groupID:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.MembersPage{},
-			svcErr:  errors.ErrAuthorization,
+			svcErr:  svcerr.ErrAuthorization,
 			resp:    listMembersRes{},
-			err:     errors.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
 		},
 	}
 
@@ -779,9 +780,9 @@ func TestAssignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			svcErr: errors.ErrAuthorization,
+			svcErr: svcerr.ErrAuthorization,
 			resp:   assignRes{},
-			err:    errors.ErrAuthorization,
+			err:    svcerr.ErrAuthorization,
 		},
 	}
 
@@ -890,9 +891,9 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			svcErr: errors.ErrAuthorization,
+			svcErr: svcerr.ErrAuthorization,
 			resp:   unassignRes{},
-			err:    errors.ErrAuthorization,
+			err:    svcerr.ErrAuthorization,
 		},
 	}
 

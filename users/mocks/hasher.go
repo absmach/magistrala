@@ -5,6 +5,7 @@ package mocks
 
 import (
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/users"
 )
 
@@ -27,7 +28,7 @@ func (hm *hasherMock) Hash(pwd string) (string, error) {
 
 func (hm *hasherMock) Compare(plain, hashed string) error {
 	if plain != hashed {
-		return errors.ErrAuthentication
+		return svcerr.ErrAuthentication
 	}
 
 	return nil

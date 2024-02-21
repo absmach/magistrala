@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/absmach/magistrala/consumers/notifiers"
-	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 )
 
 var _ notifiers.SubscriptionsRepository = (*subRepoMock)(nil)
@@ -30,11 +30,11 @@ func (srm *subRepoMock) Save(_ context.Context, sub notifiers.Subscription) (str
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 	if _, ok := srm.subs[sub.ID]; ok {
-		return "", errors.ErrConflict
+		return "", repoerr.ErrConflict
 	}
 	for _, s := range srm.subs {
 		if s.Contact == sub.Contact && s.Topic == sub.Topic {
-			return "", errors.ErrConflict
+			return "", repoerr.ErrConflict
 		}
 	}
 
@@ -47,7 +47,7 @@ func (srm *subRepoMock) Retrieve(_ context.Context, id string) (notifiers.Subscr
 	defer srm.mu.Unlock()
 	ret, ok := srm.subs[id]
 	if !ok {
-		return notifiers.Subscription{}, errors.ErrNotFound
+		return notifiers.Subscription{}, repoerr.ErrNotFound
 	}
 	return ret, nil
 }
@@ -101,7 +101,7 @@ func (srm *subRepoMock) RetrieveAll(_ context.Context, pm notifiers.PageMetadata
 	}
 
 	if len(subs) == 0 {
-		return notifiers.Page{}, errors.ErrNotFound
+		return notifiers.Page{}, repoerr.ErrNotFound
 	}
 
 	ret := notifiers.Page{
@@ -124,7 +124,7 @@ func (srm *subRepoMock) Remove(_ context.Context, id string) error {
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 	if _, ok := srm.subs[id]; !ok {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 	delete(srm.subs, id)
 	return nil

@@ -128,7 +128,7 @@ func TestRegisterClient(t *testing.T) {
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
-			err:         errors.ErrConflict,
+			err:         svcerr.ErrConflict,
 		},
 		{
 			desc:        "register a new user with an empty token",
@@ -1093,7 +1093,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			data:        fmt.Sprintf(`{"email": "%s", "host": "%s"}`, "invalid", testhost),
 			contentType: contentType,
 			status:      http.StatusNotFound,
-			err:         errors.ErrNotFound,
+			err:         svcerr.ErrNotFound,
 		},
 		{
 			desc:        "password reset with malformed data",

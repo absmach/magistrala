@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/things"
 	"github.com/go-redis/redis/v8"
 )
@@ -35,16 +36,16 @@ func NewCache(client *redis.Client, duration time.Duration) things.Cache {
 
 func (tc *thingCache) Save(ctx context.Context, thingKey, thingID string) error {
 	if thingKey == "" || thingID == "" {
-		return errors.Wrap(errors.ErrCreateEntity, errors.New("thing key or thing id is empty"))
+		return errors.Wrap(repoerr.ErrCreateEntity, errors.New("thing key or thing id is empty"))
 	}
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, thingKey)
 	if err := tc.client.Set(ctx, tkey, thingID, tc.keyDuration).Err(); err != nil {
-		return errors.Wrap(errors.ErrCreateEntity, err)
+		return errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
 	tid := fmt.Sprintf("%s:%s", idPrefix, thingID)
 	if err := tc.client.Set(ctx, tid, thingKey, tc.keyDuration).Err(); err != nil {
-		return errors.Wrap(errors.ErrCreateEntity, err)
+		return errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
 	return nil
@@ -52,13 +53,13 @@ func (tc *thingCache) Save(ctx context.Context, thingKey, thingID string) error 
 
 func (tc *thingCache) ID(ctx context.Context, thingKey string) (string, error) {
 	if thingKey == "" {
-		return "", errors.ErrNotFound
+		return "", repoerr.ErrNotFound
 	}
 
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, thingKey)
 	thingID, err := tc.client.Get(ctx, tkey).Result()
 	if err != nil {
-		return "", errors.Wrap(errors.ErrNotFound, err)
+		return "", errors.Wrap(repoerr.ErrNotFound, err)
 	}
 
 	return thingID, nil
@@ -72,12 +73,12 @@ func (tc *thingCache) Remove(ctx context.Context, thingID string) error {
 		return nil
 	}
 	if err != nil {
-		return errors.Wrap(errors.ErrRemoveEntity, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, key)
 	if err := tc.client.Del(ctx, tkey, tid).Err(); err != nil {
-		return errors.Wrap(errors.ErrRemoveEntity, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	return nil

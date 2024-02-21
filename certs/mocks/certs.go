@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/absmach/magistrala/certs"
-	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 )
 
 var _ certs.Repository = (*certsRepoMock)(nil)
@@ -63,7 +63,7 @@ func (c *certsRepoMock) RetrieveAll(ctx context.Context, ownerID string, offset,
 
 	oc, ok := c.certsByThingID[ownerID]
 	if !ok {
-		return certs.Page{}, errors.ErrNotFound
+		return certs.Page{}, repoerr.ErrNotFound
 	}
 
 	var crts []certs.Cert
@@ -89,7 +89,7 @@ func (c *certsRepoMock) Remove(ctx context.Context, ownerID, serial string) erro
 	defer c.mu.Unlock()
 	crt, ok := c.certsBySerial[serial]
 	if !ok {
-		return errors.ErrNotFound
+		return repoerr.ErrNotFound
 	}
 	delete(c.certsBySerial, crt.Serial)
 	delete(c.certsByThingID, crt.ThingID)
@@ -105,7 +105,7 @@ func (c *certsRepoMock) RetrieveByThing(ctx context.Context, ownerID, thingID st
 
 	cs, ok := c.certsByThingID[ownerID][thingID]
 	if !ok {
-		return certs.Page{}, errors.ErrNotFound
+		return certs.Page{}, repoerr.ErrNotFound
 	}
 
 	var crts []certs.Cert
@@ -130,7 +130,7 @@ func (c *certsRepoMock) RetrieveBySerial(ctx context.Context, ownerID, serialID 
 
 	crt, ok := c.certsBySerial[serialID]
 	if !ok {
-		return certs.Cert{}, errors.ErrNotFound
+		return certs.Cert{}, repoerr.ErrNotFound
 	}
 
 	return crt, nil

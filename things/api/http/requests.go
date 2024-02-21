@@ -8,6 +8,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 type createClientReq struct {
@@ -310,7 +311,7 @@ type connectChannelThingRequest struct {
 
 func (req *connectChannelThingRequest) validate() error {
 	if req.ThingID == "" || req.ChannelID == "" {
-		return errors.ErrCreateEntity
+		return svcerr.ErrCreateEntity
 	}
 	return nil
 }
@@ -323,7 +324,7 @@ type disconnectChannelThingRequest struct {
 
 func (req *disconnectChannelThingRequest) validate() error {
 	if req.ThingID == "" || req.ChannelID == "" {
-		return errors.ErrCreateEntity
+		return svcerr.ErrCreateEntity
 	}
 	return nil
 }
@@ -340,7 +341,7 @@ func (req *thingShareRequest) validate() error {
 		return errors.ErrMalformedEntity
 	}
 	if req.Relation == "" || len(req.UserIDs) == 0 {
-		return errors.ErrCreateEntity
+		return svcerr.ErrCreateEntity
 	}
 	return nil
 }
@@ -357,7 +358,7 @@ func (req *thingUnshareRequest) validate() error {
 		return errors.ErrMalformedEntity
 	}
 	if req.Relation == "" || len(req.UserIDs) == 0 {
-		return errors.ErrCreateEntity
+		return svcerr.ErrCreateEntity
 	}
 	return nil
 }

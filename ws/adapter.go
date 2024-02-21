@@ -10,6 +10,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
@@ -105,10 +106,10 @@ func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, acti
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
 	return res.GetId(), nil

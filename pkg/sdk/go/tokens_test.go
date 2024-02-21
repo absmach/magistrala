@@ -62,7 +62,7 @@ func TestIssueToken(t *testing.T) {
 			desc:  "issue token for an empty user",
 			login: sdk.Login{},
 			token: &magistrala.Token{},
-			err:   errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusInternalServerError),
+			err:   errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
 		},
 		{
 			desc:     "issue token for invalid identity",

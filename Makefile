@@ -6,6 +6,8 @@ BUILD_DIR = build
 SERVICES = auth users things http coap ws lora influxdb-writer influxdb-reader mongodb-writer \
 	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader timescale-writer timescale-reader cli \
 	bootstrap opcua twins mqtt provision certs smtp-notifier smpp-notifier invitations
+TEST_API_SERVICES = auth bootstrap certs http invitations notifiers provision readers things twins users
+TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
@@ -97,7 +99,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release run run_addons grpc_mtls_certs check_mtls check_certs
+.PHONY: all $(SERVICES) dockers dockers_dev latest release run run_addons grpc_mtls_certs check_mtls check_certs test_api
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -128,6 +130,32 @@ test: mocks
         go test -v --race -count 1 -tags test -coverprofile=coverage/$$dir.out $$(go list ./... | grep $$dir | grep -v 'cmd'); \
     done
 	go test -v --race -count 1 -tags test -coverprofile=coverage/coverage.out $$(go list ./... | grep -v 'consumers\|readers\|postgres\|internal\|opcua\|cmd')
+
+define test_api_service
+	$(eval svc=$(subst test_api_,,$(1)))
+	@which st > /dev/null || (echo "schemathesis not found, please install it from https://github.com/schemathesis/schemathesis#getting-started" && exit 1)
+
+	@if [ -z "$(USER_TOKEN)" ]; then \
+		echo "USER_TOKEN is not set"; \
+		echo "Please set it to a valid token"; \
+		exit 1; \
+	fi
+
+	st run api/openapi/$(svc).yml \
+	--checks all \
+	--base-url $(2) \
+	--header "Authorization: Bearer $(USER_TOKEN)" \
+	--contrib-unique-data --contrib-openapi-formats-uuid \
+	--hypothesis-suppress-health-check=filter_too_much \
+	--stateful=links
+endef
+
+test_api_users: TEST_API_URL := http://localhost:9002
+test_api_things: TEST_API_URL := http://localhost:9000
+test_api_invitations: TEST_API_URL := http://localhost:9020
+
+$(TEST_API):
+	$(call test_api_service,$(@),$(TEST_API_URL))
 
 proto:
 	protoc -I. --go_out=. --go_opt=paths=source_relative pkg/messaging/*.proto

@@ -19,18 +19,6 @@ import (
 )
 
 var (
-	// ErrRecoveryToken indicates error in generating password recovery token.
-	ErrRecoveryToken = errors.New("failed to generate password recovery token")
-
-	// ErrPasswordFormat indicates weak password.
-	ErrPasswordFormat = errors.New("password does not meet the requirements")
-
-	// ErrFailedPolicyUpdate indicates a failure to update user policy.
-	ErrFailedPolicyUpdate = errors.New("failed to update user policy")
-
-	// ErrFailedUpdateRole indicates a failure to update user role.
-	ErrFailedUpdateRole = errors.New("failed to update user role")
-
 	// ErrAddPolicies indictaed a failre to add policies.
 	errAddPolicies = errors.New("failed to add policies")
 
@@ -292,7 +280,7 @@ func (svc service) GenerateResetToken(ctx context.Context, email, host string) e
 	}
 	token, err := svc.auth.Issue(ctx, issueReq)
 	if err != nil {
-		return errors.Wrap(ErrRecoveryToken, err)
+		return errors.Wrap(svcerr.ErrRecoveryToken, err)
 	}
 
 	return svc.SendPasswordReset(ctx, host, email, client.Name, token.AccessToken)
@@ -311,7 +299,7 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 		return repoerr.ErrNotFound
 	}
 	if !svc.passRegex.MatchString(secret) {
-		return ErrPasswordFormat
+		return svcerr.ErrPasswordFormat
 	}
 	secret, err = svc.hasher.Hash(secret)
 	if err != nil {
@@ -337,7 +325,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 		return mgclients.Client{}, err
 	}
 	if !svc.passRegex.MatchString(newSecret) {
-		return mgclients.Client{}, ErrPasswordFormat
+		return mgclients.Client{}, svcerr.ErrPasswordFormat
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
@@ -384,7 +372,7 @@ func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgcli
 	}
 
 	if err := svc.updateClientPolicy(ctx, cli.ID, cli.Role); err != nil {
-		return mgclients.Client{}, errors.Wrap(ErrFailedPolicyUpdate, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrFailedPolicyUpdate, err)
 	}
 	client, err = svc.clients.UpdateRole(ctx, client)
 	if err != nil {
@@ -392,7 +380,7 @@ func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgcli
 		if errRollback := svc.updateClientPolicy(ctx, cli.ID, mgclients.UserRole); errRollback != nil {
 			return mgclients.Client{}, errors.Wrap(err, errors.Wrap(repoerr.ErrRollbackTx, errRollback))
 		}
-		return mgclients.Client{}, errors.Wrap(ErrFailedUpdateRole, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrFailedUpdateRole, err)
 	}
 	return client, nil
 }
@@ -438,7 +426,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 	if dbClient.Status == client.Status {
-		return mgclients.Client{}, mgclients.ErrStatusAlreadyAssigned
+		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned
 	}
 	client.UpdatedBy = tokenUserID
 
@@ -580,7 +568,7 @@ func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, per
 	}
 
 	if !res.GetAuthorized() {
-		return "", errors.Wrap(svcerr.ErrAuthorization, err)
+		return "", svcerr.ErrAuthorization
 	}
 	return res.GetId(), nil
 }

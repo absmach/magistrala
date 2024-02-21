@@ -4,7 +4,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -14,11 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	errMissingRelation = errors.New("missing relation")
-	errInvalidRelation = errors.New("invalid relation")
-	valid              = "valid"
-)
+var valid = "valid"
 
 func TestSendInvitationReqValidation(t *testing.T) {
 	cases := []struct {
@@ -79,7 +74,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 				Relation: "",
 				Resend:   true,
 			},
-			err: errMissingRelation,
+			err: apiutil.ErrMissingRelation,
 		},
 		{
 			desc: "invalid relation",
@@ -90,7 +85,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 				Relation: "invalid",
 				Resend:   true,
 			},
-			err: errInvalidRelation,
+			err: apiutil.ErrInvalidRelation,
 		},
 	}
 

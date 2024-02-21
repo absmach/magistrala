@@ -26,6 +26,7 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger) http.Han
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
+
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 			registrationEndpoint(svc),
@@ -83,20 +84,6 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger) http.Han
 			opts...,
 		), "update_client_identity").ServeHTTP)
 
-		r.Post("/password/reset-request", otelhttp.NewHandler(kithttp.NewServer(
-			passwordResetRequestEndpoint(svc),
-			decodePasswordResetRequest,
-			api.EncodeResponse,
-			opts...,
-		), "password_reset_req").ServeHTTP)
-
-		r.Put("/password/reset", otelhttp.NewHandler(kithttp.NewServer(
-			passwordResetEndpoint(svc),
-			decodePasswordReset,
-			api.EncodeResponse,
-			opts...,
-		), "password_reset").ServeHTTP)
-
 		r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
 			updateClientRoleEndpoint(svc),
 			decodeUpdateClientRole,
@@ -131,6 +118,22 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger) http.Han
 			api.EncodeResponse,
 			opts...,
 		), "disable_client").ServeHTTP)
+	})
+
+	r.Route("/password", func(r chi.Router) {
+		r.Post("/reset-request", otelhttp.NewHandler(kithttp.NewServer(
+			passwordResetRequestEndpoint(svc),
+			decodePasswordResetRequest,
+			api.EncodeResponse,
+			opts...,
+		), "password_reset_req").ServeHTTP)
+
+		r.Put("/reset", otelhttp.NewHandler(kithttp.NewServer(
+			passwordResetEndpoint(svc),
+			decodePasswordReset,
+			api.EncodeResponse,
+			opts...,
+		), "password_reset").ServeHTTP)
 	})
 
 	// Ideal location: users service, groups endpoint.
@@ -217,7 +220,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-
 	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)

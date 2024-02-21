@@ -134,11 +134,11 @@ func (repo clientRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (mgcl
 
 	dbPage, err := pgclients.ToDBClientsPage(pm)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	defer rows.Close()
 

@@ -18,27 +18,6 @@ import (
 const recoveryDuration = 5 * time.Minute
 
 var (
-	errRollbackPolicy     = errors.New("failed to rollback policy")
-	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
-	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
-)
-
-var (
-	// ErrFailedToRetrieveMembers failed to retrieve group members.
-	ErrFailedToRetrieveMembers = errors.New("failed to retrieve group members")
-
-	// ErrFailedToRetrieveMembership failed to retrieve memberships.
-	ErrFailedToRetrieveMembership = errors.New("failed to retrieve memberships")
-
-	// ErrFailedToRetrieveAll failed to retrieve groups.
-	ErrFailedToRetrieveAll = errors.New("failed to retrieve all groups")
-
-	// ErrFailedToRetrieveParents failed to retrieve groups.
-	ErrFailedToRetrieveParents = errors.New("failed to retrieve all groups")
-
-	// ErrFailedToRetrieveChildren failed to retrieve groups.
-	ErrFailedToRetrieveChildren = errors.New("failed to retrieve all groups")
-
 	// ErrExpiry indicates that the token is expired.
 	ErrExpiry = errors.New("token is expired")
 
@@ -51,6 +30,9 @@ var (
 	errCreateDomainPolicy = errors.New("failed to create domain policy")
 	errAddPolicies        = errors.New("failed to add policies")
 	errRemovePolicies     = errors.New("failed to remove the policies")
+	errRollbackPolicy     = errors.New("failed to rollback policy")
+	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
+	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
 )
 
 // Authn specifies an API that must be fullfiled by the domain service
@@ -358,7 +340,12 @@ func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (int, error)
 }
 
 func (svc service) ListPermissions(ctx context.Context, pr PolicyReq, filterPermisions []string) (Permissions, error) {
-	return svc.agent.RetrievePermissions(ctx, pr, filterPermisions)
+	pers, err := svc.agent.RetrievePermissions(ctx, pr, filterPermisions)
+	if err != nil {
+		return []string{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	return pers, nil
 }
 
 func (svc service) tmpKey(duration time.Duration, key Key) (Token, error) {

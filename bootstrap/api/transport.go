@@ -13,9 +13,9 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -41,7 +41,7 @@ var (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	r := chi.NewRouter()
@@ -51,43 +51,43 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger *s
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				addEndpoint(svc),
 				decodeAddRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "add").ServeHTTP)
 
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				listEndpoint(svc),
 				decodeListRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "list").ServeHTTP)
 
 			r.Get("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
 				viewEndpoint(svc),
 				decodeEntityRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "view").ServeHTTP)
 
 			r.Put("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
 				updateEndpoint(svc),
 				decodeUpdateRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "update").ServeHTTP)
 
 			r.Delete("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
 				removeEndpoint(svc),
 				decodeEntityRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "remove").ServeHTTP)
 
 			r.Patch("/certs/{certID}", otelhttp.NewHandler(kithttp.NewServer(
 				updateCertEndpoint(svc),
 				decodeUpdateCertRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "update_cert").ServeHTTP)
 
 			r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
 				updateConnEndpoint(svc),
 				decodeUpdateConnRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "update_connections").ServeHTTP)
 		})
 
@@ -95,12 +95,12 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger *s
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				bootstrapEndpoint(svc, reader, false),
 				decodeBootstrapRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "bootstrap").ServeHTTP)
 			r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
 				bootstrapEndpoint(svc, reader, false),
 				decodeBootstrapRequest,
-				encodeResponse,
+				api.EncodeResponse,
 				opts...), "bootstrap").ServeHTTP)
 			r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
 				bootstrapEndpoint(svc, reader, true),
@@ -112,7 +112,7 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger *s
 		r.Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 			stateEndpoint(svc),
 			decodeStateRequest,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...), "update_state").ServeHTTP)
 	})
 	r.Get("/health", magistrala.Health("bootstrap", instanceID))
@@ -242,23 +242,6 @@ func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error
 	return req, nil
 }
 
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", contentType)
-	if ar, ok := response.(magistrala.Response); ok {
-		for k, v := range ar.Headers() {
-			w.Header().Set(k, v)
-		}
-
-		w.WriteHeader(ar.Code())
-
-		if ar.Empty() {
-			return nil
-		}
-	}
-
-	return json.NewEncoder(w).Encode(response)
-}
-
 func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", byteContentType)
 	w.WriteHeader(http.StatusOK)
@@ -268,57 +251,6 @@ func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interfac
 		}
 	}
 	return nil
-}
-
-func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	var wrapper error
-	if errors.Contains(err, apiutil.ErrValidation) {
-		wrapper, err = errors.Unwrap(err)
-	}
-
-	switch {
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, apiutil.ErrBearerToken),
-		errors.Contains(err, apiutil.ErrBearerKey):
-		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, apiutil.ErrInvalidQueryParams),
-		errors.Contains(err, svcerr.ErrMalformedEntity),
-		errors.Contains(err, apiutil.ErrMissingID),
-		errors.Contains(err, apiutil.ErrBootstrapState),
-		errors.Contains(err, apiutil.ErrLimitSize):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, svcerr.ErrNotFound):
-		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, bootstrap.ErrExternalKey),
-		errors.Contains(err, bootstrap.ErrExternalKeySecure),
-		errors.Contains(err, svcerr.ErrAuthorization):
-		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, bootstrap.ErrThings):
-		w.WriteHeader(http.StatusServiceUnavailable)
-	case errors.Contains(err, svcerr.ErrConflict):
-		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, svcerr.ErrCreateEntity),
-		errors.Contains(err, svcerr.ErrUpdateEntity),
-		errors.Contains(err, svcerr.ErrViewEntity),
-		errors.Contains(err, svcerr.ErrRemoveEntity):
-		w.WriteHeader(http.StatusInternalServerError)
-
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	if wrapper != nil {
-		err = errors.Wrap(wrapper, err)
-	}
-
-	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
 }
 
 func parseFilter(values url.Values) bootstrap.Filter {

@@ -17,9 +17,7 @@ readDotEnv() {
     set +o allexport
 }
 
-vault() {
-    docker exec -it magistrala-vault vault "$@"
-}
+source vault_cmd.sh
 
 vaultCreatePolicyFile() {
     envsubst '
@@ -29,12 +27,16 @@ vaultCreatePolicyFile() {
 }
 vaultCreatePolicy() {
     echo "Creating new policy for AppRole"
-    docker cp magistrala_things_certs_issue.hcl magistrala-vault:/vault/magistrala_things_certs_issue.hcl
-    vault policy write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} magistrala_things_certs_issue /vault/magistrala_things_certs_issue.hcl
+    if is_container_running "magistrala-vault"; then
+        docker cp magistrala_things_certs_issue.hcl magistrala-vault:/vault/magistrala_things_certs_issue.hcl
+        vault policy write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} magistrala_things_certs_issue /vault/magistrala_things_certs_issue.hcl
+    else
+        vault policy write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} magistrala_things_certs_issue magistrala_things_certs_issue.hcl
+    fi
 }
 
 vaultEnableAppRole() {
-   if [ "$SKIP_ENABLE_APP_ROLE" == "skip_enable_app_role" ]; then
+   if [ "$SKIP_ENABLE_APP_ROLE" == "--skip-enable-approle" ]; then
         echo "Skipping Enable AppRole"
     else
         echo "Enabling AppRole"

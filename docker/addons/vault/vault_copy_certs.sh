@@ -25,9 +25,29 @@ if [ -n "${MG_NGINX_SERVER_NAME:-}" ]; then
 fi
 
 echo "Copying certificate files"
-cp -v data/${server_name}.crt      ${MAGISTRALA_DIR}/docker/ssl/certs/magistrala-server.crt
-cp -v data/${server_name}.key      ${MAGISTRALA_DIR}/docker/ssl/certs/magistrala-server.key
-cp -v data/${MG_VAULT_PKI_INT_FILE_NAME}.key    ${MAGISTRALA_DIR}/docker/ssl/certs/ca.key
-cp -v data/${MG_VAULT_PKI_INT_FILE_NAME}_bundle.crt     ${MAGISTRALA_DIR}/docker/ssl/certs/ca.crt
+
+if [ -e "data/${server_name}.crt" ]; then
+    cp -v data/${server_name}.crt      ${MAGISTRALA_DIR}/docker/ssl/certs/magistrala-server.crt
+else
+    echo "${server_name}.crt file not available"
+fi
+
+if [ -e "data/${server_name}.key" ]; then
+    cp -v data/${server_name}.key      ${MAGISTRALA_DIR}/docker/ssl/certs/magistrala-server.key
+else
+    echo "${server_name}.key file not available"
+fi
+
+if [ -e "data/${MG_VAULT_PKI_INT_FILE_NAME}.key" ]; then
+    cp -v data/${MG_VAULT_PKI_INT_FILE_NAME}.key    ${MAGISTRALA_DIR}/docker/ssl/certs/ca.key
+else
+    echo "data/${MG_VAULT_PKI_INT_FILE_NAME}.key file not available"
+fi
+
+if [ -e "data/${MG_VAULT_PKI_INT_FILE_NAME}_bundle.crt" ]; then
+    cp -v data/${MG_VAULT_PKI_INT_FILE_NAME}_bundle.crt     ${MAGISTRALA_DIR}/docker/ssl/certs/ca.crt
+else
+    echo "data/${MG_VAULT_PKI_INT_FILE_NAME}_bundle.crt file not available"
+fi
 
 exit 0

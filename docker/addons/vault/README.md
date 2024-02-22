@@ -6,11 +6,8 @@ When the Vault service is started, some initialization steps need to be done to 
 
 ## Configuration
 
-
 | Variable                                | Description                                                                   | Default                               |
-| :---------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------- |
-| MG_VAULT_HOST                           | Vault service address                                                         | vault                                 |
-| MG_VAULT_PORT                           | Vault service port                                                            | 8200                                  |
+| :-------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------- |
 | MG_VAULT_ADDR                           | Vault Address                                                                 | http://vault:8200                     |
 | MG_VAULT_UNSEAL_KEY_1                   | Vault unseal key                                                              | ""                                    |
 | MG_VAULT_UNSEAL_KEY_2                   | Vault unseal key                                                              | ""                                    |
@@ -106,23 +103,33 @@ The parameters required for generating certificate are obtained from the environ
 Environmental variables starting with `MG_VAULT_PKI` in `docker/.env` file are used by `vault_set_pki.sh` to generate root CA.  
 Environmental variables starting with`MG_VAULT_PKI_INT` in `docker/.env` file are used by `vault_set_pki.sh` to generate intermediate CA.  
 
+Passing command line args `--skip-server-cert` to `vault_set_pki.sh` will skip server certificate role & process of generation of server certificate & key.
+
 ### 5. `vault_create_approle.sh`  
 
 This script is used to enable app role authorization in Vault. Certs service used the approle credentials to issue, revoke things certificate from vault intermedate CA.  
 
 `vault_create_approle.sh` script by default tries to enable auth approle.  
-If approle is already enabled in vault, then use args `skip_enable_app_role` to skip enable auth approle step.  
-To skip enable auth approle step use the following  `vault_create_approle.sh   skip_enable_app_role`
+If approle is already enabled in vault, then use args `--skip-enable-approle` to skip enable auth approle step.  
+To skip enable auth approle step use the following  `vault_create_approle.sh   --skip-enable-approle`
 
 ### 6. `vault_copy_certs.sh`
 
 This scripts copies the necessary certificates and keys from `docker/addons/vault/data` to the `docker/ssl/certs` folder.
 
+## Hashicorp Cloud Platform (HCP) Vault
+
+To have the same PKI setup can done in Hashicorp Cloud Platform (HCP) Vault follow the below steps:
+Requirement: [VAULT CLI](https://developer.hashicorp.com/vault/tutorials/getting-started/getting-started-install)
+
+- Replace the environmental variable `MG_VAULT_ADDR` in `docker/.env` with HCP Vault address.
+- Replace the environmental variable `MG_VAULT_TOKEN` in `docker/.env` with HCP Vault Admin token.
+- Run script `vault_set_pki.sh` and   `vault_create_approle.sh`.
+- Optional step, run script `vault_copy_certs.sh` to copy certificates to magistrala default path.
+
 ## Vault CLI
 
 It can also be useful to run the Vault CLI for inspection and administration work.
-
-This can be done directly using the Vault image in Docker: `docker run -it magistrala/vault:latest vault`
 
 ```bash
 Usage: vault <command> [args]
@@ -156,6 +163,8 @@ Other commands:
     token          Interact with tokens
 ```
 
-### Vault Web UI
+If the Vault is setup through `docker/addons/vault`, then Vault CLI can be run directly using the Vault image in Docker: `docker run -it magistrala/vault:latest vault`
 
-The Vault Web UI is accessible by default on `http://localhost:8200/ui`.
+## Vault Web UI
+
+If the Vault is setup through `docker/addons/vault`, Then Vault Web UI is accessible by default on `http://localhost:8200/ui`.

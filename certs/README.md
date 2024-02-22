@@ -9,16 +9,16 @@ When `MG_CERTS_VAULT_HOST` is set it is presumed that `Vault` is installed and `
 First you'll need to set up `Vault`.
 To setup `Vault` follow steps in [Build Your Own Certificate Authority (CA)](https://learn.hashicorp.com/tutorials/vault/pki-engine).
 
-To setup certs service with `Vault` following environment variables must be set:
+For lab purposes you can use docker-compose and script for setting up PKI in [https://github.com/absmach/magistrala/blob/master/docker/addons/vault/README.md](https://github.com/absmach/magistrala/blob/master/docker/addons/vault/README.md)
 
 ```bash
-MG_CERTS_VAULT_HOST=vault-domain.com
-MG_CERTS_VAULT_PKI_PATH=<vault_pki_path>
-MG_CERTS_VAULT_ROLE=<vault_role>
-MG_CERTS_VAULT_TOKEN=<vault_acces_token>
+MG_CERTS_VAULT_HOST=<https://vault-domain:8200>
+MG_CERTS_VAULT_NAMESPACE=<vault_namespace> 
+MG_CERTS_VAULT_APPROLE_ROLEID=<vault_approle_roleid> 
+MG_CERTS_VAULT_APPROLE_SECRET=<vault_approle_sceret> 
+MG_CERTS_VAULT_THINGS_CERTS_PKI_PATH=<vault_things_certs_pki_path> 
+MG_CERTS_VAULT_THINGS_CERTS_PKI_ROLE_NAME=<vault_things_certs_issue_role_name> 
 ```
-
-For lab purposes you can use docker-compose and script for setting up PKI in [https://github.com/mteodor/vault](https://github.com/mteodor/vault)
 
 The certificates can also be revoked using `certs` service. To revoke a certificate you need to provide `thing_id` of the thing for which the certificate was issued.
 

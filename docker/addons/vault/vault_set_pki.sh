@@ -7,6 +7,8 @@ set -euo pipefail
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export MAGISTRALA_DIR=$scriptdir/../../../
 
+SKIP_SERVER_CERT=${1:-}
+
 cd $scriptdir
 
 readDotEnv() {
@@ -22,9 +24,7 @@ if [ -n "${MG_NGINX_SERVER_NAME:-}" ]; then
     server_name="$MG_NGINX_SERVER_NAME"
 fi
 
-vault() {
-    docker exec -it magistrala-vault vault "$@"
-}
+source vault_cmd.sh
 
 vaultEnablePKI() {
     vault secrets enable -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR}  -path ${MG_VAULT_PKI_PATH} pki
@@ -103,24 +103,43 @@ vaultGenerateIntermediateCSR() {
 
 vaultSignIntermediateCSR() {
     echo "Sign intermediate CSR"
-    docker cp data/${MG_VAULT_PKI_INT_FILE_NAME}.csr magistrala-vault:/vault/${MG_VAULT_PKI_INT_FILE_NAME}.csr
-    vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} -format=json  ${MG_VAULT_PKI_PATH}/root/sign-intermediate \
-        csr=@/vault/${MG_VAULT_PKI_INT_FILE_NAME}.csr  ttl="8760h" \
-        ou="\"$MG_VAULT_PKI_INT_CA_OU\""\
-        organization="\"$MG_VAULT_PKI_INT_CA_O\"" \
-        country="\"$MG_VAULT_PKI_INT_CA_C\"" \
-        locality="\"$MG_VAULT_PKI_INT_CA_L\"" \
-        province="\"$MG_VAULT_PKI_INT_CA_ST\"" \
-        street_address="\"$MG_VAULT_PKI_INT_CA_ADDR\"" \
-        postal_code="\"$MG_VAULT_PKI_INT_CA_PO\"" \
-        | tee >(jq -r .data.certificate >data/${MG_VAULT_PKI_INT_FILE_NAME}.crt) \
-              >(jq -r .data.issuing_ca >data/${MG_VAULT_PKI_INT_FILE_NAME}_issuing_ca.crt)
+    if is_container_running "magistrala-vault"; then
+        docker cp data/${MG_VAULT_PKI_INT_FILE_NAME}.csr magistrala-vault:/vault/${MG_VAULT_PKI_INT_FILE_NAME}.csr
+        vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} -format=json  ${MG_VAULT_PKI_PATH}/root/sign-intermediate \
+            csr=@/vault/${MG_VAULT_PKI_INT_FILE_NAME}.csr  ttl="8760h" \
+            ou="\"$MG_VAULT_PKI_INT_CA_OU\""\
+            organization="\"$MG_VAULT_PKI_INT_CA_O\"" \
+            country="\"$MG_VAULT_PKI_INT_CA_C\"" \
+            locality="\"$MG_VAULT_PKI_INT_CA_L\"" \
+            province="\"$MG_VAULT_PKI_INT_CA_ST\"" \
+            street_address="\"$MG_VAULT_PKI_INT_CA_ADDR\"" \
+            postal_code="\"$MG_VAULT_PKI_INT_CA_PO\"" \
+            | tee >(jq -r .data.certificate >data/${MG_VAULT_PKI_INT_FILE_NAME}.crt) \
+                >(jq -r .data.issuing_ca >data/${MG_VAULT_PKI_INT_FILE_NAME}_issuing_ca.crt)
+    else
+        vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} -format=json  ${MG_VAULT_PKI_PATH}/root/sign-intermediate \
+            csr=@data/${MG_VAULT_PKI_INT_FILE_NAME}.csr  ttl="8760h" \
+            ou="\"$MG_VAULT_PKI_INT_CA_OU\""\
+            organization="\"$MG_VAULT_PKI_INT_CA_O\"" \
+            country="\"$MG_VAULT_PKI_INT_CA_C\"" \
+            locality="\"$MG_VAULT_PKI_INT_CA_L\"" \
+            province="\"$MG_VAULT_PKI_INT_CA_ST\"" \
+            street_address="\"$MG_VAULT_PKI_INT_CA_ADDR\"" \
+            postal_code="\"$MG_VAULT_PKI_INT_CA_PO\"" \
+            | tee >(jq -r .data.certificate >data/${MG_VAULT_PKI_INT_FILE_NAME}.crt) \
+                >(jq -r .data.issuing_ca >data/${MG_VAULT_PKI_INT_FILE_NAME}_issuing_ca.crt)
+    fi
+
 }
 
 vaultInjectIntermediateCertificate() {
     echo "Inject Intermediate Certificate"
-    docker cp data/${MG_VAULT_PKI_INT_FILE_NAME}.crt magistrala-vault:/vault/${MG_VAULT_PKI_INT_FILE_NAME}.crt
-    vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} ${MG_VAULT_PKI_INT_PATH}/intermediate/set-signed certificate=@/vault/${MG_VAULT_PKI_INT_FILE_NAME}.crt
+    if is_container_running "magistrala-vault"; then
+        docker cp data/${MG_VAULT_PKI_INT_FILE_NAME}.crt magistrala-vault:/vault/${MG_VAULT_PKI_INT_FILE_NAME}.crt
+        vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} ${MG_VAULT_PKI_INT_PATH}/intermediate/set-signed certificate=@/vault/${MG_VAULT_PKI_INT_FILE_NAME}.crt
+    else
+        vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} ${MG_VAULT_PKI_INT_PATH}/intermediate/set-signed certificate=@data/${MG_VAULT_PKI_INT_FILE_NAME}.crt
+    fi
 }
 
 vaultGenerateIntermediateCertificateBundle() {
@@ -139,18 +158,27 @@ vaultSetupIntermediateIssuingURLs() {
 }
 
 vaultSetupServerCertsRole() {
-    echo "Setup Server Certs role"
-    vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} ${MG_VAULT_PKI_INT_PATH}/roles/${MG_VAULT_PKI_INT_SERVER_CERTS_ROLE_NAME} \
-        allow_subdomains=true \
-        max_ttl="4320h"
+    if [ "$SKIP_SERVER_CERT" == "--skip-server-cert" ]; then
+        echo "Skipping server certificate role"
+    else
+        echo "Setup Server certificate role"
+        vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} ${MG_VAULT_PKI_INT_PATH}/roles/${MG_VAULT_PKI_INT_SERVER_CERTS_ROLE_NAME} \
+            allow_subdomains=true \
+            max_ttl="4320h"
+    fi
 }
 
 vaultGenerateServerCertificate() {
-    echo "Generate server certificate"
-    vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} -format=json ${MG_VAULT_PKI_INT_PATH}/issue/${MG_VAULT_PKI_INT_SERVER_CERTS_ROLE_NAME} \
-        common_name="$server_name" ttl="4320h" \
-        | tee >(jq -r .data.certificate >data/${server_name}.crt) \
-              >(jq -r .data.private_key >data/${server_name}.key)
+    if [ "$SKIP_SERVER_CERT" == "--skip-server-cert" ]; then
+        echo "Skipping generate server certificate"
+    else
+        echo "Generate server certificate"
+        vault write -namespace=${MG_VAULT_NAMESPACE} -address=${MG_VAULT_ADDR} -format=json ${MG_VAULT_PKI_INT_PATH}/issue/${MG_VAULT_PKI_INT_SERVER_CERTS_ROLE_NAME} \
+            common_name="$server_name" ttl="4320h" \
+            | tee >(jq -r .data.certificate >data/${server_name}.crt) \
+                >(jq -r .data.private_key >data/${server_name}.key)
+    fi
+
 }
 
 vaultSetupThingCertsRole() {
@@ -162,7 +190,9 @@ vaultSetupThingCertsRole() {
 }
 
 vaultCleanupFiles() {
-    docker exec magistrala-vault sh -c 'rm -rf /vault/*.{crt,csr}'
+    if is_container_running "magistrala-vault"; then
+        docker exec magistrala-vault sh -c 'rm -rf /vault/*.{crt,csr}'
+    fi
 }
 
 if ! command -v jq &> /dev/null

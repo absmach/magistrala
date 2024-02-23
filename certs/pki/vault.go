@@ -7,6 +7,7 @@ package pki
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -178,12 +179,24 @@ func (p *pkiAgent) Revoke(serial string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	rev, err := s.Data["revocation_time"].(json.Number).Float64()
-	if err != nil {
-		return time.Time{}, err
+
+	// Vault will return a response without errors but with a warning if the certificate is expired.
+	// The response will not have "revocation_time" in such cases.
+	if revokeTime, ok := s.Data["revocation_time"]; ok {
+		switch v := revokeTime.(type) {
+		case json.Number:
+			rev, err := v.Float64()
+			if err != nil {
+				return time.Time{}, err
+			}
+			return time.Unix(0, int64(rev)*int64(time.Second)), nil
+
+		default:
+			return time.Time{}, fmt.Errorf("unsupported type for revocation_time: %T", v)
+		}
 	}
 
-	return time.Unix(0, int64(rev)*int64(time.Second)), nil
+	return time.Time{}, nil
 }
 
 func (p *pkiAgent) LoginAndRenew(ctx context.Context) error {

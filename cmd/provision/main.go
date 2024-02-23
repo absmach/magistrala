@@ -137,6 +137,7 @@ func loadConfig() (provision.Config, error) {
 	}
 	cfg.Bootstrap.Content = content
 
+	// This is default conf for provision if there is no config file
 	cfg.Channels = []mggroups.Group{
 		{
 			Name:     "control-channel",

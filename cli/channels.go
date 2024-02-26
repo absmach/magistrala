@@ -185,98 +185,6 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "assign user <relation> <user_ids> <channel_id> <user_auth_token>",
-		Short: "Assign user",
-		Long: "Assign user to a channel\n" +
-			"Usage:\n" +
-			"\tmagistrala-cli channels assign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $USERTOKEN\n",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 5 {
-				logUsage(cmd.Use)
-				return
-			}
-			var userIDs []string
-			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
-				logError(err)
-				return
-			}
-			if err := sdk.AddUserToChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
-				logError(err)
-				return
-			}
-			logOK()
-		},
-	},
-	{
-		Use:   "unassign user <relation> <user_ids> <channel_id> <user_auth_token>",
-		Short: "Unassign user",
-		Long: "Unassign user from a channel\n" +
-			"Usage:\n" +
-			"\tmagistrala-cli channels unassign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]'  <channel_id> $USERTOKEN\n",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 5 {
-				logUsage(cmd.Use)
-				return
-			}
-			var userIDs []string
-			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
-				logError(err)
-				return
-			}
-			if err := sdk.RemoveUserFromChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
-				logError(err)
-				return
-			}
-			logOK()
-		},
-	},
-	{
-		Use:   "assign group  <group_ids> <channel_id> <user_auth_token>",
-		Short: "Assign group",
-		Long: "Assign group to a channel\n" +
-			"Usage:\n" +
-			"\tmagistrala-cli channels assign group  '[\"<group_id_1>\", \"<group_id_2>\"]' <channel_id> $USERTOKEN\n",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 5 {
-				logUsage(cmd.Use)
-				return
-			}
-			var groupIDs []string
-			if err := json.Unmarshal([]byte(args[0]), &groupIDs); err != nil {
-				logError(err)
-				return
-			}
-			if err := sdk.AddUserGroupToChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
-				logError(err)
-				return
-			}
-			logOK()
-		},
-	},
-	{
-		Use:   "unassign group  <group_ids> <channel_id> <user_auth_token>",
-		Short: "Unassign group",
-		Long: "Unassign group from a channel\n" +
-			"Usage:\n" +
-			"\tmagistrala-cli channels unassign group '[\"<group_id_1>\", \"<group_id_2>\"]'  <channel_id> $USERTOKEN\n",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 5 {
-				logUsage(cmd.Use)
-				return
-			}
-			var groupIDs []string
-			if err := json.Unmarshal([]byte(args[0]), &groupIDs); err != nil {
-				logError(err)
-				return
-			}
-			if err := sdk.RemoveUserGroupFromChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
-				logError(err)
-				return
-			}
-			logOK()
-		},
-	},
-	{
 		Use:   "users <channel_id> <user_auth_token>",
 		Short: "List users",
 		Long: "List users of a channel\n" +
@@ -326,6 +234,130 @@ var cmdChannels = []cobra.Command{
 	},
 }
 
+var channelAssignCmds = []cobra.Command{
+	{
+		Use:   "users <relation> <user_ids> <channel_id> <user_auth_token>",
+		Short: "Assign users",
+		Long: "Assign users to a channel\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli channels assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 4 {
+				logUsage(cmd.Use)
+				return
+			}
+			var userIDs []string
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.AddUserToChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+	{
+		Use:   "groups  <group_ids> <channel_id> <user_auth_token>",
+		Short: "Assign groups",
+		Long: "Assign groups to a channel\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli channels assign groups  '[\"<group_id_1>\", \"<group_id_2>\"]' <channel_id> $USERTOKEN\n",
+
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 3 {
+				logUsage(cmd.Use)
+				return
+			}
+			var groupIDs []string
+			if err := json.Unmarshal([]byte(args[0]), &groupIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.AddUserGroupToChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+}
+
+var channelUnassignCmds = []cobra.Command{
+	{
+		Use:   "groups  <group_ids> <channel_id> <user_auth_token>",
+		Short: "Unassign groups",
+		Long: "Unassign groups from a channel\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli channels unassign groups '[\"<group_id_1>\", \"<group_id_2>\"]'  <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 3 {
+				logUsage(cmd.Use)
+				return
+			}
+			var groupIDs []string
+			if err := json.Unmarshal([]byte(args[0]), &groupIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.RemoveUserGroupFromChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+
+	{
+		Use:   "users <relation> <user_ids> <channel_id> <user_auth_token>",
+		Short: "Unassign users",
+		Long: "Unassign users from a channel\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli channels unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]'  <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 4 {
+				logUsage(cmd.Use)
+				return
+			}
+			var userIDs []string
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.RemoveUserFromChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+}
+
+func NewChannelAssignCmds() *cobra.Command {
+	cmd := cobra.Command{
+		Use:   "assign [users | groups]",
+		Short: "Assign users or groups to a channel",
+		Long:  "Assign users or groups to a channel",
+	}
+	for i := range channelAssignCmds {
+		cmd.AddCommand(&channelAssignCmds[i])
+	}
+	return &cmd
+}
+
+func NewChannelUnassignCmds() *cobra.Command {
+	cmd := cobra.Command{
+		Use:   "unassign [users | groups]",
+		Short: "Unassign users or groups from a channel",
+		Long:  "Unassign users or groups from a channel",
+	}
+	for i := range channelUnassignCmds {
+		cmd.AddCommand(&channelUnassignCmds[i])
+	}
+	return &cmd
+}
+
 // NewChannelsCmd returns channels command.
 func NewChannelsCmd() *cobra.Command {
 	cmd := cobra.Command{
@@ -338,5 +370,7 @@ func NewChannelsCmd() *cobra.Command {
 		cmd.AddCommand(&cmdChannels[i])
 	}
 
+	cmd.AddCommand(NewChannelAssignCmds())
+	cmd.AddCommand(NewChannelUnassignCmds())
 	return &cmd
 }

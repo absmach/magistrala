@@ -171,53 +171,82 @@ var cmdDomains = []cobra.Command{
 			logOK()
 		},
 	},
+}
 
+var domainAssignCmds = []cobra.Command{
 	{
-		Use:   "assign user <relation> <user_ids> <domain_id> <token>",
-		Short: "Assign user",
-		Long: "Assign user to a domain\n" +
+		Use:   "users <relation> <user_ids> <domain_id> <token>",
+		Short: "Assign users",
+		Long: "Assign users to a domain\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups assign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <domain_id> $TOKEN\n",
+			"\tmagistrala-cli groups assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <domain_id> $TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 5 {
+			if len(args) != 4 {
 				logUsage(cmd.Use)
 				return
 			}
 			var userIDs []string
-			if err := json.Unmarshal([]byte(args[2]), &userIDs); err != nil {
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
 				logError(err)
 				return
 			}
-			if err := sdk.AddUserToDomain(args[3], mgxsdk.UsersRelationRequest{Relation: args[1], UserIDs: userIDs}, args[4]); err != nil {
+			if err := sdk.AddUserToDomain(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
 				logError(err)
 				return
 			}
 			logOK()
 		},
 	},
+}
+
+var domainUnassignCmds = []cobra.Command{
 	{
-		Use:   "unassign user <relation> <user_ids> <domain_id> <token>",
-		Short: "Unassign user",
-		Long: "Unassign user from a domain\n" +
+		Use:   "users <relation> <user_ids> <domain_id> <token>",
+		Short: "Unassign users",
+		Long: "Unassign users from a domain\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups unassign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <domain_id> $TOKEN\n",
+			"\tmagistrala-cli groups unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <domain_id> $TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 5 {
+			if len(args) != 4 {
 				logUsage(cmd.Use)
 				return
 			}
 			var userIDs []string
-			if err := json.Unmarshal([]byte(args[2]), &userIDs); err != nil {
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
 				logError(err)
 				return
 			}
-			if err := sdk.RemoveUserFromDomain(args[3], mgxsdk.UsersRelationRequest{Relation: args[1], UserIDs: userIDs}, args[4]); err != nil {
+			if err := sdk.RemoveUserFromDomain(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
 				logError(err)
 				return
 			}
 			logOK()
 		},
 	},
+}
+
+func NewDomainAssignCmds() *cobra.Command {
+	cmd := cobra.Command{
+		Use:   "assign [users]",
+		Short: "Assign users to a domain",
+		Long:  "Assign users to a domain",
+	}
+	for i := range domainAssignCmds {
+		cmd.AddCommand(&domainAssignCmds[i])
+	}
+	return &cmd
+}
+
+func NewDomainUnassignCmds() *cobra.Command {
+	cmd := cobra.Command{
+		Use:   "unassign [users]",
+		Short: "Unassign users from a domain",
+		Long:  "Unassign users from a domain",
+	}
+	for i := range domainUnassignCmds {
+		cmd.AddCommand(&domainUnassignCmds[i])
+	}
+	return &cmd
 }
 
 // NewDomainsCmd returns domains command.
@@ -232,5 +261,7 @@ func NewDomainsCmd() *cobra.Command {
 		cmd.AddCommand(&cmdDomains[i])
 	}
 
+	cmd.AddCommand(NewDomainAssignCmds())
+	cmd.AddCommand(NewDomainUnassignCmds())
 	return &cmd
 }

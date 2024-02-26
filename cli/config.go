@@ -90,7 +90,7 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 				ReaderURL:       "http://localhost",
 				HTTPAdapterURL:  "http://localhost/http:9016",
 				BootstrapURL:    "http://localhost",
-				CertsURL:        "https://localhost:9019",
+				CertsURL:        "http://localhost:9019",
 				TLSVerification: false,
 			},
 		}

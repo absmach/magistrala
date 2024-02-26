@@ -18,9 +18,7 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-const (
-	maxReconnects = -1
-)
+const maxReconnects = -1
 
 var _ events.Subscriber = (*subEventStore)(nil)
 
@@ -47,22 +45,12 @@ var (
 )
 
 type subEventStore struct {
-	conn     *nats.Conn
-	pubsub   messaging.PubSub
-	stream   string
-	consumer string
-	logger   *slog.Logger
+	conn   *nats.Conn
+	pubsub messaging.PubSub
+	logger *slog.Logger
 }
 
-func NewSubscriber(ctx context.Context, url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
-	if stream == "" {
-		return nil, ErrEmptyStream
-	}
-
-	if consumer == "" {
-		return nil, ErrEmptyConsumer
-	}
-
+func NewSubscriber(ctx context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
 	conn, err := nats.Connect(url, nats.MaxReconnects(maxReconnects))
 	if err != nil {
 		return nil, err
@@ -82,20 +70,25 @@ func NewSubscriber(ctx context.Context, url, stream, consumer string, logger *sl
 	}
 
 	return &subEventStore{
-		conn:     conn,
-		pubsub:   pubsub,
-		stream:   stream,
-		consumer: consumer,
-		logger:   logger,
+		conn:   conn,
+		pubsub: pubsub,
+		logger: logger,
 	}, nil
 }
 
-func (es *subEventStore) Subscribe(ctx context.Context, handler events.EventHandler) error {
+func (es *subEventStore) Subscribe(ctx context.Context, cfg events.SubscriberConfig) error {
+	if cfg.Stream == "" {
+		return ErrEmptyStream
+	}
+	if cfg.Consumer == "" {
+		return ErrEmptyConsumer
+	}
+
 	subCfg := messaging.SubscriberConfig{
-		ID:    es.consumer,
-		Topic: eventsPrefix + "." + es.stream,
+		ID:    cfg.Consumer,
+		Topic: cfg.Stream,
 		Handler: &eventHandler{
-			handler: handler,
+			handler: cfg.Handler,
 			ctx:     ctx,
 			logger:  es.logger,
 		},
@@ -134,7 +127,7 @@ func (eh *eventHandler) Handle(msg *messaging.Message) error {
 	}
 
 	if err := eh.handler.Handle(eh.ctx, event); err != nil {
-		eh.logger.Warn(fmt.Sprintf("failed to handle redis event: %s", err))
+		eh.logger.Warn(fmt.Sprintf("failed to handle nats event: %s", err))
 	}
 
 	return nil

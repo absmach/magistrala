@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build nats
-// +build nats
+//go:build rabbitmq
+// +build rabbitmq
 
 package store
 
@@ -12,15 +12,15 @@ import (
 	"log/slog"
 
 	"github.com/absmach/magistrala/pkg/events"
-	"github.com/absmach/magistrala/pkg/events/nats"
+	"github.com/absmach/magistrala/pkg/events/rabbitmq"
 )
 
 func init() {
-	log.Println("The binary was build using nats as the events store")
+	log.Println("The binary was build using rabbitmq as the events store")
 }
 
 func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, error) {
-	pb, err := nats.NewPublisher(ctx, url, stream)
+	pb, err := rabbitmq.NewPublisher(ctx, url, stream)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +28,8 @@ func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, er
 	return pb, nil
 }
 
-func NewSubscriber(ctx context.Context, url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
-	pb, err := nats.NewSubscriber(ctx, url, stream, consumer, logger)
+func NewSubscriber(_ context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
+	pb, err := rabbitmq.NewSubscriber(url, logger)
 	if err != nil {
 		return nil, err
 	}

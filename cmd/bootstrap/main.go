@@ -28,6 +28,7 @@ import (
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/auth"
+	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -45,7 +46,7 @@ const (
 	defDB          = "bootstrap"
 	defSvcHTTPPort = "9013"
 
-	thingsStream = "magistrala.things"
+	thingsStream = "events.magistrala.things"
 	streamID     = "magistrala.bootstrap"
 )
 
@@ -142,6 +143,8 @@ func main() {
 		return
 	}
 
+	logger.Info("Subscribed to Event Store")
+
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
@@ -197,14 +200,15 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 }
 
 func subscribeToThingsES(ctx context.Context, svc bootstrap.Service, cfg config, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, thingsStream, cfg.ESConsumerName, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
 	if err != nil {
 		return err
 	}
 
-	handler := consumer.NewEventHandler(svc)
-
-	logger.Info("Subscribed to Redis Event Store")
-
-	return subscriber.Subscribe(ctx, handler)
+	subConfig := events.SubscriberConfig{
+		Stream:   thingsStream,
+		Consumer: cfg.ESConsumerName,
+		Handler:  consumer.NewEventHandler(svc),
+	}
+	return subscriber.Subscribe(ctx, subConfig)
 }

@@ -23,8 +23,9 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/lora"
 	"github.com/absmach/magistrala/lora/api"
-	"github.com/absmach/magistrala/lora/events"
+	loraevents "github.com/absmach/magistrala/lora/events"
 	"github.com/absmach/magistrala/lora/mqtt"
+	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
@@ -44,7 +45,7 @@ const (
 	thingsRMPrefix   = "thing"
 	channelsRMPrefix = "channel"
 	connsRMPrefix    = "connection"
-	thingsStream     = "magistrala.things"
+	thingsStream     = "events.magistrala.things"
 )
 
 type config struct {
@@ -147,6 +148,8 @@ func main() {
 		return
 	}
 
+	logger.Info("Subscribed to Event Store")
+
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
@@ -198,21 +201,22 @@ func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Du
 }
 
 func subscribeToThingsES(ctx context.Context, svc lora.Service, cfg config, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, thingsStream, cfg.ESConsumerName, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
 	if err != nil {
 		return err
 	}
 
-	handler := events.NewEventHandler(svc)
-
-	logger.Info("Subscribed to Redis Event Store")
-
-	return subscriber.Subscribe(ctx, handler)
+	subConfig := events.SubscriberConfig{
+		Stream:   thingsStream,
+		Consumer: cfg.ESConsumerName,
+		Handler:  loraevents.NewEventHandler(svc),
+	}
+	return subscriber.Subscribe(ctx, subConfig)
 }
 
 func newRouteMapRepository(client *redis.Client, prefix string, logger *slog.Logger) lora.RouteMapRepository {
 	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
-	return events.NewRouteMapRepository(client, prefix)
+	return loraevents.NewRouteMapRepository(client, prefix)
 }
 
 func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger *slog.Logger) lora.Service {

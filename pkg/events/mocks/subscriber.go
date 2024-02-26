@@ -34,17 +34,17 @@ func (_m *Subscriber) Close() error {
 	return r0
 }
 
-// Subscribe provides a mock function with given fields: ctx, handler
-func (_m *Subscriber) Subscribe(ctx context.Context, handler events.EventHandler) error {
-	ret := _m.Called(ctx, handler)
+// Subscribe provides a mock function with given fields: ctx, cfg
+func (_m *Subscriber) Subscribe(ctx context.Context, cfg events.SubscriberConfig) error {
+	ret := _m.Called(ctx, cfg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Subscribe")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, events.EventHandler) error); ok {
-		r0 = rf(ctx, handler)
+	if rf, ok := ret.Get(0).(func(context.Context, events.SubscriberConfig) error); ok {
+		r0 = rf(ctx, cfg)
 	} else {
 		r0 = ret.Error(0)
 	}

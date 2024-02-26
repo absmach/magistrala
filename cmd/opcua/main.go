@@ -23,8 +23,9 @@ import (
 	"github.com/absmach/magistrala/opcua"
 	"github.com/absmach/magistrala/opcua/api"
 	"github.com/absmach/magistrala/opcua/db"
-	"github.com/absmach/magistrala/opcua/events"
+	opcuaevents "github.com/absmach/magistrala/opcua/events"
 	"github.com/absmach/magistrala/opcua/gopcua"
+	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
@@ -43,7 +44,7 @@ const (
 	channelsRMPrefix   = "channel"
 	connectionRMPrefix = "connection"
 
-	thingsStream = "magistrala.things"
+	thingsStream = "events.magistrala.things"
 )
 
 type config struct {
@@ -142,6 +143,8 @@ func main() {
 		return
 	}
 
+	logger.Info("Subscribed to Event Store")
+
 	hs := httpserver.New(ctx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
@@ -181,21 +184,22 @@ func subscribeToStoredSubs(ctx context.Context, sub opcua.Subscriber, cfg opcua.
 }
 
 func subscribeToThingsES(ctx context.Context, svc opcua.Service, cfg config, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, thingsStream, cfg.ESConsumerName, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
 	if err != nil {
 		return err
 	}
 
-	handler := events.NewEventHandler(svc)
-
-	logger.Info("Subscribed to Redis Event Store")
-
-	return subscriber.Subscribe(ctx, handler)
+	subConfig := events.SubscriberConfig{
+		Stream:   thingsStream,
+		Consumer: cfg.ESConsumerName,
+		Handler:  opcuaevents.NewEventHandler(svc),
+	}
+	return subscriber.Subscribe(ctx, subConfig)
 }
 
 func newRouteMapRepositoy(client *redis.Client, prefix string, logger *slog.Logger) opcua.RouteMapRepository {
 	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
-	return events.NewRouteMapRepository(client, prefix)
+	return opcuaevents.NewRouteMapRepository(client, prefix)
 }
 
 func newService(sub opcua.Subscriber, browser opcua.Browser, thingRM, chanRM, connRM opcua.RouteMapRepository, opcuaConfig opcua.Config, logger *slog.Logger) opcua.Service {

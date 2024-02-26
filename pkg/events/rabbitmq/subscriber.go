@@ -30,22 +30,12 @@ var (
 )
 
 type subEventStore struct {
-	conn     *amqp.Connection
-	pubsub   messaging.PubSub
-	stream   string
-	consumer string
-	logger   *slog.Logger
+	conn   *amqp.Connection
+	pubsub messaging.PubSub
+	logger *slog.Logger
 }
 
-func NewSubscriber(url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
-	if stream == "" {
-		return nil, ErrEmptyStream
-	}
-
-	if consumer == "" {
-		return nil, ErrEmptyConsumer
-	}
-
+func NewSubscriber(url string, logger *slog.Logger) (events.Subscriber, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -64,20 +54,25 @@ func NewSubscriber(url, stream, consumer string, logger *slog.Logger) (events.Su
 	}
 
 	return &subEventStore{
-		conn:     conn,
-		pubsub:   pubsub,
-		stream:   stream,
-		consumer: consumer,
-		logger:   logger,
+		conn:   conn,
+		pubsub: pubsub,
+		logger: logger,
 	}, nil
 }
 
-func (es *subEventStore) Subscribe(ctx context.Context, handler events.EventHandler) error {
+func (es *subEventStore) Subscribe(ctx context.Context, cfg events.SubscriberConfig) error {
+	if cfg.Stream == "" {
+		return ErrEmptyStream
+	}
+	if cfg.Consumer == "" {
+		return ErrEmptyConsumer
+	}
+
 	subCfg := messaging.SubscriberConfig{
-		ID:    es.consumer,
-		Topic: eventsPrefix + "." + es.stream,
+		ID:    cfg.Consumer,
+		Topic: cfg.Stream,
 		Handler: &eventHandler{
-			handler: handler,
+			handler: cfg.Handler,
 			ctx:     ctx,
 			logger:  es.logger,
 		},
@@ -116,7 +111,7 @@ func (eh *eventHandler) Handle(msg *messaging.Message) error {
 	}
 
 	if err := eh.handler.Handle(eh.ctx, event); err != nil {
-		eh.logger.Warn(fmt.Sprintf("failed to handle redis event: %s", err))
+		eh.logger.Warn(fmt.Sprintf("failed to handle rabbitmq event: %s", err))
 	}
 
 	return nil

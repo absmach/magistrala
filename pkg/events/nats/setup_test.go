@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	}
 
 	if err := pool.Retry(func() error {
-		_, err = nats.NewSubscriber(context.Background(), natsURL, stream, consumer, logger)
+		_, err = nats.NewSubscriber(context.Background(), natsURL, logger)
 		return err
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)

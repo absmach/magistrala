@@ -1,9 +1,6 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !nats && !rabbitmq
-// +build !nats,!rabbitmq
-
 package redis
 
 import (
@@ -17,9 +14,10 @@ import (
 )
 
 const (
-	eventCount = 100
-	exists     = "BUSYGROUP Consumer Group name already exists"
-	group      = "magistrala"
+	eventsPrefix = "events."
+	eventCount   = 100
+	exists       = "BUSYGROUP Consumer Group name already exists"
+	group        = "magistrala"
 )
 
 var _ events.Subscriber = (*subEventStore)(nil)
@@ -33,36 +31,31 @@ var (
 )
 
 type subEventStore struct {
-	client   *redis.Client
-	stream   string
-	consumer string
-	logger   *slog.Logger
+	client *redis.Client
+	logger *slog.Logger
 }
 
-func NewSubscriber(url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
-	if stream == "" {
-		return nil, ErrEmptyStream
-	}
-
-	if consumer == "" {
-		return nil, ErrEmptyConsumer
-	}
-
+func NewSubscriber(url string, logger *slog.Logger) (events.Subscriber, error) {
 	opts, err := redis.ParseURL(url)
 	if err != nil {
 		return nil, err
 	}
 
 	return &subEventStore{
-		client:   redis.NewClient(opts),
-		stream:   stream,
-		consumer: consumer,
-		logger:   logger,
+		client: redis.NewClient(opts),
+		logger: logger,
 	}, nil
 }
 
-func (es *subEventStore) Subscribe(ctx context.Context, handler events.EventHandler) error {
-	err := es.client.XGroupCreateMkStream(ctx, es.stream, group, "$").Err()
+func (es *subEventStore) Subscribe(ctx context.Context, cfg events.SubscriberConfig) error {
+	if cfg.Stream == "" {
+		return ErrEmptyStream
+	}
+	if cfg.Consumer == "" {
+		return ErrEmptyConsumer
+	}
+
+	err := es.client.XGroupCreateMkStream(ctx, cfg.Stream, group, "$").Err()
 	if err != nil && err.Error() != exists {
 		return err
 	}
@@ -71,12 +64,12 @@ func (es *subEventStore) Subscribe(ctx context.Context, handler events.EventHand
 		for {
 			msgs, err := es.client.XReadGroup(ctx, &redis.XReadGroupArgs{
 				Group:    group,
-				Consumer: es.consumer,
-				Streams:  []string{es.stream, ">"},
+				Consumer: cfg.Consumer,
+				Streams:  []string{cfg.Stream, ">"},
 				Count:    eventCount,
 			}).Result()
 			if err != nil {
-				es.logger.Warn(fmt.Sprintf("failed to read from Redis stream: %s", err))
+				es.logger.Warn(fmt.Sprintf("failed to read from redis stream: %s", err))
 
 				continue
 			}
@@ -84,7 +77,7 @@ func (es *subEventStore) Subscribe(ctx context.Context, handler events.EventHand
 				continue
 			}
 
-			es.handle(ctx, msgs[0].Messages, handler)
+			es.handle(ctx, cfg.Stream, msgs[0].Messages, cfg.Handler)
 		}
 	}()
 
@@ -103,7 +96,7 @@ func (re redisEvent) Encode() (map[string]interface{}, error) {
 	return re.Data, nil
 }
 
-func (es *subEventStore) handle(ctx context.Context, msgs []redis.XMessage, h events.EventHandler) {
+func (es *subEventStore) handle(ctx context.Context, stream string, msgs []redis.XMessage, h events.EventHandler) {
 	for _, msg := range msgs {
 		event := redisEvent{
 			Data: msg.Values,
@@ -115,7 +108,7 @@ func (es *subEventStore) handle(ctx context.Context, msgs []redis.XMessage, h ev
 			return
 		}
 
-		if err := es.client.XAck(ctx, es.stream, group, msg.ID).Err(); err != nil {
+		if err := es.client.XAck(ctx, stream, group, msg.ID).Err(); err != nil {
 			es.logger.Warn(fmt.Sprintf("failed to ack redis event: %s", err))
 
 			return

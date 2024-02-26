@@ -28,8 +28,8 @@ func NewPublisher(ctx context.Context, url, stream string) (events.Publisher, er
 	return pb, nil
 }
 
-func NewSubscriber(_ context.Context, url, stream, consumer string, logger *slog.Logger) (events.Subscriber, error) {
-	pb, err := redis.NewSubscriber(url, stream, consumer, logger)
+func NewSubscriber(_ context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
+	pb, err := redis.NewSubscriber(url, logger)
 	if err != nil {
 		return nil, err
 	}

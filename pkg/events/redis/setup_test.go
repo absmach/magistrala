@@ -1,9 +1,6 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !nats && !rabbitmq
-// +build !nats,!rabbitmq
-
 package redis_test
 
 import (

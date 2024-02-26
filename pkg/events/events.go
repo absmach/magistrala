@@ -38,12 +38,19 @@ type EventHandler interface {
 	Handle(ctx context.Context, event Event) error
 }
 
+// SubscriberConfig represents event subscriber configuration.
+type SubscriberConfig struct {
+	Consumer string
+	Stream   string
+	Handler  EventHandler
+}
+
 // Subscriber specifies event subscription API.
 //
 //go:generate mockery --name Subscriber --output=./mocks --filename subscriber.go --quiet --note "Copyright (c) Abstract Machines"
 type Subscriber interface {
 	// Subscribe subscribes to the event stream and consumes events.
-	Subscribe(ctx context.Context, handler EventHandler) error
+	Subscribe(ctx context.Context, cfg SubscriberConfig) error
 
 	// Close gracefully closes event subscriber's connection.
 	Close() error

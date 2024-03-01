@@ -174,7 +174,16 @@ func (client grpcClient) Issue(ctx context.Context, req *magistrala.IssueReq, _ 
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
-	res, err := client.issue(ctx, issueReq{userID: req.GetUserId(), domainID: req.GetDomainId(), keyType: auth.KeyType(req.Type)})
+	res, err := client.issue(ctx, issueReq{
+		userID:   req.GetUserId(),
+		domainID: req.GetDomainId(),
+		keyType:  auth.KeyType(req.GetType()),
+		oauthToken: auth.OAuthToken{
+			Provider:     req.GetOauthProvider(),
+			AccessToken:  req.GetOauthAccessToken(),
+			RefreshToken: req.GetOauthRefreshToken(),
+		},
+	})
 	if err != nil {
 		return &magistrala.Token{}, decodeError(err)
 	}
@@ -183,7 +192,14 @@ func (client grpcClient) Issue(ctx context.Context, req *magistrala.IssueReq, _ 
 
 func encodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(issueReq)
-	return &magistrala.IssueReq{UserId: req.userID, DomainId: &req.domainID, Type: uint32(req.keyType)}, nil
+	return &magistrala.IssueReq{
+		UserId:            req.userID,
+		DomainId:          &req.domainID,
+		Type:              uint32(req.keyType),
+		OauthProvider:     req.oauthToken.Provider,
+		OauthAccessToken:  req.oauthToken.AccessToken,
+		OauthRefreshToken: req.oauthToken.RefreshToken,
+	}, nil
 }
 
 func decodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

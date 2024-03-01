@@ -10,7 +10,9 @@ import (
 
 	"github.com/absmach/magistrala"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
+	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users"
+	"golang.org/x/oauth2"
 )
 
 var _ users.Service = (*loggingMiddleware)(nil)
@@ -396,4 +398,22 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, token string) (id str
 		lm.logger.Info("Identify user completed successfully", args...)
 	}(time.Now())
 	return lm.svc.Identify(ctx, token)
+}
+
+func (lm *loggingMiddleware) OAuthCallback(ctx context.Context, provider string, state mgoauth2.State, oauthToken oauth2.Token, client mgclients.Client) (token *magistrala.Token, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("provider", provider),
+			slog.String("state", state.String()),
+			slog.String("user_id", client.ID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("OAuth callback failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("OAuth callback completed successfully", args...)
+	}(time.Now())
+	return lm.svc.OAuthCallback(ctx, provider, state, oauthToken, client)
 }

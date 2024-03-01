@@ -21,6 +21,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -72,7 +73,9 @@ func newService() (auth.Service, *mocks.KeyRepository) {
 	drepo := new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
 
-	t := jwt.New([]byte(secret))
+	provider := new(oauth2mocks.Provider)
+	provider.On("Name").Return("test")
+	t := jwt.New([]byte(secret), provider)
 
 	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), krepo
 }

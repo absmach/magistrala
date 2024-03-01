@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -69,7 +70,9 @@ func newService() (auth.Service, string) {
 	drepo = new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
 
-	t := jwt.New([]byte(secret))
+	provider := new(oauth2mocks.Provider)
+	provider.On("Name").Return("test")
+	t := jwt.New([]byte(secret), provider)
 	key := auth.Key{
 		IssuedAt:  time.Now(),
 		ExpiresAt: time.Now().Add(refreshDuration),
@@ -86,7 +89,10 @@ func newService() (auth.Service, string) {
 func TestIssue(t *testing.T) {
 	svc, accessToken := newService()
 
-	n := jwt.New([]byte(secret))
+	provider := new(oauth2mocks.Provider)
+	provider.On("Name").Return("test")
+	n := jwt.New([]byte(secret), provider)
+
 	apikey := auth.Key{
 		IssuedAt:  time.Now(),
 		ExpiresAt: time.Now().Add(refreshDuration),
@@ -627,7 +633,9 @@ func TestIdentify(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing expired login key expected to succeed: %s", err))
 	repocall4.Unset()
 
-	te := jwt.New([]byte(secret))
+	provider := new(oauth2mocks.Provider)
+	provider.On("Name").Return("test")
+	te := jwt.New([]byte(secret), provider)
 	key := auth.Key{
 		IssuedAt:  time.Now(),
 		ExpiresAt: time.Now().Add(refreshDuration),
@@ -721,7 +729,9 @@ func TestAuthorize(t *testing.T) {
 	repocall2.Unset()
 	repocall3.Unset()
 
-	te := jwt.New([]byte(secret))
+	provider := new(oauth2mocks.Provider)
+	provider.On("Name").Return("test")
+	te := jwt.New([]byte(secret), provider)
 	key := auth.Key{
 		IssuedAt:  time.Now(),
 		ExpiresAt: time.Now().Add(refreshDuration),

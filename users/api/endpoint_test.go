@@ -23,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
+	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	httpapi "github.com/absmach/magistrala/users/api"
 	"github.com/absmach/magistrala/users/mocks"
@@ -89,7 +90,9 @@ func newUsersServer() (*httptest.Server, *mocks.Service) {
 
 	logger := mglog.NewMock()
 	mux := chi.NewRouter()
-	httpapi.MakeHandler(svc, gsvc, mux, logger, "")
+	provider := new(oauth2mocks.Provider)
+	provider.On("Name").Return("test")
+	httpapi.MakeHandler(svc, gsvc, mux, logger, "", provider)
 
 	return httptest.NewServer(mux), svc
 }

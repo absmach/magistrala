@@ -28,6 +28,7 @@ const (
 	refreshToken       = clientPrefix + "refresh_token"
 	resetSecret        = clientPrefix + "reset_secret"
 	sendPasswordReset  = clientPrefix + "send_password_reset"
+	oauthCallback      = clientPrefix + "oauth_callback"
 )
 
 var (
@@ -44,6 +45,7 @@ var (
 	_ events.Event = (*refreshTokenEvent)(nil)
 	_ events.Event = (*resetSecretEvent)(nil)
 	_ events.Event = (*sendPasswordResetEvent)(nil)
+	_ events.Event = (*oauthCallbackEvent)(nil)
 )
 
 type createClientEvent struct {
@@ -408,5 +410,20 @@ func (spre sendPasswordResetEvent) Encode() (map[string]interface{}, error) {
 		"host":      spre.host,
 		"email":     spre.email,
 		"user":      spre.user,
+	}, nil
+}
+
+type oauthCallbackEvent struct {
+	state    string
+	provider string
+	clientID string
+}
+
+func (oce oauthCallbackEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": oauthCallback,
+		"state":     oce.state,
+		"provider":  oce.provider,
+		"client_id": oce.clientID,
 	}, nil
 }

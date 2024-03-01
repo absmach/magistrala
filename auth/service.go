@@ -428,6 +428,10 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	key.User = k.User
 	key.Type = AccessKey
 
+	key.OAuth.Provider = k.OAuth.Provider
+	key.OAuth.AccessToken = k.OAuth.AccessToken
+	key.OAuth.RefreshToken = k.OAuth.RefreshToken
+
 	key.Subject, err = svc.checkUserDomain(ctx, key)
 	if err != nil {
 		return Token{}, errors.Wrap(svcerr.ErrAuthorization, err)

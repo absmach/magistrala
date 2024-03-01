@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -22,7 +23,7 @@ import (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger) http.Handler {
+func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, providers ...oauth2.Provider) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -170,6 +171,11 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger) http.Han
 		api.EncodeResponse,
 		opts...,
 	), "list_users_by_domain_id").ServeHTTP)
+
+	for _, provider := range providers {
+		r.HandleFunc("/oauth/callback/"+provider.Name(), oauth2CallbackHandler(provider, svc))
+	}
+
 	return r
 }
 
@@ -514,4 +520,65 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 		Permission: p,
 		ListPerms:  lp,
 	}, nil
+}
+
+// oauth2CallbackHandler is a http.HandlerFunc that handles OAuth2 callbacks.
+func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !oauth.IsEnabled() {
+			http.Redirect(w, r, oauth.ErrorURL()+"?error=oauth%20provider%20is%20disabled", http.StatusSeeOther)
+			return
+		}
+		// state is prefixed with signin- or signup- to indicate which flow we should use
+		var state string
+		var flow oauth2.State
+		var err error
+		if strings.Contains(r.FormValue("state"), "-") {
+			state = strings.Split(r.FormValue("state"), "-")[1]
+			flow, err = oauth2.ToState(strings.Split(r.FormValue("state"), "-")[0])
+			if err != nil {
+				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther) //nolint:goconst
+				return
+			}
+		}
+
+		if state != oauth.State() {
+			http.Redirect(w, r, oauth.ErrorURL()+"?error=invalid%20state", http.StatusSeeOther)
+			return
+		}
+
+		if code := r.FormValue("code"); code != "" {
+			client, token, err := oauth.UserDetails(r.Context(), code)
+			if err != nil {
+				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
+				return
+			}
+
+			jwt, err := svc.OAuthCallback(r.Context(), oauth.Name(), flow, token, client)
+			if err != nil {
+				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
+				return
+			}
+
+			http.SetCookie(w, &http.Cookie{
+				Name:     "access_token",
+				Value:    jwt.AccessToken,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   true,
+			})
+			http.SetCookie(w, &http.Cookie{
+				Name:     "refresh_token",
+				Value:    *jwt.RefreshToken,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   true,
+			})
+
+			http.Redirect(w, r, oauth.RedirectURL(), http.StatusFound)
+			return
+		}
+
+		http.Redirect(w, r, oauth.ErrorURL()+"?error=empty%20code", http.StatusSeeOther)
+	}
 }

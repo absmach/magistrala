@@ -57,6 +57,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.22.0
 	golang.org/x/crypto v0.19.0
 	golang.org/x/net v0.21.0
+	golang.org/x/oauth2 v0.17.0
 	golang.org/x/sync v0.6.0
 	gonum.org/v1/gonum v0.14.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac
@@ -66,6 +67,8 @@ require (
 )
 
 require (
+	cloud.google.com/go/compute v1.23.3 // indirect
+	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
@@ -179,6 +182,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
+	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240116215550-a9fa1716bcac // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

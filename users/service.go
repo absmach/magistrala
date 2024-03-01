@@ -5,6 +5,7 @@ package users
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users/postgres"
+	"golang.org/x/oauth2"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -80,14 +83,14 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 		return mgclients.Client{}, err
 	}
 
-	if cli.Credentials.Secret == "" {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrMalformedEntity, repoerr.ErrMissingSecret)
+	if cli.Credentials.Secret != "" {
+		hash, err := svc.hasher.Hash(cli.Credentials.Secret)
+		if err != nil {
+			return mgclients.Client{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
+		}
+		cli.Credentials.Secret = hash
 	}
-	hash, err := svc.hasher.Hash(cli.Credentials.Secret)
-	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
-	}
-	cli.Credentials.Secret = hash
+
 	if cli.Status != mgclients.DisabledStatus && cli.Status != mgclients.EnabledStatus {
 		return mgclients.Client{}, svcerr.ErrInvalidStatus
 	}
@@ -583,6 +586,45 @@ func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, per
 		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	return res.GetId(), nil
+}
+
+func (svc service) OAuthCallback(ctx context.Context, provider string, state mgoauth2.State, token oauth2.Token, client mgclients.Client) (*magistrala.Token, error) {
+	switch state {
+	case mgoauth2.SignIn:
+		rclient, err := svc.clients.RetrieveByIdentity(ctx, client.Credentials.Identity)
+		if err != nil {
+			if errors.Contains(err, repoerr.ErrNotFound) {
+				return &magistrala.Token{}, errors.New("user not signed up")
+			}
+			return &magistrala.Token{}, err
+		}
+		claims := &magistrala.IssueReq{
+			UserId:            rclient.ID,
+			Type:              0,
+			OauthProvider:     provider,
+			OauthAccessToken:  token.AccessToken,
+			OauthRefreshToken: token.RefreshToken,
+		}
+		return svc.auth.Issue(ctx, claims)
+	case mgoauth2.SignUp:
+		rclient, err := svc.RegisterClient(ctx, "", client)
+		if err != nil {
+			if errors.Contains(err, repoerr.ErrConflict) {
+				return &magistrala.Token{}, errors.New("user already exists")
+			}
+			return &magistrala.Token{}, err
+		}
+		claims := &magistrala.IssueReq{
+			UserId:            rclient.ID,
+			Type:              0,
+			OauthProvider:     provider,
+			OauthAccessToken:  token.AccessToken,
+			OauthRefreshToken: token.RefreshToken,
+		}
+		return svc.auth.Issue(ctx, claims)
+	default:
+		return &magistrala.Token{}, fmt.Errorf("unknown state %s", state)
+	}
 }
 
 func (svc service) Identify(ctx context.Context, token string) (string, error) {

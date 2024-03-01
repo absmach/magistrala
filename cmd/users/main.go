@@ -34,6 +34,8 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/oauth2"
+	googleoauth "github.com/absmach/magistrala/pkg/oauth2/google"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
 	capi "github.com/absmach/magistrala/users/api"
@@ -50,29 +52,32 @@ import (
 )
 
 const (
-	svcName        = "users"
-	envPrefixDB    = "MG_USERS_DB_"
-	envPrefixHTTP  = "MG_USERS_HTTP_"
-	envPrefixAuth  = "MG_AUTH_GRPC_"
-	defDB          = "users"
-	defSvcHTTPPort = "9002"
+	svcName         = "users"
+	envPrefixDB     = "MG_USERS_DB_"
+	envPrefixHTTP   = "MG_USERS_HTTP_"
+	envPrefixAuth   = "MG_AUTH_GRPC_"
+	envPrefixGoogle = "MG_GOOGLE_"
+	defDB           = "users"
+	defSvcHTTPPort  = "9002"
 
 	streamID = "magistrala.users"
 )
 
 type config struct {
-	LogLevel      string  `env:"MG_USERS_LOG_LEVEL"              envDefault:"info"`
-	AdminEmail    string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:"admin@example.com"`
-	AdminPassword string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:"12345678"`
-	PassRegexText string  `env:"MG_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
-	ResetURL      string  `env:"MG_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:14268/api/traces"`
-	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID    string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
-	ESURL         string  `env:"MG_ES_URL"                       envDefault:"nats://localhost:4222"`
-	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
-	SelfRegister  bool    `env:"MG_USERS_ALLOW_SELF_REGISTER"    envDefault:"false"`
-	PassRegex     *regexp.Regexp
+	LogLevel           string  `env:"MG_USERS_LOG_LEVEL"              envDefault:"info"`
+	AdminEmail         string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:"admin@example.com"`
+	AdminPassword      string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:"12345678"`
+	PassRegexText      string  `env:"MG_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
+	ResetURL           string  `env:"MG_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
+	JaegerURL          url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:14268/api/traces"`
+	SendTelemetry      bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID         string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
+	ESURL              string  `env:"MG_ES_URL"                       envDefault:"nats://localhost:4222"`
+	TraceRatio         float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	SelfRegister       bool    `env:"MG_USERS_ALLOW_SELF_REGISTER"    envDefault:"false"`
+	OAuthUIRedirectURL string  `env:"MG_OAUTH_UI_REDIRECT_URL"        envDefault:"http://localhost:9095/domains"`
+	OAuthUIErrorURL    string  `env:"MG_OAUTH_UI_ERROR_URL"           envDefault:"http://localhost:9095/error"`
+	PassRegex          *regexp.Regexp
 }
 
 func main() {
@@ -172,8 +177,16 @@ func main() {
 		return
 	}
 
+	oauthConfig := oauth2.Config{}
+	if err := env.ParseWithOptions(&oauthConfig, env.Options{Prefix: envPrefixGoogle}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s Google configuration : %s", svcName, err.Error()))
+		exitCode = 1
+		return
+	}
+	oauthProvider := googleoauth.NewProvider(oauthConfig, cfg.OAuthUIRedirectURL, cfg.OAuthUIErrorURL)
+
 	mux := chi.NewRouter()
-	httpSrv := httpserver.New(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID), logger)
+	httpSrv := httpserver.New(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID, oauthProvider), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)

@@ -9,8 +9,10 @@ import (
 
 	"github.com/absmach/magistrala"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
+	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users"
 	"github.com/go-kit/kit/metrics"
+	"golang.org/x/oauth2"
 )
 
 var _ users.Service = (*metricsMiddleware)(nil)
@@ -190,4 +192,13 @@ func (ms *metricsMiddleware) Identify(ctx context.Context, token string) (string
 		ms.latency.With("method", "identify").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 	return ms.svc.Identify(ctx, token)
+}
+
+func (ms *metricsMiddleware) OAuthCallback(ctx context.Context, provider string, state mgoauth2.State, token oauth2.Token, client mgclients.Client) (*magistrala.Token, error) {
+	method := provider + "_oauth_callback_" + state.String()
+	defer func(begin time.Time) {
+		ms.counter.With("method", method).Add(1)
+		ms.latency.With("method", method).Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.OAuthCallback(ctx, provider, state, token, client)
 }

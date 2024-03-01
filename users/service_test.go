@@ -18,6 +18,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
 	"github.com/absmach/magistrala/users/hasher"
@@ -25,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -159,7 +161,7 @@ func TestRegisterClient(t *testing.T) {
 			},
 			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
 			deletePoliciesResponse: &magistrala.DeletePoliciesRes{Deleted: true},
-			err:                    repoerr.ErrMissingSecret,
+			err:                    nil,
 		},
 		{
 			desc: "register a new client with a weak secret",
@@ -2462,5 +2464,162 @@ func TestViewProfile(t *testing.T) {
 		repoCall1.Parent.AssertCalled(t, "RetrieveByID", context.Background(), mock.Anything)
 		repoCall.Unset()
 		repoCall1.Unset()
+	}
+}
+
+func TestOAuthCallback(t *testing.T) {
+	svc, cRepo, auth, _ := newService(true)
+
+	cases := []struct {
+		desc                       string
+		provider                   string
+		state                      mgoauth2.State
+		token                      oauth2.Token
+		client                     mgclients.Client
+		retrieveByIdentityResponse mgclients.Client
+		retrieveByIdentityErr      error
+		addPoliciesResponse        *magistrala.AddPoliciesRes
+		addPoliciesErr             error
+		deletePoliciesResponse     *magistrala.DeletePoliciesRes
+		deletePoliciesErr          error
+		saveResponse               mgclients.Client
+		saveErr                    error
+		issueResponse              *magistrala.Token
+		issueErr                   error
+		err                        error
+	}{
+		{
+			desc:     "oauth signin callback with successfully",
+			provider: "google",
+			state:    mgoauth2.SignIn,
+			token: oauth2.Token{
+				AccessToken:  strings.Repeat("a", 10),
+				RefreshToken: strings.Repeat("b", 10),
+			},
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
+			},
+			retrieveByIdentityResponse: mgclients.Client{
+				ID: testsutil.GenerateUUID(t),
+			},
+			issueResponse: &magistrala.Token{
+				AccessToken:  strings.Repeat("a", 10),
+				RefreshToken: &validToken,
+				AccessType:   "Bearer",
+			},
+			err: nil,
+		},
+		{
+			desc:     "oauth signin callback with error",
+			provider: "google",
+			state:    mgoauth2.SignIn,
+			token: oauth2.Token{
+				AccessToken:  strings.Repeat("a", 10),
+				RefreshToken: strings.Repeat("b", 10),
+			},
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
+			},
+			retrieveByIdentityResponse: mgclients.Client{},
+			retrieveByIdentityErr:      repoerr.ErrNotFound,
+			issueResponse:              &magistrala.Token{},
+			err:                        errors.New("user not signed up"),
+		},
+		{
+			desc:     "oauth signup callback with successfully",
+			provider: "google",
+			state:    mgoauth2.SignUp,
+			token: oauth2.Token{
+				AccessToken:  strings.Repeat("a", 10),
+				RefreshToken: strings.Repeat("b", 10),
+			},
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
+			},
+			retrieveByIdentityResponse: mgclients.Client{
+				ID: testsutil.GenerateUUID(t),
+			},
+			addPoliciesResponse: &magistrala.AddPoliciesRes{
+				Added: true,
+			},
+			addPoliciesErr: nil,
+			saveResponse: mgclients.Client{
+				ID: testsutil.GenerateUUID(t),
+			},
+			saveErr: nil,
+			issueResponse: &magistrala.Token{
+				AccessToken:  strings.Repeat("a", 10),
+				RefreshToken: &validToken,
+				AccessType:   "Bearer",
+			},
+			err: nil,
+		},
+		{
+			desc:     "oauth signup callback with error",
+			provider: "google",
+			state:    mgoauth2.SignUp,
+			token: oauth2.Token{
+				AccessToken:  strings.Repeat("a", 10),
+				RefreshToken: strings.Repeat("b", 10),
+			},
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
+			},
+			retrieveByIdentityResponse: mgclients.Client{
+				ID: testsutil.GenerateUUID(t),
+			},
+			addPoliciesResponse: &magistrala.AddPoliciesRes{
+				Added: true,
+			},
+			addPoliciesErr: nil,
+			deletePoliciesResponse: &magistrala.DeletePoliciesRes{
+				Deleted: true,
+			},
+			deletePoliciesErr: nil,
+			saveResponse:      mgclients.Client{},
+			saveErr:           repoerr.ErrConflict,
+			issueResponse:     &magistrala.Token{},
+			err:               errors.New("user already exists"),
+		},
+	}
+
+	for _, tc := range cases {
+		switch tc.state {
+		case mgoauth2.SignUp:
+			repoCall := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.saveResponse, tc.saveErr)
+			repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesErr)
+			repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesResponse, tc.deletePoliciesErr)
+			repoCall3 := auth.On("Issue", mock.Anything, mock.Anything).Return(tc.issueResponse, tc.issueErr)
+			token, err := svc.OAuthCallback(context.Background(), tc.provider, tc.state, tc.token, tc.client)
+			if err == nil {
+				assert.Equal(t, tc.issueResponse.AccessToken, token.AccessToken)
+				assert.Equal(t, tc.issueResponse.RefreshToken, token.RefreshToken)
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+			repoCall1.Unset()
+			repoCall2.Unset()
+			repoCall3.Unset()
+		case mgoauth2.SignIn:
+			repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
+			repoCall1 := auth.On("Issue", mock.Anything, mock.Anything).Return(tc.issueResponse, tc.issueErr)
+			token, err := svc.OAuthCallback(context.Background(), tc.provider, tc.state, tc.token, tc.client)
+			if err == nil {
+				assert.Equal(t, tc.issueResponse.AccessToken, token.AccessToken)
+				assert.Equal(t, tc.issueResponse.RefreshToken, token.RefreshToken)
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
+			repoCall.Unset()
+			repoCall1.Unset()
+		}
 	}
 }

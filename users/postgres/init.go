@@ -37,6 +37,14 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS clients`,
 				},
 			},
+			{
+				// To support creation of clients from Oauth2 provider
+				Id: "clients_02",
+				Up: []string{
+					`ALTER TABLE clients ALTER COLUMN secret DROP NOT NULL`,
+				},
+				Down: []string{},
+			},
 		},
 	}
 }

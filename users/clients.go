@@ -8,6 +8,8 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/clients"
+	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
+	"golang.org/x/oauth2"
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -73,4 +75,8 @@ type Service interface {
 	// After an access token expires, the refresh token is used to get
 	// a new pair of access and refresh tokens.
 	RefreshToken(ctx context.Context, accessToken, domainID string) (*magistrala.Token, error)
+
+	// OAuthCallback handles the callback from any supported OAuth provider.
+	// It processes the OAuth tokens and either signs in or signs up the user based on the provided state.
+	OAuthCallback(ctx context.Context, provider string, state mgoauth2.State, token oauth2.Token, client clients.Client) (*magistrala.Token, error)
 }

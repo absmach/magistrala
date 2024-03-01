@@ -273,7 +273,16 @@ func (s *grpcServer) ListPermissions(ctx context.Context, req *magistrala.ListPe
 
 func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.IssueReq)
-	return issueReq{userID: req.GetUserId(), domainID: req.GetDomainId(), keyType: auth.KeyType(req.GetType())}, nil
+	return issueReq{
+		userID:   req.GetUserId(),
+		domainID: req.GetDomainId(),
+		keyType:  auth.KeyType(req.GetType()),
+		oauthToken: auth.OAuthToken{
+			Provider:     req.GetOauthProvider(),
+			AccessToken:  req.GetOauthAccessToken(),
+			RefreshToken: req.GetOauthRefreshToken(),
+		},
+	}, nil
 }
 
 func decodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

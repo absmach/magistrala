@@ -1805,7 +1805,7 @@ func (_m *SDK) Parents(id string, pm sdk.PageMetadata, token string) (sdk.Groups
 }
 
 // ReadMessages provides a mock function with given fields: pm, chanID, token
-func (_m *SDK) ReadMessages(pm sdk.PageMetadata, chanID string, token string) (sdk.MessagesPage, errors.SDKError) {
+func (_m *SDK) ReadMessages(pm sdk.MessagePageMetadata, chanID string, token string) (sdk.MessagesPage, errors.SDKError) {
 	ret := _m.Called(pm, chanID, token)
 
 	if len(ret) == 0 {
@@ -1814,16 +1814,16 @@ func (_m *SDK) ReadMessages(pm sdk.PageMetadata, chanID string, token string) (s
 
 	var r0 sdk.MessagesPage
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) (sdk.MessagesPage, errors.SDKError)); ok {
+	if rf, ok := ret.Get(0).(func(sdk.MessagePageMetadata, string, string) (sdk.MessagesPage, errors.SDKError)); ok {
 		return rf(pm, chanID, token)
 	}
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) sdk.MessagesPage); ok {
+	if rf, ok := ret.Get(0).(func(sdk.MessagePageMetadata, string, string) sdk.MessagesPage); ok {
 		r0 = rf(pm, chanID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.MessagesPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string, string) errors.SDKError); ok {
+	if rf, ok := ret.Get(1).(func(sdk.MessagePageMetadata, string, string) errors.SDKError); ok {
 		r1 = rf(pm, chanID, token)
 	} else {
 		if ret.Get(1) != nil {

@@ -69,6 +69,22 @@ var (
 	ErrInvalidJWT = errors.New("invalid JWT")
 )
 
+type MessagePageMetadata struct {
+	PageMetadata
+	Subtopic    string  `json:"subtopic,omitempty"`
+	Publisher   string  `json:"publisher,omitempty"`
+	Comparator  string  `json:"comparator,omitempty"`
+	BoolValue   *bool   `json:"vb,omitempty"`
+	StringValue string  `json:"vs,omitempty"`
+	DataValue   string  `json:"vd,omitempty"`
+	From        float64 `json:"from,omitempty"`
+	To          float64 `json:"to,omitempty"`
+	Aggregation string  `json:"aggregation,omitempty"`
+	Interval    string  `json:"interval,omitempty"`
+	Value       float64 `json:"value,omitempty"`
+	Protocol    string  `json:"protocol,omitempty"`
+}
+
 type PageMetadata struct {
 	Total           uint64   `json:"total"`
 	Offset          uint64   `json:"offset"`
@@ -828,13 +844,13 @@ type SDK interface {
 	// ReadMessages read messages of specified channel.
 	//
 	// example:
-	//  pm := sdk.PageMetadata{
+	//  pm := sdk.MessagePageMetadata{
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
 	//  msgs, _ := sdk.ReadMessages(pm,"channelID", "token")
 	//  fmt.Println(msgs)
-	ReadMessages(pm PageMetadata, chanID, token string) (MessagesPage, errors.SDKError)
+	ReadMessages(pm MessagePageMetadata, chanID, token string) (MessagesPage, errors.SDKError)
 
 	// SetContentType sets message content type.
 	//

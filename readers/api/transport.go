@@ -36,6 +36,9 @@ const (
 	comparatorKey  = "comparator"
 	fromKey        = "from"
 	toKey          = "to"
+	aggregationKey = "aggregation"
+	intervalKey    = "interval"
+	defInterval    = "1s"
 	defLimit       = 10
 	defOffset      = 0
 	defFormat      = "messages"
@@ -141,6 +144,19 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
+	aggregation, err := apiutil.ReadStringQuery(r, aggregationKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	var interval string
+	if aggregation != "" {
+		interval, err = apiutil.ReadStringQuery(r, intervalKey, defInterval)
+		if err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+	}
+
 	req := listMessagesReq{
 		chanID: chi.URLParam(r, "chanID"),
 		token:  apiutil.ExtractBearerToken(r),
@@ -160,6 +176,8 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 			BoolValue:   vb,
 			From:        from,
 			To:          to,
+			Aggregation: aggregation,
+			Interval:    interval,
 		},
 	}
 	return req, nil
@@ -196,7 +214,11 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrLimitSize),
 		errors.Contains(err, apiutil.ErrOffsetSize),
-		errors.Contains(err, apiutil.ErrInvalidComparator):
+		errors.Contains(err, apiutil.ErrInvalidComparator),
+		errors.Contains(err, apiutil.ErrInvalidAggregation),
+		errors.Contains(err, apiutil.ErrInvalidInterval),
+		errors.Contains(err, apiutil.ErrMissingFrom),
+		errors.Contains(err, apiutil.ErrMissingTo):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, svcerr.ErrAuthorization),

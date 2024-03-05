@@ -37,7 +37,14 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		format = rpm.Format
 	}
 
-	q := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY %s DESC LIMIT :limit OFFSET :offset;`, format, fmtCondition(chanID, rpm), order)
+	q := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY %s DESC LIMIT :limit OFFSET :offset;`, format, fmtCondition(rpm), order)
+	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(rpm))
+
+	// If aggregation is provided, add time_bucket and aggregation to the query
+	if rpm.Aggregation != "" {
+		q = fmt.Sprintf(`SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/1000))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1 ORDER BY time DESC LIMIT :limit OFFSET :offset;`, rpm.Interval, rpm.Aggregation, format, fmtCondition(rpm))
+		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/1000))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, rpm.Aggregation, format, fmtCondition(rpm))
+	}
 
 	params := map[string]interface{}{
 		"channel":      chanID,
@@ -94,8 +101,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		}
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(chanID, rpm))
-	rows, err = tr.db.NamedQuery(q, params)
+	rows, err = tr.db.NamedQuery(totalQuery, params)
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
@@ -112,7 +118,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	return page, nil
 }
 
-func fmtCondition(chanID string, rpm readers.PageMetadata) string {
+func fmtCondition(rpm readers.PageMetadata) string {
 	condition := `channel = :channel`
 
 	var query map[string]interface{}

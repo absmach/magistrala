@@ -38,9 +38,11 @@ var cmdMessages = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-			pageMetadata := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+			pageMetadata := mgxsdk.MessagePageMetadata{
+				PageMetadata: mgxsdk.PageMetadata{
+					Offset: Offset,
+					Limit:  Limit,
+				},
 			}
 
 			m, err := sdk.ReadMessages(pageMetadata, args[0], args[1])

@@ -164,4 +164,16 @@ var (
 
 	// ErrRollbackTx indicates failed to rollback transaction.
 	ErrRollbackTx = errors.New("failed to rollback transaction")
+
+	// ErrInvalidAggregation indicates invalid aggregation value.
+	ErrInvalidAggregation = errors.New("invalid aggregation value")
+
+	// ErrInvalidInterval indicates invalid interval value.
+	ErrInvalidInterval = errors.New("invalid interval value")
+
+	// ErrMissingFrom indicates missing from value.
+	ErrMissingFrom = errors.New("missing from time value")
+
+	// ErrMissingTo indicates missing to value.
+	ErrMissingTo = errors.New("missing to time value")
 )

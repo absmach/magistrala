@@ -55,6 +55,8 @@ type PageMetadata struct {
 	From        float64 `json:"from,omitempty"`
 	To          float64 `json:"to,omitempty"`
 	Format      string  `json:"format,omitempty"`
+	Aggregation string  `json:"aggregation,omitempty"`
+	Interval    string  `json:"interval,omitempty"`
 }
 
 // ParseValueComparator convert comparison operator keys into mathematic anotation.

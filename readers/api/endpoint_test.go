@@ -414,7 +414,6 @@ func TestReadAll(t *testing.T) {
 			key:    thingToken,
 			status: http.StatusBadRequest,
 		},
-
 		{
 			desc:   "read page with non-float to as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?to=ABCD", ts.URL, chanID),
@@ -430,6 +429,68 @@ func TestReadAll(t *testing.T) {
 				Total:    uint64(len(messages[5:20])),
 				Messages: messages[5:15],
 			},
+		},
+		{
+			desc:   "read page with aggregation as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX", ts.URL, chanID),
+			key:    thingToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with interval as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?interval=10h", ts.URL, chanID),
+			key:    thingToken,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages)),
+				Messages: messages[0:10],
+			},
+		},
+		{
+			desc:   "read page with aggregation and interval as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h", ts.URL, chanID),
+			key:    thingToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval, to and from as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
+			key:    thingToken,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages[5:20])),
+				Messages: messages[5:15],
+			},
+		},
+		{
+			desc:   "read page with invalid aggregation and valid interval, to and from as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=invalid&interval=10h&from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
+			key:    thingToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with invalid interval and valid aggregation, to and from as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10hrs&from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
+			key:    thingToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval and to with missing from as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&to=%f", ts.URL, chanID, messages[4].Time),
+			key:    thingToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval and to with invalid from as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&to=ABCD&from=%f", ts.URL, chanID, messages[4].Time),
+			key:    thingToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval and to with invalid to as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&from=%f&to=ABCD", ts.URL, chanID, messages[4].Time),
+			key:    thingToken,
+			status: http.StatusBadRequest,
 		},
 		{
 			desc:   "read page with valid offset and limit as user",
@@ -710,6 +771,68 @@ func TestReadAll(t *testing.T) {
 				Total:    uint64(len(messages[5:20])),
 				Messages: messages[5:15],
 			},
+		},
+		{
+			desc:   "read page with aggregation as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX", ts.URL, chanID),
+			key:    userToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with interval as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?interval=10h", ts.URL, chanID),
+			key:    userToken,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages)),
+				Messages: messages[0:10],
+			},
+		},
+		{
+			desc:   "read page with aggregation and interval as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h", ts.URL, chanID),
+			key:    userToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval, to and from as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
+			key:    userToken,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages[5:20])),
+				Messages: messages[5:15],
+			},
+		},
+		{
+			desc:   "read page with invalid aggregation and valid interval, to and from as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=invalid&interval=10h&from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
+			key:    userToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with invalid interval and valid aggregation, to and from as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10hrs&from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
+			key:    userToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval and to with missing from as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&to=%f", ts.URL, chanID, messages[4].Time),
+			key:    userToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval and to with invalid from as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&to=ABCD&from=%f", ts.URL, chanID, messages[4].Time),
+			key:    userToken,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with aggregation, interval and to with invalid to as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?aggregation=MAX&interval=10h&from=%f&to=ABCD", ts.URL, chanID, messages[4].Time),
+			key:    userToken,
+			status: http.StatusBadRequest,
 		},
 	}
 

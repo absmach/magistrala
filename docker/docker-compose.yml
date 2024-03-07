@@ -741,6 +741,7 @@ services:
       MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
       MG_UI_HASH_KEY: ${MG_UI_HASH_KEY}
       MG_UI_BLOCK_KEY: ${MG_UI_BLOCK_KEY}
+      MG_UI_PATH_PREFIX: ${MG_UI_PATH_PREFIX}
     ports:
       - ${MG_UI_PORT}:${MG_UI_PORT}
     networks:

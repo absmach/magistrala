@@ -1,15 +1,18 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 openapi: 3.0.3
 info:
-  title: Mainflux Users Service
+  title: Magistrala Users Service
   description: |
     This is the Users Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform users. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
-    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@mainflux.com
   license:
     name: Apache 2.0
-    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+    url: https://github.com/absmach/magistrala/blob/master/LICENSE
   version: 0.14.0
 
 servers:
@@ -21,12 +24,12 @@ tags:
     description: Everything about your Users
     externalDocs:
       description: Find out more about users
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
   - name: Groups
     description: Everything about your Groups
     externalDocs:
       description: Find out more about users groups
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
   /users:
@@ -70,8 +73,6 @@ paths:
         - $ref: "#/components/parameters/UserName"
         - $ref: "#/components/parameters/UserIdentity"
         - $ref: "#/components/parameters/Tags"
-        - $ref: "#/components/parameters/Owner"
-        - $ref: "#/components/parameters/UserVisibility"
       security:
         - bearerAuth: []
       responses:
@@ -212,18 +213,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /users/{userID}/owner:
+  /users/{userID}/role:
     patch:
-      summary: Updates the user owner.
+      summary: Updates the user role.
       description: |
-        Updates owner for the user with provided ID. Owner is updated using
-        authorization token and a new owner identifier received in request.
+        Updates role for the user with provided ID.
       tags:
         - Users
       parameters:
         - $ref: "#/components/parameters/UserID"
       requestBody:
-        $ref: "#/components/requestBodies/UserUpdateOwnerReq"
+        $ref: "#/components/requestBodies/UserUpdateRoleReq"
       security:
         - bearerAuth: []
       responses:
@@ -296,8 +296,6 @@ paths:
         authorization token and the new received info.
       tags:
         - Users
-      parameters:
-        - $ref: "#/components/parameters/UserID"
       requestBody:
         $ref: "#/components/requestBodies/UserUpdateSecretReq"
       security:
@@ -376,7 +374,6 @@ paths:
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/GroupName"
         - $ref: "#/components/parameters/ParentID"
-        - $ref: "#/components/parameters/OwnerID"
       responses:
         "200":
           $ref: "#/components/responses/MembersPageRes"
@@ -412,7 +409,6 @@ paths:
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/ChannelName"
         - $ref: "#/components/parameters/ParentID"
-        - $ref: "#/components/parameters/OwnerID"
       responses:
         "200":
           $ref: "#/components/responses/MembersPageRes"
@@ -512,7 +508,6 @@ paths:
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/GroupName"
         - $ref: "#/components/parameters/ParentID"
-        - $ref: "#/components/parameters/OwnerID"
       responses:
         "200":
           $ref: "#/components/responses/GroupPageRes"
@@ -571,6 +566,26 @@ paths:
           description: Group does not exist.
         "500":
           $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete group for a group with the given id.
+      description: |
+        Delete group removes a group with the given id from repo
+        and removes all the policies related to this group.
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Group deleted.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to group id.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
   /groups/{groupID}/children:
     get:
@@ -593,7 +608,6 @@ paths:
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/GroupName"
         - $ref: "#/components/parameters/ParentID"
-        - $ref: "#/components/parameters/OwnerID"
       responses:
         "200":
           $ref: "#/components/responses/GroupPageRes"
@@ -627,7 +641,6 @@ paths:
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/GroupName"
         - $ref: "#/components/parameters/ParentID"
-        - $ref: "#/components/parameters/OwnerID"
       responses:
         "200":
           $ref: "#/components/responses/GroupPageRes"
@@ -799,7 +812,37 @@ paths:
           description: Group does not exist.
         "500":
           $ref: "#/components/responses/ServiceError"
-
+  /domains/{domainID}/users:
+    get:
+      summary: List users assigned to domain
+      description: |
+        List users assigned to domain that is identified by the domain ID.
+      tags:
+        - Domains
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/UserPageRes"
+          description: List of users assigned to domain.
+        "400":
+          description: Failed due to malformed domain's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access the domain ID.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
   /health:
     get:
       summary: Retrieves service health check info.
@@ -840,11 +883,6 @@ components:
               example: password
               minimum: 8
               description: Free-form account secret used for acquiring auth token(s).
-        owner:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: User owner must be exsiting in the databse.
         metadata:
           type: object
           example: { "domain": "example.com" }
@@ -881,11 +919,6 @@ components:
           description: Group Status
           format: string
           example: enabled
-        owner_id:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Group owner ID must be exsiting in the databse.
       required:
         - name
 
@@ -908,21 +941,16 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: User tags.
-        owner:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: User owner identifier.
         credentials:
           type: object
           properties:
             identity:
               type: string
-              example: admin@mainflux.com
+              example: admin@magistrala.com
               description: User Identity for example email address.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "address": "example" }
           description: Arbitrary, object-encoded user's data.
         status:
           type: string
@@ -954,11 +982,11 @@ components:
           type: string
           example: groupName
           description: Free-form group name. Group name is unique on the given hierarchy level.
-        owner_id:
+        domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Group owner identifier of user that created the group..
+          description: ID of the domain to which the group belongs..
         parent_id:
           type: string
           format: uuid
@@ -1000,58 +1028,6 @@ components:
       xml:
         name: group
 
-    Memberships:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Unique group identifier generated by the service.
-        name:
-          type: string
-          example: groupName
-          description: Free-form group name. Group name is unique on the given hierarchy level.
-        owner_id:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Group owner identifier of user that created the group..
-        parent_id:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Group parent identifier.
-        description:
-          type: string
-          example: long group description
-          description: Group description, free form text.
-        metadata:
-          type: object
-          example: { "role": "general" }
-          description: Arbitrary, object-encoded groups's data.
-        path:
-          type: string
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879.bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Hierarchy path, concatenated ids of group ancestors.
-        level:
-          type: integer
-          description: Level in hierarchy, distance from the root group.
-          format: int32
-          example: 2
-        created_at:
-          type: string
-          format: date-time
-          example: "2019-11-26 13:31:52"
-          description: Datetime when the group was created.
-        updated_at:
-          type: string
-          format: date-time
-          example: "2019-11-26 13:31:52"
-          description: Datetime when the group was created.
-      xml:
-        name: memberships
-
     Members:
       type: object
       properties:
@@ -1071,17 +1047,12 @@ components:
             type: string
           example: ["computations", "datasets"]
           description: User tags.
-        owner:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: User owner identifier.
         credentials:
           type: object
           properties:
             identity:
               type: string
-              example: user@mainflux.com
+              example: user@magistrala.com
               description: User Identity for example email address.
             secret:
               type: string
@@ -1159,31 +1130,6 @@ components:
         - total
         - level
 
-    MembershipsPage:
-      type: object
-      properties:
-        memberships:
-          type: array
-          minItems: 0
-          uniqueItems: true
-          items:
-            $ref: "#/components/schemas/Memberships"
-        total:
-          type: integer
-          example: 1
-          description: Total number of items.
-        offset:
-          type: integer
-          description: Number of items to skip during retrieval.
-        limit:
-          type: integer
-          example: 10
-          description: Maximum number of items to return in one page.
-      required:
-        - memberships
-        - total
-        - level
-
     MembersPage:
       type: object
       properties:
@@ -1241,7 +1187,7 @@ components:
       properties:
         identity:
           type: string
-          example: user@mainflux.com
+          example: user@magistrala.com
           description: User Identity for example email address.
       required:
         - identity
@@ -1261,15 +1207,16 @@ components:
         - old_secret
         - new_secret
 
-    UserOwner:
+    UserRole:
       type: object
       properties:
-        owner:
+        role:
           type: string
-          example: user@mainflux.com
-          description: User owner for example email address.
+          enum: ["admin","user"]
+          example: user
+          description: User role example.
       required:
-        - owner
+        - role
 
     GroupUpdate:
       type: object
@@ -1345,7 +1292,7 @@ components:
       properties:
         identity:
           type: string
-          example: user@mainflux.com
+          example: user@magistrala.com
           description: User Identity for example email address.
         secret:
           type: string
@@ -1407,15 +1354,6 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
-    Visibility:
-      name: visibility
-      description: The visibility specifier when listing users. Either all, shared or mine.
-      in: path
-      schema:
-        type: string
-      required: true
-      example: all
-
     UserName:
       name: name
       description: User's name.
@@ -1433,35 +1371,6 @@ components:
         type: string
       required: false
       example: "admin@example.com"
-
-    Owner:
-      name: owner_id
-      description: User's owner.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
-    UserOwner:
-      name: owner
-      description: Unique owner identifier for a user.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
-    UserVisibility:
-      name: visibility
-      description: visibility to list either users I own or users that are shared with me or both users I own and shared with me
-      in: query
-      schema:
-        type: string
-      required: false
-      example: shared
 
     Status:
       name: status
@@ -1572,16 +1481,6 @@ components:
         type: boolean
         default: false
 
-    OwnerID:
-      name: ownerID
-      description: Unique owner identifier for a group.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
     Metadata:
       name: metadata
       description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
@@ -1655,13 +1554,13 @@ components:
           schema:
             $ref: "#/components/schemas/UserSecret"
 
-    UserUpdateOwnerReq:
-      description: JSON-formated document describing the owner of user to be update
+    UserUpdateRoleReq:
+      description: JSON-formated document describing the role of the user to be updated
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UserOwner"
+            $ref: "#/components/schemas/UserRole"
 
     GroupCreateReq:
       description: JSON-formatted document describing the new group to be registered
@@ -1782,13 +1681,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UsersPage"
-
-    MembershipsPageRes:
-      description: Memberships associated with the user.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/MembershipsPage"
 
     GroupCreateRes:
       description: Registered new group.

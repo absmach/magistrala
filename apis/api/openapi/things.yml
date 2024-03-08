@@ -1,15 +1,18 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 openapi: 3.0.3
 info:
-  title: Mainflux Things Service
+  title: Magistrala Things Service
   description: |
     This is the Things Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform things and channels. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
-    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@mainflux.com
   license:
     name: Apache 2.0
-    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+    url: https://github.com/absmach/magistrala/blob/master/LICENSE
   version: 0.14.0
 
 servers:
@@ -21,17 +24,17 @@ tags:
     description: Everything about your Things
     externalDocs:
       description: Find out more about things
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
   - name: Channels
     description: Everything about your Channels
     externalDocs:
       description: Find out more about things channels
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
   - name: Policies
     description: Access to things policies
     externalDocs:
       description: Find out more about things policies
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
   /things:
@@ -76,7 +79,6 @@ paths:
         - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/ThingName"
         - $ref: "#/components/parameters/Tags"
-        - $ref: "#/components/parameters/Owner"
       security:
         - bearerAuth: []
       responses:
@@ -166,7 +168,26 @@ paths:
           description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
-
+    delete:
+      summary: Delete thing for a thing with the given id.
+      description: |
+        Delete thing removes a thing with the given id from repo
+        and removes all the policies related to this thing.
+      tags:
+        - Things
+      parameters:
+        - $ref: "#/components/parameters/ThingID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Thing deleted.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to thing id.
+        "500":
+          $ref: "#/components/responses/ServiceError"
   /things/{thingID}/tags:
     patch:
       summary: Updates tags the thing.
@@ -179,32 +200,6 @@ paths:
         - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ThingUpdateTagsReq"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          $ref: "#/components/responses/ThingRes"
-        "400":
-          description: Failed due to malformed JSON.
-        "404":
-          description: Failed due to non existing thing.
-        "401":
-          description: Missing or invalid access token provided.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /things/{thingID}/owner:
-    patch:
-      summary: Updates the thing owner.
-      description: |
-        Updates owner for the thing with provided ID. Owner is updated using
-        authorization token and a new owner identifier received in request.
-      tags:
-        - Things
-      parameters:
-        - $ref: "#/components/parameters/ThingID"
-      requestBody:
-        $ref: "#/components/requestBodies/ThingUpdateOwnerReq"
       security:
         - bearerAuth: []
       responses:
@@ -386,8 +381,7 @@ paths:
         - Channels
       summary: Creates new channel
       description: |
-        Creates new channel. User identified by the provided access token will
-        be the channel's owner.
+        Creates new channel in domain.
       requestBody:
         $ref: "#/components/requestBodies/ChannelCreateReq"
       security:
@@ -422,7 +416,6 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/ChannelName"
-        - $ref: "#/components/parameters/OwnerId"
       responses:
         "200":
           $ref: "#/components/responses/ChannelPageRes"
@@ -487,6 +480,26 @@ paths:
           description: Channel does not exist.
         "415":
           description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete channel for given channel id.
+      description: |
+        Delete channel remove given channel id from repo
+        and removes all the policies related to channel.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Channel deleted.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to thing id.
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -864,14 +877,9 @@ components:
               example: bb7edb32-2eac-4aad-aebe-ed96fe073879
               minimum: 8
               description: Free-form account secret used for acquiring auth token(s).
-        owner:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner must be exsiting in the databse.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "model": "example" }
           description: Arbitrary, object-encoded thing's data.
         status:
           type: string
@@ -898,18 +906,13 @@ components:
           description: Id of parent channel, it must be existing channel.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "location": "example" }
           description: Arbitrary, object-encoded channels's data.
         status:
           type: string
           description: Channel Status
           format: string
           example: enabled
-        owner_id:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Channel owner ID must be exsiting in the databse.
       required:
         - name
 
@@ -1023,11 +1026,11 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: Thing tags.
-        owner:
+        domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner identifier.
+          description: ID of the domain to which thing belongs.
         credentials:
           type: object
           properties:
@@ -1041,7 +1044,7 @@ components:
               description: Thing secret password.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "model": "example" }
           description: Arbitrary, object-encoded thing's data.
         status:
           type: string
@@ -1080,11 +1083,11 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: Thing tags.
-        owner:
+        domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner identifier.
+          description: ID of the domain to which thing belongs.
         credentials:
           type: object
           properties:
@@ -1098,7 +1101,7 @@ components:
               description: Thing secret password.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "model": "example" }
           description: Arbitrary, object-encoded thing's data.
         status:
           type: string
@@ -1130,11 +1133,11 @@ components:
           type: string
           example: channelName
           description: Free-form channel name. Channel name is unique on the given hierarchy level.
-        owner_id:
+        domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Channel owner identifier of thing that created the channel..
+          description: ID of the domain to which the group belongs.
         parent_id:
           type: string
           format: uuid
@@ -1326,16 +1329,6 @@ components:
       required:
         - secret
 
-    ThingOwner:
-      type: object
-      properties:
-        owner:
-          type: string
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Thing owner for example email address.
-      required:
-        - owner
-
     ChannelUpdate:
       type: object
       properties:
@@ -1452,35 +1445,6 @@ components:
       required: false
       example: "thingName"
 
-    ThingIdentity:
-      name: identity
-      description: Thing's identity.
-      in: query
-      schema:
-        type: string
-      required: false
-      example: "admin@example.com"
-
-    Owner:
-      name: owner_id
-      description: Thing's owner.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
-    ThingOwner:
-      name: owner
-      description: Unique owner identifier for a thing.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
     Status:
       name: status
       description: Thing account status.
@@ -1561,16 +1525,6 @@ components:
         type: boolean
         default: false
 
-    OwnerId:
-      name: ownerId
-      description: Unique owner identifier for a channel.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
     Metadata:
       name: metadata
       description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
@@ -1644,14 +1598,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ThingSecret"
-
-    ThingUpdateOwnerReq:
-      description: JSON-formated document describing the owner of thing to be update
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ThingOwner"
 
     ShareThingReq:
       description: JSON-formated document describing the policy related to sharing things

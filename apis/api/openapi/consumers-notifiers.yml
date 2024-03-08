@@ -1,15 +1,18 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 openapi: 3.0.1
 info:
-  title: Mainflux Notifiers service
+  title: Magistrala Notifiers service
   description: |
     HTTP API for Notifiers service.
     Some useful links:
-    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@mainflux.com
   license:
     name: Apache 2.0
-    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+    url: https://github.com/absmach/magistrala/blob/master/LICENSE
   version: 0.14.0
 
 servers:
@@ -23,7 +26,7 @@ tags:
     description: Everything about your Notifiers
     externalDocs:
       description: Find out more about notifiers
-      url: http://docs.mainflux.io/
+      url: https://docs.magistrala.abstractmachines.fr/
       
 paths:
   /subscriptions:

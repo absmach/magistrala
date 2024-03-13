@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -44,11 +45,11 @@ var (
 		Metadata:    validCMetadata,
 		Status:      mgclients.EnabledStatus,
 	}
-	validToken        = "valid"
-	inValidToken      = "invalid"
-	inValid           = "invalid"
-	validID           = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
-	ErrPasswordFormat = errors.New("password does not meet the requirements")
+	validToken   = "valid"
+	inValidToken = "invalid"
+	inValid      = "invalid"
+	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	passRegex    = regexp.MustCompile("^.{8,}$")
 )
 
 const contentType = "application/json"
@@ -92,7 +93,7 @@ func newUsersServer() (*httptest.Server, *mocks.Service) {
 	mux := chi.NewRouter()
 	provider := new(oauth2mocks.Provider)
 	provider.On("Name").Return("test")
-	httpapi.MakeHandler(svc, gsvc, mux, logger, "", provider)
+	httpapi.MakeHandler(svc, gsvc, mux, logger, "", passRegex, provider)
 
 	return httptest.NewServer(mux), svc
 }
@@ -1166,8 +1167,8 @@ func TestPasswordReset(t *testing.T) {
 			data:        fmt.Sprintf(`{"token": "%s", "password": "%s", "confirm_password": "%s"}`, validToken, "weak", "weak"),
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusInternalServerError,
-			err:         ErrPasswordFormat,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrPasswordFormat,
 		},
 		{
 			desc:        "password reset with empty token",
@@ -1182,7 +1183,7 @@ func TestPasswordReset(t *testing.T) {
 			data:        fmt.Sprintf(`{"token": "%s", "password": "%s", "confirm_password": "%s"}`, validToken, "", ""),
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 		{
@@ -1338,7 +1339,7 @@ func TestUpdateClientSecret(t *testing.T) {
 	}{
 		{
 			desc: "update user secret with valid token",
-			data: fmt.Sprintf(`{"secret": "%s"}`, "strongersecret"),
+			data: `{"old_secret": "strongersecret", "new_secret": "strongersecret"}`,
 			client: mgclients.Client{
 				ID: client.ID,
 				Credentials: mgclients.Credentials{
@@ -1353,7 +1354,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		},
 		{
 			desc: "update user secret with empty token",
-			data: fmt.Sprintf(`{"secret": "%s"}`, "strongersecret"),
+			data: `{"old_secret": "strongersecret", "new_secret": "strongersecret"}`,
 			client: mgclients.Client{
 				ID: client.ID,
 				Credentials: mgclients.Credentials{
@@ -1368,7 +1369,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		},
 		{
 			desc: "update user secret with invalid token",
-			data: fmt.Sprintf(`{"secret": "%s"}`, "strongersecret"),
+			data: `{"old_secret": "strongersecret", "new_secret": "strongersecret"}`,
 			client: mgclients.Client{
 				ID: client.ID,
 				Credentials: mgclients.Credentials{
@@ -1384,7 +1385,7 @@ func TestUpdateClientSecret(t *testing.T) {
 
 		{
 			desc: "update user secret with empty secret",
-			data: fmt.Sprintf(`{"secret": "%s"}`, ""),
+			data: `{"old_secret": "", "new_secret": "strongersecret"}`,
 			client: mgclients.Client{
 				ID: client.ID,
 				Credentials: mgclients.Credentials{
@@ -1395,11 +1396,11 @@ func TestUpdateClientSecret(t *testing.T) {
 			contentType: contentType,
 			token:       validToken,
 			status:      http.StatusBadRequest,
-			err:         apiutil.ErrBearerKey,
+			err:         apiutil.ErrMissingPass,
 		},
 		{
 			desc: "update user secret with invalid contentype",
-			data: fmt.Sprintf(`{"secret": "%s"}`, ""),
+			data: `{"old_secret": "strongersecret", "new_secret": "strongersecret"}`,
 			client: mgclients.Client{
 				ID: client.ID,
 				Credentials: mgclients.Credentials{
@@ -1479,7 +1480,7 @@ func TestIssueToken(t *testing.T) {
 			desc:        "issue token with empty identity",
 			data:        fmt.Sprintf(`{"identity": "%s", "secret": "%s", "domainID": "%s"}`, "", secret, validID),
 			contentType: contentType,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 		{

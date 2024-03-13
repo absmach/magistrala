@@ -132,6 +132,9 @@ var (
 	// ErrMissingSecret indicates missing secret.
 	ErrMissingSecret = errors.New("missing secret")
 
+	// ErrPasswordFormat indicates weak password.
+	ErrPasswordFormat = errors.New("password does not meet the requirements")
+
 	// ErrMissingOwner indicates missing entity owner.
 	ErrMissingOwner = errors.New("missing entity owner")
 
@@ -143,9 +146,6 @@ var (
 
 	// ErrMissingName indicates missing identity name.
 	ErrMissingName = errors.New("missing identity name")
-
-	// ErrInvalidSecret indicates invalid secret.
-	ErrInvalidSecret = errors.New("missing secret")
 
 	// ErrInvalidLevel indicates an invalid group level.
 	ErrInvalidLevel = errors.New("invalid group level (should be between 0 and 5)")

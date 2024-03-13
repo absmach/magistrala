@@ -892,8 +892,8 @@ func TestUpdateThingSecret(t *testing.T) {
 			newSecret: "newSecret",
 			token:     validToken,
 			response:  sdk.Thing{},
-			repoErr:   apiutil.ErrInvalidSecret,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, apiutil.ErrInvalidSecret), http.StatusBadRequest),
+			repoErr:   apiutil.ErrMissingSecret,
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, apiutil.ErrMissingSecret), http.StatusBadRequest),
 		},
 	}
 	for _, tc := range cases {

@@ -106,8 +106,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	w.Header().Set("Content-Type", ContentType)
 	switch {
-	case errors.Contains(err, apiutil.ErrInvalidSecret),
-		errors.Contains(err, svcerr.ErrMalformedEntity),
+	case errors.Contains(err, svcerr.ErrMalformedEntity),
 		errors.Contains(err, errors.ErrMalformedEntity),
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrEmptyList),
@@ -121,7 +120,12 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidQueryParams),
 		errors.Contains(err, apiutil.ErrInvalidStatus),
 		errors.Contains(err, apiutil.ErrMissingRelation),
-		errors.Contains(err, apiutil.ErrValidation):
+		errors.Contains(err, apiutil.ErrValidation),
+		errors.Contains(err, apiutil.ErrMissingIdentity),
+		errors.Contains(err, apiutil.ErrMissingSecret),
+		errors.Contains(err, apiutil.ErrMissingPass),
+		errors.Contains(err, apiutil.ErrMissingConfPass),
+		errors.Contains(err, apiutil.ErrPasswordFormat):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, apiutil.ErrBearerToken):

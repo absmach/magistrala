@@ -225,7 +225,7 @@ func TestEncodeError(t *testing.T) {
 		{
 			desc: "BadRequest",
 			errs: []error{
-				apiutil.ErrInvalidSecret,
+				apiutil.ErrMissingSecret,
 				svcerr.ErrMalformedEntity,
 				errors.ErrMalformedEntity,
 				apiutil.ErrMissingID,
@@ -240,7 +240,7 @@ func TestEncodeError(t *testing.T) {
 		{
 			desc: "BadRequest with validation error",
 			errs: []error{
-				errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidSecret),
+				errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingSecret),
 				errors.Wrap(apiutil.ErrValidation, svcerr.ErrMalformedEntity),
 				errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity),
 				errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID),

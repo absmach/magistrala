@@ -43,14 +43,14 @@ func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *au
 	gRepo := new(gmocks.Repository)
 
 	auth := new(authmocks.AuthClient)
-	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, passRegex, true)
+	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, true)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 
 	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	provider := new(oauth2mocks.Provider)
 	provider.On("Name").Return("test")
-	api.MakeHandler(csvc, gsvc, mux, logger, "", provider)
+	api.MakeHandler(csvc, gsvc, mux, logger, "", passRegex, provider)
 
 	return httptest.NewServer(mux), crepo, gRepo, auth
 }
@@ -62,7 +62,7 @@ func TestCreateClient(t *testing.T) {
 	user := sdk.User{
 		Name:        "clientname",
 		Tags:        []string{"tag1", "tag2"},
-		Credentials: sdk.Credentials{Identity: "admin@example.com", Secret: "secret"},
+		Credentials: sdk.Credentials{Identity: "admin@example.com", Secret: "12345678"},
 		Status:      mgclients.EnabledStatus.String(),
 	}
 	conf := sdk.Config{
@@ -96,7 +96,7 @@ func TestCreateClient(t *testing.T) {
 			client:   sdk.User{},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
 		},
 		{
 			desc: "register a user that can't be marshalled",
@@ -135,7 +135,7 @@ func TestCreateClient(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
 		},
 		{
 			desc: "register user with empty identity",
@@ -147,14 +147,7 @@ func TestCreateClient(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
-		},
-		{
-			desc:     "register empty user",
-			client:   sdk.User{},
-			response: sdk.User{},
-			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
 		},
 		{
 			desc: "register user with every field defined",
@@ -828,7 +821,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newSecret",
 			token:     validToken,
 			response:  sdk.User{},
-			repoErr:   apiutil.ErrInvalidSecret,
+			repoErr:   apiutil.ErrMissingSecret,
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrNotFound, repoerr.ErrMissingSecret), http.StatusBadRequest),
 		},
 	}

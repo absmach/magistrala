@@ -20,6 +20,15 @@ func (req createClientReq) validate() error {
 	if len(req.client.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
+	if req.client.Credentials.Identity == "" {
+		return apiutil.ErrMissingIdentity
+	}
+	if req.client.Credentials.Secret == "" {
+		return apiutil.ErrMissingPass
+	}
+	if !passRegex.MatchString(req.client.Credentials.Secret) {
+		return apiutil.ErrPasswordFormat
+	}
 
 	return req.client.Validate()
 }
@@ -180,6 +189,12 @@ func (req updateClientSecretReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
+	if req.OldSecret == "" || req.NewSecret == "" {
+		return apiutil.ErrMissingPass
+	}
+	if !passRegex.MatchString(req.NewSecret) {
+		return apiutil.ErrPasswordFormat
+	}
 
 	return nil
 }
@@ -211,7 +226,7 @@ func (req loginClientReq) validate() error {
 		return apiutil.ErrMissingIdentity
 	}
 	if req.Secret == "" {
-		return apiutil.ErrMissingSecret
+		return apiutil.ErrMissingPass
 	}
 
 	return nil
@@ -264,6 +279,9 @@ func (req resetTokenReq) validate() error {
 	}
 	if req.Password != req.ConfPass {
 		return apiutil.ErrInvalidResetPass
+	}
+	if !passRegex.MatchString(req.ConfPass) {
+		return apiutil.ErrPasswordFormat
 	}
 
 	return nil

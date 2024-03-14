@@ -12,7 +12,6 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users"
-	"golang.org/x/oauth2"
 )
 
 const streamID = "magistrala.users"
@@ -298,14 +297,13 @@ func (es *eventStore) SendPasswordReset(ctx context.Context, host, email, user, 
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) OAuthCallback(ctx context.Context, provider string, state mgoauth2.State, oauthToken oauth2.Token, client mgclients.Client) (*magistrala.Token, error) {
-	token, err := es.svc.OAuthCallback(ctx, provider, state, oauthToken, client)
+func (es *eventStore) OAuthCallback(ctx context.Context, state mgoauth2.State, client mgclients.Client) (*magistrala.Token, error) {
+	token, err := es.svc.OAuthCallback(ctx, state, client)
 	if err != nil {
 		return token, err
 	}
 
 	event := oauthCallbackEvent{
-		provider: provider,
 		state:    state.String(),
 		clientID: client.ID,
 	}

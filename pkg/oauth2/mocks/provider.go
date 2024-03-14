@@ -37,6 +37,34 @@ func (_m *Provider) ErrorURL() string {
 	return r0
 }
 
+// Exchange provides a mock function with given fields: ctx, code
+func (_m *Provider) Exchange(ctx context.Context, code string) (xoauth2.Token, error) {
+	ret := _m.Called(ctx, code)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Exchange")
+	}
+
+	var r0 xoauth2.Token
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (xoauth2.Token, error)); ok {
+		return rf(ctx, code)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) xoauth2.Token); ok {
+		r0 = rf(ctx, code)
+	} else {
+		r0 = ret.Get(0).(xoauth2.Token)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, code)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // IsEnabled provides a mock function with given fields:
 func (_m *Provider) IsEnabled() bool {
 	ret := _m.Called()
@@ -91,34 +119,6 @@ func (_m *Provider) RedirectURL() string {
 	return r0
 }
 
-// Refresh provides a mock function with given fields: ctx, token
-func (_m *Provider) Refresh(ctx context.Context, token string) (xoauth2.Token, error) {
-	ret := _m.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Refresh")
-	}
-
-	var r0 xoauth2.Token
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (xoauth2.Token, error)); ok {
-		return rf(ctx, token)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) xoauth2.Token); ok {
-		r0 = rf(ctx, token)
-	} else {
-		r0 = ret.Get(0).(xoauth2.Token)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, token)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // State provides a mock function with given fields:
 func (_m *Provider) State() string {
 	ret := _m.Called()
@@ -137,57 +137,32 @@ func (_m *Provider) State() string {
 	return r0
 }
 
-// UserDetails provides a mock function with given fields: ctx, code
-func (_m *Provider) UserDetails(ctx context.Context, code string) (clients.Client, xoauth2.Token, error) {
-	ret := _m.Called(ctx, code)
+// UserInfo provides a mock function with given fields: accessToken
+func (_m *Provider) UserInfo(accessToken string) (clients.Client, error) {
+	ret := _m.Called(accessToken)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UserDetails")
+		panic("no return value specified for UserInfo")
 	}
 
 	var r0 clients.Client
-	var r1 xoauth2.Token
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (clients.Client, xoauth2.Token, error)); ok {
-		return rf(ctx, code)
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (clients.Client, error)); ok {
+		return rf(accessToken)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) clients.Client); ok {
-		r0 = rf(ctx, code)
+	if rf, ok := ret.Get(0).(func(string) clients.Client); ok {
+		r0 = rf(accessToken)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) xoauth2.Token); ok {
-		r1 = rf(ctx, code)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(accessToken)
 	} else {
-		r1 = ret.Get(1).(xoauth2.Token)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
-		r2 = rf(ctx, code)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// Validate provides a mock function with given fields: ctx, token
-func (_m *Provider) Validate(ctx context.Context, token string) error {
-	ret := _m.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Validate")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, token)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
+	return r0, r1
 }
 
 // NewProvider creates a new instance of Provider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

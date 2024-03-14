@@ -6,11 +6,9 @@ package google
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	mfclients "github.com/absmach/magistrala/pkg/clients"
@@ -77,28 +75,29 @@ func (cfg *config) IsEnabled() bool {
 	return cfg.config.ClientID != "" && cfg.config.ClientSecret != ""
 }
 
-func (cfg *config) UserDetails(ctx context.Context, code string) (mfclients.Client, oauth2.Token, error) {
+func (cfg *config) Exchange(ctx context.Context, code string) (oauth2.Token, error) {
 	token, err := cfg.config.Exchange(ctx, code)
 	if err != nil {
-		return mfclients.Client{}, oauth2.Token{}, err
-	}
-	if token.RefreshToken == "" {
-		return mfclients.Client{}, oauth2.Token{}, svcerr.ErrAuthentication
+		return oauth2.Token{}, err
 	}
 
-	resp, err := http.Get(userInfoURL + url.QueryEscape(token.AccessToken))
+	return *token, nil
+}
+
+func (cfg *config) UserInfo(accessToken string) (mfclients.Client, error) {
+	resp, err := http.Get(userInfoURL + url.QueryEscape(accessToken))
 	if err != nil {
-		return mfclients.Client{}, oauth2.Token{}, err
+		return mfclients.Client{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return mfclients.Client{}, oauth2.Token{}, svcerr.ErrAuthentication
+		return mfclients.Client{}, svcerr.ErrAuthentication
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return mfclients.Client{}, oauth2.Token{}, err
+		return mfclients.Client{}, err
 	}
 
 	var user struct {
@@ -108,11 +107,11 @@ func (cfg *config) UserDetails(ctx context.Context, code string) (mfclients.Clie
 		Picture string `json:"picture"`
 	}
 	if err := json.Unmarshal(data, &user); err != nil {
-		return mfclients.Client{}, oauth2.Token{}, err
+		return mfclients.Client{}, err
 	}
 
 	if user.ID == "" || user.Name == "" || user.Email == "" {
-		return mfclients.Client{}, oauth2.Token{}, svcerr.ErrAuthentication
+		return mfclients.Client{}, svcerr.ErrAuthentication
 	}
 
 	client := mfclients.Client{
@@ -128,56 +127,5 @@ func (cfg *config) UserDetails(ctx context.Context, code string) (mfclients.Clie
 		Status: mfclients.EnabledStatus,
 	}
 
-	return client, *token, nil
-}
-
-func (cfg *config) Validate(ctx context.Context, token string) error {
-	client := &http.Client{
-		Timeout: defTimeout,
-	}
-	req, err := http.NewRequest(http.MethodGet, tokenInfoURL+token, http.NoBody)
-	if err != nil {
-		return svcerr.ErrAuthentication
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return svcerr.ErrAuthentication
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return svcerr.ErrAuthentication
-	}
-
-	return nil
-}
-
-func (cfg *config) Refresh(ctx context.Context, token string) (oauth2.Token, error) {
-	payload := strings.NewReader(fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s&client_secret=%s", token, cfg.config.ClientID, cfg.config.ClientSecret))
-	client := &http.Client{
-		Timeout: defTimeout,
-	}
-	req, err := http.NewRequest(http.MethodPost, cfg.config.Endpoint.TokenURL, payload)
-	if err != nil {
-		return oauth2.Token{}, err
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	res, err := client.Do(req)
-	if err != nil {
-		return oauth2.Token{}, err
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return oauth2.Token{}, err
-	}
-	var tokenData oauth2.Token
-	if err := json.Unmarshal(body, &tokenData); err != nil {
-		return oauth2.Token{}, err
-	}
-	tokenData.RefreshToken = token
-
-	return tokenData, nil
+	return client, nil
 }

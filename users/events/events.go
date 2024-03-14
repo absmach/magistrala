@@ -415,7 +415,6 @@ func (spre sendPasswordResetEvent) Encode() (map[string]interface{}, error) {
 
 type oauthCallbackEvent struct {
 	state    string
-	provider string
 	clientID string
 }
 
@@ -423,7 +422,6 @@ func (oce oauthCallbackEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": oauthCallback,
 		"state":     oce.state,
-		"provider":  oce.provider,
 		"client_id": oce.clientID,
 	}, nil
 }

@@ -72,12 +72,9 @@ type Provider interface {
 	// IsEnabled checks if the OAuth2 provider is enabled.
 	IsEnabled() bool
 
-	// UserDetails retrieves the user's details and OAuth tokens from the OAuth2 provider.
-	UserDetails(ctx context.Context, code string) (mfclients.Client, oauth2.Token, error)
+	// Exchange converts an authorization code into a token.
+	Exchange(ctx context.Context, code string) (oauth2.Token, error)
 
-	// Validate checks the validity of the access token.
-	Validate(ctx context.Context, token string) error
-
-	// Refresh refreshes the access token using the refresh token.
-	Refresh(ctx context.Context, token string) (oauth2.Token, error)
+	// UserInfo retrieves the user's information using the access token.
+	UserInfo(accessToken string) (mfclients.Client, error)
 }

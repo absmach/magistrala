@@ -21,10 +21,9 @@ func (req identityReq) validate() error {
 }
 
 type issueReq struct {
-	userID     string
-	domainID   string // optional
-	keyType    auth.KeyType
-	oauthToken auth.OAuthToken
+	userID   string
+	domainID string // optional
+	keyType  auth.KeyType
 }
 
 func (req issueReq) validate() error {

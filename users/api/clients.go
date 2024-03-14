@@ -553,13 +553,19 @@ func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service) http.Handle
 		}
 
 		if code := r.FormValue("code"); code != "" {
-			client, token, err := oauth.UserDetails(r.Context(), code)
+			token, err := oauth.Exchange(r.Context(), code)
 			if err != nil {
 				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
 				return
 			}
 
-			jwt, err := svc.OAuthCallback(r.Context(), oauth.Name(), flow, token, client)
+			client, err := oauth.UserInfo(token.AccessToken)
+			if err != nil {
+				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
+				return
+			}
+
+			jwt, err := svc.OAuthCallback(r.Context(), flow, client)
 			if err != nil {
 				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
 				return

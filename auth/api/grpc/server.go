@@ -277,11 +277,6 @@ func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, er
 		userID:   req.GetUserId(),
 		domainID: req.GetDomainId(),
 		keyType:  auth.KeyType(req.GetType()),
-		oauthToken: auth.OAuthToken{
-			Provider:     req.GetOauthProvider(),
-			AccessToken:  req.GetOauthAccessToken(),
-			RefreshToken: req.GetOauthRefreshToken(),
-		},
 	}, nil
 }
 

@@ -56,10 +56,7 @@ message IdentityRes {
 message IssueReq {
   string user_id = 1;
   optional string domain_id = 2;
-  uint32 type = 3;
-  string oauth_provider = 4;
-  string oauth_access_token = 5;
-  string oauth_refresh_token = 6;  
+  uint32 type = 3; 
 }
 
 message RefreshReq {

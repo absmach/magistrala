@@ -17,7 +17,7 @@ import (
 
 func TestTransformJSON(t *testing.T) {
 	// Following hex-encoded bytes correspond to the content of:
-	// [{-2: "base-name", -3: 100.0, -4: "base-unit", -1: 10, -5: 10.0, -6: 100.0, 0: "name", 1: "unit", 6: 300.0, 7: 150.0, 2: 42.0, 5: 10.0}]
+	// [{"bn":"base-name","bt":100,"bu":"base-unit","bver":10,"bv":10,"bs":100,"n":"name","u":"unit","t":300,"ut":150,"v":42,"s":10}]
 	// For more details for mapping SenML labels to integers, please take a look here: https://tools.ietf.org/html/rfc8428#page-19.
 	jsonBytes, err := hex.DecodeString("5b7b22626e223a22626173652d6e616d65222c226274223a3130302c226275223a22626173652d756e6974222c2262766572223a31302c226276223a31302c226273223a3130302c226e223a226e616d65222c2275223a22756e6974222c2274223a3330302c227574223a3135302c2276223a34322c2273223a31307d5d")
 	assert.Nil(t, err, "Decoding JSON expected to succeed")

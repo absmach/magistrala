@@ -187,7 +187,7 @@ func (ts *transformerService) transformTimeField(payload map[string]interface{})
 				return 0, err
 			}
 
-			return t.UnixNano(), nil
+			return transformers.ToUnixNano(t.UnixNano()), nil
 		}
 	}
 

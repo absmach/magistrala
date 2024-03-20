@@ -602,7 +602,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 		ObjectType:  DomainType,
 	}, []string{AdminPermission, EditPermission, ViewPermission, MembershipPermission})
 	if err != nil {
-		return []string{}, errors.Wrap(svcerr.ErrFailedPermissionsList, err)
+		return []string{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	return lp, nil
 }

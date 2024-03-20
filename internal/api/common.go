@@ -145,6 +145,10 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		err = svcerr.ErrInvalidStatus
 		w.WriteHeader(http.StatusBadRequest)
 
+	case errors.Contains(err, apiutil.ErrInvalidStatus):
+		err = apiutil.ErrInvalidStatus
+		w.WriteHeader(http.StatusBadRequest)
+
 	case errors.Contains(err, apiutil.ErrInvalidIDFormat):
 		err = apiutil.ErrInvalidIDFormat
 		w.WriteHeader(http.StatusBadRequest)
@@ -223,7 +227,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	case errors.Contains(err, svcerr.ErrViewEntity):
 		err = svcerr.ErrViewEntity
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 
 	case errors.Contains(err, svcerr.ErrRemoveEntity):
 		err = svcerr.ErrRemoveEntity
@@ -241,17 +245,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		err = svcerr.ErrInvalidPolicy
 		w.WriteHeader(http.StatusBadRequest)
 
-	case errors.Contains(err, svcerr.ErrAddPolicies):
-		err = svcerr.ErrAddPolicies
-		w.WriteHeader(http.StatusInternalServerError)
-
-	case errors.Contains(err, svcerr.ErrDeletePolicies):
-		err = svcerr.ErrDeletePolicies
-		w.WriteHeader(http.StatusInternalServerError)
-
-	case errors.Contains(err, svcerr.ErrFailedPermissionsList):
-		err = svcerr.ErrFailedPermissionsList
-		w.WriteHeader(http.StatusInternalServerError)
+	case errors.Contains(err, svcerr.ErrEnableClient):
+		err = mgclients.ErrEnableClient
+		w.WriteHeader(http.StatusNotFound)
 
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

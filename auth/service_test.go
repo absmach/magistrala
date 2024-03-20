@@ -1975,7 +1975,7 @@ func TestChangeDomainStatus(t *testing.T) {
 				Status: &disabledStatus,
 			},
 			retreieveByIDErr: repoerr.ErrNotFound,
-			err:              svcerr.ErrAuthorization,
+			err:              svcerr.ErrNotFound,
 		},
 		{
 			desc:     "change domain status with unauthorized domain ID",

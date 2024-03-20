@@ -2533,7 +2533,7 @@ func TestOAuthCallback(t *testing.T) {
 			saveResponse:      mgclients.Client{},
 			saveErr:           repoerr.ErrConflict,
 			issueResponse:     &magistrala.Token{},
-			err:               errors.New("user already exists"),
+			err:               svcerr.ErrConflict,
 		},
 	}
 

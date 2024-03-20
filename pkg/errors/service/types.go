@@ -61,12 +61,9 @@ var (
 	// ErrFailedUpdateRole indicates a failure to update user role.
 	ErrFailedUpdateRole = errors.New("failed to update user role")
 
-	// ErrAddPolicies indictaed a failre to add policies.
-	ErrAddPolicies = errors.New("failed to add policies")
+	// ErrEnableClient indicates error in enabling client.
+	ErrEnableClient = errors.New("failed to enable client")
 
-	// ErrAddPolicies indictaed a failure to add policies.
-	ErrDeletePolicies = errors.New("failed to delete policies")
-
-	// ErrFailedPermissionsList indicates a failure to list permissions.
-	ErrFailedPermissionsList = errors.New("failed to list permissions")
+	// ErrDisableClient indicates error in disabling client.
+	ErrDisableClient = errors.New("failed to disable client")
 )

@@ -119,7 +119,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 		})
 	}
 	if _, err := svc.auth.AddPolicies(ctx, &policies); err != nil {
-		return nil, errors.Wrap(svcerr.ErrAddPolicies, err)
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	return saved, nil
@@ -235,7 +235,7 @@ func (svc service) listUserThingPermission(ctx context.Context, userID, thingID 
 		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
-		return []string{}, errors.Wrap(svcerr.ErrFailedPermissionsList, err)
+		return []string{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	return lp.GetPermissions(), nil
 }
@@ -405,10 +405,10 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 	}
 	res, err := svc.auth.AddPolicies(ctx, &policies)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrAddPolicies, err)
+		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	if !res.Added {
-		return err
+		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return nil
 }
@@ -434,7 +434,7 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 	}
 	res, err := svc.auth.DeletePolicies(ctx, &policies)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	if !res.Deleted {
 		return err
@@ -462,7 +462,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		Object:      id,
 		ObjectType:  auth.ThingType,
 	}); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
 	// Remove policy from domain
@@ -471,7 +471,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		Object:      id,
 		ObjectType:  auth.ThingType,
 	}); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
 	// Remove thing from database
@@ -485,7 +485,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		Object:      id,
 		ObjectType:  auth.ThingType,
 	}); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
 	return nil

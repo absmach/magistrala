@@ -32,7 +32,10 @@ var (
 	// ErrIssueToken indicates a failure to issue token.
 	ErrIssueToken = errors.New("failed to issue token")
 
-	errUserNotSignedUp = errors.New("user not signed up")
+	errUserNotSignedUp       = errors.New("user not signed up")
+	errFailedPermissionsList = errors.New("failed to list permissions")
+	errAddPolicies           = errors.New("failed to add policies")
+	errDeletePolicies        = errors.New("failed to delete policies")
 )
 
 type service struct {
@@ -327,7 +330,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 	if _, err := svc.IssueToken(ctx, dbClient.Credentials.Identity, oldSecret, ""); err != nil {
 		return mgclients.Client{}, errors.Wrap(ErrIssueToken, err)
@@ -370,15 +373,15 @@ func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgcli
 	}
 
 	if err := svc.updateClientPolicy(ctx, cli.ID, cli.Role); err != nil {
-		return mgclients.Client{}, errors.Wrap(ErrFailedPolicyUpdate, err)
+		return mgclients.Client{}, err
 	}
 	client, err = svc.clients.UpdateRole(ctx, client)
 	if err != nil {
 		// If failed to update role in DB, then revert back to platform admin policy in spicedb
 		if errRollback := svc.updateClientPolicy(ctx, cli.ID, mgclients.UserRole); errRollback != nil {
-			return mgclients.Client{}, errors.Wrap(err, errors.Wrap(repoerr.ErrRollbackTx, errRollback))
+			return mgclients.Client{}, errors.Wrap(errRollback, err)
 		}
-		return mgclients.Client{}, errors.Wrap(ErrFailedUpdateRole, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return client, nil
 }
@@ -391,7 +394,7 @@ func (svc service) EnableClient(ctx context.Context, token, id string) (mgclient
 	}
 	client, err := svc.changeClientStatus(ctx, token, client)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(mgclients.ErrEnableClient, err)
+		return mgclients.Client{}, err
 	}
 
 	return client, nil
@@ -405,7 +408,7 @@ func (svc service) DisableClient(ctx context.Context, token, id string) (mgclien
 	}
 	client, err := svc.changeClientStatus(ctx, token, client)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(mgclients.ErrDisableClient, err)
+		return mgclients.Client{}, err
 	}
 
 	return client, nil
@@ -414,14 +417,14 @@ func (svc service) DisableClient(ctx context.Context, token, id string) (mgclien
 func (svc service) changeClientStatus(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
 	tokenUserID, err := svc.Identify(ctx, token)
 	if err != nil {
-		return mgclients.Client{}, err
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-		return mgclients.Client{}, err
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	if dbClient.Status == client.Status {
 		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned
@@ -513,7 +516,7 @@ func (svc service) retrieveObjectUsersPermissions(ctx context.Context, domainID,
 	userID := auth.EncodeDomainUserID(domainID, client.ID)
 	permissions, err := svc.listObjectUserPermission(ctx, userID, objectType, objectID)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrFailedPermissionsList, err)
+		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	client.Permissions = permissions
 	return nil
@@ -527,7 +530,7 @@ func (svc service) listObjectUserPermission(ctx context.Context, userID, objectT
 		ObjectType:  objectType,
 	})
 	if err != nil {
-		return []string{}, errors.Wrap(svcerr.ErrFailedPermissionsList, err)
+		return []string{}, errors.Wrap(errFailedPermissionsList, err)
 	}
 	return lp.GetPermissions(), nil
 }
@@ -577,7 +580,7 @@ func (svc service) OAuthCallback(ctx context.Context, state mgoauth2.State, clie
 		rclient, err := svc.clients.RetrieveByIdentity(ctx, client.Credentials.Identity)
 		if err != nil {
 			if errors.Contains(err, repoerr.ErrNotFound) {
-				return &magistrala.Token{}, errUserNotSignedUp
+				return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthorization, errUserNotSignedUp)
 			}
 			return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
@@ -634,7 +637,7 @@ func (svc service) addClientPolicy(ctx context.Context, userID string, role mgcl
 	}
 	resp, err := svc.auth.AddPolicies(ctx, &policies)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrAddPolicies, err)
+		return errors.Wrap(errAddPolicies, err)
 	}
 	if !resp.Added {
 		return svcerr.ErrAuthorization
@@ -664,7 +667,7 @@ func (svc service) addClientPolicyRollback(ctx context.Context, userID string, r
 	}
 	resp, err := svc.auth.DeletePolicies(ctx, &policies)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		return errors.Wrap(errDeletePolicies, err)
 	}
 	if !resp.Deleted {
 		return svcerr.ErrAuthorization
@@ -683,10 +686,10 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 			Object:      auth.MagistralaObject,
 		})
 		if err != nil {
-			return errors.Wrap(svcerr.ErrAddPolicies, err)
+			return errors.Wrap(errAddPolicies, err)
 		}
 		if !resp.Added {
-			return errors.Wrap(svcerr.ErrAuthorization, err)
+			return errors.Wrap(svcerr.ErrAuthorization, errAddPolicies)
 		}
 		return nil
 	case mgclients.UserRole:
@@ -700,10 +703,10 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 			Object:      auth.MagistralaObject,
 		})
 		if err != nil {
-			return errors.Wrap(svcerr.ErrDeletePolicies, err)
+			return errors.Wrap(errDeletePolicies, err)
 		}
 		if !resp.Deleted {
-			return errors.Wrap(svcerr.ErrDeletePolicies, err)
+			return errDeletePolicies
 		}
 		return nil
 	}

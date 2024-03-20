@@ -1,19 +1,20 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-raw_output = ""
+raw_output = "false"
 user_token = ""
 
 [filter]
-  limit = ""
-  offset = ""
+  limit = "10"
+  offset = "0"
   topic = ""
 
 [remotes]
   bootstrap_url = "http://localhost:9013"
   certs_url = "http://localhost:9019"
-  http_adapter_url = "http://localhost/http"
-  reader_url = "http://localhost:9009"
+  domains_url = "http://localhost:8189"
+  http_adapter_url = "http://localhost:9016/http"
+  reader_url = "http://localhost:9011"
   things_url = "http://localhost:9000"
   tls_verification = false
   users_url = "http://localhost:9002"

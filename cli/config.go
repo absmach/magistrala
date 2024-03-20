@@ -17,10 +17,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	defURL             string = "http://localhost"
+	defUsersURL        string = defURL + ":9002"
+	defThingsURL       string = defURL + ":9000"
+	defReaderURL       string = defURL + ":9011"
+	defBootstrapURL    string = defURL + ":9013"
+	defDomainsURL      string = defURL + ":8189"
+	defCertsURL        string = defURL + ":9019"
+	defInvitationsURL  string = defURL + ":9020"
+	defHTTPURL         string = defURL + ":9016/http"
+	defTLSVerification bool   = false
+	defOffset          string = "0"
+	defLimit           string = "10"
+	defTopic           string = ""
+	defRawOutput       string = "false"
+)
+
 type remotes struct {
 	ThingsURL       string `toml:"things_url"`
 	UsersURL        string `toml:"users_url"`
 	ReaderURL       string `toml:"reader_url"`
+	DomainsURL      string `toml:"domains_url"`
 	HTTPAdapterURL  string `toml:"http_adapter_url"`
 	BootstrapURL    string `toml:"bootstrap_url"`
 	CertsURL        string `toml:"certs_url"`
@@ -85,14 +103,21 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 	case os.IsNotExist(err):
 		defaultConfig := config{
 			Remotes: remotes{
-				ThingsURL:       "http://localhost:9000",
-				UsersURL:        "http://localhost:9002",
-				ReaderURL:       "http://localhost",
-				HTTPAdapterURL:  "http://localhost/http:9016",
-				BootstrapURL:    "http://localhost",
-				CertsURL:        "http://localhost:9019",
-				TLSVerification: false,
+				ThingsURL:       defThingsURL,
+				UsersURL:        defUsersURL,
+				ReaderURL:       defReaderURL,
+				DomainsURL:      defDomainsURL,
+				HTTPAdapterURL:  defHTTPURL,
+				BootstrapURL:    defBootstrapURL,
+				CertsURL:        defCertsURL,
+				TLSVerification: defTLSVerification,
 			},
+			Filter: filter{
+				Offset: defOffset,
+				Limit:  defLimit,
+				Topic:  defTopic,
+			},
+			RawOutput: defRawOutput,
 		}
 		buf, err := toml.Marshal(defaultConfig)
 		if err != nil {
@@ -110,7 +135,7 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 		return sdkConf, err
 	}
 
-	if config.Filter.Offset != "" {
+	if config.Filter.Offset != "" && Offset == 0 {
 		offset, err := strconv.ParseUint(config.Filter.Offset, 10, 64)
 		if err != nil {
 			return sdkConf, err
@@ -118,7 +143,7 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 		Offset = offset
 	}
 
-	if config.Filter.Limit != "" {
+	if config.Filter.Limit != "" && Limit == 0 {
 		limit, err := strconv.ParseUint(config.Filter.Limit, 10, 64)
 		if err != nil {
 			return sdkConf, err
@@ -126,7 +151,7 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 		Limit = limit
 	}
 
-	if config.Filter.Topic != "" {
+	if config.Filter.Topic != "" && Topic == "" {
 		Topic = config.Filter.Topic
 	}
 
@@ -135,15 +160,35 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 		if err != nil {
 			return sdkConf, err
 		}
-		RawOutput = rawOutput
+		// check for config file value or flag input value is true
+		RawOutput = rawOutput || RawOutput
 	}
 
-	sdkConf.ThingsURL = config.Remotes.ThingsURL
-	sdkConf.UsersURL = config.Remotes.UsersURL
-	sdkConf.ReaderURL = config.Remotes.ReaderURL
-	sdkConf.HTTPAdapterURL = config.Remotes.HTTPAdapterURL
-	sdkConf.BootstrapURL = config.Remotes.BootstrapURL
-	sdkConf.CertsURL = config.Remotes.CertsURL
+	if sdkConf.ThingsURL == "" && config.Remotes.ThingsURL != "" {
+		sdkConf.ThingsURL = config.Remotes.ThingsURL
+	}
+
+	if sdkConf.UsersURL == "" && config.Remotes.UsersURL != "" {
+		sdkConf.UsersURL = config.Remotes.UsersURL
+	}
+
+	if sdkConf.ReaderURL == "" && config.Remotes.ReaderURL != "" {
+		sdkConf.ReaderURL = config.Remotes.ReaderURL
+	}
+
+	if sdkConf.HTTPAdapterURL == "" && config.Remotes.HTTPAdapterURL != "" {
+		sdkConf.HTTPAdapterURL = config.Remotes.HTTPAdapterURL
+	}
+
+	if sdkConf.BootstrapURL == "" && config.Remotes.BootstrapURL != "" {
+		sdkConf.BootstrapURL = config.Remotes.BootstrapURL
+	}
+
+	if sdkConf.CertsURL == "" && config.Remotes.CertsURL != "" {
+		sdkConf.CertsURL = config.Remotes.CertsURL
+	}
+
+	sdkConf.TLSVerification = config.Remotes.TLSVerification || sdkConf.TLSVerification
 
 	return sdkConf, nil
 }

@@ -32,6 +32,7 @@ service AuthService {
   rpc ListAllSubjects(ListSubjectsReq) returns (ListSubjectsRes) {}
   rpc CountSubjects(CountSubjectsReq) returns (CountSubjectsRes) {}
   rpc ListPermissions(ListPermissionsReq) returns (ListPermissionsRes) {}
+  rpc DeleteEntityPolicies(DeleteEntityPoliciesReq) returns (DeletePolicyRes) {}
 }
 
 // If a token is not carrying any information itself, the type
@@ -205,4 +206,9 @@ message ListPermissionsRes {
   string object = 5;
   string object_type = 6;
   repeated string permissions = 7;
+}
+
+message DeleteEntityPoliciesReq{
+  string entity_type = 1;
+  string id          = 2;
 }

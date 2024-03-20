@@ -15,7 +15,10 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
-const recoveryDuration = 5 * time.Minute
+const (
+	recoveryDuration = 5 * time.Minute
+	defLimit         = 100
+)
 
 var (
 	// ErrExpiry indicates that the token is expired.
@@ -941,5 +944,90 @@ func DecodeDomainUserID(domainUserID string) (string, string) {
 		fallthrough
 	default:
 		return "", ""
+	}
+}
+
+func (svc service) DeleteEntityPolicies(ctx context.Context, entityType, id string) (err error) {
+	switch entityType {
+	case ThingType:
+		req := PolicyReq{
+			SubjectType: GroupType,
+			Object:      id,
+			ObjectType:  ThingType,
+		}
+
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		req.SubjectType = DomainType
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		req.SubjectType = UserType
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		return nil
+	case UserType:
+		domainsPage, err := svc.domains.ListDomains(ctx, Page{SubjectID: id, Limit: defLimit})
+		if err != nil {
+			return err
+		}
+
+		if domainsPage.Total > defLimit {
+			for i := defLimit; i < int(domainsPage.Total); i += defLimit {
+				page := Page{SubjectID: id, Offset: uint64(i), Limit: defLimit}
+				dp, err := svc.domains.ListDomains(ctx, page)
+				if err != nil {
+					return err
+				}
+				domainsPage.Domains = append(domainsPage.Domains, dp.Domains...)
+			}
+		}
+
+		for _, domain := range domainsPage.Domains {
+			policy := PolicyReq{
+				Subject:     EncodeDomainUserID(domain.ID, id),
+				SubjectType: UserType,
+				Object:      domain.ID,
+				ObjectType:  DomainType,
+			}
+			if err := svc.agent.DeletePolicy(ctx, policy); err != nil {
+				return err
+			}
+		}
+
+		req := PolicyReq{
+			Subject:     id,
+			SubjectType: UserType,
+			ObjectType:  ThingType,
+		}
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+		req.ObjectType = GroupType
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+		req.ObjectType = DomainType
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+		req.ObjectType = PlatformType
+		req.Object = MagistralaObject
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		if err := svc.domains.DeleteUserPolicies(ctx, id); err != nil {
+			return err
+		}
+
+		return nil
+	default:
+		return nil
 	}
 }

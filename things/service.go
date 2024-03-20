@@ -457,41 +457,19 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		return err
 	}
 
-	// Remove from cache
 	if err := svc.clientCache.Remove(ctx, id); err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
-	// Remove policy of groups
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-		SubjectType: auth.GroupType,
-		Object:      id,
-		ObjectType:  auth.ThingType,
+	if _, err := svc.auth.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+		EntityType: auth.ThingType,
+		Id:         id,
 	}); err != nil {
-		return err
+		return errors.Wrap(errRemovePolicies, err)
 	}
 
-	// Remove policy from domain
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-		SubjectType: auth.DomainType,
-		Object:      id,
-		ObjectType:  auth.ThingType,
-	}); err != nil {
-		return err
-	}
-
-	// Remove thing from database
 	if err := svc.clients.Delete(ctx, id); err != nil {
-		return err
-	}
-
-	// Remove policy of users
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-		SubjectType: auth.UserType,
-		Object:      id,
-		ObjectType:  auth.ThingType,
-	}); err != nil {
-		return err
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	return nil

@@ -425,10 +425,10 @@ func (lm *loggingMiddleware) DeleteClient(ctx context.Context, token, id string)
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Delete client failed to complete successfully", args...)
+			lm.logger.Warn("Delete user failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info("Delete client completed successfully", args...)
+		lm.logger.Info("Delete user completed successfully", args...)
 	}(time.Now())
 	return lm.svc.DeleteClient(ctx, token, id)
 }

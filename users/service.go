@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	// ErrAddPolicies indictaed a failre to add policies.
+	// errAddPolicies indictaed a failre to add policies.
 	errAddPolicies = errors.New("failed to add policies")
 
 	// ErrIssueToken indicates a failure to issue token.
@@ -439,41 +439,15 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		return err
 	}
 
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-		Subject:     id,
-		SubjectType: auth.UserType,
-		ObjectType:  auth.ThingType,
+	if _, err := svc.auth.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+		Id:         id,
+		EntityType: auth.UserType,
 	}); err != nil {
-		return err
-	}
-
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-		Subject:     id,
-		SubjectType: auth.UserType,
-		ObjectType:  auth.GroupType,
-	}); err != nil {
-		return err
-	}
-
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-		Subject:     id,
-		SubjectType: auth.UserType,
-		ObjectType:  auth.DomainType,
-	}); err != nil {
-		return err
+		return errors.Wrap(errDeletePolicies, err)
 	}
 
 	if err := svc.clients.Delete(ctx, id); err != nil {
-		return err
-	}
-
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
-		Subject:     id,
-		SubjectType: auth.UserType,
-		ObjectType:  auth.PlatformType,
-		Object:      auth.MagistralaObject,
-	}); err != nil {
-		return err
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	return nil

@@ -461,11 +461,15 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
-	if _, err := svc.auth.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+	deleteRes, err := svc.auth.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
 		EntityType: auth.ThingType,
 		Id:         id,
-	}); err != nil {
+	})
+	if err != nil {
 		return errors.Wrap(errRemovePolicies, err)
+	}
+	if !deleteRes.Deleted {
+		return svcerr.ErrAuthorization
 	}
 
 	if err := svc.clients.Delete(ctx, id); err != nil {

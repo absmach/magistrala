@@ -105,55 +105,154 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	w.Header().Set("Content-Type", ContentType)
 	switch {
-	case errors.Contains(err, svcerr.ErrMalformedEntity),
-		errors.Contains(err, errors.ErrMalformedEntity),
-		errors.Contains(err, apiutil.ErrMissingID),
-		errors.Contains(err, apiutil.ErrEmptyList),
-		errors.Contains(err, apiutil.ErrMissingMemberType),
-		errors.Contains(err, apiutil.ErrMissingMemberKind),
-		errors.Contains(err, apiutil.ErrLimitSize),
-		errors.Contains(err, apiutil.ErrBearerKey),
-		errors.Contains(err, apiutil.ErrNameSize),
-		errors.Contains(err, apiutil.ErrInvalidIDFormat),
-		errors.Contains(err, apiutil.ErrInvalidStatus),
-		errors.Contains(err, svcerr.ErrInvalidStatus),
-		errors.Contains(err, apiutil.ErrInvitationState),
-		errors.Contains(err, apiutil.ErrInvalidRole),
-		errors.Contains(err, apiutil.ErrMissingEmail),
-		errors.Contains(err, apiutil.ErrMissingHost),
-		errors.Contains(err, apiutil.ErrMissingIdentity),
-		errors.Contains(err, apiutil.ErrMissingSecret),
-		errors.Contains(err, apiutil.ErrMissingPass),
-		errors.Contains(err, apiutil.ErrMissingConfPass),
-		errors.Contains(err, apiutil.ErrInvalidResetPass),
-		errors.Contains(err, apiutil.ErrMissingRelation),
-		errors.Contains(err, svcerr.ErrPasswordFormat),
-		errors.Contains(err, apiutil.ErrInvalidLevel),
-		errors.Contains(err, apiutil.ErrInvalidQueryParams),
-		errors.Contains(err, apiutil.ErrValidation):
+	case errors.Contains(err, svcerr.ErrMalformedEntity):
+		err = svcerr.ErrMalformedEntity
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, svcerr.ErrLogin),
-		errors.Contains(err, apiutil.ErrBearerToken):
+
+	case errors.Contains(err, errors.ErrMalformedEntity):
+		err = errors.ErrMalformedEntity
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingID):
+		err = apiutil.ErrMissingID
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrEmptyList):
+		err = apiutil.ErrEmptyList
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingMemberType):
+		err = apiutil.ErrMissingMemberType
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingMemberKind):
+		err = apiutil.ErrMissingMemberKind
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrLimitSize):
+		err = apiutil.ErrLimitSize
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrBearerKey):
+		err = apiutil.ErrBearerKey
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrNameSize):
+		err = apiutil.ErrNameSize
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, svcerr.ErrInvalidStatus):
+		err = svcerr.ErrInvalidStatus
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrInvalidIDFormat):
+		err = apiutil.ErrInvalidIDFormat
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrInvalidQueryParams):
+		err = apiutil.ErrInvalidQueryParams
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingRelation):
+		err = apiutil.ErrMissingRelation
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrValidation):
+		err = apiutil.ErrValidation
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingIdentity):
+		err = apiutil.ErrMissingIdentity
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingSecret):
+		err = apiutil.ErrMissingSecret
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingPass):
+		err = apiutil.ErrMissingPass
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrMissingConfPass):
+		err = apiutil.ErrMissingConfPass
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, apiutil.ErrPasswordFormat):
+		err = apiutil.ErrPasswordFormat
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, svcerr.ErrAuthentication):
+		err = svcerr.ErrAuthentication
 		w.WriteHeader(http.StatusUnauthorized)
+
+	case errors.Contains(err, apiutil.ErrBearerToken):
+		err = apiutil.ErrBearerToken
+		w.WriteHeader(http.StatusUnauthorized)
+
 	case errors.Contains(err, svcerr.ErrNotFound):
+		err = svcerr.ErrNotFound
 		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, svcerr.ErrConflict),
-		errors.Contains(err, errors.ErrStatusAlreadyAssigned):
+
+	case errors.Contains(err, postgres.ErrMemberAlreadyAssigned):
+		err = postgres.ErrMemberAlreadyAssigned
 		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, svcerr.ErrAuthorization),
-		errors.Contains(err, svcerr.ErrDomainAuthorization):
+
+	case errors.Contains(err, svcerr.ErrConflict):
+		err = svcerr.ErrConflict
+		w.WriteHeader(http.StatusConflict)
+
+	case errors.Contains(err, svcerr.ErrAuthorization):
+		err = svcerr.ErrAuthorization
 		w.WriteHeader(http.StatusForbidden)
+
+	case errors.Contains(err, svcerr.ErrDomainAuthorization):
+		err = svcerr.ErrDomainAuthorization
+		w.WriteHeader(http.StatusForbidden)
+
 	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
+		err = apiutil.ErrUnsupportedContentType
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, svcerr.ErrCreateEntity),
-		errors.Contains(err, svcerr.ErrUpdateEntity),
-		errors.Contains(err, svcerr.ErrFailedUpdateRole),
-		errors.Contains(err, svcerr.ErrViewEntity),
-		errors.Contains(err, svcerr.ErrAddPolicies),
-		errors.Contains(err, svcerr.ErrDeletePolicies),
-		errors.Contains(err, svcerr.ErrRemoveEntity):
-		w.WriteHeader(http.StatusUnprocessableEntity)
+
+	case errors.Contains(err, svcerr.ErrCreateEntity):
+		err = svcerr.ErrCreateEntity
+		w.WriteHeader(http.StatusInternalServerError)
+
+	case errors.Contains(err, svcerr.ErrUpdateEntity):
+		err = svcerr.ErrUpdateEntity
+		w.WriteHeader(http.StatusInternalServerError)
+
+	case errors.Contains(err, svcerr.ErrViewEntity):
+		err = svcerr.ErrViewEntity
+		w.WriteHeader(http.StatusInternalServerError)
+
+	case errors.Contains(err, svcerr.ErrRemoveEntity):
+		err = svcerr.ErrRemoveEntity
+		w.WriteHeader(http.StatusInternalServerError)
+
+	case errors.Contains(err, svcerr.ErrLogin):
+		err = svcerr.ErrLogin
+		w.WriteHeader(http.StatusUnauthorized)
+
+	case errors.Contains(err, svcerr.ErrInvalidRole):
+		err = svcerr.ErrInvalidRole
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, svcerr.ErrInvalidPolicy):
+		err = svcerr.ErrInvalidPolicy
+		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, svcerr.ErrAddPolicies):
+		err = svcerr.ErrAddPolicies
+		w.WriteHeader(http.StatusInternalServerError)
+
+	case errors.Contains(err, svcerr.ErrDeletePolicies):
+		err = svcerr.ErrDeletePolicies
+		w.WriteHeader(http.StatusInternalServerError)
+
+	case errors.Contains(err, svcerr.ErrFailedPermissionsList):
+		err = svcerr.ErrFailedPermissionsList
+		w.WriteHeader(http.StatusInternalServerError)
+
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}

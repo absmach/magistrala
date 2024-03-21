@@ -18,12 +18,7 @@ import (
 const recoveryDuration = 5 * time.Minute
 
 var (
-	errRollbackPolicy     = errors.New("failed to rollback policy")
-	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
-	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
-)
 
-var (
 	// ErrFailedToRetrieveMembers failed to retrieve group members.
 	ErrFailedToRetrieveMembers = errors.New("failed to retrieve group members")
 
@@ -51,6 +46,10 @@ var (
 	errCreateDomainPolicy = errors.New("failed to create domain policy")
 	errAddPolicies        = errors.New("failed to add policies")
 	errRemovePolicies     = errors.New("failed to remove the policies")
+	errRollbackPolicy     = errors.New("failed to rollback policy")
+	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
+	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
+	errCheckSuperAdmin    = errors.New("failed to check user is super admin")
 )
 
 // Authn specifies an API that must be fullfiled by the domain service
@@ -555,12 +554,35 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 
 	d.CreatedAt = time.Now()
 
-	if err := svc.createDomainPolicy(ctx, key.User, domainID, AdministratorRelation); err != nil {
+	var userSubjectID string
+	err = svc.Authorize(ctx, PolicyReq{
+		Subject:     key.User,
+		SubjectType: UserType,
+		Permission:  AdminPermission,
+		Object:      MagistralaObject,
+		ObjectType:  PlatformType,
+	})
+	// If user is non-SuperAdmin then subject ID should be domainID_UserID.
+	// If user is SuperAdmin then subject ID is same as UserID.
+	// Because SuperAdmin should have access to all domain even SuperAdmin is not a member of domain.
+	// So for this reason, only userID is used in policy to inherit the access to all domains and domain entities.
+	switch {
+	case err == nil:
+		userSubjectID = key.User
+	case errors.Contains(errors.ErrDomainAuthorization, err),
+		errors.Contains(errors.ErrAuthorization, err),
+		errors.Contains(svcerr.ErrAuthorization, err):
+		userSubjectID = EncodeDomainUserID(domainID, key.User)
+	default:
+		return Domain{}, errors.Wrap(errCheckSuperAdmin, err)
+	}
+
+	if err := svc.createDomainPolicy(ctx, domainID, key.User, userSubjectID, AdministratorRelation); err != nil {
 		return Domain{}, errors.Wrap(errCreateDomainPolicy, err)
 	}
 	defer func() {
 		if err != nil {
-			if errRollBack := svc.createDomainPolicyRollback(ctx, key.User, domainID, AdministratorRelation); errRollBack != nil {
+			if errRollBack := svc.createDomainPolicyRollback(ctx, domainID, key.User, userSubjectID, AdministratorRelation); errRollBack != nil {
 				err = errors.Wrap(err, errors.Wrap(errRollbackPolicy, errRollBack))
 			}
 		}
@@ -825,10 +847,10 @@ func (svc service) addDomainPolicies(ctx context.Context, domainID, relation str
 	return nil
 }
 
-func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, relation string) (err error) {
+func (svc service) createDomainPolicy(ctx context.Context, domainID, userID, userSubjectID, relation string) (err error) {
 	prs := []PolicyReq{
 		{
-			Subject:     EncodeDomainUserID(domainID, userID),
+			Subject:     userSubjectID,
 			SubjectType: UserType,
 			SubjectKind: UsersKind,
 			Relation:    relation,
@@ -866,11 +888,11 @@ func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, rel
 	return err
 }
 
-func (svc service) createDomainPolicyRollback(ctx context.Context, userID, domainID, relation string) error {
+func (svc service) createDomainPolicyRollback(ctx context.Context, domainID, userID, userSubjectID, relation string) error {
 	var err error
 	prs := []PolicyReq{
 		{
-			Subject:     EncodeDomainUserID(domainID, userID),
+			Subject:     userSubjectID,
 			SubjectType: UserType,
 			SubjectKind: UsersKind,
 			Relation:    relation,

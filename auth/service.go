@@ -997,9 +997,19 @@ func (svc service) DeleteEntityPolicies(ctx context.Context, entityType, id stri
 			policy := PolicyReq{
 				Subject:     EncodeDomainUserID(domain.ID, id),
 				SubjectType: UserType,
-				Object:      domain.ID,
-				ObjectType:  DomainType,
+				ObjectType:  ThingType,
 			}
+			if err := svc.agent.DeletePolicy(ctx, policy); err != nil {
+				return err
+			}
+
+			policy.ObjectType = GroupType
+			if err := svc.agent.DeletePolicy(ctx, policy); err != nil {
+				return err
+			}
+
+			policy.Object = domain.ID
+			policy.ObjectType = DomainType
 			if err := svc.agent.DeletePolicy(ctx, policy); err != nil {
 				return err
 			}

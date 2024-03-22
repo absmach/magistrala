@@ -58,6 +58,7 @@ jobs:
               - "pkg/events/events.go"
               - "provision/service.go"
               - "pkg/groups/groups.go"
+              - "eventlogs/events.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -121,6 +122,8 @@ jobs:
           mv ./provision/mocks/service.go ./provision/mocks/service.go.tmp
           mv ./pkg/groups/mocks/repository.go ./pkg/groups/mocks/repository.go.tmp
           mv ./pkg/groups/mocks/service.go ./pkg/groups/mocks/service.go.tmp
+          mv ./eventlogs/mocks/repository.go ./eventlogs/mocks/repository.go.tmp
+          mv ./eventlogs/mocks/service.go ./eventlogs/mocks/service.go.tmp
 
           make mocks
 
@@ -153,3 +156,5 @@ jobs:
           check_mock_changes ./provision/mocks/service.go "Provision Service ./provision/mocks/service.go"
           check_mock_changes ./pkg/groups/mocks/repository.go "Groups Repository ./pkg/groups/mocks/repository.go"
           check_mock_changes ./pkg/groups/mocks/service.go "Groups Service ./pkg/groups/mocks/service.go"
+          check_mock_changes ./eventlogs/mocks/repository.go "Event Logs Repository ./eventlogs/mocks/repository.go"
+          check_mock_changes ./eventlogs/mocks/service.go "Event Logs Service ./eventlogs/mocks/service.go"

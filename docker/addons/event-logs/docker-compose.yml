@@ -1,0 +1,69 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional Postgres and event-logs services
+# for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
+# from <project_root>/docker. In order to run these services, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/event-logs/docker-compose.yml up
+# from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
+# inspection and data visualization.
+
+version: "3.7"
+
+networks:
+  magistrala-base-net:
+
+volumes:
+  magistrala-event-logs-volume:
+
+services:
+  event-logs-db:
+    image: postgres:15.3-alpine
+    container_name: magistrala-event-logs-db
+    restart: on-failure
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_EVENT_LOGS_USER}
+      POSTGRES_PASSWORD: ${MG_EVENT_LOGS_PASS}
+      POSTGRES_DB: ${MG_EVENT_LOGS_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-event-logs-volume:/var/lib/postgresql/data
+
+  event-logs:
+    image: magistrala/event-logs:${MG_RELEASE_TAG}
+    container_name: magistrala-event-logs
+    depends_on:
+      - event-logs-db
+    restart: on-failure
+    environment:
+      MG_EVENT_LOGS_LOG_LEVEL: ${MG_EVENT_LOGS_LOG_LEVEL}
+      MG_EVENT_LOGS_HTTP_HOST: ${MG_EVENT_LOGS_HTTP_HOST}
+      MG_EVENT_LOGS_HTTP_PORT: ${MG_EVENT_LOGS_HTTP_PORT}
+      MG_EVENT_LOGS_HTTP_SERVER_CERT: ${MG_EVENT_LOGS_HTTP_SERVER_CERT}
+      MG_EVENT_LOGS_HTTP_SERVER_KEY: ${MG_EVENT_LOGS_HTTP_SERVER_KEY}
+      MG_EVENT_LOGS_HOST: ${MG_EVENT_LOGS_HOST}
+      MG_EVENT_LOGS_PORT: ${MG_EVENT_LOGS_PORT}
+      MG_EVENT_LOGS_USER: ${MG_EVENT_LOGS_USER}
+      MG_EVENT_LOGS_PASS: ${MG_EVENT_LOGS_PASS}
+      MG_EVENT_LOGS_NAME: ${MG_EVENT_LOGS_NAME}
+      MG_EVENT_LOGS_SSL_MODE: ${MG_EVENT_LOGS_SSL_MODE}
+      MG_EVENT_LOGS_SSL_CERT: ${MG_EVENT_LOGS_SSL_CERT}
+      MG_EVENT_LOGS_SSL_KEY: ${MG_EVENT_LOGS_SSL_KEY}
+      MG_EVENT_LOGS_SSL_ROOT_CERT: ${MG_EVENT_LOGS_SSL_ROOT_CERT}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_ES_URL: ${MG_ES_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_EVENT_LOGS_INSTANCE_ID: ${MG_EVENT_LOGS_INSTANCE_ID}
+    ports:
+      - ${MG_EVENT_LOGS_HTTP_PORT}:${MG_EVENT_LOGS_HTTP_PORT}
+    networks:
+      - magistrala-base-net

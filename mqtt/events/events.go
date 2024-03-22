@@ -15,8 +15,8 @@ type mqttEvent struct {
 
 func (me mqttEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"thing_id":   me.clientID,
-		"event_type": me.eventType,
-		"instance":   me.instance,
+		"id":        me.clientID,
+		"operation": me.eventType,
+		"instance":  me.instance,
 	}, nil
 }

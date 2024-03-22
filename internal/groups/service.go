@@ -20,10 +20,9 @@ import (
 )
 
 var (
-	errParentUnAuthz  = errors.New("failed to authorize parent group")
-	errMemberKind     = errors.New("invalid member kind")
-	errRetrieveGroups = errors.New("failed to retrieve groups")
-	errGroupIDs       = errors.New("invalid group ids")
+	errParentUnAuthz = errors.New("failed to authorize parent group")
+	errMemberKind    = errors.New("invalid member kind")
+	errGroupIDs      = errors.New("invalid group ids")
 )
 
 type service struct {
@@ -70,7 +69,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 
 	g, err = svc.groups.Save(ctx, g)
 	if err != nil {
-		return groups.Group{}, err
+		return groups.Group{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 	// IMPROVEMENT NOTE: Add defer function , if return err is not nil, then delete group
 
@@ -116,7 +115,12 @@ func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Grou
 		return groups.Group{}, err
 	}
 
-	return svc.groups.RetrieveByID(ctx, id)
+	group, err := svc.groups.RetrieveByID(ctx, id)
+	if err != nil {
+		return groups.Group{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return group, nil
 }
 
 func (svc service) ViewGroupPerms(ctx context.Context, token, id string) ([]string, error) {
@@ -228,7 +232,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 
 	gp, err := svc.groups.RetrieveByIDs(ctx, gm, ids...)
 	if err != nil {
-		return groups.Page{}, err
+		return groups.Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	if gm.ListPerms && len(gp.Groups) > 0 {
@@ -454,7 +458,7 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) (err error) {
 	groupsPage, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
 	if err != nil {
-		return errors.Wrap(errRetrieveGroups, err)
+		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if len(groupsPage.Groups) == 0 {
 		return errGroupIDs
@@ -500,7 +504,7 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) (err error) {
 	groupsPage, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
 	if err != nil {
-		return errors.Wrap(errRetrieveGroups, err)
+		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if len(groupsPage.Groups) == 0 {
 		return errGroupIDs
@@ -691,7 +695,7 @@ func (svc service) changeGroupStatus(ctx context.Context, token string, group gr
 	}
 	dbGroup, err := svc.groups.RetrieveByID(ctx, group.ID)
 	if err != nil {
-		return groups.Group{}, err
+		return groups.Group{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	if dbGroup.Status == group.Status {
 		return groups.Group{}, errors.ErrStatusAlreadyAssigned

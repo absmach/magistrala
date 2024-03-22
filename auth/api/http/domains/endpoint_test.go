@@ -60,6 +60,12 @@ type testRequest struct {
 	body        io.Reader
 }
 
+type testStatusDomainReq struct {
+	token    string
+	domainID string
+	Status   string
+}
+
 func (tr testRequest) make() (*http.Response, error) {
 	req, err := http.NewRequest(tr.method, tr.url, tr.body)
 	if err != nil {
@@ -747,158 +753,102 @@ func TestUpdateDomain(t *testing.T) {
 	}
 }
 
-func TestEnableDomain(t *testing.T) {
-	ds, svc := newDomainsServer()
-	defer ds.Close()
-
-	disabledDomain := domain
-	disabledDomain.Status = auth.DisabledStatus
-
-	cases := []struct {
-		desc     string
-		domain   auth.Domain
-		response auth.Domain
-		token    string
-		status   int
-		svcErr   error
-		err      error
-	}{
-		{
-			desc:   "enable domain with valid token",
-			domain: disabledDomain,
-			response: auth.Domain{
-				ID:     domain.ID,
-				Status: auth.EnabledStatus,
-			},
-			token:  validToken,
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "enable domain with invalid token",
-			domain: disabledDomain,
-			token:  inValidToken,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
-		},
-		{
-			desc:   "enable domain with empty token",
-			domain: disabledDomain,
-			token:  "",
-			status: http.StatusUnauthorized,
-			err:    apiutil.ErrBearerToken,
-		},
-		{
-			desc: "enable domain with empty id",
-			domain: auth.Domain{
-				ID: "",
-			},
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
-		},
-		{
-			desc: "enable domain with invalid id",
-			domain: auth.Domain{
-				ID: "invalid",
-			},
-			token:  validToken,
-			status: http.StatusForbidden,
-			svcErr: svcerr.ErrAuthorization,
-			err:    svcerr.ErrAuthorization,
-		},
-	}
-
-	for _, tc := range cases {
-		data := toJSON(tc.domain)
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/enable", ds.URL, tc.domain.ID),
-			contentType: contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
-		svcCall := svc.On("ChangeDomainStatus", mock.Anything, tc.token, tc.domain.ID, mock.Anything).Return(tc.response, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-	}
-}
-
-func TestDisableDomain(t *testing.T) {
+func TestChangeStatusDomain(t *testing.T) {
 	ds, svc := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
 		desc     string
-		domain   auth.Domain
 		response auth.Domain
-		token    string
 		status   int
 		svcErr   error
 		err      error
+		request  testStatusDomainReq
 	}{
 		{
-			desc:   "disable domain with valid token",
-			domain: domain,
+			desc: "change domain status with valid token",
 			response: auth.Domain{
 				ID:     domain.ID,
 				Status: auth.DisabledStatus,
 			},
-			token:  validToken,
-			status: http.StatusOK,
-			err:    nil,
+			status:  http.StatusOK,
+			err:     nil,
+			request: testStatusDomainReq{token: validToken, domainID: testsutil.GenerateUUID(&testing.T{}), Status: "disabled"},
 		},
 		{
-			desc:   "disable domain with invalid token",
-			domain: domain,
-			token:  inValidToken,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
+			desc:    "change domain status with invalid token",
+			status:  http.StatusUnauthorized,
+			svcErr:  svcerr.ErrAuthentication,
+			err:     svcerr.ErrAuthentication,
+			request: testStatusDomainReq{token: inValidToken, domainID: testsutil.GenerateUUID(&testing.T{}), Status: "enabled"},
 		},
 		{
-			desc:   "disable domain with empty token",
-			domain: domain,
-			token:  "",
-			status: http.StatusUnauthorized,
-			err:    apiutil.ErrBearerToken,
+			desc:    "change domain status with empty token",
+			status:  http.StatusUnauthorized,
+			err:     apiutil.ErrBearerToken,
+			request: testStatusDomainReq{token: "", domainID: testsutil.GenerateUUID(&testing.T{}), Status: "enabled"},
 		},
 		{
-			desc: "disable domain with empty id",
-			domain: auth.Domain{
-				ID: "",
+			desc:    "change domain status with empty id",
+			status:  http.StatusBadRequest,
+			err:     apiutil.ErrMissingID,
+			request: testStatusDomainReq{token: validToken, domainID: "", Status: "enabled"},
+		},
+		{
+			desc:    "change domain status with invalid id",
+			status:  http.StatusForbidden,
+			svcErr:  svcerr.ErrAuthorization,
+			err:     svcerr.ErrAuthorization,
+			request: testStatusDomainReq{token: validToken, domainID: "invalid", Status: "enabled"},
+		},
+		{
+			desc: "change domain status to enabled",
+			response: auth.Domain{
+				ID: domain.ID,
 			},
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
+			status:  http.StatusOK,
+			err:     nil,
+			request: testStatusDomainReq{token: validToken, domainID: testsutil.GenerateUUID(&testing.T{}), Status: "enabled"},
 		},
 		{
-			desc: "disable domain with invalid id",
-			domain: auth.Domain{
-				ID: "invalid",
+			desc: "change domain status to disabled",
+			response: auth.Domain{
+				ID: domain.ID,
 			},
-			token:  validToken,
-			status: http.StatusForbidden,
-			svcErr: svcerr.ErrAuthorization,
-			err:    svcerr.ErrAuthorization,
+			status:  http.StatusOK,
+			err:     nil,
+			request: testStatusDomainReq{token: validToken, domainID: testsutil.GenerateUUID(&testing.T{}), Status: "disabled"},
+		},
+		{
+			desc: "change domain status to freezed",
+			response: auth.Domain{
+				ID: domain.ID,
+			},
+			status:  http.StatusOK,
+			err:     nil,
+			request: testStatusDomainReq{token: validToken, domainID: testsutil.GenerateUUID(&testing.T{}), Status: "freezed"},
+		},
+		{
+			desc: "change domain status with invalid input status",
+			response: auth.Domain{
+				ID: domain.ID,
+			},
+			status:  http.StatusBadRequest,
+			err:     apiutil.ErrInvalidDomainStatus,
+			request: testStatusDomainReq{token: validToken, domainID: testsutil.GenerateUUID(&testing.T{}), Status: "enable"},
 		},
 	}
-
 	for _, tc := range cases {
-		data := toJSON(tc.domain)
+		data := toJSON(tc.request)
 		req := testRequest{
 			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/disable", ds.URL, tc.domain.ID),
+			method:      http.MethodPut,
+			url:         fmt.Sprintf("%s/domains/%s/status", ds.URL, tc.request.domainID),
 			contentType: contentType,
-			token:       tc.token,
+			token:       tc.request.token,
 			body:        strings.NewReader(data),
 		}
-		svcCall := svc.On("ChangeDomainStatus", mock.Anything, tc.token, tc.domain.ID, mock.Anything).Return(tc.response, tc.svcErr)
+		svcCall := svc.On("ChangeDomainStatus", mock.Anything, tc.request.token, tc.request.domainID, mock.Anything).Return(tc.response, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -906,63 +856,49 @@ func TestDisableDomain(t *testing.T) {
 	}
 }
 
-func TestFreezeDomain(t *testing.T) {
+func TestDeleteDomain(t *testing.T) {
 	ds, svc := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
-		desc     string
-		domain   auth.Domain
-		response auth.Domain
-		token    string
-		status   int
-		svcErr   error
-		err      error
+		desc        string
+		token       string
+		domain      auth.Domain
+		contentType string
+		status      int
+		svcErr      error
+		err         error
 	}{
 		{
-			desc:   "freeze domain with valid token",
-			domain: domain,
-			response: auth.Domain{
-				ID:     domain.ID,
-				Status: auth.FreezeStatus,
-			},
-			token:  validToken,
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "freeze domain with invalid token",
-			domain: domain,
-			token:  inValidToken,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
-		},
-		{
-			desc:   "freeze domain with empty token",
-			domain: domain,
-			token:  "",
-			status: http.StatusUnauthorized,
-			err:    apiutil.ErrBearerToken,
-		},
-		{
-			desc: "freeze domain with empty id",
+			desc:  "delete domain successfully",
+			token: validToken,
 			domain: auth.Domain{
-				ID: "",
+				ID: ID,
 			},
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
+			contentType: contentType,
+			status:      http.StatusOK,
+			err:         nil,
 		},
 		{
-			desc: "freeze domain with invalid id",
+			desc:  "delete domain with empty token",
+			token: "",
 			domain: auth.Domain{
-				ID: "invalid",
+				ID: ID,
 			},
-			token:  validToken,
-			status: http.StatusForbidden,
-			svcErr: svcerr.ErrAuthorization,
-			err:    svcerr.ErrAuthorization,
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			err:         apiutil.ErrBearerToken,
+		},
+		{
+			desc:  "delete domain with invalid token",
+			token: inValidToken,
+			domain: auth.Domain{
+				ID: ID,
+			},
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			svcErr:      svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
 		},
 	}
 
@@ -970,13 +906,13 @@ func TestFreezeDomain(t *testing.T) {
 		data := toJSON(tc.domain)
 		req := testRequest{
 			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/freeze", ds.URL, tc.domain.ID),
+			method:      http.MethodDelete,
+			url:         fmt.Sprintf("%s/domains/%s", ds.URL, tc.domain.ID),
 			contentType: contentType,
 			token:       tc.token,
 			body:        strings.NewReader(data),
 		}
-		svcCall := svc.On("ChangeDomainStatus", mock.Anything, tc.token, tc.domain.ID, mock.Anything).Return(tc.response, tc.svcErr)
+		svcCall := svc.On("DeleteDomain", mock.Anything, tc.token, mock.Anything).Return(tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))

@@ -176,6 +176,14 @@ func (ms *metricsMiddleware) CreateDomain(ctx context.Context, token string, d a
 	return ms.svc.CreateDomain(ctx, token, d)
 }
 
+func (ms *metricsMiddleware) DeleteDomain(ctx context.Context, token string, d auth.Domain) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "delete_domain").Add(1)
+		ms.latency.With("method", "delete_domain").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.DeleteDomain(ctx, token, d)
+}
+
 func (ms *metricsMiddleware) RetrieveDomain(ctx context.Context, token, id string) (auth.Domain, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "retrieve_domain").Add(1)

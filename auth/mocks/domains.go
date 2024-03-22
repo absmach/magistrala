@@ -162,6 +162,10 @@ func (_m *DomainsRepository) RetrieveByID(ctx context.Context, id string) (auth.
 	return r0, r1
 }
 
+func (_m *DomainsRepository) RetrieveStatusByID(ctx context.Context, id string) (auth.Domain, error) {
+	return auth.Domain{}, nil
+}
+
 // RetrievePermissions provides a mock function with given fields: ctx, subject, id
 func (_m *DomainsRepository) RetrievePermissions(ctx context.Context, subject string, id string) ([]string, error) {
 	ret := _m.Called(ctx, subject, id)

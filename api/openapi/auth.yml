@@ -175,15 +175,18 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /domains/{domainID}/enable:
-    post:
-      summary: Enables a domain
+
+  /domains/{domainID}/status:
+    put:
+      summary: changes the domain status
       description: |
-        Enables a specific domain that is identified by the domain ID.
+        Changes a specific domain status that is identified by the domain ID.
       tags:
         - Domains
       parameters:
         - $ref: "#/components/parameters/DomainID"
+      requestBody:
+        $ref: "#/components/requestBodies/DomainStatusUpdateReq"
       security:
         - bearerAuth: []
       responses:
@@ -201,61 +204,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-
-  /domains/{domainID}/disable:
-    post:
-      summary: Disable a domain
-      description: |
-        Disable a specific domain that is identified by the domain ID.
-      tags:
-        - Domains
-      parameters:
-        - $ref: "#/components/parameters/DomainID"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Successfully disabled domain.
-        "400":
-          description: Failed due to malformed domain's ID.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Unauthorized access the domain ID.
-        "404":
-          description: A non-existent entity request.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /domains/{domainID}/freeze:
-    post:
-      summary: Freeze a domain
-      description: |
-        Freeze a specific domain that is identified by the domain ID.
-      tags:
-        - Domains
-      parameters:
-        - $ref: "#/components/parameters/DomainID"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Successfully freezed domain.
-        "400":
-          description: Failed due to malformed domain's ID.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Unauthorized access the domain ID.
-        "404":
-          description: A non-existent entity request.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
+  
   /domains/{domainID}/users/assign:
     post:
       summary: Assign users to domain
@@ -594,6 +543,13 @@ components:
           type: string
           example: domain alias
           description: Domain alias.
+    DomainStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          example: enabled
+          description: Domain status.
     Permissions:
       type: object
       properties:
@@ -783,6 +739,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/DomainUpdate"
+    DomainStatusUpdateReq:
+      description: JSON-formated document describing the domain status to be updated
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DomainStatusUpdate"
     AssignUserReq:
       description: JSON-formated document describing the policy related to assigning users to a domain
       required: true

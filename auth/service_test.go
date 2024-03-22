@@ -1737,6 +1737,56 @@ func TestCreateDomain(t *testing.T) {
 	}
 }
 
+func TestDeleteDomain(t *testing.T) {
+	svc, accessToken := newService()
+
+	cases := []struct {
+		desc                 string
+		d                    auth.Domain
+		token                string
+		err                  error
+		retrieveByIDResponse auth.Domain
+		retreiveByIDErr      error
+		checkPolicyErr       error
+	}{
+		{
+			desc: "delete domain successfully",
+			d: auth.Domain{
+				Status: auth.EnabledStatus,
+			},
+			token: accessToken,
+			err:   nil,
+		},
+		{
+			desc: "delete domain with invalid token",
+			d: auth.Domain{
+				Status: auth.EnabledStatus,
+			},
+			token: inValidToken,
+			err:   svcerr.ErrAuthentication,
+		},
+		{
+			desc: "delete domain with invalid status",
+			d: auth.Domain{
+				Status: auth.AllStatus,
+			},
+			token: accessToken,
+			err:   svcerr.ErrInvalidStatus,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := drepo.On("Delete", mock.Anything, tc.d.ID).Return(tc.err)
+		repoCall2 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(tc.retrieveByIDResponse, tc.retreiveByIDErr)
+		repoCall3 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+		err := svc.DeleteDomain(context.Background(), tc.token, tc.d)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
+		repoCall2.Unset()
+		repoCall3.Unset()
+	}
+}
+
 func TestRetrieveDomain(t *testing.T) {
 	svc, accessToken := newService()
 

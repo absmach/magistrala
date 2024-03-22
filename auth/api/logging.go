@@ -349,6 +349,25 @@ func (lm *loggingMiddleware) CreateDomain(ctx context.Context, token string, d a
 	return lm.svc.CreateDomain(ctx, token, d)
 }
 
+func (lm *loggingMiddleware) DeleteDomain(ctx context.Context, token string, d auth.Domain) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("domain",
+				slog.String("id", d.ID),
+				slog.String("name", d.Name),
+			),
+		}
+		if err != nil {
+			args := append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Delete domain failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Delete domain completed successfully", args...)
+	}(time.Now())
+	return lm.svc.DeleteDomain(ctx, token, d)
+}
+
 func (lm *loggingMiddleware) RetrieveDomain(ctx context.Context, token, id string) (do auth.Domain, err error) {
 	defer func(begin time.Time) {
 		args := []any{
@@ -361,6 +380,23 @@ func (lm *loggingMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 			return
 		}
 		lm.logger.Info("Retrieve domain completed successfully", args...)
+	}(time.Now())
+	return lm.svc.RetrieveDomain(ctx, token, id)
+}
+
+// RetrieveStatusByID retrieves Domain Status by its unique ID.
+func (lm *loggingMiddleware) RetrieveStatus(ctx context.Context, token string, id string) (do auth.Domain, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", id),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Retrieve domain status failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Retrieve domain status completed successfully", args...)
 	}(time.Now())
 	return lm.svc.RetrieveDomain(ctx, token, id)
 }

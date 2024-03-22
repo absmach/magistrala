@@ -6,6 +6,7 @@ package domains
 import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 type page struct {
@@ -107,12 +108,17 @@ func (req listDomainsReq) validate() error {
 	return nil
 }
 
-type enableDomainReq struct {
+type statusDomainReq struct {
 	token    string
 	domainID string
+	Status   string `json:"status,omitempty"`
 }
 
-func (req enableDomainReq) validate() error {
+func (req statusDomainReq) validate() error {
+	validStatuses := make(map[string]struct{})
+	validStatuses[auth.Enabled] = struct{}{}
+	validStatuses[auth.Disabled] = struct{}{}
+	validStatuses[auth.Freezed] = struct{}{}
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
@@ -121,32 +127,18 @@ func (req enableDomainReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
+	if _, ok := validStatuses[req.Status]; !ok {
+		return svcerr.ErrInvalidStatus
+	}
 	return nil
 }
 
-type disableDomainReq struct {
+type deleteDomainReq struct {
 	token    string
 	domainID string
 }
 
-func (req disableDomainReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.domainID == "" {
-		return apiutil.ErrMissingID
-	}
-
-	return nil
-}
-
-type freezeDomainReq struct {
-	token    string
-	domainID string
-}
-
-func (req freezeDomainReq) validate() error {
+func (req deleteDomainReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}

@@ -114,45 +114,17 @@ func (res listDomainsRes) MarshalJSON() ([]byte, error) {
 	return json.Marshal(res.Data)
 }
 
-type enableDomainRes struct{}
+type statusDomainRes struct{}
 
-func (res enableDomainRes) Code() int {
+func (res statusDomainRes) Code() int {
 	return http.StatusOK
 }
 
-func (res enableDomainRes) Headers() map[string]string {
+func (res statusDomainRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res enableDomainRes) Empty() bool {
-	return true
-}
-
-type disableDomainRes struct{}
-
-func (res disableDomainRes) Code() int {
-	return http.StatusOK
-}
-
-func (res disableDomainRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res disableDomainRes) Empty() bool {
-	return true
-}
-
-type freezeDomainRes struct{}
-
-func (res freezeDomainRes) Code() int {
-	return http.StatusOK
-}
-
-func (res freezeDomainRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res freezeDomainRes) Empty() bool {
+func (res statusDomainRes) Empty() bool {
 	return true
 }
 

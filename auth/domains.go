@@ -143,6 +143,7 @@ type Policy struct {
 
 type Domains interface {
 	CreateDomain(ctx context.Context, token string, d Domain) (Domain, error)
+	DeleteDomain(ctx context.Context, token string, d Domain) error
 	RetrieveDomain(ctx context.Context, token string, id string) (Domain, error)
 	RetrieveDomainPermissions(ctx context.Context, token string, id string) (Permissions, error)
 	UpdateDomain(ctx context.Context, token string, id string, d DomainReq) (Domain, error)
@@ -172,7 +173,7 @@ type DomainsRepository interface {
 	// Update updates the client name and metadata.
 	Update(ctx context.Context, id string, userID string, d DomainReq) (Domain, error)
 
-	// Delete
+	// Delete delete domain
 	Delete(ctx context.Context, id string) error
 
 	// SavePolicies save policies in domains database

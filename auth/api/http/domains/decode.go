@@ -76,27 +76,23 @@ func decodeListDomainRequest(ctx context.Context, r *http.Request) (interface{},
 	return req, nil
 }
 
-func decodeEnableDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	req := enableDomainReq{
+func decodeStatusDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := statusDomainReq{
 		token:    apiutil.ExtractBearerToken(r),
 		domainID: chi.URLParam(r, "domainID"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 	return req, nil
 }
 
-func decodeDisableDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	req := disableDomainReq{
+func decodeDeleteDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := deleteDomainReq{
 		token:    apiutil.ExtractBearerToken(r),
 		domainID: chi.URLParam(r, "domainID"),
 	}
-	return req, nil
-}
 
-func decodeFreezeDomainRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	req := freezeDomainReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
-	}
 	return req, nil
 }
 

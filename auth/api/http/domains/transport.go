@@ -42,6 +42,13 @@ func MakeHandler(svc auth.Service, mux *chi.Mux, logger *slog.Logger) *chi.Mux {
 				opts...,
 			), "view_domain").ServeHTTP)
 
+			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+				deleteDomainEndpoint(svc),
+				decodeDeleteDomainRequest,
+				api.EncodeResponse,
+				opts...,
+			), "delete_domain").ServeHTTP)
+
 			r.Get("/permissions", otelhttp.NewHandler(kithttp.NewServer(
 				retrieveDomainPermissionsEndpoint(svc),
 				decodeRetrieveDomainPermissionsRequest,
@@ -56,26 +63,12 @@ func MakeHandler(svc auth.Service, mux *chi.Mux, logger *slog.Logger) *chi.Mux {
 				opts...,
 			), "update_domain").ServeHTTP)
 
-			r.Post("/enable", otelhttp.NewHandler(kithttp.NewServer(
-				enableDomainEndpoint(svc),
-				decodeEnableDomainRequest,
+			r.Put("/status", otelhttp.NewHandler(kithttp.NewServer(
+				statusDomainEndpoint(svc),
+				decodeStatusDomainRequest,
 				api.EncodeResponse,
 				opts...,
-			), "enable_domain").ServeHTTP)
-
-			r.Post("/disable", otelhttp.NewHandler(kithttp.NewServer(
-				disableDomainEndpoint(svc),
-				decodeDisableDomainRequest,
-				api.EncodeResponse,
-				opts...,
-			), "disable_domain").ServeHTTP)
-
-			r.Post("/freeze", otelhttp.NewHandler(kithttp.NewServer(
-				freezeDomainEndpoint(svc),
-				decodeFreezeDomainRequest,
-				api.EncodeResponse,
-				opts...,
-			), "freeze_domain").ServeHTTP)
+			), "status_domain").ServeHTTP)
 
 			r.Route("/users", func(r chi.Router) {
 				r.Post("/assign", otelhttp.NewHandler(kithttp.NewServer(

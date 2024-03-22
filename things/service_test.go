@@ -1079,8 +1079,8 @@ func TestEnableClient(t *testing.T) {
 			changeStatusResponse: enabledClient1,
 			retrieveByIDResponse: enabledClient1,
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			changeStatusErr:      mgclients.ErrStatusAlreadyAssigned,
-			err:                  mgclients.ErrStatusAlreadyAssigned,
+			changeStatusErr:      errors.ErrStatusAlreadyAssigned,
+			err:                  errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:                 "enable non-existing client",
@@ -1236,8 +1236,8 @@ func TestDisableClient(t *testing.T) {
 			changeStatusResponse: mgclients.Client{},
 			retrieveByIDResponse: disabledClient1,
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			changeStatusErr:      mgclients.ErrStatusAlreadyAssigned,
-			err:                  mgclients.ErrStatusAlreadyAssigned,
+			changeStatusErr:      errors.ErrStatusAlreadyAssigned,
+			err:                  errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:                 "disable non-existing client",

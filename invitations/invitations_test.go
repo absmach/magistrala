@@ -4,17 +4,12 @@
 package invitations_test
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	errMissingRelation = errors.New("missing relation")
-	errInvalidRelation = errors.New("invalid relation")
 )
 
 func TestInvitation_MarshalJSON(t *testing.T) {
@@ -60,8 +55,8 @@ func TestCheckRelation(t *testing.T) {
 		relation string
 		err      error
 	}{
-		{"", errMissingRelation},
-		{"admin", errInvalidRelation},
+		{"", apiutil.ErrMissingRelation},
+		{"admin", apiutil.ErrInvalidRelation},
 		{"editor", nil},
 		{"viewer", nil},
 		{"member", nil},

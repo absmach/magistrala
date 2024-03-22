@@ -507,7 +507,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
 	}
 	if dbClient.Status == client.Status {
-		return mgclients.Client{}, mgclients.ErrStatusAlreadyAssigned
+		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned
 	}
 
 	client.UpdatedBy = userID

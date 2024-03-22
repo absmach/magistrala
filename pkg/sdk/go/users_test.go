@@ -89,7 +89,7 @@ func TestCreateClient(t *testing.T) {
 			client:   user,
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty user",
@@ -350,7 +350,6 @@ func TestListClients(t *testing.T) {
 	for _, tc := range cases {
 		pm := sdk.PageMetadata{
 			Status:   tc.status,
-			Total:    total,
 			Offset:   tc.offset,
 			Limit:    tc.limit,
 			Name:     tc.name,
@@ -552,7 +551,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -643,7 +642,7 @@ func TestUpdateClientTags(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -733,7 +732,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -749,7 +748,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
 		},
 	}
 
@@ -901,7 +900,7 @@ func TestUpdateClientRole(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(users.ErrFailedUpdateRole, users.ErrFailedUpdateRole), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrFailedUpdateRole, svcerr.ErrFailedUpdateRole), http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",

@@ -48,4 +48,7 @@ var (
 
 	// ErrInvalidSecret indicates invalid secret.
 	ErrInvalidSecret = errors.New("missing secret")
+
+	// ErrFailedToRetrieveAllGroups failed to retrieve groups.
+	ErrFailedToRetrieveAllGroups = errors.New("failed to retrieve all groups")
 )

@@ -14,7 +14,6 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	cpostgres "github.com/absmach/magistrala/users/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -232,7 +231,7 @@ func TestIsPlatformAdmin(t *testing.T) {
 				Status:   mgclients.EnabledStatus,
 				Role:     mgclients.UserRole,
 			},
-			err: svcerr.ErrAuthorization,
+			err: repoerr.ErrNotFound,
 		},
 	}
 

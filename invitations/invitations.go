@@ -6,15 +6,10 @@ package invitations
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/absmach/magistrala/auth"
-)
-
-var (
-	errMissingRelation = errors.New("missing relation")
-	errInvalidRelation = errors.New("invalid relation")
+	"github.com/absmach/magistrala/internal/apiutil"
 )
 
 // Invitation is an invitation to join a domain.
@@ -122,7 +117,7 @@ type Repository interface {
 // It returns an error if the relation is empty or invalid.
 func CheckRelation(relation string) error {
 	if relation == "" {
-		return errMissingRelation
+		return apiutil.ErrMissingRelation
 	}
 	if relation != auth.AdministratorRelation &&
 		relation != auth.EditorRelation &&
@@ -133,7 +128,7 @@ func CheckRelation(relation string) error {
 		relation != auth.RoleGroupRelation &&
 		relation != auth.GroupRelation &&
 		relation != auth.PlatformRelation {
-		return errInvalidRelation
+		return apiutil.ErrInvalidRelation
 	}
 
 	return nil

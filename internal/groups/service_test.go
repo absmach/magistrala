@@ -17,7 +17,6 @@ import (
 	"github.com/absmach/magistrala/internal/groups"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/clients"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -587,7 +586,7 @@ func TestEnableGroup(t *testing.T) {
 			retrieveResp: mggroups.Group{
 				Status: clients.Status(groups.EnabledStatus),
 			},
-			err: mgclients.ErrStatusAlreadyAssigned,
+			err: errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:  "with retrieve error",
@@ -687,7 +686,7 @@ func TestDisableGroup(t *testing.T) {
 			retrieveResp: mggroups.Group{
 				Status: clients.Status(groups.DisabledStatus),
 			},
-			err: mgclients.ErrStatusAlreadyAssigned,
+			err: errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:  "with retrieve error",

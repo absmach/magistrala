@@ -17,4 +17,7 @@ var (
 
 	// ErrEmptyPath indicates empty file path.
 	ErrEmptyPath = errors.New("empty file path")
+
+	// ErrStatusAlreadyAssigned indicated that the client or group has already been assigned the status.
+	ErrStatusAlreadyAssigned = errors.New("status already assigned")
 )

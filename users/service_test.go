@@ -1327,7 +1327,7 @@ func TestEnableClient(t *testing.T) {
 			identifyResponse:     &magistrala.IdentityRes{UserId: enabledClient1.ID},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
 			retrieveByIDResponse: enabledClient1,
-			err:                  mgclients.ErrStatusAlreadyAssigned,
+			err:                  errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:                 "enable disabled client with failed to change status",
@@ -1514,7 +1514,7 @@ func TestDisableClient(t *testing.T) {
 			identifyResponse:     &magistrala.IdentityRes{UserId: disabledClient1.ID},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
 			retrieveByIDResponse: disabledClient1,
-			err:                  mgclients.ErrStatusAlreadyAssigned,
+			err:                  errors.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:                 "disable enabled client with failed to change status",
@@ -2256,7 +2256,7 @@ func TestGenerateResetToken(t *testing.T) {
 			retrieveByIdentityResponse: client,
 			issueResponse:              &magistrala.Token{},
 			issueErr:                   svcerr.ErrAuthorization,
-			err:                        users.ErrRecoveryToken,
+			err:                        svcerr.ErrRecoveryToken,
 		},
 	}
 

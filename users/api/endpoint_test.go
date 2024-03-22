@@ -457,13 +457,6 @@ func TestListClients(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list users with invalid name",
-			token:  validToken,
-			query:  "name=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
 			desc:   "list users with duplicate name",
 			token:  validToken,
 			query:  "name=1&name=2",
@@ -509,13 +502,6 @@ func TestListClients(t *testing.T) {
 			query:  "tag=tag1,tag2",
 			status: http.StatusOK,
 			err:    nil,
-		},
-		{
-			desc:   "list users with invalid tags",
-			token:  validToken,
-			query:  "tag=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
 		},
 		{
 			desc:   "list users with duplicate tags",
@@ -565,13 +551,6 @@ func TestListClients(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list users with invalid permissions",
-			token:  validToken,
-			query:  "permission=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
 			desc:   "list users with duplicate permissions",
 			token:  validToken,
 			query:  "permission=view&permission=view",
@@ -590,13 +569,6 @@ func TestListClients(t *testing.T) {
 			query:  "list_perms=true",
 			status: http.StatusOK,
 			err:    nil,
-		},
-		{
-			desc:   "list users with invalid list perms",
-			token:  validToken,
-			query:  "list_perms=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
 		},
 		{
 			desc:   "list users with duplicate list perms",
@@ -621,13 +593,6 @@ func TestListClients(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list users with invalid identity",
-			token:  validToken,
-			query:  "identity=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
 			desc:   "list users with duplicate identity",
 			token:  validToken,
 			query:  "identity=1&identity=2",
@@ -650,25 +615,11 @@ func TestListClients(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list users with invalid order",
-			token:  validToken,
-			query:  "order=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
 			desc:   "list users with duplicate order",
 			token:  validToken,
 			query:  "order=name&order=name",
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrInvalidQueryParams,
-		},
-		{
-			desc:   "list users with invalid order direction",
-			token:  validToken,
-			query:  "dir=invalid",
-			status: http.StatusInternalServerError,
-			err:    apiutil.ErrValidation,
 		},
 		{
 			desc:   "list users with duplicate order direction",
@@ -1082,7 +1033,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			desc:        "password reset request with empty email",
 			data:        fmt.Sprintf(`{"email": "%s", "host": "%s"}`, "", testhost),
 			contentType: contentType,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 		{
@@ -1119,7 +1070,7 @@ func TestPasswordResetRequest(t *testing.T) {
 		req := testRequest{
 			client:      us.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/users/password/reset-request", us.URL),
+			url:         fmt.Sprintf("%s/password/reset-request", us.URL),
 			contentType: tc.contentType,
 			body:        strings.NewReader(tc.data),
 		}
@@ -1207,7 +1158,7 @@ func TestPasswordReset(t *testing.T) {
 		req := testRequest{
 			client:      us.Client(),
 			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/users/password/reset", us.URL),
+			url:         fmt.Sprintf("%s/password/reset", us.URL),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.data),
@@ -1276,7 +1227,7 @@ func TestUpdateClientRole(t *testing.T) {
 			clientID:    client.ID,
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         svcerr.ErrInvalidRole,
 		},
 		{

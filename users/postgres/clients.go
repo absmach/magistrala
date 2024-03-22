@@ -12,7 +12,6 @@ import (
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 var _ mgclients.Repository = (*clientRepo)(nil)
@@ -79,17 +78,18 @@ func (repo clientRepo) CheckSuperAdmin(ctx context.Context, adminID string) erro
 	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
 	rows, err := repo.DB.QueryContext(ctx, q, adminID, mgclients.AdminRole)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrAuthorization, err)
+		return postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
 	if rows.Next() {
 		if err := rows.Err(); err != nil {
-			return errors.Wrap(svcerr.ErrAuthorization, err)
+			return postgres.HandleError(repoerr.ErrViewEntity, err)
 		}
 		return nil
 	}
-	return svcerr.ErrAuthorization
+
+	return repoerr.ErrNotFound
 }
 
 func (repo clientRepo) RetrieveByID(ctx context.Context, id string) (mgclients.Client, error) {
@@ -134,11 +134,11 @@ func (repo clientRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (mgcl
 
 	dbPage, err := pgclients.ToDBClientsPage(pm)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 	defer rows.Close()
 

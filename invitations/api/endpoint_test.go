@@ -266,7 +266,7 @@ func TestListInvitation(t *testing.T) {
 			desc:        "with invalid state",
 			token:       validToken,
 			query:       "state=invalid",
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			contentType: validContenType,
 			svcErr:      nil,
 		},

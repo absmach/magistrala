@@ -391,6 +391,8 @@ paths:
           description: Users link for resetting password.
         "400":
           description: Failed due to malformed JSON.
+        "404":
+          description: Entity not found.
         "415":
           description: Missing or invalid content type.
         "422":
@@ -417,6 +419,8 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "404":
+          description: Entity not found.
         "415":
           description: Missing or invalid content type.
         "422":

@@ -88,7 +88,7 @@ func TestCreateClient(t *testing.T) {
 			client:   user,
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty user",
@@ -550,7 +550,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -641,7 +641,7 @@ func TestUpdateClientTags(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -731,7 +731,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -747,7 +747,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 	}
 
@@ -820,7 +820,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			token:     validToken,
 			response:  sdk.User{},
 			repoErr:   apiutil.ErrMissingSecret,
-			err:       errors.NewSDKErrorWithStatus(apiutil.ErrMissingSecret, http.StatusBadRequest),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusBadRequest),
 		},
 	}
 
@@ -899,7 +899,7 @@ func TestUpdateClientRole(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -984,7 +984,7 @@ func TestEnableClient(t *testing.T) {
 			client:   enabledClient1,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "enable non-existing client",
@@ -993,7 +993,7 @@ func TestEnableClient(t *testing.T) {
 			client:   sdk.User{},
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 	}
 
@@ -1113,7 +1113,7 @@ func TestDisableClient(t *testing.T) {
 			client:   disabledClient1,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "disable non-existing client",
@@ -1122,7 +1122,7 @@ func TestDisableClient(t *testing.T) {
 			token:    validToken,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 	}
 

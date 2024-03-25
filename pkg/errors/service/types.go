@@ -66,4 +66,10 @@ var (
 
 	// ErrDisableClient indicates error in disabling client.
 	ErrDisableClient = errors.New("failed to disable client")
+
+	// ErrAddPolicies indicates error in adding policies.
+	ErrAddPolicies = errors.New("failed to add policies")
+
+	// ErrDeletePolicies indicates error in removing policies.
+	ErrDeletePolicies = errors.New("failed to remove policies")
 )

@@ -104,7 +104,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	}()
 	client, err := svc.clients.Save(ctx, cli)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 	return client, nil
 }

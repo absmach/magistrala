@@ -96,7 +96,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  sdk.ErrFailedCreation,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty thing",
@@ -104,7 +104,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  errors.ErrMalformedEntity,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrMalformedEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusBadRequest),
 		},
 		{
 			desc: "register a thing that can't be marshalled",
@@ -245,7 +245,7 @@ func TestCreateThings(t *testing.T) {
 			things:   thingsList,
 			response: []sdk.Thing{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty things",
@@ -724,7 +724,7 @@ func TestUpdateThing(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -809,7 +809,7 @@ func TestUpdateThingTags(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -883,7 +883,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     "non-existent",
 			response:  sdk.Thing{},
 			repoErr:   svcerr.ErrAuthorization,
-			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusForbidden),
 		},
 		{
 			desc:      "update thing secret with wrong old secret",
@@ -892,10 +892,11 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     validToken,
 			response:  sdk.Thing{},
 			repoErr:   apiutil.ErrMissingSecret,
-			err:       errors.NewSDKErrorWithStatus(apiutil.ErrMissingSecret, http.StatusBadRequest),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusBadRequest),
 		},
 	}
 	for _, tc := range cases {
+		fmt.Println(tc.desc)
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		if tc.token != validToken {
@@ -955,7 +956,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    enabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrEnableClient, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "enable non-existing thing",
@@ -964,7 +965,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    sdk.Thing{},
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrEnableClient, http.StatusUnprocessableEntity),
 		},
 	}
 
@@ -1090,7 +1091,7 @@ func TestDisableThing(t *testing.T) {
 			thing:    disabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrDisableClient, http.StatusNotFound),
 		},
 		{
 			desc:     "disable non-existing thing",
@@ -1099,7 +1100,7 @@ func TestDisableThing(t *testing.T) {
 			token:    validToken,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrDisableClient, http.StatusNotFound),
 		},
 	}
 

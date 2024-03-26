@@ -13,7 +13,7 @@ require (
 	github.com/authzed/grpcutil v0.0.0-20230908193239-4286bb1d6403
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/docker/docker v24.0.7+incompatible
+	github.com/docker/docker v24.0.9+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/fatih/color v1.16.0
 	github.com/fiorix/go-smpp v0.0.0-20210403173735-2894b96e70ba

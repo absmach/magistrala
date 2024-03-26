@@ -2256,7 +2256,7 @@ func TestGenerateResetToken(t *testing.T) {
 			retrieveByIdentityResponse: client,
 			issueResponse:              &magistrala.Token{},
 			issueErr:                   svcerr.ErrAuthorization,
-			err:                        svcerr.ErrRecoveryToken,
+			err:                        users.ErrRecoveryToken,
 		},
 	}
 
@@ -2533,7 +2533,7 @@ func TestOAuthCallback(t *testing.T) {
 			saveResponse:      mgclients.Client{},
 			saveErr:           repoerr.ErrConflict,
 			issueResponse:     &magistrala.Token{},
-			err:               errors.New("user already exists"),
+			err:               svcerr.ErrConflict,
 		},
 	}
 

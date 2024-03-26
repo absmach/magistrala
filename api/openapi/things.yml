@@ -661,6 +661,34 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+  /channels/{memberID}/groups:
+    get:
+      summary: Get group associated with the member
+      description: |
+        Gets groups associated with the channel member specified by id.
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/MemberID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/Tags"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/GroupPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Group does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
   /things/{thingID}/channels:
     get:
       summary: List of channels connected to specified thing
@@ -671,58 +699,6 @@ paths:
         - Channels
       parameters:
         - $ref: "#/components/parameters/ThingID"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-      responses:
-        "200":
-          $ref: "#/components/responses/ChannelPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "404":
-          description: Thing does not exist.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /users/{memberID}/channels:
-    get:
-      summary: List of channels connected to specified user
-      description: |
-        Retrieves list of channels connected to specified user with pagination
-        metadata.
-      tags:
-        - Channels
-      parameters:
-        - $ref: "#/components/parameters/MemberID"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-      responses:
-        "200":
-          $ref: "#/components/responses/ChannelPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "404":
-          description: Thing does not exist.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /groups/{memberID}/channels:
-    get:
-      summary: List of channels connected to specified group
-      description: |
-        Retrieves list of channels connected to specified group with pagination
-        metadata.
-      tags:
-        - Channels
-      parameters:
-        - $ref: "#/components/parameters/MemberID"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
       responses:

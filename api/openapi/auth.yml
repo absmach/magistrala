@@ -432,7 +432,7 @@ paths:
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
-        - $ref: "users.yml#/components/parameters/MemberID"
+        - $ref: "#/components/parameters/MemberID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
@@ -767,6 +767,15 @@ components:
       schema:
         type: string
       required: false
+    MemberID:
+      name: memberID
+      description: Unique member identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
   requestBodies:
     DomainCreateReq:

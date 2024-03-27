@@ -201,6 +201,23 @@ func (_m *Service) CreateDomain(ctx context.Context, token string, d auth.Domain
 	return r0, r1
 }
 
+// DeleteDomain provides a mock function with given fields: ctx, token, d
+func (_m *Service) DeleteDomain(ctx context.Context, token string, d auth.Domain) error {
+	ret := _m.Called(ctx, token, d)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDomain")
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, auth.Domain) error); ok {
+		r1 = rf(ctx, token, d)
+	} else {
+		r1 = ret.Error(0)
+	}
+	return r1
+}
+
 // DeletePolicies provides a mock function with given fields: ctx, prs
 func (_m *Service) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
 	ret := _m.Called(ctx, prs)
@@ -517,6 +534,11 @@ func (_m *Service) RetrieveDomain(ctx context.Context, token string, id string) 
 	}
 
 	return r0, r1
+}
+
+// RetrieveStatusByID retrieves Domain Status by its unique ID.
+func (_m *Service) RetrieveStatus(ctx context.Context, token string, id string) (auth.Domain, error) {
+	return auth.Domain{}, nil
 }
 
 // RetrieveDomainPermissions provides a mock function with given fields: ctx, token, id

@@ -115,58 +115,39 @@ func listDomainsEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func enableDomainEndpoint(svc auth.Service) endpoint.Endpoint {
+func statusDomainEndpoint(svc auth.Service) endpoint.Endpoint {
+	changeStatusMapping := make(map[string]auth.Status)
+	changeStatusMapping[auth.Enabled] = auth.EnabledStatus
+	changeStatusMapping[auth.Disabled] = auth.DisabledStatus
+	changeStatusMapping[auth.Freezed] = auth.FreezeStatus
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(enableDomainReq)
+		req := request.(statusDomainReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
-		enable := auth.EnabledStatus
+		status := changeStatusMapping[req.Status]
 		d := auth.DomainReq{
-			Status: &enable,
+			Status: &status,
 		}
 		if _, err := svc.ChangeDomainStatus(ctx, req.token, req.domainID, d); err != nil {
 			return nil, err
 		}
-		return enableDomainRes{}, nil
+		return statusDomainRes{}, nil
 	}
 }
 
-func disableDomainEndpoint(svc auth.Service) endpoint.Endpoint {
+func deleteDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(disableDomainReq)
+		req := request.(deleteDomainReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
-		disable := auth.DisabledStatus
-		d := auth.DomainReq{
-			Status: &disable,
+		d := auth.Domain{
+			ID: req.domainID,
 		}
-		if _, err := svc.ChangeDomainStatus(ctx, req.token, req.domainID, d); err != nil {
-			return nil, err
-		}
-		return disableDomainRes{}, nil
+		return nil, svc.DeleteDomain(ctx, req.token, d)
 	}
-}
 
-func freezeDomainEndpoint(svc auth.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(freezeDomainReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-
-		freeze := auth.FreezeStatus
-		d := auth.DomainReq{
-			Status: &freeze,
-		}
-		if _, err := svc.ChangeDomainStatus(ctx, req.token, req.domainID, d); err != nil {
-			return nil, err
-		}
-		return freezeDomainRes{}, nil
-	}
 }
 
 func assignDomainUsersEndpoint(svc auth.Service) endpoint.Endpoint {

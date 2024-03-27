@@ -239,6 +239,14 @@ func (tm *tracingMiddleware) CreateDomain(ctx context.Context, token string, d a
 	return tm.svc.CreateDomain(ctx, token, d)
 }
 
+func (tm *tracingMiddleware) DeleteDomain(ctx context.Context, token string, d auth.Domain) error {
+	ctx, span := tm.tracer.Start(ctx, "delete_domain", trace.WithAttributes(
+		attribute.String("name", d.Name),
+	))
+	defer span.End()
+	return tm.svc.DeleteDomain(ctx, token, d)
+}
+
 func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token, id string) (auth.Domain, error) {
 	ctx, span := tm.tracer.Start(ctx, "view_domain", trace.WithAttributes(
 		attribute.String("id", id),

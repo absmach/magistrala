@@ -36,6 +36,9 @@ var (
 	// ErrInvalidStatus indicates an invalid user account status.
 	ErrInvalidStatus = errors.New("invalid user account status")
 
+	// ErrInvalidDomainStatus indicates an invalid domain status.
+	ErrInvalidDomainStatus = errors.New("invalid domain status")
+
 	// ErrInvalidRole indicates that an invalid role.
 	ErrInvalidRole = errors.New("invalid client role")
 

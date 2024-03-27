@@ -96,6 +96,29 @@ func (repo domainRepo) RetrieveByID(ctx context.Context, id string) (auth.Domain
 	return auth.Domain{}, repoerr.ErrNotFound
 }
 
+func (repo domainRepo) RetrieveStatusByID(ctx context.Context, id string) (auth.Domain, error) {
+	q := `SELECT d.status FROM domains d where d.id = :id;`
+	dbdp := dbDomainsPage{
+		ID: id,
+	}
+
+	rows, err := repo.db.NamedQueryContext(ctx, q, dbdp)
+	if err != nil {
+		return auth.Domain{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	var status auth.Status = auth.FreezeStatus
+	if rows.Next() {
+		if err = rows.Scan(&status); err != nil {
+			return auth.Domain{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+		}
+		var domain auth.Domain = auth.Domain{Status: status}
+		return domain, nil
+	}
+	return auth.Domain{}, repoerr.ErrNotFound
+}
+
 func (repo domainRepo) RetrievePermissions(ctx context.Context, subject, id string) ([]string, error) {
 	q := `SELECT pc.relation as relation
 	FROM domains as d

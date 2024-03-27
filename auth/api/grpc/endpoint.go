@@ -349,3 +349,18 @@ func listPermissionsEndpoint(svc auth.Service) endpoint.Endpoint {
 		}, nil
 	}
 }
+
+func deleteEntityPoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(deleteEntityPoliciesReq)
+		if err := req.validate(); err != nil {
+			return deletePolicyRes{}, err
+		}
+
+		if err := svc.DeleteEntityPolicies(ctx, req.EntityType, req.ID); err != nil {
+			return deletePolicyRes{}, err
+		}
+
+		return deletePolicyRes{deleted: true}, nil
+	}
+}

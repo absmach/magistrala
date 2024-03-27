@@ -15,7 +15,10 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
-const recoveryDuration = 5 * time.Minute
+const (
+	recoveryDuration = 5 * time.Minute
+	defLimit         = 100
+)
 
 var (
 	// ErrExpiry indicates that the token is expired.
@@ -33,6 +36,8 @@ var (
 	errRollbackPolicy     = errors.New("failed to rollback policy")
 	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
 	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
+	// errInvalidEntityType indicates invalid entity type.
+	errInvalidEntityType = errors.New("invalid entity type")
 )
 
 // Authn specifies an API that must be fullfiled by the domain service
@@ -941,5 +946,134 @@ func DecodeDomainUserID(domainUserID string) (string, string) {
 		fallthrough
 	default:
 		return "", ""
+	}
+}
+
+func (svc service) DeleteEntityPolicies(ctx context.Context, entityType, id string) (err error) {
+	switch entityType {
+	case ThingType:
+		// Remove policy of groups
+		req := PolicyReq{
+			SubjectType: GroupType,
+			Object:      id,
+			ObjectType:  ThingType,
+		}
+
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		// Remove policy from domain
+		req.SubjectType = DomainType
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		// Remove policy of users
+		req.SubjectType = UserType
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		return nil
+	case UserType:
+		domainsPage, err := svc.domains.ListDomains(ctx, Page{SubjectID: id, Limit: defLimit})
+		if err != nil {
+			return err
+		}
+
+		if domainsPage.Total > defLimit {
+			for i := defLimit; i < int(domainsPage.Total); i += defLimit {
+				page := Page{SubjectID: id, Offset: uint64(i), Limit: defLimit}
+				dp, err := svc.domains.ListDomains(ctx, page)
+				if err != nil {
+					return err
+				}
+				domainsPage.Domains = append(domainsPage.Domains, dp.Domains...)
+			}
+		}
+
+		for _, domain := range domainsPage.Domains {
+			policy := PolicyReq{
+				Subject:     EncodeDomainUserID(domain.ID, id),
+				SubjectType: UserType,
+				ObjectType:  ThingType,
+			}
+			if err := svc.agent.DeletePolicy(ctx, policy); err != nil {
+				return err
+			}
+
+			policy.ObjectType = GroupType
+			if err := svc.agent.DeletePolicy(ctx, policy); err != nil {
+				return err
+			}
+
+			policy.Object = domain.ID
+			policy.ObjectType = DomainType
+			if err := svc.agent.DeletePolicy(ctx, policy); err != nil {
+				return err
+			}
+		}
+
+		req := PolicyReq{
+			Subject:     id,
+			SubjectType: UserType,
+			ObjectType:  ThingType,
+		}
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+		req.ObjectType = GroupType
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+		req.ObjectType = DomainType
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+		req.ObjectType = PlatformType
+		req.Object = MagistralaObject
+		if err := svc.agent.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		if err := svc.domains.DeleteUserPolicies(ctx, id); err != nil {
+			return err
+		}
+
+		return nil
+	case GroupType:
+		// Remove policy of child groups
+		req := PolicyReq{
+			SubjectType: GroupType,
+			Subject:     id,
+			ObjectType:  GroupType,
+		}
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		// Remove policy of things
+		req.ObjectType = ThingType
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		// Remove policy from domain
+		req.SubjectType = DomainType
+		req.ObjectType = GroupType
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		// Remove policy of users
+		req.SubjectType = UserType
+		if err := svc.DeletePolicy(ctx, req); err != nil {
+			return err
+		}
+
+		return nil
+	default:
+		return errInvalidEntityType
 	}
 }

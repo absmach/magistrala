@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	// ErrAddPolicies indictaed a failre to add policies.
+	// errAddPolicies indictaed a failre to add policies.
 	errAddPolicies = errors.New("failed to add policies")
 
 	// ErrIssueToken indicates a failure to issue token.
@@ -428,6 +428,33 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return client, err
+}
+
+func (svc service) DeleteClient(ctx context.Context, token, id string) error {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return err
+	}
+	if err := svc.checkSuperAdmin(ctx, res.GetId()); err != nil {
+		return err
+	}
+
+	deleteRes, err := svc.auth.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+		Id:         id,
+		EntityType: auth.UserType,
+	})
+	if err != nil {
+		return errors.Wrap(errDeletePolicies, err)
+	}
+	if !deleteRes.Deleted {
+		return svcerr.ErrAuthorization
+	}
+
+	if err := svc.clients.Delete(ctx, id); err != nil {
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	}
+
+	return nil
 }
 
 func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {

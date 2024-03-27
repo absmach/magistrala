@@ -97,3 +97,7 @@ func (repo singleUserRepo) CountSubjects(ctx context.Context, in *magistrala.Cou
 func (repo singleUserRepo) ListPermissions(ctx context.Context, in *magistrala.ListPermissionsReq, opts ...grpc.CallOption) (*magistrala.ListPermissionsRes, error) {
 	return nil, nil
 }
+
+func (repo singleUserRepo) DeleteEntityPolicies(ctx context.Context, in *magistrala.DeleteEntityPoliciesReq, opts ...grpc.CallOption) (*magistrala.DeletePolicyRes, error) {
+	return nil, nil
+}

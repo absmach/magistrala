@@ -168,6 +168,9 @@ type Authz interface {
 
 	// ListPermissions lists permission betweeen given subject and object .
 	ListPermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)
+
+	// DeleteEntityPolicies deletes all policies for the given entity.
+	DeleteEntityPolicies(ctx context.Context, entityType, id string) error
 }
 
 // PolicyAgent facilitates the communication to authorization

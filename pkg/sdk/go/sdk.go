@@ -252,6 +252,13 @@ type SDK interface {
 	//  fmt.Println(user)
 	DisableUser(id, token string) (User, errors.SDKError)
 
+	// DeleteUser deletes a user with the given id.
+	//
+	// example:
+	//  err := sdk.DeleteUser("userID", "token")
+	//  fmt.Println(err)
+	DeleteUser(id, token string) errors.SDKError
+
 	// CreateToken receives credentials and returns user token.
 	//
 	// example:

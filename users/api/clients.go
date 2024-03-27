@@ -124,6 +124,13 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, pr *rege
 			api.EncodeResponse,
 			opts...,
 		), "disable_client").ServeHTTP)
+
+		r.Delete("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+			deleteClientEndpoint(svc),
+			decodeChangeClientStatus,
+			api.EncodeResponse,
+			opts...,
+		), "delete_client").ServeHTTP)
 	})
 
 	r.Route("/password", func(r chi.Router) {

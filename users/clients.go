@@ -64,6 +64,9 @@ type Service interface {
 	// DisableClient logically disables the client identified with the provided ID.
 	DisableClient(ctx context.Context, token, id string) (clients.Client, error)
 
+	// DeleteClient deletes client with given ID.
+	DeleteClient(ctx context.Context, token, id string) error
+
 	// Identify returns the client id from the given token.
 	Identify(ctx context.Context, tkn string) (string, error)
 

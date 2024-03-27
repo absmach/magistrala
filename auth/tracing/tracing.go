@@ -304,3 +304,12 @@ func (tm *tracingMiddleware) ListUserDomains(ctx context.Context, token, userID 
 	defer span.End()
 	return tm.svc.ListUserDomains(ctx, token, userID, p)
 }
+
+func (tm *tracingMiddleware) DeleteEntityPolicies(ctx context.Context, entityType, id string) error {
+	ctx, span := tm.tracer.Start(ctx, "delete_entity_policies", trace.WithAttributes(
+		attribute.String("entity_type", entityType),
+		attribute.String("id", id),
+	))
+	defer span.End()
+	return tm.svc.DeleteEntityPolicies(ctx, entityType, id)
+}

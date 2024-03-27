@@ -2427,7 +2427,6 @@ func TestViewProfile(t *testing.T) {
 		repoCall1 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.retrieveByIDResponse, tc.retrieveByIDErr)
 		_, err := svc.ViewProfile(context.Background(), tc.token)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
 		repoCall.Parent.AssertCalled(t, "Identify", mock.Anything, mock.Anything)
 		repoCall1.Parent.AssertCalled(t, "RetrieveByID", context.Background(), mock.Anything)
 		repoCall.Unset()
@@ -2536,7 +2535,6 @@ func TestOAuthCallback(t *testing.T) {
 			err:               errors.New("user already exists"),
 		},
 	}
-
 	for _, tc := range cases {
 		switch tc.state {
 		case mgoauth2.SignUp:
@@ -2567,5 +2565,100 @@ func TestOAuthCallback(t *testing.T) {
 			repoCall.Unset()
 			repoCall1.Unset()
 		}
+	}
+}
+
+func TestDeleteClient(t *testing.T) {
+	svc, cRepo, auth, _ := newService(true)
+
+	client := mgclients.Client{
+		ID:   testsutil.GenerateUUID(t),
+		Name: "TestClient",
+		Credentials: mgclients.Credentials{
+			Identity: "TestClient@example.com",
+			Secret:   "password",
+		},
+		Tags:     []string{"tag1", "tag2"},
+		Metadata: mgclients.Metadata{"role": "client"},
+	}
+
+	cases := []struct {
+		desc                 string
+		token                string
+		identifyResponse     *magistrala.IdentityRes
+		authorizeResponse    *magistrala.AuthorizeRes
+		deletePolicyResponse *magistrala.DeletePolicyRes
+		clientID             string
+		identifyErr          error
+		authorizeErr         error
+		checkSuperAdminErr   error
+		deleteErr            error
+		deletePolicyErr      error
+		err                  error
+	}{
+		{
+			desc:                 "Delete client with authorized token",
+			token:                validToken,
+			clientID:             client.ID,
+			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			err:                  nil,
+		},
+		{
+			desc:             "Delete client with unauthorized token",
+			token:            authmocks.InvalidValue,
+			clientID:         client.ID,
+			identifyResponse: &magistrala.IdentityRes{},
+			identifyErr:      svcerr.ErrAuthentication,
+			err:              svcerr.ErrAuthentication,
+		},
+		{
+			desc:              "Delete invalid client",
+			token:             validToken,
+			clientID:          authmocks.InvalidValue,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr:      svcerr.ErrAuthorization,
+			err:               svcerr.ErrAuthorization,
+		},
+		{
+			desc:                 "Delete client with repo error ",
+			token:                validToken,
+			clientID:             client.ID,
+			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			deleteErr:            svcerr.ErrRemoveEntity,
+			err:                  svcerr.ErrRemoveEntity,
+		},
+		{
+			desc:                 "Delete client with failed to delete policy",
+			token:                validToken,
+			clientID:             client.ID,
+			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: false},
+			authorizeErr:         svcerr.ErrAuthorization,
+			err:                  svcerr.ErrAuthorization,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
+		repoCall2 := cRepo.On("CheckSuperAdmin", mock.Anything, mock.Anything).Return(tc.checkSuperAdminErr)
+		repoCall3 := auth.On("DeleteEntityPolicies", context.Background(), &magistrala.DeleteEntityPoliciesReq{
+			EntityType: authsvc.UserType,
+			Id:         tc.clientID,
+		}).Return(tc.deletePolicyResponse, tc.deletePolicyErr)
+		repoCall4 := cRepo.On("Delete", context.Background(), tc.clientID).Return(tc.deleteErr)
+		err := svc.DeleteClient(context.Background(), tc.token, tc.clientID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
+		repoCall1.Unset()
+		repoCall2.Unset()
+		repoCall3.Unset()
+		repoCall4.Unset()
 	}
 }

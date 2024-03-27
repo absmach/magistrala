@@ -1202,3 +1202,39 @@ func TestDisableClient(t *testing.T) {
 		repoCall2.Unset()
 	}
 }
+
+func TestDeleteUser(t *testing.T) {
+	ts, crepo, _, auth := setupUsers()
+	defer ts.Close()
+
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, nil)
+	repoCall2 := crepo.On("CheckSuperAdmin", mock.Anything, mock.Anything).Return(nil)
+	repoCall3 := crepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	err := mgsdk.DeleteUser("wrongID", validToken)
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden), fmt.Sprintf("Delete user with wrong id: expected %v got %v", svcerr.ErrNotFound, err))
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+	repoCall3.Unset()
+
+	repoCall = auth.On("DeleteEntityPolicies", mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
+	repoCall1 = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+	repoCall2 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+	repoCall3 = crepo.On("CheckSuperAdmin", mock.Anything, mock.Anything).Return(nil)
+	repoCall4 := crepo.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	err = mgsdk.DeleteUser(validID, validToken)
+	assert.Nil(t, err, fmt.Sprintf("Delete user with correct id: expected %v got %v", nil, err))
+	ok := repoCall4.Parent.AssertCalled(t, "Delete", mock.Anything, mock.Anything)
+	assert.True(t, ok, "Delete was not called on deleting user with correct id")
+	repoCall.Unset()
+	repoCall1.Unset()
+	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
+}

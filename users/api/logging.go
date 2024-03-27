@@ -415,3 +415,20 @@ func (lm *loggingMiddleware) OAuthCallback(ctx context.Context, state mgoauth2.S
 	}(time.Now())
 	return lm.svc.OAuthCallback(ctx, state, client)
 }
+
+// DeleteClient logs the delete_client request. It logs the client id and token and the time it took to complete the request.
+func (lm *loggingMiddleware) DeleteClient(ctx context.Context, token, id string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("user_id", id),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Delete user failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Delete user completed successfully", args...)
+	}(time.Now())
+	return lm.svc.DeleteClient(ctx, token, id)
+}

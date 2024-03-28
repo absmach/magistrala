@@ -20,7 +20,7 @@ func browseEndpoint(svc opcua.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		nodes, err := svc.Browse(ctx, req.ServerURI, req.Namespace, req.Identifier)
+		nodes, err := svc.Browse(ctx, req.ServerURI, req.Namespace, req.Identifier, req.IdentifierType)
 		if err != nil {
 			return nil, err
 		}

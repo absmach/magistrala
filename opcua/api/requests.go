@@ -6,9 +6,10 @@ package api
 import "github.com/absmach/magistrala/internal/apiutil"
 
 type browseReq struct {
-	ServerURI  string
-	Namespace  string
-	Identifier string
+	ServerURI      string
+	Namespace      string
+	Identifier     string
+	IdentifierType string
 }
 
 func (req *browseReq) validate() error {

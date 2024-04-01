@@ -84,29 +84,29 @@ func (mm *metricsMiddleware) RemoveChannel(ctx context.Context, mgxChanID string
 	return mm.svc.RemoveChannel(ctx, mgxChanID)
 }
 
-func (mm *metricsMiddleware) ConnectThing(ctx context.Context, mgxChanID, mgxThingID string) error {
+func (mm *metricsMiddleware) ConnectThing(ctx context.Context, mgxChanID string, mgxThingIDs []string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "connect_thing").Add(1)
 		mm.latency.With("method", "connect_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ConnectThing(ctx, mgxChanID, mgxThingID)
+	return mm.svc.ConnectThing(ctx, mgxChanID, mgxThingIDs)
 }
 
-func (mm *metricsMiddleware) DisconnectThing(ctx context.Context, mgxChanID, mgxThingID string) error {
+func (mm *metricsMiddleware) DisconnectThing(ctx context.Context, mgxChanID string, mgxThingIDs []string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "disconnect_thing").Add(1)
 		mm.latency.With("method", "disconnect_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.DisconnectThing(ctx, mgxChanID, mgxThingID)
+	return mm.svc.DisconnectThing(ctx, mgxChanID, mgxThingIDs)
 }
 
-func (mm *metricsMiddleware) Browse(ctx context.Context, serverURI, namespace, identifier string) ([]opcua.BrowsedNode, error) {
+func (mm *metricsMiddleware) Browse(ctx context.Context, serverURI, namespace, identifier, identifierType string) ([]opcua.BrowsedNode, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "browse").Add(1)
 		mm.latency.With("method", "browse").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Browse(ctx, serverURI, namespace, identifier)
+	return mm.svc.Browse(ctx, serverURI, namespace, identifier, identifierType)
 }

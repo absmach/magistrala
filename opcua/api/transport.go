@@ -19,12 +19,13 @@ import (
 )
 
 const (
-	contentType     = "application/json"
-	serverParam     = "server"
-	namespaceParam  = "namespace"
-	identifierParam = "identifier"
-	defNamespace    = "ns=0" // Standard root namespace
-	defIdentifier   = "i=84" // Standard root identifier
+	contentType         = "application/json"
+	serverParam         = "server"
+	namespaceParam      = "namespace"
+	identifierParam     = "identifier"
+	identifierTypeParam = "identifierType"
+	defNamespace        = "ns=0" // Standard root namespace
+	defIdentifier       = "i=84" // Standard root identifier
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -64,15 +65,21 @@ func decodeBrowse(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
+	iType, err := apiutil.ReadStringQuery(r, identifierTypeParam, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
 	if n == "" || i == "" {
 		n = defNamespace
 		i = defIdentifier
 	}
 
 	req := browseReq{
-		ServerURI:  s,
-		Namespace:  n,
-		Identifier: i,
+		ServerURI:      s,
+		Namespace:      n,
+		Identifier:     i,
+		IdentifierType: iType,
 	}
 
 	return req, nil

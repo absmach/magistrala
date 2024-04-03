@@ -8,5 +8,5 @@
 // Magistrala MQTT adapter service.
 //
 // For more details about tracing instrumentation for Magistrala messaging refer
-// to the documentation at https://docs.mainflux.io/tracing/.
+// to the documentation at https://docs.magistrala.abstractmachines.fr/tracing/.
 package tracing

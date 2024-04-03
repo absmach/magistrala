@@ -68,4 +68,4 @@ Setting `MG_THINGS_AUTH_GRPC_CLIENT_CERT` and `MG_THINGS_AUTH_GRPC_CLIENT_KEY` w
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out the [WebSocket section](https://docs.mainflux.io/messaging/#websocket).
+For more information about service capabilities and its usage, please check out the [WebSocket section](https://docs.magistrala.abstractmachines.fr/messaging/#websocket).

@@ -24,7 +24,7 @@ const maxNameSize = 254
 var (
 	invalidName = strings.Repeat("m", maxNameSize+10)
 	password    = "$tr0ngPassw0rd"
-	namesgen    = namegenerator.NewNameGenerator()
+	namesgen    = namegenerator.NewGenerator()
 )
 
 func TestClientsSave(t *testing.T) {

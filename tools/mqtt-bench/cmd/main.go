@@ -21,7 +21,7 @@ func main() {
 		Use:   "mqtt-bench",
 		Short: "mqtt-bench is MQTT benchmark tool for Magistrala",
 		Long: `Tool for exctensive load and benchmarking of MQTT brokers used within the Magistrala platform.
-Complete documentation is available at https://docs.mainflux.io`,
+Complete documentation is available at https://docs.magistrala.abstractmachines.fr`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if confFile != "" {
 				viper.SetConfigFile(confFile)

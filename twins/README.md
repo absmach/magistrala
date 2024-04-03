@@ -98,6 +98,6 @@ magistrala natively, than do the same thing in the corresponding console
 environment.
 
 For more information about service capabilities and its usage, please check out
-the [API documentation](https://api.mainflux.io/?urls.primaryName=twins-openapi.yml).
+the [API documentation](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=twins-openapi.yml).
 
-[doc]: https://docs.mainflux.io
+[doc]: https://docs.magistrala.abstractmachines.fr

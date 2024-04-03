@@ -18,7 +18,7 @@ func main() {
 		Use:   "provision",
 		Short: "provision is provisioning tool for Magistrala",
 		Long: `Tool for provisioning series of Magistrala channels and things and connecting them together.
-Complete documentation is available at https://docs.mainflux.io`,
+Complete documentation is available at https://docs.magistrala.abstractmachines.fr`,
 		Run: func(_ *cobra.Command, _ []string) {
 			if err := provision.Provision(pconf); err != nil {
 				log.Fatal(err)

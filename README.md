@@ -74,7 +74,7 @@ Check that `.env` file contains:
 MG_RELEASE_TAG=<release_number>
 ```
 
-> `docker-compose` should be used for development and testing deployments. For production we suggest using [Kubernetes](https://docs.mainflux.io/kubernetes).
+> `docker-compose` should be used for development and testing deployments. For production we suggest using [Kubernetes](https://docs.magistrala.abstractmachines.fr/kubernetes).
 
 ## Usage
 
@@ -87,11 +87,11 @@ make cli
 ./build/cli version
 ```
 
-Additional details on using the CLI can be found in the [CLI documentation](https://docs.mainflux.io/cli).
+Additional details on using the CLI can be found in the [CLI documentation](https://docs.magistrala.abstractmachines.fr/cli).
 
 ## Documentation
 
-Official documentation is hosted at [Magistrala official docs page][docs]. Documentation is auto-generated, checkout the instructions on [official docs repository](https://github.com/mainflux/docs):
+Official documentation is hosted at [Magistrala official docs page][docs]. Documentation is auto-generated, checkout the instructions on [official docs repository](https://github.com/absmach/magistrala-docs):
 
 If you spot an error or a need for corrections, please let us know - or even better: send us a PR.
 
@@ -137,8 +137,7 @@ You like Magistrala and you would like to make it your day job? We're always loo
 
 [Apache-2.0](LICENSE)
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmainflux%2Fmainflux.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmainflux%2Fmainflux?ref=badge_large)
-
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fabsmach%2Fmagistrala.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fabsmach%2Fmagistrala?ref=badge_large&issueType=license)
 ## Data Collection for Magistrala
 
 Magistrala is committed to continuously improving its services and ensuring a seamless experience for its users. To achieve this, we collect certain data from your deployments. Rest assured, this data is collected solely for the purpose of enhancing Magistrala and is not used with any malicious intent. The deployment summary can be found on our [website][callhome].
@@ -157,8 +156,8 @@ Data collection is on by default and can be disabled by setting the env variable
 
 By utilizing Magistrala, you actively contribute to its improvement. Together, we can build a more robust and efficient IoT platform. Thank you for your trust in Magistrala!
 
-[banner]: https://github.com/mainflux/docs/blob/master/docs/img/gopherBanner.jpg
-[docs]: https://docs.mainflux.io
+[banner]: https://github.com/absmach/magistrala-docs/blob/main/docs/img/gopherBanner.jpg
+[docs]: https://docs.magistrala.abstractmachines.fr
 [docker]: https://www.docker.com
 [forum]: https://groups.google.com/forum/#!forum/mainflux
 [gitter]: https://gitter.im/absmach/magistrala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
@@ -168,11 +167,11 @@ By utilizing Magistrala, you actively contribute to its improvement. Together, w
 [cov-badge]: https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=SEMDAO3L09
 [cov-url]: https://codecov.io/gh/absmach/magistrala
 [license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
-[twitter]: https://twitter.com/mainflux
+[twitter]: https://twitter.com/absmach
 [lora]: https://lora-alliance.org/
 [opcua]: https://opcfoundation.org/about/opc-technologies/opc-ua/
-[agent]: https://github.com/mainflux/agent
-[export]: https://github.com/mainflux/export
+[agent]: https://github.com/absmach/agent
+[export]: https://github.com/absmach/export
 [kubernetes]: https://kubernetes.io/
 [releases]: https://github.com/absmach/magistrala/releases
 [drasko]: https://github.com/drasko
@@ -190,4 +189,4 @@ By utilizing Magistrala, you actively contribute to its improvement. Together, w
 [dusanm]: https://github.com/malidukica
 [mirko]: https://github.com/mteodor
 [rodneyosodo]: https://github.com/rodneyosodo
-[callhome]: https://deployments.mainflux.io
+[callhome]: https://deployments.magistrala.abstractmachines.fr/

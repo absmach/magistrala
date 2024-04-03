@@ -68,4 +68,4 @@ Setting `MG_THINGS_AUTH_GRPC_CLIENT_CERT` and `MG_THINGS_AUTH_GRPC_CLIENT_KEY` w
 
 ## Usage
 
-HTTP Authorization request header contains the credentials to authenticate a Thing. The authorization header can be a plain Thing key or a Thing key encoded as a password for Basic Authentication. In case the Basic Authentication schema is used, the username is ignored. For more information about service capabilities and its usage, please check out the [API documentation](https://api.mainflux.io/?urls.primaryName=http.yml).
+HTTP Authorization request header contains the credentials to authenticate a Thing. The authorization header can be a plain Thing key or a Thing key encoded as a password for Basic Authentication. In case the Basic Authentication schema is used, the username is ignored. For more information about service capabilities and its usage, please check out the [API documentation](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=http.yml).

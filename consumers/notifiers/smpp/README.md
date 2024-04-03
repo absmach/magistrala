@@ -47,4 +47,5 @@ default values.
 
 Starting service will start consuming messages and sending SMS when a message is received.
 
-[doc]: http://mainflux.readthedocs.io
+[doc]: https://docs.magistrala.abstractmachines.fr
+

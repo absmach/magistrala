@@ -87,10 +87,10 @@ docker-compose -f docker/addons/mongodb-reader/docker-compose.yml up -d
 
 ## Usage
 
-Service exposes [HTTP API](https://api.mainflux.io/?urls.primaryName=readers-openapi.yml) for fetching messages.
+Service exposes [HTTP API](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=readers-openapi.yml) for fetching messages.
 
 ```
 Note: MongoDB Reader doesn't support searching substrings from string_value, due to inefficient searching as the current data model is not suitable for this type of queries.
 ```
 
-[doc]: https://docs.mainflux.io
+[doc]: https://docs.magistrala.abstractmachines.fr

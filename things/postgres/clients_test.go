@@ -27,7 +27,7 @@ var (
 	clientName      = "client name"
 	invalidClientID = "invalidClientID"
 	invalidDomainID = strings.Repeat("m", maxNameSize+10)
-	namesgen        = namegenerator.NewNameGenerator()
+	namesgen        = namegenerator.NewGenerator()
 )
 
 func TestClientsSave(t *testing.T) {

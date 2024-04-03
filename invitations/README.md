@@ -77,4 +77,4 @@ $GOBIN/magistrala-invitation
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out the [API documentation](https://api.mainflux.io/?urls.primaryName=invitations.yml).
+For more information about service capabilities and its usage, please check out the [API documentation](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=invitations.yml).

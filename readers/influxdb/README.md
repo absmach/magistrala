@@ -112,7 +112,7 @@ docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up --env-file
 
 ## Usage
 
-Service exposes [HTTP API](https://api.mainflux.io/?urls.primaryName=readers-openapi.yml) for fetching messages.
+Service exposes [HTTP API](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=readers-openapi.yml) for fetching messages.
 
 Comparator Usage Guide:
 | Comparator | Usage | Example |  
@@ -123,4 +123,4 @@ Comparator Usage Guide:
 | le | Return values that are superstrings of the query | le["active"] -> "tiv" |  
 | lt | Return values that are superstrings of the query and not equal to the query | lt["active"] -> "active" and "tiv" |
 
-Official docs can be found [here](https://docs.mainflux.io).
+Official docs can be found [here](https://docs.magistrala.abstractmachines.fr).

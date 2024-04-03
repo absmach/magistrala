@@ -27,7 +27,7 @@ import (
 var (
 	password    = "$tr0ngPassw0rd"
 	emailSuffix = "@example.com"
-	namegen     = namegenerator.NewNameGenerator()
+	namegen     = namegenerator.NewGenerator()
 )
 
 func TestRetrieveByID(t *testing.T) {
@@ -150,7 +150,7 @@ func TestRetrieveAll(t *testing.T) {
 				Identity: namegen.Generate() + emailSuffix,
 				Secret:   password,
 			},
-			Tags: namegen.GenerateNames(5),
+			Tags: namegen.GenerateMultiple(5),
 			Metadata: mgclients.Metadata{
 				"department": namegen.Generate(),
 			},
@@ -683,7 +683,7 @@ func TestRetrieveByIDs(t *testing.T) {
 				Identity: name + emailSuffix,
 				Secret:   password,
 			},
-			Tags:      namegen.GenerateNames(5),
+			Tags:      namegen.GenerateMultiple(5),
 			Metadata:  map[string]interface{}{"name": name},
 			CreatedAt: time.Now().UTC().Truncate(time.Millisecond),
 			Status:    clients.EnabledStatus,
@@ -1501,7 +1501,7 @@ func TestUpdateTags(t *testing.T) {
 			desc: "for enabled client",
 			client: mgclients.Client{
 				ID:   client1.ID,
-				Tags: namegen.GenerateNames(5),
+				Tags: namegen.GenerateMultiple(5),
 			},
 			err: nil,
 		},
@@ -1509,7 +1509,7 @@ func TestUpdateTags(t *testing.T) {
 			desc: "for disabled client",
 			client: mgclients.Client{
 				ID:   client2.ID,
-				Tags: namegen.GenerateNames(5),
+				Tags: namegen.GenerateMultiple(5),
 			},
 			err: repoerr.ErrNotFound,
 		},
@@ -1517,7 +1517,7 @@ func TestUpdateTags(t *testing.T) {
 			desc: "for invalid client",
 			client: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
-				Tags: namegen.GenerateNames(5),
+				Tags: namegen.GenerateMultiple(5),
 			},
 			err: repoerr.ErrNotFound,
 		},
@@ -1825,7 +1825,7 @@ func generateClient(t *testing.T, status mgclients.Status, role mgclients.Role, 
 			Identity: namegen.Generate() + emailSuffix,
 			Secret:   password,
 		},
-		Tags: namegen.GenerateNames(5),
+		Tags: namegen.GenerateMultiple(5),
 		Metadata: mgclients.Metadata{
 			"name": namegen.Generate(),
 		},

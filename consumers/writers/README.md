@@ -12,5 +12,5 @@ the [Docker Compose][compose] file.
 For an in-depth explanation of the usage of `writers`, as well as thorough
 understanding of Magistrala, please check out the [official documentation][doc].
 
-[doc]: https://docs.mainflux.io
+[doc]: https://docs.magistrala.abstractmachines.fr
 [compose]: ../docker/docker-compose.yml

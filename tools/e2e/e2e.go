@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	namesgenerator = namegenerator.NewNameGenerator()
+	namesgenerator = namegenerator.NewGenerator()
 	msgFormat      = `[{"bn":"demo", "bu":"V", "t": %d, "bver":5, "n":"voltage", "u":"V", "v":%d}]`
 )
 

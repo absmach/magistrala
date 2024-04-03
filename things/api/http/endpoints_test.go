@@ -48,7 +48,7 @@ var (
 	inValidToken = "invalid"
 	inValid      = "invalid"
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
-	namesgen     = namegenerator.NewNameGenerator()
+	namesgen     = namegenerator.NewGenerator()
 )
 
 const contentType = "application/json"

@@ -15,7 +15,7 @@ make
 ```
 ./provision --help
 Tool for provisioning series of Magistrala channels and things and connecting them together.
-Complete documentation is available at https://docs.mainflux.io
+Complete documentation is available at https://docs.magistrala.abstractmachines.fr
 
 Usage:
   provision [flags]

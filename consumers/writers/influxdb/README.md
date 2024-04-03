@@ -102,4 +102,4 @@ _Please note that you need to start core services before the additional ones._
 
 Starting service will start consuming normalized messages in SenML format.
 
-Official docs can be found [here](https://docs.mainflux.io).
+Official docs can be found [here](https://docs.magistrala.abstractmachines.fr).

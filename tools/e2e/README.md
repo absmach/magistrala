@@ -13,11 +13,11 @@ make
 
 ```bash
 ./e2e --help
-Tool for testing end-to-end flow of mainflux by doing a couple of operations namely:
+Tool for testing end-to-end flow of Magistrala by doing a couple of operations namely:
 1. Creating, viewing, updating and changing status of users, groups, things and channels.
 2. Connecting users and groups to each other and things and channels to each other.
 3. Sending messages from things to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).
-Complete documentation is available at https://docs.mainflux.io
+Complete documentation is available at https://docs.magistrala.abstractmachines.fr
 
 
 Usage:
@@ -28,7 +28,7 @@ Usage:
 Examples:
 
 Here is a simple example of using e2e tool.
-Use the following commands from the root mainflux directory:
+Use the following commands from the root Magistrala directory:
 
 go run tools/e2e/cmd/main.go
 go run tools/e2e/cmd/main.go --host 142.93.118.47
@@ -38,7 +38,7 @@ go run tools/e2e/cmd/main.go --host localhost --num 10 --num_of_messages 100 --p
 Flags:
 
   -h, --help                   help for e2e
-  -H, --host string            address for a running mainflux instance (default "localhost")
+  -H, --host string            address for a running Magistrala instance (default "localhost")
   -n, --num uint               number of users, groups, channels and things to create and connect (default 10)
   -N, --num_of_messages uint   number of messages to send (default 10)
   -p, --prefix string          name prefix for users, groups, things and channels

@@ -127,4 +127,4 @@ Setting `MG_AUTH_GRPC_CLIENT_CERT` and `MG_AUTH_GRPC_CLIENT_KEY` will enable TLS
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out the [Certs section](https://docs.mainflux.io/certs/).
+For more information about service capabilities and its usage, please check out the [Certs section](https://docs.magistrala.abstractmachines.fr/certs/).

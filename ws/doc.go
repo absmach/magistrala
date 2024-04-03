@@ -11,5 +11,5 @@
 // clients and servers.
 //
 // For more details about Magistrala messaging and WebSocket adapter service,
-// please refer to the documentation at https://docs.mainflux.io/messaging/#websocket.
+// please refer to the documentation at https://docs.magistrala.abstractmachines.fr/messaging/#websocket.
 package ws

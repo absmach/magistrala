@@ -48,4 +48,4 @@ default values.
 
 Starting service will start consuming messages and sending emails when a message is received.
 
-[doc]: https://docs.mainflux.io
+[doc]: https://docs.magistrala.abstractmachines.fr

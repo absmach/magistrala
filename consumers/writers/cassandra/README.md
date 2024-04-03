@@ -78,4 +78,4 @@ execute following command:
 
 Starting service will start consuming normalized messages in SenML format.
 
-[doc]: https://docs.mainflux.io
+[doc]: https://docs.magistrala.abstractmachines.fr

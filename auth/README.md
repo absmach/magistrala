@@ -154,6 +154,6 @@ Setting `MG_AUTH_GRPC_SERVER_CERT` and `MG_AUTH_GRPC_SERVER_KEY` will enable TLS
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out the [API documentation](https://api.mainflux.io/?urls.primaryName=auth.yml).
+For more information about service capabilities and its usage, please check out the [API documentation](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=auth.yml).
 
-[doc]: https://docs.mainflux.io
+[doc]: https://docs.magistrala.abstractmachines.fr

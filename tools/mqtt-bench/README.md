@@ -21,7 +21,7 @@ The tool supports multiple concurrent clients, publishers and subscribers config
 ```
 ./mqtt-bench --help
 Tool for extensive load and benchmarking of MQTT brokers used within Magistrala platform.
-Complete documentation is available at https://docs.mainflux.io
+Complete documentation is available at https://docs.magistrala.abstractmachines.fr
 
 Usage:
   mqtt-bench [flags]

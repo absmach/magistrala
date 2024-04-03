@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	namegen    = namegenerator.NewNameGenerator()
+	namegen    = namegenerator.NewGenerator()
 	invalidID  = strings.Repeat("a", 37)
 	validGroup = mggroups.Group{
 		ID:          testsutil.GenerateUUID(&testing.T{}),

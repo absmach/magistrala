@@ -24,7 +24,7 @@ func main() {
 			"1. Creating, viewing, updating and changing status of users, groups, things and channels.\n" +
 			"2. Connecting users and groups to each other and things and channels to each other.\n" +
 			"3. Sending messages from things to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).\n" +
-			"Complete documentation is available at https://docs.mainflux.io",
+			"Complete documentation is available at https://docs.magistrala.abstractmachines.fr",
 		Example: "Here is a simple example of using e2e tool.\n" +
 			"Use the following commands from the root magistrala directory:\n\n" +
 			"go run tools/e2e/cmd/main.go\n" +

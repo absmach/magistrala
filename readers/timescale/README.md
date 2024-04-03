@@ -96,4 +96,4 @@ Comparator Usage Guide:
 | le | Return values that are superstrings of the query | le["active"] -> "tiv" |  
 | lt | Return values that are superstrings of the query and not equal to the query | lt["active"] -> "active" and "tiv" |
 
-Official docs can be found [here](https://docs.mainflux.io).
+Official docs can be found [here](https://docs.magistrala.abstractmachines.fr).

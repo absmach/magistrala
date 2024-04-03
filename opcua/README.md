@@ -74,4 +74,4 @@ docker-compose -f docker/addons/opcua-adapter/docker-compose.yml up -d
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out the [Magistrala documentation](https://docs.mainflux.io/opcua).
+For more information about service capabilities and its usage, please check out the [Magistrala documentation](https://docs.magistrala.abstractmachines.fr/opcua).

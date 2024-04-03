@@ -28,4 +28,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: swagger-ui
-          cname: api.mainflux.io
+          cname: docs.api.magistrala.abstractmachines.fr

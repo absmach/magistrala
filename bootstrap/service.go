@@ -325,6 +325,10 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 				ThingID:   cfg.ThingID,
 			}
 			if err := bs.sdk.Connect(conIDs, token); err != nil {
+				// Ignore conflict errors as they indicate the connection already exists.
+				if errors.Contains(err, svcerr.ErrConflict) {
+					continue
+				}
 				return ErrThings
 			}
 		}

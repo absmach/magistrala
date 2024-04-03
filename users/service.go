@@ -19,17 +19,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	// ErrAddPolicies indictaed a failre to add policies.
-	errAddPolicies = errors.New("failed to add policies")
-
-	// ErrIssueToken indicates a failure to issue token.
-	ErrIssueToken = errors.New("failed to issue token")
-
-	// errDeletePolicies indictaed a failre to add policies.
-	errDeletePolicies = errors.New("failed to delete policies")
-)
-
 type service struct {
 	clients      postgres.Repository
 	idProvider   magistrala.IDProvider
@@ -90,7 +79,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	defer func() {
 		if err != nil {
 			if errRollback := svc.addClientPolicyRollback(ctx, cli.ID, cli.Role); errRollback != nil {
-				err = errors.Wrap(err, errors.Wrap(repoerr.ErrRollbackTx, errRollback))
+				err = errors.Wrap(errors.Wrap(repoerr.ErrRollbackTx, errRollback), err)
 			}
 		}
 	}()
@@ -104,7 +93,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	dbUser, err := svc.clients.RetrieveByIdentity(ctx, identity)
 	if err != nil {
-		return &magistrala.Token{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
 		return &magistrala.Token{}, errors.Wrap(svcerr.ErrLogin, err)
@@ -139,7 +128,7 @@ func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.
 
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	client.Credentials.Secret = ""
 
@@ -153,7 +142,7 @@ func (svc service) ViewProfile(ctx context.Context, token string) (mgclients.Cli
 	}
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	client.Credentials.Secret = ""
 
@@ -168,7 +157,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	if err := svc.checkSuperAdmin(ctx, userID); err == nil {
 		pg, err := svc.clients.RetrieveAll(ctx, pm)
 		if err != nil {
-			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 		}
 		return pg, err
 	}
@@ -183,7 +172,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	}
 	pg, err := svc.clients.RetrieveAll(ctx, p)
 	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return pg, nil
 }
@@ -292,7 +281,7 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 	}
 	c, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return errors.Wrap(repoerr.ErrNotFound, err)
+		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if c.Credentials.Identity == "" {
 		return repoerr.ErrNotFound
@@ -322,10 +311,10 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if _, err := svc.IssueToken(ctx, dbClient.Credentials.Identity, oldSecret, ""); err != nil {
-		return mgclients.Client{}, errors.Wrap(ErrIssueToken, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrIssueToken, err)
 	}
 	newSecret, err = svc.hasher.Hash(newSecret)
 	if err != nil {
@@ -416,7 +405,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 	if dbClient.Status == client.Status {
 		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned
@@ -461,7 +450,7 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 		ObjectType:  objectType,
 	})
 	if err != nil {
-		return mgclients.MembersPage{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 	if len(duids.Policies) == 0 {
 		return mgclients.MembersPage{
@@ -479,7 +468,7 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 
 	cp, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
-		return mgclients.MembersPage{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	if pm.ListPerms && len(cp.Clients) > 0 {
@@ -629,7 +618,7 @@ func (svc service) addClientPolicy(ctx context.Context, userID string, role mgcl
 	}
 	resp, err := svc.auth.AddPolicies(ctx, &policies)
 	if err != nil {
-		return err
+		return errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 	if !resp.Added {
 		return svcerr.ErrAuthorization
@@ -659,7 +648,7 @@ func (svc service) addClientPolicyRollback(ctx context.Context, userID string, r
 	}
 	resp, err := svc.auth.DeletePolicies(ctx, &policies)
 	if err != nil {
-		return err
+		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
 	if !resp.Deleted {
 		return svcerr.ErrAuthorization
@@ -678,10 +667,10 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 			Object:      auth.MagistralaObject,
 		})
 		if err != nil {
-			return errors.Wrap(errAddPolicies, err)
+			return errors.Wrap(svcerr.ErrAddPolicies, err)
 		}
 		if !resp.Added {
-			return errors.Wrap(svcerr.ErrAuthorization, err)
+			return svcerr.ErrAuthorization
 		}
 		return nil
 	case mgclients.UserRole:
@@ -695,10 +684,10 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 			Object:      auth.MagistralaObject,
 		})
 		if err != nil {
-			return errors.Wrap(errDeletePolicies, err)
+			return errors.Wrap(svcerr.ErrDeletePolicies, err)
 		}
 		if !resp.Deleted {
-			return errors.Wrap(errDeletePolicies, err)
+			return svcerr.ErrAuthorization
 		}
 		return nil
 	}

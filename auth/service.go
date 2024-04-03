@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
@@ -670,7 +669,7 @@ func (svc service) ListDomains(ctx context.Context, token string, p Page) (Domai
 	}
 	dp, err := svc.domains.ListDomains(ctx, p)
 	if err != nil {
-		return DomainsPage{}, postgres.HandleError(svcerr.ErrViewEntity, err)
+		return DomainsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if p.SubjectID == "" {
 		for i := range dp.Domains {

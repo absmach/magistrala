@@ -61,6 +61,9 @@ var (
 	// ErrDeletePolicies indicates failed to delete policies.
 	ErrDeletePolicies = errors.New("failed to delete policies")
 
+	// ErrIssueToken indicates a failure to issue token.
+	ErrIssueToken = errors.New("failed to issue token")
+
 	// ErrPasswordFormat indicates weak password.
 	ErrPasswordFormat = errors.New("password does not meet the requirements")
 

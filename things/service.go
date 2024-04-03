@@ -202,7 +202,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 
 	tp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
 	if err != nil {
-		return mgclients.ClientsPage{}, err
+		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	if pm.ListPerms && len(tp.Clients) > 0 {
@@ -542,7 +542,7 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 
 	cp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
 	if err != nil {
-		return mgclients.MembersPage{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	if pm.ListPerms && len(cp.Clients) > 0 {

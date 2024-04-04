@@ -274,7 +274,7 @@ func (svc service) DeletePolicies(ctx context.Context, prs []PolicyReq) error {
 	return svc.agent.DeletePolicies(ctx, prs)
 }
 
-func (svc service) ListObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit int32) (PolicyPage, error) {
+func (svc service) ListObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error) {
 	if limit <= 0 {
 		limit = 100
 	}
@@ -302,11 +302,11 @@ func (svc service) ListAllObjects(ctx context.Context, pr PolicyReq) (PolicyPage
 	return page, nil
 }
 
-func (svc service) CountObjects(ctx context.Context, pr PolicyReq) (int, error) {
+func (svc service) CountObjects(ctx context.Context, pr PolicyReq) (uint64, error) {
 	return svc.agent.RetrieveAllObjectsCount(ctx, pr)
 }
 
-func (svc service) ListSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit int32) (PolicyPage, error) {
+func (svc service) ListSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error) {
 	if limit <= 0 {
 		limit = 100
 	}
@@ -334,7 +334,7 @@ func (svc service) ListAllSubjects(ctx context.Context, pr PolicyReq) (PolicyPag
 	return page, nil
 }
 
-func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (int, error) {
+func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (uint64, error) {
 	return svc.agent.RetrieveAllSubjectsCount(ctx, pr)
 }
 

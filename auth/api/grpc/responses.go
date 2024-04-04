@@ -41,7 +41,7 @@ type listObjectsRes struct {
 }
 
 type countObjectsRes struct {
-	count int
+	count uint64
 }
 
 type listSubjectsRes struct {
@@ -50,7 +50,7 @@ type listSubjectsRes struct {
 }
 
 type countSubjectsRes struct {
-	count int
+	count uint64
 }
 
 type listPermissionsRes struct {

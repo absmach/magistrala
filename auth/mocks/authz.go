@@ -72,22 +72,22 @@ func (_m *Authz) Authorize(ctx context.Context, pr auth.PolicyReq) error {
 }
 
 // CountObjects provides a mock function with given fields: ctx, pr
-func (_m *Authz) CountObjects(ctx context.Context, pr auth.PolicyReq) (int, error) {
+func (_m *Authz) CountObjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CountObjects")
 	}
 
-	var r0 int
+	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (uint64, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) uint64); ok {
 		r0 = rf(ctx, pr)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Get(0).(uint64)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq) error); ok {
@@ -100,22 +100,22 @@ func (_m *Authz) CountObjects(ctx context.Context, pr auth.PolicyReq) (int, erro
 }
 
 // CountSubjects provides a mock function with given fields: ctx, pr
-func (_m *Authz) CountSubjects(ctx context.Context, pr auth.PolicyReq) (int, error) {
+func (_m *Authz) CountSubjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CountSubjects")
 	}
 
-	var r0 int
+	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (uint64, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) uint64); ok {
 		r0 = rf(ctx, pr)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Get(0).(uint64)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq) error); ok {
@@ -220,7 +220,7 @@ func (_m *Authz) ListAllSubjects(ctx context.Context, pr auth.PolicyReq) (auth.P
 }
 
 // ListObjects provides a mock function with given fields: ctx, pr, nextPageToken, limit
-func (_m *Authz) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) (auth.PolicyPage, error) {
+func (_m *Authz) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
 	ret := _m.Called(ctx, pr, nextPageToken, limit)
 
 	if len(ret) == 0 {
@@ -229,16 +229,16 @@ func (_m *Authz) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageTok
 
 	var r0 auth.PolicyPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) (auth.PolicyPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) (auth.PolicyPage, error)); ok {
 		return rf(ctx, pr, nextPageToken, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) auth.PolicyPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) auth.PolicyPage); ok {
 		r0 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r0 = ret.Get(0).(auth.PolicyPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, int32) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, uint64) error); ok {
 		r1 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r1 = ret.Error(1)
@@ -278,7 +278,7 @@ func (_m *Authz) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterP
 }
 
 // ListSubjects provides a mock function with given fields: ctx, pr, nextPageToken, limit
-func (_m *Authz) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) (auth.PolicyPage, error) {
+func (_m *Authz) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
 	ret := _m.Called(ctx, pr, nextPageToken, limit)
 
 	if len(ret) == 0 {
@@ -287,16 +287,16 @@ func (_m *Authz) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageTo
 
 	var r0 auth.PolicyPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) (auth.PolicyPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) (auth.PolicyPage, error)); ok {
 		return rf(ctx, pr, nextPageToken, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) auth.PolicyPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) auth.PolicyPage); ok {
 		r0 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r0 = ret.Get(0).(auth.PolicyPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, int32) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, uint64) error); ok {
 		r1 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r1 = ret.Error(1)

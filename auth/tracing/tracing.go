@@ -118,7 +118,7 @@ func (tm *tracingMiddleware) DeletePolicies(ctx context.Context, prs []auth.Poli
 	return tm.svc.DeletePolicies(ctx, prs)
 }
 
-func (tm *tracingMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) (auth.PolicyPage, error) {
+func (tm *tracingMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "list_objects", trace.WithAttributes(
 		attribute.String("subject", pr.Subject),
 		attribute.String("subject_type", pr.SubjectType),
@@ -150,7 +150,7 @@ func (tm *tracingMiddleware) ListAllObjects(ctx context.Context, pr auth.PolicyR
 	return tm.svc.ListAllObjects(ctx, pr)
 }
 
-func (tm *tracingMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq) (int, error) {
+func (tm *tracingMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
 	ctx, span := tm.tracer.Start(ctx, "count_objects", trace.WithAttributes(
 		attribute.String("subject", pr.Subject),
 		attribute.String("subject_type", pr.SubjectType),
@@ -166,7 +166,7 @@ func (tm *tracingMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq
 	return tm.svc.CountObjects(ctx, pr)
 }
 
-func (tm *tracingMiddleware) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) (auth.PolicyPage, error) {
+func (tm *tracingMiddleware) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "list_subjects", trace.WithAttributes(
 		attribute.String("subject", pr.Subject),
 		attribute.String("subject_type", pr.SubjectType),
@@ -198,7 +198,7 @@ func (tm *tracingMiddleware) ListAllSubjects(ctx context.Context, pr auth.Policy
 	return tm.svc.ListAllSubjects(ctx, pr)
 }
 
-func (tm *tracingMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyReq) (int, error) {
+func (tm *tracingMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
 	ctx, span := tm.tracer.Start(ctx, "count_subjects", trace.WithAttributes(
 		attribute.String("subject", pr.Subject),
 		attribute.String("subject_type", pr.SubjectType),

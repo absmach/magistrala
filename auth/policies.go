@@ -149,22 +149,22 @@ type Authz interface {
 	DeletePolicies(ctx context.Context, prs []PolicyReq) error
 
 	// ListObjects lists policies based on the given PolicyReq structure.
-	ListObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit int32) (PolicyPage, error)
+	ListObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error)
 
 	// ListAllObjects lists all policies based on the given PolicyReq structure.
 	ListAllObjects(ctx context.Context, pr PolicyReq) (PolicyPage, error)
 
 	// CountPolicies count policies based on the given PolicyReq structure.
-	CountObjects(ctx context.Context, pr PolicyReq) (int, error)
+	CountObjects(ctx context.Context, pr PolicyReq) (uint64, error)
 
 	// ListSubjects lists subjects based on the given PolicyReq structure.
-	ListSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit int32) (PolicyPage, error)
+	ListSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error)
 
 	// ListAllSubjects lists all subjects based on the given PolicyReq structure.
 	ListAllSubjects(ctx context.Context, pr PolicyReq) (PolicyPage, error)
 
 	// CountSubjects count policies based on the given PolicyReq structure.
-	CountSubjects(ctx context.Context, pr PolicyReq) (int, error)
+	CountSubjects(ctx context.Context, pr PolicyReq) (uint64, error)
 
 	// ListPermissions lists permission betweeen given subject and object .
 	ListPermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)
@@ -196,22 +196,22 @@ type PolicyAgent interface {
 	DeletePolicies(ctx context.Context, pr []PolicyReq) error
 
 	// RetrieveObjects
-	RetrieveObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit int32) ([]PolicyRes, string, error)
+	RetrieveObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) ([]PolicyRes, string, error)
 
 	// RetrieveAllObjects
 	RetrieveAllObjects(ctx context.Context, pr PolicyReq) ([]PolicyRes, error)
 
 	// RetrieveAllObjectsCount
-	RetrieveAllObjectsCount(ctx context.Context, pr PolicyReq) (int, error)
+	RetrieveAllObjectsCount(ctx context.Context, pr PolicyReq) (uint64, error)
 
 	// RetrieveSubjects
-	RetrieveSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit int32) ([]PolicyRes, string, error)
+	RetrieveSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) ([]PolicyRes, string, error)
 
 	// RetrieveAllSubjects
 	RetrieveAllSubjects(ctx context.Context, pr PolicyReq) ([]PolicyRes, error)
 
 	// RetrieveAllSubjectsCount
-	RetrieveAllSubjectsCount(ctx context.Context, pr PolicyReq) (int, error)
+	RetrieveAllSubjectsCount(ctx context.Context, pr PolicyReq) (uint64, error)
 
 	// (ctx context.Context, pr PolicyReq, filterPermissions []string) ([]PolicyReq, error)
 	RetrievePermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)

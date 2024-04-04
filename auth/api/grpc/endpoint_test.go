@@ -715,7 +715,7 @@ func TestCountObects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("CountObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(int(tc.countObjectsRes.Count), tc.err)
+		repoCall := svc.On("CountObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.countObjectsRes.Count, tc.err)
 		apr, err := client.CountObjects(context.Background(), tc.countObjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.countObjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.countObjectsRes, apr))
@@ -868,7 +868,7 @@ func TestCountSubjects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("CountSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(int(tc.countSubjectsRes.Count), tc.err)
+		repoCall := svc.On("CountSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.countSubjectsRes.Count, tc.err)
 		apr, err := client.CountSubjects(context.Background(), tc.countSubjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.countSubjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.countSubjectsRes, apr))

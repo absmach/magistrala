@@ -447,7 +447,7 @@ func decodeCountObjectsRequest(_ context.Context, grpcReq interface{}) (interfac
 
 func encodeCountObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(countObjectsRes)
-	return &magistrala.CountObjectsRes{Count: int64(res.count)}, nil
+	return &magistrala.CountObjectsRes{Count: res.count}, nil
 }
 
 func decodeListSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -483,7 +483,7 @@ func decodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interfa
 
 func encodeCountSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(countSubjectsRes)
-	return &magistrala.CountSubjectsRes{Count: int64(res.count)}, nil
+	return &magistrala.CountSubjectsRes{Count: res.count}, nil
 }
 
 func decodeListPermissionsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

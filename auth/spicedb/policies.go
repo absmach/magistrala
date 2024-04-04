@@ -175,7 +175,7 @@ func (pa *policyAgent) DeletePolicy(ctx context.Context, pr auth.PolicyReq) erro
 }
 
 // RetrieveObjects - Listing of things.
-func (pa *policyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) ([]auth.PolicyRes, string, error) {
+func (pa *policyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) ([]auth.PolicyRes, string, error) {
 	resourceReq := &v1.LookupResourcesRequest{
 		Consistency: &v1.Consistency{
 			Requirement: &v1.Consistency_FullyConsistent{
@@ -244,15 +244,15 @@ func (pa *policyAgent) RetrieveAllObjects(ctx context.Context, pr auth.PolicyReq
 	}
 }
 
-func (pa *policyAgent) RetrieveAllObjectsCount(ctx context.Context, pr auth.PolicyReq) (int, error) {
-	var count int
+func (pa *policyAgent) RetrieveAllObjectsCount(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
+	var count uint64
 	nextPageToken := ""
 	for {
 		relationTuples, npt, err := pa.RetrieveObjects(ctx, pr, nextPageToken, defRetrieveAllLimit)
 		if err != nil {
 			return count, err
 		}
-		count = count + len(relationTuples)
+		count = count + uint64(len(relationTuples))
 		if npt == "" {
 			break
 		}
@@ -261,7 +261,7 @@ func (pa *policyAgent) RetrieveAllObjectsCount(ctx context.Context, pr auth.Poli
 	return count, nil
 }
 
-func (pa *policyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) ([]auth.PolicyRes, string, error) {
+func (pa *policyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) ([]auth.PolicyRes, string, error) {
 	subjectsReq := v1.LookupSubjectsRequest{
 		Consistency: &v1.Consistency{
 			Requirement: &v1.Consistency_FullyConsistent{
@@ -321,15 +321,15 @@ func (pa *policyAgent) RetrieveAllSubjects(ctx context.Context, pr auth.PolicyRe
 	return tuples, nil
 }
 
-func (pa *policyAgent) RetrieveAllSubjectsCount(ctx context.Context, pr auth.PolicyReq) (int, error) {
-	var count int
+func (pa *policyAgent) RetrieveAllSubjectsCount(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
+	var count uint64
 	nextPageToken := ""
 	for {
 		relationTuples, npt, err := pa.RetrieveSubjects(ctx, pr, nextPageToken, defRetrieveAllLimit)
 		if err != nil {
 			return count, err
 		}
-		count = count + len(relationTuples)
+		count = count + uint64(len(relationTuples))
 		if npt == "" {
 			break
 		}

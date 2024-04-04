@@ -138,22 +138,22 @@ func (_m *PolicyAgent) RetrieveAllObjects(ctx context.Context, pr auth.PolicyReq
 }
 
 // RetrieveAllObjectsCount provides a mock function with given fields: ctx, pr
-func (_m *PolicyAgent) RetrieveAllObjectsCount(ctx context.Context, pr auth.PolicyReq) (int, error) {
+func (_m *PolicyAgent) RetrieveAllObjectsCount(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAllObjectsCount")
 	}
 
-	var r0 int
+	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (uint64, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) uint64); ok {
 		r0 = rf(ctx, pr)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Get(0).(uint64)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq) error); ok {
@@ -196,22 +196,22 @@ func (_m *PolicyAgent) RetrieveAllSubjects(ctx context.Context, pr auth.PolicyRe
 }
 
 // RetrieveAllSubjectsCount provides a mock function with given fields: ctx, pr
-func (_m *PolicyAgent) RetrieveAllSubjectsCount(ctx context.Context, pr auth.PolicyReq) (int, error) {
+func (_m *PolicyAgent) RetrieveAllSubjectsCount(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAllSubjectsCount")
 	}
 
-	var r0 int
+	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) (uint64, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq) uint64); ok {
 		r0 = rf(ctx, pr)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Get(0).(uint64)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq) error); ok {
@@ -224,7 +224,7 @@ func (_m *PolicyAgent) RetrieveAllSubjectsCount(ctx context.Context, pr auth.Pol
 }
 
 // RetrieveObjects provides a mock function with given fields: ctx, pr, nextPageToken, limit
-func (_m *PolicyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) ([]auth.PolicyRes, string, error) {
+func (_m *PolicyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) ([]auth.PolicyRes, string, error) {
 	ret := _m.Called(ctx, pr, nextPageToken, limit)
 
 	if len(ret) == 0 {
@@ -234,10 +234,10 @@ func (_m *PolicyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, n
 	var r0 []auth.PolicyRes
 	var r1 string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) ([]auth.PolicyRes, string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) ([]auth.PolicyRes, string, error)); ok {
 		return rf(ctx, pr, nextPageToken, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) []auth.PolicyRes); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) []auth.PolicyRes); ok {
 		r0 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		if ret.Get(0) != nil {
@@ -245,13 +245,13 @@ func (_m *PolicyAgent) RetrieveObjects(ctx context.Context, pr auth.PolicyReq, n
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, int32) string); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, uint64) string); ok {
 		r1 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, auth.PolicyReq, string, int32) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, auth.PolicyReq, string, uint64) error); ok {
 		r2 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r2 = ret.Error(2)
@@ -291,7 +291,7 @@ func (_m *PolicyAgent) RetrievePermissions(ctx context.Context, pr auth.PolicyRe
 }
 
 // RetrieveSubjects provides a mock function with given fields: ctx, pr, nextPageToken, limit
-func (_m *PolicyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) ([]auth.PolicyRes, string, error) {
+func (_m *PolicyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) ([]auth.PolicyRes, string, error) {
 	ret := _m.Called(ctx, pr, nextPageToken, limit)
 
 	if len(ret) == 0 {
@@ -301,10 +301,10 @@ func (_m *PolicyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, 
 	var r0 []auth.PolicyRes
 	var r1 string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) ([]auth.PolicyRes, string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) ([]auth.PolicyRes, string, error)); ok {
 		return rf(ctx, pr, nextPageToken, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, int32) []auth.PolicyRes); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.PolicyReq, string, uint64) []auth.PolicyRes); ok {
 		r0 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		if ret.Get(0) != nil {
@@ -312,13 +312,13 @@ func (_m *PolicyAgent) RetrieveSubjects(ctx context.Context, pr auth.PolicyReq, 
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, int32) string); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, auth.PolicyReq, string, uint64) string); ok {
 		r1 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, auth.PolicyReq, string, int32) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, auth.PolicyReq, string, uint64) error); ok {
 		r2 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r2 = ret.Error(2)

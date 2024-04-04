@@ -112,7 +112,7 @@ type listObjectsReq struct {
 	ObjectType    string
 	Object        string
 	NextPageToken string
-	Limit         int32
+	Limit         uint64
 }
 
 type countObjectsReq struct {
@@ -135,7 +135,7 @@ type listSubjectsReq struct {
 	ObjectType    string
 	Object        string
 	NextPageToken string
-	Limit         int32
+	Limit         uint64
 }
 
 type countSubjectsReq struct {

@@ -1302,7 +1302,7 @@ func TestListObjects(t *testing.T) {
 		desc          string
 		pr            auth.PolicyReq
 		nextPageToken string
-		limit         int32
+		limit         uint64
 		err           error
 	}{
 		{
@@ -1332,20 +1332,6 @@ func TestListObjects(t *testing.T) {
 			nextPageToken: accessToken,
 			limit:         10,
 			err:           svcerr.ErrInvalidPolicy,
-		},
-		{
-			desc: "list objects with limit less than zero",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ViewerRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         -1,
-			err:           nil,
 		},
 	}
 	for _, tc := range cases {
@@ -1415,7 +1401,7 @@ func TestListAllObjects(t *testing.T) {
 func TestCountObjects(t *testing.T) {
 	svc, _ := newService()
 
-	pageLen := 15
+	pageLen := uint64(15)
 
 	repocall2 := prepo.On("RetrieveAllObjectsCount", mock.Anything, mock.Anything, mock.Anything).Return(pageLen, nil)
 	count, err := svc.CountObjects(context.Background(), auth.PolicyReq{Subject: id, SubjectType: auth.UserType, ObjectType: auth.ThingType, Permission: auth.ViewPermission})
@@ -1434,7 +1420,7 @@ func TestListSubjects(t *testing.T) {
 		desc          string
 		pr            auth.PolicyReq
 		nextPageToken string
-		limit         int32
+		limit         uint64
 		err           error
 	}{
 		{
@@ -1464,20 +1450,6 @@ func TestListSubjects(t *testing.T) {
 			nextPageToken: accessToken,
 			limit:         10,
 			err:           svcerr.ErrInvalidPolicy,
-		},
-		{
-			desc: "list subjects with limit less than zero",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ViewerRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         -1,
-			err:           nil,
 		},
 	}
 	for _, tc := range cases {
@@ -1546,7 +1518,7 @@ func TestListAllSubjects(t *testing.T) {
 
 func TestCountSubjects(t *testing.T) {
 	svc, _ := newService()
-	pageLen := 15
+	pageLen := uint64(15)
 
 	repocall2 := prepo.On("RetrieveAllSubjectsCount", mock.Anything, mock.Anything, mock.Anything).Return(pageLen, nil)
 	count, err := svc.CountSubjects(context.Background(), auth.PolicyReq{Object: id, ObjectType: auth.ThingType, Permission: auth.ViewPermission})

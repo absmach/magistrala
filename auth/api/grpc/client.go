@@ -555,12 +555,12 @@ func (client grpcClient) CountObjects(ctx context.Context, in *magistrala.CountO
 	}
 
 	cp := res.(countObjectsRes)
-	return &magistrala.CountObjectsRes{Count: int64(cp.count)}, nil
+	return &magistrala.CountObjectsRes{Count: cp.count}, nil
 }
 
 func decodeCountObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*magistrala.CountObjectsRes)
-	return countObjectsRes{count: int(res.GetCount())}, nil
+	return countObjectsRes{count: res.GetCount()}, nil
 }
 
 func encodeCountObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -655,12 +655,12 @@ func (client grpcClient) CountSubjects(ctx context.Context, in *magistrala.Count
 	}
 
 	cp := res.(countSubjectsRes)
-	return &magistrala.CountSubjectsRes{Count: int64(cp.count)}, err
+	return &magistrala.CountSubjectsRes{Count: cp.count}, err
 }
 
 func decodeCountSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*magistrala.CountSubjectsRes)
-	return countSubjectsRes{count: int(res.GetCount())}, nil
+	return countSubjectsRes{count: res.GetCount()}, nil
 }
 
 func encodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

@@ -133,7 +133,7 @@ message ListObjectsReq {
   string object = 7;
   string object_type = 8;
   string nextPageToken = 9;
-  int32 limit = 10;
+  uint64 limit = 10;
 }
 
 message ListObjectsRes {
@@ -153,7 +153,7 @@ message CountObjectsReq {
   string nextPageToken = 9;
 }
 
-message CountObjectsRes { int64 count = 1; }
+message CountObjectsRes { uint64 count = 1; }
 
 message ListSubjectsReq {
   string domain = 1;
@@ -165,7 +165,7 @@ message ListSubjectsReq {
   string object = 7;
   string object_type = 8;
   string nextPageToken = 9;
-  int32 limit = 10;
+  uint64 limit = 10;
 }
 
 message ListSubjectsRes {
@@ -185,7 +185,7 @@ message CountSubjectsReq {
   string nextPageToken = 9;
 }
 
-message CountSubjectsRes { int64 count = 1; }
+message CountSubjectsRes { uint64 count = 1; }
 
 message ListPermissionsReq {
   string domain = 1;

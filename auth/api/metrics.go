@@ -30,7 +30,7 @@ func MetricsMiddleware(svc auth.Service, counter metrics.Counter, latency metric
 	}
 }
 
-func (ms *metricsMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) (p auth.PolicyPage, err error) {
+func (ms *metricsMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (p auth.PolicyPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_objects").Add(1)
 		ms.latency.With("method", "list_objects").Observe(time.Since(begin).Seconds())
@@ -48,7 +48,7 @@ func (ms *metricsMiddleware) ListAllObjects(ctx context.Context, pr auth.PolicyR
 	return ms.svc.ListAllObjects(ctx, pr)
 }
 
-func (ms *metricsMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq) (count int, err error) {
+func (ms *metricsMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq) (count uint64, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "count_objects").Add(1)
 		ms.latency.With("method", "count_objects").Observe(time.Since(begin).Seconds())
@@ -56,7 +56,7 @@ func (ms *metricsMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq
 	return ms.svc.CountObjects(ctx, pr)
 }
 
-func (ms *metricsMiddleware) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit int32) (p auth.PolicyPage, err error) {
+func (ms *metricsMiddleware) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (p auth.PolicyPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_subjects").Add(1)
 		ms.latency.With("method", "list_subjects").Observe(time.Since(begin).Seconds())
@@ -74,7 +74,7 @@ func (ms *metricsMiddleware) ListAllSubjects(ctx context.Context, pr auth.Policy
 	return ms.svc.ListAllSubjects(ctx, pr)
 }
 
-func (ms *metricsMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyReq) (count int, err error) {
+func (ms *metricsMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyReq) (count uint64, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "count_subjects").Add(1)
 		ms.latency.With("method", "count_subjects").Observe(time.Since(begin).Seconds())

@@ -311,7 +311,7 @@ type connectChannelThingRequest struct {
 
 func (req *connectChannelThingRequest) validate() error {
 	if req.ThingID == "" || req.ChannelID == "" {
-		return svcerr.ErrCreateEntity
+		return apiutil.ErrMissingID
 	}
 	return nil
 }
@@ -324,7 +324,7 @@ type disconnectChannelThingRequest struct {
 
 func (req *disconnectChannelThingRequest) validate() error {
 	if req.ThingID == "" || req.ChannelID == "" {
-		return svcerr.ErrCreateEntity
+		return apiutil.ErrMissingID
 	}
 	return nil
 }

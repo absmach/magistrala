@@ -11,11 +11,11 @@ properties:
   version:
     type: string
     description: Service version.
-    example: 0.0.1
+    example: v0.14.0
   commit:
     type: string
     description: Service commit hash.
-    example: 7d6f4dc4f7f0c1fa3dc24eddfb18bb5073ff4f62
+    example: 73362210dd2e04e389eaddb802cab3fe03976593
   description:
     type: string
     description: Service description.
@@ -23,4 +23,8 @@ properties:
   build_time:
     type: string
     description: Service build time.
-    example: 1970-01-01_00:00:00
+    example: 2024-02-01_12:18:15
+  instance_id:
+    type: string
+    description: Service instance ID.
+    example: 8edbf8af-7db7-4218-bb4f-a8a929ff5266

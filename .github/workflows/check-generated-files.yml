@@ -58,6 +58,8 @@ jobs:
               - "pkg/events/events.go"
               - "provision/service.go"
               - "pkg/groups/groups.go"
+              - "bootstrap/service.go"
+              - "bootstrap/configs.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -101,7 +103,7 @@ jobs:
       - name: Check Mocks are up to Date
         if: steps.changes.outputs.mocks == 'true'
         run: |
-          MOCKERY_VERSION=v2.38.0
+          MOCKERY_VERSION=v2.42.1
           go install github.com/vektra/mockery/v2@$MOCKERY_VERSION
 
           mv ./pkg/sdk/mocks/sdk.go ./pkg/sdk/mocks/sdk.go.tmp
@@ -121,6 +123,8 @@ jobs:
           mv ./provision/mocks/service.go ./provision/mocks/service.go.tmp
           mv ./pkg/groups/mocks/repository.go ./pkg/groups/mocks/repository.go.tmp
           mv ./pkg/groups/mocks/service.go ./pkg/groups/mocks/service.go.tmp
+          mv ./bootstrap/mocks/service.go ./bootstrap/mocks/service.go.tmp
+          mv ./bootstrap/mocks/configs.go ./bootstrap/mocks/configs.go.tmp
 
           make mocks
 
@@ -153,3 +157,5 @@ jobs:
           check_mock_changes ./provision/mocks/service.go "Provision Service ./provision/mocks/service.go"
           check_mock_changes ./pkg/groups/mocks/repository.go "Groups Repository ./pkg/groups/mocks/repository.go"
           check_mock_changes ./pkg/groups/mocks/service.go "Groups Service ./pkg/groups/mocks/service.go"
+          check_mock_changes ./bootstrap/mocks/service.go "Bootstrap Service ./bootstrap/mocks/service.go"
+          check_mock_changes ./bootstrap/mocks/configs.go "Bootstrap Repository ./bootstrap/mocks/configs.go"

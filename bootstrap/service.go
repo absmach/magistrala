@@ -50,6 +50,8 @@ var _ Service = (*bootstrapService)(nil)
 
 // Service specifies an API that must be fulfilled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
+//
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// Add adds new Thing Config to the user identified by the provided token.
 	Add(ctx context.Context, token string, cfg Config) (Config, error)

@@ -39,8 +39,7 @@ const (
 )
 
 var (
-	encKey = []byte("1234567891011121")
-
+	encKey  = []byte("1234567891011121")
 	channel = bootstrap.Channel{
 		ID:       testsutil.GenerateUUID(&testing.T{}),
 		Name:     "name",
@@ -57,13 +56,13 @@ var (
 	}
 )
 
-func newService() (bootstrap.Service, *authmocks.AuthClient, *sdkmocks.SDK) {
-	things := mocks.NewConfigsRepository()
+func newService() (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthClient, *sdkmocks.SDK) {
+	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 
-	return bootstrap.New(auth, things, sdk, encKey, idp), auth, sdk
+	return bootstrap.New(auth, boot, sdk, encKey, idp), boot, auth, sdk
 }
 
 func enc(in []byte) ([]byte, error) {
@@ -82,7 +81,7 @@ func enc(in []byte) ([]byte, error) {
 }
 
 func TestAdd(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	neID := config
 	neID.ThingID = "non-existent"
 
@@ -127,6 +126,8 @@ func TestAdd(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.err))
 		repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, errors.NewSDKError(tc.err))
+		repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.config.Channels, tc.err)
+		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.err)
 		_, err := svc.Add(context.Background(), tc.token, tc.config)
 		switch err {
 		case nil:
@@ -137,19 +138,25 @@ func TestAdd(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
+		repoCall4.Unset()
 	}
 }
 
 func TestView(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	cases := []struct {
 		desc  string
@@ -179,14 +186,16 @@ func TestView(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall1 := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, tc.err)
 		_, err := svc.View(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
 func TestUpdate(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	c := config
 
 	ch := channel
@@ -196,11 +205,15 @@ func TestUpdate(t *testing.T) {
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, c)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	modifiedCreated := saved
 	modifiedCreated.Content = "new-config"
@@ -237,14 +250,16 @@ func TestUpdate(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repocall1 := boot.On("Update", context.Background(), mock.Anything).Return(tc.err)
 		err := svc.Update(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
+		repocall1.Unset()
 	}
 }
 
 func TestUpdateCert(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	c := config
 
 	ch := channel
@@ -253,11 +268,15 @@ func TestUpdateCert(t *testing.T) {
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, c)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	cases := []struct {
 		desc           string
@@ -316,6 +335,7 @@ func TestUpdateCert(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall1 := boot.On("UpdateCert", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedConfig, tc.err)
 		cfg, err := svc.UpdateCert(context.Background(), tc.token, tc.thingID, tc.clientCert, tc.clientKey, tc.caCert)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		sort.Slice(cfg.Channels, func(i, j int) bool {
@@ -326,39 +346,52 @@ func TestUpdateCert(t *testing.T) {
 		})
 		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
 func TestUpdateConnections(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	c := config
 
 	ch := channel
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toGroup(c.Channels[0]), nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	created, err := svc.Add(context.Background(), validToken, c)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	c.ExternalID = testsutil.GenerateUUID(t)
 	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 = sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 = sdk.On("Channel", mock.Anything, mock.Anything).Return(toGroup(c.Channels[0]), nil)
+	repoCall3 = boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 = boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	active, err := svc.Add(context.Background(), validToken, c)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 	repoCall1 = sdk.On("Connect", mock.Anything, mock.Anything).Return(nil)
+	repoCall2 = boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
+	repoCall3 = boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	err = svc.ChangeState(context.Background(), validToken, active.ThingID, bootstrap.Active)
 	assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
+	repoCall2.Unset()
+	repoCall3.Unset()
 
 	nonExisting := config
 	nonExisting.ThingID = unknown
@@ -411,16 +444,22 @@ func TestUpdateConnections(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 		repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+		repoCall3 := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
+		repoCall4 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+		repoCall5 := boot.On("UpdateConnections", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		err := svc.UpdateConnections(context.Background(), tc.token, tc.id, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
+		repoCall4.Unset()
+		repoCall5.Unset()
 	}
 }
 
 func TestList(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	numThings := 101
 	var saved []bootstrap.Config
 	for i := 0; i < numThings; i++ {
@@ -431,20 +470,28 @@ func TestList(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 		repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: c.ThingID, Credentials: mgsdk.Credentials{Secret: c.ThingKey}}, nil)
 		repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toGroup(c.Channels[0]), nil)
+		repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(c.Channels, nil)
+		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 		s, err := svc.Add(context.Background(), validToken, c)
 		assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
+		repoCall4.Unset()
 		saved = append(saved, s)
 	}
 	// Set one Thing to the different state
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 	repoCall1 := sdk.On("Connect", mock.Anything, mock.Anything).Return(nil)
+	repoCall2 := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
+	repoCall3 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	err := svc.ChangeState(context.Background(), validToken, saved[41].ThingID, bootstrap.Active)
 	assert.Nil(t, err, fmt.Sprintf("Changing config state expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
+	repoCall2.Unset()
+	repoCall3.Unset()
 
 	saved[41].State = bootstrap.Active
 
@@ -526,24 +573,30 @@ func TestList(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall1 := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.config)
 		result, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
 		assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
 		assert.Equal(t, tc.config.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Total, result.Total))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
 func TestRemove(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	cases := []struct {
 		desc  string
@@ -579,22 +632,28 @@ func TestRemove(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		repoCall1 := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
 		err := svc.Remove(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
 func TestBootstrap(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	e, err := enc([]byte(saved.ExternalKey))
 	assert.Nil(t, err, fmt.Sprintf("Encrypting external key expected to succeed: %s.\n", err))
@@ -642,22 +701,28 @@ func TestBootstrap(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(tc.config, tc.err)
 		config, err := svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, tc.encrypted)
 		assert.Equal(t, tc.config, config, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.config, config))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
 	}
 }
 
 func TestChangeState(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toGroup(config.Channels[0]), nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	cases := []struct {
 		desc  string
@@ -707,24 +772,32 @@ func TestChangeState(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := sdk.On("Connect", mock.Anything, mock.Anything).Return(nil)
 		repoCall2 := sdk.On("DisconnectThing", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		repoCall3 := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
+		repoCall4 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
+		repoCall4.Unset()
 	}
 }
 
 func TestUpdateChannelHandler(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	_, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 	ch := bootstrap.Channel{
 		ID:       channel.ID,
 		Name:     "new name",
@@ -749,21 +822,27 @@ func TestUpdateChannelHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := boot.On("UpdateChannel", context.Background(), mock.Anything).Return(tc.err)
 		err := svc.UpdateChannelHandler(context.Background(), tc.channel)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
 	}
 }
 
 func TestRemoveChannelHandler(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	_, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	cases := []struct {
 		desc string
@@ -783,21 +862,27 @@ func TestRemoveChannelHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := boot.On("RemoveChannel", context.Background(), mock.Anything).Return(tc.err)
 		err := svc.RemoveChannelHandler(context.Background(), tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
 	}
 }
 
 func TestRemoveCoinfigHandler(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	cases := []struct {
 		desc string
@@ -817,21 +902,27 @@ func TestRemoveCoinfigHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := boot.On("RemoveThing", context.Background(), mock.Anything).Return(tc.err)
 		err := svc.RemoveConfigHandler(context.Background(), tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
 	}
 }
 
 func TestDisconnectThingsHandler(t *testing.T) {
-	svc, auth, sdk := newService()
+	svc, boot, auth, sdk := newService()
 	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
 	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
 	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
+	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
+	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
 	saved, err := svc.Add(context.Background(), validToken, config)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
+	repoCall3.Unset()
+	repoCall4.Unset()
 
 	cases := []struct {
 		desc      string
@@ -854,8 +945,10 @@ func TestDisconnectThingsHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := boot.On("DisconnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
 		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
 	}
 }
 

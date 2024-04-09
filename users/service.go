@@ -406,7 +406,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if dbClient.Status == client.Status {
 		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned

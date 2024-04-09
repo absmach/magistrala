@@ -138,7 +138,7 @@ func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.
 	}
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return client, nil
 }
@@ -241,7 +241,7 @@ func (svc service) listUserThingPermission(ctx context.Context, userID, thingID 
 		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
-		return []string{}, err
+		return []string{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	return lp.GetPermissions(), nil
 }
@@ -504,7 +504,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return mgclients.Client{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	if dbClient.Status == client.Status {
 		return mgclients.Client{}, errors.ErrStatusAlreadyAssigned
@@ -607,7 +607,7 @@ func (svc *service) authorize(ctx context.Context, domainID, subjType, subjKind,
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
 		return "", errors.Wrap(svcerr.ErrAuthorization, err)

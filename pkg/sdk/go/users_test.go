@@ -985,7 +985,7 @@ func TestEnableClient(t *testing.T) {
 			client:   enabledClient1,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, repoerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "enable non-existing client",
@@ -994,7 +994,7 @@ func TestEnableClient(t *testing.T) {
 			client:   sdk.User{},
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, repoerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 	}
 
@@ -1114,7 +1114,7 @@ func TestDisableClient(t *testing.T) {
 			client:   disabledClient1,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, repoerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "disable non-existing client",
@@ -1123,7 +1123,7 @@ func TestDisableClient(t *testing.T) {
 			token:    validToken,
 			response: sdk.User{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, repoerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 	}
 

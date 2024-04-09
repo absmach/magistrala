@@ -49,7 +49,7 @@ const (
 	envPrefixGrpc  = "MG_AUTH_GRPC_"
 	envPrefixDB    = "MG_AUTH_DB_"
 	defDB          = "auth"
-	defSvcHTTPPort = "8180"
+	defSvcHTTPPort = "8189"
 	defSvcGRPCPort = "8181"
 )
 

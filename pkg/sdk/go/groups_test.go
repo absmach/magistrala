@@ -581,14 +581,14 @@ func TestViewGroup(t *testing.T) {
 			token:    "wrongtoken",
 			groupID:  group.ID,
 			response: sdk.Group{Children: []*sdk.Group{}},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrViewEntity, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "view group for wrong id",
 			token:    validToken,
 			groupID:  wrongID,
 			response: sdk.Group{Children: []*sdk.Group{}},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrViewEntity, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 	}
 

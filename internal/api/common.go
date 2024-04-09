@@ -117,6 +117,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidIDFormat),
 		errors.Contains(err, apiutil.ErrInvalidStatus),
 		errors.Contains(err, svcerr.ErrInvalidStatus),
+		errors.Contains(err, apiutil.ErrValidation),
 		errors.Contains(err, apiutil.ErrInvitationState),
 		errors.Contains(err, apiutil.ErrInvalidRole),
 		errors.Contains(err, apiutil.ErrMissingEmail),
@@ -127,10 +128,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingConfPass),
 		errors.Contains(err, apiutil.ErrInvalidResetPass),
 		errors.Contains(err, apiutil.ErrMissingRelation),
-		errors.Contains(err, svcerr.ErrPasswordFormat),
+		errors.Contains(err, apiutil.ErrPasswordFormat),
 		errors.Contains(err, apiutil.ErrInvalidLevel),
-		errors.Contains(err, apiutil.ErrInvalidQueryParams),
-		errors.Contains(err, apiutil.ErrValidation):
+		errors.Contains(err, apiutil.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, svcerr.ErrLogin),

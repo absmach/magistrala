@@ -187,7 +187,7 @@ func (req updateClientCredentialsReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 	if req.Secret == "" {
-		return apiutil.ErrBearerKey
+		return apiutil.ErrMissingSecret
 	}
 
 	return nil

@@ -1080,7 +1080,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			contentType: contentType,
 			token:       validToken,
 			status:      http.StatusBadRequest,
-			err:         apiutil.ErrBearerKey,
+			err:         apiutil.ErrMissingSecret,
 		},
 		{
 			desc: "update thing secret with invalid contentype",

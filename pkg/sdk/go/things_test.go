@@ -646,7 +646,7 @@ func TestThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    validToken,
 			thingID:  wrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(repoerr.ErrNotFound, repoerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrViewEntity, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "view thing with an invalid token and invalid thing id",
@@ -956,7 +956,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    enabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "enable non-existing thing",
@@ -965,7 +965,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    sdk.Thing{},
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, repoerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 	}
 
@@ -1091,7 +1091,7 @@ func TestDisableThing(t *testing.T) {
 			thing:    disabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "disable non-existing thing",
@@ -1100,7 +1100,7 @@ func TestDisableThing(t *testing.T) {
 			token:    validToken,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, repoerr.ErrNotFound), http.StatusNotFound),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 	}
 

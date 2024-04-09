@@ -115,7 +115,12 @@ func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Grou
 		return groups.Group{}, err
 	}
 
-	return svc.groups.RetrieveByID(ctx, id)
+	group, err := svc.groups.RetrieveByID(ctx, id)
+	if err != nil {
+		return groups.Group{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return group, nil
 }
 
 func (svc service) ViewGroupPerms(ctx context.Context, token, id string) ([]string, error) {

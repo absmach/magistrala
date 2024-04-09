@@ -324,14 +324,14 @@ func TestViewChannel(t *testing.T) {
 			token:     "wrongtoken",
 			channelID: channel.ID,
 			response:  sdk.Channel{Children: []*sdk.Channel{}},
-			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrViewEntity, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 		{
 			desc:      "view channel for wrong id",
 			token:     validToken,
 			channelID: wrongID,
 			response:  sdk.Channel{Children: []*sdk.Channel{}},
-			err:       errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrViewEntity, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
 		},
 	}
 

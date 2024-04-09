@@ -39,6 +39,7 @@ tags:
 paths:
   /things:
     post:
+      operationId: createThing
       tags:
         - Things
       summary: Adds new thing
@@ -54,6 +55,8 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -64,6 +67,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     get:
+      operationId: listThings
       tags:
         - Things
       summary: Retrieves things
@@ -89,6 +93,8 @@ paths:
         "401":
           description: |
             Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.            
         "404":
           description: A non-existent entity request.
         "422":
@@ -98,6 +104,7 @@ paths:
 
   /things/bulk:
     post:
+      operationId: bulkCreateThings
       summary: Bulk provisions new things
       description: |
         Adds new things to the list of things owned by user identified using
@@ -107,19 +114,24 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ThingsCreateReq"
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/ThingPageRes"
         "400":
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /things/{thingID}:
     get:
+      operationId: getThing
       summary: Retrieves thing info
       description: |
         Retrieves a specific thing that is identifier by the thing ID.
@@ -134,6 +146,8 @@ paths:
           $ref: "#/components/responses/ThingRes"
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -142,6 +156,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     patch:
+      operationId: updateThing
       summary: Updates name and metadata of the thing.
       description: |
         Update is performed by replacing the current resource data with values
@@ -162,10 +177,16 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Failed due to non existing thing.
+        "409":
+          description: Failed due to using an existing identity.          
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
     delete:
@@ -190,6 +211,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
   /things/{thingID}/tags:
     patch:
+      operationId: updateThingTags
       summary: Updates tags the thing.
       description: |
         Updates tags of the thing with provided ID. Tags is updated using
@@ -207,15 +229,20 @@ paths:
           $ref: "#/components/responses/ThingRes"
         "400":
           description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Failed due to non existing thing.
         "401":
           description: Missing or invalid access token provided.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /things/{thingID}/secret:
     patch:
+      operationId: updateThingSecret
       summary: Updates Secret of the identified thing.
       description: |
         Updates secret of the identified in thing. Secret is updated using
@@ -235,17 +262,22 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Failed due to non existing thing.
         "409":
           description: Specified key already exists.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /things/{thingID}/disable:
     post:
+      operationId: disableThing
       summary: Disables a thing
       description: |
         Disables a specific thing that is identifier by the thing ID.
@@ -262,8 +294,12 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already disabled thing.             
         "422":
           description: Database can't process request.
         "500":
@@ -271,6 +307,7 @@ paths:
 
   /things/{thingID}/enable:
     post:
+      operationId: enableThing
       summary: Enables a thing
       description: |
         Enables a specific thing that is identifier by the thing ID.
@@ -287,8 +324,12 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already enabled thing.          
         "422":
           description: Database can't process request.
         "500":
@@ -296,6 +337,7 @@ paths:
 
   /things/{thingID}/share:
     post:
+      operationId: shareThing
       summary: Shares a thing
       description: |
         Shares a specific thing that is identifier by the thing ID.
@@ -314,6 +356,8 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -323,6 +367,7 @@ paths:
 
   /things/{thingID}/unshare:
     post:
+      operationId: unshareThing
       summary: Unshares a thing
       description: |
         Unshares a specific thing that is identifier by the thing ID.
@@ -341,6 +386,8 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -350,6 +397,7 @@ paths:
 
   /channels/{chanID}/things:
     get:
+      operationId: listThingsInaChannel
       summary: List of things connected to specified channel
       description: |
         Retrieves list of things connected to specified channel with pagination
@@ -368,6 +416,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -377,6 +427,7 @@ paths:
 
   /channels:
     post:
+      operationId: createChannel
       tags:
         - Channels
       summary: Creates new channel
@@ -393,14 +444,19 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "409":
           description: Failed due to using an existing identity.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
     get:
+      operationId: listChannels
       summary: Lists channels.
       description: |
         Retrieves a list of channels. Due to performance concerns, data
@@ -423,6 +479,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Channel does not exist.
         "422":
@@ -432,6 +490,7 @@ paths:
 
   /channels/{chanID}:
     get:
+      operationId: getChannel
       summary: Retrieves channel info.
       description: |
         Gets info on a channel specified by id.
@@ -448,6 +507,8 @@ paths:
           description: Failed due to malformed channel's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Channel does not exist.
         "422":
@@ -456,6 +517,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     put:
+      operationId: updateChannel
       summary: Updates channel data.
       description: |
         Update is performed by replacing the current resource data with values
@@ -476,10 +538,16 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Channel does not exist.
+        "409":
+          description: Failed due to using an existing identity.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
     delete:
@@ -505,6 +573,7 @@ paths:
 
   /channels/{chanID}/enable:
     post:
+      operationId: enableChannel
       summary: Enables a channel
       description: |
         Enables a specific channel that is identifier by the channel ID.
@@ -521,8 +590,12 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already enabled channel.             
         "422":
           description: Database can't process request.
         "500":
@@ -530,6 +603,7 @@ paths:
 
   /channels/{chanID}/disable:
     post:
+      operationId: disableChannel
       summary: Disables a channel
       description: |
         Disables a specific channel that is identifier by the channel ID.
@@ -546,8 +620,12 @@ paths:
           description: Failed due to malformed channel's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
+        "409":
+          description: Failed due to already disabled channel.             
         "422":
           description: Database can't process request.
         "500":
@@ -555,6 +633,7 @@ paths:
 
   /channels/{chanID}/users/assign:
     post:
+      operationId: assignUsersToChannel
       summary: Assigns a member to a channel
       description: |
         Assigns a specific member to a channel that is identifier by the channel ID.
@@ -573,6 +652,8 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -582,6 +663,7 @@ paths:
 
   /channels/{chanID}/users/unassign:
     post:
+      operationId: unassignUsersFromChannel
       summary: Unassigns a member from a channel
       description: |
         Unassigns a specific member from a channel that is identifier by the channel ID.
@@ -594,12 +676,14 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "200":
+        "204":
           description: Thing unshared.
         "400":
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -609,6 +693,7 @@ paths:
 
   /channels/{chanID}/groups/assign:
     post:
+      operationId: assignGroupsToChannel
       summary: Assigns a member to a channel
       description: |
         Assigns a specific member to a channel that is identifier by the channel ID.
@@ -627,6 +712,8 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -636,6 +723,7 @@ paths:
 
   /channels/{chanID}/groups/unassign:
     post:
+      operationId: unassignGroupsFromChannel
       summary: Unassigns a member from a channel
       description: |
         Unassigns a specific member from a channel that is identifier by the channel ID.
@@ -648,12 +736,14 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "200":
+        "204":
           description: Thing unshared.
         "400":
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -663,6 +753,7 @@ paths:
 
   /things/{thingID}/channels:
     get:
+      operationId: listChannelsConnectedToThing
       summary: List of channels connected to specified thing
       description: |
         Retrieves list of channels connected to specified thing with pagination
@@ -680,6 +771,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Thing does not exist.
         "422":
@@ -689,6 +782,7 @@ paths:
 
   /users/{memberID}/channels:
     get:
+      operationId: listChannelsConnectedToUser
       summary: List of channels connected to specified user
       description: |
         Retrieves list of channels connected to specified user with pagination
@@ -706,6 +800,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Thing does not exist.
         "422":
@@ -715,6 +811,7 @@ paths:
 
   /groups/{memberID}/channels:
     get:
+      operationId: listChannelsConnectedToGroup
       summary: List of channels connected to specified group
       description: |
         Retrieves list of channels connected to specified group with pagination
@@ -732,6 +829,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Thing does not exist.
         "422":
@@ -741,6 +840,7 @@ paths:
 
   /connect:
     post:
+      operationId: connectThingsAndChannels
       summary: Connects thing and channel.
       description: |
         Connect things specified by IDs to channels specified by IDs.
@@ -756,17 +856,22 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "409":
           description: Entity already exist.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /disconnect:
     post:
+      operationId: disconnectThingsAndChannels
       summary: Disconnect things and channels using lists of IDs.
       description: |
         Disconnect things from channels specified by lists of IDs.
@@ -782,15 +887,20 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /channels/{chanID}/things/{thingID}/connect:
     post:
+      operationId: connectThingToChannel
       summary: Connects a thing to a channel
       description: |
         Connects a specific thing to a channel that is identifier by the channel ID.
@@ -806,6 +916,8 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -815,6 +927,7 @@ paths:
 
   /channels/{chanID}/things/{thingID}/disconnect:
     post:
+      operationId: disconnectThingFromChannel
       summary: Disconnects a thing to a channel
       description: |
         Disconnects a specific thing to a channel that is identifier by the channel ID.
@@ -830,6 +943,8 @@ paths:
           description: Failed due to malformed thing's ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -1245,7 +1360,7 @@ components:
     ChannelsPage:
       type: object
       properties:
-        channels:
+        groups:
           type: array
           minItems: 0
           uniqueItems: true
@@ -1263,9 +1378,9 @@ components:
           example: 10
           description: Maximum number of items to return in one page.
       required:
-        - channels
+        - groups
         - total
-        - level
+        - offset
 
     PoliciesPage:
       type: object
@@ -1423,6 +1538,9 @@ components:
       schema:
         type: string
         format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
@@ -1433,6 +1551,9 @@ components:
       schema:
         type: string
         format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
@@ -1686,6 +1807,43 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Thing"
+      links:
+        get:
+          operationId: getThing
+          parameters:
+            thingID: $response.body#/id
+        get_channels:
+          operationId: listChannelsConnectedToThing
+          parameters:
+            thingID: $response.body#/id
+        update:
+          operationId: updateThing
+          parameters:
+            thingID: $response.body#/id
+        update_tags:
+          operationId: updateThingTags
+          parameters:
+            thingID: $response.body#/id
+        update_secret:
+          operationId: updateThingSecret
+          parameters:
+            thingID: $response.body#/id
+        share:
+          operationId: shareThing
+          parameters:
+            thingID: $response.body#/id
+        unsahre:
+          operationId: unshareThing
+          parameters:
+            thingID: $response.body#/id
+        disable:
+          operationId: disableThing
+          parameters:
+            thingID: $response.body#/id
+        enable:
+          operationId: enableThing
+          parameters:
+            thingID: $response.body#/id
 
     ThingRes:
       description: Data retrieved.
@@ -1693,6 +1851,19 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Thing"
+      links:
+        get_channels:
+          operationId: listChannelsConnectedToThing
+          parameters:
+            thingID: $response.body#/id
+        share:
+          operationId: shareThing
+          parameters:
+            thingID: $response.body#/id
+        unsahre:
+          operationId: unshareThing
+          parameters:
+            thingID: $response.body#/id
 
     ThingPageRes:
       description: Data retrieved.
@@ -1720,6 +1891,51 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Channel"
+      links:
+        get:
+          operationId: getChannel
+          parameters:
+            chanID: $response.body#/id
+        get_things:
+          operationId: listThingsInaChannel
+          parameters:
+            chanID: $response.body#/id
+        get_users:
+          operationId: listChannelsConnectedToUser
+          parameters:
+            memberID: $response.body#/id
+        get_groups:
+          operationId: listChannelsConnectedToGroup
+          parameters:
+            memberID: $response.body#/id
+        update:
+          operationId: updateChannel
+          parameters:
+            chanID: $response.body#/id
+        disable:
+          operationId: disableChannel
+          parameters:
+            chanID: $response.body#/id
+        enable:
+          operationId: enableChannel
+          parameters:
+            chanID: $response.body#/id
+        assign_users:
+          operationId: assignUsersToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_users:
+          operationId: unassignUsersFromChannel
+          parameters:
+            chanID: $response.body#/id
+        assign_groups:
+          operationId: assignGroupsToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_groups:
+          operationId: unassignGroupsFromChannel
+          parameters:
+            chanID: $response.body#/id
 
     ChannelRes:
       description: Data retrieved.
@@ -1727,6 +1943,35 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Channel"
+      links:
+        get_things:
+          operationId: listThingsInaChannel
+          parameters:
+            chanID: $response.body#/id
+        get_users:
+          operationId: listChannelsConnectedToUser
+          parameters:
+            memberID: $response.body#/id
+        get_groups:
+          operationId: listChannelsConnectedToGroup
+          parameters:
+            memberID: $response.body#/id
+        assign_users:
+          operationId: assignUsersToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_users:
+          operationId: unassignUsersFromChannel
+          parameters:
+            chanID: $response.body#/id
+        assign_groups:
+          operationId: assignGroupsToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_groups:
+          operationId: unassignGroupsFromChannel
+          parameters:
+            chanID: $response.body#/id
 
     ChannelPageRes:
       description: Data retrieved.

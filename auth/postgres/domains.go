@@ -214,6 +214,9 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 	}
 
 	cq := "SELECT COUNT(*) FROM domains d JOIN policies pc ON pc.object_id = d.id"
+	if pm.SubjectID == "" {
+		cq = "SELECT COUNT(*) FROM domains d"
+	}
 	if query != "" {
 		cq = fmt.Sprintf(" %s %s", cq, query)
 	}

@@ -23,7 +23,7 @@ jobs:
         with:
           go-version: 1.21.x
           cache-dependency-path: "go.sum"
-      
+
       - name: Check for changes in go.mod
         run: |
           go mod tidy
@@ -60,6 +60,7 @@ jobs:
               - "pkg/groups/groups.go"
               - "bootstrap/service.go"
               - "bootstrap/configs.go"
+              - "invitations/invitations.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -125,6 +126,8 @@ jobs:
           mv ./pkg/groups/mocks/service.go ./pkg/groups/mocks/service.go.tmp
           mv ./bootstrap/mocks/service.go ./bootstrap/mocks/service.go.tmp
           mv ./bootstrap/mocks/configs.go ./bootstrap/mocks/configs.go.tmp
+          mv ./invitations/mocks/service.go ./invitations/mocks/service.go.tmp
+          mv ./invitations/mocks/repository.go ./invitations/mocks/repository.go.tmp
 
           make mocks
 
@@ -159,3 +162,5 @@ jobs:
           check_mock_changes ./pkg/groups/mocks/service.go "Groups Service ./pkg/groups/mocks/service.go"
           check_mock_changes ./bootstrap/mocks/service.go "Bootstrap Service ./bootstrap/mocks/service.go"
           check_mock_changes ./bootstrap/mocks/configs.go "Bootstrap Repository ./bootstrap/mocks/configs.go"
+          check_mock_changes ./invitations/mocks/service.go "Invitations Service ./invitations/mocks/service.go"
+          check_mock_changes ./invitations/mocks/repository.go "Invitations Repository ./invitations/mocks/repository.go"

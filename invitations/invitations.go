@@ -61,6 +61,8 @@ func (page InvitationPage) MarshalJSON() ([]byte, error) {
 }
 
 // Service is an interface that defines methods for managing invitations.
+//
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// SendInvitation sends an invitation to the given user.
 	// Only domain administrators and platform administrators can send invitations.
@@ -93,6 +95,7 @@ type Service interface {
 	DeleteInvitation(ctx context.Context, token, userID, domainID string) (err error)
 }
 
+//go:generate mockery --name Repository --output=./mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
 type Repository interface {
 	// Create creates an invitation.
 	Create(ctx context.Context, invitation Invitation) (err error)

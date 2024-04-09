@@ -58,7 +58,7 @@ jobs:
           cache-dependency-path: "go.sum"
 
       - name: Check for changes in specific paths
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: changes
         with:
           base: main

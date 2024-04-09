@@ -58,7 +58,7 @@ jobs:
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
 
       - name: Check for changes in specific paths
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: changes
         with:
           filters: |

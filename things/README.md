@@ -55,8 +55,8 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`things `](https://github.com/absmach/magistrala/blob/master/docker/docker-compose.yml#L167-L194) service section in
-docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`things `](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yml#L167-L194) service section in
+docker-compose file to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 

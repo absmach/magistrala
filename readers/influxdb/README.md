@@ -42,7 +42,7 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`influxdb-reader`](https://github.com/absmach/magistrala/blob/master/docker/addons/influxdb-reader/docker-compose.yml#L17-L40) service section in docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`influxdb-reader`](https://github.com/absmach/magistrala/blob/main/docker/addons/influxdb-reader/docker-compose.yml#L17-L40) service section in docker-compose file to see how service is deployed.
 
 To start the service, execute the following shell script:
 
@@ -100,14 +100,14 @@ In order to run all Magistrala core services, as well as mentioned optional ones
 execute following command:
 
 ```bash
-docker-compose -f docker/docker-compose.yml up -d
-docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml up -d
+docker compose -f docker/addons/influxdb-reader/docker-compose.yml up -d
 ```
 
 And, to use the default .env file, execute the following command:
 
 ```bash
-docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up --env-file docker/.env -d
+docker compose -f docker/addons/influxdb-reader/docker-compose.yml up --env-file docker/.env -d
 ```
 
 ## Usage

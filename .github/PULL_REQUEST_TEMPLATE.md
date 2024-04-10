@@ -4,7 +4,7 @@ SPDX-License-Identifier: Apache-2.0 -->
 <!--
 
 Pull request title should be `MG-XXX - description` or `NOISSUE - description` where XXX is ID of the issue that this PR relate to.
-Please review the [CONTRIBUTING.md](https://github.com/absmach/magistrala/blob/master/CONTRIBUTING.md) file for detailed contributing guidelines.
+Please review the [CONTRIBUTING.md](https://github.com/absmach/magistrala/blob/main/CONTRIBUTING.md) file for detailed contributing guidelines.
 
 For Work In Progress Pull Requests, please use the Draft PR feature, see https://github.blog/2019-02-14-introducing-draft-pull-requests/ for further details.
 

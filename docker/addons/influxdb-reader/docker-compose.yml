@@ -8,8 +8,6 @@
 # as well as the network from the core composition, should be already running.
 ###
 
-version: "3.7"
-
 networks:
   magistrala-base-net:
 

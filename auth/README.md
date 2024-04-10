@@ -96,7 +96,7 @@ The service is configured using the environment variables presented in the follo
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`auth`](https://github.com/absmach/magistrala/blob/master/docker/docker-compose.yml) service section in docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`auth`](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yml) service section in docker-compose file to see how service is deployed.
 
 Running this service outside of container requires working instance of the postgres database, SpiceDB, and Jaeger server.
 To start the service outside of the container, execute the following shell script:

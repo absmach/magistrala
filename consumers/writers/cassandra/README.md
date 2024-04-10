@@ -24,11 +24,11 @@ default values.
 | MG_MESSAGE_BROKER_URL                | Message broker instance URL                                             | nats://localhost:4222          |
 | MG_JAEGER_URL                        | Jaeger server URL                                                       | http://jaeger:14268/api/traces |
 | MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server                           | true                           |
-| MG_CASSANDRA_WRITER_INSANCE_ID       | Cassandra writer instance ID                                            |                                |
+| MG_CASSANDRA_WRITER_INSTANCE_ID      | Cassandra writer instance ID                                            |                                |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`cassandra-writer`](https://github.com/absmach/magistrala/blob/master/docker/addons/cassandra-writer/docker-compose.yml#L30-L49) service section in docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`cassandra-writer`](https://github.com/absmach/magistrala/blob/main/docker/addons/cassandra-writer/docker-compose.yml#L30-L49) service section in docker-compose file to see how service is deployed.
 
 To start the service, execute the following shell script:
 
@@ -59,7 +59,7 @@ MG_CASSANDRA_PORT=[Cassandra DB port] \
 MG_MESSAGE_BROKER_URL=[Message Broker instance URL] \
 MG_JAEGER_URL=[Jaeger server URL] \
 MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
-MG_CASSANDRA_WRITER_INSANCE_ID=[Cassandra writer instance ID] \
+MG_CASSANDRA_WRITER_INSTANCE_ID=[Cassandra writer instance ID] \
 $GOBIN/magistrala-cassandra-writer
 ```
 

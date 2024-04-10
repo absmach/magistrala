@@ -28,7 +28,7 @@ The service is configured using the environment variables presented in the follo
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`opcua-adapter`](https://github.com/absmach/magistrala/blob/master/docker/addons/opcua-adapter/docker-compose.yml) service section in docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`opcua-adapter`](https://github.com/absmach/magistrala/blob/main/docker/addons/opcua-adapter/docker-compose.yml) service section in docker-compose file to see how service is deployed.
 
 Running this service outside of container requires working instance of the message broker service, redis routemap server and Jaeger server.
 To start the service outside of the container, execute the following shell script:
@@ -69,7 +69,7 @@ Setting `MG_LORA_ADAPTER_HTTP_SERVER_CERT` and `MG_LORA_ADAPTER_HTTP_SERVER_KEY`
 This service can be deployed using docker containers. Docker compose file is available in `<project_root>/docker/addons/opcua-adapter/docker-compose.yml`. In order to run Magistrala opcua-adapter, execute the following command:
 
 ```bash
-docker-compose -f docker/addons/opcua-adapter/docker-compose.yml up -d
+docker compose -f docker/addons/opcua-adapter/docker-compose.yml up -d
 ```
 
 ## Usage

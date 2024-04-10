@@ -13,11 +13,11 @@ Follow the [official documentation](https://docs.docker.com/compose/install/).
 Run the following commands from the project root directory.
 
 ```bash
-docker-compose -f docker/docker-compose.yml up
+docker compose -f docker/docker-compose.yml up
 ```
 
 ```bash
-docker-compose -f docker/addons/<path>/docker-compose.yml  up
+docker compose -f docker/addons/<path>/docker-compose.yml up
 ```
 
 To pull docker images from a specific release you need to change the value of `MG_RELEASE_TAG` in `.env` before running these commands.

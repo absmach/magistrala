@@ -76,10 +76,10 @@ func (lm *loggingMiddleware) Update(ctx context.Context, token string, cfg boots
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update boostrap config failed to complete successfully", args...)
+			lm.logger.Warn("Update bootstrap config failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info("Update boostrap config completed successfully", args...)
+		lm.logger.Info("Update bootstrap config completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Update(ctx, token, cfg)

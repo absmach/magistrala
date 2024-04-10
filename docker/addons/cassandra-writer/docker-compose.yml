@@ -3,10 +3,8 @@
 
 # This docker-compose file contains optional Cassandra and cassandra-writer. Since these are optional, this file is
 # dependent of docker-compose file from <project_root>/docker. In order to run these services, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/cassandra-writer/docker-compose.yml up
+# docker compose -f docker/docker-compose.yml -f docker/addons/cassandra-writer/docker-compose.yml up
 # from project root.
-
-version: "3.7"
 
 networks:
   magistrala-base-net:
@@ -59,7 +57,7 @@ services:
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_CASSANDRA_WRITER_INSANCE_ID: ${MG_CASSANDRA_WRITER_INSANCE_ID}
+      MG_CASSANDRA_WRITER_INSTANCE_ID: ${MG_CASSANDRA_WRITER_INSTANCE_ID}
     ports:
       - ${MG_CASSANDRA_WRITER_HTTP_PORT}:${MG_CASSANDRA_WRITER_HTTP_PORT}
     networks:

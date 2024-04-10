@@ -108,7 +108,7 @@ build/magistrala-provision
 Docker composition:
 
 ```bash
-docker-compose -f docker/addons/provision/docker-compose.yml up
+docker compose -f docker/addons/provision/docker-compose.yml up
 ```
 
 For the case that credentials or API token is passed in configuration file or environment variables, call to `/mapping` endpoint doesn't require `Authentication` header:

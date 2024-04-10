@@ -67,7 +67,7 @@ The service is configured using the environment variables presented in the follo
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`boostrap`](https://github.com/absmach/magistrala/blob/master/docker/addons/bootstrap/docker-compose.yml) service section in docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`bootstrap`](https://github.com/absmach/magistrala/blob/main/docker/addons/bootstrap/docker-compose.yml) service section in docker-compose file to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 
@@ -77,7 +77,7 @@ git clone https://github.com/absmach/magistrala
 
 cd magistrala
 
-# compile the service
+# compile the servic e
 make bootstrap
 
 # copy binary to bin

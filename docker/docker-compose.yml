@@ -1,7 +1,6 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-version: "3.7"
 name: "magistrala"
 
 networks:
@@ -21,7 +20,7 @@ volumes:
 
 services:
   spicedb:
-    image: "authzed/spicedb:v1.29.0"
+    image: "authzed/spicedb:v1.30.0"
     container_name: magistrala-spicedb
     command: "serve"
     restart: "always"
@@ -39,7 +38,7 @@ services:
       - spicedb-migrate
 
   spicedb-migrate:
-    image: "authzed/spicedb:v1.29.0"
+    image: "authzed/spicedb:v1.30.0"
     container_name: magistrala-spicedb-migrate
     command: "migrate head"
     restart: "on-failure"
@@ -52,7 +51,7 @@ services:
       - spicedb-db
 
   spicedb-db:
-    image: "postgres:16.1-alpine"
+    image: "postgres:16.2-alpine"
     container_name: magistrala-spicedb-db
     networks:
       - magistrala-base-net
@@ -66,7 +65,7 @@ services:
       - magistrala-spicedb-db-volume:/var/lib/postgresql/data
 
   auth-db:
-    image: postgres:16.1-alpine
+    image: postgres:16.2-alpine
     container_name: magistrala-auth-db
     restart: on-failure
     ports:
@@ -155,7 +154,7 @@ services:
           create_host_path: true
 
   invitations-db:
-    image: postgres:16.1-alpine
+    image: postgres:16.2-alpine
     container_name: magistrala-invitations-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -226,7 +225,7 @@ services:
           create_host_path: true
 
   nginx:
-    image: nginx:1.25.0-alpine
+    image: nginx:1.25.4-alpine
     container_name: magistrala-nginx
     restart: on-failure
     volumes:
@@ -264,7 +263,7 @@ services:
       - coap-adapter
 
   things-db:
-    image: postgres:16.1-alpine
+    image: postgres:16.2-alpine
     container_name: magistrala-things-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -378,7 +377,7 @@ services:
           create_host_path: true
 
   users-db:
-    image: postgres:16.1-alpine
+    image: postgres:16.2-alpine
     container_name: magistrala-users-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -744,7 +743,7 @@ services:
       - magistrala-base-net
 
   ui-db:
-    image: postgres:16.1-alpine
+    image: postgres:16.2-alpine
     container_name: magistrala-ui-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"

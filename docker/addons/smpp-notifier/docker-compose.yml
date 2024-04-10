@@ -6,8 +6,6 @@
 # docker-compose.yml file from <project_root>/docker/. In order to run these services,
 # core services, as well as the network from the core composition, should be already running.
 
-version: "3.7"
-
 networks:
   magistrala-base-net:
 
@@ -16,7 +14,7 @@ volumes:
 
 services:
   smpp-notifier-db:
-    image: postgres:16.1-alpine
+    image: postgres:16.2-alpine
     container_name: magistrala-smpp-notifier-db
     restart: on-failure
     environment:

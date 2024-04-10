@@ -79,7 +79,7 @@ var cmdBootstrap = []cobra.Command{
 				config <JSON_config> - Updates editable fields of the provided Config.
 				connection <id> <channel_ids> - Updates connections performs update of the channel list corresponding Thing is connected to.
 				channel_ids - '["channel_id1", ...]'
-				certs  <id> <client_cert> <client_key> <ca> - Update boostrap config certificates.`,
+				certs  <id> <client_cert> <client_key> <ca> - Update bootstrap config certificates.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 3 {
 				logUsage(cmd.Use)

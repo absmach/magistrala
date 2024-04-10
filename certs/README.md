@@ -9,7 +9,7 @@ When `MG_CERTS_VAULT_HOST` is set it is presumed that `Vault` is installed and `
 First you'll need to set up `Vault`.
 To setup `Vault` follow steps in [Build Your Own Certificate Authority (CA)](https://learn.hashicorp.com/tutorials/vault/pki-engine).
 
-For lab purposes you can use docker-compose and script for setting up PKI in [https://github.com/absmach/magistrala/blob/master/docker/addons/vault/README.md](https://github.com/absmach/magistrala/blob/master/docker/addons/vault/README.md)
+For lab purposes you can use docker-compose and script for setting up PKI in [https://github.com/absmach/magistrala/blob/main/docker/addons/vault/README.md](https://github.com/absmach/magistrala/blob/main/docker/addons/vault/README.md)
 
 ```bash
 MG_CERTS_VAULT_HOST=<https://vault-domain:8200>
@@ -68,7 +68,7 @@ The service is configured using the environment variables presented in the follo
 
 ## Deployment
 
-The service is distributed as Docker container. Check the [`certs`](https://github.com/absmach/magistrala/blob/main/docker/addons/bootstrap/docker-compose.yml) service section in docker-compose to see how the service is deployed.
+The service is distributed as Docker container. Check the [`certs`](https://github.com/absmach/magistrala/blob/main/docker/addons/bootstrap/docker-compose.yml) service section in docker-compose file to see how the service is deployed.
 
 Running this service outside of container requires working instance of the auth service, things service, postgres database, vault and Jaeger server.
 To start the service outside of the container, execute the following shell script:

@@ -12,7 +12,7 @@ info:
     email: info@abstracmachines.fr
   license:
     name: Apache 2.0
-    url: https://github.com/absmach/magistrala/blob/master/LICENSE
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
   version: 0.14.0
 
 servers:

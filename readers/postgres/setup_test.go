@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	}
 	container, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
-		Tag:        "16.1-alpine",
+		Tag:        "16.2-alpine",
 		Env: []string{
 			"POSTGRES_USER=test",
 			"POSTGRES_PASSWORD=test",

@@ -4,10 +4,8 @@
 # This docker-compose file contains optional MongoDB-reader service
 # for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run this service, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/mongodb-reader/docker-compose.yml up
+# docker compose -f docker/docker-compose.yml -f docker/addons/mongodb-reader/docker-compose.yml up
 # from project root. MongoDB service is defined in docker/addons/mongodb-writer/docker-compose.yml.
-
-version: "3.7"
 
 networks:
   magistrala-base-net:

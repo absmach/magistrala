@@ -33,7 +33,7 @@ The service is configured using the environment variables presented in the follo
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`invitation`](https://github.com/absmach/amdm/blob/master/docker/docker-compose.yml) service section in docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`invitation`](https://github.com/absmach/amdm/blob/main/docker/docker-compose.yml) service section in docker-compose file to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 

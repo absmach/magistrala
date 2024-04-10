@@ -4,11 +4,9 @@
 # This docker-compose file contains optional Postgres and Postgres-writer services
 # for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run these services, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/postgres-writer/docker-compose.yml up
+# docker compose -f docker/docker-compose.yml -f docker/addons/postgres-writer/docker-compose.yml up
 # from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
 # inspection and data visualization.
-
-version: "3.7"
 
 networks:
   magistrala-base-net:
@@ -18,7 +16,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:16.1-alpine
+    image: postgres:16.2-alpine
     container_name: magistrala-postgres
     restart: on-failure
     environment:

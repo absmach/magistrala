@@ -38,8 +38,7 @@ For more details, check out the [official documentation][docs].
 
 The following are needed to run Magistrala:
 
-- [Docker](https://docs.docker.com/install/) (version 24.0.7)
-- [Docker compose](https://docs.docker.com/compose/install/) (version 2.24.0)
+- [Docker](https://docs.docker.com/install/) (version 26.0.0)
 
 Developing Magistrala will also require:
 

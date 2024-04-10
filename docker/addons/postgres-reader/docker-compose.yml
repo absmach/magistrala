@@ -4,10 +4,8 @@
 # This docker-compose file contains optional Postgres-reader service for Magistrala platform.
 # Since this service is optional, this file is dependent of docker-compose.yml file
 # from <project_root>/docker. In order to run this service, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/postgres-reader/docker-compose.yml up
+# docker compose -f docker/docker-compose.yml -f docker/addons/postgres-reader/docker-compose.yml up
 # from project root.
-
-version: "3.7"
 
 networks:
   magistrala-base-net:

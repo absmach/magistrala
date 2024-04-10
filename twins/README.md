@@ -35,8 +35,8 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`twins`](https://github.com/absmach/magistrala/blob/master/docker/addons/twins/docker-compose.yml#L35-L58) service section in
-docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`twins`](https://github.com/absmach/magistrala/blob/main/docker/addons/twins/docker-compose.yml#L35-L58) service section in
+docker-compose file to see how service is deployed.
 
 To start the service outside of the container, execute the following shell
 script:

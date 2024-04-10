@@ -4,11 +4,9 @@
 # This docker-compose file contains optional Timescale and Timescale-writer services
 # for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run these services, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/timescale-writer/docker-compose.yml up
+# docker compose -f docker/docker-compose.yml -f docker/addons/timescale-writer/docker-compose.yml up
 # from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
 # inspection and data visualization.
-
-version: "3.7"
 
 networks:
   magistrala-base-net:

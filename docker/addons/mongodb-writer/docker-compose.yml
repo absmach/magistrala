@@ -4,11 +4,9 @@
 # This docker-compose file contains optional MongoDB and MongoDB-writer services
 # for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run these services, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/mongodb-writer/docker-compose.yml up
+# docker compose -f docker/docker-compose.yml -f docker/addons/mongodb-writer/docker-compose.yml up
 # from project root. MongoDB default port (27017) is exposed, so you can use various tools for database
 # inspection and data visualization.
-
-version: "3.7"
 
 networks:
   magistrala-base-net:
@@ -19,7 +17,7 @@ volumes:
 
 services:
   mongodb:
-    image: mongo:7.0.5
+    image: mongo:7.0.8
     container_name: magistrala-mongodb
     restart: on-failure
     environment:

@@ -26,7 +26,7 @@ The service is configured using the environment variables presented in the follo
 
 ## Deployment
 
-The service is distributed as Docker container. Check the [`ws-adapter`](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yml) service section in docker-compose to see how the service is deployed.
+The service is distributed as Docker container. Check the [`ws-adapter`](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yml) service section in docker-compose file to see how the service is deployed.
 
 Running this service outside of container requires working instance of the message broker service, things service and Jaeger server.
 To start the service outside of the container, execute the following shell script:

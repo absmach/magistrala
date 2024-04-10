@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 asyncapi: '2.6.0'
-id: 'https://github.com/absmach/magistrala/blob/master/api/asyncapi/mqtt.yml'
+id: 'https://github.com/absmach/magistrala/blob/main/api/asyncapi/mqtt.yml'
 info:
   title: Magistrala MQTT Adapter
   version: '1.0.0'
@@ -16,7 +16,7 @@ info:
 
   license:
     name: Apache 2.0
-    url: 'https://github.com/absmach/magistrala/blob/master/LICENSE'
+    url: 'https://github.com/absmach/magistrala/blob/main/LICENSE'
   
   
 defaultContentType: application/json

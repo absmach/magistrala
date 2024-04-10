@@ -29,6 +29,7 @@ tags:
 paths:
   /invitations:
     post:
+      operationId: sendInvitation
       tags:
         - Invitations
       summary: Send invitation
@@ -45,6 +46,8 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.          
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -53,6 +56,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     get:
+      operationId: listInvitations
       tags:
         - Invitations
       summary: List invitations
@@ -89,6 +93,7 @@ paths:
 
   /invitations/accept:
     post:
+      operationId: acceptInvitation
       summary: Accept invitation
       description: |
         Current logged in user accepts invitation to join domain.
@@ -105,11 +110,14 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.          
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /invitations/{user_id}/{domain_id}:
     get:
+      operationId: getInvitation
       summary: Retrieves a specific invitation
       description: |
         Retrieves a specific invitation that is identifier by the user ID and domain ID.
@@ -135,6 +143,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     delete:
+      operationId: deleteInvitation
       summary: Deletes a specific invitation
       description: |
         Deletes a specific invitation that is identifier by the user ID and domain ID.
@@ -452,6 +461,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Invitation"
+      links:
+        delete:
+          operationId: deleteInvitation
+          parameters:
+            user_id: $response.body#/user_id
+            domain_id: $response.body#/domain_id
 
     InvitationPageRes:
       description: Data retrieved.

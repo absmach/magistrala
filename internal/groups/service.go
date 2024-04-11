@@ -54,7 +54,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		return groups.Group{}, err
 	}
 	if g.Status != mgclients.EnabledStatus && g.Status != mgclients.DisabledStatus {
-		return groups.Group{}, apiutil.ErrInvalidStatus
+		return groups.Group{}, svcerr.ErrInvalidStatus
 	}
 
 	g.ID = groupID

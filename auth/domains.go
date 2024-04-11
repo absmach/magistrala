@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/clients"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 // Status represents Domain status.
@@ -73,7 +73,7 @@ func ToStatus(status string) (Status, error) {
 	case All:
 		return AllStatus, nil
 	}
-	return Status(0), apiutil.ErrInvalidStatus
+	return Status(0), svcerr.ErrInvalidStatus
 }
 
 // Custom Marshaller for Domains status.
@@ -128,8 +128,25 @@ type Page struct {
 }
 
 type DomainsPage struct {
-	Page
-	Domains []Domain `json:"domains,omitempty"`
+	Total   uint64   `json:"total"`
+	Offset  uint64   `json:"offset"`
+	Limit   uint64   `json:"limit"`
+	Domains []Domain `json:"domains"`
+}
+
+func (page DomainsPage) MarshalJSON() ([]byte, error) {
+	type Alias DomainsPage
+	a := struct {
+		Alias
+	}{
+		Alias: Alias(page),
+	}
+
+	if a.Domains == nil {
+		a.Domains = make([]Domain, 0)
+	}
+
+	return json.Marshal(a)
 }
 
 type Policy struct {

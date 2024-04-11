@@ -119,7 +119,7 @@ func TestCreateDomain(t *testing.T) {
 			},
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusOK,
+			status:      http.StatusCreated,
 			err:         nil,
 		},
 		{
@@ -162,7 +162,7 @@ func TestCreateDomain(t *testing.T) {
 			},
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrMissingName,
 		},
 		{
@@ -241,9 +241,7 @@ func TestListDomains(t *testing.T) {
 			token:  validToken,
 			status: http.StatusOK,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			err: nil,
@@ -265,9 +263,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with offset",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "offset=1",
@@ -285,9 +281,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with limit",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "limit=1",
@@ -305,9 +299,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with name",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "name=domainname",
@@ -332,9 +324,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with status",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "status=enabled",
@@ -359,9 +349,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with tags",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "tag=tag1,tag2",
@@ -386,9 +374,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with metadata",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
@@ -413,9 +399,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with permissions",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "permission=view",
@@ -440,9 +424,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with order",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "order=name",
@@ -466,9 +448,7 @@ func TestListDomains(t *testing.T) {
 			desc:  "list domains  with dir",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "dir=asc",
@@ -1066,7 +1046,7 @@ func TestAssignDomainUsers(t *testing.T) {
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       validToken,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 		{
@@ -1075,7 +1055,7 @@ func TestAssignDomainUsers(t *testing.T) {
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       validToken,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 	}
@@ -1180,7 +1160,7 @@ func TestUnassignDomainUsers(t *testing.T) {
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       validToken,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 		{
@@ -1189,7 +1169,7 @@ func TestUnassignDomainUsers(t *testing.T) {
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       validToken,
-			status:      http.StatusInternalServerError,
+			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 	}
@@ -1231,9 +1211,7 @@ func TestListDomainsByUserID(t *testing.T) {
 			token:  validToken,
 			status: http.StatusOK,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			userID: validID,
@@ -1264,9 +1242,7 @@ func TestListDomainsByUserID(t *testing.T) {
 			desc:  "list domains by user id with offset",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "offset=1",
@@ -1285,9 +1261,7 @@ func TestListDomainsByUserID(t *testing.T) {
 			desc:  "list domains by user id with limit",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
-				Page: auth.Page{
-					Total: 1,
-				},
+				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
 			query:  "limit=1",

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/absmach/magistrala/internal/apiutil"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 // Status represents Client status.
@@ -59,7 +59,7 @@ func ToStatus(status string) (Status, error) {
 	case All:
 		return AllStatus, nil
 	}
-	return Status(0), apiutil.ErrInvalidStatus
+	return Status(0), svcerr.ErrInvalidStatus
 }
 
 // Custom Marshaller for Client/Groups.

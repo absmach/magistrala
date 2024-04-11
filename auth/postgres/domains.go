@@ -166,9 +166,10 @@ func (repo domainRepo) RetrieveAllByIDs(ctx context.Context, pm auth.Page) (auth
 		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	pm.Total = total
 	return auth.DomainsPage{
-		Page:    pm,
+		Total:   total,
+		Offset:  pm.Offset,
+		Limit:   pm.Limit,
 		Domains: domains,
 	}, nil
 }
@@ -226,9 +227,10 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm auth.Page) (auth.Doma
 		return auth.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	pm.Total = total
 	return auth.DomainsPage{
-		Page:    pm,
+		Total:   total,
+		Offset:  pm.Offset,
+		Limit:   pm.Limit,
 		Domains: domains,
 	}, nil
 }

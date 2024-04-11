@@ -6,8 +6,8 @@ package groups_test
 import (
 	"testing"
 
-	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/groups"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,7 +39,7 @@ func TestToStatus(t *testing.T) {
 		{"Enabled", "enabled", groups.EnabledStatus, nil},
 		{"Disabled", "disabled", groups.DisabledStatus, nil},
 		{"All", "all", groups.AllStatus, nil},
-		{"Unknown", "unknown", groups.Status(0), apiutil.ErrInvalidStatus},
+		{"Unknown", "unknown", groups.Status(0), svcerr.ErrInvalidStatus},
 	}
 
 	for _, tc := range cases {

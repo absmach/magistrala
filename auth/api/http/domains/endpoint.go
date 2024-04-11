@@ -29,7 +29,7 @@ func createDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return createDomainRes{Data: domain}, nil
+		return createDomainRes{domain}, nil
 	}
 }
 
@@ -44,7 +44,7 @@ func retrieveDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		return retrieveDomainRes{Data: domain}, nil
+		return retrieveDomainRes{domain}, nil
 	}
 }
 
@@ -85,7 +85,7 @@ func updateDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return updateDomainRes{Data: domain}, nil
+		return updateDomainRes{domain}, nil
 	}
 }
 
@@ -111,7 +111,7 @@ func listDomainsEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		return listDomainsRes{Data: dp}, nil
+		return listDomainsRes{dp}, nil
 	}
 }
 
@@ -219,6 +219,6 @@ func listUserDomainsEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		return listUserDomainsRes{Data: dp}, nil
+		return listUserDomainsRes{dp}, nil
 	}
 }

@@ -33,9 +33,6 @@ var (
 	// ErrEmailSize indicates that email size exceeds the max.
 	ErrEmailSize = errors.New("invalid email size")
 
-	// ErrInvalidStatus indicates an invalid user account status.
-	ErrInvalidStatus = errors.New("invalid user account status")
-
 	// ErrInvalidRole indicates that an invalid role.
 	ErrInvalidRole = errors.New("invalid client role")
 

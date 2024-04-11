@@ -4,10 +4,10 @@
 package domains
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 )
 
 var (
@@ -19,11 +19,11 @@ var (
 )
 
 type createDomainRes struct {
-	Data interface{}
+	auth.Domain
 }
 
 func (res createDomainRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res createDomainRes) Headers() map[string]string {
@@ -34,12 +34,8 @@ func (res createDomainRes) Empty() bool {
 	return false
 }
 
-func (res createDomainRes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(res.Data)
-}
-
 type retrieveDomainRes struct {
-	Data interface{}
+	auth.Domain
 }
 
 func (res retrieveDomainRes) Code() int {
@@ -52,10 +48,6 @@ func (res retrieveDomainRes) Headers() map[string]string {
 
 func (res retrieveDomainRes) Empty() bool {
 	return false
-}
-
-func (res retrieveDomainRes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(res.Data)
 }
 
 type retrieveDomainPermissionsRes struct {
@@ -75,7 +67,7 @@ func (res retrieveDomainPermissionsRes) Empty() bool {
 }
 
 type updateDomainRes struct {
-	Data interface{}
+	auth.Domain
 }
 
 func (res updateDomainRes) Code() int {
@@ -90,12 +82,8 @@ func (res updateDomainRes) Empty() bool {
 	return false
 }
 
-func (res updateDomainRes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(res.Data)
-}
-
 type listDomainsRes struct {
-	Data interface{}
+	auth.DomainsPage
 }
 
 func (res listDomainsRes) Code() int {
@@ -108,10 +96,6 @@ func (res listDomainsRes) Headers() map[string]string {
 
 func (res listDomainsRes) Empty() bool {
 	return false
-}
-
-func (res listDomainsRes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(res.Data)
 }
 
 type enableDomainRes struct{}
@@ -185,7 +169,7 @@ func (res unassignUsersRes) Empty() bool {
 }
 
 type listUserDomainsRes struct {
-	Data interface{}
+	auth.DomainsPage
 }
 
 func (res listUserDomainsRes) Code() int {
@@ -198,8 +182,4 @@ func (res listUserDomainsRes) Headers() map[string]string {
 
 func (res listUserDomainsRes) Empty() bool {
 	return false
-}
-
-func (res listUserDomainsRes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(res.Data)
 }

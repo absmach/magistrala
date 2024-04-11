@@ -3,7 +3,7 @@
 
 package groups
 
-import "github.com/absmach/magistrala/internal/apiutil"
+import svcerr "github.com/absmach/magistrala/pkg/errors/service"
 
 // Status represents Group status.
 type Status uint8
@@ -54,5 +54,5 @@ func ToStatus(status string) (Status, error) {
 	case All:
 		return AllStatus, nil
 	}
-	return Status(0), apiutil.ErrInvalidStatus
+	return Status(0), svcerr.ErrInvalidStatus
 }

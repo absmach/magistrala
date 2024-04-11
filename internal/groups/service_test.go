@@ -155,7 +155,7 @@ func TestCreateGroup(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			err: apiutil.ErrInvalidStatus,
+			err: svcerr.ErrInvalidStatus,
 		},
 		{
 			desc:  "successfully with parent",

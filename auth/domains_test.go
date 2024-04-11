@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/internal/apiutil"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,7 +87,7 @@ func TestToStatus(t *testing.T) {
 			desc:      "Unknown",
 			status:    "unknown",
 			expetcted: auth.Status(0),
-			err:       apiutil.ErrInvalidStatus,
+			err:       svcerr.ErrInvalidStatus,
 		},
 	}
 
@@ -171,7 +171,7 @@ func TestStatusUnmarshalJSON(t *testing.T) {
 			desc:     "Unknown",
 			expected: auth.Status(0),
 			status:   []byte(`"unknown"`),
-			err:      apiutil.ErrInvalidStatus,
+			err:      svcerr.ErrInvalidStatus,
 		},
 	}
 

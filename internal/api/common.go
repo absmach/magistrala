@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -129,10 +130,11 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingRelation),
 		errors.Contains(err, apiutil.ErrPasswordFormat),
 		errors.Contains(err, apiutil.ErrInvalidLevel),
-		errors.Contains(err, apiutil.ErrInvalidQueryParams),
 		errors.Contains(err, apiutil.ErrMalformedPolicy),
 		errors.Contains(err, apiutil.ErrInvalidAPIKey),
-		errors.Contains(err, apiutil.ErrMissingName):
+		errors.Contains(err, apiutil.ErrMissingName),
+		errors.Contains(err, apiutil.ErrBootstrapState),
+		errors.Contains(err, apiutil.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, svcerr.ErrLogin),
@@ -144,7 +146,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, errors.ErrStatusAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, svcerr.ErrAuthorization),
-		errors.Contains(err, svcerr.ErrDomainAuthorization):
+		errors.Contains(err, svcerr.ErrDomainAuthorization),
+		errors.Contains(err, bootstrap.ErrExternalKey),
+		errors.Contains(err, bootstrap.ErrExternalKeySecure):
 		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -156,6 +160,8 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, svcerr.ErrDeletePolicies),
 		errors.Contains(err, svcerr.ErrRemoveEntity):
 		w.WriteHeader(http.StatusUnprocessableEntity)
+	case errors.Contains(err, bootstrap.ErrThings):
+		w.WriteHeader(http.StatusServiceUnavailable)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}

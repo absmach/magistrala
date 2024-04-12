@@ -154,6 +154,7 @@ test_api_users: TEST_API_URL := http://localhost:9002
 test_api_things: TEST_API_URL := http://localhost:9000
 test_api_invitations: TEST_API_URL := http://localhost:9020
 test_api_auth: TEST_API_URL := http://localhost:8189
+test_api_bootstrap: TEST_API_URL := http://localhost:9013
 
 $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))

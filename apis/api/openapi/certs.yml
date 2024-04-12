@@ -29,6 +29,7 @@ tags:
 paths:
   /certs:
     post:
+      operationId: createCert
       summary: Creates a certificate for thing
       description: Creates a certificate for thing
       tags:
@@ -36,16 +37,23 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/CertReq"
       responses:
-        '201':
+        "201":
           description: Created
-        '400':
+        "400":
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
-        '500':
-          description: Unexpected server-side error ocurred.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
   /certs/{certID}:
     get:
+      operationId: getCert
       summary: Retrieves a certificate
       description: |
         Retrieves a certificate for a given cert ID.
@@ -54,18 +62,23 @@ paths:
       parameters:
         - $ref: "#/components/parameters/CertID"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/CertRes"
-        '400':
+        "400":
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
-        '404':
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
           description: |
             Failed to retrieve corresponding certificate.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
     delete:
+      operationId: revokeCert
       summary: Revokes a certificate
       description: |
         Revokes a certificate for a given cert ID.
@@ -74,17 +87,22 @@ paths:
       parameters:
         - $ref: "#/components/parameters/CertID"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/RevokeRes"
         "401":
           description: Missing or invalid access token provided.
-        '404':
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
           description: |
             Failed to revoke corresponding certificate.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /serials/{thingID}:
     get:
+      operationId: getSerials
       summary: Retrieves certificates' serial IDs
       description: |
         Retrieves a list of certificates' serial IDs for a given thing ID.
@@ -93,16 +111,20 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ThingID"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SerialsPageRes"
-        '400':
+        "400":
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
-        '404':
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
           description: |
             Failed to retrieve corresponding certificates.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /health:
     get:
@@ -110,9 +132,9 @@ paths:
       tags:
         - health
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/HealthRes"
-        '500':
+        "500":
           $ref: "#/components/responses/ServiceError"
 
 components:
@@ -210,9 +232,9 @@ components:
   requestBodies:
     CertReq:
       description: |
-          Issues a certificate that is required for mTLS. To create a certificate for a thing
-          provide a thing id, data identifying particular thing will be embedded into the Certificate.
-          x509 and ECC certificates are supported when using when Vault is used as PKI.
+        Issues a certificate that is required for mTLS. To create a certificate for a thing
+        provide a thing id, data identifying particular thing will be embedded into the Certificate.
+        x509 and ECC certificates are supported when using when Vault is used as PKI.
       content:
         application/json:
           schema:
@@ -221,12 +243,12 @@ components:
               - thing_id
               - ttl
             properties:
-               thing_id:
-                 type: string
-                 format: uuid
-               ttl:
-                 type: string
-                 example: "10h"
+              thing_id:
+                type: string
+                format: uuid
+              ttl:
+                type: string
+                example: "10h"
 
   responses:
     ServiceError:
@@ -237,6 +259,15 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Cert"
+      links:
+        serial:
+          operationId: getSerials
+          parameters:
+            thingID: $response.body#/thing_id
+        delete:
+          operationId: revokeCert
+          parameters:
+            certID: $response.body#/serial
     CertsPageRes:
       description: Certificates page.
       content:
@@ -258,7 +289,7 @@ components:
     HealthRes:
       description: Service Health Check.
       content:
-        application/json:
+        application/health+json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
 

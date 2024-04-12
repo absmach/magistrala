@@ -25,10 +25,11 @@ tags:
     externalDocs:
       description: Find out more about Configs
       url: https://docs.magistrala.abstractmachines.fr/
-  
+
 paths:
   /things/configs:
     post:
+      operationId: createConfig
       summary: Adds new config
       description: |
         Adds new config to the list of config owned by user identified using
@@ -38,17 +39,28 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ConfigCreateReq"
       responses:
-        '201':
+        "201":
           $ref: "#/components/responses/ConfigCreateRes"
-        '400':
+        "400":
           description: Failed due to malformed JSON.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '415':
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
           description: Missing or invalid content type.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
+        "503":
+          description: Failed to receive response from the things service.
     get:
+      operationId: getConfigs
       summary: Retrieves managed configs
       description: |
         Retrieves a list of managed configs. Due to performance concerns, data
@@ -63,31 +75,37 @@ paths:
         - $ref: "#/components/parameters/State"
         - $ref: "#/components/parameters/Name"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/ConfigListRes"
-        '400':
+        "400":
           description: Failed due to malformed query parameters.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /things/configs/{configId}:
     get:
+      operationId: getConfig
       summary: Retrieves config info (with channels).
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/ConfigId"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/ConfigRes"
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '404':
+        "404":
           description: Config does not exist.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
     put:
+      operationId: updateConfig
       summary: Updates config info
       description: |
         Update is performed by replacing the current resource data with values
@@ -98,21 +116,24 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
-          $ref: "#/components/requestBodies/ConfigUpdateReq"
+        $ref: "#/components/requestBodies/ConfigUpdateReq"
       responses:
-        '200':
+        "200":
           description: Config updated.
-        '400':
+        "400":
           description: Failed due to malformed JSON.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '404':
+        "404":
           description: Config does not exist.
-        '415':
+        "415":
           description: Missing or invalid content type.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
     delete:
+      operationId: removeConfig
       summary: Removes a Config
       description: |
         Removes a Config. In case of successful removal the service will ensure
@@ -122,16 +143,19 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ConfigId"
       responses:
-        '204':
+        "204":
           description: Config removed.
-        '400':
+        "400":
           description: Failed due to malformed config ID.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /things/configs/certs/{configId}:
     patch:
+      operationId: updateConfigCerts
       summary: Updates certs
       description: |
         Update is performed by replacing the current certificate data with values
@@ -143,21 +167,24 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ConfigCertUpdateReq"
       responses:
-        '200':
+        "200":
           description: Config updated.
           $ref: "#/components/responses/ConfigUpdateCertsRes"
-        '400':
+        "400":
           description: Failed due to malformed JSON.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '404':
+        "404":
           description: Config does not exist.
-        '415':
+        "415":
           description: Missing or invalid content type.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /things/configs/connections/{configId}:
     put:
+      operationId: updateConfigConnections
       summary: Updates channels the thing is connected to
       description: |
         Update connections performs update of the channel list corresponding
@@ -169,20 +196,23 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ConfigConnUpdateReq"
       responses:
-        '200':
+        "200":
           description: Config updated.
-        '400':
+        "400":
           description: Failed due to malformed JSON.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '404':
+        "404":
           description: Config does not exist.
-        '415':
+        "415":
           description: Missing or invalid content type.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /things/bootstrap/{externalId}:
     get:
+      operationId: getBootstrapConfig
       summary: Retrieves configuration.
       description: |
         Retrieves a configuration with given external ID and external key.
@@ -193,18 +223,21 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ExternalId"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/BootstrapConfigRes"
-        '400':
+        "400":
           description: Failed due to malformed JSON.
-        '401':
+        "401":
           description: Missing or invalid external key provided.
-        '404':
+        "404":
           description: Failed to retrieve corresponding config.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /things/bootstrap/secure/{externalId}:
     get:
+      operationId: getSecureBootstrapConfig
       summary: Retrieves configuration.
       description: |
         Retrieves a configuration with given external ID and encrypted external key.
@@ -215,15 +248,22 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ExternalId"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/BootstrapConfigRes"
-        '404':
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
           description: |
             Failed to retrieve corresponding config.
-        '500':
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /things/state/{configId}:
     put:
+      operationId: updateConfigState
       summary: Updates Config state.
       description: |
         Updating state represents enabling/disabling Config, i.e. connecting
@@ -233,15 +273,21 @@ paths:
       parameters:
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
-        $ref: '#/components/requestBodies/ConfigStateUpdateReq'
+        $ref: "#/components/requestBodies/ConfigStateUpdateReq"
       responses:
-        '204':
+        "204":
           description: Config removed.
-        '400':
+        "400":
           description: Failed due to malformed config's ID.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '500':
+        "404":
+          description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
           $ref: "#/components/responses/ServiceError"
   /health:
     get:
@@ -249,9 +295,9 @@ paths:
       tags:
         - health
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/HealthRes"
-        '500':
+        "500":
           $ref: "#/components/responses/ServiceError"
 
 components:
@@ -453,12 +499,14 @@ components:
                 description: External key.
               thing_id:
                 type: string
+                format: uuid
                 description: ID of the corresponding Magistrala Thing.
               channels:
                 type: array
                 minItems: 0
                 items:
                   type: string
+                  format: uuid
               content:
                 type: string
               name:
@@ -468,7 +516,7 @@ components:
                 description: Thing Certificate.
               client_key:
                 type: string
-                description: Thing Private Key.        
+                description: Thing Private Key.
               ca_cert:
                 type: string
             required:
@@ -513,6 +561,7 @@ components:
                 minItems: 0
                 items:
                   type: string
+                  format: uuid
     ConfigStateUpdateReq:
       description: Update the state of the Config.
       content:
@@ -525,14 +574,14 @@ components:
 
   responses:
     ConfigCreateRes:
-     description: Config registered.
-     headers:
-       Location:
-         content:
-           text/plain:
-             schema:
-               type: string
-               description: Created configuration's relative URL (i.e. /things/configs/{configId}).
+      description: Config registered.
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Created configuration's relative URL (i.e. /things/configs/{configId}).
     ConfigListRes:
       description: Data retrieved. Configs from this list don't contain channels.
       content:
@@ -545,10 +594,31 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Config"
+      links:
+        update:
+          operationId: updateConfig
+          parameters:
+            configId: $response.body#/id
+        updateCerts:
+          operationId: updateConfigCerts
+          parameters:
+            configId: $response.body#/id
+        updateConnections:
+          operationId: updateConfigConnections
+          parameters:
+            configId: $response.body#/id
+        updateState:
+          operationId: updateConfigState
+          parameters:
+            configId: $response.body#/id
+        delete:
+          operationId: removeConfig
+          parameters:
+            configId: $response.body#/id
     BootstrapConfigRes:
       description: |
-          Data retrieved. If secure, a response is encrypted using
-          the secret key, so the response is in the binary form.
+        Data retrieved. If secure, a response is encrypted using
+        the secret key, so the response is in the binary form.
       content:
         application/json:
           schema:
@@ -558,7 +628,7 @@ components:
     HealthRes:
       description: Service Health Check.
       content:
-        application/json:
+        application/health+json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
     ConfigUpdateCertsRes:

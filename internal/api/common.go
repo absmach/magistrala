@@ -134,6 +134,8 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidAPIKey),
 		errors.Contains(err, apiutil.ErrMissingName),
 		errors.Contains(err, apiutil.ErrBootstrapState),
+		errors.Contains(err, apiutil.ErrMissingCertData),
+		errors.Contains(err, apiutil.ErrInvalidCertData),
 		errors.Contains(err, apiutil.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),

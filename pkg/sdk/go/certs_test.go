@@ -105,7 +105,7 @@ func TestIssueCert(t *testing.T) {
 			thingID:  "ah",
 			duration: "10h",
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, certs.ErrFailedCertCreation), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, certs.ErrFailedCertCreation), http.StatusBadRequest),
 		},
 		{
 			desc:     "create new cert with thing id and empty duration",
@@ -199,7 +199,7 @@ func TestViewCert(t *testing.T) {
 			desc:     "get non-existent cert",
 			certID:   "43",
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrNotFound), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrNotFound), http.StatusNotFound),
 			response: sdk.Subscription{},
 		},
 		{
@@ -262,7 +262,7 @@ func TestViewCertByThing(t *testing.T) {
 			desc:     "get non-existent cert",
 			thingID:  "43",
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, repoerr.ErrNotFound), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, repoerr.ErrNotFound), http.StatusNotFound),
 			response: sdk.Subscription{},
 		},
 		{
@@ -323,7 +323,7 @@ func TestRevokeCert(t *testing.T) {
 			desc:    "revoke non-existing cert",
 			thingID: "2",
 			token:   token,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(certs.ErrFailedCertRevocation, svcerr.ErrNotFound), http.StatusInternalServerError),
+			err:     errors.NewSDKErrorWithStatus(errors.Wrap(certs.ErrFailedCertRevocation, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
 			desc:    "revoke cert with empty token",
@@ -341,7 +341,7 @@ func TestRevokeCert(t *testing.T) {
 			desc:    "revoke deleted cert",
 			thingID: thingID,
 			token:   token,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(certs.ErrFailedToRemoveCertFromDB, svcerr.ErrNotFound), http.StatusInternalServerError),
+			err:     errors.NewSDKErrorWithStatus(errors.Wrap(certs.ErrFailedToRemoveCertFromDB, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 	}
 

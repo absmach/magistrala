@@ -80,4 +80,4 @@ $GOBIN/magistrala-mqtt
 
 Setting `MG_THINGS_AUTH_GRPC_CLIENT_CERT` and `MG_THINGS_AUTH_GRPC_CLIENT_KEY` will enable TLS against the things service. The service expects a file in PEM format for both the certificate and the key. Setting `MG_THINGS_AUTH_GRPC_SERVER_CERTS` will enable TLS against the things service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
 
-For more information about service capabilities and its usage, please check out the API documentation [API](https://github.com/absmach/magistrala/blob/main/api/mqtt.yml).
+For more information about service capabilities and its usage, please check out the API documentation [API](https://github.com/absmach/magistrala/blob/main/api/asyncapi/mqtt.yml).

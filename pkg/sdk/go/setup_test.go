@@ -54,7 +54,7 @@ var (
 
 	subject   = generateUUID(&testing.T{})
 	object    = generateUUID(&testing.T{})
-	emailer   = umocks.NewEmailer()
+	emailer   = new(umocks.Emailer)
 	passRegex = regexp.MustCompile("^.{8,}$")
 )
 

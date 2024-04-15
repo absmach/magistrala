@@ -13,20 +13,20 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	adapter "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
-	"github.com/absmach/magistrala/http/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	pubsub "github.com/absmach/magistrala/pkg/messaging/mocks"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	mproxy "github.com/absmach/mproxy/pkg/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func setupMessages() (*httptest.Server, *authmocks.AuthClient) {
+func setupMessages() (*httptest.Server, *authmocks.AuthClient, *pubsub.PubSub) {
 	auth := new(authmocks.AuthClient)
-	pub := mocks.NewPublisher()
+	pub := new(pubsub.PubSub)
 	handler := adapter.NewHandler(pub, mglog.NewMock(), auth)
 
 	mux := api.MakeHandler("")
@@ -34,10 +34,10 @@ func setupMessages() (*httptest.Server, *authmocks.AuthClient) {
 
 	mp, err := mproxy.NewProxy("", target.URL, handler, mglog.NewMock())
 	if err != nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	return httptest.NewServer(http.HandlerFunc(mp.Handler)), auth
+	return httptest.NewServer(http.HandlerFunc(mp.Handler)), auth, pub
 }
 
 func TestSendMessage(t *testing.T) {
@@ -46,7 +46,7 @@ func TestSendMessage(t *testing.T) {
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 
-	ts, auth := setupMessages()
+	ts, auth, pub := setupMessages()
 	defer ts.Close()
 	sdkConf := sdk.Config{
 		HTTPAdapterURL:  ts.URL,
@@ -104,6 +104,7 @@ func TestSendMessage(t *testing.T) {
 		},
 	}
 	for desc, tc := range cases {
+		svcCall := pub.On("Publish", mock.Anything, tc.chanID, mock.Anything).Return(tc.err)
 		err := mgsdk.SendMessage(tc.chanID, tc.msg, tc.auth)
 		switch tc.err {
 		case nil:
@@ -111,11 +112,12 @@ func TestSendMessage(t *testing.T) {
 		default:
 			assert.Equal(t, tc.err.Error(), err.Error(), fmt.Sprintf("%s: expected error %s, got %s", desc, tc.err, err))
 		}
+		svcCall.Unset()
 	}
 }
 
 func TestSetContentType(t *testing.T) {
-	ts, _ := setupMessages()
+	ts, _, _ := setupMessages()
 	defer ts.Close()
 
 	sdkConf := sdk.Config{

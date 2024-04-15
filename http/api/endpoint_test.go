@@ -15,9 +15,9 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	server "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
-	"github.com/absmach/magistrala/http/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
+	pubsub "github.com/absmach/magistrala/pkg/messaging/mocks"
 	mproxy "github.com/absmach/mproxy/pkg/http"
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
@@ -26,9 +26,9 @@ import (
 
 const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
-func newService(auth magistrala.AuthzServiceClient) session.Handler {
-	pub := mocks.NewPublisher()
-	return server.NewHandler(pub, mglog.NewMock(), auth)
+func newService(auth magistrala.AuthzServiceClient) (session.Handler, *pubsub.PubSub) {
+	pub := new(pubsub.PubSub)
+	return server.NewHandler(pub, mglog.NewMock(), auth), pub
 }
 
 func newTargetHTTPServer() *httptest.Server {
@@ -83,7 +83,7 @@ func TestPublish(t *testing.T) {
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	msgJSON := `{"field1":"val1","field2":"val2"}`
 	msgCBOR := `81A3616E6763757272656E746174206176FB3FF999999999999A`
-	svc := newService(auth)
+	svc, pub := newService(auth)
 	target := newTargetHTTPServer()
 	defer target.Close()
 	ts, err := newProxyHTPPServer(svc, target)
@@ -171,6 +171,7 @@ func TestPublish(t *testing.T) {
 
 	for desc, tc := range cases {
 		t.Run(desc, func(t *testing.T) {
+			svcCall := pub.On("Publish", mock.Anything, tc.chanID, mock.Anything).Return(nil)
 			req := testRequest{
 				client:      ts.Client(),
 				method:      http.MethodPost,
@@ -183,6 +184,7 @@ func TestPublish(t *testing.T) {
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", desc, tc.status, res.StatusCode))
+			svcCall.Unset()
 		})
 	}
 }

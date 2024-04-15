@@ -12,6 +12,7 @@ import (
 
 const streamID = "magistrala.mqtt"
 
+//go:generate mockery --name EventStore --output=../mocks --filename events.go --quiet --note "Copyright (c) Abstract Machines"
 type EventStore interface {
 	Connect(ctx context.Context, clientID string) error
 	Disconnect(ctx context.Context, clientID string) error

@@ -64,7 +64,7 @@ var (
 )
 
 func TestAuthConnect(t *testing.T) {
-	handler, _ := newHandler()
+	handler, _, eventStore := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -105,19 +105,22 @@ func TestAuthConnect(t *testing.T) {
 			session: &sessionClient,
 		},
 	}
-
 	for _, tc := range cases {
 		ctx := context.TODO()
+		password := ""
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
+			password = string(tc.session.Password)
 		}
+		svcCall := eventStore.On("Connect", mock.Anything, password).Return(tc.err)
 		err := handler.AuthConnect(ctx)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		svcCall.Unset()
 	}
 }
 
 func TestAuthPublish(t *testing.T) {
-	handler, auth := newHandler()
+	handler, auth, _ := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -157,7 +160,7 @@ func TestAuthPublish(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, tc.err)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
@@ -169,7 +172,7 @@ func TestAuthPublish(t *testing.T) {
 }
 
 func TestAuthSubscribe(t *testing.T) {
-	handler, auth := newHandler()
+	handler, auth, _ := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -210,7 +213,7 @@ func TestAuthSubscribe(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, tc.err)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
@@ -222,7 +225,7 @@ func TestAuthSubscribe(t *testing.T) {
 }
 
 func TestConnect(t *testing.T) {
-	handler, _ := newHandler()
+	handler, _, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -256,7 +259,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	handler, _ := newHandler()
+	handler, _, _ := newHandler()
 	logBuffer.Reset()
 
 	malformedSubtopics := topic + "/" + subtopic + "%"
@@ -335,7 +338,7 @@ func TestPublish(t *testing.T) {
 }
 
 func TestSubscribe(t *testing.T) {
-	handler, _ := newHandler()
+	handler, _, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -371,7 +374,7 @@ func TestSubscribe(t *testing.T) {
 }
 
 func TestUnsubscribe(t *testing.T) {
-	handler, _ := newHandler()
+	handler, _, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -407,7 +410,7 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 func TestDisconnect(t *testing.T) {
-	handler, _ := newHandler()
+	handler, _, eventStore := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -433,21 +436,25 @@ func TestDisconnect(t *testing.T) {
 
 	for _, tc := range cases {
 		ctx := context.TODO()
+		password := ""
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
+			password = string(tc.session.Password)
 		}
+		svcCall := eventStore.On("Disconnect", mock.Anything, password).Return(tc.err)
 		err := handler.Disconnect(ctx)
 		assert.Contains(t, logBuffer.String(), tc.logMsg)
 		assert.Equal(t, tc.err, err)
+		svcCall.Unset()
 	}
 }
 
-func newHandler() (session.Handler, *authmocks.AuthClient) {
+func newHandler() (session.Handler, *authmocks.AuthClient, *mocks.EventStore) {
 	logger, err := mglog.New(&logBuffer, "debug")
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}
 	auth := new(authmocks.AuthClient)
-	eventStore := mocks.NewEventStore()
-	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, auth), auth
+	eventStore := new(mocks.EventStore)
+	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, auth), auth, eventStore
 }

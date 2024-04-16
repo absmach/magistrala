@@ -301,6 +301,7 @@ func TestListParentGroups(t *testing.T) {
 			Metadata: sdk.Metadata{"name": fmt.Sprintf("user_%d", i)},
 			Status:   clients.EnabledStatus.String(),
 			ParentID: parentID,
+			Level:    1,
 		}
 		parentID = gr.ID
 		grps = append(grps, gr)
@@ -431,6 +432,7 @@ func TestListChildrenGroups(t *testing.T) {
 			Metadata: sdk.Metadata{"name": fmt.Sprintf("user_%d", i)},
 			Status:   clients.EnabledStatus.String(),
 			ParentID: parentID,
+			Level:    -1,
 		}
 		parentID = gr.ID
 		grps = append(grps, gr)

@@ -128,8 +128,9 @@ func ListGroupsEndpoint(svc groups.Service, memberKind string) endpoint.Endpoint
 		if req.tree {
 			return buildGroupsResponseTree(page), nil
 		}
+		filterByID := req.Page.ID != ""
 
-		return buildGroupsResponse(page), nil
+		return buildGroupsResponse(page, filterByID), nil
 	}
 }
 
@@ -262,7 +263,7 @@ func toViewGroupRes(group groups.Group) viewGroupRes {
 	return view
 }
 
-func buildGroupsResponse(gp groups.Page) groupPageRes {
+func buildGroupsResponse(gp groups.Page, filterByID bool) groupPageRes {
 	res := groupPageRes{
 		pageRes: pageRes{
 			Total: gp.Total,
@@ -274,6 +275,9 @@ func buildGroupsResponse(gp groups.Page) groupPageRes {
 	for _, group := range gp.Groups {
 		view := viewGroupRes{
 			Group: group,
+		}
+		if filterByID && group.Level == 0 {
+			continue
 		}
 		res.Groups = append(res.Groups, view)
 	}

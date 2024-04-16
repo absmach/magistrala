@@ -467,6 +467,41 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 
 func TestListGroupsEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	childGroup := groups.Group{
+		ID:          testsutil.GenerateUUID(t),
+		Name:        valid,
+		Description: valid,
+		Domain:      testsutil.GenerateUUID(t),
+		Parent:      validGroupResp.ID,
+		Metadata: clients.Metadata{
+			"name": "test",
+		},
+		Level:     -1,
+		Children:  []*groups.Group{},
+		CreatedAt: time.Now().Add(-1 * time.Second),
+		UpdatedAt: time.Now(),
+		UpdatedBy: testsutil.GenerateUUID(t),
+		Status:    clients.EnabledStatus,
+	}
+	parentGroup := groups.Group{
+		ID:          testsutil.GenerateUUID(t),
+		Name:        valid,
+		Description: valid,
+		Domain:      testsutil.GenerateUUID(t),
+		Metadata: clients.Metadata{
+			"name": "test",
+		},
+		Level:     1,
+		Children:  []*groups.Group{},
+		CreatedAt: time.Now().Add(-1 * time.Second),
+		UpdatedAt: time.Now(),
+		UpdatedBy: testsutil.GenerateUUID(t),
+		Status:    clients.EnabledStatus,
+	}
+
+	validGroupResp.Children = append(validGroupResp.Children, &childGroup)
+	parentGroup.Children = append(parentGroup.Children, &validGroupResp)
+
 	cases := []struct {
 		desc       string
 		memberKind string
@@ -542,13 +577,71 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
-				Groups: []groups.Group{validGroupResp},
+				Groups: []groups.Group{validGroupResp, childGroup},
 			},
 			svcErr: nil,
 			resp: groupPageRes{
 				Groups: []viewGroupRes{
 					{
 						Group: validGroupResp,
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			desc:       "list children groups successfully without tree",
+			memberKind: auth.UsersKind,
+			req: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Limit: 10,
+					},
+					ID:        validGroupResp.ID,
+					Direction: -1,
+				},
+				tree:       false,
+				token:      valid,
+				memberKind: auth.UsersKind,
+				memberID:   testsutil.GenerateUUID(t),
+			},
+			svcResp: groups.Page{
+				Groups: []groups.Group{validGroupResp, childGroup},
+			},
+			svcErr: nil,
+			resp: groupPageRes{
+				Groups: []viewGroupRes{
+					{
+						Group: childGroup,
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			desc:       "list parent group successfully without tree",
+			memberKind: auth.UsersKind,
+			req: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Limit: 10,
+					},
+					ID:        validGroupResp.ID,
+					Direction: 1,
+				},
+				tree:       false,
+				token:      valid,
+				memberKind: auth.UsersKind,
+				memberID:   testsutil.GenerateUUID(t),
+			},
+			svcResp: groups.Page{
+				Groups: []groups.Group{parentGroup, validGroupResp},
+			},
+			svcErr: nil,
+			resp: groupPageRes{
+				Groups: []viewGroupRes{
+					{
+						Group: parentGroup,
 					},
 				},
 			},

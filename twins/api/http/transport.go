@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/twins"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -34,7 +34,7 @@ const (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc twins.Service, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	r := chi.NewRouter()
@@ -43,38 +43,38 @@ func MakeHandler(svc twins.Service, logger *slog.Logger, instanceID string) http
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 			addTwinEndpoint(svc),
 			decodeTwinCreation,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "add_twin").ServeHTTP)
 		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 			listTwinsEndpoint(svc),
 			decodeList,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "list_twins").ServeHTTP)
 		r.Put("/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
 			updateTwinEndpoint(svc),
 			decodeTwinUpdate,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "update_twin").ServeHTTP)
 		r.Get("/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
 			viewTwinEndpoint(svc),
 			decodeView,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "view_twin").ServeHTTP)
 		r.Delete("/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
 			removeTwinEndpoint(svc),
 			decodeView,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "remove_twin").ServeHTTP)
 	})
 	r.Get("/states/{twinID}", otelhttp.NewHandler(kithttp.NewServer(
 		listStatesEndpoint(svc),
 		decodeListStates,
-		encodeResponse,
+		api.EncodeResponse,
 		opts...,
 	), "list_states").ServeHTTP)
 
@@ -173,67 +173,4 @@ func decodeListStates(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	return req, nil
-}
-
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", contentType)
-
-	if ar, ok := response.(magistrala.Response); ok {
-		for k, v := range ar.Headers() {
-			w.Header().Set(k, v)
-		}
-
-		w.WriteHeader(ar.Code())
-
-		if ar.Empty() {
-			return nil
-		}
-	}
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	var wrapper error
-	if errors.Contains(err, apiutil.ErrValidation) {
-		wrapper, err = errors.Unwrap(err)
-	}
-
-	switch {
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, apiutil.ErrBearerToken):
-		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, apiutil.ErrInvalidQueryParams):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, svcerr.ErrMalformedEntity),
-		errors.Contains(err, apiutil.ErrMissingID),
-		errors.Contains(err, apiutil.ErrNameSize),
-		errors.Contains(err, apiutil.ErrLimitSize):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, svcerr.ErrNotFound):
-		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, svcerr.ErrConflict):
-		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, svcerr.ErrCreateEntity),
-		errors.Contains(err, svcerr.ErrUpdateEntity),
-		errors.Contains(err, svcerr.ErrViewEntity),
-		errors.Contains(err, svcerr.ErrRemoveEntity):
-		w.WriteHeader(http.StatusInternalServerError)
-
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	if wrapper != nil {
-		err = errors.Wrap(wrapper, err)
-	}
-
-	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
 }

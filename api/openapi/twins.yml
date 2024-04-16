@@ -18,7 +18,7 @@ info:
 servers:
   - url: http://localhost:9018
   - url: https://localhost:9018
-    
+
 tags:
   - name: twins
     description: Everything about your Twins
@@ -26,10 +26,10 @@ tags:
       description: Find out more about twins
       url: https://docs.magistrala.abstractmachines.fr/
 
-
 paths:
   /twins:
     post:
+      operationId: createTwin
       summary: Adds new twin
       description: |
         Adds new twin to the list of twins owned by user identified using
@@ -39,18 +39,21 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/TwinReq"
       responses:
-        '201':
+        "201":
           $ref: "#/components/responses/TwinCreateRes"
-        '400':
+        "400":
           description: Failed due to malformed JSON.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '415':
+        "415":
           description: Missing or invalid content type.
-        '500':
-          $ref: '#/components/responses/ServiceError'
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
     get:
+      operationId: getTwins
       summary: Retrieves twins
       description: |
         Retrieves a list of twins. Due to performance concerns, data
@@ -58,39 +61,45 @@ paths:
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-        - $ref: '#/components/parameters/Name'
-        - $ref: '#/components/parameters/Metadata'
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Metadata"
       responses:
-        '200':
-          $ref: '#/components/responses/TwinsPageRes'
-        '400':
+        "200":
+          $ref: "#/components/responses/TwinsPageRes"
+        "400":
           description: Failed due to malformed query parameters.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '500':
-          $ref: '#/components/responses/ServiceError'
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
   /twins/{twinID}:
     get:
+      operationId: getTwin
       summary: Retrieves twin info
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/TwinID'
+        - $ref: "#/components/parameters/TwinID"
       responses:
-        '200':
-          $ref: '#/components/responses/TwinRes'
-        '400':
+        "200":
+          $ref: "#/components/responses/TwinRes"
+        "400":
           description: Failed due to malformed twin's ID.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '404':
+        "404":
           description: Twin does not exist.
-        '500':
-          $ref: '#/components/responses/ServiceError'
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
     put:
+      operationId: updateTwin
       summary: Updates twin info
       description: |
         Update is performed by replacing the current resource data with values
@@ -98,43 +107,51 @@ paths:
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/TwinID'
+        - $ref: "#/components/parameters/TwinID"
       requestBody:
-        $ref: '#/components/requestBodies/TwinReq'
+        $ref: "#/components/requestBodies/TwinReq"
       responses:
-        '200':
+        "200":
           description: Twin updated.
-        '400':
+        "400":
           description: Failed due to malformed twin's ID or malformed JSON.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '404':
+        "404":
           description: Twin does not exist.
-        '415':
+        "415":
           description: Missing or invalid content type.
-        '500':
-          $ref: '#/components/responses/ServiceError'
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
     delete:
+      operationId: removeTwin
       summary: Removes a twin
       description: Removes a twin.
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/TwinID'
+        - $ref: "#/components/parameters/TwinID"
       responses:
-        '204':
+        "204":
           description: Twin removed.
-        '400':
+        "400":
           description: Failed due to malformed twin's ID.
-        '401':
+        "401":
           description: Missing or invalid access token provided
-        '404':
+        "404":
           description: Twin does not exist.
-        '500':
-          $ref: '#/components/responses/ServiceError'
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
   /states/{twinID}:
     get:
+      operationId: getStates
       summary: Retrieves states of twin with id twinID
       description: |
         Retrieves a list of states. Due to performance concerns, data
@@ -142,29 +159,31 @@ paths:
       tags:
         - states
       parameters:
-        - $ref: '#/components/parameters/TwinID'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+        - $ref: "#/components/parameters/TwinID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
-        '200':
-          $ref: '#/components/responses/StatesPageRes'
-        '400':
+        "200":
+          $ref: "#/components/responses/StatesPageRes"
+        "400":
           description: Failed due to malformed query parameters.
-        '401':
+        "401":
           description: Missing or invalid access token provided.
-        '404':
+        "404":
           description: Twin does not exist.
-        '500':
-          $ref: '#/components/responses/ServiceError'
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
   /health:
     get:
       summary: Retrieves service health check info.
       tags:
         - health
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/HealthRes"
-        '500':
+        "500":
           $ref: "#/components/responses/ServiceError"
 
 components:
@@ -242,7 +261,7 @@ components:
           minItems: 0
           uniqueItems: true
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: "#/components/schemas/Attribute"
     TwinReqObj:
       type: object
       properties:
@@ -253,7 +272,7 @@ components:
           type: object
           description: Arbitrary, object-encoded twin's data.
         definition:
-          $ref: '#/components/schemas/Definition'
+          $ref: "#/components/schemas/Definition"
     TwinResObj:
       type: object
       properties:
@@ -283,7 +302,7 @@ components:
           minItems: 0
           uniqueItems: true
           items:
-            $ref: '#/components/schemas/Definition'
+            $ref: "#/components/schemas/Definition"
         metadata:
           type: object
           description: Arbitrary, object-encoded twin's data.
@@ -295,7 +314,7 @@ components:
           minItems: 0
           uniqueItems: true
           items:
-            $ref: '#/components/schemas/TwinResObj'
+            $ref: "#/components/schemas/TwinResObj"
         total:
           type: integer
           description: Total number of items.
@@ -327,12 +346,12 @@ components:
     StatesPage:
       type: object
       properties:
-        twins:
+        states:
           type: array
           minItems: 0
           uniqueItems: true
           items:
-            $ref: '#/components/schemas/State'
+            $ref: "#/components/schemas/State"
         total:
           type: integer
           description: Total number of items.
@@ -343,7 +362,7 @@ components:
           type: integer
           description: Maximum number of items to return in one page.
       required:
-        - twins
+        - states
 
   requestBodies:
     TwinReq:
@@ -351,7 +370,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/TwinReqObj'
+            $ref: "#/components/schemas/TwinReqObj"
       required: true
 
   responses:
@@ -368,25 +387,38 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/TwinResObj'
+            $ref: "#/components/schemas/TwinResObj"
+      links:
+        update:
+          operationId: updateTwin
+          parameters:
+            twinID: $response.body#/id
+        delete:
+          operationId: removeTwin
+          parameters:
+            twinID: $response.body#/id
+        states:
+          operationId: getStates
+          parameters:
+            twinID: $response.body#/id
     TwinsPageRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/TwinsPage'
+            $ref: "#/components/schemas/TwinsPage"
     StatesPageRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/StatesPage'
+            $ref: "#/components/schemas/StatesPage"
     ServiceError:
       description: Unexpected server-side error occurred.
     HealthRes:
       description: Service Health Check.
       content:
-        application/json:
+        application/health+json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
 

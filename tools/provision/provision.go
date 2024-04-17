@@ -19,14 +19,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/0x6flab/namegenerator"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
-	"github.com/docker/docker/pkg/namesgenerator"
 )
 
 const (
 	defPass      = "12345678"
 	defReaderURL = "http://localhost:9005"
 )
+
+var namesgenerator = namegenerator.NewGenerator()
 
 // MgConn - structure describing Magistrala connection set.
 type MgConn struct {
@@ -78,7 +80,7 @@ func Provision(conf Config) error {
 	}
 
 	if user.Credentials.Identity == "" {
-		user.Credentials.Identity = fmt.Sprintf("%s@email.com", namesgenerator.GetRandomName(0))
+		user.Credentials.Identity = fmt.Sprintf("%s@email.com", namesgenerator.Generate())
 		user.Credentials.Secret = defPass
 	}
 
@@ -138,10 +140,15 @@ func Provision(conf Config) error {
 		return fmt.Errorf("failed to create the things: %s", err.Error())
 	}
 
-	channels, err = s.CreateChannels(channels, token.AccessToken)
-	if err != nil {
-		return fmt.Errorf("failed to create the chennels: %s", err.Error())
+	var chs []sdk.Channel
+	for _, c := range channels {
+		c, err = s.CreateChannel(c, token.AccessToken)
+		if err != nil {
+			return fmt.Errorf("failed to create the chennels: %s", err.Error())
+		}
+		chs = append(chs, c)
 	}
+	channels = chs
 
 	for _, t := range things {
 		tIDs = append(tIDs, t.ID)

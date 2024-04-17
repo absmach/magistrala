@@ -14,14 +14,19 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/0x6flab/namegenerator"
 	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
-	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/spf13/cobra"
 )
 
 const (
 	jsonExt = ".json"
 	csvExt  = ".csv"
+)
+
+var (
+	msgFormat      = `[{"bn":"provision:", "bu":"V", "t": %d, "bver":5, "n":"voltage", "u":"V", "v":%d}]`
+	namesgenerator = namegenerator.NewGenerator()
 )
 
 var cmdProvision = []cobra.Command{
@@ -71,11 +76,16 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			channels, err = sdk.CreateChannels(channels, args[1])
-			if err != nil {
-				logError(err)
-				return
+			var chs []mgxsdk.Channel
+			for _, c := range channels {
+				c, err = sdk.CreateChannel(c, args[1])
+				if err != nil {
+					logError(err)
+					return
+				}
+				chs = append(chs, c)
 			}
+			channels = chs
 
 			logJSON(channels)
 		},
@@ -122,9 +132,8 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			rand.Seed(time.Now().UnixNano())
-			name := namesgenerator.GetRandomName(0)
 			// Create test user
+			name := namesgenerator.Generate()
 			user := mgxsdk.User{
 				Name: name,
 				Credentials: mgxsdk.Credentials{
@@ -146,11 +155,28 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
+			// create domain
+			domain := mgxsdk.Domain{
+				Name:   fmt.Sprintf("%s-domain", name),
+				Status: mgxsdk.EnabledStatus,
+			}
+			domain, err = sdk.CreateDomain(domain, ut.AccessToken)
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			// domain login
+			ut, err = sdk.CreateToken(mgxsdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret, DomainID: domain.ID})
+			if err != nil {
+				logError(err)
+				return
+			}
+
 			// Create things
 			for i := 0; i < numThings; i++ {
-				n := fmt.Sprintf("d%d", i)
 				t := mgxsdk.Thing{
-					Name:   n,
+					Name:   fmt.Sprintf("%s-thing-%d", name, i),
 					Status: mgxsdk.EnabledStatus,
 				}
 
@@ -164,19 +190,17 @@ var cmdProvision = []cobra.Command{
 
 			// Create channels
 			for i := 0; i < numChan; i++ {
-				n := fmt.Sprintf("c%d", i)
-
 				c := mgxsdk.Channel{
-					Name:   n,
+					Name:   fmt.Sprintf("%s-channel-%d", name, i),
 					Status: mgxsdk.EnabledStatus,
+				}
+				c, err = sdk.CreateChannel(c, ut.AccessToken)
+				if err != nil {
+					logError(err)
+					return
 				}
 
 				channels = append(channels, c)
-			}
-			channels, err = sdk.CreateChannels(channels, ut.AccessToken)
-			if err != nil {
-				logError(err)
-				return
 			}
 
 			// Connect things to channels - first thing to both channels, second only to first
@@ -203,6 +227,20 @@ var cmdProvision = []cobra.Command{
 				ThingID:   things[1].ID,
 			}
 			if err := sdk.Connect(conIDs, ut.AccessToken); err != nil {
+				logError(err)
+				return
+			}
+
+			// send message to test connectivity
+			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[0].Credentials.Secret); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[1].Credentials.Secret); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.SendMessage(channels[1].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[0].Credentials.Secret); err != nil {
 				logError(err)
 				return
 			}

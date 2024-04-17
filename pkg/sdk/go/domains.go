@@ -38,7 +38,7 @@ func (sdk mgSDK) CreateDomain(domain Domain, token string) (Domain, errors.SDKEr
 
 	url := fmt.Sprintf("%s/%s", sdk.domainsURL, domainsEndpoint)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusCreated)
 	if sdkerr != nil {
 		return Domain{}, sdkerr
 	}

@@ -42,176 +42,272 @@ func TestClientsSave(t *testing.T) {
 	secret := testsutil.GenerateUUID(t)
 
 	cases := []struct {
-		desc   string
-		client clients.Client
-		err    error
+		desc    string
+		clients []clients.Client
+		err     error
 	}{
 		{
 			desc: "add new client successfully",
-			client: clients.Client{
-				ID:     uid,
-				Domain: domainID,
-				Name:   clientName,
-				Credentials: clients.Credentials{
-					Identity: clientIdentity,
-					Secret:   secret,
+			clients: []clients.Client{
+				{
+					ID:     uid,
+					Domain: domainID,
+					Name:   clientName,
+					Credentials: clients.Credentials{
+						Identity: clientIdentity,
+						Secret:   secret,
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
+			},
+			err: nil,
+		},
+		{
+			desc: "add multiple clients successfully",
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: testsutil.GenerateUUID(t),
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Secret: testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
+				},
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: testsutil.GenerateUUID(t),
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Secret: testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
+				},
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: testsutil.GenerateUUID(t),
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Secret: testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
+				},
 			},
 			err: nil,
 		},
 		{
 			desc: "add new client with duplicate secret",
-			client: clients.Client{
-				ID:     uid,
-				Domain: domainID,
-				Name:   clientName,
-				Credentials: clients.Credentials{
-					Identity: clientIdentity,
-					Secret:   secret,
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: domainID,
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Identity: clientIdentity,
+						Secret:   secret,
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add new client with duplicate secret",
-			client: clients.Client{
-				ID:     uid,
-				Domain: domainID,
-				Name:   clientName,
-				Credentials: clients.Credentials{
-					Identity: clientIdentity,
-					Secret:   testsutil.GenerateUUID(t),
+			desc: "add multiple clients with one client having duplicate secret",
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: testsutil.GenerateUUID(t),
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Secret: testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: domainID,
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Identity: clientIdentity,
+						Secret:   secret,
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
+				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add new client without domain id",
-			client: clients.Client{
-				ID:   testsutil.GenerateUUID(t),
-				Name: clientName,
-				Credentials: clients.Credentials{
-					Identity: "withoutdomain-client@example.com",
-					Secret:   testsutil.GenerateUUID(t),
+			clients: []clients.Client{
+				{
+					ID:   testsutil.GenerateUUID(t),
+					Name: clientName,
+					Credentials: clients.Credentials{
+						Identity: "withoutdomain-client@example.com",
+						Secret:   testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
 			},
 			err: nil,
 		},
 		{
 			desc: "add client with invalid client id",
-			client: clients.Client{
-				ID:     invalidName,
-				Domain: domainID,
-				Name:   clientName,
-				Credentials: clients.Credentials{
-					Identity: "invalidid-client@example.com",
-					Secret:   testsutil.GenerateUUID(t),
+			clients: []clients.Client{
+				{
+					ID:     invalidName,
+					Domain: domainID,
+					Name:   clientName,
+					Credentials: clients.Credentials{
+						Identity: "invalidid-client@example.com",
+						Secret:   testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
+			},
+			err: repoerr.ErrCreateEntity,
+		},
+		{
+			desc: "add multiple clients with one client having invalid client id",
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: testsutil.GenerateUUID(t),
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Secret: testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
+				},
+				{
+					ID:     invalidName,
+					Domain: testsutil.GenerateUUID(t),
+					Name:   namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Secret: testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
+				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with invalid client name",
-			client: clients.Client{
-				ID:     testsutil.GenerateUUID(t),
-				Name:   invalidName,
-				Domain: domainID,
-				Credentials: clients.Credentials{
-					Identity: "invalidname-client@example.com",
-					Secret:   testsutil.GenerateUUID(t),
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Name:   invalidName,
+					Domain: domainID,
+					Credentials: clients.Credentials{
+						Identity: "invalidname-client@example.com",
+						Secret:   testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with invalid client domain id",
-			client: clients.Client{
-				ID:     testsutil.GenerateUUID(t),
-				Domain: invalidDomainID,
-				Credentials: clients.Credentials{
-					Identity: "invaliddomainid-client@example.com",
-					Secret:   testsutil.GenerateUUID(t),
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: invalidDomainID,
+					Credentials: clients.Credentials{
+						Identity: "invaliddomainid-client@example.com",
+						Secret:   testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with invalid client identity",
-			client: clients.Client{
-				ID:   testsutil.GenerateUUID(t),
-				Name: clientName,
-				Credentials: clients.Credentials{
-					Identity: invalidName,
-					Secret:   testsutil.GenerateUUID(t),
+			clients: []clients.Client{
+				{
+					ID:   testsutil.GenerateUUID(t),
+					Name: clientName,
+					Credentials: clients.Credentials{
+						Identity: invalidName,
+						Secret:   testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
+					Status:   clients.EnabledStatus,
 				},
-				Metadata: clients.Metadata{},
-				Status:   clients.EnabledStatus,
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add client with a missing client identity",
-			client: clients.Client{
-				ID:     testsutil.GenerateUUID(t),
-				Domain: testsutil.GenerateUUID(t),
-				Name:   "missing-client-identity",
-				Credentials: clients.Credentials{
-					Identity: "",
-					Secret:   testsutil.GenerateUUID(t),
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: testsutil.GenerateUUID(t),
+					Name:   "missing-client-identity",
+					Credentials: clients.Credentials{
+						Identity: "",
+						Secret:   testsutil.GenerateUUID(t),
+					},
+					Metadata: clients.Metadata{},
 				},
-				Metadata: clients.Metadata{},
 			},
 			err: nil,
 		},
 		{
 			desc: "add client with a missing client secret",
-			client: clients.Client{
-				ID:     testsutil.GenerateUUID(t),
-				Domain: testsutil.GenerateUUID(t),
-				Credentials: clients.Credentials{
-					Identity: "missing-client-secret@example.com",
-					Secret:   "",
+			clients: []clients.Client{
+				{
+					ID:     testsutil.GenerateUUID(t),
+					Domain: testsutil.GenerateUUID(t),
+					Credentials: clients.Credentials{
+						Identity: "missing-client-secret@example.com",
+						Secret:   "",
+					},
+					Metadata: clients.Metadata{},
 				},
-				Metadata: clients.Metadata{},
 			},
 			err: nil,
 		},
 		{
 			desc: "add a client with invalid metadata",
-			client: clients.Client{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
-				Credentials: clients.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
-					Secret:   testsutil.GenerateUUID(t),
-				},
-				Metadata: map[string]interface{}{
-					"key": make(chan int),
+			clients: []clients.Client{
+				{
+					ID:   testsutil.GenerateUUID(t),
+					Name: namesgen.Generate(),
+					Credentials: clients.Credentials{
+						Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+						Secret:   testsutil.GenerateUUID(t),
+					},
+					Metadata: map[string]interface{}{
+						"key": make(chan int),
+					},
 				},
 			},
 			err: errors.ErrMalformedEntity,
 		},
 	}
 	for _, tc := range cases {
-		rClient, err := repo.Save(context.Background(), tc.client)
+		rClients, err := repo.Save(context.Background(), tc.clients...)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			rClient[0].Credentials.Secret = tc.client.Credentials.Secret
-			assert.Equal(t, tc.client, rClient[0], fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.client, rClient[0]))
+			for i := range rClients {
+				tc.clients[i].Credentials.Secret = rClients[i].Credentials.Secret
+			}
+			assert.Equal(t, tc.clients, rClients, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.clients, rClients))
 		}
 	}
 }

@@ -633,27 +633,6 @@ type SDK interface {
 	//  fmt.Println(channel)
 	CreateChannel(channel Channel, token string) (Channel, errors.SDKError)
 
-	// CreateChannels registers new channels and returns their ids.
-	//
-	// example:
-	//  channels := []sdk.Channel{
-	//    {
-	//      Name: "My Channel 1",
-	//      Metadata: sdk.Metadata{
-	//        "key": "value",
-	//      },
-	//    },
-	//    {
-	//      Name: "My Channel 2",
-	//      Metadata: sdk.Metadata{
-	//        "key": "value",
-	//      },
-	//    },
-	//  }
-	//  channels, _ := sdk.CreateChannels(channels, "token")
-	//  fmt.Println(channels)
-	CreateChannels(channels []Channel, token string) ([]Channel, errors.SDKError)
-
 	// Channels returns page of channels.
 	//
 	// example:

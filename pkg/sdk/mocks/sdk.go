@@ -456,38 +456,6 @@ func (_m *SDK) CreateChannel(channel sdk.Channel, token string) (sdk.Channel, er
 	return r0, r1
 }
 
-// CreateChannels provides a mock function with given fields: channels, token
-func (_m *SDK) CreateChannels(channels []sdk.Channel, token string) ([]sdk.Channel, errors.SDKError) {
-	ret := _m.Called(channels, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateChannels")
-	}
-
-	var r0 []sdk.Channel
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func([]sdk.Channel, string) ([]sdk.Channel, errors.SDKError)); ok {
-		return rf(channels, token)
-	}
-	if rf, ok := ret.Get(0).(func([]sdk.Channel, string) []sdk.Channel); ok {
-		r0 = rf(channels, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]sdk.Channel)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func([]sdk.Channel, string) errors.SDKError); ok {
-		r1 = rf(channels, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
 // CreateDomain provides a mock function with given fields: d, token
 func (_m *SDK) CreateDomain(d sdk.Domain, token string) (sdk.Domain, errors.SDKError) {
 	ret := _m.Called(d, token)

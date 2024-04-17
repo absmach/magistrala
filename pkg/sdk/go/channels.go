@@ -51,27 +51,6 @@ func (sdk mgSDK) CreateChannel(c Channel, token string) (Channel, errors.SDKErro
 	return c, nil
 }
 
-func (sdk mgSDK) CreateChannels(chs []Channel, token string) ([]Channel, errors.SDKError) {
-	data, err := json.Marshal(chs)
-	if err != nil {
-		return []Channel{}, errors.NewSDKError(err)
-	}
-
-	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, channelsEndpoint, "bulk")
-
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
-	if sdkerr != nil {
-		return []Channel{}, sdkerr
-	}
-
-	var ccr createChannelsRes
-	if err := json.Unmarshal(body, &ccr); err != nil {
-		return []Channel{}, errors.NewSDKError(err)
-	}
-
-	return ccr.Channels, nil
-}
-
 func (sdk mgSDK) Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.thingsURL, channelsEndpoint, pm)
 	if err != nil {

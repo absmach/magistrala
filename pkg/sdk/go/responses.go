@@ -13,10 +13,6 @@ type createThingsRes struct {
 	Things []Thing `json:"things"`
 }
 
-type createChannelsRes struct {
-	Channels []Channel `json:"channels"`
-}
-
 type pageRes struct {
 	Total  uint64 `json:"total"`
 	Offset uint64 `json:"offset"`

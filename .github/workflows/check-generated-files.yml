@@ -64,6 +64,7 @@ jobs:
               - "users/emailer.go"
               - "users/hasher.go"
               - "mqtt/events/streams.go"
+              - "readers/messages.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -134,6 +135,7 @@ jobs:
           mv ./users/mocks/emailer.go ./users/mocks/emailer.go.tmp
           mv ./users/mocks/hasher.go ./users/mocks/hasher.go.tmp
           mv ./mqtt/mocks/events.go ./mqtt/mocks/events.go.tmp
+          mv ./readers/mocks/messages.go ./readers/mocks/messages.go.tmp
 
           make mocks
 
@@ -173,3 +175,4 @@ jobs:
           check_mock_changes ./users/mocks/emailer.go "Users Emailer ./users/mocks/emailer.go"
           check_mock_changes ./users/mocks/hasher.go "Users Hasher ./users/mocks/hasher.go"
           check_mock_changes ./mqtt/mocks/events.go "MQTT Events Store ./mqtt/mocks/events.go"
+          check_mock_changes ./readers/mocks/messages.go "Message Readers ./readers/mocks/messages.go"

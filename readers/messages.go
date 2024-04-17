@@ -22,6 +22,8 @@ const (
 var ErrReadMessages = errors.New("failed to read messages from database")
 
 // MessageRepository specifies message reader API.
+//
+//go:generate mockery --name MessageRepository --output=./mocks --filename messages.go --quiet --note "Copyright (c) Abstract Machines"
 type MessageRepository interface {
 	// ReadAll skips given number of messages for given channel and returns next
 	// limited number of messages.

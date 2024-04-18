@@ -37,6 +37,7 @@ tags:
 paths:
   /channels/{chanId}/messages:
     get:
+      operationId: getMessages
       summary: Retrieves messages sent to single channel
       description: |
         Retrieves a list of messages sent to specific channel. Due to
@@ -70,6 +71,7 @@ paths:
           $ref: "#/components/responses/ServiceError"
   /health:
     get:
+      operationId: health
       summary: Retrieves service health check info.
       tags:
         - health
@@ -278,7 +280,7 @@ components:
     HealthRes:
       description: Service Health Check.
       content:
-        application/json:
+        application/health+json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
 

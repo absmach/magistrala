@@ -36,6 +36,11 @@ env:
   CERTS_URL: http://localhost:9019
   TWINS_URL: http://localhost:9018
   PROVISION_URL: http://localhost:9016
+  CASSANDRA_READER_URL: http://localhost:9003
+  INFLUX_READER_URL: http://localhost:9005
+  MONGO_READER_URL: http://localhost:9007
+  POSTGRES_READER_URL: http://localhost:9009
+  TIMESCALE_READER_URL: http://localhost:9011
 
 jobs:
   api-test:
@@ -202,6 +207,62 @@ jobs:
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Seed Messages
+        if: steps.changes.outputs.readers == 'true'
+        run: |
+          make cli
+          ./build/cli provision test
+
+      - name: Run Cassandra Reader API tests
+        if: steps.changes.outputs.readers == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/readers.yml
+          base-url: ${{ env.CASSANDRA_READER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Influx Reader API tests
+        if: steps.changes.outputs.readers == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/readers.yml
+          base-url: ${{ env.INFLUX_READER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Mongo Reader API tests
+        if: steps.changes.outputs.readers == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/readers.yml
+          base-url: ${{ env.MONGO_READER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Postgres Reader API tests
+        if: steps.changes.outputs.readers == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/readers.yml
+          base-url: ${{ env.POSTGRES_READER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Timescale Reader API tests
+        if: steps.changes.outputs.readers == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/readers.yml
+          base-url: ${{ env.TIMESCALE_READER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
       - name: Stop containers
         if: always()

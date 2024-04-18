@@ -158,6 +158,7 @@ test_api_bootstrap: TEST_API_URL := http://localhost:9013
 test_api_certs: TEST_API_URL := http://localhost:9019
 test_api_twins: TEST_API_URL := http://localhost:9018
 test_api_provision: TEST_API_URL := http://localhost:9016
+test_api_readers: TEST_API_URL := http://localhost:9009 # This can be the URL of any reader service.
 
 $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))

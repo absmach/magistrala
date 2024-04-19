@@ -65,6 +65,7 @@ jobs:
               - "users/hasher.go"
               - "mqtt/events/streams.go"
               - "readers/messages.go"
+              - "lora/routemap.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -136,6 +137,7 @@ jobs:
           mv ./users/mocks/hasher.go ./users/mocks/hasher.go.tmp
           mv ./mqtt/mocks/events.go ./mqtt/mocks/events.go.tmp
           mv ./readers/mocks/messages.go ./readers/mocks/messages.go.tmp
+          mv ./lora/mocks/routes.go ./lora/mocks/routes.go.tmp
 
           make mocks
 
@@ -176,3 +178,4 @@ jobs:
           check_mock_changes ./users/mocks/hasher.go "Users Hasher ./users/mocks/hasher.go"
           check_mock_changes ./mqtt/mocks/events.go "MQTT Events Store ./mqtt/mocks/events.go"
           check_mock_changes ./readers/mocks/messages.go "Message Readers ./readers/mocks/messages.go"
+          check_mock_changes ./lora/mocks/routes.go "LoRa Repository ./lora/mocks/routes.go"

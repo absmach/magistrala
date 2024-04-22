@@ -66,6 +66,9 @@ jobs:
               - "mqtt/events/streams.go"
               - "readers/messages.go"
               - "lora/routemap.go"
+              - "consumers/notifiers/notifier.go"
+              - "consumers/notifiers/service.go"
+              - "consumers/notifiers/subscriptions.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -138,6 +141,9 @@ jobs:
           mv ./mqtt/mocks/events.go ./mqtt/mocks/events.go.tmp
           mv ./readers/mocks/messages.go ./readers/mocks/messages.go.tmp
           mv ./lora/mocks/routes.go ./lora/mocks/routes.go.tmp
+          mv ./consumers/notifiers/mocks/notifier.go ./consumers/notifiers/mocks/notifier.go.tmp
+          mv ./consumers/notifiers/mocks/service.go ./consumers/notifiers/mocks/service.go.tmp
+          mv ./consumers/notifiers/mocks/repository.go ./consumers/notifiers/mocks/repository.go.tmp
 
           make mocks
 
@@ -179,3 +185,6 @@ jobs:
           check_mock_changes ./mqtt/mocks/events.go "MQTT Events Store ./mqtt/mocks/events.go"
           check_mock_changes ./readers/mocks/messages.go "Message Readers ./readers/mocks/messages.go"
           check_mock_changes ./lora/mocks/routes.go "LoRa Repository ./lora/mocks/routes.go"
+          check_mock_changes ./consumers/notifiers/mocks/notifier.go "Notifiers Notifier ./consumers/notifiers/mocks/notifier.go"
+          check_mock_changes ./consumers/notifiers/mocks/service.go "Notifiers Service ./consumers/notifiers/mocks/service.go"
+          check_mock_changes ./consumers/notifiers/mocks/repository.go "Notifiers Repository ./consumers/notifiers/mocks/repository.go"

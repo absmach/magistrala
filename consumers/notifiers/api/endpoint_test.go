@@ -4,21 +4,21 @@
 package api_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/consumers/notifiers"
 	httpapi "github.com/absmach/magistrala/consumers/notifiers/api"
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -67,19 +67,11 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newService() (notifiers.Service, *authmocks.AuthClient) {
-	auth := new(authmocks.AuthClient)
-	repo := mocks.NewRepo(make(map[string]notifiers.Subscription))
-	idp := uuid.NewMock()
-	notif := mocks.NewNotifier()
-	from := "exampleFrom"
-	return notifiers.New(auth, repo, idp, notif, from), auth
-}
-
-func newServer(svc notifiers.Service) *httptest.Server {
+func newServer() (*httptest.Server, *mocks.Service) {
 	logger := mglog.NewMock()
+	svc := new(mocks.Service)
 	mux := httpapi.MakeHandler(svc, logger, instanceID)
-	return httptest.NewServer(mux)
+	return httptest.NewServer(mux), svc
 }
 
 func toJSON(data interface{}) string {
@@ -91,8 +83,7 @@ func toJSON(data interface{}) string {
 }
 
 func TestCreate(t *testing.T) {
-	svc, auth := newService()
-	ss := newServer(svc)
+	ss, svc := newServer()
 	defer ss.Close()
 
 	sub := notifiers.Subscription{
@@ -112,6 +103,7 @@ func TestCreate(t *testing.T) {
 		auth        string
 		status      int
 		location    string
+		err         error
 	}{
 		{
 			desc:        "add successfully",
@@ -120,6 +112,7 @@ func TestCreate(t *testing.T) {
 			auth:        token,
 			status:      http.StatusCreated,
 			location:    fmt.Sprintf("/subscriptions/%s%012d", uuid.Prefix, 1),
+			err:         nil,
 		},
 		{
 			desc:        "add an existing subscription",
@@ -128,6 +121,7 @@ func TestCreate(t *testing.T) {
 			auth:        token,
 			status:      http.StatusConflict,
 			location:    "",
+			err:         svcerr.ErrConflict,
 		},
 		{
 			desc:        "add with empty topic",
@@ -136,6 +130,7 @@ func TestCreate(t *testing.T) {
 			auth:        token,
 			status:      http.StatusBadRequest,
 			location:    "",
+			err:         svcerr.ErrMalformedEntity,
 		},
 		{
 			desc:        "add with empty contact",
@@ -144,6 +139,7 @@ func TestCreate(t *testing.T) {
 			auth:        token,
 			status:      http.StatusBadRequest,
 			location:    "",
+			err:         svcerr.ErrMalformedEntity,
 		},
 		{
 			desc:        "add with invalid auth token",
@@ -152,6 +148,7 @@ func TestCreate(t *testing.T) {
 			auth:        authmocks.InvalidValue,
 			status:      http.StatusUnauthorized,
 			location:    "",
+			err:         svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "add with empty auth token",
@@ -160,6 +157,7 @@ func TestCreate(t *testing.T) {
 			auth:        "",
 			status:      http.StatusUnauthorized,
 			location:    "",
+			err:         svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "add with invalid request format",
@@ -168,6 +166,7 @@ func TestCreate(t *testing.T) {
 			auth:        token,
 			status:      http.StatusBadRequest,
 			location:    "",
+			err:         svcerr.ErrMalformedEntity,
 		},
 		{
 			desc:        "add without content type",
@@ -176,11 +175,12 @@ func TestCreate(t *testing.T) {
 			auth:        token,
 			status:      http.StatusUnsupportedMediaType,
 			location:    "",
+			err:         apiutil.ErrUnsupportedContentType,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		svcCall := svc.On("CreateSubscription", mock.Anything, tc.auth, sub).Return(path.Base(tc.location), tc.err)
 
 		req := testRequest{
 			client:      ss.Client(),
@@ -197,26 +197,23 @@ func TestCreate(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location %s got %s", tc.desc, tc.location, location))
 
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
 func TestView(t *testing.T) {
-	svc, auth := newService()
-	ss := newServer(svc)
+	ss, svc := newServer()
 	defer ss.Close()
 
 	sub := notifiers.Subscription{
 		Topic:   topic,
 		Contact: contact1,
+		ID:      testsutil.GenerateUUID(t),
+		OwnerID: validID,
 	}
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	id, err := svc.CreateSubscription(context.Background(), token, sub)
-	assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
-	repoCall.Unset()
 
 	sr := subRes{
-		ID:      id,
+		ID:      sub.ID,
 		OwnerID: validID,
 		Contact: sub.Contact,
 		Topic:   sub.Topic,
@@ -229,13 +226,17 @@ func TestView(t *testing.T) {
 		auth   string
 		status int
 		res    string
+		err    error
+		Sub    notifiers.Subscription
 	}{
 		{
 			desc:   "view successfully",
-			id:     id,
+			id:     sub.ID,
 			auth:   token,
 			status: http.StatusOK,
 			res:    data,
+			err:    nil,
+			Sub:    sub,
 		},
 		{
 			desc:   "view not existing",
@@ -243,25 +244,28 @@ func TestView(t *testing.T) {
 			auth:   token,
 			status: http.StatusNotFound,
 			res:    notFoundRes,
+			err:    svcerr.ErrNotFound,
 		},
 		{
 			desc:   "view with invalid auth token",
-			id:     id,
+			id:     sub.ID,
 			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
+			err:    svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "view with empty auth token",
-			id:     id,
+			id:     sub.ID,
 			auth:   "",
 			status: http.StatusUnauthorized,
 			res:    missingTokRes,
+			err:    svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		svcCall := svc.On("ViewSubscription", mock.Anything, tc.auth, tc.id).Return(tc.Sub, tc.err)
 
 		req := testRequest{
 			client: ss.Client(),
@@ -277,36 +281,33 @@ func TestView(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, data))
 
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
 func TestList(t *testing.T) {
-	svc, auth := newService()
-	ss := newServer(svc)
+	ss, svc := newServer()
 	defer ss.Close()
 
 	const numSubs = 100
 	var subs []subRes
+	var sub notifiers.Subscription
 
 	for i := 0; i < numSubs; i++ {
-		sub := notifiers.Subscription{
+		sub = notifiers.Subscription{
 			Topic:   fmt.Sprintf("topic.subtopic.%d", i),
 			Contact: contact1,
+			ID:      testsutil.GenerateUUID(t),
 		}
 		if i%2 == 0 {
 			sub.Contact = contact2
 		}
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-		id, err := svc.CreateSubscription(context.Background(), token, sub)
 		sr := subRes{
-			ID:      id,
+			ID:      sub.ID,
 			OwnerID: validID,
 			Contact: sub.Contact,
 			Topic:   sub.Topic,
 		}
-		assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
-		repoCall.Unset()
 		subs = append(subs, sr)
 	}
 	noLimit := toJSON(page{Offset: 5, Limit: 20, Total: numSubs, Subscriptions: subs[5:25]})
@@ -324,6 +325,8 @@ func TestList(t *testing.T) {
 		auth   string
 		status int
 		res    string
+		err    error
+		page   notifiers.Page
 	}{
 		{
 			desc: "list default limit",
@@ -333,6 +336,15 @@ func TestList(t *testing.T) {
 			auth:   token,
 			status: http.StatusOK,
 			res:    noLimit,
+			err:    nil,
+			page: notifiers.Page{
+				PageMetadata: notifiers.PageMetadata{
+					Offset: 5,
+					Limit:  20,
+				},
+				Total:         numSubs,
+				Subscriptions: subscriptionsSlice(subs, 5, 25),
+			},
 		},
 		{
 			desc: "list not existing",
@@ -342,6 +354,7 @@ func TestList(t *testing.T) {
 			auth:   token,
 			status: http.StatusNotFound,
 			res:    notFoundRes,
+			err:    svcerr.ErrNotFound,
 		},
 		{
 			desc: "list one with topic",
@@ -351,6 +364,15 @@ func TestList(t *testing.T) {
 			auth:   token,
 			status: http.StatusOK,
 			res:    one,
+			err:    nil,
+			page: notifiers.Page{
+				PageMetadata: notifiers.PageMetadata{
+					Offset: 0,
+					Limit:  20,
+				},
+				Total:         1,
+				Subscriptions: subscriptionsSlice(subs, 10, 11),
+			},
 		},
 		{
 			desc: "list with contact",
@@ -362,6 +384,15 @@ func TestList(t *testing.T) {
 			auth:   token,
 			status: http.StatusOK,
 			res:    contactList,
+			err:    nil,
+			page: notifiers.Page{
+				PageMetadata: notifiers.PageMetadata{
+					Offset: 10,
+					Limit:  10,
+				},
+				Total:         50,
+				Subscriptions: subscriptionsSlice(contact2Subs, 0, 10),
+			},
 		},
 		{
 			desc: "list with invalid query",
@@ -371,24 +402,26 @@ func TestList(t *testing.T) {
 			auth:   token,
 			status: http.StatusBadRequest,
 			res:    invalidRes,
+			err:    svcerr.ErrMalformedEntity,
 		},
 		{
 			desc:   "list with invalid auth token",
 			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
+			err:    svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "list with empty auth token",
 			auth:   "",
 			status: http.StatusUnauthorized,
 			res:    missingTokRes,
+			err:    svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-
+		svcCall := svc.On("ListSubscriptions", mock.Anything, tc.auth, mock.Anything).Return(tc.page, tc.err)
 		req := testRequest{
 			client: ss.Client(),
 			method: http.MethodGet,
@@ -403,23 +436,14 @@ func TestList(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: got unexpected body\n", tc.desc))
 
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
 func TestRemove(t *testing.T) {
-	svc, auth := newService()
-	ss := newServer(svc)
+	ss, svc := newServer()
 	defer ss.Close()
-
-	sub := notifiers.Subscription{
-		Topic:   "topic",
-		Contact: contact1,
-	}
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	id, err := svc.CreateSubscription(context.Background(), token, sub)
-	assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
-	repoCall.Unset()
+	id := testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc   string
@@ -427,24 +451,28 @@ func TestRemove(t *testing.T) {
 		auth   string
 		status int
 		res    string
+		err    error
 	}{
 		{
 			desc:   "remove successfully",
 			id:     id,
 			auth:   token,
 			status: http.StatusNoContent,
+			err:    nil,
 		},
 		{
 			desc:   "remove not existing",
 			id:     "not existing",
 			auth:   token,
 			status: http.StatusNotFound,
+			err:    svcerr.ErrNotFound,
 		},
 		{
 			desc:   "remove empty id",
 			id:     "",
 			auth:   token,
 			status: http.StatusBadRequest,
+			err:    svcerr.ErrMalformedEntity,
 		},
 		{
 			desc:   "view with invalid auth token",
@@ -452,6 +480,7 @@ func TestRemove(t *testing.T) {
 			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
+			err:    svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "view with empty auth token",
@@ -459,11 +488,12 @@ func TestRemove(t *testing.T) {
 			auth:   "",
 			status: http.StatusUnauthorized,
 			res:    missingTokRes,
+			err:    svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: validID}, nil)
+		svcCall := svc.On("RemoveSubscription", mock.Anything, tc.auth, tc.id).Return(tc.err)
 
 		req := testRequest{
 			client: ss.Client(),
@@ -475,7 +505,7 @@ func TestRemove(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -501,4 +531,18 @@ type page struct {
 	Limit         int      `json:"limit"`
 	Total         uint     `json:"total,omitempty"`
 	Subscriptions []subRes `json:"subscriptions,omitempty"`
+}
+
+func subscriptionsSlice(subs []subRes, start, end int) []notifiers.Subscription {
+	var res []notifiers.Subscription
+	for i := start; i < end; i++ {
+		sub := subs[i]
+		res = append(res, notifiers.Subscription{
+			ID:      sub.ID,
+			OwnerID: sub.OwnerID,
+			Contact: sub.Contact,
+			Topic:   sub.Topic,
+		})
+	}
+	return res
 }

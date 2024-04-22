@@ -30,6 +30,8 @@ type PageMetadata struct {
 }
 
 // SubscriptionsRepository specifies a Subscription persistence API.
+//
+//go:generate mockery --name SubscriptionsRepository --output=./mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
 type SubscriptionsRepository interface {
 	// Save persists a subscription. Successful operation is indicated by non-nil
 	// error response.

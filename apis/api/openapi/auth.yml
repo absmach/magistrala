@@ -286,7 +286,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "200":
+        "204":
           description: Users successfully unassigned from domain.
         "400":
           description: Failed due to malformed domain's ID.

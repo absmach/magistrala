@@ -370,16 +370,19 @@ func (repo domainRepo) DeletePolicies(ctx context.Context, pcs ...auth.Policy) (
 
 	for _, pc := range pcs {
 		q := `
-			DELETE FROM
-				policies
-			WHERE
-				subject_type = :subject_type
-				AND subject_id = :subject_id
-				AND subject_relation = :subject_relation
-				AND relation = :relation
-				AND object_type = :object_type
-				AND object_id = :object_id
-			;`
+		DELETE FROM
+			policies
+		WHERE
+			subject_type = :subject_type
+			AND subject_id = :subject_id
+			AND subject_relation = :subject_relation
+			AND object_type = :object_type
+			AND object_id = :object_id
+		`
+		if pc.Relation != "" {
+			q = fmt.Sprintf("%s AND relation = :relation", q)
+		}
+		q = fmt.Sprintf("%s;", q)
 
 		dbpc := toDBPolicy(pc)
 		row, err := tx.NamedQuery(q, dbpc)

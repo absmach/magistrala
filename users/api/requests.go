@@ -330,9 +330,6 @@ func (req unassignUsersReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	if req.Relation == "" {
-		return apiutil.ErrMissingRelation
-	}
 	if len(req.UserIDs) == 0 {
 		return apiutil.ErrEmptyList
 	}

@@ -83,6 +83,17 @@ func TestDeletePolicyCopy(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "delete a  policy with empty relation",
+			pc: auth.Policy{
+				SubjectType: "unknown",
+				SubjectID:   "unknown",
+				Relation:    "",
+				ObjectType:  "unknown",
+				ObjectID:    "unknown",
+			},
+			err: nil,
+		},
 	}
 
 	for _, tc := range cases {

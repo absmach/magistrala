@@ -245,10 +245,6 @@ func (req unassignUsersRequest) validate() error {
 		return apiutil.ErrBearerToken
 	}
 
-	if req.Relation == "" {
-		return apiutil.ErrMissingRelation
-	}
-
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}

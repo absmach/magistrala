@@ -603,7 +603,7 @@ func TestUnassignUsersRequestValidate(t *testing.T) {
 				UserIDs:  []string{validID},
 				Relation: "",
 			},
-			err: apiutil.ErrMissingRelation,
+			err: nil,
 		},
 	}
 	for _, c := range cases {

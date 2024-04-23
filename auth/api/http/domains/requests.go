@@ -205,10 +205,6 @@ func (req unassignUsersReq) validate() error {
 		return apiutil.ErrMalformedPolicy
 	}
 
-	if req.Relation == "" {
-		return apiutil.ErrMalformedPolicy
-	}
-
 	return nil
 }
 

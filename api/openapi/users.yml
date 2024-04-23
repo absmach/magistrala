@@ -1787,6 +1787,10 @@ components:
                 type: string
                 format: email
                 description: User email.
+              host:
+                type: string
+                example: examplehost
+                description: Email host.
 
     PasswordReset:
       description: Password reset request data, new password and token that is appended on password reset link received in email.
@@ -1799,11 +1803,13 @@ components:
                 type: string
                 format: password
                 description: New password.
+                example: 12345678
                 minimum: 8
               confirm_password:
                 type: string
                 format: password
                 description: New confirmation password.
+                example: 12345678
                 minimum: 8
               token:
                 type: string

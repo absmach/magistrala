@@ -1163,15 +1163,6 @@ func TestUnassignDomainUsers(t *testing.T) {
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
-		{
-			desc:        "unassign domain users with empty relation",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "", validID, validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
-		},
 	}
 
 	for _, tc := range cases {

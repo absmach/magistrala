@@ -11,7 +11,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestHealth(t *testing.T) {
@@ -23,8 +22,7 @@ func TestHealth(t *testing.T) {
 	auth.Test(t)
 	defer usclsv.Close()
 
-	CertTs, _, _, err := setupCerts()
-	require.Nil(t, err, fmt.Sprintf("unexpected error during creating service: %s", err))
+	CertTs, _ := setupCerts()
 	defer CertTs.Close()
 
 	sdkConf := sdk.Config{

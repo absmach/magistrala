@@ -24,6 +24,8 @@ type Page struct {
 var ErrMissingCerts = errors.New("CA path or CA key path not set")
 
 // Repository specifies a Config persistence API.
+//
+//go:generate mockery --name Repository --output=./mocks --filename certs.go --quiet --note "Copyright (c) Abstract Machines"
 type Repository interface {
 	// Save  saves cert for thing into database
 	Save(ctx context.Context, cert Cert) (string, error)

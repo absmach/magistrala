@@ -54,6 +54,8 @@ type Cert struct {
 }
 
 // Agent represents the Vault PKI interface.
+//
+//go:generate mockery --name Agent --output=../mocks --filename pki.go --quiet --note "Copyright (c) Abstract Machines"
 type Agent interface {
 	// IssueCert issues certificate on PKI
 	IssueCert(cn, ttl string) (Cert, error)

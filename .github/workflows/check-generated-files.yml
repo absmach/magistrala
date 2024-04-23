@@ -69,6 +69,9 @@ jobs:
               - "consumers/notifiers/notifier.go"
               - "consumers/notifiers/service.go"
               - "consumers/notifiers/subscriptions.go"
+              - "certs/certs.go"
+              - "certs/pki/vault.go"
+              - "certs/service.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -144,6 +147,9 @@ jobs:
           mv ./consumers/notifiers/mocks/notifier.go ./consumers/notifiers/mocks/notifier.go.tmp
           mv ./consumers/notifiers/mocks/service.go ./consumers/notifiers/mocks/service.go.tmp
           mv ./consumers/notifiers/mocks/repository.go ./consumers/notifiers/mocks/repository.go.tmp
+          mv ./certs/mocks/certs.go ./certs/mocks/certs.go.tmp
+          mv ./certs/mocks/pki.go ./certs/mocks/pki.go.tmp
+          mv ./certs/mocks/service.go ./certs/mocks/service.go.tmp
 
           make mocks
 
@@ -188,3 +194,6 @@ jobs:
           check_mock_changes ./consumers/notifiers/mocks/notifier.go "Notifiers Notifier ./consumers/notifiers/mocks/notifier.go"
           check_mock_changes ./consumers/notifiers/mocks/service.go "Notifiers Service ./consumers/notifiers/mocks/service.go"
           check_mock_changes ./consumers/notifiers/mocks/repository.go "Notifiers Repository ./consumers/notifiers/mocks/repository.go"
+          check_mock_changes ./certs/mocks/certs.go "Certs Repository ./certs/mocks/certs.go"
+          check_mock_changes ./certs/mocks/pki.go "PKI ./certs/mocks/pki.go"
+          check_mock_changes ./certs/mocks/service.go "Certs Service ./certs/mocks/service.go"

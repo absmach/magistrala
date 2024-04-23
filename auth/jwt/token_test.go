@@ -37,11 +37,15 @@ func newToken(issuerName string, key auth.Key) string {
 	builder.
 		Issuer(issuerName).
 		IssuedAt(key.IssuedAt).
-		Subject(key.Subject).
 		Claim(tokenType, "r").
 		Expiration(key.ExpiresAt)
 	builder.Claim(userField, key.User)
-	builder.Claim(domainField, key.Domain)
+	if key.Domain != "" {
+		builder.Claim(domainField, key.Domain)
+	}
+	if key.Subject != "" {
+		builder.Subject(key.Subject)
+	}
 	if key.ID != "" {
 		builder.JwtID(key.ID)
 	}
@@ -76,8 +80,44 @@ func TestIssue(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "issue token without a domain",
+			key: auth.Key{
+				ID:       testsutil.GenerateUUID(t),
+				Type:     auth.AccessKey,
+				Subject:  testsutil.GenerateUUID(t),
+				User:     testsutil.GenerateUUID(t),
+				Domain:   "",
+				IssuedAt: time.Now().Add(-10 * time.Second).Round(time.Second),
+			},
+			err: nil,
+		},
+		{
+			desc: "issue token without a subject",
+			key: auth.Key{
+				ID:       testsutil.GenerateUUID(t),
+				Type:     auth.AccessKey,
+				Subject:  "",
+				User:     testsutil.GenerateUUID(t),
+				Domain:   testsutil.GenerateUUID(t),
+				IssuedAt: time.Now().Add(-10 * time.Second).Round(time.Second),
+			},
+			err: nil,
+		},
+		{
+			desc: "issue token without a domain and subject",
+			key: auth.Key{
+				ID:        testsutil.GenerateUUID(t),
+				Type:      auth.AccessKey,
+				Subject:   "",
+				User:      testsutil.GenerateUUID(t),
+				Domain:    "",
+				IssuedAt:  time.Now().Add(-10 * time.Second).Round(time.Second),
+				ExpiresAt: time.Now().Add(10 * time.Minute).Round(time.Second),
+			},
+			err: nil,
+		},
 	}
-
 	for _, tc := range cases {
 		tkn, err := tokenizer.Issue(tc.key)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
@@ -103,6 +143,22 @@ func TestParse(t *testing.T) {
 	expKey.ExpiresAt = time.Now().UTC().Add(-1 * time.Minute).Round(time.Second)
 	expToken, err := tokenizer.Issue(expKey)
 	require.Nil(t, err, fmt.Sprintf("issuing expired key expected to succeed: %s", err))
+
+	emptyDomainKey := key()
+	emptyDomainKey.Domain = ""
+	emptyDomainToken, err := tokenizer.Issue(emptyDomainKey)
+	require.Nil(t, err, fmt.Sprintf("issuing user key expected to succeed: %s", err))
+
+	emptySubjectKey := key()
+	emptySubjectKey.Subject = ""
+	emptySubjectToken, err := tokenizer.Issue(emptySubjectKey)
+	require.Nil(t, err, fmt.Sprintf("issuing user key expected to succeed: %s", err))
+
+	emptyKey := key()
+	emptyKey.Domain = ""
+	emptyKey.Subject = ""
+	emptyToken, err := tokenizer.Issue(emptyKey)
+	require.Nil(t, err, fmt.Sprintf("issuing user key expected to succeed: %s", err))
 
 	inValidToken := newToken("invalid", key())
 
@@ -147,6 +203,24 @@ func TestParse(t *testing.T) {
 			key:   auth.Key{},
 			token: newToken(issuerName, key()),
 			err:   authjwt.ErrJSONHandle,
+		},
+		{
+			desc:  "parse token with empty domain",
+			key:   emptyDomainKey,
+			token: emptyDomainToken,
+			err:   nil,
+		},
+		{
+			desc:  "parse token with empty subject",
+			key:   emptySubjectKey,
+			token: emptySubjectToken,
+			err:   nil,
+		},
+		{
+			desc:  "parse token with empty domain and subject",
+			key:   emptyKey,
+			token: emptyToken,
+			err:   nil,
 		},
 	}
 

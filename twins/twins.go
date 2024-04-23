@@ -55,6 +55,8 @@ type Page struct {
 }
 
 // TwinRepository specifies a twin persistence API.
+//
+//go:generate mockery --name TwinRepository --output=./mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
 type TwinRepository interface {
 	// Save persists the twin
 	Save(ctx context.Context, twin Twin) (string, error)
@@ -78,6 +80,8 @@ type TwinRepository interface {
 }
 
 // TwinCache contains twin caching interface.
+//
+//go:generate mockery --name TwinCache --output=./mocks --filename cache.go --quiet --note "Copyright (c) Abstract Machines"
 type TwinCache interface {
 	// Save stores twin ID as element of channel-subtopic keyed set and vice versa.
 	Save(ctx context.Context, twin Twin) error

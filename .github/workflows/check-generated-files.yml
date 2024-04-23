@@ -72,6 +72,9 @@ jobs:
               - "certs/certs.go"
               - "certs/pki/vault.go"
               - "certs/service.go"
+              - "twins/twins.go"
+              - "twins/states.go"
+              - "twins/service.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -115,7 +118,7 @@ jobs:
       - name: Check Mocks are up to Date
         if: steps.changes.outputs.mocks == 'true'
         run: |
-          MOCKERY_VERSION=v2.42.1
+          MOCKERY_VERSION=v2.42.3
           go install github.com/vektra/mockery/v2@$MOCKERY_VERSION
 
           mv ./pkg/sdk/mocks/sdk.go ./pkg/sdk/mocks/sdk.go.tmp
@@ -150,6 +153,10 @@ jobs:
           mv ./certs/mocks/certs.go ./certs/mocks/certs.go.tmp
           mv ./certs/mocks/pki.go ./certs/mocks/pki.go.tmp
           mv ./certs/mocks/service.go ./certs/mocks/service.go.tmp
+          mv ./twins/mocks/service.go ./twins/mocks/service.go.tmp
+          mv ./twins/mocks/states.go ./twins/mocks/states.go.tmp
+          mv ./twins/mocks/repository.go ./twins/mocks/repository.go.tmp
+          mv ./twins/mocks/cache.go ./twins/mocks/cache.go.tmp
 
           make mocks
 
@@ -197,3 +204,7 @@ jobs:
           check_mock_changes ./certs/mocks/certs.go "Certs Repository ./certs/mocks/certs.go"
           check_mock_changes ./certs/mocks/pki.go "PKI ./certs/mocks/pki.go"
           check_mock_changes ./certs/mocks/service.go "Certs Service ./certs/mocks/service.go"
+          check_mock_changes ./twins/mocks/service.go "Twins Service ./twins/mocks/service.go"
+          check_mock_changes ./twins/mocks/states.go "Twins States ./twins/mocks/states.go"
+          check_mock_changes ./twins/mocks/repository.go "Twins Repository ./twins/mocks/repository.go"
+          check_mock_changes ./twins/mocks/cache.go "Twins Cache ./twins/mocks/cache.go"

@@ -137,8 +137,6 @@ func TestPublish(t *testing.T) {
 		repoCall2 := connsRM.On("Get", context.Background(), mock.Anything).Return("", tc.connectionsErr)
 		repoCall3 := pub.On("Publish", context.Background(), tc.msg.ApplicationID, mock.Anything).Return(tc.publishErr)
 		err := svc.Publish(context.Background(), &tc.msg)
-		fmt.Println(err)
-		fmt.Println(tc.err)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()

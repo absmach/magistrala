@@ -22,6 +22,8 @@ const publisher = "twins"
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
+//
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// AddTwin adds new twin related to user identified by the provided key.
 	AddTwin(ctx context.Context, token string, twin Twin, def Definition) (tw Twin, err error)

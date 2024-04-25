@@ -83,6 +83,16 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE IF EXISTS channels RENAME COLUMN mainflux_channel TO magistrala_channel`,
 				},
 			},
+			{
+				Id: "configs_5",
+				Up: []string{
+					`ALTER TABLE IF EXISTS configs RENAME COLUMN owner TO domain_id`,
+					`ALTER TABLE IF EXISTS channels RENAME COLUMN owner TO domain_id`,
+					`ALTER TABLE IF EXISTS connections RENAME COLUMN channel_owner TO channel_domain_id`,
+					`ALTER TABLE IF EXISTS connections RENAME COLUMN config_owner TO config_domain_id`,
+					`ALTER TABLE IF EXISTS configs ADD CONSTRAINT configs_name_domain_id_key UNIQUE (name, domain_id)`,
+				},
+			},
 		},
 	}
 }

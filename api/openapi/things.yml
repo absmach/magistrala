@@ -94,7 +94,7 @@ paths:
           description: |
             Missing or invalid access token provided.
         "403":
-          description: Failed to perform authorization over the entity.            
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -182,7 +182,7 @@ paths:
         "404":
           description: Failed due to non existing thing.
         "409":
-          description: Failed due to using an existing identity.          
+          description: Failed due to using an existing identity.
         "415":
           description: Missing or invalid content type.
         "422":
@@ -299,7 +299,7 @@ paths:
         "404":
           description: A non-existent entity request.
         "409":
-          description: Failed due to already disabled thing.             
+          description: Failed due to already disabled thing.
         "422":
           description: Database can't process request.
         "500":
@@ -329,7 +329,7 @@ paths:
         "404":
           description: A non-existent entity request.
         "409":
-          description: Failed due to already enabled thing.          
+          description: Failed due to already enabled thing.
         "422":
           description: Database can't process request.
         "500":
@@ -595,7 +595,7 @@ paths:
         "404":
           description: A non-existent entity request.
         "409":
-          description: Failed due to already enabled channel.             
+          description: Failed due to already enabled channel.
         "422":
           description: Database can't process request.
         "500":
@@ -625,7 +625,7 @@ paths:
         "404":
           description: A non-existent entity request.
         "409":
-          description: Failed due to already disabled channel.             
+          description: Failed due to already disabled channel.
         "422":
           description: Database can't process request.
         "500":

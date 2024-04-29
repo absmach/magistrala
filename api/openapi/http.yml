@@ -25,7 +25,7 @@ tags:
     externalDocs:
       description: Find out more about messages
       url: https://docs.magistrala.abstractmachines.fr/
-      
+
 paths:
   /channels/{id}/messages:
     post:
@@ -50,7 +50,7 @@ paths:
           description: Message discarded due to invalid channel id.
         "415":
           description: Message discarded due to invalid or missing content type.
-        '500':
+        "500":
           $ref: "#/components/responses/ServiceError"
   /health:
     get:
@@ -58,9 +58,9 @@ paths:
       tags:
         - health
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/HealthRes"
-        '500':
+        "500":
           $ref: "#/components/responses/ServiceError"
 
 components:
@@ -154,7 +154,7 @@ components:
   responses:
     ServiceError:
       description: Unexpected server-side error occurred.
-      
+
     HealthRes:
       description: Service Health Check.
       content:

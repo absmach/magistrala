@@ -91,6 +91,8 @@ func main() {
 	db, err := pgclient.Setup(dbConfig, *notifierpg.Migration())
 	if err != nil {
 		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
 	defer db.Close()
 

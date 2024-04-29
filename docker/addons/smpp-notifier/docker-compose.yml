@@ -24,7 +24,7 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      - magistrala-smpp-notifier-volume:/var/lib/postgresql/datab
+      - magistrala-smpp-notifier-volume:/var/lib/postgresql/data
 
   smpp-notifier:
     image: magistrala/smpp-notifier:latest

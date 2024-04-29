@@ -41,6 +41,8 @@ env:
   MONGO_READER_URL: http://localhost:9007
   POSTGRES_READER_URL: http://localhost:9009
   TIMESCALE_READER_URL: http://localhost:9011
+  SMPP_NOTIFIER_URL: http://localhost:9014
+  SMTP_NOTIFIER_URL: http://localhost:9015
 
 jobs:
   api-test:
@@ -206,7 +208,7 @@ jobs:
           base-url: ${{ env.PROVISION_URL }}
           checks: all
           report: false
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-unique-data --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
       - name: Seed Messages
         if: steps.changes.outputs.readers == 'true'
@@ -264,6 +266,26 @@ jobs:
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
+      - name: Run SMPP Notifier API tests
+        if: steps.changes.outputs.notifiers == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/notifiers.yml
+          base-url: ${{ env.SMPP_NOTIFIER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run SMTP Notifier API tests
+        if: steps.changes.outputs.notifiers == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/notifiers.yml
+          base-url: ${{ env.SMTP_NOTIFIER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
       - name: Stop containers
         if: always()
-        run: make run down args="-v"
+        run: make run down args="-v" && make run_addons down args="-v"

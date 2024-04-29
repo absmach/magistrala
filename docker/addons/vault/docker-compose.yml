@@ -8,8 +8,6 @@
 # from project root. Vault default port (8200) is exposed, so you can use Vault CLI tool for
 # vault inspection and administration, as well as access the UI.
 
-version: '3.7'
-
 networks:
   magistrala-base-net:
 

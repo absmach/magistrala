@@ -12,9 +12,9 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,7 +34,7 @@ const (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	mux := chi.NewRouter()
@@ -43,35 +43,35 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 			createSubscriptionEndpoint(svc),
 			decodeCreate,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "create").ServeHTTP)
 
 		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 			listSubscriptionsEndpoint(svc),
 			decodeList,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "list").ServeHTTP)
 
 		r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
 			deleteSubscriptionEndpint(svc),
 			decodeSubscription,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "delete").ServeHTTP)
 
 		r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
 			viewSubscriptionEndpint(svc),
 			decodeSubscription,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "view").ServeHTTP)
 
 		r.Delete("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
 			deleteSubscriptionEndpint(svc),
 			decodeSubscription,
-			encodeResponse,
+			api.EncodeResponse,
 			opts...,
 		), "delete").ServeHTTP)
 	})
@@ -129,64 +129,4 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	req.limit = uint(limit)
 
 	return req, nil
-}
-
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	if ar, ok := response.(magistrala.Response); ok {
-		for k, v := range ar.Headers() {
-			w.Header().Set(k, v)
-		}
-		w.Header().Set("Content-Type", contentType)
-		w.WriteHeader(ar.Code())
-
-		if ar.Empty() {
-			return nil
-		}
-	}
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	var wrapper error
-	if errors.Contains(err, apiutil.ErrValidation) {
-		wrapper, err = errors.Unwrap(err)
-	}
-
-	switch {
-	case errors.Contains(err, svcerr.ErrMalformedEntity),
-		errors.Contains(err, apiutil.ErrInvalidContact),
-		errors.Contains(err, apiutil.ErrInvalidTopic),
-		errors.Contains(err, apiutil.ErrMissingID),
-		errors.Contains(err, apiutil.ErrInvalidQueryParams):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, svcerr.ErrNotFound):
-		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, apiutil.ErrBearerToken):
-		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, svcerr.ErrConflict):
-		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-
-	case errors.Contains(err, svcerr.ErrCreateEntity),
-		errors.Contains(err, svcerr.ErrViewEntity),
-		errors.Contains(err, svcerr.ErrRemoveEntity):
-		w.WriteHeader(http.StatusInternalServerError)
-
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	if wrapper != nil {
-		err = errors.Wrap(wrapper, err)
-	}
-
-	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
 }

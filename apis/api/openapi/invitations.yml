@@ -47,7 +47,7 @@ paths:
         "401":
           description: Missing or invalid access token provided.
         "404":
-          description: A non-existent entity request.          
+          description: A non-existent entity request.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -111,7 +111,7 @@ paths:
         "401":
           description: Missing or invalid access token provided.
         "404":
-          description: A non-existent entity request.          
+          description: A non-existent entity request.
         "500":
           $ref: "#/components/responses/ServiceError"
 

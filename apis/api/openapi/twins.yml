@@ -312,7 +312,6 @@ components:
         twins:
           type: array
           minItems: 0
-          uniqueItems: true
           items:
             $ref: "#/components/schemas/TwinResObj"
         total:

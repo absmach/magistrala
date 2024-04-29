@@ -20,17 +20,18 @@ servers:
   - url: https://localhost:9014
   - url: http://localhost:9015
   - url: https://localhost:9015
-  
+
 tags:
   - name: notifiers
     description: Everything about your Notifiers
     externalDocs:
       description: Find out more about notifiers
       url: https://docs.magistrala.abstractmachines.fr/
-      
+
 paths:
   /subscriptions:
     post:
+      operationId: createSubscription
       summary: Create subscription
       description: Creates a new subscription give a topic and contact.
       tags:
@@ -42,13 +43,18 @@ paths:
           $ref: "#/components/responses/Create"
         "400":
           description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
         "409":
           description: Failed due to using an existing topic and contact.
         "415":
           description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
     get:
+      operationId: listSubscriptions
       summary: List subscriptions
       description: List subscriptions given list parameters.
       tags:
@@ -65,10 +71,17 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
   /subscriptions/{id}:
     get:
+      operationId: viewSubscription
       summary: Get subscription with the provided id
       description: Retrieves a subscription with the provided id.
       tags:
@@ -80,9 +93,16 @@ paths:
           $ref: "#/components/responses/View"
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
     delete:
+      operationId: removeSubscription
       summary: Delete subscription with the provided id
       description: Removes a subscription with the provided id.
       tags:
@@ -94,6 +114,12 @@ paths:
           description: Subscription removed
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
   /health:
@@ -102,9 +128,9 @@ paths:
       tags:
         - health
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/HealthRes"
-        '500':
+        "500":
           $ref: "#/components/responses/ServiceError"
 
 components:
@@ -140,7 +166,7 @@ components:
         contact:
           type: string
           example: user@example.com
-          description: The contact of the user to which the notification will be sent.          
+          description: The contact of the user to which the notification will be sent.
     Page:
       type: object
       properties:
@@ -229,6 +255,11 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Subscription"
+      links:
+        delete:
+          operationId: removeSubscription
+          parameters:
+            id: $response.body#/id
     Page:
       description: Data retrieved.
       content:
@@ -240,7 +271,7 @@ components:
     HealthRes:
       description: Service Health Check.
       content:
-        application/json:
+        application/health+json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
 

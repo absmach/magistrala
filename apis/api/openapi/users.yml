@@ -57,7 +57,7 @@ paths:
         "415":
           description: Missing or invalid content type.
         "422":
-          description: Database can't process request.          
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -572,6 +572,8 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -695,6 +697,8 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Unauthorized access to group id.
+        "404":
+          description: A non-existent entity request.
         "500":
           $ref: "#/components/responses/ServiceError"
 

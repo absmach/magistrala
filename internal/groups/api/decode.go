@@ -56,12 +56,22 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	var g mggroups.Page
+	if err := json.NewDecoder(r.Body).Decode(&g); err != nil {
+		if err.Error() != "EOF" {
+			return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		}
+		g = mggroups.Page{}
+	}
 	req := listGroupsReq{
 		token:      apiutil.ExtractBearerToken(r),
 		tree:       tree,
 		memberKind: memberKind,
 		memberID:   chi.URLParam(r, "memberID"),
 		Page: mggroups.Page{
+			Type:       g.Type,
+			Path:       g.Path,
 			Level:      level,
 			ID:         parentID,
 			Permission: permission,
@@ -97,10 +107,20 @@ func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	var g mggroups.Page
+	if err := json.NewDecoder(r.Body).Decode(&g); err != nil {
+		if err.Error() != "EOF" {
+			return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		}
+		g = mggroups.Page{}
+	}
 	req := listGroupsReq{
 		token: apiutil.ExtractBearerToken(r),
 		tree:  tree,
 		Page: mggroups.Page{
+			Type:       g.Type,
+			Path:       g.Path,
 			Level:      level,
 			ID:         chi.URLParam(r, "groupID"),
 			Permission: permission,
@@ -136,10 +156,20 @@ func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{},
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	var g mggroups.Page
+	if err := json.NewDecoder(r.Body).Decode(&g); err != nil {
+		if err.Error() != "EOF" {
+			return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		}
+		g = mggroups.Page{}
+	}
 	req := listGroupsReq{
 		token: apiutil.ExtractBearerToken(r),
 		tree:  tree,
 		Page: mggroups.Page{
+			Type:       g.Type,
+			Path:       g.Path,
 			Level:      level,
 			ID:         chi.URLParam(r, "groupID"),
 			Permission: permission,

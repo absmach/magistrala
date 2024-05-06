@@ -33,6 +33,18 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS groups`,
 				},
 			},
+			{
+				Id: "groups_02",
+				Up: []string{
+					`CREATE EXTENSION IF NOT EXISTS LTREE`,
+					`ALTER TABLE groups ADD COLUMN path LTREE`,
+					`CREATE INDEX path_gist_idx ON groups USING GIST (path);`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS groups`,
+					`DROP EXTENSION IF EXISTS LTREE`,
+				},
+			},
 		},
 	}
 }

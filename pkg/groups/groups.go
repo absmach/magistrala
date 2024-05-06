@@ -52,7 +52,8 @@ type MembersPage struct {
 // of Groups that belong to the page.
 type Page struct {
 	PageMeta
-	Path       string
+	Type       string `json:"type"`
+	Path       string `json:"path"`
 	Level      uint64
 	ID         string
 	Permission string

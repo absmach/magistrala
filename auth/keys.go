@@ -58,6 +58,56 @@ func (kt KeyType) String() string {
 	}
 }
 
+type ScopeOperation uint32
+
+const (
+	CreateOp ScopeOperation = iota
+	ReadOp
+	ListOp
+	UpdateOp
+	DeleteOp
+)
+
+type ScopeEntityType uint32
+
+const (
+	DomainManagementScope ScopeEntityType = iota
+	GroupScope
+	ChannelScope
+	ThingScope
+)
+
+type ScopeValue interface {
+	string | []string
+}
+
+type KeyScopes map[ScopeEntityType]map[ScopeOperation]map[string]struct{}
+
+func NewKeyScopes() KeyScopes {
+	return make(KeyScopes)
+}
+
+func (ks KeyScopes) Add(entityType ScopeEntityType, operation ScopeOperation, entity string) {
+	if ks[entityType] == nil {
+		ks[entityType] = make(map[ScopeOperation]map[string]struct{})
+	}
+	if ks[entityType][operation] == nil {
+		ks[entityType][operation] = make(map[string]struct{})
+	}
+	ks[entityType][operation][entity] = struct{}{}
+}
+
+func (ks KeyScopes) Contains(entityType ScopeEntityType, operation ScopeOperation, entity string) bool {
+	if scopOperations, ok := ks[entityType]; ok {
+		if entities, ok := scopOperations[operation]; ok {
+			if _, ok := entities[entity]; ok {
+				return ok
+			}
+		}
+	}
+	return false
+}
+
 // Key represents API key.
 type Key struct {
 	ID        string    `json:"id,omitempty"`
@@ -66,6 +116,7 @@ type Key struct {
 	Subject   string    `json:"subject,omitempty"` // user ID
 	User      string    `json:"user,omitempty"`
 	Domain    string    `json:"domain,omitempty"` // domain user ID
+	Scopes    KeyScopes `json:"scopes,omitempty"`
 	IssuedAt  time.Time `json:"issued_at,omitempty"`
 	ExpiresAt time.Time `json:"expires_at,omitempty"`
 }

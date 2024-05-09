@@ -36,6 +36,7 @@ func Save(serverURI, nodeID string) error {
 	if err != nil {
 		return errors.Wrap(errWriteFile, err)
 	}
+	defer file.Close()
 	csvWriter := csv.NewWriter(file)
 	err = csvWriter.Write([]string{serverURI, nodeID})
 	csvWriter.Flush()

@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/invitations/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -36,95 +37,116 @@ func TestSendInvitation(t *testing.T) {
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	cases := []struct {
-		desc        string
-		token       string
-		tokenUserID string
-		req         invitations.Invitation
-		err         error
-		authNErr    error
-		domainErr   error
-		adminErr    error
-		authorised  bool
-		issueErr    error
-		repoErr     error
+		desc            string
+		token           string
+		tokenUserID     string
+		req             invitations.Invitation
+		err             error
+		authNErr        error
+		domainMemberErr error
+		domainAdminErr  error
+		adminErr        error
+		authorised      bool
+		issueErr        error
+		repoErr         error
 	}{
 		{
-			desc:        "send invitation successful",
-			token:       validToken,
-			tokenUserID: testsutil.GenerateUUID(t),
-			req:         validInvitation,
-			err:         nil,
-			authNErr:    nil,
-			domainErr:   nil,
-			adminErr:    nil,
-			authorised:  true,
-			issueErr:    nil,
-			repoErr:     nil,
+			desc:            "send invitation successful",
+			token:           validToken,
+			tokenUserID:     testsutil.GenerateUUID(t),
+			req:             validInvitation,
+			err:             nil,
+			authNErr:        nil,
+			domainMemberErr: svcerr.ErrAuthorization,
+			domainAdminErr:  nil,
+			adminErr:        nil,
+			authorised:      true,
+			issueErr:        nil,
+			repoErr:         nil,
 		},
 		{
-			desc:        "invalid token",
-			token:       "invalid",
-			tokenUserID: "",
-			req:         validInvitation,
-			err:         svcerr.ErrAuthentication,
-			authNErr:    svcerr.ErrAuthentication,
-			domainErr:   nil,
-			adminErr:    nil,
-			authorised:  false,
-			issueErr:    nil,
-			repoErr:     nil,
+			desc:            "existing domain member",
+			token:           validToken,
+			tokenUserID:     testsutil.GenerateUUID(t),
+			req:             validInvitation,
+			err:             errors.Wrap(svcerr.ErrConflict, invitations.ErrMemberExist),
+			authNErr:        nil,
+			domainMemberErr: nil,
+			domainAdminErr:  nil,
+			adminErr:        nil,
+			authorised:      true,
+			issueErr:        nil,
+			repoErr:         nil,
 		},
 		{
-			desc:        "invalid relation",
-			token:       validToken,
-			tokenUserID: testsutil.GenerateUUID(t),
-			req:         invitations.Invitation{Relation: "invalid"},
-			err:         apiutil.ErrInvalidRelation,
-			authNErr:    nil,
-			domainErr:   nil,
-			adminErr:    nil,
-			authorised:  false,
-			issueErr:    nil,
-			repoErr:     nil,
+			desc:            "invalid token",
+			token:           "invalid",
+			tokenUserID:     "",
+			req:             validInvitation,
+			err:             svcerr.ErrAuthentication,
+			authNErr:        svcerr.ErrAuthentication,
+			domainMemberErr: svcerr.ErrAuthorization,
+			domainAdminErr:  nil,
+			adminErr:        nil,
+			authorised:      false,
+			issueErr:        nil,
+			repoErr:         nil,
 		},
 		{
-			desc:        "error during domain admin check",
-			token:       validToken,
-			tokenUserID: testsutil.GenerateUUID(t),
-			req:         validInvitation,
-			err:         svcerr.ErrAuthorization,
-			authNErr:    nil,
-			domainErr:   svcerr.ErrAuthorization,
-			adminErr:    nil,
-			authorised:  false,
-			issueErr:    nil,
-			repoErr:     nil,
+			desc:            "invalid relation",
+			token:           validToken,
+			tokenUserID:     testsutil.GenerateUUID(t),
+			req:             invitations.Invitation{Relation: "invalid"},
+			err:             apiutil.ErrInvalidRelation,
+			authNErr:        nil,
+			domainMemberErr: svcerr.ErrAuthorization,
+			domainAdminErr:  nil,
+			adminErr:        nil,
+			authorised:      false,
+			issueErr:        nil,
+			repoErr:         nil,
 		},
 		{
-			desc:        "error during platform admin check",
-			token:       validToken,
-			tokenUserID: testsutil.GenerateUUID(t),
-			req:         validInvitation,
-			err:         svcerr.ErrAuthorization,
-			authNErr:    nil,
-			domainErr:   svcerr.ErrAuthorization,
-			adminErr:    svcerr.ErrAuthorization,
-			authorised:  false,
-			issueErr:    nil,
-			repoErr:     nil,
+			desc:            "error during domain admin check",
+			token:           validToken,
+			tokenUserID:     testsutil.GenerateUUID(t),
+			req:             validInvitation,
+			err:             svcerr.ErrAuthorization,
+			authNErr:        nil,
+			domainMemberErr: svcerr.ErrAuthorization,
+			domainAdminErr:  svcerr.ErrAuthorization,
+			adminErr:        nil,
+			authorised:      false,
+			issueErr:        nil,
+			repoErr:         nil,
 		},
 		{
-			desc:        "error during token issuance",
-			token:       validToken,
-			tokenUserID: testsutil.GenerateUUID(t),
-			req:         validInvitation,
-			err:         svcerr.ErrAuthentication,
-			authNErr:    nil,
-			domainErr:   nil,
-			adminErr:    nil,
-			authorised:  true,
-			issueErr:    svcerr.ErrAuthentication,
-			repoErr:     nil,
+			desc:            "error during platform admin check",
+			token:           validToken,
+			tokenUserID:     testsutil.GenerateUUID(t),
+			req:             validInvitation,
+			err:             svcerr.ErrAuthorization,
+			authNErr:        nil,
+			domainMemberErr: svcerr.ErrAuthorization,
+			domainAdminErr:  svcerr.ErrAuthorization,
+			adminErr:        svcerr.ErrAuthorization,
+			authorised:      false,
+			issueErr:        nil,
+			repoErr:         nil,
+		},
+		{
+			desc:            "error during token issuance",
+			token:           validToken,
+			tokenUserID:     testsutil.GenerateUUID(t),
+			req:             validInvitation,
+			err:             svcerr.ErrAuthentication,
+			authNErr:        nil,
+			domainMemberErr: svcerr.ErrAuthorization,
+			domainAdminErr:  nil,
+			adminErr:        nil,
+			authorised:      true,
+			issueErr:        svcerr.ErrAuthentication,
+			repoErr:         nil,
 		},
 		{
 			desc:        "resend invitation",
@@ -136,13 +158,14 @@ func TestSendInvitation(t *testing.T) {
 				Relation: auth.ViewerRelation,
 				Resend:   true,
 			},
-			err:        nil,
-			authNErr:   nil,
-			domainErr:  nil,
-			adminErr:   nil,
-			authorised: true,
-			issueErr:   nil,
-			repoErr:    nil,
+			err:             nil,
+			authNErr:        nil,
+			domainMemberErr: svcerr.ErrAuthorization,
+			domainAdminErr:  nil,
+			adminErr:        nil,
+			authorised:      true,
+			issueErr:        nil,
+			repoErr:         nil,
 		},
 	}
 
@@ -151,8 +174,17 @@ func TestSendInvitation(t *testing.T) {
 			UserId: tc.tokenUserID,
 			Id:     testsutil.GenerateUUID(t) + "_" + tc.tokenUserID,
 		}
+		domainMemberReq := magistrala.AuthorizeReq{
+			SubjectType: auth.UserType,
+			SubjectKind: auth.UsersKind,
+			Subject:     auth.EncodeDomainUserID(tc.req.DomainID, tc.req.UserID),
+			Permission:  auth.MembershipPermission,
+			ObjectType:  auth.DomainType,
+			Object:      tc.req.DomainID,
+		}
+		domaincall := authsvc.On("Authorize", context.Background(), &domainMemberReq).Return(&magistrala.AuthorizeRes{Authorized: tc.authorised}, tc.domainMemberErr)
 		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(idRes, tc.authNErr)
-		domainReq := magistrala.AuthorizeReq{
+		domainAdminReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
 			Subject:     idRes.GetId(),
@@ -160,7 +192,7 @@ func TestSendInvitation(t *testing.T) {
 			ObjectType:  auth.DomainType,
 			Object:      tc.req.DomainID,
 		}
-		domaincall := authsvc.On("Authorize", context.Background(), &domainReq).Return(&magistrala.AuthorizeRes{Authorized: tc.authorised}, tc.domainErr)
+		domaincall1 := authsvc.On("Authorize", context.Background(), &domainAdminReq).Return(&magistrala.AuthorizeRes{Authorized: tc.authorised}, tc.domainAdminErr)
 		platformReq := magistrala.AuthorizeReq{
 			SubjectType: auth.UserType,
 			SubjectKind: auth.UsersKind,
@@ -179,6 +211,7 @@ func TestSendInvitation(t *testing.T) {
 		assert.Equal(t, tc.err, err, tc.desc)
 		repocall.Unset()
 		domaincall.Unset()
+		domaincall1.Unset()
 		platformcall.Unset()
 		repocall1.Unset()
 		repocall2.Unset()

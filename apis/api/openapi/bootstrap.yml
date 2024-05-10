@@ -96,6 +96,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ConfigRes"
+        "400":
+          description: Missing or invalid config.
         "401":
           description: Missing or invalid access token provided.
         "404":

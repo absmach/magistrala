@@ -234,6 +234,7 @@ func TestEncodeError(t *testing.T) {
 				apiutil.ErrMissingMemberKind,
 				apiutil.ErrLimitSize,
 				apiutil.ErrNameSize,
+				svcerr.ErrViewEntity,
 			},
 			code: http.StatusBadRequest,
 		},
@@ -298,7 +299,6 @@ func TestEncodeError(t *testing.T) {
 			errs: []error{
 				svcerr.ErrCreateEntity,
 				svcerr.ErrUpdateEntity,
-				svcerr.ErrViewEntity,
 				svcerr.ErrRemoveEntity,
 			},
 			code: http.StatusUnprocessableEntity,

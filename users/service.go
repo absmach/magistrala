@@ -19,6 +19,13 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var (
+	errIssueToken            = errors.New("failed to issue token")
+	errUserNotSignedUp       = errors.New("user not signed up")
+	errFailedPermissionsList = errors.New("failed to list permissions")
+	errRecoveryToken         = errors.New("failed to generate password recovery token")
+)
+
 type service struct {
 	clients      postgres.Repository
 	idProvider   magistrala.IDProvider
@@ -59,7 +66,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	if cli.Credentials.Secret != "" {
 		hash, err := svc.hasher.Hash(cli.Credentials.Secret)
 		if err != nil {
-			return mgclients.Client{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
+			return mgclients.Client{}, errors.Wrap(svcerr.ErrMalformedEntity, err)
 		}
 		cli.Credentials.Secret = hash
 	}
@@ -85,7 +92,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	}()
 	client, err := svc.clients.Save(ctx, cli)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 	return client, nil
 }
@@ -93,7 +100,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	dbUser, err := svc.clients.RetrieveByIdentity(ctx, identity)
 	if err != nil {
-		return &magistrala.Token{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
 		return &magistrala.Token{}, errors.Wrap(svcerr.ErrLogin, err)
@@ -103,7 +110,13 @@ func (svc service) IssueToken(ctx context.Context, identity, secret, domainID st
 	if domainID != "" {
 		d = domainID
 	}
-	return svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: dbUser.ID, DomainId: &d, Type: uint32(auth.AccessKey)})
+
+	token, err := svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: dbUser.ID, DomainId: &d, Type: uint32(auth.AccessKey)})
+	if err != nil {
+		return &magistrala.Token{}, errors.Wrap(errIssueToken, err)
+	}
+
+	return token, err
 }
 
 func (svc service) RefreshToken(ctx context.Context, refreshToken, domainID string) (*magistrala.Token, error) {
@@ -259,8 +272,8 @@ func (svc service) UpdateClientIdentity(ctx context.Context, token, clientID, id
 
 func (svc service) GenerateResetToken(ctx context.Context, email, host string) error {
 	client, err := svc.clients.RetrieveByIdentity(ctx, email)
-	if err != nil || client.Credentials.Identity == "" {
-		return repoerr.ErrNotFound
+	if err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	issueReq := &magistrala.IssueReq{
 		UserId: client.ID,
@@ -268,7 +281,7 @@ func (svc service) GenerateResetToken(ctx context.Context, email, host string) e
 	}
 	token, err := svc.auth.Issue(ctx, issueReq)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrRecoveryToken, err)
+		return errors.Wrap(errRecoveryToken, err)
 	}
 
 	return svc.SendPasswordReset(ctx, host, email, client.Name, token.AccessToken)
@@ -283,12 +296,10 @@ func (svc service) ResetSecret(ctx context.Context, resetToken, secret string) e
 	if err != nil {
 		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	if c.Credentials.Identity == "" {
-		return repoerr.ErrNotFound
-	}
+
 	secret, err = svc.hasher.Hash(secret)
 	if err != nil {
-		return err
+		return errors.Wrap(svcerr.ErrMalformedEntity, err)
 	}
 	c = mgclients.Client{
 		ID: c.ID,
@@ -315,11 +326,11 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if _, err := svc.IssueToken(ctx, dbClient.Credentials.Identity, oldSecret, ""); err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrIssueToken, err)
+		return mgclients.Client{}, err
 	}
 	newSecret, err = svc.hasher.Hash(newSecret)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrMalformedEntity, err)
 	}
 	dbClient.Credentials.Secret = newSecret
 	dbClient.UpdatedAt = time.Now()
@@ -355,15 +366,15 @@ func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgcli
 	}
 
 	if err := svc.updateClientPolicy(ctx, cli.ID, cli.Role); err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrFailedPolicyUpdate, err)
+		return mgclients.Client{}, err
 	}
 	client, err = svc.clients.UpdateRole(ctx, client)
 	if err != nil {
 		// If failed to update role in DB, then revert back to platform admin policy in spicedb
 		if errRollback := svc.updateClientPolicy(ctx, cli.ID, mgclients.UserRole); errRollback != nil {
-			return mgclients.Client{}, errors.Wrap(err, errors.Wrap(repoerr.ErrRollbackTx, errRollback))
+			return mgclients.Client{}, errors.Wrap(errRollback, err)
 		}
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrFailedUpdateRole, err)
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return client, nil
 }
@@ -390,7 +401,7 @@ func (svc service) DisableClient(ctx context.Context, token, id string) (mgclien
 	}
 	client, err := svc.changeClientStatus(ctx, token, client)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(mgclients.ErrDisableClient, err)
+		return mgclients.Client{}, err
 	}
 
 	return client, nil
@@ -417,7 +428,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
-	return client, err
+	return client, nil
 }
 
 func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
@@ -498,7 +509,7 @@ func (svc service) retrieveObjectUsersPermissions(ctx context.Context, domainID,
 	userID := auth.EncodeDomainUserID(domainID, client.ID)
 	permissions, err := svc.listObjectUserPermission(ctx, userID, objectType, objectID)
 	if err != nil {
-		return err
+		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	client.Permissions = permissions
 	return nil
@@ -512,7 +523,7 @@ func (svc service) listObjectUserPermission(ctx context.Context, userID, objectT
 		ObjectType:  objectType,
 	})
 	if err != nil {
-		return []string{}, err
+		return []string{}, errors.Wrap(errFailedPermissionsList, err)
 	}
 	return lp.GetPermissions(), nil
 }
@@ -562,9 +573,9 @@ func (svc service) OAuthCallback(ctx context.Context, state mgoauth2.State, clie
 		rclient, err := svc.clients.RetrieveByIdentity(ctx, client.Credentials.Identity)
 		if err != nil {
 			if errors.Contains(err, repoerr.ErrNotFound) {
-				return &magistrala.Token{}, errors.New("user not signed up")
+				return &magistrala.Token{}, errors.Wrap(svcerr.ErrNotFound, errUserNotSignedUp)
 			}
-			return &magistrala.Token{}, err
+			return &magistrala.Token{}, errors.Wrap(svcerr.ErrViewEntity, err)
 		}
 		claims := &magistrala.IssueReq{
 			UserId: rclient.ID,
@@ -575,7 +586,7 @@ func (svc service) OAuthCallback(ctx context.Context, state mgoauth2.State, clie
 		rclient, err := svc.RegisterClient(ctx, "", client)
 		if err != nil {
 			if errors.Contains(err, repoerr.ErrConflict) {
-				return &magistrala.Token{}, errors.New("user already exists")
+				return &magistrala.Token{}, errors.Wrap(svcerr.ErrConflict, errors.New("user already exists"))
 			}
 			return &magistrala.Token{}, err
 		}

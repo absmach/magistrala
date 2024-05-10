@@ -296,7 +296,6 @@ func TestListInvitation(t *testing.T) {
 			token:       tc.token,
 			contentType: tc.contentType,
 		}
-
 		res, err := req.make()
 		assert.Nil(t, err, tc.desc)
 		assert.Equal(t, tc.status, res.StatusCode, tc.desc)

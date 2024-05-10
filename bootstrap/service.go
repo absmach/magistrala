@@ -31,7 +31,9 @@ var (
 	// ErrBootstrap indicates error in getting bootstrap configuration.
 	ErrBootstrap = errors.New("failed to read bootstrap configuration")
 
-	errAddBootstrap       = errors.New("failed to add bootstrap configuration")
+	// ErrAddBootstrap indicates error in adding bootstrap configuration.
+	ErrAddBootstrap = errors.New("failed to add bootstrap configuration")
+
 	errUpdateConnections  = errors.New("failed to update connections")
 	errRemoveBootstrap    = errors.New("failed to remove bootstrap configuration")
 	errChangeState        = errors.New("failed to change state of bootstrap configuration")
@@ -164,7 +166,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 				err = errors.Wrap(err, errT)
 			}
 		}
-		return Config{}, errors.Wrap(errAddBootstrap, err)
+		return Config{}, errors.Wrap(ErrAddBootstrap, err)
 	}
 
 	cfg.ThingID = saved
@@ -400,7 +402,7 @@ func (bs bootstrapService) thing(id, token string) (mgsdk.Thing, error) {
 		}
 		thing, sdkErr := bs.sdk.CreateThing(mgsdk.Thing{ID: id, Name: "Bootstrapped Thing " + id}, token)
 		if sdkErr != nil {
-			return mgsdk.Thing{}, errors.Wrap(errCreateThing, errors.New(sdkErr.Err().Msg()))
+			return mgsdk.Thing{}, errors.Wrap(errCreateThing, sdkErr)
 		}
 		return thing, nil
 	}

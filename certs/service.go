@@ -10,7 +10,6 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/certs/pki"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
@@ -156,7 +155,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, of
 
 	cp, err := cs.certsRepo.RetrieveByThing(ctx, u.GetId(), thingID, offset, limit)
 	if err != nil {
-		return Page{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	for i, cert := range cp.Certs {
@@ -188,7 +187,7 @@ func (cs *certsService) ViewCert(ctx context.Context, token, serialID string) (C
 
 	cert, err := cs.certsRepo.RetrieveBySerial(ctx, u.GetId(), serialID)
 	if err != nil {
-		return Cert{}, errors.Wrap(repoerr.ErrNotFound, err)
+		return Cert{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	vcert, err := cs.pki.Read(serialID)

@@ -43,8 +43,7 @@ var (
 	invalid           = "invalid"
 	validID           = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 	wrongID           = testsutil.GenerateUUID(&testing.T{})
-	errAddPolicies    = errors.New("failed to add policies")
-	errRemovePolicies = errors.New("failed to remove the policies")
+	errRemovePolicies = errors.New("failed to delete policies")
 )
 
 func newService() (things.Service, *mocks.Repository, *authmocks.AuthClient, *mocks.Cache) {
@@ -1774,7 +1773,7 @@ func TestShare(t *testing.T) {
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
 			addPoliciesResponse: &magistrala.AddPoliciesRes{},
 			addPoliciesErr:      svcerr.ErrInvalidPolicy,
-			err:                 errAddPolicies,
+			err:                 svcerr.ErrInvalidPolicy,
 		},
 		{
 			desc:                "share thing with failed authorization from add policies",
@@ -1783,7 +1782,7 @@ func TestShare(t *testing.T) {
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
 			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: false},
-			err:                 nil,
+			err:                 svcerr.ErrUpdateEntity,
 		},
 	}
 
@@ -1852,7 +1851,7 @@ func TestUnShare(t *testing.T) {
 			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
 			deletePoliciesResponse: &magistrala.DeletePoliciesRes{},
 			deletePoliciesErr:      svcerr.ErrInvalidPolicy,
-			err:                    errRemovePolicies,
+			err:                    svcerr.ErrInvalidPolicy,
 		},
 		{
 			desc:                   "share thing with failed delete from delete policies",

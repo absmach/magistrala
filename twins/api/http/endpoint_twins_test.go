@@ -469,7 +469,7 @@ func TestViewTwin(t *testing.T) {
 			desc:        "view twin by passing invalid token",
 			id:          twin.ID,
 			auth:        authmocks.InvalidValue,
-			status:      http.StatusUnauthorized,
+			status:      http.StatusForbidden,
 			res:         twinRes{},
 			err:         svcerr.ErrAuthentication,
 			identifyErr: svcerr.ErrAuthentication,

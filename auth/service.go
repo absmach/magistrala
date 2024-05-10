@@ -139,7 +139,7 @@ func (svc service) Identify(ctx context.Context, token string) (Key, error) {
 	key, err := svc.tokenizer.Parse(token)
 	if errors.Contains(err, ErrExpiry) {
 		err = svc.keys.Remove(ctx, key.Issuer, key.ID)
-		return Key{}, errors.Wrap(ErrKeyExpired, err)
+		return Key{}, errors.Wrap(svcerr.ErrAuthentication, errors.Wrap(ErrKeyExpired, err))
 	}
 	if err != nil {
 		return Key{}, errors.Wrap(svcerr.ErrAuthentication, errors.Wrap(errIdentify, err))
@@ -204,6 +204,16 @@ func (svc service) checkPolicy(ctx context.Context, pr PolicyReq) error {
 }
 
 func (svc service) checkDomain(ctx context.Context, subjectType, subject, domainID string) error {
+	if err := svc.agent.CheckPolicy(ctx, PolicyReq{
+		Subject:     subject,
+		SubjectType: subjectType,
+		Permission:  MembershipPermission,
+		Object:      domainID,
+		ObjectType:  DomainType,
+	}); err != nil {
+		return svcerr.ErrDomainAuthorization
+	}
+
 	d, err := svc.domains.RetrieveByID(ctx, domainID)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrViewEntity, err)
@@ -531,7 +541,7 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 
 	domainID, err := svc.idProvider.ID()
 	if err != nil {
-		return Domain{}, err
+		return Domain{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 	d.ID = domainID
 
@@ -580,7 +590,7 @@ func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain
 func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id string) (Permissions, error) {
 	res, err := svc.Identify(ctx, token)
 	if err != nil {
-		return []string{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return []string{}, err
 	}
 
 	if err := svc.Authorize(ctx, PolicyReq{
@@ -591,7 +601,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 		ObjectType:  DomainType,
 		Permission:  MembershipPermission,
 	}); err != nil {
-		return []string{}, errors.Wrap(svcerr.ErrAuthorization, err)
+		return []string{}, err
 	}
 
 	lp, err := svc.ListPermissions(ctx, PolicyReq{
@@ -609,7 +619,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainReq) (Domain, error) {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
-		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return Domain{}, err
 	}
 	if err := svc.Authorize(ctx, PolicyReq{
 		Subject:     key.Subject,
@@ -619,7 +629,7 @@ func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainR
 		ObjectType:  DomainType,
 		Permission:  EditPermission,
 	}); err != nil {
-		return Domain{}, errors.Wrap(svcerr.ErrAuthorization, err)
+		return Domain{}, err
 	}
 
 	dom, err := svc.domains.Update(ctx, id, key.User, d)
@@ -642,7 +652,7 @@ func (svc service) ChangeDomainStatus(ctx context.Context, token, id string, d D
 		ObjectType:  DomainType,
 		Permission:  AdminPermission,
 	}); err != nil {
-		return Domain{}, errors.Wrap(svcerr.ErrAuthorization, err)
+		return Domain{}, err
 	}
 
 	dom, err := svc.domains.Update(ctx, id, key.User, d)
@@ -765,7 +775,7 @@ func (svc service) UnassignUsers(ctx context.Context, token, id string, userIds 
 	for _, rel := range []string{MemberRelation, ViewerRelation, EditorRelation} {
 		// Remove only non-admins.
 		if err := svc.removeDomainPolicies(ctx, id, rel, userIds...); err != nil {
-			return errors.Wrap(errRemovePolicies, err)
+			return err
 		}
 	}
 

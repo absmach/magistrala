@@ -106,66 +106,77 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	w.Header().Set("Content-Type", ContentType)
 	switch {
-	case errors.Contains(err, svcerr.ErrMalformedEntity),
-		errors.Contains(err, errors.ErrMalformedEntity),
-		errors.Contains(err, apiutil.ErrMissingID),
-		errors.Contains(err, apiutil.ErrEmptyList),
-		errors.Contains(err, apiutil.ErrMissingMemberType),
-		errors.Contains(err, apiutil.ErrMissingMemberKind),
-		errors.Contains(err, apiutil.ErrLimitSize),
-		errors.Contains(err, apiutil.ErrBearerKey),
-		errors.Contains(err, apiutil.ErrNameSize),
-		errors.Contains(err, apiutil.ErrInvalidIDFormat),
-		errors.Contains(err, svcerr.ErrInvalidStatus),
-		errors.Contains(err, apiutil.ErrValidation),
-		errors.Contains(err, apiutil.ErrInvitationState),
-		errors.Contains(err, apiutil.ErrInvalidRole),
-		errors.Contains(err, apiutil.ErrMissingEmail),
-		errors.Contains(err, apiutil.ErrMissingHost),
-		errors.Contains(err, apiutil.ErrMissingIdentity),
-		errors.Contains(err, apiutil.ErrMissingSecret),
-		errors.Contains(err, apiutil.ErrMissingPass),
-		errors.Contains(err, apiutil.ErrMissingConfPass),
-		errors.Contains(err, apiutil.ErrInvalidResetPass),
-		errors.Contains(err, apiutil.ErrMissingRelation),
-		errors.Contains(err, apiutil.ErrPasswordFormat),
-		errors.Contains(err, apiutil.ErrInvalidLevel),
-		errors.Contains(err, apiutil.ErrMalformedPolicy),
-		errors.Contains(err, apiutil.ErrInvalidAPIKey),
-		errors.Contains(err, apiutil.ErrMissingName),
-		errors.Contains(err, apiutil.ErrBootstrapState),
-		errors.Contains(err, apiutil.ErrMissingCertData),
-		errors.Contains(err, apiutil.ErrInvalidCertData),
-		errors.Contains(err, apiutil.ErrInvalidContact),
-		errors.Contains(err, apiutil.ErrInvalidTopic),
-		errors.Contains(err, apiutil.ErrInvalidQueryParams):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, svcerr.ErrLogin),
-		errors.Contains(err, apiutil.ErrBearerToken):
-		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, svcerr.ErrNotFound):
-		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, svcerr.ErrConflict),
-		errors.Contains(err, errors.ErrStatusAlreadyAssigned):
-		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, svcerr.ErrAuthorization),
 		errors.Contains(err, svcerr.ErrDomainAuthorization),
 		errors.Contains(err, bootstrap.ErrExternalKey),
 		errors.Contains(err, bootstrap.ErrExternalKeySecure):
+		err = unwrap(err)
 		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
-		w.WriteHeader(http.StatusUnsupportedMediaType)
+
+	case errors.Contains(err, svcerr.ErrAuthentication),
+		errors.Contains(err, apiutil.ErrBearerToken),
+		errors.Contains(err, svcerr.ErrLogin):
+		err = unwrap(err)
+		w.WriteHeader(http.StatusUnauthorized)
+	case errors.Contains(err, svcerr.ErrMalformedEntity),
+		errors.Contains(err, apiutil.ErrMalformedPolicy),
+		errors.Contains(err, apiutil.ErrMissingSecret),
+		errors.Contains(err, errors.ErrMalformedEntity),
+		errors.Contains(err, apiutil.ErrMissingID),
+		errors.Contains(err, apiutil.ErrMissingName),
+		errors.Contains(err, apiutil.ErrMissingEmail),
+		errors.Contains(err, apiutil.ErrMissingHost),
+		errors.Contains(err, apiutil.ErrInvalidResetPass),
+		errors.Contains(err, apiutil.ErrEmptyList),
+		errors.Contains(err, apiutil.ErrMissingMemberKind),
+		errors.Contains(err, apiutil.ErrMissingMemberType),
+		errors.Contains(err, apiutil.ErrLimitSize),
+		errors.Contains(err, apiutil.ErrBearerKey),
+		errors.Contains(err, svcerr.ErrInvalidStatus),
+		errors.Contains(err, apiutil.ErrNameSize),
+		errors.Contains(err, apiutil.ErrInvalidIDFormat),
+		errors.Contains(err, apiutil.ErrInvalidQueryParams),
+		errors.Contains(err, apiutil.ErrMissingRelation),
+		errors.Contains(err, apiutil.ErrValidation),
+		errors.Contains(err, apiutil.ErrMissingIdentity),
+		errors.Contains(err, apiutil.ErrMissingPass),
+		errors.Contains(err, apiutil.ErrMissingConfPass),
+		errors.Contains(err, apiutil.ErrPasswordFormat),
+		errors.Contains(err, svcerr.ErrInvalidRole),
+		errors.Contains(err, svcerr.ErrInvalidPolicy),
+		errors.Contains(err, apiutil.ErrInvitationState),
+		errors.Contains(err, apiutil.ErrInvalidAPIKey),
+		errors.Contains(err, svcerr.ErrViewEntity),
+		errors.Contains(err, apiutil.ErrBootstrapState),
+		errors.Contains(err, apiutil.ErrMissingCertData),
+		errors.Contains(err, apiutil.ErrInvalidContact),
+		errors.Contains(err, apiutil.ErrInvalidTopic),
+		errors.Contains(err, bootstrap.ErrAddBootstrap),
+		errors.Contains(err, apiutil.ErrInvalidCertData):
+		err = unwrap(err)
+		w.WriteHeader(http.StatusBadRequest)
+
 	case errors.Contains(err, svcerr.ErrCreateEntity),
 		errors.Contains(err, svcerr.ErrUpdateEntity),
-		errors.Contains(err, svcerr.ErrFailedUpdateRole),
-		errors.Contains(err, svcerr.ErrViewEntity),
-		errors.Contains(err, svcerr.ErrAddPolicies),
-		errors.Contains(err, svcerr.ErrDeletePolicies),
-		errors.Contains(err, svcerr.ErrRemoveEntity):
+		errors.Contains(err, svcerr.ErrRemoveEntity),
+		errors.Contains(err, svcerr.ErrEnableClient):
+		err = unwrap(err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
-	case errors.Contains(err, bootstrap.ErrThings):
-		w.WriteHeader(http.StatusServiceUnavailable)
+
+	case errors.Contains(err, svcerr.ErrNotFound),
+		errors.Contains(err, bootstrap.ErrBootstrap):
+		err = unwrap(err)
+		w.WriteHeader(http.StatusNotFound)
+
+	case errors.Contains(err, errors.ErrStatusAlreadyAssigned),
+		errors.Contains(err, svcerr.ErrConflict):
+		err = unwrap(err)
+		w.WriteHeader(http.StatusConflict)
+
+	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
+		err = unwrap(err)
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -179,4 +190,12 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}
+}
+
+func unwrap(err error) error {
+	wrapper, err := errors.Unwrap(err)
+	if wrapper != nil {
+		return wrapper
+	}
+	return err
 }

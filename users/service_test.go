@@ -1053,7 +1053,7 @@ func TestUpdateClientRole(t *testing.T) {
 			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: false},
 			updateRoleResponse:   mgclients.Client{},
 			token:                validToken,
-			err:                  svcerr.ErrFailedPolicyUpdate,
+			err:                  svcerr.ErrAuthorization,
 		},
 		{
 			desc:                 "update client role to user role with failed to delete policy with error",
@@ -2349,7 +2349,7 @@ func TestResetSecret(t *testing.T) {
 					Identity: "",
 				},
 			},
-			err: repoerr.ErrNotFound,
+			err: nil,
 		},
 		{
 			desc:                 "reset secret with failed to update secret",

@@ -29,7 +29,7 @@ var (
 	ErrConflict = errors.New("entity already exists")
 
 	// ErrCreateEntity indicates error in creating entity or entities.
-	ErrCreateEntity = errors.New("failed to create entity in the db")
+	ErrCreateEntity = errors.New("failed to create entity")
 
 	// ErrRemoveEntity indicates error in removing entity.
 	ErrRemoveEntity = errors.New("failed to remove entity")
@@ -55,18 +55,24 @@ var (
 	// ErrFailedPolicyUpdate indicates a failure to update user policy.
 	ErrFailedPolicyUpdate = errors.New("failed to update user policy")
 
-	// ErrAddPolicies indicates failed to add policies.
-	ErrAddPolicies = errors.New("failed to add policies")
-
-	// ErrDeletePolicies indicates failed to delete policies.
-	ErrDeletePolicies = errors.New("failed to delete policies")
-
-	// ErrIssueToken indicates a failure to issue token.
-	ErrIssueToken = errors.New("failed to issue token")
-
 	// ErrPasswordFormat indicates weak password.
 	ErrPasswordFormat = errors.New("password does not meet the requirements")
 
 	// ErrFailedUpdateRole indicates a failure to update user role.
 	ErrFailedUpdateRole = errors.New("failed to update user role")
+
+	// ErrFailedPermissionsList indicates a failure to list permissions.
+	ErrFailedPermissionsList = errors.New("failed to list permissions")
+
+	// ErrEnableClient indicates error in enabling client.
+	ErrEnableClient = errors.New("failed to enable client")
+
+	// ErrDisableClient indicates error in disabling client.
+	ErrDisableClient = errors.New("failed to disable client")
+
+	// ErrAddPolicies indicates error in adding policies.
+	ErrAddPolicies = errors.New("failed to add policies")
+
+	// ErrDeletePolicies indicates error in removing policies.
+	ErrDeletePolicies = errors.New("failed to remove policies")
 )

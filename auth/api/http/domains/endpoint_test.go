@@ -307,21 +307,21 @@ func TestListDomains(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list domains  with empty name",
+			desc:   "list domains with empty name",
 			token:  validToken,
 			query:  "name= ",
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrValidation,
 		},
 		{
-			desc:   "list domains  with duplicate name",
+			desc:   "list domains with duplicate name",
 			token:  validToken,
 			query:  "name=1&name=2",
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:  "list domains  with status",
+			desc:  "list domains with status",
 			token: validToken,
 			listDomainsRequest: auth.DomainsPage{
 				Total:   1,
@@ -332,7 +332,7 @@ func TestListDomains(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list domains  with invalid status",
+			desc:   "list domains with invalid status",
 			token:  validToken,
 			query:  "status=invalid",
 			status: http.StatusBadRequest,
@@ -1047,7 +1047,7 @@ func TestAssignDomainUsers(t *testing.T) {
 			contentType: contentType,
 			token:       validToken,
 			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
+			err:         apiutil.ErrMissingID,
 		},
 		{
 			desc:        "assign domain users with empty relation",
@@ -1056,7 +1056,7 @@ func TestAssignDomainUsers(t *testing.T) {
 			contentType: contentType,
 			token:       validToken,
 			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
+			err:         apiutil.ErrMalformedPolicy,
 		},
 	}
 

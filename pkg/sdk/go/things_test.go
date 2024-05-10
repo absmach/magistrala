@@ -18,7 +18,6 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -97,7 +96,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  sdk.ErrFailedCreation,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrCreateEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty thing",
@@ -105,7 +104,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			repoErr:  errors.ErrMalformedEntity,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, repoerr.ErrMalformedEntity), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusBadRequest),
 		},
 		{
 			desc: "register a thing that can't be marshalled",
@@ -246,7 +245,7 @@ func TestCreateThings(t *testing.T) {
 			things:   thingsList,
 			response: []sdk.Thing{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedCreation, sdk.ErrFailedCreation), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc:     "register empty things",
@@ -361,7 +360,7 @@ func TestListThings(t *testing.T) {
 			token:    authmocks.InvalidValue,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -369,7 +368,7 @@ func TestListThings(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -573,7 +572,7 @@ func TestListThingsByChannel(t *testing.T) {
 			channelID: testsutil.GenerateUUID(t),
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:      "list things with an invalid id",
@@ -581,7 +580,7 @@ func TestListThingsByChannel(t *testing.T) {
 			channelID: wrongID,
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrViewEntity, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
 		},
 	}
 
@@ -639,21 +638,21 @@ func TestThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    invalidToken,
 			thingID:  generateUUID(t),
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc:     "view thing with valid token and invalid thing id",
 			response: sdk.Thing{},
 			token:    validToken,
 			thingID:  wrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrViewEntity, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
 		},
 		{
 			desc:     "view thing with an invalid token and invalid thing id",
 			response: sdk.Thing{},
 			token:    invalidToken,
 			thingID:  wrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 	}
 
@@ -718,14 +717,14 @@ func TestUpdateThing(t *testing.T) {
 			thing:    thing1,
 			response: sdk.Thing{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc:     "update thing name with invalid id",
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -803,14 +802,14 @@ func TestUpdateThingTags(t *testing.T) {
 			thing:    thing1,
 			response: sdk.Thing{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc:     "update thing name with invalid id",
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    validToken,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrUpdateEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -884,7 +883,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     "non-existent",
 			response:  sdk.Thing{},
 			repoErr:   svcerr.ErrAuthorization,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, svcerr.ErrAuthorization), http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusForbidden),
 		},
 		{
 			desc:      "update thing secret with wrong old secret",
@@ -893,7 +892,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     validToken,
 			response:  sdk.Thing{},
 			repoErr:   apiutil.ErrMissingSecret,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrUpdateEntity, apiutil.ErrMissingSecret), http.StatusBadRequest),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusBadRequest),
 		},
 	}
 	for _, tc := range cases {
@@ -956,7 +955,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    enabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrEnableClient, http.StatusBadRequest),
 		},
 		{
 			desc:     "enable non-existing thing",
@@ -965,7 +964,7 @@ func TestEnableThing(t *testing.T) {
 			thing:    sdk.Thing{},
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedEnable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrEnableClient, http.StatusBadRequest),
 		},
 	}
 
@@ -1091,7 +1090,7 @@ func TestDisableThing(t *testing.T) {
 			thing:    disabledThing1,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrDisableClient, http.StatusBadRequest),
 		},
 		{
 			desc:     "disable non-existing thing",
@@ -1100,7 +1099,7 @@ func TestDisableThing(t *testing.T) {
 			token:    validToken,
 			response: sdk.Thing{},
 			repoErr:  sdk.ErrFailedDisable,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, svcerr.ErrViewEntity), http.StatusUnprocessableEntity),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrDisableClient, http.StatusBadRequest),
 		},
 	}
 
@@ -1218,14 +1217,14 @@ func TestShareThing(t *testing.T) {
 			channelID: generateUUID(t),
 			thingID:   "thingID",
 			token:     invalidToken,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:      "share thing with valid token for unauthorized user",
 			channelID: generateUUID(t),
 			thingID:   "thingID",
 			token:     validToken,
-			err:       errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusForbidden),
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 			repoErr:   svcerr.ErrAuthorization,
 		},
 	}

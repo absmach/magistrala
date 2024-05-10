@@ -46,6 +46,7 @@ var (
 	inValid      = "invalid"
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 	passRegex    = regexp.MustCompile("^.{8,}$")
+	testReferer  = "http://localhost"
 )
 
 const contentType = "application/json"
@@ -55,6 +56,7 @@ type testRequest struct {
 	method      string
 	url         string
 	contentType string
+	referer     string
 	token       string
 	body        io.Reader
 }
@@ -73,7 +75,7 @@ func (tr testRequest) make() (*http.Response, error) {
 		req.Header.Set("Content-Type", tr.contentType)
 	}
 
-	req.Header.Set("Referer", "http://localhost")
+	req.Header.Set("Referer", tr.referer)
 
 	return tr.client.Do(req)
 }
@@ -1013,6 +1015,7 @@ func TestPasswordResetRequest(t *testing.T) {
 		desc        string
 		data        string
 		contentType string
+		referer     string
 		status      int
 		err         error
 	}{
@@ -1020,6 +1023,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			desc:        "password reset request with valid email",
 			data:        fmt.Sprintf(`{"email": "%s", "host": "%s"}`, testemail, testhost),
 			contentType: contentType,
+			referer:     testReferer,
 			status:      http.StatusCreated,
 			err:         nil,
 		},
@@ -1027,6 +1031,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			desc:        "password reset request with empty email",
 			data:        fmt.Sprintf(`{"email": "%s", "host": "%s"}`, "", testhost),
 			contentType: contentType,
+			referer:     testReferer,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
@@ -1034,6 +1039,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			desc:        "password reset request with empty host",
 			data:        fmt.Sprintf(`{"email": "%s", "host": "%s"}`, testemail, ""),
 			contentType: contentType,
+			referer:     "",
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
@@ -1041,6 +1047,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			desc:        "password reset request with invalid email",
 			data:        fmt.Sprintf(`{"email": "%s", "host": "%s"}`, "invalid", testhost),
 			contentType: contentType,
+			referer:     testReferer,
 			status:      http.StatusNotFound,
 			err:         svcerr.ErrNotFound,
 		},
@@ -1048,6 +1055,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			desc:        "password reset with malformed data",
 			data:        fmt.Sprintf(`{"email": %s, "host": %s}`, testemail, testhost),
 			contentType: contentType,
+			referer:     testReferer,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
@@ -1055,6 +1063,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			desc:        "password reset with invalid contentype",
 			data:        fmt.Sprintf(`{"email": "%s", "host": "%s"}`, testemail, testhost),
 			contentType: "application/xml",
+			referer:     testReferer,
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrValidation,
 		},
@@ -1066,9 +1075,9 @@ func TestPasswordResetRequest(t *testing.T) {
 			method:      http.MethodPost,
 			url:         fmt.Sprintf("%s/password/reset-request", us.URL),
 			contentType: tc.contentType,
+			referer:     tc.referer,
 			body:        strings.NewReader(tc.data),
 		}
-
 		svcCall := svc.On("GenerateResetToken", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -1154,10 +1163,10 @@ func TestPasswordReset(t *testing.T) {
 			method:      http.MethodPut,
 			url:         fmt.Sprintf("%s/password/reset", us.URL),
 			contentType: tc.contentType,
+			referer:     testReferer,
 			token:       tc.token,
 			body:        strings.NewReader(tc.data),
 		}
-
 		svcCall := svc.On("ResetSecret", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))

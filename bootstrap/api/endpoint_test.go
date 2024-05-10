@@ -88,9 +88,9 @@ var (
 
 	missingIDRes  = toJSON(apiutil.ErrorRes{Err: apiutil.ErrMissingID.Error(), Msg: apiutil.ErrValidation.Error()})
 	missingKeyRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerKey.Error(), Msg: apiutil.ErrValidation.Error()})
-	bsErrorRes    = toJSON(apiutil.ErrorRes{Err: svcerr.ErrNotFound.Error(), Msg: bootstrap.ErrBootstrap.Error()})
+	bsErrorRes    = toJSON(apiutil.ErrorRes{Msg: bootstrap.ErrBootstrap.Error()})
 	extKeyRes     = toJSON(apiutil.ErrorRes{Msg: bootstrap.ErrExternalKey.Error()})
-	extSecKeyRes  = toJSON(apiutil.ErrorRes{Err: "encoding/hex: invalid byte: U+002D '-'", Msg: bootstrap.ErrExternalKeySecure.Error()})
+	extSecKeyRes  = toJSON(apiutil.ErrorRes{Msg: bootstrap.ErrExternalKeySecure.Error()})
 )
 
 type testRequest struct {
@@ -1138,7 +1138,7 @@ func TestBootstrap(t *testing.T) {
 			status:      http.StatusNotFound,
 			res:         bsErrorRes,
 			secure:      false,
-			err:         errors.Wrap(bootstrap.ErrBootstrap, svcerr.ErrNotFound),
+			err:         bootstrap.ErrBootstrap,
 		},
 		{
 			desc:        "bootstrap a Thing with an empty ID",
@@ -1192,7 +1192,7 @@ func TestBootstrap(t *testing.T) {
 			status:      http.StatusForbidden,
 			res:         extSecKeyRes,
 			secure:      true,
-			err:         errors.Wrap(bootstrap.ErrExternalKeySecure, errors.New("encoding/hex: invalid byte: U+002D '-'")),
+			err:         bootstrap.ErrExternalKeySecure,
 		},
 	}
 

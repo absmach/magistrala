@@ -42,10 +42,10 @@ func main() {
 		}
 		parentID = id
 		if i == 0 {
-			fmt.Printf("\nCURL Command to fetch children:\ncurl -X \"GET\"  -H \"accept: application/json\" -H \"Authorization: Bearer %s\" \"http://localhost:9002/groups/%s/children?tree=true\"\n\n", token, id)
+			fmt.Printf("\nCURL Command to fetch children:\ncurl -X \"GET\"  -H \"accept: application/json\" -H \"Authorization: Bearer %s\" \"http://localhost:9002/groups/%s/children?tree=true&level=%d\"\n\n", token, id, num)
 		}
 	}
-	fmt.Printf("\nCURL Command to fetch parents:\ncurl -X \"GET\"  -H \"accept: application/json\" -H \"Authorization: Bearer %s\" \"http://localhost:9002/groups/%s/parents?tree=true\"\n\n", token, parentID)
+	fmt.Printf("\nCURL Command to fetch parents:\ncurl -X \"GET\"  -H \"accept: application/json\" -H \"Authorization: Bearer %s\" \"http://localhost:9002/groups/%s/parents?tree=true&level=%d\"\n\n", token, parentID, num)
 }
 
 func createGroup(s sdk.SDK, token, parentID string) (string, error) {

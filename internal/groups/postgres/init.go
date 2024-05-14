@@ -39,10 +39,33 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE EXTENSION IF NOT EXISTS LTREE`,
 					`ALTER TABLE groups ADD COLUMN path LTREE`,
 					`CREATE INDEX path_gist_idx ON groups USING GIST (path);`,
+					`CREATE OR REPLACE FUNCTION inherit_group()
+					 RETURNS trigger 
+					 LANGUAGE PLPGSQL
+					 AS
+					 $$
+					 BEGIN
+					 IF NEW.parent_id IS NULL OR NEW.parent_id = '' THEN
+						RETURN NEW;
+					 END IF;
+					 IF NOT EXISTS (SELECT id FROM groups WHERE id = NEW.parent_id) THEN
+						RAISE EXCEPTION 'wrong parent id';
+					 END IF;
+					 SELECT text2ltree(ltree2text(path) || '.' || NEW.id) INTO NEW.path FROM groups WHERE id = NEW.parent_id;
+					 RETURN NEW;
+					 END;
+					 $$`,
+					`CREATE TRIGGER inherit_group_tr
+					 BEFORE INSERT
+					 ON groups
+					 FOR EACH ROW
+					 EXECUTE PROCEDURE inherit_group();`,
 				},
 				Down: []string{
 					`DROP TABLE IF EXISTS groups`,
 					`DROP EXTENSION IF EXISTS LTREE`,
+					`DROP FUNCTION IF EXISTS inherit_group`,
+					`DROP TRIGGER IF EXISTS inherit_group_tr ON groups`,
 				},
 			},
 		},

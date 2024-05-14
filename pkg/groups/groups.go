@@ -11,7 +11,7 @@ import (
 )
 
 // MaxLevel represents the maximum group hierarchy level.
-const MaxLevel = uint64(5)
+const MaxLevel = uint64(50)
 
 // Group represents the group of Clients.
 // Indicates a level in tree hierarchy. Root node is level 1.
@@ -52,8 +52,8 @@ type MembersPage struct {
 // of Groups that belong to the page.
 type Page struct {
 	PageMeta
-	Type       string `json:"type"`
-	Path       string `json:"path"`
+	Type       string
+	Path       string
 	Level      uint64
 	ID         string
 	Permission string

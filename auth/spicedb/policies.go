@@ -35,17 +35,30 @@ type policyAgent struct {
 	client           *authzed.ClientWithExperimental
 	permissionClient v1.PermissionsServiceClient
 	logger           *slog.Logger
+	cache            auth.Cache
 }
 
-func NewPolicyAgent(client *authzed.ClientWithExperimental, logger *slog.Logger) auth.PolicyAgent {
+func NewPolicyAgent(client *authzed.ClientWithExperimental, logger *slog.Logger, cache auth.Cache) auth.PolicyAgent {
 	return &policyAgent{
 		client:           client,
 		permissionClient: client.PermissionsServiceClient,
 		logger:           logger,
+		cache:            cache,
 	}
 }
 
-func (pa *policyAgent) CheckPolicy(ctx context.Context, pr auth.PolicyReq) error {
+func (pa *policyAgent) CheckPolicy(ctx context.Context, pr auth.PolicyReq) (err error) {
+	key, val := pr.KV()
+	if pa.cache.Contains(ctx, key, val) {
+		return nil
+	}
+	defer func() {
+		if err == nil {
+			cacheErr := pa.cache.Save(ctx, key, val)
+			err = errors.Wrap(err, cacheErr)
+		}
+	}()
+
 	checkReq := v1.CheckPermissionRequest{
 		// FullyConsistent means little caching will be available, which means performance will suffer.
 		// Only use if a ZedToken is not available or absolutely latest information is required.
@@ -134,6 +147,10 @@ func (pa *policyAgent) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {
 func (pa *policyAgent) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
 	updates := []*v1.RelationshipUpdate{}
 	for _, pr := range prs {
+		if err := pa.cache.Remove(ctx, pr.KeyForRemoval()); err != nil {
+			return errors.Wrap(repoerr.ErrRemoveEntity, err)
+		}
+
 		updates = append(updates, &v1.RelationshipUpdate{
 			Operation: v1.RelationshipUpdate_OPERATION_DELETE,
 			Relationship: &v1.Relationship{
@@ -154,6 +171,10 @@ func (pa *policyAgent) DeletePolicies(ctx context.Context, prs []auth.PolicyReq)
 }
 
 func (pa *policyAgent) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) error {
+	if err := pa.cache.Remove(ctx, pr.KeyForRemoval()); err != nil {
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	}
+
 	req := &v1.DeleteRelationshipsRequest{
 		RelationshipFilter: &v1.RelationshipFilter{
 			ResourceType:       pr.ObjectType,

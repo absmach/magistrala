@@ -193,6 +193,22 @@ func (lm *loggingMiddleware) Revoke(ctx context.Context, token, id string) (err 
 	return lm.svc.Revoke(ctx, token, id)
 }
 
+func (lm *loggingMiddleware) RevokeToken(ctx context.Context, token string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Revoke token failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Revoke token completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.RevokeToken(ctx, token)
+}
+
 func (lm *loggingMiddleware) RetrieveKey(ctx context.Context, token, id string) (key auth.Key, err error) {
 	defer func(begin time.Time) {
 		args := []any{

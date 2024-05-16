@@ -252,6 +252,8 @@ type PolicyAgent interface {
 
 // Cache represents a cache repository. It exposes functionalities
 // through `auth` to perform caching.
+//
+//go:generate mockery --name Cache --output=./mocks --filename cache.go --quiet --note "Copyright (c) Abstract Machines"
 type Cache interface {
 	// Save saves the key-value pair in the cache.
 	Save(ctx context.Context, key, value string) error

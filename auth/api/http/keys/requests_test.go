@@ -86,3 +86,30 @@ func TestKeyReqValidate(t *testing.T) {
 		assert.Equal(t, tc.err, err)
 	}
 }
+
+func TestRevokeTokenReqValidate(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  revokeTokenReq
+		err  error
+	}{
+		{
+			desc: "valid request",
+			req: revokeTokenReq{
+				token: valid,
+			},
+			err: nil,
+		},
+		{
+			desc: "empty token",
+			req: revokeTokenReq{
+				token: "",
+			},
+			err: apiutil.ErrBearerToken,
+		},
+	}
+	for _, tc := range cases {
+		err := tc.req.validate()
+		assert.Equal(t, tc.err, err)
+	}
+}

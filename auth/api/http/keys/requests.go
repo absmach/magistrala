@@ -46,3 +46,15 @@ func (req keyReq) validate() error {
 	}
 	return nil
 }
+
+type revokeTokenReq struct {
+	token string
+}
+
+func (req revokeTokenReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	return nil
+}

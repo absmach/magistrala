@@ -67,9 +67,9 @@ func (req listGroupsReq) validate() error {
 	if req.memberKind == auth.ThingsKind && req.memberID == "" {
 		return apiutil.ErrMissingID
 	}
-	// if req.Level > mggroups.MaxLevel {
-	// 	return apiutil.ErrInvalidLevel
-	// }
+	if req.Level > mggroups.MaxLevel {
+		return apiutil.ErrInvalidLevel
+	}
 	if req.Limit > api.MaxLimitSize || req.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}

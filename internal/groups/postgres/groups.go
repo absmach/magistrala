@@ -34,7 +34,7 @@ func New(db postgres.Database) mggroups.Repository {
 }
 
 func (repo groupRepository) Save(ctx context.Context, g mggroups.Group) (mggroups.Group, error) {
-	q := groupQuery(g)
+	q := repo.groupQuery(ctx, g)
 	dbg, err := toDBGroup(g)
 	if err != nil {
 		return mggroups.Group{}, err
@@ -514,13 +514,22 @@ func (repo groupRepository) processRows(rows *sqlx.Rows) ([]mggroups.Group, erro
 	return items, nil
 }
 
-func groupQuery(g mggroups.Group) string {
+func (repo groupRepository) groupQuery(c context.Context, g mggroups.Group) string {
 	query := ""
 	switch {
 	case g.Parent != "":
-		query = `INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status)
-		VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status)
-		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`
+		parent, err := repo.RetrieveByID(c, g.Parent)
+		if err != nil {
+			query = `INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status, path)
+			VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status, :id)
+			RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`
+			return query
+		}
+
+		query = fmt.Sprintf(`INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status, path)
+		VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status, '%s')
+		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`, parent.Path)
+
 	default:
 		query = `INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status, path)
 		VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status, :id)

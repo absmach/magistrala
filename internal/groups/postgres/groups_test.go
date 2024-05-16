@@ -24,10 +24,15 @@ import (
 var (
 	namegen    = namegenerator.NewGenerator()
 	invalidID  = strings.Repeat("a", 37)
+	groupID    = testsutil.GenerateUUID(&testing.T{})
 	validGroup = mggroups.Group{
-		ID:          testsutil.GenerateUUID(&testing.T{}),
+		ID:          groupID,
 		Domain:      testsutil.GenerateUUID(&testing.T{}),
+		Level:       1,
+		Path:        groupID,
 		Name:        namegen.Generate(),
+		Path:        groupID,
+		Level:       1,
 		Description: strings.Repeat("a", 64),
 		Metadata:    map[string]interface{}{"key": "value"},
 		CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
@@ -42,6 +47,8 @@ func TestSave(t *testing.T) {
 	})
 
 	repo := postgres.New(database)
+	group1ID := testsutil.GenerateUUID(t)
+	group2ID := testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc  string
@@ -141,9 +148,13 @@ func TestSave(t *testing.T) {
 		{
 			desc: "add group with empty domain",
 			group: mggroups.Group{
-				ID:          testsutil.GenerateUUID(t),
+				ID:          group1ID,
 				Name:        namegen.Generate(),
+				Path:        groupID,
+				Level:       1,
 				Description: strings.Repeat("a", 64),
+				Level:       1,
+				Path:        group1ID,
 				Metadata:    map[string]interface{}{"key": "value"},
 				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 				Status:      clients.EnabledStatus,
@@ -153,9 +164,13 @@ func TestSave(t *testing.T) {
 		{
 			desc: "add group with empty name",
 			group: mggroups.Group{
-				ID:          testsutil.GenerateUUID(t),
+				ID:          group2ID,
 				Domain:      testsutil.GenerateUUID(t),
+				Path:        groupID,
+				Level:       1,
 				Description: strings.Repeat("a", 64),
+				Level:       1,
+				Path:        group2ID,
 				Metadata:    map[string]interface{}{"key": "value"},
 				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 				Status:      clients.EnabledStatus,

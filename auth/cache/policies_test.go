@@ -27,7 +27,7 @@ var policy = auth.PolicyReq{
 	Permission:  auth.ViewPermission,
 }
 
-func setupRedisClient(t *testing.T) auth.Cache {
+func setupRedisCacheClient(t *testing.T) auth.Cache {
 	opts, err := redis.ParseURL(redisURL)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on parsing redis URL: %s", err))
 	redisClient := redis.NewClient(opts)
@@ -35,7 +35,7 @@ func setupRedisClient(t *testing.T) auth.Cache {
 }
 
 func TestSave(t *testing.T) {
-	authCache := setupRedisClient(t)
+	authCache := setupRedisCacheClient(t)
 
 	cases := []struct {
 		desc   string
@@ -153,7 +153,7 @@ func TestSave(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	authCache := setupRedisClient(t)
+	authCache := setupRedisCacheClient(t)
 
 	key, val := policy.KV()
 	err := authCache.Save(context.Background(), key, val)
@@ -237,7 +237,7 @@ func TestContains(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	authCache := setupRedisClient(t)
+	authCache := setupRedisCacheClient(t)
 
 	subject := policy.Subject
 	object := policy.Object

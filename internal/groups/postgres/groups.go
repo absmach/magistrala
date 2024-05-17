@@ -97,7 +97,7 @@ func (repo groupRepository) Update(ctx context.Context, g mggroups.Group) (mggro
 
 func (repo groupRepository) ChangeStatus(ctx context.Context, group mggroups.Group) (mggroups.Group, error) {
 	qc := `UPDATE groups SET status = :status, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
-	RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status`
+	RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status, path, nlevel(path) as level;`
 
 	dbg, err := toDBGroup(group)
 	if err != nil {
@@ -301,20 +301,6 @@ func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroup
 }
 
 func (repo groupRepository) Delete(ctx context.Context, groupID string) error {
-	page := mggroups.Page{
-		Type: "lquery",
-		Path: fmt.Sprintf("'*.%s.*'", groupID),
-	}
-	g, err := repo.RetrieveByIDs(ctx, page, groupID)
-	if err != nil {
-		return errors.Wrap(errors.New("failed to retrieve group"), err)
-	}
-	for _, group := range g.Groups {
-		if err := repo.UnassignParentGroup(ctx, groupID, group.ID); err != nil {
-			return errors.Wrap(errors.New("failed to unassign parent group"), err)
-		}
-	}
-
 	q := "DELETE FROM groups AS g WHERE g.id = $1;"
 
 	result, err := repo.db.ExecContext(ctx, q, groupID)

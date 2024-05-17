@@ -144,17 +144,21 @@ func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggrou
 }
 
 func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
-	var q, count string
-	query := buildQuery(gm)
+	var query, q, count string
 
 	if gm.ID != "" {
 		q, count = buildHierachy(gm)
+		query = buildQuery(gm, "AND")
+
+		q = fmt.Sprintf(" %s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
 	}
 	if gm.ID == "" {
 		q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
 		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status, nlevel(path) as level, g.path FROM groups g`
+		query = buildQuery(gm, "WHERE")
+
+		q = fmt.Sprintf(" %s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
 	}
-	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
 
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {
@@ -193,20 +197,28 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 }
 
 func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page, ids ...string) (mggroups.Page, error) {
-	var q, count string
+	var cq, query, q, count string
 	if (len(ids) == 0) && (gm.PageMeta.DomainID == "") {
 		return mggroups.Page{PageMeta: mggroups.PageMeta{Offset: gm.Offset, Limit: gm.Limit}}, nil
 	}
-	query := buildQuery(gm, ids...)
+	query = buildQuery(gm, "WHERE", ids...)
+	cq = `SELECT COUNT(*) FROM groups g`
 
-	q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
-	g.metadata, g.created_at, g.updated_at, g.updated_by, g.status, g.path FROM groups g`
-	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
+	if query != "" {
+		cq = fmt.Sprintf(" %s %s", cq, query)
+	}
+
+	q = fmt.Sprintf("SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description, g.metadata, g.created_at, g.updated_at, g.updated_by, g.status, g.path, nlevel(g.path) as level FROM groups g %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", query)
 
 	if gm.ID != "" {
 		q, count = buildHierachy(gm)
+		query = buildQuery(gm, "AND", ids...)
+		q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
 	}
 
+	if count != "" {
+		cq = count
+	}
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
@@ -221,15 +233,6 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
-
-	cq := `SELECT COUNT(*) FROM groups g`
-	if count != "" {
-		cq = count
-	}
-
-	// if query != "" {
-	// 	cq = fmt.Sprintf(" %s %s", cq, query)
-	// }
 
 	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
 	if err != nil {
@@ -324,28 +327,24 @@ func (repo groupRepository) Delete(ctx context.Context, groupID string) error {
 	return nil
 }
 
-func buildHierachy(gm mggroups.Page) (query string, cq string) {
+func buildHierachy(gm mggroups.Page) (query, cq string) {
 	switch {
 	case gm.Direction >= 0: // ancestors
-		query = fmt.Sprintf(`SELECT g.id, COALESCE(g.parent_id, '') AS parent_id, g.domain_id, g.name, g.description, g.metadata, g.created_at, g.updated_at, g.updated_by, g.status, g.path
-					FROM groups parent, groups g
-					WHERE parent.id = '%s' AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= %d;`, gm.ID, gm.Level)
-		cq = fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = '%s' AND g.path <@ parent.path`, gm.ID)
+		query = fmt.Sprintf(`SELECT g.id, COALESCE(g.parent_id, '') AS parent_id, g.domain_id, g.name, g.description, g.metadata, g.created_at, g.updated_at, g.updated_by, g.status, g.path, nlevel(g.path) as level FROM groups parent, groups g WHERE parent.id = '%s' AND g.path @> parent.path AND nlevel(parent.path) - nlevel(g.path) <= %d`, gm.ID, gm.Level)
+		cq = fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = '%s' AND g.path @> parent.path`, gm.ID)
 
 	case gm.Direction < 0: // descendants
-		query = fmt.Sprintf(`SELECT g.id, COALESCE(g.parent_id, '') AS parent_id, g.domain_id, g.name, g.description, g.metadata, g.created_at, g.updated_at, g.updated_by, g.status, g.path
-					FROM groups parent, groups g
-					WHERE parent.id = '%s' AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) < %d;`, gm.ID, gm.Level)
-		cq = fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = '%s' AND g.path @> parent.path`, gm.ID)
+		query = fmt.Sprintf(`SELECT g.id, COALESCE(g.parent_id, '') AS parent_id, g.domain_id, g.name, g.description, g.metadata, g.created_at, g.updated_at, g.updated_by, g.status, g.path, nlevel(g.path) as level FROM groups parent, groups g WHERE parent.id = '%s' AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) < %d`, gm.ID, gm.Level)
+		cq = fmt.Sprintf(`SELECT COUNT(*) FROM groups parent, groups g WHERE parent.id = '%s' AND g.path <@ parent.path`, gm.ID)
 	}
 	return
 }
 
-func buildQuery(gm mggroups.Page, ids ...string) string {
+func buildQuery(gm mggroups.Page, q string, ids ...string) string {
 	queries := []string{}
 
 	if len(ids) > 0 {
-		queries = append(queries, fmt.Sprintf(" id in ('%s') ", strings.Join(ids, "', '")))
+		queries = append(queries, fmt.Sprintf(" g.id in ('%s') ", strings.Join(ids, "', '")))
 	}
 	if gm.Name != "" {
 		queries = append(queries, "g.name = :name")
@@ -360,7 +359,7 @@ func buildQuery(gm mggroups.Page, ids ...string) string {
 		queries = append(queries, "g.metadata @> :metadata")
 	}
 	if len(queries) > 0 {
-		return fmt.Sprintf("WHERE %s", strings.Join(queries, " AND "))
+		return fmt.Sprintf("%s %s", q, strings.Join(queries, " AND "))
 	}
 
 	return ""
@@ -515,7 +514,7 @@ func (repo groupRepository) processRows(rows *sqlx.Rows) ([]mggroups.Group, erro
 }
 
 func (repo groupRepository) groupQuery(c context.Context, g mggroups.Group) string {
-	query := ""
+	var query, path string
 	switch {
 	case g.Parent != "":
 		parent, err := repo.RetrieveByID(c, g.Parent)
@@ -525,10 +524,14 @@ func (repo groupRepository) groupQuery(c context.Context, g mggroups.Group) stri
 			RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`
 			return query
 		}
+		path = parent.Path + "." + g.ID
+		if len(strings.Split(path, ".")) > 20 {
+			path = parent.ID + "." + g.ID
+		}
 
 		query = fmt.Sprintf(`INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status, path)
 		VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status, '%s')
-		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`, parent.Path)
+		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`, path)
 
 	default:
 		query = `INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status, path)

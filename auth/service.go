@@ -146,7 +146,7 @@ func (svc service) Identify(ctx context.Context, token string) (Key, error) {
 	}
 
 	switch key.Type {
-	case RecoveryKey, AccessKey, InvitationKey:
+	case RecoveryKey, AccessKey, InvitationKey, RefreshKey:
 		return key, nil
 	case APIKey:
 		_, err := svc.keys.Retrieve(ctx, key.Issuer, key.ID)

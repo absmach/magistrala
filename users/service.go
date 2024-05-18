@@ -24,6 +24,7 @@ var (
 	errUserNotSignedUp       = errors.New("user not signed up")
 	errFailedPermissionsList = errors.New("failed to list permissions")
 	errRecoveryToken         = errors.New("failed to generate password recovery token")
+	errLoginDisableUser      = errors.New("failed to login in disabled user")
 )
 
 type service struct {
@@ -124,6 +125,20 @@ func (svc service) RefreshToken(ctx context.Context, refreshToken, domainID stri
 	if domainID != "" {
 		d = domainID
 	}
+
+	tokenUserID, err := svc.Identify(ctx, refreshToken)
+	if err != nil {
+		return &magistrala.Token{}, err
+	}
+
+	dbUser, err := svc.clients.RetrieveByID(ctx, tokenUserID)
+	if err != nil {
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+	if dbUser.Status == mgclients.DisabledStatus {
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
+	}
+
 	return svc.auth.Refresh(ctx, &magistrala.RefreshReq{RefreshToken: refreshToken, DomainId: &d})
 }
 

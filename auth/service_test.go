@@ -679,6 +679,12 @@ func TestIdentify(t *testing.T) {
 			err:  nil,
 		},
 		{
+			desc: "identify refresh key",
+			key:  loginSecret.RefreshToken,
+			idt:  id,
+			err:  nil,
+		},
+		{
 			desc: "identify recovery key",
 			key:  recoverySecret.AccessToken,
 			idt:  id,

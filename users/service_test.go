@@ -2104,7 +2104,7 @@ func TestIssueToken(t *testing.T) {
 
 	cases := []struct {
 		desc                       string
-		DomainID                   string
+		domainID                   string
 		client                     mgclients.Client
 		retrieveByIdentityResponse mgclients.Client
 		issueResponse              *magistrala.Token
@@ -2114,6 +2114,14 @@ func TestIssueToken(t *testing.T) {
 	}{
 		{
 			desc:                       "issue token for an existing client",
+			client:                     client,
+			retrieveByIdentityResponse: rClient,
+			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			err:                        nil,
+		},
+		{
+			desc:                       "issue token for non-empty domain id",
+			domainID:                   validID,
 			client:                     client,
 			retrieveByIdentityResponse: rClient,
 			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
@@ -2133,93 +2141,139 @@ func TestIssueToken(t *testing.T) {
 			err:                        svcerr.ErrLogin,
 		},
 		{
-			desc:                       "issue token with non-empty domain id",
-			DomainID:                   "domain",
+			desc:                       "issue token with empty domain id",
 			client:                     client,
 			retrieveByIdentityResponse: rClient,
-			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
-			err:                        nil,
+			issueResponse:              &magistrala.Token{},
+			issueErr:                   svcerr.ErrAuthentication,
+			err:                        svcerr.ErrAuthentication,
+		},
+		{
+			desc:                       "issue token with grpc error",
+			client:                     client,
+			retrieveByIdentityResponse: rClient,
+			issueResponse:              &magistrala.Token{},
+			issueErr:                   svcerr.ErrAuthentication,
+			err:                        svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
-		repoCall1 := auth.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
-
-		token, err := svc.IssueToken(context.Background(), tc.client.Credentials.Identity, tc.client.Credentials.Secret, tc.DomainID)
+		authCall := auth.On("Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, DomainId: &tc.domainID, Type: uint32(authsvc.AccessKey)}).Return(tc.issueResponse, tc.issueErr)
+		token, err := svc.IssueToken(context.Background(), tc.client.Credentials.Identity, tc.client.Credentials.Secret, tc.domainID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
 			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
 			ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByIdentity was not called on %s", tc.desc))
+			ok = authCall.Parent.AssertCalled(t, "Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, DomainId: &tc.domainID, Type: uint32(authsvc.AccessKey)})
+			assert.True(t, ok, fmt.Sprintf("Issue was not called on %s", tc.desc))
 		}
+		authCall.Unset()
 		repoCall.Unset()
-		repoCall1.Unset()
 	}
 }
 
 func TestRefreshToken(t *testing.T) {
-	svc, _, auth, _ := newService(true)
+	svc, crepo, auth, _ := newService(true)
 
 	rClient := client
 	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
 
 	cases := []struct {
-		desc     string
-		token    string
-		domainID string
-		client   mgclients.Client
-		err      error
+		desc         string
+		token        string
+		domainID     string
+		identifyResp *magistrala.IdentityRes
+		identifyErr  error
+		refreshResp  *magistrala.Token
+		refresErr    error
+		repoResp     mgclients.Client
+		repoErr      error
+		err          error
 	}{
 		{
-			desc:   "refresh token with refresh token for an existing client",
-			token:  validToken,
-			client: client,
-			err:    nil,
+			desc:         "refresh token with refresh token for an existing client",
+			token:        validToken,
+			domainID:     validID,
+			identifyResp: &magistrala.IdentityRes{UserId: client.ID},
+			refreshResp:  &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			repoResp:     rClient,
+			err:          nil,
 		},
 		{
-			desc:   "refresh token with refresh token for a non-existing client",
-			token:  validToken,
-			client: mgclients.Client{},
-			err:    svcerr.ErrAuthentication,
+			desc:         "refresh token with refresh token for empty domain id",
+			token:        validToken,
+			identifyResp: &magistrala.IdentityRes{UserId: client.ID},
+			refreshResp:  &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			repoResp:     rClient,
+			err:          nil,
 		},
 		{
-			desc:   "refresh token with access token for an existing client",
-			token:  validToken,
-			client: client,
-			err:    svcerr.ErrAuthentication,
+			desc:         "refresh token with access token for an existing client",
+			token:        validToken,
+			domainID:     validID,
+			identifyResp: &magistrala.IdentityRes{UserId: client.ID},
+			refreshResp:  &magistrala.Token{},
+			refresErr:    svcerr.ErrAuthentication,
+			repoResp:     rClient,
+			err:          svcerr.ErrAuthentication,
 		},
 		{
-			desc:   "refresh token with access token for a non-existing client",
-			token:  validToken,
-			client: mgclients.Client{},
-			err:    svcerr.ErrAuthentication,
+			desc:         "refresh token with invalid token",
+			token:        validToken,
+			domainID:     validID,
+			identifyResp: &magistrala.IdentityRes{},
+			identifyErr:  svcerr.ErrAuthentication,
+			err:          svcerr.ErrAuthentication,
 		},
 		{
-			desc:   "refresh token with invalid token for an existing client",
-			token:  inValidToken,
-			client: client,
-			err:    svcerr.ErrAuthentication,
+			desc:         "refresh token with refresh token for a non-existing client",
+			token:        validToken,
+			domainID:     validID,
+			identifyResp: &magistrala.IdentityRes{UserId: client.ID},
+			repoErr:      repoerr.ErrNotFound,
+			err:          repoerr.ErrNotFound,
 		},
 		{
-			desc:     "refresh token with non-empty domain id",
-			token:    validToken,
-			domainID: validID,
-			client:   client,
-			err:      nil,
+			desc:         "refresh token with refresh token for a disable client",
+			token:        validToken,
+			domainID:     validID,
+			identifyResp: &magistrala.IdentityRes{UserId: client.ID},
+			repoResp:     mgclients.Client{Status: mgclients.DisabledStatus},
+			err:          svcerr.ErrAuthentication,
+		},
+		{
+			desc:         "refresh token with empty domain id",
+			token:        validToken,
+			identifyResp: &magistrala.IdentityRes{UserId: client.ID},
+			refreshResp:  &magistrala.Token{},
+			refresErr:    svcerr.ErrAuthentication,
+			repoResp:     rClient,
+			err:          svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Refresh", context.Background(), mock.Anything).Return(&magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"}, tc.err)
-
+		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResp, tc.identifyErr)
+		authCall1 := auth.On("Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: tc.token, DomainId: &tc.domainID}).Return(tc.refreshResp, tc.refresErr)
+		repoCall := crepo.On("RetrieveByID", context.Background(), tc.identifyResp.GetUserId()).Return(tc.repoResp, tc.repoErr)
 		token, err := svc.RefreshToken(context.Background(), tc.token, tc.domainID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
 			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
+			ok := authCall.Parent.AssertCalled(t, "Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token})
+			assert.True(t, ok, fmt.Sprintf("Identify was not called on %s", tc.desc))
+			ok = authCall.Parent.AssertCalled(t, "Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: tc.token, DomainId: &tc.domainID})
+			assert.True(t, ok, fmt.Sprintf("Refresh was not called on %s", tc.desc))
+			ok = repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.identifyResp.UserId)
+			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
 		}
+		authCall.Unset()
+		authCall1.Unset()
 		repoCall.Unset()
 	}
 }

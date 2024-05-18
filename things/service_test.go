@@ -2013,61 +2013,96 @@ func TestAuthorize(t *testing.T) {
 	svc, cRepo, auth, cache := newService()
 
 	cases := []struct {
-		desc        string
-		token       string
-		key         string
-		clientID    string
-		request     *magistrala.AuthorizeReq
-		response    *magistrala.AuthorizeRes
-		err         error
-		identifyErr error
-		authErr     error
+		desc                string
+		request             *magistrala.AuthorizeReq
+		cacheIDRes          string
+		cacheIDErr          error
+		retrieveBySecretRes mgclients.Client
+		retrieveBySecretErr error
+		cacheSaveErr        error
+		authorizeRes        *magistrala.AuthorizeRes
+		authErr             error
+		id                  string
+		err                 error
 	}{
 		{
-			desc:     "authorize client with valid key",
-			key:      valid,
-			clientID: valid,
-			request:  &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "admin"},
-			response: &magistrala.AuthorizeRes{Authorized: true},
-			err:      nil,
+			desc:                "authorize client with valid key not in cache",
+			request:             &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "admin"},
+			cacheIDRes:          "",
+			cacheIDErr:          repoerr.ErrNotFound,
+			retrieveBySecretRes: mgclients.Client{ID: valid},
+			retrieveBySecretErr: nil,
+			cacheSaveErr:        nil,
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: true},
+			authErr:             nil,
+			id:                  valid,
+			err:                 nil,
 		},
 		{
-			desc:        "authorize client with invalid key",
-			key:         invalid,
-			request:     &magistrala.AuthorizeReq{Subject: invalid, Object: inValidToken, Permission: "admin"},
-			response:    &magistrala.AuthorizeRes{Authorized: false},
-			identifyErr: repoerr.ErrNotFound,
-			err:         repoerr.ErrNotFound,
+			desc:         "authorize client with valid key in cache",
+			request:      &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "admin"},
+			cacheIDRes:   valid,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			id:           valid,
 		},
 		{
-			desc:     "authorize with invalid token",
-			key:      valid,
-			request:  &magistrala.AuthorizeReq{Subject: valid, Object: inValidToken, Permission: "admin"},
-			response: &magistrala.AuthorizeRes{Authorized: false},
-			authErr:  svcerr.ErrAuthentication,
-			err:      svcerr.ErrAuthorization,
+			desc:                "authorize client with invalid key not in cache for non existing client",
+			request:             &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "admin"},
+			cacheIDRes:          "",
+			cacheIDErr:          repoerr.ErrNotFound,
+			retrieveBySecretRes: mgclients.Client{},
+			retrieveBySecretErr: repoerr.ErrNotFound,
+			err:                 repoerr.ErrNotFound,
 		},
 		{
-			desc:     "authorize with valid failed authorize response",
-			key:      valid,
-			request:  &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "view"},
-			response: &magistrala.AuthorizeRes{Authorized: false},
-			authErr:  nil,
-			err:      svcerr.ErrAuthorization,
+			desc:                "authorize client with valid key not in cache with failed to save to cache",
+			request:             &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "admin"},
+			cacheIDRes:          "",
+			cacheIDErr:          repoerr.ErrNotFound,
+			retrieveBySecretRes: mgclients.Client{ID: valid},
+			cacheSaveErr:        errors.ErrMalformedEntity,
+			err:                 svcerr.ErrAuthorization,
+		},
+		{
+			desc:                "authorize client with valid key not in cache and failed to authorize",
+			request:             &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "admin"},
+			cacheIDRes:          "",
+			cacheIDErr:          repoerr.ErrNotFound,
+			retrieveBySecretRes: mgclients.Client{ID: valid},
+			retrieveBySecretErr: nil,
+			cacheSaveErr:        nil,
+			authorizeRes:        &magistrala.AuthorizeRes{},
+			authErr:             svcerr.ErrAuthorization,
+			err:                 svcerr.ErrAuthorization,
+		},
+		{
+			desc:                "authorize client with valid key not in cache and not authorize",
+			request:             &magistrala.AuthorizeReq{Subject: valid, Object: valid, Permission: "admin"},
+			cacheIDRes:          "",
+			cacheIDErr:          repoerr.ErrNotFound,
+			retrieveBySecretRes: mgclients.Client{ID: valid},
+			retrieveBySecretErr: nil,
+			cacheSaveErr:        nil,
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: false},
+			authErr:             nil,
+			err:                 svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := cache.On("ID", mock.Anything, mock.Anything).Return(mock.Anything, tc.identifyErr)
-		repoCall1 := cRepo.On("RetrieveBySecret", mock.Anything, mock.Anything).Return(mgclients.Client{ID: tc.clientID}, tc.identifyErr)
-		repoCall2 := cache.On("Save", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		repoCall3 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.response, tc.authErr)
-		_, err := svc.Authorize(context.Background(), tc.request)
+		cacheCall := cache.On("ID", context.Background(), tc.request.GetSubject()).Return(tc.cacheIDRes, tc.cacheIDErr)
+		repoCall := cRepo.On("RetrieveBySecret", context.Background(), tc.request.GetSubject()).Return(tc.retrieveBySecretRes, tc.retrieveBySecretErr)
+		cacheCall1 := cache.On("Save", context.Background(), tc.request.GetSubject(), tc.retrieveBySecretRes.ID).Return(tc.cacheSaveErr)
+		authCall := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authErr)
+		id, err := svc.Authorize(context.Background(), tc.request)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		if tc.err == nil {
+			assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.id, id))
+		}
+		cacheCall.Unset()
+		cacheCall1.Unset()
 		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
+		authCall.Unset()
 	}
 }
 

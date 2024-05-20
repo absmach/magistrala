@@ -148,16 +148,17 @@ func (svc service) ViewClient(ctx context.Context, token, id string) (mgclients.
 		return mgclients.Client{}, err
 	}
 
-	if tokenUserID != id {
-		if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-			return mgclients.Client{}, err
-		}
-	}
-
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
+
+	if tokenUserID != id {
+		if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
+			return mgclients.Client{Name: client.Name, ID: client.ID}, nil
+		}
+	}
+
 	client.Credentials.Secret = ""
 
 	return client, nil
@@ -202,6 +203,11 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
+
+	for i, c := range pg.Clients {
+		pg.Clients[i] = mgclients.Client{ID: c.ID, Name: c.Name}
+	}
+
 	return pg, nil
 }
 
@@ -496,6 +502,10 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 	cp, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
 		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	for i, c := range cp.Clients {
+		cp.Clients[i] = mgclients.Client{ID: c.ID, Name: c.Name}
 	}
 
 	if pm.ListPerms && len(cp.Clients) > 0 {

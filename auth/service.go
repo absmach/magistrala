@@ -570,21 +570,25 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 }
 
 func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain, error) {
-	if err := svc.Authorize(ctx, PolicyReq{
-		Subject:     token,
-		SubjectType: UserType,
-		SubjectKind: TokenKind,
-		Object:      id,
-		ObjectType:  DomainType,
-		Permission:  ViewPermission,
-	}); err != nil {
-		return Domain{}, errors.Wrap(svcerr.ErrAuthorization, err)
+	res, err := svc.Identify(ctx, token)
+	if err != nil {
+		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	dom, err := svc.domains.RetrieveByID(ctx, id)
+	domain, err := svc.domains.RetrieveByID(ctx, id)
 	if err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	return dom, nil
+	if err = svc.Authorize(ctx, PolicyReq{
+		Subject:     res.Subject,
+		SubjectType: UserType,
+		SubjectKind: UsersKind,
+		Object:      id,
+		ObjectType:  DomainType,
+		Permission:  MembershipPermission,
+	}); err != nil {
+		return Domain{ID: domain.ID, Name: domain.Name, Alias: domain.Alias}, nil
+	}
+	return domain, nil
 }
 
 func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id string) (Permissions, error) {

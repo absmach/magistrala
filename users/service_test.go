@@ -32,13 +32,18 @@ var (
 	phasher        = hasher.New()
 	secret         = "strongsecret"
 	validCMetadata = mgclients.Metadata{"role": "client"}
+	clientID       = testsutil.GenerateUUID(&testing.T{})
 	client         = mgclients.Client{
-		ID:          testsutil.GenerateUUID(&testing.T{}),
+		ID:          clientID,
 		Name:        "clientname",
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: mgclients.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validCMetadata,
 		Status:      mgclients.EnabledStatus,
+	}
+	basicClient = mgclients.Client{
+		Name: "clientname",
+		ID:   clientID,
 	}
 	validToken      = "token"
 	inValidToken    = "invalid"
@@ -387,13 +392,15 @@ func TestViewClient(t *testing.T) {
 			token:                validToken,
 			clientID:             client.ID,
 			err:                  nil,
+			checkSuperAdminErr:   svcerr.ErrAuthorization,
 		},
 		{
-			desc:             "view client with an invalid token",
-			identifyResponse: &magistrala.IdentityRes{},
-			response:         mgclients.Client{},
-			token:            inValidToken,
-			err:              svcerr.ErrAuthentication,
+			desc:               "view client with an invalid token",
+			identifyResponse:   &magistrala.IdentityRes{},
+			response:           mgclients.Client{},
+			token:              inValidToken,
+			err:                svcerr.ErrAuthentication,
+			checkSuperAdminErr: svcerr.ErrAuthorization,
 		},
 		{
 			desc:                 "view client as normal user with failed to retrieve client",
@@ -403,6 +410,7 @@ func TestViewClient(t *testing.T) {
 			clientID:             client.ID,
 			retrieveByIDErr:      repoerr.ErrNotFound,
 			err:                  svcerr.ErrNotFound,
+			checkSuperAdminErr:   svcerr.ErrAuthorization,
 		},
 		{
 			desc:                 "view client as admin user successfully",
@@ -422,21 +430,25 @@ func TestViewClient(t *testing.T) {
 			err:              svcerr.ErrAuthentication,
 		},
 		{
-			desc:              "view client as admin user with invalid ID",
-			identifyResponse:  &magistrala.IdentityRes{UserId: wrongID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			token:             validToken,
-			clientID:          client.ID,
-			err:               svcerr.ErrAuthorization,
-		},
-		{
-			desc:               "view client as admin user with failed check on super admin",
-			identifyResponse:   &magistrala.IdentityRes{UserId: adminID},
+			desc:               "view client as admin user with invalid ID",
+			identifyResponse:   &magistrala.IdentityRes{UserId: wrongID},
 			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: false},
 			token:              validToken,
 			clientID:           client.ID,
-			checkSuperAdminErr: svcerr.ErrAuthorization,
+			identifyErr:        svcerr.ErrAuthorization,
 			err:                svcerr.ErrAuthorization,
+			checkSuperAdminErr: nil,
+		},
+		{
+			desc:                 "view client as admin user with failed check on super admin",
+			identifyResponse:     &magistrala.IdentityRes{UserId: adminID},
+			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: false},
+			token:                validToken,
+			retrieveByIDResponse: basicClient,
+			response:             basicClient,
+			clientID:             client.ID,
+			checkSuperAdminErr:   svcerr.ErrAuthorization,
+			err:                  nil,
 		},
 	}
 
@@ -562,7 +574,7 @@ func TestListClients(t *testing.T) {
 				Page: mgclients.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []mgclients.Client{basicClient},
 			},
 			token: validToken,
 			err:   nil,
@@ -1627,7 +1639,7 @@ func TestListMembers(t *testing.T) {
 	svc, cRepo, auth, _ := newService(true)
 
 	validPolicy := fmt.Sprintf("%s_%s", validID, client.ID)
-	permissionsClient := client
+	permissionsClient := basicClient
 	permissionsClient.Permissions = []string{"read"}
 
 	cases := []struct {
@@ -1725,7 +1737,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Members: []mgclients.Client{client},
+				Members: []mgclients.Client{basicClient},
 			},
 			err: nil,
 		},
@@ -1736,7 +1748,7 @@ func TestListMembers(t *testing.T) {
 			objectKind:       authsvc.ThingsKind,
 			objectID:         validID,
 			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read", ListPerms: true},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
+			identifyResponse: &magistrala.IdentityRes{UserId: basicClient.ID},
 			authorizeReq: &magistrala.AuthorizeReq{
 				SubjectType: authsvc.UserType,
 				SubjectKind: authsvc.TokenKind,
@@ -1761,7 +1773,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []mgclients.Client{basicClient},
 			},
 			listPermissionsResponse: &magistrala.ListPermissionsRes{Permissions: []string{"read"}},
 			response: mgclients.MembersPage{
@@ -1955,7 +1967,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []mgclients.Client{basicClient},
 			},
 			response: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1963,7 +1975,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Members: []mgclients.Client{client},
+				Members: []mgclients.Client{basicClient},
 			},
 			err: nil,
 		},
@@ -2020,7 +2032,7 @@ func TestListMembers(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:             "list members with policies successsfully of the domains kind",
+			desc:             "list members with policies successsfully of the groups kind",
 			token:            validToken,
 			groupID:          validID,
 			objectKind:       authsvc.GroupsKind,
@@ -2059,7 +2071,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Members: []mgclients.Client{client},
+				Members: []mgclients.Client{basicClient},
 			},
 			err: nil,
 		},

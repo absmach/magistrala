@@ -1161,7 +1161,6 @@ func TestAuthorize(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		fmt.Println(tc.desc)
 		repoCall := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq3).Return(tc.checkPolicyErr)
 		repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(tc.retrieveDomainRes, nil)
 		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
@@ -1175,7 +1174,6 @@ func TestAuthorize(t *testing.T) {
 		repoCall3.Unset()
 		repoCall4.Unset()
 	}
-	fmt.Println("Cases 1 end")
 	cases2 := []struct {
 		desc      string
 		policyReq auth.PolicyReq
@@ -1849,17 +1847,19 @@ func TestRetrieveDomain(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:     "retrieve domain with empty domainID",
-			token:    accessToken,
-			domainID: "",
-			err:      nil,
+			desc:           "retrieve domain with empty domain id",
+			token:          accessToken,
+			domainID:       "",
+			err:            svcerr.ErrViewEntity,
+			domainRepoErr1: repoerr.ErrNotFound,
 		},
 		{
-			desc:          "retrieve non-existing domain",
-			token:         accessToken,
-			domainID:      inValid,
-			domainRepoErr: repoerr.ErrNotFound,
-			err:           svcerr.ErrAuthorization,
+			desc:           "retrieve non-existing domain",
+			token:          accessToken,
+			domainID:       inValid,
+			domainRepoErr:  repoerr.ErrNotFound,
+			err:            svcerr.ErrViewEntity,
+			domainRepoErr1: repoerr.ErrNotFound,
 		},
 		{
 			desc:           "retrieve domain with failed to retrieve by id",

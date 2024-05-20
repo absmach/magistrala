@@ -183,7 +183,7 @@ type DomainsRepository interface {
 	// RetrievePermissions retrieves domain permissions.
 	RetrievePermissions(ctx context.Context, subject, id string) ([]string, error)
 
-	// RetrieveAllByIDs retrieves for given Domain IDs .
+	// RetrieveAllByIDs retrieves for given Domain IDs.
 	RetrieveAllByIDs(ctx context.Context, pm Page) (DomainsPage, error)
 
 	// Update updates the client name and metadata.

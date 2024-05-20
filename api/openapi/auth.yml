@@ -99,10 +99,10 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/DomainRes"
+        "400":
+          description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":

@@ -33,6 +33,7 @@ import (
 var (
 	id         = generateUUID(&testing.T{})
 	validToken = "token"
+	adminToken = "adminToken"
 	validID    = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 	wrongID    = testsutil.GenerateUUID(&testing.T{})
 )
@@ -379,68 +380,100 @@ func TestClient(t *testing.T) {
 		Metadata:    validMetadata,
 		Status:      mgclients.EnabledStatus.String(),
 	}
+
+	basicUser := sdk.User{
+		Name:   "clientname",
+		Status: mgclients.EnabledStatus.String(),
+	}
 	conf := sdk.Config{
 		UsersURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc     string
-		token    string
-		clientID string
-		response sdk.User
-		err      errors.SDKError
+		desc                 string
+		token                string
+		clientID             string
+		response             sdk.User
+		retrieveByIDResponse sdk.User
+		err                  errors.SDKError
+		authorizeErr         error
+		retrieveByIDErr      error
+		checkSuperAdminErr   errors.Error
+		identifyErr          errors.Error
 	}{
 		{
-			desc:     "view client successfully",
+			desc:               "view client successfully",
+			response:           basicUser,
+			token:              validToken,
+			clientID:           generateUUID(t),
+			authorizeErr:       svcerr.ErrAuthentication,
+			checkSuperAdminErr: svcerr.ErrAuthentication,
+			err:                nil,
+		},
+		{
+			desc:     "view client successfully as admin",
 			response: user,
-			token:    validToken,
+			token:    adminToken,
 			clientID: generateUUID(t),
 			err:      nil,
 		},
 		{
-			desc:     "view client with an invalid token",
-			response: sdk.User{},
-			token:    invalidToken,
-			clientID: generateUUID(t),
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:               "view client with an invalid token",
+			response:           sdk.User{},
+			token:              invalidToken,
+			clientID:           generateUUID(t),
+			identifyErr:        svcerr.ErrAuthentication,
+			authorizeErr:       svcerr.ErrAuthentication,
+			checkSuperAdminErr: svcerr.ErrAuthentication,
+			err:                errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			retrieveByIDErr:    svcerr.ErrAuthentication,
 		},
 		{
-			desc:     "view client with valid token and invalid client id",
-			response: sdk.User{},
-			token:    validToken,
-			clientID: wrongID,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
+			desc:               "view client with valid token and invalid client id",
+			response:           sdk.User{},
+			token:              validToken,
+			clientID:           wrongID,
+			authorizeErr:       svcerr.ErrAuthentication,
+			checkSuperAdminErr: svcerr.ErrAuthentication,
+			err:                errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
+			retrieveByIDErr:    svcerr.ErrViewEntity,
 		},
 		{
-			desc:     "view client with an invalid token and invalid client id",
-			response: sdk.User{},
-			token:    invalidToken,
-			clientID: wrongID,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:               "view client with an invalid token and invalid client id",
+			response:           sdk.User{},
+			token:              invalidToken,
+			identifyErr:        svcerr.ErrAuthentication,
+			authorizeErr:       svcerr.ErrAuthentication,
+			clientID:           wrongID,
+			checkSuperAdminErr: svcerr.ErrAuthentication,
+			err:                errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			retrieveByIDErr:    svcerr.ErrAuthentication,
+		},
+		{
+			desc:               "view client as normal user with failed check on admin",
+			response:           basicUser,
+			token:              validToken,
+			authorizeErr:       svcerr.ErrAuthentication,
+			checkSuperAdminErr: svcerr.ErrAuthentication,
+			clientID:           generateUUID(t),
+			err:                nil,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
-		if tc.token != validToken {
-			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
-		}
-		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{UserId: validID}, tc.identifyErr)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, tc.authorizeErr)
 		repoCall2 := crepo.On("RetrieveByID", mock.Anything, tc.clientID).Return(convertClient(tc.response), tc.err)
+		superAdminCall := crepo.On("CheckSuperAdmin", mock.Anything, mock.Anything).Return(tc.checkSuperAdminErr)
 		rClient, err := mgsdk.User(tc.clientID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		tc.response.Credentials.Secret = ""
 		assert.Equal(t, tc.response, rClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rClient))
-		if tc.err == nil {
-			ok := repoCall.Parent.AssertCalled(t, "Identify", mock.Anything, mock.Anything)
-			assert.True(t, ok, fmt.Sprintf("Identify was not called on %s", tc.desc))
-			ok = repoCall2.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, tc.clientID)
-			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
-		}
 		repoCall2.Unset()
 		repoCall1.Unset()
 		repoCall.Unset()
+		superAdminCall.Unset()
 	}
 }
 

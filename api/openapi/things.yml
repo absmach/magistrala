@@ -57,6 +57,8 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -122,6 +124,8 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
+        "404":          
+          description: A non-existent entity request.
         "415":
           description: Missing or invalid content type.
         "422":
@@ -207,6 +211,8 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Unauthorized access to thing id.
+        "404":
+          description: Missing thing.
         "500":
           $ref: "#/components/responses/ServiceError"
   /things/{thingID}/tags:
@@ -446,6 +452,8 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
+        "404":
+          descripttion: A non-existent entity request.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -568,6 +576,8 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Unauthorized access to thing id.
+        "404":
+          descripttion: A non-existent entity request.
         "500":
           $ref: "#/components/responses/ServiceError"
 

@@ -158,7 +158,7 @@ components:
     HealthRes:
       description: Service Health Check.
       content:
-        application/json:
+        application/health+json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
 

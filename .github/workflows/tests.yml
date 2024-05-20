@@ -20,13 +20,13 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.56.1
+          version: v1.57.2
 
       - name: Build all Binaries
         run: |
@@ -54,7 +54,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
       - name: Check for changes in specific paths

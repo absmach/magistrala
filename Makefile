@@ -141,17 +141,34 @@ define test_api_service
 		exit 1; \
 	fi
 
-	st run api/openapi/$(svc).yml \
-	--checks all \
-	--base-url $(2) \
-	--header "Authorization: Bearer $(USER_TOKEN)" \
-	--contrib-openapi-formats-uuid \
-	--hypothesis-suppress-health-check=filter_too_much \
-	--stateful=links
+	@if [ "$(svc)" = "http" ] && [ -z "$(THING_SECRET)" ]; then \
+		echo "THING_SECRET is not set"; \
+		echo "Please set it to a valid secret"; \
+		exit 1; \
+	fi
+
+	@if [ "$(svc)" = "http" ]; then \
+		st run api/openapi/$(svc).yml \
+		--checks all \
+		--base-url $(2) \
+		--header "Authorization: Thing $(THING_SECRET)" \
+		--contrib-openapi-formats-uuid \
+		--hypothesis-suppress-health-check=filter_too_much \
+		--stateful=links; \
+	else \
+		st run api/openapi/$(svc).yml \
+		--checks all \
+		--base-url $(2) \
+		--header "Authorization: Bearer $(USER_TOKEN)" \
+		--contrib-openapi-formats-uuid \
+		--hypothesis-suppress-health-check=filter_too_much \
+		--stateful=links; \
+	fi
 endef
 
 test_api_users: TEST_API_URL := http://localhost:9002
 test_api_things: TEST_API_URL := http://localhost:9000
+test_api_http: TEST_API_URL := http://localhost:8008
 test_api_invitations: TEST_API_URL := http://localhost:9020
 test_api_auth: TEST_API_URL := http://localhost:8189
 test_api_bootstrap: TEST_API_URL := http://localhost:9013

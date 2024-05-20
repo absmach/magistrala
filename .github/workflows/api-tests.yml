@@ -30,6 +30,7 @@ env:
   DOMAIN_NAME: demo-test
   USERS_URL: http://localhost:9002
   THINGS_URL: http://localhost:9000
+  HTTP_ADAPTER_URL: http://localhost:8008
   INVITATIONS_URL: http://localhost:9020
   AUTH_URL: http://localhost:8189
   BOOTSTRAP_URL: http://localhost:9013
@@ -54,7 +55,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
       - name: Build images
@@ -69,6 +70,8 @@ jobs:
           export DOMAIN_ID=$(curl -sSX POST $DOMAINS_URL -H "Content-Type: application/json" -H "Authorization: Bearer $USER_TOKEN" -d "{\"name\":\"$DOMAIN_NAME\",\"alias\":\"$DOMAIN_NAME\"}" | jq -r .id)
           export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\",\"domain_id\": \"$DOMAIN_ID\"}" | jq -r .access_token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
+          export THING_SECRET=$(magistrala-cli provision test | /usr/bin/grep -Eo '"secret": "[^"]+"' | awk 'NR % 2 == 0' | sed 's/"secret": "\(.*\)"/\1/')
+          echo "THING_SECRET=$THING_SECRET" >> $GITHUB_ENV
 
       - name: Check for changes in specific paths
         uses: dorny/paths-filter@v3
@@ -149,6 +152,16 @@ jobs:
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run HTTP Adapter API tests
+        if: steps.changes.outputs.http == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/http.yml
+          base-url: ${{ env.HTTP_ADAPTER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Thing ${{ env.THING_SECRET }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
       - name: Run Invitations API tests
         if: steps.changes.outputs.invitations == 'true'

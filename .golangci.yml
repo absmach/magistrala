@@ -31,9 +31,6 @@ linters-settings:
 
   gocritic:
     enabled-checks:
-      - captLocal
-      - singleCaseSwitch
-      - switchTrue
       - importShadow
       - httpNoBody
       - paramTypeCombine

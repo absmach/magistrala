@@ -21,7 +21,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21.x
+          go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
       - name: Check for changes in go.mod

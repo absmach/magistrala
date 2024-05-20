@@ -5,19 +5,19 @@ package api
 
 import (
 	"context"
-	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -26,26 +26,24 @@ const (
 	contentType = "application/json"
 )
 
-var errMalformedSubtopic = errors.New("malformed subtopic")
-
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(instanceID string) http.Handler {
+func MakeHandler(logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	r := chi.NewRouter()
 	r.Post("/channels/{chanID}/messages", otelhttp.NewHandler(kithttp.NewServer(
 		sendMessageEndpoint(),
 		decodeRequest,
-		encodeResponse,
+		api.EncodeResponse,
 		opts...,
 	), "publish").ServeHTTP)
 
 	r.Post("/channels/{chanID}/messages/*", otelhttp.NewHandler(kithttp.NewServer(
 		sendMessageEndpoint(),
 		decodeRequest,
-		encodeResponse,
+		api.EncodeResponse,
 		opts...,
 	), "publish").ServeHTTP)
 
@@ -61,62 +59,23 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	return nil, nil
-}
+	var req publishReq
 
-func encodeResponse(_ context.Context, w http.ResponseWriter, _ interface{}) error {
-	w.WriteHeader(http.StatusAccepted)
-	return nil
-}
-
-func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	var wrapper error
-	if errors.Contains(err, apiutil.ErrValidation) {
-		wrapper, err = errors.Unwrap(err)
-	}
-
+	_, pass, ok := r.BasicAuth()
 	switch {
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, apiutil.ErrBearerKey),
-		errors.Contains(err, apiutil.ErrBearerToken):
-		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, svcerr.ErrAuthorization):
-		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, errMalformedSubtopic),
-		errors.Contains(err, svcerr.ErrMalformedEntity):
-		w.WriteHeader(http.StatusBadRequest)
-
-	default:
-		switch e, ok := status.FromError(err); {
-		case ok:
-			switch e.Code() {
-			case codes.Unauthenticated:
-				w.WriteHeader(http.StatusUnauthorized)
-			case codes.PermissionDenied:
-				w.WriteHeader(http.StatusForbidden)
-			case codes.Internal:
-				w.WriteHeader(http.StatusInternalServerError)
-			case codes.NotFound:
-				err = svcerr.ErrNotFound
-				w.WriteHeader(http.StatusNotFound)
-			default:
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-		}
+	case ok:
+		req.token = pass
+	case !ok:
+		req.token = apiutil.ExtractThingKey(r)
 	}
 
-	if wrapper != nil {
-		err = errors.Wrap(wrapper, err)
+	payload, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity)
 	}
+	defer r.Body.Close()
 
-	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
+	req.msg = &messaging.Message{Payload: payload}
+
+	return req, nil
 }

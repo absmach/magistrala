@@ -173,4 +173,7 @@ var (
 
 	// ErrMissingTo indicates missing to value.
 	ErrMissingTo = errors.New("missing to time value")
+
+	// ErrEmptyMessage indicates empty message.
+	ErrEmptyMessage = errors.New("empty message")
 )

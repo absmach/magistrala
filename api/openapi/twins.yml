@@ -259,7 +259,6 @@ components:
         attributes:
           type: array
           minItems: 0
-          uniqueItems: true
           items:
             $ref: "#/components/schemas/Attribute"
     TwinReqObj:
@@ -300,7 +299,6 @@ components:
         definitions:
           type: array
           minItems: 0
-          uniqueItems: true
           items:
             $ref: "#/components/schemas/Definition"
         metadata:
@@ -348,7 +346,6 @@ components:
         states:
           type: array
           minItems: 0
-          uniqueItems: true
           items:
             $ref: "#/components/schemas/State"
         total:

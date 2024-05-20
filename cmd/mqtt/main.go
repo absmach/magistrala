@@ -32,7 +32,8 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging/handler"
 	mqttpub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	"github.com/absmach/magistrala/pkg/uuid"
-	mp "github.com/absmach/mproxy/pkg/mqtt"
+	"github.com/absmach/mproxy"
+	mproxymqtt "github.com/absmach/mproxy/pkg/mqtt"
 	"github.com/absmach/mproxy/pkg/mqtt/websocket"
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/caarlos0/env/v10"
@@ -209,9 +210,11 @@ func main() {
 }
 
 func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
-	address := fmt.Sprintf(":%s", cfg.MQTTPort)
-	target := fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort)
-	mproxy := mp.New(address, target, sessionHandler, interceptor, logger)
+	config := mproxy.Config{
+		Address: fmt.Sprintf(":%s", cfg.MQTTPort),
+		Target:  fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort),
+	}
+	mproxy := mproxymqtt.New(config, sessionHandler, interceptor, logger)
 
 	errCh := make(chan error)
 	go func() {
@@ -220,7 +223,7 @@ func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHand
 
 	select {
 	case <-ctx.Done():
-		logger.Info(fmt.Sprintf("proxy MQTT shutdown at %s", target))
+		logger.Info(fmt.Sprintf("proxy MQTT shutdown at %s", config.Target))
 		return nil
 	case err := <-errCh:
 		return err
@@ -228,19 +231,24 @@ func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHand
 }
 
 func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
-	target := fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort)
-	wp := websocket.New(target, cfg.HTTPTargetPath, "ws", sessionHandler, interceptor, logger)
-	http.Handle("/mqtt", wp.Handler())
+	config := mproxy.Config{
+		Address:    fmt.Sprintf("%s:%s", "", cfg.HTTPPort),
+		Target:     fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort),
+		PathPrefix: "/mqtt",
+	}
+
+	wp := websocket.New(config, sessionHandler, interceptor, logger)
+	http.HandleFunc("/mqtt", wp.ServeHTTP)
 
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- wp.Listen(cfg.HTTPPort)
+		errCh <- wp.Listen(ctx)
 	}()
 
 	select {
 	case <-ctx.Done():
-		logger.Info(fmt.Sprintf("proxy MQTT WS shutdown at %s", target))
+		logger.Info(fmt.Sprintf("proxy MQTT WS shutdown at %s", config.Target))
 		return nil
 	case err := <-errCh:
 		return err

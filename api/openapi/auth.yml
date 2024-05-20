@@ -322,6 +322,8 @@ paths:
           description: Issued new key.
         "400":
           description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
         "409":
           description: Failed due to using already existing ID.
         "415":
@@ -415,6 +417,8 @@ paths:
           description: Policies deleted.
         "400":
           description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.          
         "404":
           description: A non-existent entity request.
         "409":

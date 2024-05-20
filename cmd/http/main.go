@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"log/slog"
@@ -28,7 +29,8 @@ import (
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/messaging/handler"
 	"github.com/absmach/magistrala/pkg/uuid"
-	mproxy "github.com/absmach/mproxy/pkg/http"
+	"github.com/absmach/mproxy"
+	mproxyhttp "github.com/absmach/mproxy/pkg/http"
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/caarlos0/env/v10"
 	"go.opentelemetry.io/otel/trace"
@@ -127,7 +129,7 @@ func main() {
 	svc := newService(pub, authClient, logger, tracer)
 	targetServerCfg := server.Config{Port: targetHTTPPort}
 
-	hs := httpserver.New(ctx, cancel, svcName, targetServerCfg, api.MakeHandler(cfg.InstanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, targetServerCfg, api.MakeHandler(logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -161,31 +163,43 @@ func newService(pub messaging.Publisher, tc magistrala.AuthzServiceClient, logge
 }
 
 func proxyHTTP(ctx context.Context, cfg server.Config, logger *slog.Logger, sessionHandler session.Handler) error {
-	address := fmt.Sprintf("%s:%s", "", cfg.Port)
-	target := fmt.Sprintf("%s:%s", targetHTTPHost, targetHTTPPort)
-	mp, err := mproxy.NewProxy(address, target, sessionHandler, logger)
+	config := mproxy.Config{
+		Address:    fmt.Sprintf("%s:%s", "", cfg.Port),
+		Target:     fmt.Sprintf("%s:%s", targetHTTPHost, targetHTTPPort),
+		PathPrefix: "/",
+	}
+	if cfg.CertFile != "" || cfg.KeyFile != "" {
+		tlsCert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
+		if err != nil {
+			return err
+		}
+		config.TLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{tlsCert},
+		}
+	}
+	mp, err := mproxyhttp.NewProxy(config, sessionHandler, logger)
 	if err != nil {
 		return err
 	}
-	http.HandleFunc("/", mp.Handler)
+	http.HandleFunc("/", mp.ServeHTTP)
 
 	errCh := make(chan error)
 	switch {
 	case cfg.CertFile != "" || cfg.KeyFile != "":
 		go func() {
-			errCh <- mp.ListenTLS(cfg.CertFile, cfg.KeyFile)
+			errCh <- mp.Listen(ctx)
 		}()
 		logger.Info(fmt.Sprintf("%s service https server listening at %s:%s with TLS cert %s and key %s", svcName, cfg.Host, cfg.Port, cfg.CertFile, cfg.KeyFile))
 	default:
 		go func() {
-			errCh <- mp.Listen()
+			errCh <- mp.Listen(ctx)
 		}()
 		logger.Info(fmt.Sprintf("%s service http server listening at %s:%s without TLS", svcName, cfg.Host, cfg.Port))
 	}
 
 	select {
 	case <-ctx.Done():
-		logger.Info(fmt.Sprintf("proxy HTTP shutdown at %s", target))
+		logger.Info(fmt.Sprintf("proxy HTTP shutdown at %s", config.Target))
 		return nil
 	case err := <-errCh:
 		return err

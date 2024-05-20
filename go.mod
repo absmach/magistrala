@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/0x6flab/namegenerator v1.3.1
 	github.com/absmach/callhome v0.14.0
-	github.com/absmach/mproxy v0.4.2
+	github.com/absmach/mproxy v0.4.3-0.20240430090627-27dad4c91c6c
 	github.com/absmach/senml v1.0.5
 	github.com/authzed/authzed-go v0.11.1
 	github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b
@@ -72,6 +72,7 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bitly/go-hostpool v0.1.0 // indirect
+	github.com/caarlos0/env/v11 v11.0.0 // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

@@ -22,14 +22,14 @@ var (
 	// ErrConnect indicates that connection to MQTT broker failed.
 	ErrConnect = errors.New("failed to connect to MQTT broker")
 
-	// ErrSubscribeTimeout indicates that the subscription failed due to timeout.
-	ErrSubscribeTimeout = errors.New("failed to subscribe due to timeout reached")
+	// errSubscribeTimeout indicates that the subscription failed due to timeout.
+	errSubscribeTimeout = errors.New("failed to subscribe due to timeout reached")
 
-	// ErrUnsubscribeTimeout indicates that unsubscribe failed due to timeout.
-	ErrUnsubscribeTimeout = errors.New("failed to unsubscribe due to timeout reached")
+	// errUnsubscribeTimeout indicates that unsubscribe failed due to timeout.
+	errUnsubscribeTimeout = errors.New("failed to unsubscribe due to timeout reached")
 
-	// ErrUnsubscribeDeleteTopic indicates that unsubscribe failed because the topic was deleted.
-	ErrUnsubscribeDeleteTopic = errors.New("failed to unsubscribe due to deletion of topic")
+	// errUnsubscribeDeleteTopic indicates that unsubscribe failed because the topic was deleted.
+	errUnsubscribeDeleteTopic = errors.New("failed to unsubscribe due to deletion of topic")
 
 	// ErrNotSubscribed indicates that the topic is not subscribed to.
 	ErrNotSubscribed = errors.New("not subscribed")
@@ -116,7 +116,7 @@ func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig)
 		return token.Error()
 	}
 	if ok := token.WaitTimeout(ps.timeout); !ok {
-		return ErrSubscribeTimeout
+		return errSubscribeTimeout
 	}
 
 	return nil
@@ -161,10 +161,10 @@ func (s *subscription) unsubscribe(topic string, timeout time.Duration) error {
 	}
 
 	if ok := token.WaitTimeout(timeout); !ok {
-		return ErrUnsubscribeTimeout
+		return errUnsubscribeTimeout
 	}
 	if ok := s.delete(topic); !ok {
-		return ErrUnsubscribeDeleteTopic
+		return errUnsubscribeDeleteTopic
 	}
 	return token.Error()
 }

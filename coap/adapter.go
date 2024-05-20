@@ -19,9 +19,6 @@ import (
 
 const chansPrefix = "channels"
 
-// ErrUnsubscribe indicates an error to unsubscribe.
-var ErrUnsubscribe = errors.New("unable to unsubscribe")
-
 // Service specifies CoAP service API.
 type Service interface {
 	// Publish publishes message to specified channel.

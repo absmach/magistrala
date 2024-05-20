@@ -24,15 +24,6 @@ const (
 )
 
 var (
-	// ErrMissingCACertificate indicates missing CA certificate.
-	ErrMissingCACertificate = errors.New("missing CA certificate for certificate signing")
-
-	// ErrFailedCertCreation indicates failed to certificate creation.
-	ErrFailedCertCreation = errors.New("failed to create client certificate")
-
-	// ErrFailedCertRevocation indicates failed certificate revocation.
-	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
-
 	errFailedCertDecoding = errors.New("failed to decode response from vault service")
 	errFailedToLogin      = errors.New("failed to login to Vault")
 	errFailedAppRole      = errors.New("failed to create vault new app role")

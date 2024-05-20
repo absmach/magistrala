@@ -10,17 +10,8 @@ import (
 	"time"
 )
 
-var (
-	// ErrInvalidKeyIssuedAt indicates that the Key is being used before it's issued.
-	ErrInvalidKeyIssuedAt = errors.New("invalid issue time")
-
-	// ErrKeyExpired indicates that the Key is expired.
-	ErrKeyExpired = errors.New("use of expired key")
-
-	// ErrAPIKeyExpired indicates that the Key is expired
-	// and that the key type is API key.
-	ErrAPIKeyExpired = errors.New("use of expired API key")
-)
+// ErrKeyExpired indicates that the Key is expired.
+var ErrKeyExpired = errors.New("use of expired key")
 
 type Token struct {
 	AccessToken  string // AccessToken contains the security credentials for a login session and identifies the client.

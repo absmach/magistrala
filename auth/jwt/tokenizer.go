@@ -20,14 +20,8 @@ var (
 	errInvalidIssuer = errors.New("invalid token issuer value")
 	// errJWTExpiryKey is used to check if the token is expired.
 	errJWTExpiryKey = errors.New(`"exp" not satisfied`)
-	// ErrExpiry indicates that the token is expired.
-	ErrExpiry = errors.New("token is expired")
-	// ErrSetClaim indicates an inability to set the claim.
-	ErrSetClaim = errors.New("failed to set claim")
 	// ErrSignJWT indicates an error in signing jwt token.
 	ErrSignJWT = errors.New("failed to sign jwt token")
-	// ErrParseToken indicates a failure to parse the token.
-	ErrParseToken = errors.New("failed to parse token")
 	// ErrValidateJWTToken indicates a failure to validate JWT token.
 	ErrValidateJWTToken = errors.New("failed to validate jwt token")
 	// ErrJSONHandle indicates an error in handling JSON.
@@ -107,7 +101,7 @@ func (tok *tokenizer) validateToken(token string) (jwt.Token, error) {
 	)
 	if err != nil {
 		if errors.Contains(err, errJWTExpiryKey) {
-			return nil, ErrExpiry
+			return nil, auth.ErrExpiry
 		}
 
 		return nil, err

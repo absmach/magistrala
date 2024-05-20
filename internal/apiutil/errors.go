@@ -66,9 +66,6 @@ var (
 	// ErrMalformedPolicyAct indicates missing policies action.
 	ErrMalformedPolicyAct = errors.New("malformed policy action")
 
-	// ErrMalformedPolicyRel indicates missing policies relation.
-	ErrMalformedPolicyRel = errors.New("malformed policy relation")
-
 	// ErrMalformedPolicyPer indicates missing policies relation.
 	ErrMalformedPolicyPer = errors.New("malformed policy permission")
 
@@ -131,15 +128,6 @@ var (
 
 	// ErrPasswordFormat indicates weak password.
 	ErrPasswordFormat = errors.New("password does not meet the requirements")
-
-	// ErrMissingOwner indicates missing entity owner.
-	ErrMissingOwner = errors.New("missing entity owner")
-
-	// ErrMissingPolicyOwner indicated malformed policy owner.
-	ErrMissingPolicyOwner = errors.New("malformed policy owner")
-
-	// ErrMissingPolicyEntityType indicates malformed policy entity type.
-	ErrMissingPolicyEntityType = errors.New("malformed or missing entity type")
 
 	// ErrMissingName indicates missing identity name.
 	ErrMissingName = errors.New("missing identity name")

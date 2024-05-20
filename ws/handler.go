@@ -35,20 +35,15 @@ const (
 
 // Error wrappers for MQTT errors.
 var (
-	ErrMalformedSubtopic            = errors.New("malformed subtopic")
-	ErrClientNotInitialized         = errors.New("client is not initialized")
-	ErrMalformedTopic               = errors.New("malformed topic")
-	ErrMissingClientID              = errors.New("client_id not found")
-	ErrMissingTopicPub              = errors.New("failed to publish due to missing topic")
-	ErrMissingTopicSub              = errors.New("failed to subscribe due to missing topic")
-	ErrFailedConnect                = errors.New("failed to connect")
-	ErrFailedSubscribe              = errors.New("failed to subscribe")
-	ErrFailedPublish                = errors.New("failed to publish")
-	ErrFailedDisconnect             = errors.New("failed to disconnect")
-	ErrFailedPublishDisconnectEvent = errors.New("failed to publish disconnect event")
-	ErrFailedParseSubtopic          = errors.New("failed to parse subtopic")
-	ErrFailedPublishConnectEvent    = errors.New("failed to publish connect event")
-	ErrFailedPublishToMsgBroker     = errors.New("failed to publish to magistrala message broker")
+	errMalformedSubtopic        = errors.New("malformed subtopic")
+	errClientNotInitialized     = errors.New("client is not initialized")
+	errMalformedTopic           = errors.New("malformed topic")
+	errMissingTopicPub          = errors.New("failed to publish due to missing topic")
+	errMissingTopicSub          = errors.New("failed to subscribe due to missing topic")
+	errFailedSubscribe          = errors.New("failed to subscribe")
+	errFailedPublish            = errors.New("failed to publish")
+	errFailedParseSubtopic      = errors.New("failed to parse subtopic")
+	errFailedPublishToMsgBroker = errors.New("failed to publish to magistrala message broker")
 )
 
 var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
@@ -79,11 +74,11 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 // prior forwarding to the ws server.
 func (h *handler) AuthPublish(ctx context.Context, topic *string, payload *[]byte) error {
 	if topic == nil {
-		return ErrMissingTopicPub
+		return errMissingTopicPub
 	}
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return ErrClientNotInitialized
+		return errClientNotInitialized
 	}
 
 	var token string
@@ -102,10 +97,10 @@ func (h *handler) AuthPublish(ctx context.Context, topic *string, payload *[]byt
 func (h *handler) AuthSubscribe(ctx context.Context, topics *[]string) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return ErrClientNotInitialized
+		return errClientNotInitialized
 	}
 	if topics == nil || *topics == nil {
-		return ErrMissingTopicSub
+		return errMissingTopicSub
 	}
 
 	var token string
@@ -134,19 +129,19 @@ func (h *handler) Connect(ctx context.Context) error {
 func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return errors.Wrap(ErrFailedPublish, ErrClientNotInitialized)
+		return errors.Wrap(errFailedPublish, errClientNotInitialized)
 	}
 	h.logger.Info(fmt.Sprintf(LogInfoPublished, s.ID, *topic))
 
 	if len(*payload) == 0 {
-		return ErrFailedMessagePublish
+		return errFailedMessagePublish
 	}
 
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 	channelParts := channelRegExp.FindStringSubmatch(*topic)
 	if len(channelParts) < 2 {
-		return errors.Wrap(ErrFailedPublish, ErrMalformedTopic)
+		return errors.Wrap(errFailedPublish, errMalformedTopic)
 	}
 
 	chanID := channelParts[1]
@@ -154,7 +149,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
-		return errors.Wrap(ErrFailedParseSubtopic, err)
+		return errors.Wrap(errFailedParseSubtopic, err)
 	}
 
 	var token string
@@ -190,7 +185,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	}
 
 	if err := h.pubsub.Publish(ctx, msg.GetChannel(), &msg); err != nil {
-		return errors.Wrap(ErrFailedPublishToMsgBroker, err)
+		return errors.Wrap(errFailedPublishToMsgBroker, err)
 	}
 
 	return nil
@@ -200,7 +195,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 func (h *handler) Subscribe(ctx context.Context, topics *[]string) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return errors.Wrap(ErrFailedSubscribe, ErrClientNotInitialized)
+		return errors.Wrap(errFailedSubscribe, errClientNotInitialized)
 	}
 	h.logger.Info(fmt.Sprintf(LogInfoSubscribed, s.ID, strings.Join(*topics, ",")))
 	return nil
@@ -210,7 +205,7 @@ func (h *handler) Subscribe(ctx context.Context, topics *[]string) error {
 func (h *handler) Unsubscribe(ctx context.Context, topics *[]string) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return errors.Wrap(ErrFailedUnsubscribe, ErrClientNotInitialized)
+		return errors.Wrap(errFailedUnsubscribe, errClientNotInitialized)
 	}
 
 	h.logger.Info(fmt.Sprintf(LogInfoUnsubscribed, s.ID, strings.Join(*topics, ",")))
@@ -226,12 +221,12 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 	if !channelRegExp.MatchString(topic) {
-		return ErrMalformedTopic
+		return errMalformedTopic
 	}
 
 	channelParts := channelRegExp.FindStringSubmatch(topic)
 	if len(channelParts) < 1 {
-		return ErrMalformedTopic
+		return errMalformedTopic
 	}
 
 	chanID := channelParts[1]
@@ -261,7 +256,7 @@ func parseSubtopic(subtopic string) (string, error) {
 
 	subtopic, err := url.QueryUnescape(subtopic)
 	if err != nil {
-		return "", ErrMalformedSubtopic
+		return "", errMalformedSubtopic
 	}
 	subtopic = strings.ReplaceAll(subtopic, "/", ".")
 
@@ -273,7 +268,7 @@ func parseSubtopic(subtopic string) (string, error) {
 		}
 
 		if len(elem) > 1 && (strings.Contains(elem, "*") || strings.Contains(elem, ">")) {
-			return "", ErrMalformedSubtopic
+			return "", errMalformedSubtopic
 		}
 
 		filteredElems = append(filteredElems, elem)

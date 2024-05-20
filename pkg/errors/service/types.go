@@ -49,21 +49,6 @@ var (
 	// ErrInvalidPolicy indicates that an invalid policy.
 	ErrInvalidPolicy = errors.New("invalid policy")
 
-	// ErrRecoveryToken indicates error in generating password recovery token.
-	ErrRecoveryToken = errors.New("failed to generate password recovery token")
-
-	// ErrFailedPolicyUpdate indicates a failure to update user policy.
-	ErrFailedPolicyUpdate = errors.New("failed to update user policy")
-
-	// ErrPasswordFormat indicates weak password.
-	ErrPasswordFormat = errors.New("password does not meet the requirements")
-
-	// ErrFailedUpdateRole indicates a failure to update user role.
-	ErrFailedUpdateRole = errors.New("failed to update user role")
-
-	// ErrFailedPermissionsList indicates a failure to list permissions.
-	ErrFailedPermissionsList = errors.New("failed to list permissions")
-
 	// ErrEnableClient indicates error in enabling client.
 	ErrEnableClient = errors.New("failed to enable client")
 

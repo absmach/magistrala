@@ -27,24 +27,19 @@ const protocol = "http"
 
 // Log message formats.
 const (
-	LogInfoConnected = "connected with thing_key %s"
-	// ThingPrefix represents the key prefix for Thing authentication scheme.
-	ThingPrefix      = "Thing "
-	LogInfoPublished = "published with client_id %s to the topic %s"
+	logInfoConnected = "connected with thing_key %s"
+	logInfoPublished = "published with client_id %s to the topic %s"
 )
 
 // Error wrappers for MQTT errors.
 var (
-	ErrMalformedSubtopic         = errors.New("malformed subtopic")
-	ErrClientNotInitialized      = errors.New("client is not initialized")
-	ErrMalformedTopic            = errors.New("malformed topic")
-	ErrMissingTopicPub           = errors.New("failed to publish due to missing topic")
-	ErrMissingTopicSub           = errors.New("failed to subscribe due to missing topic")
-	ErrFailedConnect             = errors.New("failed to connect")
-	ErrFailedPublish             = errors.New("failed to publish")
-	ErrFailedParseSubtopic       = errors.New("failed to parse subtopic")
-	ErrFailedPublishConnectEvent = errors.New("failed to publish connect event")
-	ErrFailedPublishToMsgBroker  = errors.New("failed to publish to magistrala message broker")
+	errMalformedSubtopic        = errors.New("malformed subtopic")
+	errClientNotInitialized     = errors.New("client is not initialized")
+	errMalformedTopic           = errors.New("malformed topic")
+	errMissingTopicPub          = errors.New("failed to publish due to missing topic")
+	errFailedPublish            = errors.New("failed to publish")
+	errFailedParseSubtopic      = errors.New("failed to parse subtopic")
+	errFailedPublishToMsgBroker = errors.New("failed to publish to magistrala message broker")
 )
 
 var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
@@ -70,7 +65,7 @@ func NewHandler(publisher messaging.Publisher, logger *slog.Logger, authClient m
 func (h *handler) AuthConnect(ctx context.Context) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return ErrClientNotInitialized
+		return errClientNotInitialized
 	}
 
 	var tok string
@@ -83,7 +78,7 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 		tok = string(s.Password)
 	}
 
-	h.logger.Info(fmt.Sprintf(LogInfoConnected, tok))
+	h.logger.Info(fmt.Sprintf(logInfoConnected, tok))
 	return nil
 }
 
@@ -105,20 +100,20 @@ func (h *handler) Connect(ctx context.Context) error {
 // Publish - after client successfully published.
 func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) error {
 	if topic == nil {
-		return ErrMissingTopicPub
+		return errMissingTopicPub
 	}
 	topic = &strings.Split(*topic, "?")[0]
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return errors.Wrap(ErrFailedPublish, ErrClientNotInitialized)
+		return errors.Wrap(errFailedPublish, errClientNotInitialized)
 	}
-	h.logger.Info(fmt.Sprintf(LogInfoPublished, s.ID, *topic))
+	h.logger.Info(fmt.Sprintf(logInfoPublished, s.ID, *topic))
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 
 	channelParts := channelRegExp.FindStringSubmatch(*topic)
 	if len(channelParts) < 2 {
-		return errors.Wrap(ErrFailedPublish, ErrMalformedTopic)
+		return errors.Wrap(errFailedPublish, errMalformedTopic)
 	}
 
 	chanID := channelParts[1]
@@ -126,7 +121,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
-		return errors.Wrap(ErrFailedParseSubtopic, err)
+		return errors.Wrap(errFailedParseSubtopic, err)
 	}
 
 	msg := messaging.Message{
@@ -162,7 +157,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	msg.Publisher = res.GetId()
 
 	if err := h.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
-		return errors.Wrap(ErrFailedPublishToMsgBroker, err)
+		return errors.Wrap(errFailedPublishToMsgBroker, err)
 	}
 
 	return nil
@@ -190,7 +185,7 @@ func parseSubtopic(subtopic string) (string, error) {
 
 	subtopic, err := url.QueryUnescape(subtopic)
 	if err != nil {
-		return "", ErrMalformedSubtopic
+		return "", errMalformedSubtopic
 	}
 	subtopic = strings.ReplaceAll(subtopic, "/", ".")
 
@@ -202,7 +197,7 @@ func parseSubtopic(subtopic string) (string, error) {
 		}
 
 		if len(elem) > 1 && (strings.Contains(elem, "*") || strings.Contains(elem, ">")) {
-			return "", ErrMalformedSubtopic
+			return "", errMalformedSubtopic
 		}
 
 		filteredElems = append(filteredElems, elem)
@@ -214,9 +209,9 @@ func parseSubtopic(subtopic string) (string, error) {
 
 // extractThingKey returns value of the thing key. If there is no thing key - an empty value is returned.
 func extractThingKey(topic string) string {
-	if !strings.HasPrefix(topic, ThingPrefix) {
+	if !strings.HasPrefix(topic, apiutil.ThingPrefix) {
 		return ""
 	}
 
-	return strings.TrimPrefix(topic, ThingPrefix)
+	return strings.TrimPrefix(topic, apiutil.ThingPrefix)
 }

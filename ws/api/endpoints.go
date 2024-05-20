@@ -111,7 +111,7 @@ func encodeError(w http.ResponseWriter, err error) {
 	var statusCode int
 
 	switch err {
-	case ws.ErrEmptyID, ws.ErrEmptyTopic:
+	case ws.ErrEmptyTopic:
 		statusCode = http.StatusBadRequest
 	case errUnauthorizedAccess:
 		statusCode = http.StatusForbidden

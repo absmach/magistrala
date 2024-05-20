@@ -25,6 +25,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var (
+	errMalformedTopic = errors.New("malformed topic")
+	errFailedPublish  = errors.New("failed to publish")
+)
+
 func setupMessages() (*httptest.Server, *authmocks.AuthClient, *pubsub.PubSub) {
 	auth := new(authmocks.AuthClient)
 	pub := new(pubsub.PubSub)
@@ -99,7 +104,7 @@ func TestSendMessage(t *testing.T) {
 			chanID: "",
 			msg:    msg,
 			auth:   atoken,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(adapter.ErrFailedPublish, adapter.ErrMalformedTopic), http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(errors.Wrap(errFailedPublish, errMalformedTopic), http.StatusBadRequest),
 		},
 		"publish message unable to authorize": {
 			chanID: chanID,

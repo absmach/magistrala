@@ -184,13 +184,13 @@ func TestParse(t *testing.T) {
 			desc:  "parse expired key",
 			key:   auth.Key{},
 			token: expToken,
-			err:   authjwt.ErrExpiry,
+			err:   auth.ErrExpiry,
 		},
 		{
 			desc:  "parse expired API key",
 			key:   apiKey,
 			token: apiToken,
-			err:   authjwt.ErrExpiry,
+			err:   auth.ErrExpiry,
 		},
 		{
 			desc:  "parse token with invalid issuer",

@@ -28,26 +28,11 @@ var (
 	// ErrRemoveEntity indicates error in removing entity.
 	ErrRemoveEntity = errors.New("failed to remove entity")
 
-	// ErrScanMetadata indicates problem with metadata in db.
-	ErrScanMetadata = errors.New("failed to scan metadata in db")
-
-	// ErrWrongSecret indicates a wrong secret was provided.
-	ErrWrongSecret = errors.New("wrong secret")
-
-	// ErrLogin indicates wrong login credentials.
-	ErrLogin = errors.New("invalid user id or secret")
-
 	// ErrFailedOpDB indicates a failure in a database operation.
 	ErrFailedOpDB = errors.New("operation on db element failed")
 
 	// ErrRollbackTx indicates failed to rollback transaction.
 	ErrRollbackTx = errors.New("failed to rollback transaction")
-
-	// ErrMissingSecret indicates missing secret.
-	ErrMissingSecret = errors.New("missing secret")
-
-	// ErrInvalidSecret indicates invalid secret.
-	ErrInvalidSecret = errors.New("missing secret")
 
 	// ErrFailedToRetrieveAllGroups failed to retrieve groups.
 	ErrFailedToRetrieveAllGroups = errors.New("failed to retrieve all groups")

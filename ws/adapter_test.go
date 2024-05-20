@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/mocks"
 	"github.com/absmach/magistrala/ws"
@@ -79,28 +80,28 @@ func TestSubscribe(t *testing.T) {
 			thingKey: authmocks.InvalidValue,
 			chanID:   authmocks.InvalidValue,
 			subtopic: subTopic,
-			err:      ws.ErrUnauthorizedAccess,
+			err:      svcerr.ErrAuthorization,
 		},
 		{
 			desc:     "subscribe to channel with empty channel",
 			thingKey: thingKey,
 			chanID:   "",
 			subtopic: subTopic,
-			err:      ws.ErrUnauthorizedAccess,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
 			desc:     "subscribe to channel with empty thingKey",
 			thingKey: "",
 			chanID:   chanID,
 			subtopic: subTopic,
-			err:      ws.ErrUnauthorizedAccess,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
 			desc:     "subscribe to channel with empty thingKey and empty channel",
 			thingKey: "",
 			chanID:   "",
 			subtopic: subTopic,
-			err:      ws.ErrUnauthorizedAccess,
+			err:      svcerr.ErrAuthentication,
 		},
 	}
 

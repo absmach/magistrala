@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not start container: %s", err)
 	}
 
-	handleInterrupt(m, pool, container)
+	handleInterrupt(pool, container)
 
 	address = fmt.Sprintf("%s:%s", "localhost", container.GetPort(port))
 	pool.MaxWait = poolMaxWait
@@ -84,7 +84,7 @@ func TestMain(m *testing.M) {
 	}()
 }
 
-func handleInterrupt(m *testing.M, pool *dockertest.Pool, container *dockertest.Resource) {
+func handleInterrupt(pool *dockertest.Pool, container *dockertest.Resource) {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {

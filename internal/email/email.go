@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	// ErrMissingEmailTemplate missing email template file.
+	// errMissingEmailTemplate missing email template file.
 	errMissingEmailTemplate = errors.New("Missing e-mail template file")
 	errParseTemplate        = errors.New("Parse e-mail template failed")
 	errExecTemplate         = errors.New("Execute e-mail template failed")

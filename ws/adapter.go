@@ -17,29 +17,17 @@ import (
 const chansPrefix = "channels"
 
 var (
-	// ErrFailedMessagePublish indicates that message publishing failed.
-	ErrFailedMessagePublish = errors.New("failed to publish message")
+	// errFailedMessagePublish indicates that message publishing failed.
+	errFailedMessagePublish = errors.New("failed to publish message")
 
 	// ErrFailedSubscription indicates that client couldn't subscribe to specified channel.
 	ErrFailedSubscription = errors.New("failed to subscribe to a channel")
 
-	// ErrFailedUnsubscribe indicates that client couldn't unsubscribe from specified channel.
-	ErrFailedUnsubscribe = errors.New("failed to unsubscribe from a channel")
-
-	// ErrFailedConnection indicates that service couldn't connect to message broker.
-	ErrFailedConnection = errors.New("failed to connect to message broker")
-
-	// ErrInvalidConnection indicates that client couldn't subscribe to message broker.
-	ErrInvalidConnection = errors.New("nats: invalid connection")
-
-	// ErrUnauthorizedAccess indicates that client provided missing or invalid credentials.
-	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
+	// errFailedUnsubscribe indicates that client couldn't unsubscribe from specified channel.
+	errFailedUnsubscribe = errors.New("failed to unsubscribe from a channel")
 
 	// ErrEmptyTopic indicate absence of thingKey in the request.
 	ErrEmptyTopic = errors.New("empty topic")
-
-	// ErrEmptyID indicate absence of channelID in the request.
-	ErrEmptyID = errors.New("empty id")
 )
 
 // Service specifies web socket service API.
@@ -67,12 +55,12 @@ func New(authClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Serv
 
 func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subtopic string, c *Client) error {
 	if chanID == "" || thingKey == "" {
-		return ErrUnauthorizedAccess
+		return svcerr.ErrAuthentication
 	}
 
 	thingID, err := svc.authorize(ctx, thingKey, chanID, auth.SubscribePermission)
 	if err != nil {
-		return ErrUnauthorizedAccess
+		return svcerr.ErrAuthorization
 	}
 
 	c.id = thingID

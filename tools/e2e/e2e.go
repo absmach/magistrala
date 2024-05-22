@@ -579,7 +579,7 @@ func sendHTTPMessage(s sdk.SDK, msg string, thing sdk.Thing, chanID string) erro
 }
 
 func sendCoAPMessage(msg string, thing sdk.Thing, chanID string) error {
-	cmd := exec.Command("coap-cli", "post", fmt.Sprintf("channels/%s/messages", chanID), "-auth", thing.Credentials.Secret, "-d", msg)
+	cmd := exec.Command("coap-cli", "post", fmt.Sprintf("channels/%s/messages", chanID), "--auth", thing.Credentials.Secret, "-d", msg)
 	if _, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("CoAP failed to send message from thing %s to channel %s: %w", thing.ID, chanID, err)
 	}

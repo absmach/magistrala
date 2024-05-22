@@ -20,9 +20,10 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-chi/chi/v5"
-	"github.com/plgd-dev/go-coap/v2/message"
-	"github.com/plgd-dev/go-coap/v2/message/codes"
-	"github.com/plgd-dev/go-coap/v2/mux"
+	"github.com/plgd-dev/go-coap/v3/message"
+	"github.com/plgd-dev/go-coap/v3/message/codes"
+	"github.com/plgd-dev/go-coap/v3/message/pool"
+	"github.com/plgd-dev/go-coap/v3/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -42,6 +43,7 @@ const (
 var (
 	errMalformedSubtopic = errors.New("malformed subtopic")
 	errBadOptions        = errors.New("bad options")
+	errMethodNotAllowed  = errors.New("method not allowed")
 )
 
 var (
@@ -66,75 +68,93 @@ func MakeCoAPHandler(svc coap.Service, l *slog.Logger) mux.HandlerFunc {
 	return handler
 }
 
-func sendResp(w mux.ResponseWriter, resp *message.Message) {
-	if err := w.Client().WriteMessage(resp); err != nil {
+func sendResp(w mux.ResponseWriter, resp *pool.Message) {
+	if err := w.Conn().WriteMessage(resp); err != nil {
 		logger.Warn(fmt.Sprintf("Can't set response: %s", err))
 	}
 }
 
 func handler(w mux.ResponseWriter, m *mux.Message) {
-	resp := message.Message{
-		Code:    codes.Content,
-		Token:   m.Token,
-		Context: m.Context,
-		Options: make(message.Options, 0, 16),
+	resp := pool.NewMessage(w.Conn().Context())
+	resp.SetToken(m.Token())
+	for _, opt := range m.Options() {
+		resp.AddOptionBytes(opt.ID, opt.Value)
 	}
-	defer sendResp(w, &resp)
+	defer sendResp(w, resp)
+
 	msg, err := decodeMessage(m)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Error decoding message: %s", err))
-		resp.Code = codes.BadRequest
+		resp.SetCode(codes.BadRequest)
 		return
 	}
 	key, err := parseKey(m)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Error parsing auth: %s", err))
-		resp.Code = codes.Unauthorized
+		resp.SetCode(codes.Unauthorized)
 		return
 	}
-	switch m.Code {
+
+	switch m.Code() {
 	case codes.GET:
-		err = handleGet(m.Context, m, w.Client(), msg, key)
+		resp.SetCode(codes.Content)
+		err = handleGet(m, w, msg, key)
 	case codes.POST:
-		resp.Code = codes.Created
-		err = service.Publish(m.Context, key, msg)
+		resp.SetCode(codes.Created)
+		err = service.Publish(m.Context(), key, msg)
 	default:
-		err = svcerr.ErrNotFound
+		err = errMethodNotAllowed
 	}
+
 	if err != nil {
 		switch {
 		case err == errBadOptions:
-			resp.Code = codes.BadOption
-		case err == svcerr.ErrNotFound:
-			resp.Code = codes.NotFound
-		case errors.Contains(err, svcerr.ErrAuthorization),
-			errors.Contains(err, svcerr.ErrAuthentication):
-			resp.Code = codes.Unauthorized
+			resp.SetCode(codes.BadOption)
+		case err == errMethodNotAllowed:
+			resp.SetCode(codes.MethodNotAllowed)
+		case errors.Contains(err, svcerr.ErrAuthorization):
+			resp.SetCode(codes.Forbidden)
+		case errors.Contains(err, svcerr.ErrAuthentication):
+			resp.SetCode(codes.Unauthorized)
 		default:
-			resp.Code = codes.InternalServerError
+			resp.SetCode(codes.InternalServerError)
 		}
 	}
 }
 
-func handleGet(ctx context.Context, m *mux.Message, c mux.Client, msg *messaging.Message, key string) error {
+func handleGet(m *mux.Message, w mux.ResponseWriter, msg *messaging.Message, key string) error {
 	var obs uint32
-	obs, err := m.Options.Observe()
+	obs, err := m.Options().Observe()
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Error reading observe option: %s", err))
 		return errBadOptions
 	}
 	if obs == startObserve {
-		c := coap.NewClient(c, m.Token, logger)
-		return service.Subscribe(ctx, key, msg.GetChannel(), msg.GetSubtopic(), c)
+		c := coap.NewClient(w.Conn(), m.Token(), logger)
+		w.Conn().AddOnClose(func() {
+			err := service.Unsubscribe(context.Background(), key, msg.GetChannel(), msg.GetSubtopic(), c.Token())
+			args := []any{
+				slog.String("channel_id", msg.GetChannel()),
+				slog.String("subtopic", msg.GetSubtopic()),
+				slog.String("token", c.Token()),
+			}
+			if err != nil {
+				args = append(args, slog.Any("error", err))
+				logger.Warn("Unsubscribe idle client failed to complete successfully ", args...)
+				return
+			}
+			logger.Warn("Unsubscribe idle client completed successfully", args...)
+		})
+		return service.Subscribe(w.Conn().Context(), key, msg.GetChannel(), msg.GetSubtopic(), c)
 	}
-	return service.Unsubscribe(ctx, key, msg.GetChannel(), msg.GetSubtopic(), m.Token.String())
+	return service.Unsubscribe(w.Conn().Context(), key, msg.GetChannel(), msg.GetSubtopic(), m.Token().String())
 }
 
 func decodeMessage(msg *mux.Message) (*messaging.Message, error) {
-	if msg.Options == nil {
+	if msg.Options() == nil {
 		return &messaging.Message{}, errBadOptions
 	}
-	path, err := msg.Options.Path()
+	path, err := msg.Path()
 	if err != nil {
 		return &messaging.Message{}, err
 	}
@@ -155,8 +175,8 @@ func decodeMessage(msg *mux.Message) (*messaging.Message, error) {
 		Created:  time.Now().UnixNano(),
 	}
 
-	if msg.Body != nil {
-		buff, err := io.ReadAll(msg.Body)
+	if msg.Body() != nil {
+		buff, err := io.ReadAll(msg.Body())
 		if err != nil {
 			return ret, err
 		}
@@ -166,10 +186,7 @@ func decodeMessage(msg *mux.Message) (*messaging.Message, error) {
 }
 
 func parseKey(msg *mux.Message) (string, error) {
-	if obs, _ := msg.Options.Observe(); obs != 0 && msg.Code == codes.GET {
-		return "", nil
-	}
-	authKey, err := msg.Options.GetString(message.URIQuery)
+	authKey, err := msg.Options().GetString(message.URIQuery)
 	if err != nil {
 		return "", err
 	}

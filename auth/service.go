@@ -34,7 +34,41 @@ var (
 	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
 )
 
-// Authn specifies an API that must be fullfiled by the domain service
+var (
+	defThingsFilterPermissions = []string{
+		AdminPermission,
+		DeletePermission,
+		EditPermission,
+		ViewPermission,
+		SharePermission,
+		PublishPermission,
+		SubscribePermission,
+	}
+
+	defGroupsFilterPermissions = []string{
+		AdminPermission,
+		DeletePermission,
+		EditPermission,
+		ViewPermission,
+		MembershipPermission,
+		SharePermission,
+	}
+
+	defDomainsFilterPermissions = []string{
+		AdminPermission,
+		EditPermission,
+		ViewPermission,
+		MembershipPermission,
+		SharePermission,
+	}
+
+	defPlatformFilterPermissions = []string{
+		AdminPermission,
+		MembershipPermission,
+	}
+)
+
+// Authn specifies an API that must be fulfilled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
 // an Auth service request.
@@ -348,8 +382,22 @@ func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (uint64, err
 	return svc.agent.RetrieveAllSubjectsCount(ctx, pr)
 }
 
-func (svc service) ListPermissions(ctx context.Context, pr PolicyReq, filterPermisions []string) (Permissions, error) {
-	pers, err := svc.agent.RetrievePermissions(ctx, pr, filterPermisions)
+func (svc service) ListPermissions(ctx context.Context, pr PolicyReq, permissionsFilter []string) (Permissions, error) {
+	if len(permissionsFilter) == 0 {
+		switch pr.ObjectType {
+		case ThingType:
+			permissionsFilter = defThingsFilterPermissions
+		case GroupType:
+			permissionsFilter = defGroupsFilterPermissions
+		case PlatformType:
+			permissionsFilter = defPlatformFilterPermissions
+		case DomainType:
+			permissionsFilter = defDomainsFilterPermissions
+		default:
+			return nil, svcerr.ErrMalformedEntity
+		}
+	}
+	pers, err := svc.agent.RetrievePermissions(ctx, pr, permissionsFilter)
 	if err != nil {
 		return []string{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

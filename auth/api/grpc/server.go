@@ -18,39 +18,6 @@ import (
 
 var _ magistrala.AuthServiceServer = (*grpcServer)(nil)
 
-var (
-	defThingsFilterPermissions = []string{
-		auth.AdminPermission,
-		auth.DeletePermission,
-		auth.EditPermission,
-		auth.ViewPermission,
-		auth.SharePermission,
-		auth.PublishPermission,
-		auth.SubscribePermission,
-	}
-
-	defGroupsFilterPermissions = []string{
-		auth.AdminPermission,
-		auth.DeletePermission,
-		auth.EditPermission,
-		auth.ViewPermission,
-		auth.MembershipPermission,
-		auth.SharePermission,
-	}
-
-	defDomainsFilterPermissions = []string{
-		auth.AdminPermission,
-		auth.EditPermission,
-		auth.ViewPermission,
-		auth.MembershipPermission,
-		auth.SharePermission,
-	}
-	defPlatformFilterPermissions = []string{
-		auth.AdminPermission,
-		auth.MembershipPermission,
-	}
-)
-
 type grpcServer struct {
 	magistrala.UnimplementedAuthServiceServer
 	issue           kitgrpc.Handler
@@ -488,23 +455,6 @@ func encodeCountSubjectsResponse(_ context.Context, grpcRes interface{}) (interf
 
 func decodeListPermissionsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.ListPermissionsReq)
-	var fp []string
-
-	switch req.GetObjectType() {
-	case auth.ThingType:
-		fp = defThingsFilterPermissions
-	case auth.GroupType:
-		fp = defGroupsFilterPermissions
-	case auth.PlatformType:
-		fp = defPlatformFilterPermissions
-	case auth.DomainType:
-		fp = defDomainsFilterPermissions
-	default:
-		return nil, apiutil.ErrMalformedPolicy
-	}
-	if len(req.GetFilterPermissions()) > 0 {
-		fp = req.GetFilterPermissions()
-	}
 	return listPermissionsReq{
 		Domain:            req.GetDomain(),
 		SubjectType:       req.GetSubjectType(),
@@ -512,7 +462,7 @@ func decodeListPermissionsRequest(_ context.Context, grpcReq interface{}) (inter
 		SubjectRelation:   req.GetSubjectRelation(),
 		ObjectType:        req.GetObjectType(),
 		Object:            req.GetObject(),
-		FilterPermissions: fp,
+		FilterPermissions: req.GetFilterPermissions(),
 	}, nil
 }
 

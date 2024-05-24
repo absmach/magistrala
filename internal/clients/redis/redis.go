@@ -3,7 +3,7 @@
 
 package redis
 
-import "github.com/go-redis/redis/v8"
+import "github.com/redis/go-redis/v9"
 
 // Connect create new RedisDB client and connect to RedisDB server.
 func Connect(url string) (*redis.Client, error) {

@@ -217,24 +217,27 @@ func TestAdd(t *testing.T) {
 func TestView(t *testing.T) {
 	svc, boot, auth, _ := newService()
 	cases := []struct {
-		desc        string
-		id          string
-		domain      string
-		thingDomain string
-		token       string
-		identifyErr error
-		retrieveErr error
-		thingErr    error
-		channelErr  error
-		err         error
+		desc         string
+		id           string
+		domain       string
+		thingDomain  string
+		authorizeRes *magistrala.AuthorizeRes
+		token        string
+		identifyErr  error
+		authorizeErr error
+		retrieveErr  error
+		thingErr     error
+		channelErr   error
+		err          error
 	}{
 		{
-			desc:        "view an existing config",
-			id:          saved.ThingID,
-			thingDomain: domainID,
-			domain:      domainID,
-			token:       validToken,
-			err:         nil,
+			desc:         "view an existing config",
+			id:           saved.ThingID,
+			thingDomain:  domainID,
+			domain:       domainID,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc:        "view a non-existing config",
@@ -272,10 +275,21 @@ func TestView(t *testing.T) {
 			identifyErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
+		{
+			desc:         "view a config with failed authorization",
+			id:           saved.ThingID,
+			thingDomain:  domainID,
+			domain:       domainID,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: tc.domain}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
 		sdkCall := sdk.On("Thing", tc.id, tc.token).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}, DomainID: tc.domain}, tc.thingErr)
 		sdkCall1 := sdk.On("Channel", mock.Anything, tc.token).Return(mgsdk.Channel{ID: channel.ID, DomainID: tc.domain}, tc.channelErr)
 		svcCall := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, tc.retrieveErr)
@@ -283,6 +297,7 @@ func TestView(t *testing.T) {
 		_, err := svc.View(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		authCall.Unset()
+		authCall1.Unset()
 		sdkCall.Unset()
 		sdkCall1.Unset()
 		svcCall.Unset()

@@ -15,7 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 

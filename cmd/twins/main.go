@@ -34,7 +34,7 @@ import (
 	twmongodb "github.com/absmach/magistrala/twins/mongodb"
 	"github.com/absmach/magistrala/twins/tracing"
 	"github.com/caarlos0/env/v10"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"

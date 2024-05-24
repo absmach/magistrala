@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala/opcua"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 var _ opcua.RouteMapRepository = (*routerMap)(nil)

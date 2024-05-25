@@ -140,7 +140,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	// If domain is disabled , then this authorization will fail for all non-admin domain users.
-	if _, err := bs.authorize(ctx, "", user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
+	if _, err := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
 		return Config{}, err
 	}
 
@@ -191,14 +191,14 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.ThingType, id)
+	if err != nil {
+		return Config{}, err
+	}
+
 	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-
-	_, err = bs.authorize(ctx, "", user.GetId(), auth.ViewPermission, auth.ThingType, cfg.ThingID)
-	if err != nil {
-		return Config{}, err
 	}
 
 	return cfg, nil
@@ -208,6 +208,10 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.EditPermission, auth.ThingType, cfg.ThingID)
+	if err != nil {
+		return err
 	}
 
 	cfg.DomainID = user.GetDomainId()
@@ -421,11 +425,11 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (*magistr
 	return res, nil
 }
 
-func (bs bootstrapService) authorize(ctx context.Context, domainID, subj, perm, objType, obj string) (string, error) {
+func (bs bootstrapService) authorize(ctx context.Context, domainID, subjKind, subj, perm, objType, obj string) (string, error) {
 	req := &magistrala.AuthorizeReq{
 		Domain:      domainID,
 		SubjectType: auth.UserType,
-		SubjectKind: auth.UsersKind,
+		SubjectKind: subjKind,
 		Subject:     subj,
 		Permission:  perm,
 		ObjectType:  objType,

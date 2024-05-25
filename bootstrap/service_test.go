@@ -320,25 +320,29 @@ func TestUpdate(t *testing.T) {
 	nonExisting.ThingID = unknown
 
 	cases := []struct {
-		desc        string
-		config      bootstrap.Config
-		token       string
-		identifyErr error
-		updateErr   error
-		err         error
+		desc         string
+		config       bootstrap.Config
+		token        string
+		authorizeRes *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		updateErr    error
+		err          error
 	}{
 		{
-			desc:   "update a config with state Created",
-			config: modifiedCreated,
-			token:  validToken,
-			err:    nil,
+			desc:         "update a config with state Created",
+			config:       modifiedCreated,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
-			desc:      "update a non-existing config",
-			config:    nonExisting,
-			token:     validToken,
-			updateErr: svcerr.ErrNotFound,
-			err:       svcerr.ErrNotFound,
+			desc:         "update a non-existing config",
+			config:       nonExisting,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			updateErr:    svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
 		},
 		{
 			desc:        "update a config with wrong credentials",
@@ -347,14 +351,32 @@ func TestUpdate(t *testing.T) {
 			identifyErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
+		{
+			desc:         "update a config with failed authorization",
+			config:       saved,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+		},
+		{
+			desc:         "update a config with update error",
+			config:       saved,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			updateErr:    svcerr.ErrUpdateEntity,
+			err:          svcerr.ErrUpdateEntity,
+		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
 		err := svc.Update(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		authCall.Unset()
+		authCall1.Unset()
 		svcCall.Unset()
 	}
 }

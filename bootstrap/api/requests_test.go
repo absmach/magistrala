@@ -136,6 +136,12 @@ func TestUpdateReqValidation(t *testing.T) {
 		err   error
 	}{
 		{
+			desc:  "valid request",
+			token: "token",
+			id:    "id",
+			err:   nil,
+		},
+		{
 			desc:  "empty token",
 			token: "",
 			id:    "id",

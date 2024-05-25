@@ -191,7 +191,7 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.ThingType, id)
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.DomainType, user.GetDomainId())
 	if err != nil {
 		return Config{}, err
 	}
@@ -209,12 +209,13 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.EditPermission, auth.ThingType, cfg.ThingID)
+
+	cfg.DomainID = user.GetDomainId()
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.EditPermission, auth.DomainType, cfg.DomainID)
 	if err != nil {
 		return err
 	}
 
-	cfg.DomainID = user.GetDomainId()
 	if err = bs.configs.Update(ctx, cfg); err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -225,6 +226,11 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.EditPermission, auth.DomainType, user.GetDomainId())
+	if err != nil {
+		return Config{}, err
 	}
 
 	cfg, err := bs.configs.UpdateCert(ctx, user.GetDomainId(), thingID, clientCert, clientKey, caCert)
@@ -238,6 +244,11 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.EditPermission, auth.DomainType, user.GetDomainId())
+	if err != nil {
+		return err
 	}
 
 	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
@@ -294,6 +305,11 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.DomainType, user.GetDomainId())
+	if err != nil {
+		return ConfigsPage{}, err
 	}
 
 	return bs.configs.RetrieveAll(ctx, user.GetDomainId(), filter, offset, limit), nil

@@ -392,7 +392,7 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("View", mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+		svcCall := svc.On("View", mock.Anything, tc.auth, tc.id).Return(c, tc.err)
 		req := testRequest{
 			client: bs.Client(),
 			method: http.MethodGet,

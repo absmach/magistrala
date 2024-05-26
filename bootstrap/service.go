@@ -191,7 +191,7 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.DomainType, user.GetDomainId())
+	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.ThingType, id)
 	if err != nil {
 		return Config{}, err
 	}
@@ -307,12 +307,16 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.DomainType, user.GetDomainId())
-	if err != nil {
-		return ConfigsPage{}, err
+	configsPage := bs.configs.RetrieveAll(ctx, user.GetDomainId(), filter, offset, limit)
+
+	for _, config := range configsPage.Configs {
+		_, err = bs.authorize(ctx, "", auth.TokenKind, token, auth.ViewPermission, auth.ThingType, config.ThingID)
+		if err != nil {
+			return ConfigsPage{}, err
+		}
 	}
 
-	return bs.configs.RetrieveAll(ctx, user.GetDomainId(), filter, offset, limit), nil
+	return configsPage, nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {

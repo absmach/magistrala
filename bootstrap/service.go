@@ -191,7 +191,7 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetUserId(), auth.ViewPermission, auth.ThingType, id)
+	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, id)
 	if err != nil {
 		return Config{}, err
 	}
@@ -211,7 +211,7 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 	}
 
 	cfg.DomainID = user.GetDomainId()
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetUserId(), auth.EditPermission, auth.DomainType, cfg.DomainID)
+	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.EditPermission, auth.DomainType, cfg.DomainID)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetUserId(), auth.EditPermission, auth.DomainType, user.GetDomainId())
+	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.EditPermission, auth.DomainType, user.GetDomainId())
 	if err != nil {
 		return Config{}, err
 	}
@@ -246,7 +246,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetUserId(), auth.EditPermission, auth.DomainType, user.GetDomainId())
+	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.EditPermission, auth.DomainType, user.GetDomainId())
 	if err != nil {
 		return err
 	}
@@ -310,7 +310,7 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 	configsPage := bs.configs.RetrieveAll(ctx, user.GetDomainId(), filter, offset, limit)
 
 	for _, config := range configsPage.Configs {
-		_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetUserId(), auth.ViewPermission, auth.ThingType, config.ThingID)
+		_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, config.ThingID)
 		if err != nil {
 			return ConfigsPage{}, err
 		}

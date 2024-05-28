@@ -389,6 +389,14 @@ func TestView(t *testing.T) {
 			res:    config{},
 			err:    svcerr.ErrAuthentication,
 		},
+		{
+			desc:   "view config without authorization",
+			auth:   validToken,
+			id:     saved.ThingID,
+			status: http.StatusForbidden,
+			res:    config{},
+			err:    svcerr.ErrAuthorization,
+		},
 	}
 
 	for _, tc := range cases {

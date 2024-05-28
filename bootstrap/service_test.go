@@ -568,11 +568,11 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:         "update connections for non-existing config",
 			token:        validToken,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
 			id:           "",
 			connections:  []string{"3"},
-			retrieveErr:  errors.NewSDKError(svcerr.ErrNotFound),
-			err:          svcerr.ErrNotFound,
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
 		},
 		{
 			desc:         "update connections with invalid channels",
@@ -747,17 +747,16 @@ func TestList(t *testing.T) {
 			limit:        20,
 			err:          nil,
 		},
-		// {
-		// 	desc:         "list configs with failed authorization",
-		// 	config:       bootstrap.ConfigsPage{},
-		// 	filter:       bootstrap.Filter{},
-		// 	token:        validToken,
-		// 	authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
-		// 	authorizeErr: svcerr.ErrAuthorization,
-		// 	offset:       0,
-		// 	limit:        10,
-		// 	err:          svcerr.ErrAuthorization,
-		// },
+		{
+			desc:         "list configs with failed authorization",
+			config:       bootstrap.ConfigsPage{},
+			filter:       bootstrap.Filter{},
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
+			offset:       0,
+			limit:        10,
+			err:          nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -778,46 +777,68 @@ func TestList(t *testing.T) {
 func TestRemove(t *testing.T) {
 	svc, boot, auth, _ := newService()
 	cases := []struct {
-		desc        string
-		id          string
-		token       string
-		identifyErr error
-		removeErr   error
-		err         error
+		desc         string
+		id           string
+		token        string
+		authorizeRes *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		removeErr    error
+		err          error
 	}{
 		{
-			desc:        "view a config with wrong credentials",
+			desc:        "remove a config with wrong credentials",
 			id:          config.ThingID,
 			token:       invalidToken,
 			identifyErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc:  "remove an existing config",
-			id:    config.ThingID,
-			token: validToken,
-			err:   nil,
+			desc:         "remove an existing config",
+			id:           config.ThingID,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
-			desc:  "remove removed config",
-			id:    config.ThingID,
-			token: validToken,
-			err:   nil,
+			desc:         "remove removed config",
+			id:           config.ThingID,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
-			desc:  "remove non-existing config",
-			id:    unknown,
-			token: validToken,
-			err:   nil,
+			desc:         "remove non-existing config",
+			id:           unknown,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
+			err:          svcerr.ErrAuthorization,
+		},
+		{
+			desc:         "remove a config with failed authorization",
+			id:           saved.ThingID,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
+			err:          svcerr.ErrAuthorization,
+		},
+		{
+			desc:         "remove a config with failed remove",
+			id:           saved.ThingID,
+			token:        validToken,
+			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
+			removeErr:    svcerr.ErrRemoveEntity,
+			err:          svcerr.ErrRemoveEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: domainID}, tc.identifyErr)
-		svcCall := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
+		svcCall := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
 		err := svc.Remove(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		authCall.Unset()
+		authCall1.Unset()
 		svcCall.Unset()
 	}
 }

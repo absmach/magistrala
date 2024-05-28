@@ -191,7 +191,7 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, id)
+	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, id)
 	if err != nil {
 		return Config{}, err
 	}
@@ -200,7 +200,6 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-
 	return cfg, nil
 }
 
@@ -209,13 +208,12 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-
-	cfg.DomainID = user.GetDomainId()
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.EditPermission, auth.DomainType, cfg.DomainID)
+	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, cfg.ThingID)
 	if err != nil {
 		return err
 	}
 
+	cfg.DomainID = user.GetDomainId()
 	if err = bs.configs.Update(ctx, cfg); err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -227,8 +225,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.EditPermission, auth.DomainType, user.GetDomainId())
+	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, thingID)
 	if err != nil {
 		return Config{}, err
 	}
@@ -246,7 +243,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.EditPermission, auth.DomainType, user.GetDomainId())
+	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, id)
 	if err != nil {
 		return err
 	}
@@ -309,12 +306,20 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 
 	configsPage := bs.configs.RetrieveAll(ctx, user.GetDomainId(), filter, offset, limit)
 
+	j := 0
 	for _, config := range configsPage.Configs {
-		_, err = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, config.ThingID)
+		_, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, config.ThingID)
 		if err != nil {
+			if errors.Contains(err, svcerr.ErrAuthorization) {
+				// Skip this config if the user does not have viewPermission.
+				continue
+			}
 			return ConfigsPage{}, err
 		}
+		configsPage.Configs[j] = config
+		j++
 	}
+	configsPage.Configs = configsPage.Configs[:j]
 
 	return configsPage, nil
 }
@@ -324,7 +329,9 @@ func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-
+	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
+		return err
+	}
 	if err := bs.configs.Remove(ctx, user.GetDomainId(), id); err != nil {
 		return errors.Wrap(errRemoveBootstrap, err)
 	}

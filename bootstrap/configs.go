@@ -73,7 +73,7 @@ type ConfigRepository interface {
 
 	// RetrieveAll retrieves a subset of Configs that are owned
 	// by the specific user, with given filter parameters.
-	RetrieveAll(ctx context.Context, domainID string, filter Filter, offset, limit uint64) ConfigsPage
+	RetrieveAll(ctx context.Context, domainID, thingID string, filter Filter, offset, limit uint64) ConfigsPage
 
 	// RetrieveByExternalID returns Config for given external ID.
 	RetrieveByExternalID(ctx context.Context, externalID string) (Config, error)

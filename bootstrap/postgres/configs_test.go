@@ -188,6 +188,7 @@ func TestRetrieveAll(t *testing.T) {
 	cases := []struct {
 		desc     string
 		domainID string
+		thingID  string
 		offset   uint64
 		limit    uint64
 		filter   bootstrap.Filter
@@ -196,6 +197,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all",
 			domainID: config.DomainID,
+			thingID:  config.ThingID,
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     numConfigs,
@@ -203,6 +205,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve subset",
 			domainID: config.DomainID,
+			thingID:  config.ThingID,
 			offset:   5,
 			limit:    uint64(numConfigs - 5),
 			size:     numConfigs - 5,
@@ -210,6 +213,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve wrong domain ID ",
 			domainID: "2",
+			thingID:  config.ThingID,
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     0,
@@ -217,6 +221,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all active",
 			domainID: config.DomainID,
+			thingID:  config.ThingID,
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
@@ -225,6 +230,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve search by name",
 			domainID: config.DomainID,
+			thingID:  config.ThingID,
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
@@ -232,7 +238,7 @@ func TestRetrieveAll(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.filter, tc.offset, tc.limit)
+		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.thingID, tc.filter, tc.offset, tc.limit)
 		size := len(ret.Configs)
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
 	}

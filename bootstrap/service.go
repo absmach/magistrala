@@ -298,30 +298,66 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	return nil
 }
 
+func (bs bootstrapService) listClientIDs(ctx context.Context, userID, permission string) ([]string, error) {
+	tids, err := bs.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Permission:  permission,
+		ObjectType:  auth.ThingType,
+	})
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+	return tids.Policies, nil
+}
+
+func (bs bootstrapService) filterAllowedThingIDs(ctx context.Context, userID, permission string, thingIDs []string) ([]string, error) {
+	var ids []string
+	tids, err := bs.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Permission:  permission,
+		ObjectType:  auth.ThingType,
+	})
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+	for _, thingID := range thingIDs {
+		for _, tid := range tids.Policies {
+			if thingID == tid {
+				ids = append(ids, thingID)
+			}
+		}
+	}
+	return ids, nil
+}
+
 func (bs bootstrapService) List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
+	var thingIDs []string
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	configsPage := bs.configs.RetrieveAll(ctx, user.GetDomainId(), filter, offset, limit)
-
-	j := 0
-	for _, config := range configsPage.Configs {
-		_, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, config.ThingID)
-		if err != nil {
-			if errors.Contains(err, svcerr.ErrAuthorization) {
-				// Skip this config if the user does not have viewPermission.
-				continue
-			}
-			return ConfigsPage{}, err
-		}
-		configsPage.Configs[j] = config
-		j++
+	rtids, err := bs.listClientIDs(ctx, user.GetId(), auth.ViewPermission)
+	if err != nil {
+		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
-	configsPage.Configs = configsPage.Configs[:j]
-
-	return configsPage, nil
+	thingIDs, err = bs.filterAllowedThingIDs(ctx, user.GetId(), auth.ViewPermission, rtids)
+	if err != nil {
+		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+	var configs []Config
+	for _, thingID := range thingIDs {
+		configPage := bs.configs.RetrieveAll(ctx, user.GetDomainId(), thingID, filter, offset, limit)
+		configs = append(configs, configPage.Configs...)
+	}
+	return ConfigsPage{
+		Total:   uint64(len(configs)),
+		Offset:  offset,
+		Limit:   limit,
+		Configs: configs,
+	}, nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {

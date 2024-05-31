@@ -148,12 +148,12 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 	return cfg, nil
 }
 
-func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
-	search, params := cr.retrieveAll(domainID, filter)
+func (cr configRepository) RetrieveAll(ctx context.Context, domainID, thingID string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+	search, params := cr.retrieveAll(domainID, thingID, filter)
 	n := len(params)
 
 	q := `SELECT magistrala_thing, magistrala_key, external_id, external_key, name, content, state
-	      FROM configs %s ORDER BY magistrala_thing LIMIT $%d OFFSET $%d`
+		  FROM configs %s ORDER BY magistrala_thing LIMIT $%d OFFSET $%d`
 	q = fmt.Sprintf(q, search, n+1, n+2)
 
 	rows, err := cr.db.QueryContext(ctx, q, append(params, limit, offset)...)
@@ -482,13 +482,13 @@ func (cr configRepository) DisconnectThing(ctx context.Context, channelID, thing
 	return nil
 }
 
-func (cr configRepository) retrieveAll(domainID string, filter bootstrap.Filter) (string, []interface{}) {
-	template := `WHERE domain_id = $1 %s`
-	params := []interface{}{domainID}
+func (cr configRepository) retrieveAll(domainID, thingID string, filter bootstrap.Filter) (string, []interface{}) {
+	template := `WHERE domain_id = $1 AND magistrala_thing = $2 %s`
+	params := []interface{}{domainID, thingID}
 	// One empty string so that strings Join works if only one filter is applied.
 	queries := []string{""}
-	// Since domain ID is the first param, start from 2.
-	counter := 2
+	// Since domain ID and thing ID are the first two params, start from 3.
+	counter := 3
 	for k, v := range filter.FullMatch {
 		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
 		params = append(params, v)

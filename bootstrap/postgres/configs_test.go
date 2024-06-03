@@ -162,6 +162,8 @@ func TestRetrieveAll(t *testing.T) {
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
 
+	thingIDs := make([]string, numConfigs)
+
 	for i := 0; i < numConfigs; i++ {
 		c := config
 
@@ -172,6 +174,8 @@ func TestRetrieveAll(t *testing.T) {
 		c.Name = fmt.Sprintf("name %d", i)
 		c.ThingID = uid.String()
 		c.ThingKey = uid.String()
+
+		thingIDs[i] = c.ThingID
 
 		if i%2 == 0 {
 			c.State = bootstrap.Active
@@ -184,7 +188,6 @@ func TestRetrieveAll(t *testing.T) {
 		_, err = repo.Save(context.Background(), c, channels)
 		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	}
-
 	cases := []struct {
 		desc     string
 		domainID string
@@ -195,50 +198,75 @@ func TestRetrieveAll(t *testing.T) {
 		size     int
 	}{
 		{
-			desc:     "retrieve all",
+			desc:     "retrieve all configs",
 			domainID: config.DomainID,
-			thingID:  config.ThingID,
+			thingID:  "",
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     numConfigs,
 		},
 		{
-			desc:     "retrieve subset",
+			desc:     "retrieve a subset of configs",
 			domainID: config.DomainID,
-			thingID:  config.ThingID,
+			thingID:  "",
 			offset:   5,
 			limit:    uint64(numConfigs - 5),
 			size:     numConfigs - 5,
 		},
 		{
-			desc:     "retrieve wrong domain ID ",
+			desc:     "retrieve with wrong domain ID ",
 			domainID: "2",
-			thingID:  config.ThingID,
+			thingID:  "",
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     0,
 		},
 		{
-			desc:     "retrieve all active",
+			desc:     "retrieve all active configs ",
 			domainID: config.DomainID,
-			thingID:  config.ThingID,
+			thingID:  "",
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
 			size:     numConfigs / 2,
 		},
 		{
-			desc:     "retrieve search by name",
+			desc:     "retrieve all with partial match filter",
 			domainID: config.DomainID,
-			thingID:  config.ThingID,
+			thingID:  "",
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
 			size:     1,
 		},
+		{
+			desc:     "retrieve search by name",
+			domainID: config.DomainID,
+			thingID:  "",
+			offset:   0,
+			limit:    uint64(numConfigs),
+			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
+			size:     1,
+		},
+		{
+			desc:     "retrieve by valid thingID",
+			domainID: config.DomainID,
+			thingID:  thingIDs[0],
+			offset:   0,
+			limit:    uint64(numConfigs),
+			size:     1,
+		},
+		{
+			desc:     "retrieve by non-existing thingID",
+			domainID: config.DomainID,
+			thingID:  "non-existing",
+			offset:   0,
+			limit:    uint64(numConfigs),
+			size:     0,
+		},
 	}
 	for _, tc := range cases {
-		ret := repo.RetrieveAll(context.Background(), tc.domainID, "", tc.filter, tc.offset, tc.limit)
+		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.thingID, tc.filter, tc.offset, tc.limit)
 		size := len(ret.Configs)
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
 	}

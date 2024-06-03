@@ -25,23 +25,25 @@ var (
 )
 
 type service struct {
-	clients      postgres.Repository
-	idProvider   magistrala.IDProvider
-	auth         magistrala.AuthServiceClient
-	hasher       Hasher
-	email        Emailer
-	selfRegister bool
+	clients             postgres.Repository
+	idProvider          magistrala.IDProvider
+	constraintsProvider magistrala.ConstraintsProvider
+	auth                magistrala.AuthServiceClient
+	hasher              Hasher
+	email               Emailer
+	selfRegister        bool
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, selfRegister bool) Service {
+func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, constpr magistrala.ConstraintsProvider, selfRegister bool) Service {
 	return service{
-		clients:      crepo,
-		auth:         authClient,
-		hasher:       hasher,
-		email:        emailer,
-		idProvider:   idp,
-		selfRegister: selfRegister,
+		clients:             crepo,
+		auth:                authClient,
+		hasher:              hasher,
+		email:               emailer,
+		idProvider:          idp,
+		selfRegister:        selfRegister,
+		constraintsProvider: constpr,
 	}
 }
 
@@ -60,6 +62,12 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	if err != nil {
 		return mgclients.Client{}, err
 	}
+
+	constraints, err := svc.constraintsProvider.Constraints()
+	if err != nil {
+		return mgclients.Client{}, err
+	}
+	fmt.Println(constraints)
 
 	if cli.Credentials.Secret != "" {
 		hash, err := svc.hasher.Hash(cli.Credentials.Secret)

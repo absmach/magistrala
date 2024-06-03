@@ -43,7 +43,7 @@ func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *au
 	gRepo := new(gmocks.Repository)
 
 	auth := new(authmocks.AuthClient)
-	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, true)
+	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, constraintsProvider, true)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 
 	logger := mglog.NewMock()

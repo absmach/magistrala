@@ -340,6 +340,8 @@ services:
     networks:
       - magistrala-base-net
     volumes:
+      # Constraints toml file
+      - ../constraints.toml:${MG_CONSTRAINTS_TOML_FILE}
       # Things gRPC server certificates
       - type: bind
         source: ${MG_THINGS_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
@@ -442,6 +444,11 @@ services:
       MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_CONSTRAINTS_GRPC_URL: ${MG_CONSTRAINTS_GRPC_URL}
+      MG_CONSTRAINTS_GRPC_TIMEOUT: ${MG_CONSTRAINTS_GRPC_TIMEOUT}
+      MG_CONSTRAINTS_GRPC_CLIENT_CERT: ${MG_CONSTRAINTS_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_CONSTRAINTS_GRPC_CLIENT_KEY: ${MG_CONSTRAINTS_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_CONSTRAINTS_GRPC_SERVER_CA_CERTS: ${MG_CONSTRAINTS_GRPC_CLIENT_CA_CERTS:+/auth-grpc-server-ca.crt}
       MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
       MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
       MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
@@ -454,6 +461,8 @@ services:
       - magistrala-base-net
     volumes:
       - ./templates/${MG_USERS_RESET_PWD_TEMPLATE}:/email.tmpl
+      # Constraints toml file
+      - ../constraints.toml:${MG_CONSTRAINTS_TOML_FILE}
       # Auth gRPC client certificates
       - type: bind
         source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}

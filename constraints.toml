@@ -1,0 +1,9 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+users = "10"
+things = "10"
+domains = "17"
+channels = "10"
+groups = "10"
+msg_rate_limit = "10"

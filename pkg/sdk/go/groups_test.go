@@ -37,7 +37,7 @@ func setupGroups() (*httptest.Server, *mocks.Repository, *authmocks.AuthClient) 
 	grepo := new(mocks.Repository)
 
 	auth := new(authmocks.AuthClient)
-	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, true)
+	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, constraintsProvider, true)
 	gsvc := groups.NewService(grepo, idProvider, auth)
 
 	logger := mglog.NewMock()

@@ -483,12 +483,16 @@ func (cr configRepository) DisconnectThing(ctx context.Context, channelID, thing
 }
 
 func (cr configRepository) retrieveAll(domainID, thingID string, filter bootstrap.Filter) (string, []interface{}) {
-	template := `WHERE domain_id = $1 AND magistrala_thing = $2 %s`
-	params := []interface{}{domainID, thingID}
-	// One empty string so that strings Join works if only one filter is applied.
-	queries := []string{""}
+	params := []interface{}{domainID}
+	queries := []string{"domain_id = $1"}
+
+	if thingID != "" {
+		queries = append(queries, "magistrala_thing = $2")
+		params = append(params, thingID)
+	}
+
 	// Since domain ID and thing ID are the first two params, start from 3.
-	counter := 3
+	counter := len(params) + 1
 	for k, v := range filter.FullMatch {
 		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
 		params = append(params, v)
@@ -502,7 +506,7 @@ func (cr configRepository) retrieveAll(domainID, thingID string, filter bootstra
 
 	f := strings.Join(queries, " AND ")
 
-	return fmt.Sprintf(template, f), params
+	return "WHERE " + f, params
 }
 
 func (cr configRepository) rollback(defErr error, tx *sqlx.Tx) error {

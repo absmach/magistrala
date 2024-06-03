@@ -665,17 +665,19 @@ func TestList(t *testing.T) {
 	saved[41].State = bootstrap.Active
 
 	cases := []struct {
-		desc         string
-		config       bootstrap.ConfigsPage
-		filter       bootstrap.Filter
-		offset       uint64
-		limit        uint64
-		token        string
-		authorizeRes *magistrala.AuthorizeRes
-		authorizeErr error
-		identifyErr  error
-		retrieveErr  error
-		err          error
+		desc                string
+		config              bootstrap.ConfigsPage
+		filter              bootstrap.Filter
+		offset              uint64
+		limit               uint64
+		token               string
+		authorizeRes        *magistrala.AuthorizeRes
+		listObjectsResponse *magistrala.ListObjectsRes
+		authorizeErr        error
+		identifyErr         error
+		listObjectsErr      error
+		retrieveErr         error
+		err                 error
 	}{
 		{
 			desc: "list configs",
@@ -685,12 +687,13 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:       bootstrap.Filter{},
-			token:        validToken,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
-			offset:       0,
-			limit:        10,
-			err:          nil,
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			offset:              0,
+			limit:               10,
+			err:                 nil,
 		},
 		{
 			desc: "list configs with specified name",
@@ -748,21 +751,36 @@ func TestList(t *testing.T) {
 			err:          nil,
 		},
 		{
-			desc:         "list configs with failed authorization",
-			config:       bootstrap.ConfigsPage{},
-			filter:       bootstrap.Filter{},
-			token:        validToken,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
-			offset:       0,
-			limit:        10,
-			err:          nil,
+			desc:                "list configs with failed authorization",
+			config:              bootstrap.ConfigsPage{},
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr:        svcerr.ErrAuthorization,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			offset:              0,
+			limit:               10,
+			err:                 nil,
+		},
+		{
+			desc:                "list configs with failed to list objects",
+			config:              bootstrap.ConfigsPage{},
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			token:               validToken,
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsErr:      svcerr.ErrNotFound,
+			err:                 nil,
 		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: domainID}, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
-		svcCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.config, tc.retrieveErr)
+		listAllObjectsCall := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
+		svcCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.config, tc.retrieveErr)
 
 		result, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
 		assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
@@ -771,6 +789,7 @@ func TestList(t *testing.T) {
 		authCall.Unset()
 		authCall1.Unset()
 		svcCall.Unset()
+		listAllObjectsCall.Unset()
 	}
 }
 

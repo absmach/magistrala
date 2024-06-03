@@ -16,7 +16,6 @@ import (
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
-	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
 var (
@@ -351,51 +350,32 @@ func (bs bootstrapService) checkSuperAdmin(ctx context.Context, userID string) e
 }
 
 func (bs bootstrapService) List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
-	var thingIDs []string
-	var configs []Config
-	var authErr error
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	switch {
-	case bs.checkSuperAdmin(ctx, user.GetId()) == nil:
-		pm := sdk.PageMetadata{
-			Permission: auth.AdminPermission,
-		}
-		thingsPage, err := bs.sdk.Things(pm, token)
-		if err != nil {
-			return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-		}
-		for _, thing := range thingsPage.Things {
-			thingIDs = append(thingIDs, thing.ID)
-		}
-	case func() bool {
-		_, authErr = bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.AdminPermission, auth.DomainType, user.GetDomainId())
-		return authErr == nil
-	}():
-		if authErr != nil {
-			return ConfigsPage{}, svcerr.ErrAuthorization
-		}
-		rtids, err := bs.listClientIDs(ctx, user.GetId(), auth.AdminPermission)
-		if err != nil {
-			return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-		}
-		thingIDs, err = bs.filterAllowedThingIDs(ctx, user.GetId(), auth.AdminPermission, rtids)
-		if err != nil {
-			return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-		}
-	default:
-		rtids, err := bs.listClientIDs(ctx, user.GetId(), auth.ViewPermission)
-		if err != nil {
-			return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-		}
-		thingIDs, err = bs.filterAllowedThingIDs(ctx, user.GetId(), auth.ViewPermission, rtids)
-		if err != nil {
-			return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-		}
+	if err := bs.checkSuperAdmin(ctx, user.GetId()); err == nil {
+		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), "", filter, offset, limit), nil
 	}
+
+	// Check user is admin of domain, if yes then show listing on domain context.
+	_, authErr := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.AdminPermission, auth.DomainType, user.GetDomainId())
+	if authErr == nil {
+		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), "", filter, offset, limit), nil
+	}
+
+	rtids, err := bs.listClientIDs(ctx, user.GetId(), auth.ViewPermission)
+	if err != nil {
+		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+
+	thingIDs, err := bs.filterAllowedThingIDs(ctx, user.GetId(), auth.ViewPermission, rtids)
+	if err != nil {
+		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+
+	var configs []Config
 	for _, thingID := range thingIDs {
 		configPage := bs.configs.RetrieveAll(ctx, user.GetDomainId(), thingID, filter, offset, limit)
 		configs = append(configs, configPage.Configs...)

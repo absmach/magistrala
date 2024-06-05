@@ -8,7 +8,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -195,12 +194,11 @@ func (tm *tracingMiddleware) Identify(ctx context.Context, token string) (string
 }
 
 // OAuthCallback traces the "OAuthCallback" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) OAuthCallback(ctx context.Context, state mgoauth2.State, client mgclients.Client) (*magistrala.Token, error) {
+func (tm *tracingMiddleware) OAuthCallback(ctx context.Context, client mgclients.Client) (*magistrala.Token, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_oauth_callback", trace.WithAttributes(
-		attribute.String("state", state.String()),
 		attribute.String("client_id", client.ID),
 	))
 	defer span.End()
 
-	return tm.svc.OAuthCallback(ctx, state, client)
+	return tm.svc.OAuthCallback(ctx, client)
 }

@@ -5,44 +5,10 @@ package oauth2
 
 import (
 	"context"
-	"errors"
 
 	mfclients "github.com/absmach/magistrala/pkg/clients"
 	"golang.org/x/oauth2"
 )
-
-// State is the state of the OAuth2 flow.
-type State uint8
-
-const (
-	// SignIn is the state for the sign-in flow.
-	SignIn State = iota
-	// SignUp is the state for the sign-up flow.
-	SignUp
-)
-
-func (s State) String() string {
-	switch s {
-	case SignIn:
-		return "signin"
-	case SignUp:
-		return "signup"
-	default:
-		return "unknown"
-	}
-}
-
-// ToState converts string value to a valid OAuth2 state.
-func ToState(state string) (State, error) {
-	switch state {
-	case "signin":
-		return SignIn, nil
-	case "signup":
-		return SignUp, nil
-	}
-
-	return State(0), errors.New("invalid state")
-}
 
 // Config is the configuration for the OAuth2 provider.
 type Config struct {

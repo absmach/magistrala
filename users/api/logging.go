@@ -10,7 +10,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users"
 )
 
@@ -399,11 +398,10 @@ func (lm *loggingMiddleware) Identify(ctx context.Context, token string) (id str
 	return lm.svc.Identify(ctx, token)
 }
 
-func (lm *loggingMiddleware) OAuthCallback(ctx context.Context, state mgoauth2.State, client mgclients.Client) (token *magistrala.Token, err error) {
+func (lm *loggingMiddleware) OAuthCallback(ctx context.Context, client mgclients.Client) (token *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("state", state.String()),
 			slog.String("user_id", client.ID),
 		}
 		if err != nil {
@@ -413,5 +411,5 @@ func (lm *loggingMiddleware) OAuthCallback(ctx context.Context, state mgoauth2.S
 		}
 		lm.logger.Info("OAuth callback completed successfully", args...)
 	}(time.Now())
-	return lm.svc.OAuthCallback(ctx, state, client)
+	return lm.svc.OAuthCallback(ctx, client)
 }

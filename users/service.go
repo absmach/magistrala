@@ -5,7 +5,6 @@ package users
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/absmach/magistrala"
@@ -14,14 +13,12 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/users/postgres"
 	"golang.org/x/sync/errgroup"
 )
 
 var (
 	errIssueToken            = errors.New("failed to issue token")
-	errUserNotSignedUp       = errors.New("user not signed up")
 	errFailedPermissionsList = errors.New("failed to list permissions")
 	errRecoveryToken         = errors.New("failed to generate password recovery token")
 	errLoginDisableUser      = errors.New("failed to login in disabled user")
@@ -592,37 +589,32 @@ func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, per
 	return res.GetId(), nil
 }
 
-func (svc service) OAuthCallback(ctx context.Context, state mgoauth2.State, client mgclients.Client) (*magistrala.Token, error) {
-	switch state {
-	case mgoauth2.SignIn:
-		rclient, err := svc.clients.RetrieveByIdentity(ctx, client.Credentials.Identity)
-		if err != nil {
-			if errors.Contains(err, repoerr.ErrNotFound) {
-				return &magistrala.Token{}, errors.Wrap(svcerr.ErrNotFound, errUserNotSignedUp)
+func (svc service) OAuthCallback(ctx context.Context, client mgclients.Client) (*magistrala.Token, error) {
+	rclient, err := svc.clients.RetrieveByIdentity(ctx, client.Credentials.Identity)
+	if err != nil {
+		switch errors.Contains(err, repoerr.ErrNotFound) {
+		case true:
+			rclient, err = svc.RegisterClient(ctx, "", client)
+			if err != nil {
+				return &magistrala.Token{}, err
 			}
-			return &magistrala.Token{}, errors.Wrap(svcerr.ErrViewEntity, err)
-		}
-		claims := &magistrala.IssueReq{
-			UserId: rclient.ID,
-			Type:   uint32(auth.AccessKey),
-		}
-		return svc.auth.Issue(ctx, claims)
-	case mgoauth2.SignUp:
-		rclient, err := svc.RegisterClient(ctx, "", client)
-		if err != nil {
-			if errors.Contains(err, repoerr.ErrConflict) {
-				return &magistrala.Token{}, errors.Wrap(svcerr.ErrConflict, errors.New("user already exists"))
-			}
+		default:
 			return &magistrala.Token{}, err
 		}
-		claims := &magistrala.IssueReq{
-			UserId: rclient.ID,
-			Type:   uint32(auth.AccessKey),
-		}
-		return svc.auth.Issue(ctx, claims)
-	default:
-		return &magistrala.Token{}, fmt.Errorf("unknown state %s", state)
 	}
+
+	if _, err = svc.authorize(ctx, auth.UserType, auth.UsersKind, rclient.ID, auth.MembershipPermission, auth.PlatformType, auth.MagistralaObject); err != nil {
+		if err := svc.addClientPolicy(ctx, rclient.ID, rclient.Role); err != nil {
+			return &magistrala.Token{}, err
+		}
+	}
+
+	claims := &magistrala.IssueReq{
+		UserId: rclient.ID,
+		Type:   uint32(auth.AccessKey),
+	}
+
+	return svc.auth.Issue(ctx, claims)
 }
 
 func (svc service) Identify(ctx context.Context, token string) (string, error) {

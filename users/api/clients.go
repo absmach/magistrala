@@ -536,19 +536,7 @@ func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service) http.Handle
 			http.Redirect(w, r, oauth.ErrorURL()+"?error=oauth%20provider%20is%20disabled", http.StatusSeeOther)
 			return
 		}
-		// state is prefixed with signin- or signup- to indicate which flow we should use
-		var state string
-		var flow oauth2.State
-		var err error
-		if strings.Contains(r.FormValue("state"), "-") {
-			state = strings.Split(r.FormValue("state"), "-")[1]
-			flow, err = oauth2.ToState(strings.Split(r.FormValue("state"), "-")[0])
-			if err != nil {
-				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther) //nolint:goconst
-				return
-			}
-		}
-
+		state := r.FormValue("state")
 		if state != oauth.State() {
 			http.Redirect(w, r, oauth.ErrorURL()+"?error=invalid%20state", http.StatusSeeOther)
 			return
@@ -567,7 +555,7 @@ func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service) http.Handle
 				return
 			}
 
-			jwt, err := svc.OAuthCallback(r.Context(), flow, client)
+			jwt, err := svc.OAuthCallback(r.Context(), client)
 			if err != nil {
 				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
 				return

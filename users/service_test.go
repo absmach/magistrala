@@ -17,7 +17,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
 	"github.com/absmach/magistrala/users/hasher"
@@ -2520,31 +2519,33 @@ func TestOAuthCallback(t *testing.T) {
 
 	cases := []struct {
 		desc                       string
-		state                      mgoauth2.State
 		client                     mgclients.Client
 		retrieveByIdentityResponse mgclients.Client
 		retrieveByIdentityErr      error
 		addPoliciesResponse        *magistrala.AddPoliciesRes
 		addPoliciesErr             error
-		deletePoliciesResponse     *magistrala.DeletePoliciesRes
-		deletePoliciesErr          error
 		saveResponse               mgclients.Client
 		saveErr                    error
+		deletePoliciesResponse     *magistrala.DeletePoliciesRes
+		deletePoliciesErr          error
+		authorizeResponse          *magistrala.AuthorizeRes
+		authorizeErr               error
 		issueResponse              *magistrala.Token
 		issueErr                   error
 		err                        error
 	}{
 		{
-			desc:  "oauth signin callback with successfully",
-			state: mgoauth2.SignIn,
+			desc: "oauth signin callback with successfully",
 			client: mgclients.Client{
 				Credentials: mgclients.Credentials{
 					Identity: "test@example.com",
 				},
 			},
 			retrieveByIdentityResponse: mgclients.Client{
-				ID: testsutil.GenerateUUID(t),
+				ID:   testsutil.GenerateUUID(t),
+				Role: mgclients.UserRole,
 			},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
 			issueResponse: &magistrala.Token{
 				AccessToken:  strings.Repeat("a", 10),
 				RefreshToken: &validToken,
@@ -2553,37 +2554,20 @@ func TestOAuthCallback(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:  "oauth signin callback with error",
-			state: mgoauth2.SignIn,
+			desc: "oauth signup callback with successfully",
 			client: mgclients.Client{
 				Credentials: mgclients.Credentials{
 					Identity: "test@example.com",
 				},
 			},
-			retrieveByIdentityResponse: mgclients.Client{},
-			retrieveByIdentityErr:      repoerr.ErrNotFound,
-			issueResponse:              &magistrala.Token{},
-			err:                        errors.New("user not signed up"),
-		},
-		{
-			desc:  "oauth signup callback with successfully",
-			state: mgoauth2.SignUp,
-			client: mgclients.Client{
-				Credentials: mgclients.Credentials{
-					Identity: "test@example.com",
-				},
-			},
-			retrieveByIdentityResponse: mgclients.Client{
-				ID: testsutil.GenerateUUID(t),
-			},
+			retrieveByIdentityErr: repoerr.ErrNotFound,
 			addPoliciesResponse: &magistrala.AddPoliciesRes{
 				Added: true,
 			},
-			addPoliciesErr: nil,
 			saveResponse: mgclients.Client{
-				ID: testsutil.GenerateUUID(t),
+				ID:   testsutil.GenerateUUID(t),
+				Role: mgclients.UserRole,
 			},
-			saveErr: nil,
 			issueResponse: &magistrala.Token{
 				AccessToken:  strings.Repeat("a", 10),
 				RefreshToken: &validToken,
@@ -2592,61 +2576,111 @@ func TestOAuthCallback(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:  "oauth signup callback with error",
-			state: mgoauth2.SignUp,
+			desc: "oauth signup callback with unknown error",
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
+			},
+			retrieveByIdentityErr: repoerr.ErrMalformedEntity,
+			err:                   repoerr.ErrMalformedEntity,
+		},
+		{
+			desc: "oauth signup callback with failed to register user",
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
+			},
+			retrieveByIdentityErr: repoerr.ErrNotFound,
+			addPoliciesResponse:   &magistrala.AddPoliciesRes{Added: false},
+			addPoliciesErr:        svcerr.ErrAuthorization,
+			err:                   svcerr.ErrAuthorization,
+		},
+		{
+			desc: "oauth signin callback with user not in the platform",
 			client: mgclients.Client{
 				Credentials: mgclients.Credentials{
 					Identity: "test@example.com",
 				},
 			},
 			retrieveByIdentityResponse: mgclients.Client{
-				ID: testsutil.GenerateUUID(t),
+				ID:   testsutil.GenerateUUID(t),
+				Role: mgclients.UserRole,
 			},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{
-				Added: true,
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr:        svcerr.ErrAuthorization,
+			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			issueResponse: &magistrala.Token{
+				AccessToken:  strings.Repeat("a", 10),
+				RefreshToken: &validToken,
+				AccessType:   "Bearer",
 			},
-			addPoliciesErr: nil,
-			deletePoliciesResponse: &magistrala.DeletePoliciesRes{
-				Deleted: true,
+			err: nil,
+		},
+		{
+			desc: "oauth signin callback with user not in the platform and failed to add policy",
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
 			},
-			deletePoliciesErr: nil,
-			saveResponse:      mgclients.Client{},
-			saveErr:           repoerr.ErrConflict,
-			issueResponse:     &magistrala.Token{},
-			err:               errors.New("user already exists"),
+			retrieveByIdentityResponse: mgclients.Client{
+				ID:   testsutil.GenerateUUID(t),
+				Role: mgclients.UserRole,
+			},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr:        svcerr.ErrAuthorization,
+			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: false},
+			addPoliciesErr:      svcerr.ErrAuthorization,
+			err:                 svcerr.ErrAuthorization,
+		},
+		{
+			desc: "oauth signin callback with failed to issue token",
+			client: mgclients.Client{
+				Credentials: mgclients.Credentials{
+					Identity: "test@example.com",
+				},
+			},
+			retrieveByIdentityResponse: mgclients.Client{
+				ID:   testsutil.GenerateUUID(t),
+				Role: mgclients.UserRole,
+			},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			issueErr:          svcerr.ErrAuthorization,
+			err:               svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
-		switch tc.state {
-		case mgoauth2.SignUp:
-			repoCall := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.saveResponse, tc.saveErr)
-			repoCall1 := auth.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesErr)
-			repoCall2 := auth.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponse, tc.deletePoliciesErr)
-			repoCall3 := auth.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
-
-			token, err := svc.OAuthCallback(context.Background(), tc.state, tc.client)
-			if err == nil {
-				assert.Equal(t, tc.issueResponse.AccessToken, token.AccessToken)
-				assert.Equal(t, tc.issueResponse.RefreshToken, token.RefreshToken)
-			}
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			repoCall.Unset()
-			repoCall1.Unset()
-			repoCall2.Unset()
-			repoCall3.Unset()
-		case mgoauth2.SignIn:
-			repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
-			repoCall1 := auth.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
-			token, err := svc.OAuthCallback(context.Background(), tc.state, tc.client)
-			if err == nil {
-				assert.Equal(t, tc.issueResponse.AccessToken, token.AccessToken)
-				assert.Equal(t, tc.issueResponse.RefreshToken, token.RefreshToken)
-			}
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
-			repoCall.Unset()
-			repoCall1.Unset()
+		id := tc.saveResponse.ID
+		if tc.retrieveByIdentityResponse.ID != "" {
+			id = tc.retrieveByIdentityResponse.ID
 		}
+		authReq := &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     id,
+			Permission:  authsvc.MembershipPermission,
+			ObjectType:  authsvc.PlatformType,
+			Object:      authsvc.MagistralaObject,
+		}
+		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
+		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.saveResponse, tc.saveErr)
+		authCall := auth.On("Issue", mock.Anything, mock.Anything).Return(tc.issueResponse, tc.issueErr)
+		authCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesErr)
+		authCall2 := auth.On("Authorize", mock.Anything, authReq).Return(tc.authorizeResponse, tc.authorizeErr)
+		token, err := svc.OAuthCallback(context.Background(), tc.client)
+		if err == nil {
+			assert.Equal(t, tc.issueResponse.AccessToken, token.AccessToken)
+			assert.Equal(t, tc.issueResponse.RefreshToken, token.RefreshToken)
+		}
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
+		repoCall.Unset()
+		repoCall1.Unset()
+		authCall.Unset()
+		authCall1.Unset()
+		authCall2.Unset()
 	}
 }

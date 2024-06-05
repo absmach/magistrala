@@ -30,6 +30,7 @@ import (
 	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/constraints"
 	"github.com/absmach/magistrala/pkg/uuid"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
@@ -207,10 +208,11 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 	domainsRepo := apostgres.NewDomainRepository(database)
 	pa := spicedb.NewPolicyAgent(spicedbClient, logger)
 	idProvider := uuid.New()
+	constraintProvider := constraints.New()
 
 	t := jwt.New([]byte(cfg.SecretKey))
 
-	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
+	svc := auth.New(keysRepo, domainsRepo, idProvider, constraintProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("groups", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

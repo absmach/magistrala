@@ -29,11 +29,11 @@ const (
 )
 
 var (
-	idProvider    = uuid.New()
+	idProvider          = uuid.New()
 	constraintsProvider = constraints.New()
-	phasher       = hasher.New()
-	validMetadata = sdk.Metadata{"role": "client"}
-	user          = sdk.User{
+	phasher             = hasher.New()
+	validMetadata       = sdk.Metadata{"role": "client"}
+	user                = sdk.User{
 		Name:        "clientname",
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},

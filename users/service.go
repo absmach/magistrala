@@ -67,7 +67,15 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	if err != nil {
 		return mgclients.Client{}, err
 	}
-	fmt.Println(constraints)
+
+	platformUsers, err := svc.clients.RetrieveAll(ctx, mgclients.Page{})
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	if uint32(platformUsers.Total) >= constraints.Users {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, svcerr.ErrLimitReached)
+	}
 
 	if cli.Credentials.Secret != "" {
 		hash, err := svc.hasher.Hash(cli.Credentials.Secret)
@@ -100,6 +108,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
+
 	return client, nil
 }
 

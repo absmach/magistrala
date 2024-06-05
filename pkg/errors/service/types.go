@@ -60,4 +60,7 @@ var (
 
 	// ErrDeletePolicies indicates error in removing policies.
 	ErrDeletePolicies = errors.New("failed to remove policies")
+
+	// ErrLimitReached indicates that the maximum entity limit has been reached.
+	ErrLimitReached = errors.New("entity limit reached")
 )

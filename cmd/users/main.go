@@ -222,7 +222,7 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 	}
 
 	csvc := users.NewService(cRepo, authClient, emailerClient, hsr, idp, constraintsProvider, c.SelfRegister)
-	gsvc := mggroups.NewService(gRepo, idp, authClient)
+	gsvc := mggroups.NewService(gRepo, idp, constraintsProvider, authClient)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
 	if err != nil {

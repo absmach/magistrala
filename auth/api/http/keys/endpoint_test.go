@@ -20,6 +20,7 @@ import (
 	"github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/constraints"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -71,10 +72,11 @@ func newService() (auth.Service, *mocks.KeyRepository) {
 	prepo := new(mocks.PolicyAgent)
 	drepo := new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
+	constraintsProvider := constraints.New()
 
 	t := jwt.New([]byte(secret))
 
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), krepo
+	return auth.New(krepo, drepo, idProvider, constraintsProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), krepo
 }
 
 func newServer(svc auth.Service) *httptest.Server {

@@ -44,7 +44,7 @@ func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *au
 
 	auth := new(authmocks.AuthClient)
 	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, constraintsProvider, true)
-	gsvc := groups.NewService(gRepo, idProvider, auth)
+	gsvc := groups.NewService(gRepo, idProvider, constraintsProvider, auth)
 
 	logger := mglog.NewMock()
 	mux := chi.NewRouter()
@@ -72,6 +72,7 @@ func TestCreateClient(t *testing.T) {
 
 	cases := []struct {
 		desc     string
+		total    uint64
 		client   sdk.User
 		response sdk.User
 		token    string
@@ -183,6 +184,7 @@ func TestCreateClient(t *testing.T) {
 		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: true}, nil)
 		repoCall3 := crepo.On("Save", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
+		retrieveAllCall := crepo.On("RetrieveAll", mock.Anything, mgclients.Page{}).Return(mgclients.ClientsPage{Page: mgclients.Page{Total: tc.total}}, nil)
 		rClient, err := mgsdk.CreateUser(tc.client, tc.token)
 		tc.response.ID = rClient.ID
 		tc.response.CreatedAt = rClient.CreatedAt
@@ -198,6 +200,7 @@ func TestCreateClient(t *testing.T) {
 		repoCall2.Unset()
 		repoCall1.Unset()
 		repoCall.Unset()
+		retrieveAllCall.Unset()
 	}
 }
 

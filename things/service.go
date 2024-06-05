@@ -17,21 +17,23 @@ import (
 )
 
 type service struct {
-	auth        magistrala.AuthServiceClient
-	clients     postgres.Repository
-	clientCache Cache
-	idProvider  magistrala.IDProvider
-	grepo       mggroups.Repository
+	auth                magistrala.AuthServiceClient
+	clients             postgres.Repository
+	clientCache         Cache
+	idProvider          magistrala.IDProvider
+	grepo               mggroups.Repository
+	constraintsProvider magistrala.ConstraintsProvider
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
+func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider, constpr magistrala.ConstraintsProvider) Service {
 	return service{
-		auth:        uauth,
-		clients:     c,
-		grepo:       grepo,
-		clientCache: tcache,
-		idProvider:  idp,
+		auth:                uauth,
+		clients:             c,
+		grepo:               grepo,
+		clientCache:         tcache,
+		idProvider:          idp,
+		constraintsProvider: constpr,
 	}
 }
 
@@ -67,6 +69,19 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 	// If domain is disabled , then this authorization will fail for all non-admin domain users
 	if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, user.GetId(), auth.CreatePermission, auth.DomainType, user.GetDomainId()); err != nil {
 		return []mgclients.Client{}, err
+	}
+	ths, err := svc.clients.RetrieveAll(ctx, mgclients.Page{})
+	if err != nil {
+		return []mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	constraints, err := svc.constraintsProvider.Constraints()
+	if err != nil {
+		return []mgclients.Client{}, err
+	}
+
+	if int(ths.Total)+len(cls) >= int(constraints.Things) {
+		return []mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, svcerr.ErrLimitReached)
 	}
 
 	var clients []mgclients.Client

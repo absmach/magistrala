@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	defaultConstraintPath = "./constraints.toml"
+	defaultConstraintPath = "./constraints_config.toml"
 	filePermission        = 0o644
 )
 

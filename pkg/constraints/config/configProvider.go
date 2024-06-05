@@ -39,12 +39,10 @@ func read(file, serviceName string) (magistrala.Constraints, error) {
 	if _, err := toml.DecodeFile(file, &tc.Services); err != nil {
 		return nil, fmt.Errorf("error reading config file: %s", err)
 	}
-
 	svcConstraint, exists := tc.Services[serviceName]
 	if !exists {
 		return nil, fmt.Errorf("section [%s] not found", serviceName)
 	}
-
 	return svcConstraint, nil
 }
 

@@ -72,7 +72,7 @@ func TestAddReqValidation(t *testing.T) {
 			externalID:  "external-id",
 			externalKey: "external-key",
 			channels:    []string{},
-			err:         apiutil.ErrMissingID,
+			err:         apiutil.ErrEmptyList,
 		},
 		{
 			desc:        "empty channel value",

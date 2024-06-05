@@ -148,8 +148,8 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 	return cfg, nil
 }
 
-func (cr configRepository) RetrieveAll(ctx context.Context, domainID, thingID string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
-	search, params := cr.retrieveAll(domainID, thingID, filter)
+func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, thingIDs []string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+	search, params := cr.retrieveAll(domainID, thingIDs, filter)
 	n := len(params)
 
 	q := `SELECT magistrala_thing, magistrala_key, external_id, external_key, name, content, state
@@ -482,13 +482,17 @@ func (cr configRepository) DisconnectThing(ctx context.Context, channelID, thing
 	return nil
 }
 
-func (cr configRepository) retrieveAll(domainID, thingID string, filter bootstrap.Filter) (string, []interface{}) {
+func (cr configRepository) retrieveAll(domainID string, thingIDs []string, filter bootstrap.Filter) (string, []interface{}) {
 	params := []interface{}{domainID}
 	queries := []string{"domain_id = $1"}
 
-	if thingID != "" {
-		queries = append(queries, "magistrala_thing = $2")
-		params = append(params, thingID)
+	if len(thingIDs) != 0 {
+		placeholders := make([]string, len(thingIDs))
+		for index, thingID := range thingIDs {
+			placeholders[index] = fmt.Sprintf("$%d", index+2)
+			params = append(params, thingID)
+		}
+		queries = append(queries, fmt.Sprintf("magistrala_thing IN (%s)", strings.Join(placeholders, ", ")))
 	}
 
 	// Since domain ID and thing ID are the first two params, start from 3.

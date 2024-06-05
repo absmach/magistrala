@@ -191,7 +191,7 @@ func TestRetrieveAll(t *testing.T) {
 	cases := []struct {
 		desc     string
 		domainID string
-		thingID  string
+		thingID  []string
 		offset   uint64
 		limit    uint64
 		filter   bootstrap.Filter
@@ -200,7 +200,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all configs",
 			domainID: config.DomainID,
-			thingID:  "",
+			thingID:  []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     numConfigs,
@@ -208,7 +208,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve a subset of configs",
 			domainID: config.DomainID,
-			thingID:  "",
+			thingID:  []string{},
 			offset:   5,
 			limit:    uint64(numConfigs - 5),
 			size:     numConfigs - 5,
@@ -216,7 +216,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve with wrong domain ID ",
 			domainID: "2",
-			thingID:  "",
+			thingID:  []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     0,
@@ -224,7 +224,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all active configs ",
 			domainID: config.DomainID,
-			thingID:  "",
+			thingID:  []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
@@ -233,7 +233,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all with partial match filter",
 			domainID: config.DomainID,
-			thingID:  "",
+			thingID:  []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
@@ -242,24 +242,24 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve search by name",
 			domainID: config.DomainID,
-			thingID:  "",
+			thingID:  []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
 			size:     1,
 		},
 		{
-			desc:     "retrieve by valid thingID",
+			desc:     "retrieve by valid thingIDs",
 			domainID: config.DomainID,
-			thingID:  thingIDs[0],
+			thingID:  thingIDs,
 			offset:   0,
 			limit:    uint64(numConfigs),
-			size:     1,
+			size:     10,
 		},
 		{
 			desc:     "retrieve by non-existing thingID",
 			domainID: config.DomainID,
-			thingID:  "non-existing",
+			thingID:  []string{"non-existing"},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     0,

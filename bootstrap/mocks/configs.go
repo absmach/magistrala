@@ -155,17 +155,17 @@ func (_m *ConfigRepository) RemoveThing(ctx context.Context, id string) error {
 	return r0
 }
 
-// RetrieveAll provides a mock function with given fields: ctx, domainID, thingID, filter, offset, limit
-func (_m *ConfigRepository) RetrieveAll(ctx context.Context, domainID string, thingID string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
-	ret := _m.Called(ctx, domainID, thingID, filter, offset, limit)
+// RetrieveAll provides a mock function with given fields: ctx, domainID, thingIDs, filter, offset, limit
+func (_m *ConfigRepository) RetrieveAll(ctx context.Context, domainID string, thingIDs []string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
+	ret := _m.Called(ctx, domainID, thingIDs, filter, offset, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
 	}
 
 	var r0 bootstrap.ConfigsPage
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, bootstrap.Filter, uint64, uint64) bootstrap.ConfigsPage); ok {
-		r0 = rf(ctx, domainID, thingID, filter, offset, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, string, []string, bootstrap.Filter, uint64, uint64) bootstrap.ConfigsPage); ok {
+		r0 = rf(ctx, domainID, thingIDs, filter, offset, limit)
 	} else {
 		r0 = ret.Get(0).(bootstrap.ConfigsPage)
 	}

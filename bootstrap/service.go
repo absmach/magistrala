@@ -191,11 +191,9 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, id)
-	if err != nil {
+	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, id); err != nil {
 		return Config{}, err
 	}
-
 	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -208,8 +206,7 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, cfg.ThingID)
-	if err != nil {
+	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, cfg.ThingID); err != nil {
 		return err
 	}
 
@@ -225,8 +222,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, thingID)
-	if err != nil {
+	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, thingID); err != nil {
 		return Config{}, err
 	}
 
@@ -243,8 +239,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	_, err = bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, id)
-	if err != nil {
+	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, id); err != nil {
 		return err
 	}
 
@@ -298,11 +293,11 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	return nil
 }
 
-func (bs bootstrapService) listClientIDs(ctx context.Context, userID, permission string) ([]string, error) {
+func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
 	tids, err := bs.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
-		Permission:  permission,
+		Permission:  auth.ViewPermission,
 		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
@@ -311,12 +306,12 @@ func (bs bootstrapService) listClientIDs(ctx context.Context, userID, permission
 	return tids.Policies, nil
 }
 
-func (bs bootstrapService) filterAllowedThingIDs(ctx context.Context, userID, permission string, thingIDs []string) ([]string, error) {
+func (bs bootstrapService) filterAllowedThingIDs(ctx context.Context, userID string, thingIDs []string) ([]string, error) {
 	var ids []string
 	tids, err := bs.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
-		Permission:  permission,
+		Permission:  auth.ViewPermission,
 		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
@@ -356,37 +351,25 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 	}
 
 	if err := bs.checkSuperAdmin(ctx, user.GetId()); err == nil {
-		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), "", filter, offset, limit), nil
+		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
 	}
 
-	// Check user is admin of domain, if yes then show listing on domain context.
 	_, authErr := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.AdminPermission, auth.DomainType, user.GetDomainId())
 	if authErr == nil {
-		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), "", filter, offset, limit), nil
+		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
 	}
 
-	rtids, err := bs.listClientIDs(ctx, user.GetId(), auth.ViewPermission)
+	rtids, err := bs.listClientIDs(ctx, user.GetId())
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
-	thingIDs, err := bs.filterAllowedThingIDs(ctx, user.GetId(), auth.ViewPermission, rtids)
+	thingIDs, err := bs.filterAllowedThingIDs(ctx, user.GetId(), rtids)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
-	var configs []Config
-	for _, thingID := range thingIDs {
-		configPage := bs.configs.RetrieveAll(ctx, user.GetDomainId(), thingID, filter, offset, limit)
-		configs = append(configs, configPage.Configs...)
-	}
-
-	return ConfigsPage{
-		Total:   uint64(len(configs)),
-		Offset:  offset,
-		Limit:   limit,
-		Configs: configs,
-	}, nil
+	return bs.configs.RetrieveAll(ctx, user.GetDomainId(), thingIDs, filter, offset, limit), nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {

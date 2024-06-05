@@ -37,7 +37,7 @@ func (req addReq) validate() error {
 	}
 
 	if len(req.Channels) == 0 {
-		return apiutil.ErrMissingID
+		return apiutil.ErrEmptyList
 	}
 
 	for _, channel := range req.Channels {

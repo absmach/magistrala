@@ -369,6 +369,10 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
+	if len(thingIDs) == 0 {
+		return ConfigsPage{}, nil
+	}
+
 	return bs.configs.RetrieveAll(ctx, user.GetDomainId(), thingIDs, filter, offset, limit), nil
 }
 

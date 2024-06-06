@@ -483,28 +483,33 @@ func (cr configRepository) DisconnectThing(ctx context.Context, channelID, thing
 }
 
 func (cr configRepository) retrieveAll(domainID string, thingIDs []string, filter bootstrap.Filter) (string, []interface{}) {
-	params := []interface{}{domainID}
-	queries := []string{"domain_id = $1"}
+	params := []interface{}{}
+	queries := []string{}
 
-	if len(thingIDs) != 0 {
+	if domainID != "" {
+		params = append(params, domainID)
+		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
+	}
+
+	if len(thingIDs) > 0 {
 		placeholders := make([]string, len(thingIDs))
-		for index, thingID := range thingIDs {
-			placeholders[index] = fmt.Sprintf("$%d", index+2)
-			params = append(params, thingID)
+		for i, id := range thingIDs {
+			params = append(params, id)
+			placeholders[i] = fmt.Sprintf("$%d", len(params))
 		}
 		queries = append(queries, fmt.Sprintf("magistrala_thing IN (%s)", strings.Join(placeholders, ", ")))
 	}
 
-	// Since domain ID and thing ID are the first two params, start from 3.
+	// Adjust the starting point for placeholders based on the current length of params
 	counter := len(params) + 1
 	for k, v := range filter.FullMatch {
-		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
 		params = append(params, v)
+		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
 		counter++
 	}
 	for k, v := range filter.PartialMatch {
-		queries = append(queries, fmt.Sprintf("LOWER(%s) LIKE '%%' || $%d || '%%'", k, counter))
 		params = append(params, v)
+		queries = append(queries, fmt.Sprintf("LOWER(%s) LIKE '%%' || $%d || '%%'", k, counter))
 		counter++
 	}
 

@@ -488,7 +488,7 @@ func (cr configRepository) retrieveAll(domainID string, thingIDs []string, filte
 
 	if domainID != "" {
 		params = append(params, domainID)
-		queries = append(queries, fmt.Sprintf("domain_id = %s", domainID))
+		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
 	}
 
 	if len(thingIDs) != 0 {

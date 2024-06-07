@@ -338,7 +338,7 @@ func (bs bootstrapService) checkSuperAdmin(ctx context.Context, userID string) e
 		return err
 	}
 	if !res.Authorized {
-		return svcerr.ErrAuthorization
+		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	return nil
 }
@@ -510,10 +510,10 @@ func (bs bootstrapService) authorize(ctx context.Context, domainID, subjKind, su
 	}
 	res, err := bs.auth.Authorize(ctx, req)
 	if err != nil {
-		return "", svcerr.ErrAuthorization
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
-		return "", svcerr.ErrAuthorization
+		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
 	return res.GetId(), nil

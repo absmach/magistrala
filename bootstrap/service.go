@@ -139,7 +139,6 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	// If domain is disabled , then this authorization will fail for all non-admin domain users.
 	if _, err := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
 		return Config{}, err
 	}
@@ -354,8 +353,7 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
 	}
 
-	_, authErr := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.AdminPermission, auth.DomainType, user.GetDomainId())
-	if authErr == nil {
+	if _, err := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.AdminPermission, auth.DomainType, user.GetDomainId()); err == nil {
 		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
 	}
 
@@ -492,10 +490,10 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (*magistr
 
 	res, err := bs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
-		return nil, svcerr.ErrAuthentication
+		return nil, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if res.GetId() == "" || res.GetDomainId() == "" {
-		return nil, svcerr.ErrAuthentication
+		return nil, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	return res, nil
 }

@@ -511,7 +511,7 @@ func (repo groupRepository) groupQuery(c context.Context, g mggroups.Group) stri
 			return query
 		}
 		path = parent.Path + "." + g.ID
-		if len(strings.Split(path, ".")) > 20 {
+		if len(strings.Split(path, ".")) > mggroups.MaxPathLength {
 			path = parent.ID + "." + g.ID
 		}
 

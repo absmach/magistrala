@@ -4,13 +4,10 @@
 package config
 
 import (
-	"io"
-	"os"
-	"strconv"
+	"fmt"
 
+	"github.com/BurntSushi/toml"
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/pelletier/go-toml"
 )
 
 const (
@@ -18,103 +15,35 @@ const (
 	filePermission        = 0o644
 )
 
-type stringConstraint struct {
-	Users        string `toml:"users"`
-	Domains      string `toml:"domains"`
-	Things       string `toml:"things"`
-	Groups       string `toml:"groups"`
-	Channels     string `toml:"channels"`
-	MsgRateLimit string `toml:"msg_rate_limit"`
+type Limits struct {
+	Create int64 `toml:"create"`
+	Update int64 `toml:"update"`
+}
+type Constraints struct {
+	Limits Limits `toml:"limits"`
+}
+type tomlConfig struct {
+	Services map[string]Constraints
 }
 
 // Attempts to read constraints from the default path, if the file does not exist,
 // it will be created with the default constraints.
-func ParseConstraints() (magistrala.Constraints, error) {
-	defConstraints := stringConstraint{
-		Users:        "5",
-		Domains:      "5",
-		Things:       "5",
-		Groups:       "5",
-		Channels:     "5",
-		MsgRateLimit: "5",
+func New(serviceName string) (magistrala.Constraints, error) {
+	return read(defaultConstraintPath, serviceName)
+}
+func read(file, serviceName string) (magistrala.Constraints, error) {
+	var tc tomlConfig
+	if _, err := toml.DecodeFile(file, &tc.Services); err != nil {
+		return nil, fmt.Errorf("error reading config file: %s", err)
 	}
-
-	_, err := os.Stat(defaultConstraintPath)
-	switch {
-	case os.IsNotExist(err):
-		buf, err := toml.Marshal(defConstraints)
-		if err != nil {
-			return magistrala.Constraints{}, err
-		}
-		if err := os.WriteFile(defaultConstraintPath, buf, 0o644); err != nil {
-			return magistrala.Constraints{}, err
-		}
-	case err != nil:
-		return magistrala.Constraints{}, err
+	svcConstraint, exists := tc.Services[serviceName]
+	if !exists {
+		return nil, fmt.Errorf("section [%s] not found", serviceName)
 	}
-
-	c, err := read(defaultConstraintPath)
-	if err != nil {
-		return magistrala.Constraints{}, err
-	}
-	return c, nil
+	return svcConstraint, nil
 }
 
-func read(file string) (c magistrala.Constraints, err error) {
-	data, err := os.Open(file)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-	defer data.Close()
-
-	buf, err := io.ReadAll(data)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-
-	tmp := stringConstraint{}
-
-	if err := toml.Unmarshal(buf, &tmp); err != nil {
-		return magistrala.Constraints{}, err
-	}
-
-	c.Users, err = convertStringToUint32(tmp.Users)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-
-	c.Channels, err = convertStringToUint32(tmp.Channels)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-
-	c.Domains, err = convertStringToUint32(tmp.Domains)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-
-	c.Groups, err = convertStringToUint32(tmp.Groups)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-
-	c.Things, err = convertStringToUint32(tmp.Things)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-
-	c.MsgRateLimit, err = convertStringToUint32(tmp.MsgRateLimit)
-	if err != nil {
-		return c, errors.Wrap(errors.New("failed to read constraints"), err)
-	}
-
-	return c, nil
-}
-
-func convertStringToUint32(str string) (uint32, error) {
-	parsedValue, err := strconv.ParseUint(str, 10, 32)
-	if err != nil {
-		return 0, err
-	}
-	return uint32(parsedValue), nil
+func (c Constraints) CheckLimits(operation magistrala.Operation, currentValue uint64) error {
+	
+	return nil
 }

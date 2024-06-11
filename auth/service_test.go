@@ -12,7 +12,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/auth/jwt"
 	"github.com/absmach/magistrala/auth/mocks"
-	"github.com/absmach/magistrala/pkg/constraints"
+	constraints "github.com/absmach/magistrala/pkg/constraints/config"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"

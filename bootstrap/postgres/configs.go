@@ -483,7 +483,7 @@ func (cr configRepository) retrieveAll(owner string, filter bootstrap.Filter) (s
 	return fmt.Sprintf(template, f), params
 }
 
-func (cr configRepository) rollback(content string, tx *sqlx.Tx) {
+func (cr configRepository) rollback(_ string, tx *sqlx.Tx) {
 	if err := tx.Rollback(); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to rollback due to %s", err))
 	}

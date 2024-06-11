@@ -31,6 +31,7 @@ type tomlConfig struct {
 func New(serviceName string) (magistrala.Constraints, error) {
 	return read(defaultConstraintPath, serviceName)
 }
+
 func read(file, serviceName string) (magistrala.Constraints, error) {
 	var tc tomlConfig
 	if _, err := toml.DecodeFile(file, &tc.Services); err != nil {

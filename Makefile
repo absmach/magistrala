@@ -12,7 +12,7 @@ DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
 GOARCH ?= amd64
-VERSION ?= $(shell git describe --abbrev=0 --tags)
+VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo 'unknown')
 COMMIT ?= $(shell git rev-parse HEAD)
 TIME ?= $(shell date +%F_%T)
 USER_REPO ?= $(shell git remote get-url origin | sed -e 's/.*\/\([^/]*\)\/\([^/]*\).*/\1_\2/' )

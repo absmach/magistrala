@@ -19,9 +19,11 @@ type Limits struct {
 	Create int64 `toml:"create"`
 	Update int64 `toml:"update"`
 }
+
 type Constraints struct {
 	Limits Limits `toml:"limits"`
 }
+
 type tomlConfig struct {
 	Services map[string]Constraints
 }
@@ -37,17 +39,21 @@ func read(file, serviceName string) (magistrala.Constraints, error) {
 	if _, err := toml.DecodeFile(file, &tc.Services); err != nil {
 		return nil, fmt.Errorf("error reading config file: %s", err)
 	}
+
 	svcConstraint, exists := tc.Services[serviceName]
 	if !exists {
 		return nil, fmt.Errorf("section [%s] not found", serviceName)
 	}
+
 	return svcConstraint, nil
 }
 
 func (c Constraints) CheckLimits(operation magistrala.Operation, currentValue uint64) error {
-	fmt.Println("two limits below")
-	fmt.Println(c.Limits.Create)
-	fmt.Println(c.Limits.Update)
-	fmt.Println("two limits above")
+	switch operation {
+	case magistrala.Create:
+		if int64(currentValue) > c.Limits.Create {
+			return fmt.Errorf("create limit exceeded: %d", c.Limits.Create)
+		}
+	}
 	return nil
 }

@@ -213,7 +213,7 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 	gRepo := gpostgres.New(database)
 
 	idp := uuid.New()
-	constraintsProvider, _ := constraints.New("users")
+	constraintsProvider, _ := constraints.New(svcName)
 	hsr := hasher.New()
 
 	emailerClient, err := emailer.New(c.ResetURL, &ec)

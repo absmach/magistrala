@@ -208,7 +208,7 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 	domainsRepo := apostgres.NewDomainRepository(database)
 	pa := spicedb.NewPolicyAgent(spicedbClient, logger)
 	idProvider := uuid.New()
-	constraintProvider, _ := constraints.New("domains")
+	constraintProvider, _ := constraints.New(svcName)
 
 	t := jwt.New([]byte(cfg.SecretKey))
 

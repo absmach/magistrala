@@ -227,7 +227,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	gRepo := gpostgres.New(database)
 
 	idp := uuid.New()
-	constraintsProvider, _ := constraints.New("things")
+	constraintsProvider, _ := constraints.New(svcName)
 
 	thingCache := thcache.NewCache(cacheClient, keyDuration)
 

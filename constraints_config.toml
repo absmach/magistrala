@@ -11,8 +11,8 @@ update = 10
 create = 10
 update = 10
 
-[domains]
-[domains.limits]
+[auth]
+[auth.limits]
 create = 10
 update = 10
 

@@ -305,19 +305,10 @@ func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]
 	return tids.Policies, nil
 }
 
-func (bs bootstrapService) filterAllowedThingIDs(ctx context.Context, userID string, thingIDs []string) ([]string, error) {
+func (bs bootstrapService) filterAllowedThingIDs(thingIDs []string) ([]string, error) {
 	var ids []string
-	tids, err := bs.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
-		SubjectType: auth.UserType,
-		Subject:     userID,
-		Permission:  auth.ViewPermission,
-		ObjectType:  auth.ThingType,
-	})
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrNotFound, err)
-	}
 	for _, thingID := range thingIDs {
-		for _, tid := range tids.Policies {
+		for _, tid := range thingIDs {
 			if thingID == tid {
 				ids = append(ids, thingID)
 			}
@@ -357,12 +348,12 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
 	}
 
-	rtids, err := bs.listClientIDs(ctx, user.GetId())
+	thingIDs, err := bs.listClientIDs(ctx, user.GetId())
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
-	thingIDs, err := bs.filterAllowedThingIDs(ctx, user.GetId(), rtids)
+	thingIDs, err = bs.filterAllowedThingIDs(thingIDs)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}

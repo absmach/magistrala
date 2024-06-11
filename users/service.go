@@ -27,7 +27,7 @@ var (
 type service struct {
 	clients             postgres.Repository
 	idProvider          magistrala.IDProvider
-	constraintsProvider magistrala.ConstraintsProvider
+	constraintsProvider magistrala.Constraints
 	auth                magistrala.AuthServiceClient
 	hasher              Hasher
 	email               Emailer
@@ -35,7 +35,7 @@ type service struct {
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, constpr magistrala.ConstraintsProvider, selfRegister bool) Service {
+func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, constpr magistrala.Constraints, selfRegister bool) Service {
 	return service{
 		clients:             crepo,
 		auth:                authClient,
@@ -63,18 +63,14 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 		return mgclients.Client{}, err
 	}
 
-	constraints, err := svc.constraintsProvider.Constraints()
-	if err != nil {
-		return mgclients.Client{}, err
-	}
-
 	platformUsers, err := svc.clients.RetrieveAll(ctx, mgclients.Page{})
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
-	if uint32(platformUsers.Total) >= constraints.Users {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, svcerr.ErrLimitReached)
+	err = svc.constraintsProvider.CheckLimits(magistrala.Create, platformUsers.Total)
+	if err != nil {
+		return mgclients.Client{}, err
 	}
 
 	if cli.Credentials.Secret != "" {

@@ -17,7 +17,7 @@ import (
 	"github.com/absmach/magistrala/internal/groups"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/clients"
-	"github.com/absmach/magistrala/pkg/constraints"
+	constraints "github.com/absmach/magistrala/pkg/constraints/config"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -29,11 +29,11 @@ import (
 )
 
 var (
-	idProvider     = uuid.New()
-	constrProvider = constraints.New()
-	token          = "token"
-	namegen        = namegenerator.NewGenerator()
-	validGroup     = mggroups.Group{
+	idProvider        = uuid.New()
+	constrProvider, _ = constraints.New("groups")
+	token             = "token"
+	namegen           = namegenerator.NewGenerator()
+	validGroup        = mggroups.Group{
 		Name:        namegen.Generate(),
 		Description: namegen.Generate(),
 		Metadata: map[string]interface{}{

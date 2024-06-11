@@ -13,7 +13,7 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	"github.com/absmach/magistrala/pkg/constraints"
+	constraints "github.com/absmach/magistrala/pkg/constraints/config"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -51,7 +51,7 @@ func newService() (things.Service, *mocks.Repository, *authmocks.AuthClient, *mo
 	auth := new(authmocks.AuthClient)
 	thingCache := new(mocks.Cache)
 	idProvider := uuid.NewMock()
-	constrProvider := constraints.New()
+	constrProvider, _ := constraints.New("things")
 	cRepo := new(mocks.Repository)
 	gRepo := new(gmocks.Repository)
 

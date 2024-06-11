@@ -30,7 +30,7 @@ import (
 	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/auth"
-	"github.com/absmach/magistrala/pkg/constraints"
+	constraints "github.com/absmach/magistrala/pkg/constraints/config"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
@@ -227,7 +227,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	gRepo := gpostgres.New(database)
 
 	idp := uuid.New()
-	constraintsProvider := constraints.New()
+	constraintsProvider, _ := constraints.New("things")
 
 	thingCache := thcache.NewCache(cacheClient, keyDuration)
 

@@ -22,11 +22,11 @@ type service struct {
 	clientCache         Cache
 	idProvider          magistrala.IDProvider
 	grepo               mggroups.Repository
-	constraintsProvider magistrala.ConstraintsProvider
+	constraintsProvider magistrala.Constraints
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider, constpr magistrala.ConstraintsProvider) Service {
+func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider, constpr magistrala.Constraints) Service {
 	return service{
 		auth:                uauth,
 		clients:             c,
@@ -75,13 +75,9 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 		return []mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
-	constraints, err := svc.constraintsProvider.Constraints()
+	err = svc.constraintsProvider.CheckLimits(magistrala.Create, ths.Total)
 	if err != nil {
 		return []mgclients.Client{}, err
-	}
-
-	if int(ths.Total)+len(cls) >= int(constraints.Things) {
-		return []mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, svcerr.ErrLimitReached)
 	}
 
 	var clients []mgclients.Client

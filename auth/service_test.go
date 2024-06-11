@@ -69,7 +69,7 @@ func newService() (auth.Service, string) {
 	prepo = new(mocks.PolicyAgent)
 	drepo = new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
-	constrProvider := constraints.New()
+	constrProvider, _ := constraints.New("domains")
 
 	t := jwt.New([]byte(secret))
 	key := auth.Key{

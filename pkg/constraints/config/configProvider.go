@@ -44,6 +44,9 @@ func read(file, serviceName string) (magistrala.Constraints, error) {
 }
 
 func (c Constraints) CheckLimits(operation magistrala.Operation, currentValue uint64) error {
-	
+	fmt.Println("two limits below")
+	fmt.Println(c.Limits.Create)
+	fmt.Println(c.Limits.Update)
+	fmt.Println("two limits above")
 	return nil
 }

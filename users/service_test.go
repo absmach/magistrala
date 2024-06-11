@@ -14,7 +14,7 @@ import (
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	"github.com/absmach/magistrala/pkg/constraints"
+	constraints "github.com/absmach/magistrala/pkg/constraints/config"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -28,13 +28,13 @@ import (
 )
 
 var (
-	idProvider          = uuid.New()
-	constraintsProvider = constraints.New()
-	phasher             = hasher.New()
-	secret              = "strongsecret"
-	validCMetadata      = mgclients.Metadata{"role": "client"}
-	clientID            = testsutil.GenerateUUID(&testing.T{})
-	client              = mgclients.Client{
+	idProvider             = uuid.New()
+	constraintsProvider, _ = constraints.New("users")
+	phasher                = hasher.New()
+	secret                 = "strongsecret"
+	validCMetadata         = mgclients.Metadata{"role": "client"}
+	clientID               = testsutil.GenerateUUID(&testing.T{})
+	client                 = mgclients.Client{
 		ID:          clientID,
 		Name:        "clientname",
 		Tags:        []string{"tag1", "tag2"},

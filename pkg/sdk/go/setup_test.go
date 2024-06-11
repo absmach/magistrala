@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	"github.com/absmach/magistrala/pkg/constraints"
+	constraints "github.com/absmach/magistrala/pkg/constraints/config"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -29,11 +29,11 @@ const (
 )
 
 var (
-	idProvider          = uuid.New()
-	constraintsProvider = constraints.New()
-	phasher             = hasher.New()
-	validMetadata       = sdk.Metadata{"role": "client"}
-	user                = sdk.User{
+	idProvider             = uuid.New()
+	constraintsProvider, _ = constraints.New("groups")
+	phasher                = hasher.New()
+	validMetadata          = sdk.Metadata{"role": "client"}
+	user                   = sdk.User{
 		Name:        "clientname",
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},

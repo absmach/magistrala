@@ -28,11 +28,11 @@ type service struct {
 	groups              groups.Repository
 	auth                magistrala.AuthServiceClient
 	idProvider          magistrala.IDProvider
-	constraintsProvider magistrala.ConstraintsProvider
+	constraintsProvider magistrala.Constraints
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(g groups.Repository, idp magistrala.IDProvider, constrProvider magistrala.ConstraintsProvider, authClient magistrala.AuthServiceClient) groups.Service {
+func NewService(g groups.Repository, idp magistrala.IDProvider, constrProvider magistrala.Constraints, authClient magistrala.AuthServiceClient) groups.Service {
 	return service{
 		groups:              g,
 		idProvider:          idp,
@@ -50,18 +50,15 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 	if _, err := svc.authorizeKind(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.CreatePermission, auth.DomainType, res.GetDomainId()); err != nil {
 		return groups.Group{}, err
 	}
-	constrs, err := svc.constraintsProvider.Constraints()
-	if err != nil {
-		return groups.Group{}, err
-	}
 
 	entities, err := svc.groups.RetrieveAll(ctx, groups.Page{})
 	if err != nil {
 		return groups.Group{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
-	if uint32(entities.Total) >= constrs.Groups {
-		return groups.Group{}, errors.Wrap(svcerr.ErrCreateEntity, svcerr.ErrLimitReached)
+	err = svc.constraintsProvider.CheckLimits(magistrala.Create, entities.Total)
+	if err != nil {
+		return groups.Group{}, err
 	}
 
 	groupID, err := svc.idProvider.ID()

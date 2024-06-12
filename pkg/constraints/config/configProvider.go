@@ -8,6 +8,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 const (
@@ -53,11 +55,11 @@ func New(serviceName string) (magistrala.Constraints, error) {
 func read(file, serviceName string) (magistrala.Constraints, error) {
 	var tc tomlConfig
 	if _, err := toml.DecodeFile(file, &tc.Services); err != nil {
-		return nil, fmt.Errorf("error reading config file: %s", err)
+		return nil, errors.Wrap(svcerr.ErrViewEntity, fmt.Errorf("error reading config file: %s", err))
 	}
 	svcConstraint, exists := tc.Services[serviceName]
 	if !exists {
-		return nil, fmt.Errorf("section [%s] not found", serviceName)
+		return nil, errors.Wrap(svcerr.ErrViewEntity, fmt.Errorf("section [%s] not found", serviceName))
 	}
 	return svcConstraint, nil
 }
@@ -66,7 +68,7 @@ func (c Constraints) CheckLimits(operation magistrala.Operation, currentValue ui
 	switch operation {
 	case magistrala.Create:
 		if int64(currentValue) > c.Limits.Create {
-			return fmt.Errorf("create limit exceeded: %d", c.Limits.Create)
+			return errors.Wrap(svcerr.ErrLimitReached, fmt.Errorf("create limit exceeded: %d", c.Limits.Create))
 		}
 	}
 	return nil

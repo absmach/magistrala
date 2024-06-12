@@ -345,7 +345,7 @@ func TestAssignReqValidation(t *testing.T) {
 			req: assignReq{
 				token:      valid,
 				groupID:    valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
 			},
@@ -355,7 +355,7 @@ func TestAssignReqValidation(t *testing.T) {
 			desc: "empty token",
 			req: assignReq{
 				groupID:    valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
 			},
@@ -366,7 +366,7 @@ func TestAssignReqValidation(t *testing.T) {
 			req: assignReq{
 				token:    valid,
 				groupID:  valid,
-				Relation: auth.ViewerRelation,
+				Relation: auth.ContributorRelation,
 				Members:  []string{valid},
 			},
 			err: apiutil.ErrMissingMemberKind,
@@ -375,7 +375,7 @@ func TestAssignReqValidation(t *testing.T) {
 			desc: "empty groupID",
 			req: assignReq{
 				token:      valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
 			},
@@ -386,7 +386,7 @@ func TestAssignReqValidation(t *testing.T) {
 			req: assignReq{
 				token:      valid,
 				groupID:    valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 			},
 			err: apiutil.ErrEmptyList,
@@ -410,7 +410,7 @@ func TestUnAssignReqValidation(t *testing.T) {
 			req: unassignReq{
 				token:      valid,
 				groupID:    valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
 			},
@@ -420,7 +420,7 @@ func TestUnAssignReqValidation(t *testing.T) {
 			desc: "empty token",
 			req: unassignReq{
 				groupID:    valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
 			},
@@ -431,7 +431,7 @@ func TestUnAssignReqValidation(t *testing.T) {
 			req: unassignReq{
 				token:    valid,
 				groupID:  valid,
-				Relation: auth.ViewerRelation,
+				Relation: auth.ContributorRelation,
 				Members:  []string{valid},
 			},
 			err: apiutil.ErrMissingMemberKind,
@@ -440,7 +440,7 @@ func TestUnAssignReqValidation(t *testing.T) {
 			desc: "empty groupID",
 			req: unassignReq{
 				token:      valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
 			},
@@ -451,7 +451,7 @@ func TestUnAssignReqValidation(t *testing.T) {
 			req: unassignReq{
 				token:      valid,
 				groupID:    valid,
-				Relation:   auth.ViewerRelation,
+				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 			},
 			err: apiutil.ErrEmptyList,

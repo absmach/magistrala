@@ -1423,7 +1423,7 @@ func TestListObjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      "",
@@ -1437,7 +1437,7 @@ func TestListObjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     inValid,
 				SubjectType: inValid,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      inValid,
@@ -1476,7 +1476,7 @@ func TestListAllObjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      "",
@@ -1490,7 +1490,7 @@ func TestListAllObjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     inValid,
 				SubjectType: inValid,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      inValid,
@@ -1541,7 +1541,7 @@ func TestListSubjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      "",
@@ -1555,7 +1555,7 @@ func TestListSubjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     inValid,
 				SubjectType: inValid,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      inValid,
@@ -1594,7 +1594,7 @@ func TestListAllSubjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      "",
@@ -1608,7 +1608,7 @@ func TestListAllSubjects(t *testing.T) {
 			pr: auth.PolicyReq{
 				Subject:     inValid,
 				SubjectType: inValid,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ObjectType:  auth.ThingType,
 				ObjectKind:  auth.ThingsKind,
 				Object:      inValid,
@@ -1646,7 +1646,7 @@ func TestListPermissions(t *testing.T) {
 	pr := auth.PolicyReq{
 		Subject:     id,
 		SubjectType: auth.UserType,
-		Relation:    auth.ViewerRelation,
+		Relation:    auth.ContributorRelation,
 		ObjectType:  auth.ThingType,
 		ObjectKind:  auth.ThingsKind,
 		Object:      "",
@@ -1676,8 +1676,8 @@ func TestSwitchToPermission(t *testing.T) {
 			result:   auth.EditPermission,
 		},
 		{
-			desc:     "switch to viewer permission",
-			relation: auth.ViewerRelation,
+			desc:     "switch to contributor permission",
+			relation: auth.ContributorRelation,
 			result:   auth.ViewPermission,
 		},
 		{
@@ -2190,7 +2190,7 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
 				Subject:     "testID",
@@ -2231,7 +2231,7 @@ func TestAssignUsers(t *testing.T) {
 			token:    inValidToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
 				Subject:     "testID",
@@ -2263,7 +2263,7 @@ func TestAssignUsers(t *testing.T) {
 			desc:     "assign users with invalid domainID",
 			token:    accessToken,
 			domainID: inValid,
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
 				Subject:     "testID",
@@ -2297,7 +2297,7 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			userIDs:  []string{inValid},
 			domainID: validID,
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
 				Subject:     "testID",
@@ -2338,7 +2338,7 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
 				Subject:     "testID",
@@ -2379,7 +2379,7 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
 				Subject:     "testID",
@@ -2420,7 +2420,7 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
 				Subject:     "testID",

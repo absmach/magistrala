@@ -571,7 +571,7 @@ func SwitchToPermission(relation string) string {
 		return AdminPermission
 	case EditorRelation:
 		return EditPermission
-	case ViewerRelation:
+	case ContributorRelation:
 		return ViewPermission
 	case MemberRelation:
 		return MembershipPermission
@@ -824,7 +824,7 @@ func (svc service) UnassignUsers(ctx context.Context, token, id string, userIds 
 		userIds = ids
 	}
 
-	for _, rel := range []string{MemberRelation, ViewerRelation, EditorRelation} {
+	for _, rel := range []string{MemberRelation, ContributorRelation, EditorRelation} {
 		// Remove only non-admins.
 		if err := svc.removeDomainPolicies(ctx, id, rel, userIds...); err != nil {
 			return err

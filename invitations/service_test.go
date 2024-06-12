@@ -26,7 +26,7 @@ var (
 	validInvitation = invitations.Invitation{
 		UserID:   testsutil.GenerateUUID(&testing.T{}),
 		DomainID: testsutil.GenerateUUID(&testing.T{}),
-		Relation: auth.ViewerRelation,
+		Relation: auth.ContributorRelation,
 	}
 	validToken = "token"
 )
@@ -155,7 +155,7 @@ func TestSendInvitation(t *testing.T) {
 			req: invitations.Invitation{
 				UserID:   testsutil.GenerateUUID(t),
 				DomainID: testsutil.GenerateUUID(t),
-				Relation: auth.ViewerRelation,
+				Relation: auth.ContributorRelation,
 				Resend:   true,
 			},
 			err:             nil,
@@ -227,7 +227,7 @@ func TestViewInvitation(t *testing.T) {
 		InvitedBy:   testsutil.GenerateUUID(t),
 		UserID:      testsutil.GenerateUUID(t),
 		DomainID:    testsutil.GenerateUUID(t),
-		Relation:    auth.ViewerRelation,
+		Relation:    auth.ContributorRelation,
 		CreatedAt:   time.Now().Add(-time.Hour),
 		UpdatedAt:   time.Now().Add(-time.Hour),
 		ConfirmedAt: time.Now().Add(-time.Hour),
@@ -413,7 +413,7 @@ func TestListInvitations(t *testing.T) {
 				InvitedBy:   testsutil.GenerateUUID(t),
 				UserID:      testsutil.GenerateUUID(t),
 				DomainID:    testsutil.GenerateUUID(t),
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				CreatedAt:   time.Now().Add(-time.Hour),
 				UpdatedAt:   time.Now().Add(-time.Hour),
 				ConfirmedAt: time.Now().Add(-time.Hour),
@@ -613,7 +613,7 @@ func TestAcceptInvitation(t *testing.T) {
 				UserID:      userID,
 				DomainID:    testsutil.GenerateUUID(t),
 				Token:       validToken,
-				Relation:    auth.ViewerRelation,
+				Relation:    auth.ContributorRelation,
 				ConfirmedAt: time.Now().Add(-time.Second * time.Duration(rand.Intn(100))),
 			},
 			err:        nil,

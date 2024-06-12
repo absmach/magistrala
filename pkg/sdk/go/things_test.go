@@ -1242,7 +1242,7 @@ func TestShareThing(t *testing.T) {
 		}
 		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Added: true}, nil)
 		req := sdk.UsersRelationRequest{
-			Relation: "viewer",
+			Relation: "contributor",
 			UserIDs:  []string{tc.channelID},
 		}
 		err := mgsdk.ShareThing(tc.thingID, req, tc.token)

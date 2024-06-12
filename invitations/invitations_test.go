@@ -58,7 +58,7 @@ func TestCheckRelation(t *testing.T) {
 		{"", apiutil.ErrMissingRelation},
 		{"admin", apiutil.ErrInvalidRelation},
 		{"editor", nil},
-		{"viewer", nil},
+		{"contributor", nil},
 		{"member", nil},
 		{"domain", nil},
 		{"parent_group", nil},

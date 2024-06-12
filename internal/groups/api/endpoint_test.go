@@ -805,7 +805,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			relation:   auth.ViewerRelation,
+			relation:   auth.ContributorRelation,
 			memberKind: auth.ThingsKind,
 			req: assignReq{
 				token:      valid,
@@ -822,7 +822,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:     "successfully with empty member kind",
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			req: assignReq{
 				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
@@ -854,7 +854,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			relation:   auth.ViewerRelation,
+			relation:   auth.ContributorRelation,
 			memberKind: auth.ThingsKind,
 			req:        assignReq{},
 			resp:       assignRes{},
@@ -862,7 +862,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			relation:   auth.ViewerRelation,
+			relation:   auth.ContributorRelation,
 			memberKind: auth.ThingsKind,
 			req: assignReq{
 				token:      valid,
@@ -916,7 +916,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			relation:   auth.ViewerRelation,
+			relation:   auth.ContributorRelation,
 			memberKind: auth.ThingsKind,
 			req: unassignReq{
 				token:      valid,
@@ -933,7 +933,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:     "successfully with empty member kind",
-			relation: auth.ViewerRelation,
+			relation: auth.ContributorRelation,
 			req: unassignReq{
 				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
@@ -965,7 +965,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			relation:   auth.ViewerRelation,
+			relation:   auth.ContributorRelation,
 			memberKind: auth.ThingsKind,
 			req:        unassignReq{},
 			resp:       unassignRes{},
@@ -973,7 +973,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			relation:   auth.ViewerRelation,
+			relation:   auth.ContributorRelation,
 			memberKind: auth.ThingsKind,
 			req: unassignReq{
 				token:      valid,

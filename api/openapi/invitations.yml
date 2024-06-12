@@ -197,7 +197,7 @@ components:
           enum:
             - administrator
             - editor
-            - viewer
+            - contributor
             - member
             - domain
             - parent_group
@@ -238,7 +238,7 @@ components:
           enum:
             - administrator
             - editor
-            - viewer
+            - contributor
             - member
             - domain
             - parent_group
@@ -406,7 +406,7 @@ components:
         enum:
           - administrator
           - editor
-          - viewer
+          - contributor
           - member
           - domain
           - parent_group

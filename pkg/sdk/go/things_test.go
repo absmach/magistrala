@@ -183,9 +183,10 @@ func TestCreateThing(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
-		repoCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+		authCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
+		authCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		authCall3 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: false}, nil)
 		repoCall3 := cRepo.On("Save", mock.Anything, mock.Anything).Return(convertThings(tc.response), tc.repoErr)
 		rThing, err := mgsdk.CreateThing(tc.client, tc.token)
 
@@ -200,9 +201,10 @@ func TestCreateThing(t *testing.T) {
 			ok := repoCall3.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 		}
-		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
+		authCall.Unset()
+		authCall1.Unset()
+		authCall2.Unset()
+		authCall3.Unset()
 		repoCall3.Unset()
 	}
 }
@@ -270,12 +272,13 @@ func TestCreateThings(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
-		repoCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall3 := cRepo.On("Save", mock.Anything, mock.Anything).Return(convertThings(tc.response...), tc.err)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+		authCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
+		authCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		authCall3 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: false}, nil)
+		repoCall1 := cRepo.On("Save", mock.Anything, mock.Anything).Return(convertThings(tc.response...), tc.err)
 		if len(tc.things) > 0 {
-			repoCall3 = cRepo.On("Save", mock.Anything, mock.Anything, mock.Anything).Return(convertThings(tc.response...), tc.err)
+			repoCall1 = cRepo.On("Save", mock.Anything, mock.Anything, mock.Anything).Return(convertThings(tc.response...), tc.err)
 		}
 		rThing, err := mgsdk.CreateThings(tc.things, tc.token)
 		for i, t := range rThing {
@@ -290,17 +293,18 @@ func TestCreateThings(t *testing.T) {
 		if tc.err == nil {
 			switch len(tc.things) {
 			case 1:
-				ok := repoCall3.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
+				ok := repoCall1.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
 				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 			case 2:
-				ok := repoCall3.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything, mock.Anything)
+				ok := repoCall1.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything, mock.Anything)
 				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 			}
 		}
-		repoCall.Unset()
+		authCall.Unset()
+		authCall1.Unset()
+		authCall2.Unset()
+		authCall3.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
 	}
 }
 

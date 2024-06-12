@@ -20,4 +20,7 @@ var (
 
 	// ErrStatusAlreadyAssigned indicated that the client or group has already been assigned the status.
 	ErrStatusAlreadyAssigned = errors.New("status already assigned")
+
+	// ErrRollbackTx indicates failed to rollback transaction.
+	ErrRollbackTx = errors.New("failed to rollback transaction")
 )

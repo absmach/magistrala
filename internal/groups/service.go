@@ -66,46 +66,23 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		}
 	}
 
-	g, err = svc.groups.Save(ctx, g)
+	if err := svc.addGroupPolicy(ctx, res.GetId(), res.GetDomainId(), g.ID, g.Parent, kind); err != nil {
+		return groups.Group{}, err
+	}
+	defer func() {
+		if err != nil {
+			if errRollback := svc.addGroupPolicyRollback(ctx, res.GetId(), res.GetDomainId(), g.ID, g.Parent, kind); errRollback != nil {
+				err = errors.Wrap(errors.Wrap(errors.ErrRollbackTx, errRollback), err)
+			}
+		}
+	}()
+
+	saved, err := svc.groups.Save(ctx, g)
 	if err != nil {
 		return groups.Group{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
-	// IMPROVEMENT NOTE: Add defer function , if return err is not nil, then delete group
 
-	policies := magistrala.AddPoliciesReq{}
-	policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
-		Domain:      res.GetDomainId(),
-		SubjectType: auth.UserType,
-		Subject:     res.GetId(),
-		Relation:    auth.AdministratorRelation,
-		ObjectKind:  kind,
-		ObjectType:  auth.GroupType,
-		Object:      g.ID,
-	})
-	policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
-		Domain:      res.GetDomainId(),
-		SubjectType: auth.DomainType,
-		Subject:     res.GetDomainId(),
-		Relation:    auth.DomainRelation,
-		ObjectType:  auth.GroupType,
-		Object:      g.ID,
-	})
-	if g.Parent != "" {
-		policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
-			Domain:      res.GetDomainId(),
-			SubjectType: auth.GroupType,
-			Subject:     g.Parent,
-			Relation:    auth.ParentGroupRelation,
-			ObjectKind:  kind,
-			ObjectType:  auth.GroupType,
-			Object:      g.ID,
-		})
-	}
-	if _, err := svc.auth.AddPolicies(ctx, &policies); err != nil {
-		return g, errors.Wrap(svcerr.ErrAddPolicies, err)
-	}
-
-	return g, nil
+	return saved, nil
 }
 
 func (svc service) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
@@ -752,4 +729,78 @@ func (svc service) authorizeKind(ctx context.Context, domainID, subjectType, sub
 		return "", svcerr.ErrAuthorization
 	}
 	return res.GetId(), nil
+}
+
+func (svc service) addGroupPolicy(ctx context.Context, userID, domainID, id, parentID, kind string) error {
+	policies := magistrala.AddPoliciesReq{}
+	policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+		Domain:      domainID,
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Relation:    auth.AdministratorRelation,
+		ObjectKind:  kind,
+		ObjectType:  auth.GroupType,
+		Object:      id,
+	})
+	policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+		Domain:      domainID,
+		SubjectType: auth.DomainType,
+		Subject:     domainID,
+		Relation:    auth.DomainRelation,
+		ObjectType:  auth.GroupType,
+		Object:      id,
+	})
+	if parentID != "" {
+		policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			Domain:      domainID,
+			SubjectType: auth.GroupType,
+			Subject:     parentID,
+			Relation:    auth.ParentGroupRelation,
+			ObjectKind:  kind,
+			ObjectType:  auth.GroupType,
+			Object:      id,
+		})
+	}
+	if _, err := svc.auth.AddPolicies(ctx, &policies); err != nil {
+		return errors.Wrap(svcerr.ErrAddPolicies, err)
+	}
+
+	return nil
+}
+
+func (svc service) addGroupPolicyRollback(ctx context.Context, userID, domainID, id, parentID, kind string) error {
+	policies := magistrala.DeletePoliciesReq{}
+	policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+		Domain:      domainID,
+		SubjectType: auth.UserType,
+		Subject:     userID,
+		Relation:    auth.AdministratorRelation,
+		ObjectKind:  kind,
+		ObjectType:  auth.GroupType,
+		Object:      id,
+	})
+	policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+		Domain:      domainID,
+		SubjectType: auth.DomainType,
+		Subject:     domainID,
+		Relation:    auth.DomainRelation,
+		ObjectType:  auth.GroupType,
+		Object:      id,
+	})
+	if parentID != "" {
+		policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+			Domain:      domainID,
+			SubjectType: auth.GroupType,
+			Subject:     parentID,
+			Relation:    auth.ParentGroupRelation,
+			ObjectKind:  kind,
+			ObjectType:  auth.GroupType,
+			Object:      id,
+		})
+	}
+	if _, err := svc.auth.DeletePolicies(ctx, &policies); err != nil {
+		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+	}
+
+	return nil
 }

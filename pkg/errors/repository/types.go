@@ -31,9 +31,6 @@ var (
 	// ErrFailedOpDB indicates a failure in a database operation.
 	ErrFailedOpDB = errors.New("operation on db element failed")
 
-	// ErrRollbackTx indicates failed to rollback transaction.
-	ErrRollbackTx = errors.New("failed to rollback transaction")
-
 	// ErrFailedToRetrieveAllGroups failed to retrieve groups.
 	ErrFailedToRetrieveAllGroups = errors.New("failed to retrieve all groups")
 )

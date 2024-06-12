@@ -52,21 +52,23 @@ func TestCreateGroup(t *testing.T) {
 	svc := groups.NewService(repo, idProvider, authsvc)
 
 	cases := []struct {
-		desc         string
-		token        string
-		kind         string
-		group        mggroups.Group
-		idResp       *magistrala.IdentityRes
-		idErr        error
-		authzResp    *magistrala.AuthorizeRes
-		authzErr     error
-		authzTknResp *magistrala.AuthorizeRes
-		authzTknErr  error
-		repoResp     mggroups.Group
-		repoErr      error
-		addPolResp   *magistrala.AddPoliciesRes
-		addPolErr    error
-		err          error
+		desc          string
+		token         string
+		kind          string
+		group         mggroups.Group
+		idResp        *magistrala.IdentityRes
+		idErr         error
+		authzResp     *magistrala.AuthorizeRes
+		authzErr      error
+		authzTknResp  *magistrala.AuthorizeRes
+		authzTknErr   error
+		repoResp      mggroups.Group
+		repoErr       error
+		addPolResp    *magistrala.AddPoliciesRes
+		addPolErr     error
+		deletePolResp *magistrala.DeletePoliciesRes
+		deletePolErr  error
+		err           error
 	}{
 		{
 			desc:  "successfully",
@@ -256,12 +258,37 @@ func TestCreateGroup(t *testing.T) {
 			addPolErr:  svcerr.ErrAuthorization,
 			err:        svcerr.ErrAuthorization,
 		},
+		{
+			desc:  "with failed to delete policies response",
+			token: token,
+			kind:  auth.NewGroupKind,
+			group: mggroups.Group{
+				Name:        namegen.Generate(),
+				Description: namegen.Generate(),
+				Status:      clients.Status(groups.EnabledStatus),
+				Parent:      testsutil.GenerateUUID(t),
+			},
+			idResp: &magistrala.IdentityRes{
+				Id:       testsutil.GenerateUUID(t),
+				DomainId: testsutil.GenerateUUID(t),
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			authzTknResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			repoErr:      errors.ErrMalformedEntity,
+			addPolResp:   &magistrala.AddPoliciesRes{Added: true},
+			deletePolErr: svcerr.ErrAuthorization,
+			err:          errors.ErrMalformedEntity,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
-			repocall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.UsersKind,
 				Subject:     tc.idResp.GetId(),
@@ -269,7 +296,7 @@ func TestCreateGroup(t *testing.T) {
 				Object:      tc.idResp.GetDomainId(),
 				ObjectType:  auth.DomainType,
 			}).Return(tc.authzResp, tc.authzErr)
-			repocall2 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Subject:     tc.token,
@@ -277,8 +304,9 @@ func TestCreateGroup(t *testing.T) {
 				Object:      tc.group.Parent,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzTknResp, tc.authzTknErr)
-			repocall3 := repo.On("Save", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
-			repocall4 := authsvc.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolResp, tc.addPolErr)
+			repocall1 := repo.On("Save", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
+			authCall2 := authsvc.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolResp, tc.addPolErr)
+			authCall3 := authsvc.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolResp, tc.deletePolErr)
 			got, err := svc.CreateGroup(context.Background(), tc.token, tc.kind, tc.group)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -286,14 +314,15 @@ func TestCreateGroup(t *testing.T) {
 				assert.NotEmpty(t, got.CreatedAt)
 				assert.NotEmpty(t, got.Domain)
 				assert.WithinDuration(t, time.Now(), got.CreatedAt, 2*time.Second)
-				ok := repocall3.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
+				ok := repocall1.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 			}
 			repocall.Unset()
+			authCall.Unset()
+			authCall1.Unset()
 			repocall1.Unset()
-			repocall2.Unset()
-			repocall3.Unset()
-			repocall4.Unset()
+			authCall2.Unset()
+			authCall3.Unset()
 		})
 	}
 }

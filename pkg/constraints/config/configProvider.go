@@ -34,15 +34,17 @@ type tomlConfig struct {
 func New(serviceName string) (magistrala.Constraints, error) {
 	switch serviceName {
 	case "auth_test":
-		return read(testConstraintPath , "auth")
+		return read(testConstraintPath, "auth")
 	case "users_test":
-		return read(testConstraintPath , "users")
+		return read(testConstraintPath, "users")
 	case "things_test":
-		return read(testConstraintPath , "things")
+		return read(testConstraintPath, "things")
 	case "groups_test":
-		return read(testConstraintPath , "groups")
+		return read(testConstraintPath, "groups")
 	case "channels_test":
-		return read(testConstraintPath , "channels")
+		return read(testConstraintPath, "channels")
+	case "sdk_test":
+		return read(fmt.Sprintf("../../%s", testConstraintPath), "groups")
 	}
 
 	return read(defaultConstraintPath, serviceName)

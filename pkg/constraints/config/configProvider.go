@@ -40,7 +40,7 @@ func New(serviceName string) (magistrala.Constraints, error) {
 	case "things_test":
 		return read(testConstraintPath, "things")
 	case "groups_test":
-		return read(testConstraintPath, "groups")
+		return read(fmt.Sprintf("../%s", testConstraintPath), "groups")
 	case "channels_test":
 		return read(testConstraintPath, "channels")
 	case "sdk_test":

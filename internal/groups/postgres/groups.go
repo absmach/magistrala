@@ -250,6 +250,10 @@ func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID
 	if len(groupIDs) == 0 {
 		return nil
 	}
+	if parentGroupID == "" {
+		return repoerr.ErrCreateEntity
+	}
+
 	var updateColumns []string
 	for _, groupID := range groupIDs {
 		updateColumns = append(updateColumns, fmt.Sprintf("('%s', '%s') ", groupID, parentGroupID))
@@ -258,7 +262,7 @@ func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID
 	query := fmt.Sprintf(`
 			UPDATE groups AS g SET
 				parent_id = u.parent_group_id,
-				path = COALESCE(u.parent_group_id, '') || '.' || g.path
+				path = text2ltree(COALESCE(u.parent_group_id, '') || '.' || ltree2text(g.path))
 			FROM (VALUES
 				%s
 			) AS u(id, parent_group_id)

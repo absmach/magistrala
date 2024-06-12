@@ -65,7 +65,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mgclie
 		return []mgclients.Client{}, err
 	}
 	// If domain is disabled , then this authorization will fail for all non-admin domain users
-	if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
+	if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, user.GetId(), auth.CreatePermission, auth.DomainType, user.GetDomainId()); err != nil {
 		return []mgclients.Client{}, err
 	}
 

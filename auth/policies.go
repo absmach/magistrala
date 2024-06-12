@@ -39,6 +39,7 @@ const (
 	RoleGroupRelation     = "role_group"
 	GroupRelation         = "group"
 	PlatformRelation      = "platform"
+	GuestRelation         = "guest"
 )
 
 const (
@@ -50,6 +51,7 @@ const (
 	SharePermission      = "share"
 	PublishPermission    = "publish"
 	SubscribePermission  = "subscribe"
+	CreatePermission     = "create"
 )
 
 const MagistralaObject = "magistrala"
@@ -86,10 +88,10 @@ type PolicyReq struct {
 	// platform, group, domain, thing, users.
 	ObjectType string `json:"object_type"`
 
-	// Relation contains the relation. Supported relations are administrator, editor, contributor, member,parent_group,group,domain.
+	// Relation contains the relation. Supported relations are administrator, editor, contributor, member, guest, parent_group,group,domain.
 	Relation string `json:"relation,omitempty"`
 
-	// Permission contains the permission. Supported permissions are admin, delete, edit, share, view, membership,
+	// Permission contains the permission. Supported permissions are admin, delete, edit, share, view, membership, create.
 	// admin_only, edit_only, viewer_only, membership_only, ext_admin, ext_edit, ext_view.
 	Permission string `json:"permission,omitempty"`
 }

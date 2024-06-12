@@ -126,6 +126,7 @@ func CheckRelation(relation string) error {
 		relation != auth.EditorRelation &&
 		relation != auth.ContributorRelation &&
 		relation != auth.MemberRelation &&
+		relation != auth.GuestRelation &&
 		relation != auth.DomainRelation &&
 		relation != auth.ParentGroupRelation &&
 		relation != auth.RoleGroupRelation &&

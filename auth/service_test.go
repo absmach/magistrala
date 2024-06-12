@@ -1690,6 +1690,11 @@ func TestSwitchToPermission(t *testing.T) {
 			relation: auth.GroupRelation,
 			result:   auth.GroupRelation,
 		},
+		{
+			desc:     "switch to guest permission",
+			relation: auth.GuestRelation,
+			result:   auth.ViewPermission,
+		},
 	}
 	for _, tc := range cases {
 		result := auth.SwitchToPermission(tc.relation)

@@ -613,7 +613,7 @@ components:
     UserDomainRelationReq:
       type: object
       properties:
-        users_ids:
+        user_ids:
           type: array
           minItems: 1
           items:
@@ -626,11 +626,11 @@ components:
             ]
         relation:
           type: string
-          enum: ["administrator", "editor", "contributor", "member"]
+          enum: ["administrator", "editor", "contributor", "member", "guest"]
           example: "administrator"
           description: Policy relations.
       required:
-        - users_ids
+        - user_ids
         - relation
     Key:
       type: object

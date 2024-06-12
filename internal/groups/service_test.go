@@ -292,7 +292,7 @@ func TestCreateGroup(t *testing.T) {
 				SubjectType: auth.UserType,
 				SubjectKind: auth.UsersKind,
 				Subject:     tc.idResp.GetId(),
-				Permission:  auth.MembershipPermission,
+				Permission:  auth.CreatePermission,
 				Object:      tc.idResp.GetDomainId(),
 				ObjectType:  auth.DomainType,
 			}).Return(tc.authzResp, tc.authzErr)

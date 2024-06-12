@@ -60,6 +60,7 @@ func TestCheckRelation(t *testing.T) {
 		{"editor", nil},
 		{"contributor", nil},
 		{"member", nil},
+		{"guest", nil},
 		{"domain", nil},
 		{"parent_group", nil},
 		{"role_group", nil},

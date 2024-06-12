@@ -280,7 +280,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "contributor"
+	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "viewer", "guest", "editor", "contributor", "create"
 	//	}
 	//  channels, _ := sdk.ListUserChannels("user_id_1", pm, "token")
 	//  fmt.Println(channels)
@@ -292,7 +292,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "contributor"
+	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  groups, _ := sdk.ListUserGroups("user_id_1", pm, "token")
 	//  fmt.Println(channels)
@@ -304,7 +304,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "contributor"
+	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  things, _ := sdk.ListUserThings("user_id_1", pm, "token")
 	//  fmt.Println(things)
@@ -439,7 +439,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	//  err := sdk.ShareThing("thing_id", req, "token")
@@ -450,7 +450,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	//  err := sdk.UnshareThing("thing_id", req, "token")
@@ -463,7 +463,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "contributor"
+	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  users, _ := sdk.ListThingUsers("thing_id", pm, "token")
 	//  fmt.Println(users)
@@ -571,7 +571,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	// err := sdk.AddUserToGroup("groupID",req, "token")
@@ -582,7 +582,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	// err := sdk.RemoveUserFromGroup("groupID",req, "token")
@@ -595,7 +595,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "contributor"
+	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  groups, _ := sdk.ListGroupUsers("groupID", pm, "token")
 	//  fmt.Println(groups)
@@ -607,7 +607,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "contributor"
+	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  groups, _ := sdk.ListGroupChannels("groupID", pm, "token")
 	//  fmt.Println(groups)
@@ -703,7 +703,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	// 		UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	// err := sdk.AddUserToChannel("channel_id", req, "token")
@@ -714,7 +714,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	// err := sdk.RemoveUserFromChannel("channel_id", req, "token")
@@ -727,7 +727,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		Permission: "edit",  // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "contributor"
+	//		Permission: "edit",  // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  users, _ := sdk.ListChannelUsers("channel_id", pm, "token")
 	//  fmt.Println(users)
@@ -1096,7 +1096,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor",  "member"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor",  "member", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	// err := sdk.AddUserToDomain("domainID", req, "token")
@@ -1107,7 +1107,7 @@ type SDK interface {
 	//
 	// example:
 	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor" , "member"
+	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor" , "member", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
 	// err := sdk.RemoveUserFromDomain("domainID", req, "token")
@@ -1120,7 +1120,7 @@ type SDK interface {
 	//  invitation := sdk.Invitation{
 	//    DomainID: "domainID",
 	//    UserID:   "userID",
-	//    Relation: "contributor", // available options: "owner", "admin", "editor", "contributor"
+	//    Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  }
 	//  err := sdk.SendInvitation(invitation, "token")
 	//  fmt.Println(err)

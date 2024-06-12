@@ -383,9 +383,14 @@ func (svc service) UpdateClientRole(ctx context.Context, token string, cli mgcli
 		UpdatedBy: tokenUserID,
 	}
 
+	if _, err := svc.authorize(ctx, auth.UserType, auth.UsersKind, client.ID, auth.MembershipPermission, auth.PlatformType, auth.MagistralaObject); err != nil {
+		return mgclients.Client{}, err
+	}
+
 	if err := svc.updateClientPolicy(ctx, cli.ID, cli.Role); err != nil {
 		return mgclients.Client{}, err
 	}
+
 	client, err = svc.clients.UpdateRole(ctx, client)
 	if err != nil {
 		// If failed to update role in DB, then revert back to platform admin policy in spicedb

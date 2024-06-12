@@ -51,7 +51,7 @@ func TestAuthorize(t *testing.T) {
 	svc := new(mocks.Service)
 	startGRPCServer(svc, port)
 	authAddr := fmt.Sprintf("localhost:%d", port)
-	conn, _ := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, _ := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	client := grpcapi.NewClient(conn, time.Second)
 
 	cases := []struct {

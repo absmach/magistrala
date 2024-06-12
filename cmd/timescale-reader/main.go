@@ -90,7 +90,7 @@ func main() {
 		return
 	}
 
-	ac, acHandler, err := auth.Setup(authConfig)
+	ac, acHandler, err := auth.Setup(ctx, authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -107,7 +107,7 @@ func main() {
 		return
 	}
 
-	tc, tcHandler, err := auth.SetupAuthz(authConfig)
+	tc, tcHandler, err := auth.SetupAuthz(ctx, authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

@@ -143,9 +143,10 @@ func connect(cfg Config) (*grpc.ClientConn, security, error) {
 		grpc.WithWriteBufferSize(buffSize),
 	)
 
-	conn, err := grpc.Dial(cfg.URL, opts...)
+	conn, err := grpc.NewClient(cfg.URL, opts...)
 	if err != nil {
 		return nil, secure, errors.Wrap(errGrpcConnect, err)
 	}
+
 	return conn, secure, nil
 }

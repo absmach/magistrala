@@ -56,7 +56,7 @@ func TestHandler(t *testing.T) {
 				URL:     "",
 				Timeout: time.Second,
 			},
-			err: errors.New("failed to connect to grpc server"),
+			secure: "without TLS",
 		},
 		{
 			desc: "failed with invalid server CA file",

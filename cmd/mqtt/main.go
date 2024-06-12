@@ -171,7 +171,7 @@ func main() {
 		return
 	}
 
-	authClient, authHandler, err := auth.SetupAuthz(authConfig)
+	authClient, authHandler, err := auth.SetupAuthz(ctx, authConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

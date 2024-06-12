@@ -12,6 +12,7 @@ import (
 
 const (
 	defaultConstraintPath = "./constraints_config.toml"
+	testConstraintPath    = "../constraints_config.toml"
 	filePermission        = 0o644
 )
 
@@ -31,6 +32,19 @@ type tomlConfig struct {
 // Attempts to read constraints from the default path, if the file does not exist,
 // it will be created with the default constraints.
 func New(serviceName string) (magistrala.Constraints, error) {
+	switch serviceName {
+	case "auth_test":
+		return read(testConstraintPath , "auth")
+	case "users_test":
+		return read(testConstraintPath , "users")
+	case "things_test":
+		return read(testConstraintPath , "things")
+	case "groups_test":
+		return read(testConstraintPath , "groups")
+	case "channels_test":
+		return read(testConstraintPath , "channels")
+	}
+
 	return read(defaultConstraintPath, serviceName)
 }
 

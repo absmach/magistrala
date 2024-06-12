@@ -30,7 +30,7 @@ const (
 
 var (
 	idProvider             = uuid.New()
-	constraintsProvider, _ = constraints.New("groups")
+	constraintsProvider, _ = constraints.New("groups_test")
 	phasher                = hasher.New()
 	validMetadata          = sdk.Metadata{"role": "client"}
 	user                   = sdk.User{

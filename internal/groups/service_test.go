@@ -30,7 +30,7 @@ import (
 
 var (
 	idProvider        = uuid.New()
-	constrProvider, _ = constraints.New("groups")
+	constrProvider, _ = constraints.New("groups_test")
 	token             = "token"
 	namegen           = namegenerator.NewGenerator()
 	validGroup        = mggroups.Group{

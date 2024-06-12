@@ -51,7 +51,7 @@ func newService() (things.Service, *mocks.Repository, *authmocks.AuthClient, *mo
 	auth := new(authmocks.AuthClient)
 	thingCache := new(mocks.Cache)
 	idProvider := uuid.NewMock()
-	constrProvider, _ := constraints.New("things")
+	constrProvider, _ := constraints.New("things_test")
 	cRepo := new(mocks.Repository)
 	gRepo := new(gmocks.Repository)
 

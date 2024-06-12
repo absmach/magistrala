@@ -29,7 +29,7 @@ import (
 
 var (
 	idProvider             = uuid.New()
-	constraintsProvider, _ = constraints.New("users")
+	constraintsProvider, _ = constraints.New("users_test")
 	phasher                = hasher.New()
 	secret                 = "strongsecret"
 	validCMetadata         = mgclients.Metadata{"role": "client"}

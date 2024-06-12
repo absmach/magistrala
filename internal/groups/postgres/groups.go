@@ -257,7 +257,8 @@ func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID
 	uc := strings.Join(updateColumns, ",")
 	query := fmt.Sprintf(`
 			UPDATE groups AS g SET
-				parent_id = u.parent_group_id
+				parent_id = u.parent_group_id,
+				path = COALESCE(u.parent_group_id, '') || '.' || g.path
 			FROM (VALUES
 				%s
 			) AS u(id, parent_group_id)
@@ -284,11 +285,12 @@ func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroup
 	uc := strings.Join(updateColumns, ",")
 	query := fmt.Sprintf(`
 			UPDATE groups AS g SET
-				parent_id = NULL
+				parent_id = NULL,
+				path = text2ltree(TRIM(BOTH '.' FROM REGEXP_REPLACE(ltree2text(g.path), '(^|\\.)' || u.parent_group_id || '(\\.|$)', '.', 'g')))
 			FROM (VALUES
 				%s
 			) AS u(id, parent_group_id)
-			WHERE g.id = u.id ;
+			WHERE g.id = u.id;
 	`, uc)
 
 	row, err := repo.db.QueryContext(ctx, query)

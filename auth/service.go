@@ -105,27 +105,29 @@ type Service interface {
 var _ Service = (*service)(nil)
 
 type service struct {
-	keys               KeyRepository
-	domains            DomainsRepository
-	idProvider         magistrala.IDProvider
-	agent              PolicyAgent
-	tokenizer          Tokenizer
-	loginDuration      time.Duration
-	refreshDuration    time.Duration
-	invitationDuration time.Duration
+	keys                KeyRepository
+	domains             DomainsRepository
+	idProvider          magistrala.IDProvider
+	constraintsProvider magistrala.Constraints
+	agent               PolicyAgent
+	tokenizer           Tokenizer
+	loginDuration       time.Duration
+	refreshDuration     time.Duration
+	invitationDuration  time.Duration
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
+func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, constrProvider magistrala.Constraints, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
 	return &service{
-		tokenizer:          tokenizer,
-		domains:            domains,
-		keys:               keys,
-		idProvider:         idp,
-		agent:              policyAgent,
-		loginDuration:      loginDuration,
-		refreshDuration:    refreshDuration,
-		invitationDuration: invitationDuration,
+		tokenizer:           tokenizer,
+		domains:             domains,
+		keys:                keys,
+		idProvider:          idp,
+		agent:               policyAgent,
+		loginDuration:       loginDuration,
+		refreshDuration:     refreshDuration,
+		invitationDuration:  invitationDuration,
+		constraintsProvider: constrProvider,
 	}
 }
 
@@ -588,6 +590,16 @@ func (svc service) CreateDomain(ctx context.Context, token string, d Domain) (do
 		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	d.CreatedBy = key.User
+
+	ds, err := svc.domains.ListDomains(ctx, Page{})
+	if err != nil {
+		return Domain{}, err
+	}
+
+	err = svc.constraintsProvider.CheckLimits(magistrala.Create, ds.Total)
+	if err != nil {
+		return Domain{}, err
+	}
 
 	domainID, err := svc.idProvider.ID()
 	if err != nil {

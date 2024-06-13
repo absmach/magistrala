@@ -39,8 +39,8 @@ func setupChannels() (*httptest.Server, *mocks.Repository, *authmocks.AuthClient
 	thingCache := new(thmocks.Cache)
 
 	auth := new(authmocks.AuthClient)
-	csvc := things.NewService(auth, cRepo, grepo, thingCache, idProvider)
-	gsvc := groups.NewService(grepo, idProvider, auth)
+	csvc := things.NewService(auth, cRepo, grepo, thingCache, idProvider, constraintsProvider)
+	gsvc := groups.NewService(grepo, idProvider, constraintsProvider, auth)
 
 	logger := mglog.NewMock()
 	mux := chi.NewRouter()
@@ -65,6 +65,7 @@ func TestCreateChannel(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 	cases := []struct {
 		desc    string
+		total   uint64
 		channel sdk.Channel
 		token   string
 		err     errors.SDKError
@@ -142,6 +143,7 @@ func TestCreateChannel(t *testing.T) {
 		authCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		authCall3 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: false}, nil)
 		repoCall := grepo.On("Save", mock.Anything, mock.Anything).Return(convertChannel(sdk.Channel{}), tc.err)
+		retrieveAllCall := grepo.On("RetrieveAll", mock.Anything, mggroups.Page{}).Return(mggroups.Page{PageMeta: mggroups.PageMeta{Total: tc.total}}, nil)
 		rChannel, err := mgsdk.CreateChannel(tc.channel, validToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		if err == nil {
@@ -154,6 +156,7 @@ func TestCreateChannel(t *testing.T) {
 		authCall2.Unset()
 		authCall3.Unset()
 		repoCall.Unset()
+		retrieveAllCall.Unset()
 	}
 }
 

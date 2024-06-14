@@ -50,7 +50,10 @@ var (
 	errUpdateCert         = errors.New("failed to update cert")
 )
 
-var _ Service = (*bootstrapService)(nil)
+var (
+	_  Service = (*bootstrapService)(nil)
+	pm         = mgsdk.PageMetadata{}
+)
 
 // Service specifies an API that must be fulfilled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
@@ -164,8 +167,28 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 
 	cfg.ThingID = mgThing.ID
 	cfg.DomainID = user.GetDomainId()
-	cfg.State = Inactive
 	cfg.ThingKey = mgThing.Credentials.Secret
+
+	channelsPage, err := bs.sdk.ChannelsByThing(cfg.ThingID, pm, token)
+	if err != nil {
+		return Config{}, errors.Wrap(errCheckChannels, err)
+	}
+
+	cfg.State = Active
+	for _, cfgChannel := range cfg.Channels {
+		alreadyConnected := false
+		for _, channel := range channelsPage.Channels {
+			if channel.ID == cfgChannel.ID {
+				alreadyConnected = true
+				break
+			}
+		}
+
+		if !alreadyConnected {
+			cfg.State = Inactive
+			break
+		}
+	}
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
@@ -400,6 +423,11 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
+	channelsPage, err := bs.sdk.ChannelsByThing(id, pm, token)
+	if err != nil {
+		return errors.Wrap(errCheckChannels, err)
+	}
+
 	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
 	if err != nil {
 		return errors.Wrap(errChangeState, err)
@@ -411,25 +439,26 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 
 	switch state {
 	case Active:
+	OuterLoop:
 		for _, c := range cfg.Channels {
+			for _, channel := range channelsPage.Channels {
+				if channel.ID == c.ID {
+					goto OuterLoop
+				}
+			}
+
 			conIDs := mgsdk.Connection{
 				ChannelID: c.ID,
 				ThingID:   cfg.ThingID,
 			}
+
 			if err := bs.sdk.Connect(conIDs, token); err != nil {
-				// Ignore conflict errors as they indicate the connection already exists.
-				if errors.Contains(err, svcerr.ErrConflict) {
-					continue
-				}
 				return ErrThings
 			}
 		}
 	case Inactive:
 		for _, c := range cfg.Channels {
 			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, token); err != nil {
-				if errors.Contains(err, repoerr.ErrNotFound) {
-					continue
-				}
 				return ErrThings
 			}
 		}

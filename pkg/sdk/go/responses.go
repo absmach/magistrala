@@ -13,7 +13,7 @@ type createThingsRes struct {
 	Things []Thing `json:"things"`
 }
 
-type pageRes struct {
+type PageRes struct {
 	Total  uint64 `json:"total"`
 	Offset uint64 `json:"offset"`
 	Limit  uint64 `json:"limit"`
@@ -22,40 +22,40 @@ type pageRes struct {
 // ThingsPage contains list of things in a page with proper metadata.
 type ThingsPage struct {
 	Things []Thing `json:"things"`
-	pageRes
+	PageRes
 }
 
 // ChannelsPage contains list of channels in a page with proper metadata.
 type ChannelsPage struct {
 	Channels []Channel `json:"groups"`
-	pageRes
+	PageRes
 }
 
 // MessagesPage contains list of messages in a page with proper metadata.
 type MessagesPage struct {
 	Messages []senml.Message `json:"messages,omitempty"`
-	pageRes
+	PageRes
 }
 
 type GroupsPage struct {
 	Groups []Group `json:"groups"`
-	pageRes
+	PageRes
 }
 
 type UsersPage struct {
 	Users []User `json:"users"`
-	pageRes
+	PageRes
 }
 
 type MembersPage struct {
 	Members []User `json:"members"`
-	pageRes
+	PageRes
 }
 
 // MembershipsPage contains page related metadata as well as list of memberships that
 // belong to this page.
 type MembershipsPage struct {
-	pageRes
+	PageRes
 	Memberships []Group `json:"memberships"`
 }
 
@@ -66,17 +66,17 @@ type revokeCertsRes struct {
 // bootstrapsPage contains list of bootstrap configs in a page with proper metadata.
 type BootstrapPage struct {
 	Configs []BootstrapConfig `json:"configs"`
-	pageRes
+	PageRes
 }
 
 type CertSerials struct {
 	Certs []Cert `json:"certs"`
-	pageRes
+	PageRes
 }
 
 type SubscriptionPage struct {
 	Subscriptions []Subscription `json:"subscriptions"`
-	pageRes
+	PageRes
 }
 
 type identifyThingResp struct {
@@ -85,5 +85,5 @@ type identifyThingResp struct {
 
 type DomainsPage struct {
 	Domains []Domain `json:"domains"`
-	pageRes
+	PageRes
 }

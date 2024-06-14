@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
@@ -102,6 +103,10 @@ func (sdk mgSDK) getGroups(url, token string) (GroupsPage, errors.SDKError) {
 }
 
 func (sdk mgSDK) Group(id, token string) (Group, errors.SDKError) {
+	if id == "" {
+		return Group{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
+
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, groupsEndpoint, id)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -139,6 +144,9 @@ func (sdk mgSDK) UpdateGroup(g Group, token string) (Group, errors.SDKError) {
 		return Group{}, errors.NewSDKError(err)
 	}
 
+	if g.ID == "" {
+		return Group{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, groupsEndpoint, g.ID)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPut, url, token, data, nil, http.StatusOK)
@@ -221,6 +229,9 @@ func (sdk mgSDK) ListGroupChannels(groupID string, pm PageMetadata, token string
 }
 
 func (sdk mgSDK) DeleteGroup(id, token string) errors.SDKError {
+	if id == "" {
+		return errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, groupsEndpoint, id)
 	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return sdkerr

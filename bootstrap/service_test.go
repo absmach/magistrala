@@ -299,7 +299,7 @@ func TestView(t *testing.T) {
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domain}, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
-		repoCall := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, tc.retrieveErr)
+		repoCall := boot.On("RetrieveByID", context.Background(), tc.thingDomain, tc.configID).Return(config, tc.retrieveErr)
 
 		_, err := svc.View(context.Background(), tc.token, tc.configID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -604,7 +604,7 @@ func TestUpdateConnections(t *testing.T) {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
 		sdkCall := sdk.On("Channel", mock.Anything, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
-		repoCall := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(c, tc.retrieveErr)
+		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
 		repoCall1 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(c.Channels, tc.listErr)
 		repoCall2 := boot.On("UpdateConnections", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.updateErr)
 		err := svc.UpdateConnections(context.Background(), tc.token, tc.id, tc.connections)
@@ -761,8 +761,8 @@ func TestList(t *testing.T) {
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
-		listAllObjectsCall := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		svcCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.config, tc.retrieveErr)
+		authCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
+		svcCall := boot.On("RetrieveAll", context.Background(), tc.domainID, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 
 		result, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
 		assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
@@ -770,8 +770,8 @@ func TestList(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		authCall.Unset()
 		authCall1.Unset()
+		authCall2.Unset()
 		svcCall.Unset()
-		listAllObjectsCall.Unset()
 	}
 }
 
@@ -1024,7 +1024,7 @@ func TestChangeState(t *testing.T) {
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
-		repoCall := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(c, tc.retrieveErr)
+		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
 		sdkCall := sdk.On("ChannelsByThing", tc.id, mock.Anything, tc.token).Return(mgsdk.ChannelsPage{}, errors.NewSDKError(tc.channelsByThingErr))
 		sdkCall1 := sdk.On("Connect", mock.Anything, mock.Anything).Return(tc.connectErr)
 		repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)

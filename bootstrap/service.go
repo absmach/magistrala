@@ -418,14 +418,10 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 }
 
 func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, state State) error {
+	existingChannels := make(map[string]bool)
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
-	}
-
-	channelsPage, err := bs.sdk.ChannelsByThing(id, pm, token)
-	if err != nil {
-		return errors.Wrap(errCheckChannels, err)
 	}
 
 	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
@@ -437,21 +433,26 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 		return nil
 	}
 
+	channelsPage, err := bs.sdk.ChannelsByThing(cfg.ThingID, pm, token)
+	if err != nil {
+		return errors.Wrap(errChangeState, err)
+	}
+
+	for _, channel := range channelsPage.Channels {
+		existingChannels[channel.ID] = true
+	}
+
 	switch state {
 	case Active:
-	OuterLoop:
 		for _, c := range cfg.Channels {
-			for _, channel := range channelsPage.Channels {
-				if channel.ID == c.ID {
-					goto OuterLoop
-				}
+			if existingChannels[c.ID] {
+				continue
 			}
 
 			conIDs := mgsdk.Connection{
 				ChannelID: c.ID,
 				ThingID:   cfg.ThingID,
 			}
-
 			if err := bs.sdk.Connect(conIDs, token); err != nil {
 				return ErrThings
 			}

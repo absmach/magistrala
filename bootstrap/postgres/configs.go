@@ -61,6 +61,10 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 	defer func() {
 		if err != nil {
 			err = cr.rollback("Save method", err, tx)
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				err = commitErr
+			}
 		}
 	}()
 
@@ -68,21 +72,19 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 		switch pgErr := err.(type) {
 		case *pgconn.PgError:
 			if pgErr.Code == pgerrcode.UniqueViolation {
-				return "", repoerr.ErrConflict
+				err = repoerr.ErrConflict
 			}
 		}
-		return "", cr.rollback("NamedExec in Save method", err, tx)
+		return "", err
 	}
 
 	if err := insertChannels(cfg.DomainID, cfg.Channels, tx); err != nil {
-		return "", cr.rollback("insertChannels in Save method", errors.Wrap(errSaveChannels, err), tx)
+		err = errors.Wrap(errSaveChannels, err)
+		return "", err
 	}
 
 	if err := insertConnections(ctx, cfg, chsConnIDs, tx); err != nil {
-		return "", cr.rollback("insertConnections in Save method", errors.Wrap(errSaveConnections, err), tx)
-	}
-
-	if err := tx.Commit(); err != nil {
+		err = errors.Wrap(errSaveConnections, err)
 		return "", err
 	}
 	return cfg.ThingID, nil
@@ -309,7 +311,7 @@ func (cr configRepository) UpdateCert(ctx context.Context, domainID, thingID, cl
 	return toConfig(dbcfg), nil
 }
 
-func (cr configRepository) UpdateConnections(ctx context.Context, domainID, id string, channels []bootstrap.Channel, connections []string) error {
+func (cr configRepository) UpdateConnections(ctx context.Context, domainID, id string, channels []bootstrap.Channel, connections []string) (err error) {
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(repoerr.ErrUpdateEntity, err)
@@ -318,24 +320,26 @@ func (cr configRepository) UpdateConnections(ctx context.Context, domainID, id s
 	defer func() {
 		if err != nil {
 			err = cr.rollback("UpdateConnections method", err, tx)
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				err = commitErr
+			}
 		}
 	}()
 
-	if err := insertChannels(domainID, channels, tx); err != nil {
-		return cr.rollback("insertChannels in UpdateConnections method", errors.Wrap(repoerr.ErrUpdateEntity, err), tx)
+	if err = insertChannels(domainID, channels, tx); err != nil {
+		err = errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return err
 	}
 
-	if err := updateConnections(domainID, id, connections, tx); err != nil {
+	if err = updateConnections(domainID, id, connections, tx); err != nil {
 		if e, ok := err.(*pgconn.PgError); ok {
 			if e.Code == pgerrcode.ForeignKeyViolation {
-				return repoerr.ErrNotFound
+				err = repoerr.ErrNotFound
 			}
 		}
-		return cr.rollback("updateConnections in UpdateConnections method", errors.Wrap(repoerr.ErrUpdateEntity, err), tx)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return cr.rollback("Commit in UpdateConnections method", errors.Wrap(repoerr.ErrUpdateEntity, err), tx)
+		err = errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return err
 	}
 
 	return nil

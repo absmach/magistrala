@@ -787,14 +787,14 @@ func TestUpdateCert(t *testing.T) {
 
 func TestList(t *testing.T) {
 	svc, boot, auth, _ := newService(t, redisURL)
-	numThings := 10
+	numThings := 101
 	var saved []bootstrap.Config
 	for i := 0; i < numThings; i++ {
 		c := config
 		c.ExternalID = testsutil.GenerateUUID(t)
 		c.ExternalKey = testsutil.GenerateUUID(t)
 		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
-		if i == 7 {
+		if i == 41 {
 			c.State = bootstrap.Active
 		}
 		saved = append(saved, c)
@@ -831,6 +831,7 @@ func TestList(t *testing.T) {
 				Configs: saved[0:10],
 			},
 			filter:              bootstrap.Filter{},
+			offset:              0,
 			limit:               10,
 			listObjectsResponse: &magistrala.ListObjectsRes{},
 			err:                 nil,
@@ -839,29 +840,61 @@ func TestList(t *testing.T) {
 		{
 			desc:        "list with invalid token",
 			token:       invalidToken,
+			filter:      bootstrap.Filter{},
+			offset:      0,
+			limit:       10,
 			identifyErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 			event:       nil,
 		},
 		{
-			desc:         "list with failed authorization",
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: false},
-			authorizeErr: svcerr.ErrAuthorization,
-			err:          svcerr.ErrAuthorization,
-			event:        nil,
+			desc:                "list with failed authorization",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr:        nil,
+			err:                 nil,
+			event:               nil,
 		},
 		{
-			desc:         "list with failed retrieve all",
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
-			retrieveErr:  nil,
-			err:          nil,
-			event:        nil,
+			desc:     "list with failed list all objects",
+			token:    validToken,
+			userID:   validID,
+			domainID: domainID,
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  0,
+				Limit:   10,
+				Configs: saved[0:10],
+			},
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsErr:      svcerr.ErrNotFound,
+			err:                 svcerr.ErrNotFound,
+			event:               nil,
+		},
+
+		{
+			desc:                "list with failed retrieve all",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			authorizeRes:        &magistrala.AuthorizeRes{Authorized: true},
+			retrieveErr:         nil,
+			err:                 nil,
+			event:               nil,
 		},
 	}
 
@@ -870,7 +903,7 @@ func TestList(t *testing.T) {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
 		authCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		repoCall := boot.On("RetrieveAll", context.Background(), tc.domainID, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
+		repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 
 		_, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

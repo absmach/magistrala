@@ -60,7 +60,7 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 
 	defer func() {
 		if err != nil {
-			err = cr.rollback(err, tx)
+			err = cr.rollback("Save method", err, tx)
 		}
 	}()
 
@@ -71,15 +71,15 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 				return "", repoerr.ErrConflict
 			}
 		}
-		return "", err
+		return "", cr.rollback("NamedExec in Save method", err, tx)
 	}
 
 	if err := insertChannels(cfg.DomainID, cfg.Channels, tx); err != nil {
-		return "", errors.Wrap(errSaveChannels, err)
+		return "", cr.rollback("insertChannels in Save method", errors.Wrap(errSaveChannels, err), tx)
 	}
 
 	if err := insertConnections(ctx, cfg, chsConnIDs, tx); err != nil {
-		return "", errors.Wrap(errSaveConnections, err)
+		return "", cr.rollback("insertConnections in Save method", errors.Wrap(errSaveConnections, err), tx)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -317,12 +317,12 @@ func (cr configRepository) UpdateConnections(ctx context.Context, domainID, id s
 
 	defer func() {
 		if err != nil {
-			err = cr.rollback(err, tx)
+			err = cr.rollback("UpdateConnections method", err, tx)
 		}
 	}()
 
 	if err := insertChannels(domainID, channels, tx); err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return cr.rollback("insertChannels in UpdateConnections method", errors.Wrap(repoerr.ErrUpdateEntity, err), tx)
 	}
 
 	if err := updateConnections(domainID, id, connections, tx); err != nil {
@@ -331,11 +331,11 @@ func (cr configRepository) UpdateConnections(ctx context.Context, domainID, id s
 				return repoerr.ErrNotFound
 			}
 		}
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return cr.rollback("updateConnections in UpdateConnections method", errors.Wrap(repoerr.ErrUpdateEntity, err), tx)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return cr.rollback("Commit in UpdateConnections method", errors.Wrap(repoerr.ErrUpdateEntity, err), tx)
 	}
 
 	return nil
@@ -513,9 +513,9 @@ func (cr configRepository) retrieveAll(domainID string, thingIDs []string, filte
 	return "WHERE " + f, params
 }
 
-func (cr configRepository) rollback(defErr error, tx *sqlx.Tx) error {
+func (cr configRepository) rollback(content string, defErr error, tx *sqlx.Tx) error {
 	if err := tx.Rollback(); err != nil {
-		return errors.Wrap(defErr, errors.Wrap(errors.New("failed to rollback"), err))
+		return errors.Wrap(defErr, errors.Wrap(errors.New("failed to rollback at "+content), err))
 	}
 
 	return defErr

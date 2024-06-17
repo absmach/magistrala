@@ -97,7 +97,26 @@ type OperationRegistry[T ScopeValue] struct {
 	Operations map[OperationType]T `json:"operations,omitempty"`
 }
 
-// Define EntityRegistry contains map of Entity types with all its related operations registry.
+// `EntityRegistry` contains map of Entity types with all its related operations registry.
+// Example Visualization of `EntityRegistry`.
+//
+//	{
+//		"entities": {
+//			"domains": {
+//				"operations": {
+//				"create": {}
+//				}
+//			},
+//			"groups": {
+//				"operations": {
+//				"read": {
+//					"group1": {},
+//					"group2": {}
+//				}
+//				}
+//			}
+//		}
+//	}
 type EntityRegistry struct {
 	Entities map[EntityType]OperationRegistry[ScopeValue] `json:"entities,omitempty"`
 }
@@ -188,27 +207,39 @@ func (er *EntityRegistry) Check(entityType EntityType, operation OperationType, 
 }
 
 func (er *EntityRegistry) String() string {
-	str, _ := json.MarshalIndent(er, "", "  ")
+	str, err := json.MarshalIndent(er, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("failed to convert scope/entity_registry to string: json marshal error :%s", err.Error())
+	}
 	return string(str)
 }
 
-// PAT in Domain Level
+// PAT represents Personal Access Token.
+// Example Visualization of PAT.
 //
 //	{
-//			"DomainManagement" : {
-//				"CreateOp": "All",
-//				"UpdateOp" : ["domain_1", "domain2"],
-//				"DeleteOp" : ["domain_3"]
+//		"id": "new id",
+//		"user": "user 1",
+//		"scopes": {
+//		  "entities": {
+//			"domains": {
+//			  "operations": {
+//				"create": {}
+//			  }
 //			},
-//			"Group" :{
-//				"CreateOp" : "All",
-//				"ReadOp"   : ["group_1","group_2"],
-//				"UpdateOp" : ["group_4"],
-//				"DeleteOp" : ["group_6"],
+//			"groups": {
+//			  "operations": {
+//				"read": {
+//				  "group1": {},
+//				  "group2": {}
+//				}
+//			  }
 //			}
-//	}``
-
-// PAT represents Personal Access Token.
+//		  }
+//		},
+//		"issued_at": "2024-06-17T14:52:22.670691615+05:30",
+//		"expires_at": "2024-06-20T14:52:22.670691708+05:30"
+//	  }
 type PAT struct {
 	ID        string         `json:"id,omitempty"`
 	User      string         `json:"user,omitempty"`
@@ -218,7 +249,10 @@ type PAT struct {
 }
 
 func (pat PAT) String() string {
-	str, _ := json.MarshalIndent(pat, "", "  ")
+	str, err := json.MarshalIndent(pat, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("failed to convert PAT to string: json marshal error :%s", err.Error())
+	}
 	return string(str)
 }
 

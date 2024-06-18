@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
@@ -26,10 +27,10 @@ type Cert struct {
 	Expiration time.Time `json:"expiration,omitempty"`
 }
 
-func (sdk mgSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError) {
+func (sdk mgSDK) IssueCert(thingID, validity, token string) (Cert, errors.SDKError) {
 	r := certReq{
-		ThingID: thingID,
-		Valid:   valid,
+		ThingID:  thingID,
+		Validity: validity,
 	}
 	d, err := json.Marshal(r)
 	if err != nil {
@@ -68,6 +69,9 @@ func (sdk mgSDK) ViewCert(id, token string) (Cert, errors.SDKError) {
 }
 
 func (sdk mgSDK) ViewCertByThing(thingID, token string) (CertSerials, errors.SDKError) {
+	if thingID == "" {
+		return CertSerials{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, serialsEndpoint, thingID)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -100,6 +104,6 @@ func (sdk mgSDK) RevokeCert(id, token string) (time.Time, errors.SDKError) {
 }
 
 type certReq struct {
-	ThingID string `json:"thing_id"`
-	Valid   string `json:"ttl"`
+	ThingID  string `json:"thing_id"`
+	Validity string `json:"ttl"`
 }

@@ -22,8 +22,8 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/gopcua/opcua v0.1.6
 	github.com/gorilla/websocket v1.5.1
-	github.com/hashicorp/vault/api v1.13.0
-	github.com/hashicorp/vault/api/auth/approle v0.6.0
+	github.com/hashicorp/vault/api v1.14.0
+	github.com/hashicorp/vault/api/auth/approle v0.7.0
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/ivanpirog/coloredcobra v1.0.1
@@ -106,7 +106,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.6 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.8 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect

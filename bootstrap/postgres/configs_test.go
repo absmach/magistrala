@@ -845,7 +845,7 @@ func TestDisconnectThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		owner       string
+		domainID    string
 		id          string
 		channels    []bootstrap.Channel
 		connections []string
@@ -853,7 +853,7 @@ func TestDisconnectThing(t *testing.T) {
 	}{
 		{
 			desc:        "disconnect connected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          connectedThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -861,7 +861,7 @@ func TestDisconnectThing(t *testing.T) {
 		},
 		{
 			desc:        "disconnect already disconnected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          saved,
 			channels:    c.Channels,
 			connections: channels,
@@ -869,7 +869,7 @@ func TestDisconnectThing(t *testing.T) {
 		},
 		{
 			desc:        "disconnect invalid thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          wrongID,
 			channels:    c.Channels,
 			connections: channels,
@@ -877,7 +877,7 @@ func TestDisconnectThing(t *testing.T) {
 		},
 		{
 			desc:        "disconnect random thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          randomThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -885,7 +885,7 @@ func TestDisconnectThing(t *testing.T) {
 		},
 		{
 			desc:        "disconnect empty thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          emptyThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -898,11 +898,11 @@ func TestDisconnectThing(t *testing.T) {
 			err = repo.DisconnectThing(context.Background(), ch.ID, tc.id)
 			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
 		}
-	}
 
-	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
-	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-	assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
+		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+		assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
+	}
 }
 
 func deleteChannels(ctx context.Context, repo bootstrap.ConfigRepository) error {

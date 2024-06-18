@@ -1556,9 +1556,6 @@ func TestConnectThingHandler(t *testing.T) {
 
 	svc, boot, _, _ := newService(t, redisURL)
 
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	cases := []struct {
 		desc      string
 		channelID string
@@ -1580,116 +1577,31 @@ func TestConnectThingHandler(t *testing.T) {
 			},
 		},
 		{
-			desc:      "add non-existing channel handler",
-			channelID: "unknown",
-			err:       nil,
-			event:     nil,
-		},
-		{
-			desc:      "add channel handler with empty ID",
-			channelID: "",
-			err:       nil,
-			event:     nil,
-		},
-		{
-			desc:      "add channel handler successfully",
+			desc:      "connect non-existing thing handler",
 			channelID: channel.ID,
+			thingID:   "unknown",
+			err:       nil,
+			event:     nil,
+		},
+		{
+			desc:      "connect thing handler with empty thing ID",
+			channelID: channel.ID,
+			thingID:   "",
+			err:       nil,
+			event:     nil,
+		},
+		{
+			desc:      "connect thing handler with empty channel ID",
+			channelID: "",
 			thingID:   "1",
 			err:       nil,
-			event: map[string]interface{}{
-				"channel_id":  channel.ID,
-				"thing_id":    "1",
-				"operation":   thingConnect,
-				"timestamp":   time.Now().UnixNano(),
-				"occurred_at": time.Now().UnixNano(),
-			},
+			event:     nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("ConnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
-		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
-		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
-			Streams: []string{streamID, lastID},
-			Count:   1,
-			Block:   time.Second,
-		}).Val()
-
-		var event map[string]interface{}
-		if len(streams) > 0 && len(streams[0].Messages) > 0 {
-			msg := streams[0].Messages[0]
-			event = msg.Values
-			event["timestamp"] = msg.ID
-			lastID = msg.ID
-		}
-
-		test(t, tc.event, event, tc.desc)
-		repoCall.Unset()
-	}
-}
-
-func TestConnectThingHandler(t *testing.T) {
-	err := redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	svc, boot, _, _ := newService(t, redisURL)
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	cases := []struct {
-		desc      string
-		channelID string
-		thingID   string
-		err       error
-		event     map[string]interface{}
-	}{
-		{
-			desc:      "connect thing handler successfully",
-			channelID: channel.ID,
-			thingID:   "1",
-			err:       nil,
-			event: map[string]interface{}{
-				"channel_id":  channel.ID,
-				"thing_id":    "1",
-				"operation":   thingConnect,
-				"timestamp":   time.Now().UnixNano(),
-				"occurred_at": time.Now().UnixNano(),
-			},
-		},
-		{
-			desc:      "add non-existing channel handler",
-			channelID: "unknown",
-			err:       nil,
-			event:     nil,
-		},
-		{
-			desc:      "add channel handler with empty ID",
-			channelID: "",
-			err:       nil,
-			event:     nil,
-		},
-		{
-			desc:      "add channel handler successfully",
-			channelID: channel.ID,
-			thingID:   "1",
-			err:       nil,
-			event: map[string]interface{}{
-				"channel_id":  channel.ID,
-				"thing_id":    "1",
-				"operation":   thingConnect,
-				"timestamp":   time.Now().UnixNano(),
-				"occurred_at": time.Now().UnixNano(),
-			},
-		},
-	}
-
-	lastID := "0"
-	for _, tc := range cases {
-		repoCall := boot.On("ConnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
+		repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
 		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -1739,19 +1651,25 @@ func TestDisconnectThingHandler(t *testing.T) {
 			},
 		},
 		{
-			desc:      "remove non-existing channel handler",
+			desc:      "remove non-existing thing handler",
 			channelID: "unknown",
+			err:       nil,
+		},
+		{
+			desc:      "remove thing handler with empty thing ID",
+			channelID: channel.ID,
+			thingID:   "",
 			err:       nil,
 			event:     nil,
 		},
 		{
-			desc:      "remove channel handler with empty ID",
+			desc:      "remove thing handler with empty channel ID",
 			channelID: "",
 			err:       nil,
 			event:     nil,
 		},
 		{
-			desc:      "remove channel handler successfully",
+			desc:      "remove thing handler successfully",
 			channelID: channel.ID,
 			thingID:   "1",
 			err:       nil,

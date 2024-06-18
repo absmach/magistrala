@@ -15,7 +15,7 @@ var cmdUsers = []cobra.Command{
 	{
 		Use:   "create <name> <username> <password> <user_auth_token>",
 		Short: "Create user",
-		Long: "Create user with provided name, username and password. Token in optional\n" +
+		Long: "Create user with provided name, username and password. Token is optional\n" +
 			"For example:\n" +
 			"\tmagistrala-cli users create user user@example.com 12345678 $USER_AUTH_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {

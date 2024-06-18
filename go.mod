@@ -61,6 +61,7 @@ require (
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+	moul.io/http2curl v1.0.0
 )
 
 require (
@@ -157,6 +158,7 @@ require (
 	github.com/samber/lo v1.39.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/smartystreets/goconvey v1.8.1 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect

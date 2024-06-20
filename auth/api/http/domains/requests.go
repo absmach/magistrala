@@ -100,7 +100,8 @@ func (req updateDomainReq) validate() error {
 }
 
 type listDomainsReq struct {
-	token string
+	token  string
+	userID string
 	page
 }
 
@@ -208,24 +209,6 @@ func (req unassignUsersReq) validate() error {
 
 	if len(req.UserIDs) == 0 {
 		return apiutil.ErrMalformedPolicy
-	}
-
-	return nil
-}
-
-type listUserDomainsReq struct {
-	token  string
-	userID string
-	page
-}
-
-func (req listUserDomainsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.userID == "" {
-		return apiutil.ErrMissingID
 	}
 
 	return nil

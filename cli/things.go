@@ -328,8 +328,9 @@ var cmdThings = []cobra.Command{
 			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
+				Thing:  args[0],
 			}
-			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
+			cl, err := sdk.ChannelsByThing(pm, args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -352,8 +353,9 @@ var cmdThings = []cobra.Command{
 			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
+				Thing:  args[0],
 			}
-			ul, err := sdk.ListThingUsers(args[0], pm, args[1])
+			ul, err := sdk.ListThingUsers(pm, args[1])
 			if err != nil {
 				logError(err)
 				return

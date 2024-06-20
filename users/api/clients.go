@@ -23,7 +23,17 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-var passRegex = regexp.MustCompile("^.{8,}$")
+var (
+	passRegex   = regexp.MustCompile("^.{8,}$")
+	queryKeys   = []string{api.ThingKey, api.ChannelKey, api.DomainKey, api.GroupKey, api.UserKey}
+	entityTypes = map[string]string{
+		api.ThingKey:   auth.ThingsKind,
+		api.ChannelKey: auth.GroupsKind,
+		api.DomainKey:  auth.DomainsKind,
+		api.GroupKey:   auth.GroupsKind,
+		api.UserKey:    auth.UsersKind,
+	}
+)
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, pr *regexp.Regexp, providers ...oauth2.Provider) http.Handler {
@@ -124,6 +134,13 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, pr *rege
 			api.EncodeResponse,
 			opts...,
 		), "disable_client").ServeHTTP)
+
+		r.Get("/members", otelhttp.NewHandler(kithttp.NewServer(
+			listMembersEndpoint(svc),
+			decodeListMembers,
+			api.EncodeResponse,
+			opts...,
+		), "list_users_by_entity_id").ServeHTTP)
 	})
 
 	r.Route("/password", func(r chi.Router) {
@@ -141,44 +158,6 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, pr *rege
 			opts...,
 		), "password_reset").ServeHTTP)
 	})
-
-	// Ideal location: users service, groups endpoint.
-	// Reason for placing here :
-	// SpiceDB provides list of user ids in given user_group_id
-	// and users service can access spiceDB and get the user list with user_group_id.
-	// Request to get list of users present in the user_group_id {groupID}
-	r.Get("/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByGroupEndpoint(svc),
-		decodeListMembersByGroup,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_user_group_id").ServeHTTP)
-
-	// Ideal location: things service, channels endpoint.
-	// Reason for placing here :
-	// SpiceDB provides list of user ids in given channel_id
-	// and users service can access spiceDB and get the user list with channel_id.
-	// Request to get list of users present in the user_group_id {channelID}
-	r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByChannelEndpoint(svc),
-		decodeListMembersByChannel,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_channel_id").ServeHTTP)
-
-	r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByThingEndpoint(svc),
-		decodeListMembersByThing,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_thing_id").ServeHTTP)
-
-	r.Get("/domains/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByDomainEndpoint(svc),
-		decodeListMembersByDomain,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_domain_id").ServeHTTP)
 
 	for _, provider := range providers {
 		r.HandleFunc("/oauth/callback/"+provider.Name(), oauth2CallbackHandler(provider, svc))
@@ -418,58 +397,30 @@ func decodeChangeClientStatus(_ context.Context, r *http.Request) (interface{}, 
 	return req, nil
 }
 
-func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListMembers(_ context.Context, r *http.Request) (interface{}, error) {
 	page, err := queryPageParams(r, api.DefPermission)
 	if err != nil {
 		return nil, err
 	}
-	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "groupID"),
-	}
 
-	return req, nil
-}
+	var entityID, entityType string
 
-func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, api.DefPermission)
-	if err != nil {
-		return nil, err
-	}
-	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "channelID"),
-	}
-
-	return req, nil
-}
-
-func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, api.DefPermission)
-	if err != nil {
-		return nil, err
-	}
-	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "thingID"),
-	}
-
-	return req, nil
-}
-
-func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, auth.MembershipPermission)
-	if err != nil {
-		return nil, err
+	for _, key := range queryKeys {
+		entityID, err = apiutil.ReadStringQuery(r, key, "")
+		if err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		if entityID != "" {
+			entityType = entityTypes[key]
+			break
+		}
 	}
 
 	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "domainID"),
+		token:      apiutil.ExtractBearerToken(r),
+		Page:       page,
+		objectID:   entityID,
+		objectKind: entityType,
 	}
 
 	return req, nil

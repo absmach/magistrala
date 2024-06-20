@@ -167,19 +167,3 @@ func (res unassignUsersRes) Headers() map[string]string {
 func (res unassignUsersRes) Empty() bool {
 	return true
 }
-
-type listUserDomainsRes struct {
-	auth.DomainsPage
-}
-
-func (res listUserDomainsRes) Code() int {
-	return http.StatusOK
-}
-
-func (res listUserDomainsRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res listUserDomainsRes) Empty() bool {
-	return false
-}

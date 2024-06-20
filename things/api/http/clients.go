@@ -115,26 +115,15 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger *slog.Logger) http.Ha
 			api.EncodeResponse,
 			opts...,
 		), "delete_thing").ServeHTTP)
+
+		r.Get("/members", otelhttp.NewHandler(kithttp.NewServer(
+			listMembersEndpoint(svc),
+			decodeListMembersRequest,
+			api.EncodeResponse,
+			opts...,
+		), "list_things_by_member_id").ServeHTTP)
 	})
 
-	// Ideal location: things service,  channels endpoint
-	// Reason for placing here :
-	// SpiceDB provides list of thing ids present in given channel id
-	// and things service can access spiceDB and get the list of thing ids present in given channel id.
-	// Request to get list of things present in channelID ({groupID}) .
-	r.Get("/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersEndpoint(svc),
-		decodeListMembersRequest,
-		api.EncodeResponse,
-		opts...,
-	), "list_things_by_channel_id").ServeHTTP)
-
-	r.Get("/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
-		listClientsEndpoint(svc),
-		decodeListClients,
-		api.EncodeResponse,
-		opts...,
-	), "list_user_things").ServeHTTP)
 	return r
 }
 
@@ -185,6 +174,10 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	u, err := apiutil.ReadStringQuery(r, api.UserKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
 	if err != nil {
@@ -204,7 +197,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		tag:        t,
 		permission: p,
 		listPerms:  lp,
-		userID:     chi.URLParam(r, "userID"),
+		userID:     u,
 	}
 	return req, nil
 }
@@ -321,6 +314,10 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	g, err := apiutil.ReadStringQuery(r, api.ChannelKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
 	if err != nil {
@@ -336,7 +333,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 			Metadata:   m,
 			ListPerms:  lp,
 		},
-		groupID: chi.URLParam(r, "groupID"),
+		groupID: g,
 	}
 	return req, nil
 }

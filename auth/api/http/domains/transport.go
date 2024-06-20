@@ -94,12 +94,6 @@ func MakeHandler(svc auth.Service, mux *chi.Mux, logger *slog.Logger) *chi.Mux {
 			})
 		})
 	})
-	mux.Get("/users/{userID}/domains", otelhttp.NewHandler(kithttp.NewServer(
-		listUserDomainsEndpoint(svc),
-		decodeListUserDomainsRequest,
-		api.EncodeResponse,
-		opts...,
-	), "list_domains_by_user_id").ServeHTTP)
 
 	return mux
 }

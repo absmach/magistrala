@@ -166,6 +166,20 @@ func TestCreateDomain(t *testing.T) {
 			err:         apiutil.ErrMissingName,
 		},
 		{
+			desc: "register a new domain with an empty alias",
+			domain: auth.Domain{
+				ID:       ID,
+				Name:     "test",
+				Metadata: mgclients.Metadata{"role": "domain"},
+				Tags:     []string{"tag1", "tag2"},
+				Alias:    "",
+			},
+			token:       validToken,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingAlias,
+		},
+		{
 			desc: "register a  new domain with invalid content type",
 			domain: auth.Domain{
 				ID:       ID,

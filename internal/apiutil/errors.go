@@ -132,6 +132,9 @@ var (
 	// ErrMissingName indicates missing identity name.
 	ErrMissingName = errors.New("missing identity name")
 
+	// ErrMissingName indicates missing alias.
+	ErrMissingAlias = errors.New("missing alias")
+
 	// ErrInvalidLevel indicates an invalid group level.
 	ErrInvalidLevel = errors.New("invalid group level (should be between 0 and 5)")
 

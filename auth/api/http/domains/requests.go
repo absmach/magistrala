@@ -25,7 +25,7 @@ type createDomainReq struct {
 	Name     string                 `json:"name"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 	Tags     []string               `json:"tags,omitempty"`
-	Alias    string                 `json:"alias,omitempty"`
+	Alias    string                 `json:"alias"`
 }
 
 func (req createDomainReq) validate() error {
@@ -36,6 +36,11 @@ func (req createDomainReq) validate() error {
 	if req.Name == "" {
 		return apiutil.ErrMissingName
 	}
+
+	if req.Alias == "" {
+		return apiutil.ErrMissingAlias
+	}
+
 	return nil
 }
 

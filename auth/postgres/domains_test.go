@@ -170,6 +170,24 @@ func TestSave(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc: "add domain with empty alias",
+			domain: auth.Domain{
+				ID:    testsutil.GenerateUUID(&testing.T{}),
+				Name:  "test1",
+				Alias: "",
+				Tags:  []string{"test"},
+				Metadata: map[string]interface{}{
+					"test": "test",
+				},
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				CreatedBy: userID,
+				UpdatedBy: userID,
+				Status:    auth.EnabledStatus,
+			},
+			err: repoerr.ErrCreateEntity,
+		},
+		{
 			desc: "add domain with malformed metadata",
 			domain: auth.Domain{
 				ID:    domainID,

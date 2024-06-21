@@ -71,10 +71,10 @@ func (m *AuthClient) AddPolicies(ctx context.Context, in *magistrala.AddPolicies
 	return ret.Get(0).(*magistrala.AddPoliciesRes), ret.Error(1)
 }
 
-func (m *AuthClient) DeletePolicy(ctx context.Context, in *magistrala.DeletePolicyReq, opts ...grpc.CallOption) (*magistrala.DeletePolicyRes, error) {
+func (m *AuthClient) DeletePolicyFilter(ctx context.Context, in *magistrala.DeletePolicyFilterReq, opts ...grpc.CallOption) (*magistrala.DeletePolicyFilterRes, error) {
 	ret := m.Called(ctx, in)
 
-	return ret.Get(0).(*magistrala.DeletePolicyRes), ret.Error(1)
+	return ret.Get(0).(*magistrala.DeletePolicyFilterRes), ret.Error(1)
 }
 
 func (m *AuthClient) DeletePolicies(ctx context.Context, in *magistrala.DeletePoliciesReq, opts ...grpc.CallOption) (*magistrala.DeletePoliciesRes, error) {

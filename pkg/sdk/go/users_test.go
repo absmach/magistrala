@@ -957,7 +957,7 @@ func TestUpdateClientRole(t *testing.T) {
 			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := auth.On("DeletePolicy", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
+		repoCall2 := auth.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyFilterRes{Deleted: true}, nil)
 		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Added: true}, nil)
 		repoCall4 := crepo.On("UpdateRole", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		uClient, err := mgsdk.UpdateUserRole(tc.client, tc.token)

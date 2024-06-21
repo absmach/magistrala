@@ -153,7 +153,7 @@ func (pa *policyAgent) DeletePolicies(ctx context.Context, prs []auth.PolicyReq)
 	return nil
 }
 
-func (pa *policyAgent) DeletePolicy(ctx context.Context, pr auth.PolicyReq) error {
+func (pa *policyAgent) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) error {
 	req := &v1.DeleteRelationshipsRequest{
 		RelationshipFilter: &v1.RelationshipFilter{
 			ResourceType:       pr.ObjectType,

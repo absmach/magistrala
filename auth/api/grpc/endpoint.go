@@ -151,14 +151,14 @@ func addPoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func deletePolicyEndpoint(svc auth.Service) endpoint.Endpoint {
+func deletePolicyFilterEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(policyReq)
 		if err := req.validate(); err != nil {
-			return deletePolicyRes{}, err
+			return deletePolicyFilterRes{}, err
 		}
 
-		err := svc.DeletePolicy(ctx, auth.PolicyReq{
+		err := svc.DeletePolicyFilter(ctx, auth.PolicyReq{
 			Domain:      req.Domain,
 			SubjectKind: req.SubjectKind,
 			SubjectType: req.SubjectType,
@@ -170,9 +170,9 @@ func deletePolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 			Object:      req.Object,
 		})
 		if err != nil {
-			return deletePolicyRes{}, err
+			return deletePolicyFilterRes{}, err
 		}
-		return deletePolicyRes{deleted: true}, nil
+		return deletePolicyFilterRes{deleted: true}, nil
 	}
 }
 

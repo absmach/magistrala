@@ -444,7 +444,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 	}
 
 	// Remove policy of groups
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
 		SubjectType: auth.GroupType,
 		Object:      id,
 		ObjectType:  auth.ThingType,
@@ -453,7 +453,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 	}
 
 	// Remove policy from domain
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
 		SubjectType: auth.DomainType,
 		Object:      id,
 		ObjectType:  auth.ThingType,
@@ -467,7 +467,7 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 	}
 
 	// Remove policy of users
-	if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
 		SubjectType: auth.UserType,
 		Object:      id,
 		ObjectType:  auth.ThingType,

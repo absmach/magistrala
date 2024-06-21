@@ -124,10 +124,10 @@ func TestIssue(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
+		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
 		_, err := client.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.userId, DomainId: &tc.domainID, Type: uint32(tc.kind)})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -170,10 +170,10 @@ func TestRefresh(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
+		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
 		_, err := client.Refresh(context.Background(), &magistrala.RefreshReq{DomainId: &tc.domainID, RefreshToken: tc.token})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -211,13 +211,13 @@ func TestIdentify(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("Identify", mock.Anything, mock.Anything, mock.Anything).Return(auth.Key{Subject: id, User: email, Domain: domainID}, tc.svcErr)
+		svcCall := svc.On("Identify", mock.Anything, mock.Anything, mock.Anything).Return(auth.Key{Subject: id, User: email, Domain: domainID}, tc.svcErr)
 		idt, err := client.Identify(context.Background(), &magistrala.IdentityReq{Token: tc.token})
 		if idt != nil {
 			assert.Equal(t, tc.idt, idt, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.idt, idt))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -333,13 +333,13 @@ func TestAuthorize(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repocall := svc.On("Authorize", mock.Anything, mock.Anything).Return(tc.err)
+		svccall := svc.On("Authorize", mock.Anything, mock.Anything).Return(tc.err)
 		ar, err := client.Authorize(context.Background(), tc.authRequest)
 		if ar != nil {
 			assert.Equal(t, tc.authResponse, ar, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.authResponse, ar))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
+		svccall.Unset()
 	}
 }
 
@@ -387,13 +387,13 @@ func TestAddPolicy(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("AddPolicy", mock.Anything, mock.Anything).Return(tc.err)
+		svcCall := svc.On("AddPolicy", mock.Anything, mock.Anything).Return(tc.err)
 		apr, err := client.AddPolicy(context.Background(), tc.addPolicyReq)
 		if apr != nil {
 			assert.Equal(t, tc.addPolicyRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.addPolicyRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -449,17 +449,17 @@ func TestAddPolicies(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.err)
+		svcCall := svc.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.err)
 		apr, err := client.AddPolicies(context.Background(), tc.pr)
 		if apr != nil {
 			assert.Equal(t, tc.ar, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ar, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
-func TestDeletePolicy(t *testing.T) {
+func TestDeletePolicyFilter(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	client := grpcapi.NewClient(conn, time.Second)
@@ -468,16 +468,16 @@ func TestDeletePolicy(t *testing.T) {
 	thingID := "thing"
 
 	cases := []struct {
-		desc            string
-		token           string
-		deletePolicyReq *magistrala.DeletePolicyReq
-		deletePolicyRes *magistrala.DeletePolicyRes
-		err             error
+		desc                  string
+		token                 string
+		deletePolicyFilterReq *magistrala.DeletePolicyFilterReq
+		deletePolicyFilterRes *magistrala.DeletePolicyFilterRes
+		err                   error
 	}{
 		{
 			desc:  "delete valid policy",
 			token: validToken,
-			deletePolicyReq: &magistrala.DeletePolicyReq{
+			deletePolicyFilterReq: &magistrala.DeletePolicyFilterReq{
 				Subject:     id,
 				SubjectType: usersType,
 				Object:      thingID,
@@ -485,13 +485,13 @@ func TestDeletePolicy(t *testing.T) {
 				Relation:    readRelation,
 				Permission:  readRelation,
 			},
-			deletePolicyRes: &magistrala.DeletePolicyRes{Deleted: true},
-			err:             nil,
+			deletePolicyFilterRes: &magistrala.DeletePolicyFilterRes{Deleted: true},
+			err:                   nil,
 		},
 		{
 			desc:  "delete invalid policy with invalid token",
 			token: inValidToken,
-			deletePolicyReq: &magistrala.DeletePolicyReq{
+			deletePolicyFilterReq: &magistrala.DeletePolicyFilterReq{
 				Subject:     id,
 				SubjectType: usersType,
 				Object:      thingID,
@@ -499,16 +499,16 @@ func TestDeletePolicy(t *testing.T) {
 				Relation:    readRelation,
 				Permission:  readRelation,
 			},
-			deletePolicyRes: &magistrala.DeletePolicyRes{Deleted: false},
-			err:             svcerr.ErrAuthorization,
+			deletePolicyFilterRes: &magistrala.DeletePolicyFilterRes{Deleted: false},
+			err:                   svcerr.ErrAuthorization,
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("DeletePolicy", mock.Anything, mock.Anything).Return(tc.err)
-		dpr, err := client.DeletePolicy(context.Background(), tc.deletePolicyReq)
-		assert.Equal(t, tc.deletePolicyRes.GetDeleted(), dpr.GetDeleted(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.deletePolicyRes.GetDeleted(), dpr.GetDeleted()))
+		svcCall := svc.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.err)
+		dpr, err := client.DeletePolicyFilter(context.Background(), tc.deletePolicyFilterReq)
+		assert.Equal(t, tc.deletePolicyFilterRes.GetDeleted(), dpr.GetDeleted(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.deletePolicyFilterRes.GetDeleted(), dpr.GetDeleted()))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -565,13 +565,13 @@ func TestDeletePolicies(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.err)
+		svcCall := svc.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.err)
 		apr, err := client.DeletePolicies(context.Background(), tc.deletePoliciesReq)
 		if apr != nil {
 			assert.Equal(t, tc.deletePoliciesRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.deletePoliciesRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -615,13 +615,13 @@ func TestListObjects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("ListObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listObjectsRes.Policies}, tc.err)
+		svcCall := svc.On("ListObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listObjectsRes.Policies}, tc.err)
 		apr, err := client.ListObjects(context.Background(), tc.listObjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.listObjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.listObjectsRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -665,13 +665,13 @@ func TestListAllObjects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("ListAllObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listAllObjectsRes.Policies}, tc.err)
+		svcCall := svc.On("ListAllObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listAllObjectsRes.Policies}, tc.err)
 		apr, err := client.ListAllObjects(context.Background(), tc.listAllObjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.listAllObjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.listAllObjectsRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -715,13 +715,13 @@ func TestCountObects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("CountObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.countObjectsRes.Count, tc.err)
+		svcCall := svc.On("CountObjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.countObjectsRes.Count, tc.err)
 		apr, err := client.CountObjects(context.Background(), tc.countObjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.countObjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.countObjectsRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -765,13 +765,13 @@ func TestListSubjects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("ListSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listSubjectsRes.Policies}, tc.err)
+		svcCall := svc.On("ListSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listSubjectsRes.Policies}, tc.err)
 		apr, err := client.ListSubjects(context.Background(), tc.listSubjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.listSubjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.listSubjectsRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -815,13 +815,13 @@ func TestListAllSubjects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("ListAllSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listSubjectsRes.Policies}, tc.err)
+		svcCall := svc.On("ListAllSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.PolicyPage{Policies: tc.listSubjectsRes.Policies}, tc.err)
 		apr, err := client.ListAllSubjects(context.Background(), tc.listSubjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.listSubjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.listSubjectsRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -868,7 +868,7 @@ func TestCountSubjects(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("CountSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.countSubjectsRes.Count, tc.err)
+		svcCall := svc.On("CountSubjects", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.countSubjectsRes.Count, tc.err)
 		apr, err := client.CountSubjects(context.Background(), tc.countSubjectsReq)
 		if apr != nil {
 			assert.Equal(t, tc.countSubjectsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.countSubjectsRes, apr))
@@ -876,7 +876,7 @@ func TestCountSubjects(t *testing.T) {
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "gRPC status can't be extracted from the error")
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 
@@ -1001,12 +1001,12 @@ func TestListPermissions(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := svc.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.Permissions{"view"}, tc.err)
+		svcCall := svc.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.Permissions{"view"}, tc.err)
 		apr, err := client.ListPermissions(context.Background(), tc.listPermissionsReq)
 		if apr != nil {
 			assert.Equal(t, tc.listPermissionsRes, apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.listPermissionsRes, apr))
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }

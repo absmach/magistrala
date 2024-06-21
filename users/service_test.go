@@ -998,25 +998,25 @@ func TestUpdateClientRole(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc                 string
-		client               mgclients.Client
-		identifyResponse     *magistrala.IdentityRes
-		superAdminAuthReq    *magistrala.AuthorizeReq
-		membershipAuthReq    *magistrala.AuthorizeReq
-		superAdminAuthRes    *magistrala.AuthorizeRes
-		membershipAuthRes    *magistrala.AuthorizeRes
-		deletePolicyResponse *magistrala.DeletePolicyRes
-		addPolicyResponse    *magistrala.AddPolicyRes
-		updateRoleResponse   mgclients.Client
-		token                string
-		identifyErr          error
-		authorizeErr         error
-		membershipAuthErr    error
-		deletePolicyErr      error
-		addPolicyErr         error
-		updateRoleErr        error
-		checkSuperAdminErr   error
-		err                  error
+		desc                       string
+		client                     mgclients.Client
+		identifyResponse           *magistrala.IdentityRes
+		superAdminAuthReq          *magistrala.AuthorizeReq
+		membershipAuthReq          *magistrala.AuthorizeReq
+		superAdminAuthRes          *magistrala.AuthorizeRes
+		membershipAuthRes          *magistrala.AuthorizeRes
+		deletePolicyFilterResponse *magistrala.DeletePolicyFilterRes
+		addPolicyResponse          *magistrala.AddPolicyRes
+		updateRoleResponse         mgclients.Client
+		token                      string
+		identifyErr                error
+		authorizeErr               error
+		membershipAuthErr          error
+		deletePolicyErr            error
+		addPolicyErr               error
+		updateRoleErr              error
+		checkSuperAdminErr         error
+		err                        error
 	}{
 		{
 			desc:               "update client role successfully",
@@ -1088,75 +1088,75 @@ func TestUpdateClientRole(t *testing.T) {
 			err:               svcerr.ErrAddPolicies,
 		},
 		{
-			desc:                 "update client role to user role successfully  ",
-			client:               client2,
-			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
-			superAdminAuthReq:    superAdminAuthReq,
-			superAdminAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			membershipAuthReq:    membershipAuthReq,
-			membershipAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
-			updateRoleResponse:   client2,
-			token:                validToken,
-			err:                  nil,
+			desc:                       "update client role to user role successfully  ",
+			client:                     client2,
+			identifyResponse:           &magistrala.IdentityRes{UserId: client.ID},
+			superAdminAuthReq:          superAdminAuthReq,
+			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			membershipAuthReq:          membershipAuthReq,
+			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyFilterResponse: &magistrala.DeletePolicyFilterRes{Deleted: true},
+			updateRoleResponse:         client2,
+			token:                      validToken,
+			err:                        nil,
 		},
 		{
-			desc:                 "update client role to user role with failed to delete policy",
-			client:               client2,
-			superAdminAuthReq:    superAdminAuthReq,
-			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
-			superAdminAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			membershipAuthReq:    membershipAuthReq,
-			membershipAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: false},
-			updateRoleResponse:   mgclients.Client{},
-			token:                validToken,
-			deletePolicyErr:      svcerr.ErrAuthorization,
-			err:                  svcerr.ErrAuthorization,
+			desc:                       "update client role to user role with failed to delete policy",
+			client:                     client2,
+			superAdminAuthReq:          superAdminAuthReq,
+			identifyResponse:           &magistrala.IdentityRes{UserId: client.ID},
+			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			membershipAuthReq:          membershipAuthReq,
+			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyFilterResponse: &magistrala.DeletePolicyFilterRes{Deleted: false},
+			updateRoleResponse:         mgclients.Client{},
+			token:                      validToken,
+			deletePolicyErr:            svcerr.ErrAuthorization,
+			err:                        svcerr.ErrAuthorization,
 		},
 		{
-			desc:                 "update client role to user role with failed to delete policy with error",
-			client:               client2,
-			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
-			superAdminAuthReq:    superAdminAuthReq,
-			superAdminAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			membershipAuthReq:    membershipAuthReq,
-			membershipAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: false},
-			updateRoleResponse:   mgclients.Client{},
-			token:                validToken,
-			deletePolicyErr:      svcerr.ErrMalformedEntity,
-			err:                  svcerr.ErrDeletePolicies,
+			desc:                       "update client role to user role with failed to delete policy with error",
+			client:                     client2,
+			identifyResponse:           &magistrala.IdentityRes{UserId: client.ID},
+			superAdminAuthReq:          superAdminAuthReq,
+			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			membershipAuthReq:          membershipAuthReq,
+			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyFilterResponse: &magistrala.DeletePolicyFilterRes{Deleted: false},
+			updateRoleResponse:         mgclients.Client{},
+			token:                      validToken,
+			deletePolicyErr:            svcerr.ErrMalformedEntity,
+			err:                        svcerr.ErrDeletePolicies,
 		},
 		{
-			desc:                 "Update client with failed repo update and roll back",
-			client:               client,
-			superAdminAuthReq:    superAdminAuthReq,
-			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
-			superAdminAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			membershipAuthReq:    membershipAuthReq,
-			membershipAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse:    &magistrala.AddPolicyRes{Added: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
-			updateRoleResponse:   mgclients.Client{},
-			token:                validToken,
-			updateRoleErr:        svcerr.ErrAuthentication,
-			err:                  svcerr.ErrAuthentication,
+			desc:                       "Update client with failed repo update and roll back",
+			client:                     client,
+			superAdminAuthReq:          superAdminAuthReq,
+			identifyResponse:           &magistrala.IdentityRes{UserId: client.ID},
+			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			membershipAuthReq:          membershipAuthReq,
+			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			addPolicyResponse:          &magistrala.AddPolicyRes{Added: true},
+			deletePolicyFilterResponse: &magistrala.DeletePolicyFilterRes{Deleted: true},
+			updateRoleResponse:         mgclients.Client{},
+			token:                      validToken,
+			updateRoleErr:              svcerr.ErrAuthentication,
+			err:                        svcerr.ErrAuthentication,
 		},
 		{
-			desc:                 "Update client with failed repo update and failedroll back",
-			client:               client,
-			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
-			superAdminAuthReq:    superAdminAuthReq,
-			superAdminAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			membershipAuthReq:    membershipAuthReq,
-			membershipAuthRes:    &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse:    &magistrala.AddPolicyRes{Added: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: false},
-			updateRoleResponse:   mgclients.Client{},
-			token:                validToken,
-			updateRoleErr:        svcerr.ErrAuthentication,
-			err:                  svcerr.ErrAuthentication,
+			desc:                       "Update client with failed repo update and failedroll back",
+			client:                     client,
+			identifyResponse:           &magistrala.IdentityRes{UserId: client.ID},
+			superAdminAuthReq:          superAdminAuthReq,
+			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			membershipAuthReq:          membershipAuthReq,
+			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
+			addPolicyResponse:          &magistrala.AddPolicyRes{Added: true},
+			deletePolicyFilterResponse: &magistrala.DeletePolicyFilterRes{Deleted: false},
+			updateRoleResponse:         mgclients.Client{},
+			token:                      validToken,
+			updateRoleErr:              svcerr.ErrAuthentication,
+			err:                        svcerr.ErrAuthentication,
 		},
 		{
 			desc:              "update client role with failed MembershipPermission authorization",
@@ -1178,7 +1178,7 @@ func TestUpdateClientRole(t *testing.T) {
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
 		authCall2 := auth.On("Authorize", context.Background(), tc.membershipAuthReq).Return(tc.membershipAuthRes, tc.membershipAuthErr)
 		authCall3 := auth.On("AddPolicy", context.Background(), mock.Anything).Return(tc.addPolicyResponse, tc.addPolicyErr)
-		authCall4 := auth.On("DeletePolicy", context.Background(), mock.Anything).Return(tc.deletePolicyResponse, tc.deletePolicyErr)
+		authCall4 := auth.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyFilterResponse, tc.deletePolicyErr)
 		repoCall1 := cRepo.On("UpdateRole", context.Background(), mock.Anything).Return(tc.updateRoleResponse, tc.updateRoleErr)
 
 		updatedClient, err := svc.UpdateClientRole(context.Background(), tc.token, tc.client)

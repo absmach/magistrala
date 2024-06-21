@@ -89,12 +89,12 @@ func (_m *PolicyAgent) DeletePolicies(ctx context.Context, pr []auth.PolicyReq) 
 	return r0
 }
 
-// DeletePolicy provides a mock function with given fields: ctx, pr
-func (_m *PolicyAgent) DeletePolicy(ctx context.Context, pr auth.PolicyReq) error {
+// DeletePolicyFilter provides a mock function with given fields: ctx, pr
+func (_m *PolicyAgent) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) error {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeletePolicy")
+		panic("no return value specified for DeletePolicyFilter")
 	}
 
 	var r0 error

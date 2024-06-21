@@ -116,21 +116,21 @@ var AuthzService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	AuthService_Issue_FullMethodName           = "/magistrala.AuthService/Issue"
-	AuthService_Refresh_FullMethodName         = "/magistrala.AuthService/Refresh"
-	AuthService_Identify_FullMethodName        = "/magistrala.AuthService/Identify"
-	AuthService_Authorize_FullMethodName       = "/magistrala.AuthService/Authorize"
-	AuthService_AddPolicy_FullMethodName       = "/magistrala.AuthService/AddPolicy"
-	AuthService_AddPolicies_FullMethodName     = "/magistrala.AuthService/AddPolicies"
-	AuthService_DeletePolicy_FullMethodName    = "/magistrala.AuthService/DeletePolicy"
-	AuthService_DeletePolicies_FullMethodName  = "/magistrala.AuthService/DeletePolicies"
-	AuthService_ListObjects_FullMethodName     = "/magistrala.AuthService/ListObjects"
-	AuthService_ListAllObjects_FullMethodName  = "/magistrala.AuthService/ListAllObjects"
-	AuthService_CountObjects_FullMethodName    = "/magistrala.AuthService/CountObjects"
-	AuthService_ListSubjects_FullMethodName    = "/magistrala.AuthService/ListSubjects"
-	AuthService_ListAllSubjects_FullMethodName = "/magistrala.AuthService/ListAllSubjects"
-	AuthService_CountSubjects_FullMethodName   = "/magistrala.AuthService/CountSubjects"
-	AuthService_ListPermissions_FullMethodName = "/magistrala.AuthService/ListPermissions"
+	AuthService_Issue_FullMethodName              = "/magistrala.AuthService/Issue"
+	AuthService_Refresh_FullMethodName            = "/magistrala.AuthService/Refresh"
+	AuthService_Identify_FullMethodName           = "/magistrala.AuthService/Identify"
+	AuthService_Authorize_FullMethodName          = "/magistrala.AuthService/Authorize"
+	AuthService_AddPolicy_FullMethodName          = "/magistrala.AuthService/AddPolicy"
+	AuthService_AddPolicies_FullMethodName        = "/magistrala.AuthService/AddPolicies"
+	AuthService_DeletePolicyFilter_FullMethodName = "/magistrala.AuthService/DeletePolicyFilter"
+	AuthService_DeletePolicies_FullMethodName     = "/magistrala.AuthService/DeletePolicies"
+	AuthService_ListObjects_FullMethodName        = "/magistrala.AuthService/ListObjects"
+	AuthService_ListAllObjects_FullMethodName     = "/magistrala.AuthService/ListAllObjects"
+	AuthService_CountObjects_FullMethodName       = "/magistrala.AuthService/CountObjects"
+	AuthService_ListSubjects_FullMethodName       = "/magistrala.AuthService/ListSubjects"
+	AuthService_ListAllSubjects_FullMethodName    = "/magistrala.AuthService/ListAllSubjects"
+	AuthService_CountSubjects_FullMethodName      = "/magistrala.AuthService/CountSubjects"
+	AuthService_ListPermissions_FullMethodName    = "/magistrala.AuthService/ListPermissions"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -143,7 +143,7 @@ type AuthServiceClient interface {
 	Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*AuthorizeRes, error)
 	AddPolicy(ctx context.Context, in *AddPolicyReq, opts ...grpc.CallOption) (*AddPolicyRes, error)
 	AddPolicies(ctx context.Context, in *AddPoliciesReq, opts ...grpc.CallOption) (*AddPoliciesRes, error)
-	DeletePolicy(ctx context.Context, in *DeletePolicyReq, opts ...grpc.CallOption) (*DeletePolicyRes, error)
+	DeletePolicyFilter(ctx context.Context, in *DeletePolicyFilterReq, opts ...grpc.CallOption) (*DeletePolicyFilterRes, error)
 	DeletePolicies(ctx context.Context, in *DeletePoliciesReq, opts ...grpc.CallOption) (*DeletePoliciesRes, error)
 	ListObjects(ctx context.Context, in *ListObjectsReq, opts ...grpc.CallOption) (*ListObjectsRes, error)
 	ListAllObjects(ctx context.Context, in *ListObjectsReq, opts ...grpc.CallOption) (*ListObjectsRes, error)
@@ -216,9 +216,9 @@ func (c *authServiceClient) AddPolicies(ctx context.Context, in *AddPoliciesReq,
 	return out, nil
 }
 
-func (c *authServiceClient) DeletePolicy(ctx context.Context, in *DeletePolicyReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
-	out := new(DeletePolicyRes)
-	err := c.cc.Invoke(ctx, AuthService_DeletePolicy_FullMethodName, in, out, opts...)
+func (c *authServiceClient) DeletePolicyFilter(ctx context.Context, in *DeletePolicyFilterReq, opts ...grpc.CallOption) (*DeletePolicyFilterRes, error) {
+	out := new(DeletePolicyFilterRes)
+	err := c.cc.Invoke(ctx, AuthService_DeletePolicyFilter_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ type AuthServiceServer interface {
 	Authorize(context.Context, *AuthorizeReq) (*AuthorizeRes, error)
 	AddPolicy(context.Context, *AddPolicyReq) (*AddPolicyRes, error)
 	AddPolicies(context.Context, *AddPoliciesReq) (*AddPoliciesRes, error)
-	DeletePolicy(context.Context, *DeletePolicyReq) (*DeletePolicyRes, error)
+	DeletePolicyFilter(context.Context, *DeletePolicyFilterReq) (*DeletePolicyFilterRes, error)
 	DeletePolicies(context.Context, *DeletePoliciesReq) (*DeletePoliciesRes, error)
 	ListObjects(context.Context, *ListObjectsReq) (*ListObjectsRes, error)
 	ListAllObjects(context.Context, *ListObjectsReq) (*ListObjectsRes, error)
@@ -341,8 +341,8 @@ func (UnimplementedAuthServiceServer) AddPolicy(context.Context, *AddPolicyReq) 
 func (UnimplementedAuthServiceServer) AddPolicies(context.Context, *AddPoliciesReq) (*AddPoliciesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPolicies not implemented")
 }
-func (UnimplementedAuthServiceServer) DeletePolicy(context.Context, *DeletePolicyReq) (*DeletePolicyRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicy not implemented")
+func (UnimplementedAuthServiceServer) DeletePolicyFilter(context.Context, *DeletePolicyFilterReq) (*DeletePolicyFilterRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicyFilter not implemented")
 }
 func (UnimplementedAuthServiceServer) DeletePolicies(context.Context, *DeletePoliciesReq) (*DeletePoliciesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicies not implemented")
@@ -489,20 +489,20 @@ func _AuthService_AddPolicies_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_DeletePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeletePolicyReq)
+func _AuthService_DeletePolicyFilter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePolicyFilterReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).DeletePolicy(ctx, in)
+		return srv.(AuthServiceServer).DeletePolicyFilter(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_DeletePolicy_FullMethodName,
+		FullMethod: AuthService_DeletePolicyFilter_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).DeletePolicy(ctx, req.(*DeletePolicyReq))
+		return srv.(AuthServiceServer).DeletePolicyFilter(ctx, req.(*DeletePolicyFilterReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -683,8 +683,8 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_AddPolicies_Handler,
 		},
 		{
-			MethodName: "DeletePolicy",
-			Handler:    _AuthService_DeletePolicy_Handler,
+			MethodName: "DeletePolicyFilter",
+			Handler:    _AuthService_DeletePolicyFilter_Handler,
 		},
 		{
 			MethodName: "DeletePolicies",

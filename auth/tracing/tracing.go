@@ -96,7 +96,7 @@ func (tm *tracingMiddleware) AddPolicies(ctx context.Context, prs []auth.PolicyR
 	return tm.svc.AddPolicies(ctx, prs)
 }
 
-func (tm *tracingMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq) error {
+func (tm *tracingMiddleware) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) error {
 	ctx, span := tm.tracer.Start(ctx, "delete_policy", trace.WithAttributes(
 		attribute.String("subject", pr.Subject),
 		attribute.String("subject_type", pr.SubjectType),
@@ -108,7 +108,7 @@ func (tm *tracingMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq
 	))
 	defer span.End()
 
-	return tm.svc.DeletePolicy(ctx, pr)
+	return tm.svc.DeletePolicyFilter(ctx, pr)
 }
 
 func (tm *tracingMiddleware) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {

@@ -710,7 +710,7 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 	case mgclients.UserRole:
 		fallthrough
 	default:
-		resp, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
+		resp, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
 			SubjectType: auth.UserType,
 			Subject:     userID,
 			Relation:    auth.AdministratorRelation,

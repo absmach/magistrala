@@ -293,7 +293,7 @@ func (lm *loggingMiddleware) AddPolicies(ctx context.Context, prs []auth.PolicyR
 	return lm.svc.AddPolicies(ctx, prs)
 }
 
-func (lm *loggingMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq) (err error) {
+func (lm *loggingMiddleware) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -307,12 +307,12 @@ func (lm *loggingMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Delete policy failed to complete successfully", args...)
+			lm.logger.Warn("Delete policy filter failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info("Delete policy completed successfully", args...)
+		lm.logger.Info("Delete policy filter completed successfully", args...)
 	}(time.Now())
-	return lm.svc.DeletePolicy(ctx, pr)
+	return lm.svc.DeletePolicyFilter(ctx, pr)
 }
 
 func (lm *loggingMiddleware) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) (err error) {

@@ -113,20 +113,20 @@ func TestAdd(t *testing.T) {
 	invalidConfig.Channels = []bootstrap.Channel{{ID: "empty"}}
 
 	cases := []struct {
-		desc               string
-		config             bootstrap.Config
-		token              string
-		id                 string
-		domainID           string
-		authResponse       *magistrala.AuthorizeRes
-		authorizeErr       error
-		identifyErr        error
-		thingErr           error
-		channel            []bootstrap.Channel
-		listErr            error
-		saveErr            error
-		err                error
-		event              map[string]interface{}
+		desc         string
+		config       bootstrap.Config
+		token        string
+		id           string
+		domainID     string
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		thingErr     error
+		channel      []bootstrap.Channel
+		listErr      error
+		saveErr      error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
 			desc:         "create config successfully",
@@ -1211,20 +1211,20 @@ func TestChangeState(t *testing.T) {
 	svc, boot, auth, sdk := newService(t, redisURL)
 
 	cases := []struct {
-		desc               string
-		id                 string
-		userID             string
-		domainID           string
-		token              string
-		state              bootstrap.State
-		authResponse       *magistrala.AuthorizeRes
-		authorizeErr       error
-		connectErr         error
-		retrieveErr        error
-		stateErr           error
-		identifyErr        error
-		err                error
-		event              map[string]interface{}
+		desc         string
+		id           string
+		userID       string
+		domainID     string
+		token        string
+		state        bootstrap.State
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		connectErr   error
+		retrieveErr  error
+		stateErr     error
+		identifyErr  error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
 			desc:         "change state to active",

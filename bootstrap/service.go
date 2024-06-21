@@ -50,10 +50,7 @@ var (
 	errUpdateCert         = errors.New("failed to update cert")
 )
 
-var (
-	_  Service = (*bootstrapService)(nil)
-	pm         = mgsdk.PageMetadata{}
-)
+var _ Service = (*bootstrapService)(nil)
 
 // Service specifies an API that must be fulfilled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
@@ -167,28 +164,8 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 
 	cfg.ThingID = mgThing.ID
 	cfg.DomainID = user.GetDomainId()
+	cfg.State = Inactive
 	cfg.ThingKey = mgThing.Credentials.Secret
-
-	channelsPage, err := bs.sdk.ChannelsByThing(cfg.ThingID, pm, token)
-	if err != nil {
-		return Config{}, errors.Wrap(errCheckChannels, err)
-	}
-
-	cfg.State = Active
-	for _, cfgChannel := range cfg.Channels {
-		alreadyConnected := false
-		for _, channel := range channelsPage.Channels {
-			if channel.ID == cfgChannel.ID {
-				alreadyConnected = true
-				break
-			}
-		}
-
-		if !alreadyConnected {
-			cfg.State = Inactive
-			break
-		}
-	}
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
@@ -328,18 +305,6 @@ func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]
 	return tids.Policies, nil
 }
 
-func (bs bootstrapService) filterAllowedThingIDs(thingIDs []string) ([]string, error) {
-	var ids []string
-	for _, thingID := range thingIDs {
-		for _, tid := range thingIDs {
-			if thingID == tid {
-				ids = append(ids, thingID)
-			}
-		}
-	}
-	return ids, nil
-}
-
 func (bs bootstrapService) checkSuperAdmin(ctx context.Context, userID string) error {
 	res, err := bs.auth.Authorize(ctx, &magistrala.AuthorizeReq{
 		SubjectType: auth.UserType,
@@ -372,11 +337,6 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 	}
 
 	thingIDs, err := bs.listClientIDs(ctx, user.GetId())
-	if err != nil {
-		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-	}
-
-	thingIDs, err = bs.filterAllowedThingIDs(thingIDs)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
@@ -418,7 +378,6 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 }
 
 func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, state State) error {
-	existingChannels := make(map[string]bool)
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
@@ -433,33 +392,27 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 		return nil
 	}
 
-	channelsPage, err := bs.sdk.ChannelsByThing(cfg.ThingID, pm, token)
-	if err != nil {
-		return errors.Wrap(errChangeState, err)
-	}
-
-	for _, channel := range channelsPage.Channels {
-		existingChannels[channel.ID] = true
-	}
-
 	switch state {
 	case Active:
 		for _, c := range cfg.Channels {
-			if existingChannels[c.ID] {
-				continue
-			}
-
 			conIDs := mgsdk.Connection{
 				ChannelID: c.ID,
 				ThingID:   cfg.ThingID,
 			}
 			if err := bs.sdk.Connect(conIDs, token); err != nil {
+				// Ignore conflict errors as they indicate the connection already exists.
+				if errors.Contains(err, svcerr.ErrConflict) {
+					continue
+				}
 				return ErrThings
 			}
 		}
 	case Inactive:
 		for _, c := range cfg.Channels {
 			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, token); err != nil {
+				if errors.Contains(err, repoerr.ErrNotFound) {
+					continue
+				}
 				return ErrThings
 			}
 		}

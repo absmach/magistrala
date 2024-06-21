@@ -122,7 +122,6 @@ func TestAdd(t *testing.T) {
 		authorizeErr       error
 		identifyErr        error
 		thingErr           error
-		channelsByThingErr error
 		channel            []bootstrap.Channel
 		listErr            error
 		saveErr            error
@@ -180,18 +179,6 @@ func TestAdd(t *testing.T) {
 			err:          svcerr.ErrNotFound,
 		},
 		{
-			desc:               "create config with failed to fetch channels",
-			config:             config,
-			token:              validToken,
-			id:                 validID,
-			domainID:           domainID,
-			authResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			channel:            invalidConfig.Channels,
-			event:              nil,
-			channelsByThingErr: svcerr.ErrNotFound,
-			err:                svcerr.ErrNotFound,
-		},
-		{
 			desc:         "create config with failed to list existing",
 			config:       config,
 			token:        validToken,
@@ -220,7 +207,6 @@ func TestAdd(t *testing.T) {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
 		sdkCall := sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
-		sdkCall1 := sdk.On("ChannelsByThing", tc.config.ThingID, mock.Anything, tc.token).Return(mgsdk.ChannelsPage{}, errors.NewSDKError(tc.channelsByThingErr))
 		repoCall := boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
 		repoCall1 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
@@ -244,7 +230,6 @@ func TestAdd(t *testing.T) {
 		authCall.Unset()
 		authCall1.Unset()
 		sdkCall.Unset()
-		sdkCall1.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
 	}
@@ -1233,7 +1218,6 @@ func TestChangeState(t *testing.T) {
 		token              string
 		state              bootstrap.State
 		authResponse       *magistrala.AuthorizeRes
-		channelsByThingErr error
 		authorizeErr       error
 		connectErr         error
 		retrieveErr        error
@@ -1279,17 +1263,6 @@ func TestChangeState(t *testing.T) {
 			event:       nil,
 		},
 		{
-			desc:               "change state with failed channels by thing check",
-			id:                 config.ThingID,
-			token:              validToken,
-			userID:             validID,
-			domainID:           domainID,
-			state:              bootstrap.Active,
-			channelsByThingErr: svcerr.ErrNotFound,
-			err:                svcerr.ErrNotFound,
-			event:              nil,
-		},
-		{
 			desc:       "change state with failed connect",
 			id:         config.ThingID,
 			token:      validToken,
@@ -1317,7 +1290,6 @@ func TestChangeState(t *testing.T) {
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
 		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
-		sdkCall := sdk.On("ChannelsByThing", tc.id, mock.Anything, tc.token).Return(mgsdk.ChannelsPage{}, errors.NewSDKError(tc.channelsByThingErr))
 		sdkCall1 := sdk.On("Connect", mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
 		repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
 		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
@@ -1337,7 +1309,6 @@ func TestChangeState(t *testing.T) {
 
 		test(t, tc.event, event, tc.desc)
 		authCall.Unset()
-		sdkCall.Unset()
 		sdkCall1.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()

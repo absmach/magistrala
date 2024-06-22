@@ -38,11 +38,33 @@ func (ot OperationType) String() string {
 	}
 }
 
+func ParseOperationType(ot string) (OperationType, error) {
+	switch ot {
+	case "create":
+		return CreateOp, nil
+	case "read":
+		return ReadOp, nil
+	case "list":
+		return ListOp, nil
+	case "update":
+		return UpdateOp, nil
+	case "delete":
+		return DeleteOp, nil
+	default:
+		return 0, fmt.Errorf("unknown operation type %s", ot)
+	}
+}
+
 func (ot OperationType) MarshalJSON() ([]byte, error) {
 	return []byte(ot.String()), nil
 }
 func (ot OperationType) MarshalText() (text []byte, err error) {
 	return []byte(ot.String()), nil
+}
+
+func (ot *OperationType) UnmarshalText(data []byte) (err error) {
+	*ot, err = ParseOperationType(string(data))
+	return err
 }
 
 // Define DomainEntityType.
@@ -71,11 +93,31 @@ func (det DomainEntityType) String() string {
 	}
 }
 
+func ParseDomainEntityType(det string) (DomainEntityType, error) {
+	switch det {
+	case "domain_management":
+		return DomainManagementScope, nil
+	case "groups":
+		return DomainGroupsScope, nil
+	case "channels":
+		return DomainChannelsScope, nil
+	case "things":
+		return DomainThingsScope, nil
+	default:
+		return 0, fmt.Errorf("unknown domain entity type %s", det)
+	}
+}
+
 func (det DomainEntityType) MarshalJSON() ([]byte, error) {
 	return []byte(det.String()), nil
 }
-func (det DomainEntityType) MarshalText() (text []byte, err error) {
+func (det DomainEntityType) MarshalText() ([]byte, error) {
 	return []byte(det.String()), nil
+}
+
+func (det *DomainEntityType) UnmarshalText(data []byte) (err error) {
+	*det, err = ParseDomainEntityType(string(data))
+	return err
 }
 
 // Define DomainEntityType.
@@ -97,11 +139,27 @@ func (pet PlatformEntityType) String() string {
 	}
 }
 
+func ParsePlatformEntityType(pet string) (PlatformEntityType, error) {
+	switch pet {
+	case "users":
+		return PlatformUsersScope, nil
+	case "domains":
+		return PlatformDomainsScope, nil
+	default:
+		return 0, fmt.Errorf("unknown platform entity type %s", pet)
+	}
+}
+
 func (pet PlatformEntityType) MarshalJSON() ([]byte, error) {
 	return []byte(pet.String()), nil
 }
 func (pet PlatformEntityType) MarshalText() (text []byte, err error) {
 	return []byte(pet.String()), nil
+}
+
+func (pet *PlatformEntityType) UnmarshalText(data []byte) (err error) {
+	*pet, err = ParsePlatformEntityType(string(data))
+	return err
 }
 
 // ScopeValue interface for Any entity ids or for sets of entity ids.
@@ -122,6 +180,50 @@ func (s SelectedIDs) Contains(id string) bool { _, ok := s[id]; return ok }
 // OperationScope contains map of OperationType with value of AnyIDs or SelectedIDs.
 type OperationScope struct {
 	Operations map[OperationType]ScopeValue `json:"operations,omitempty"`
+}
+
+func (os *OperationScope) UnmarshalJSON(data []byte) error {
+	type tempOperationScope struct {
+		Operations map[OperationType]json.RawMessage `json:"operations"`
+	}
+
+	var tempScope tempOperationScope
+	if err := json.Unmarshal(data, &tempScope); err != nil {
+		return err
+	}
+	// Initialize the Operations map
+	os.Operations = make(map[OperationType]ScopeValue)
+
+	for opType, rawMessage := range tempScope.Operations {
+		var stringValue string
+		var stringArrayValue []string
+
+		// Try to unmarshal as string
+		if err := json.Unmarshal(rawMessage, &stringValue); err == nil {
+			switch {
+			case stringValue == "*":
+				os.Operations[opType] = AnyIDs{}
+			default:
+				os.Operations[opType] = SelectedIDs{stringValue: {}}
+			}
+			continue
+		}
+
+		// Try to unmarshal as []string
+		if err := json.Unmarshal(rawMessage, &stringArrayValue); err == nil {
+			sids := make(SelectedIDs)
+			for _, stringVal := range stringArrayValue {
+				sids[stringVal] = struct{}{}
+			}
+			os.Operations[opType] = sids
+			continue
+		}
+
+		// If neither unmarshalling succeeded, return an error
+		return fmt.Errorf("invalid ScopeValue for OperationType %v", opType)
+	}
+
+	return nil
 }
 
 func (os *OperationScope) Add(operation OperationType, entityIDs ...string) error {
@@ -303,14 +405,6 @@ func (ds *DomainScope) Check(domainEntityType DomainEntityType, operation Operat
 	return os.Check(operation, ids...)
 }
 
-func (ds *DomainScope) String() string {
-	str, err := json.MarshalIndent(ds, "", "  ")
-	if err != nil {
-		return fmt.Sprintf("failed to convert domain_scope to string: json marshal error :%s", err.Error())
-	}
-	return string(str)
-}
-
 // Example Scope as JSON
 //
 //	{
@@ -427,7 +521,7 @@ func (s *Scope) Check(platformEntityType PlatformEntityType, optionalDomainID st
 }
 
 func (s *Scope) String() string {
-	str, err := json.MarshalIndent(s, "", "  ")
+	str, err := json.Marshal(s) // , "", "  ")
 	if err != nil {
 		return fmt.Sprintf("failed to convert scope to string: json marshal error :%s", err.Error())
 	}
@@ -436,19 +530,28 @@ func (s *Scope) String() string {
 
 // PAT represents Personal Access Token.
 type PAT struct {
-	ID         string    `json:"id,omitempty"`
-	User       string    `json:"user,omitempty"`
-	Name       string    `json:"name,omitempty"`
-	Scope      Scope     `json:"scope,omitempty"`
-	IssuedAt   time.Time `json:"issued_at,omitempty"`
-	ExpiresAt  time.Time `json:"expires_at,omitempty"`
-	UpdatedAt  time.Time `json:"updated_at,omitempty"`
-	LastUsedAt time.Time `json:"last_used_at,omitempty"`
-	Revoked    bool      `json:"revoked,omitempty"`
-	RevokedAt  time.Time `json:"revoked_at,omitempty"`
+	ID          string    `json:"id,omitempty"`
+	User        string    `json:"user,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Description string    `json:"Description,omitempty"`
+	Token       string    `json:"Token,omitempty"`
+	Scope       Scope     `json:"scope,omitempty"`
+	IssuedAt    time.Time `json:"issued_at,omitempty"`
+	ExpiresAt   time.Time `json:"expires_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	LastUsedAt  time.Time `json:"last_used_at,omitempty"`
+	Revoked     bool      `json:"revoked,omitempty"`
+	RevokedAt   time.Time `json:"revoked_at,omitempty"`
 }
 
-func (pat PAT) String() string {
+type PATSPage struct {
+	Total  uint64 `json:"total"`
+	Offset uint64 `json:"offset"`
+	Limit  uint64 `json:"limit"`
+	PATS   []PAT  `json:"pats"`
+}
+
+func (pat *PAT) String() string {
 	str, err := json.MarshalIndent(pat, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("failed to convert PAT to string: json marshal error :%s", err.Error())
@@ -461,25 +564,64 @@ func (pat PAT) Expired() bool {
 	return pat.ExpiresAt.UTC().Before(time.Now().UTC())
 }
 
-type PATService interface {
-	Create(ctx context.Context, token string, scope Scope) (PAT, error)
+type PATS interface {
+	Create(ctx context.Context, token, name, description string, duration time.Duration, scope Scope) (PAT, error)
+
+	UpdateName(ctx context.Context, token, patID, name string) (PAT, error)
+	UpdateDescription(ctx context.Context, token, patID, description string) (PAT, error)
+
 	Retrieve(ctx context.Context, token string, patID string) (PAT, error)
-	List(ctx context.Context, token string) (PAT, error)
-	Revoke(ctx context.Context, token string, paToken string) error
-	Delete(ctx context.Context, token string, paToken string) error
+	List(ctx context.Context, token string) (PATSPage, error)
+	Delete(ctx context.Context, token string, patID string) error
+
+	ResetToken(ctx context.Context, token, patID string, duration time.Duration) (PAT, error)
+	RevokeToken(ctx context.Context, token string, patID string) error
+
+	AddScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error
+	RemoveScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error
+	ClearAllScope(ctx context.Context, token, patID string) error
+
+	// This will be removed during PR merge.
+	TestCheckScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error
+
+	IdentifyPAT(ctx context.Context, paToken string) (PAT, error)
+	AuthorizationPAT(ctx context.Context, paToken string) (PAT, error)
 }
 
-// KeyRepository specifies Key persistence API.
+// PATSRepository specifies Key persistence API.
 //
 //go:generate mockery --name KeyRepository --output=./mocks --filename keys.go --quiet --note "Copyright (c) Abstract Machines"
-type PATRepository interface {
-	// Save persists the Key. A non-nil error is returned to indicate
-	// operation failure
+type PATSRepository interface {
+	// Save persists the PAT
 	Save(ctx context.Context, pat PAT) (id string, err error)
 
-	// Retrieve retrieves Key by its unique identifier.
-	Retrieve(ctx context.Context, id string) (pat PAT, err error)
+	// Retrieve retrieves users PAT by its unique identifier.
+	Retrieve(ctx context.Context, userID, patID string) (pat PAT, err error)
+
+	// UpdateName updates the name of a PAT.
+	UpdateName(ctx context.Context, userID, patID, name string) (PAT, error)
+
+	// UpdateDescription updates the description of a PAT.
+	UpdateDescription(ctx context.Context, userID, patID, description string) (PAT, error)
+
+	// UpdateTokenHash updates the token hash of a PAT.
+	UpdateTokenHash(ctx context.Context, userID, patID, tokenHash string, expiryAt time.Time) (PAT, error)
+
+	// UpdateLastUsed updates the last used details of a PAT.
+	UpdateLastUsed(ctx context.Context, token, patID, description string) (PAT, error)
+
+	// RetrieveAll retrieves all PATs belongs to userID.
+	RetrieveAll(ctx context.Context, userID string) (pats PATSPage, err error)
+
+	// Revoke PAT with provided ID.
+	Revoke(ctx context.Context, userID, patID string) error
 
 	// Remove removes Key with provided ID.
-	Remove(ctx context.Context, id string) error
+	Remove(ctx context.Context, userID, patID string) error
+
+	AddScopeEntry(ctx context.Context, userID, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error)
+
+	RemoveScopeEntry(ctx context.Context, userID, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error)
+
+	RemoveAllScopeEntry(ctx context.Context, userID, patID string) error
 }

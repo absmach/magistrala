@@ -1593,6 +1593,57 @@ func TestListMembers(t *testing.T) {
 	}
 }
 
+func TestSearchThings(t *testing.T) {
+	svc, cRepo, auth, _ := newService()
+
+	cases := []struct {
+		desc              string
+		token             string
+		page              mgclients.Page
+		identifyResponse  *magistrala.IdentityRes
+		authorizeResponse *magistrala.AuthorizeRes
+		searchResponse    mgclients.ClientsPage
+		responseErr       error
+		authorizeErr      error
+		identifyErr       error
+		err               error
+	}{
+		{
+			desc:  "search clients with valid token",
+			token: validToken,
+			page:  mgclients.Page{Offset: 0, Limit: 100, Name: "clientname"},
+			searchResponse: mgclients.ClientsPage{
+				Page:    mgclients.Page{Total: 1, Offset: 0, Limit: 100},
+				Clients: []mgclients.Client{client},
+			},
+			identifyResponse:  &magistrala.IdentityRes{Id: client.ID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			identifyErr:       nil,
+			err:               nil,
+		},
+		{
+			desc:           "search clients with invalid token",
+			token:          inValidToken,
+			page:           mgclients.Page{Offset: 0, Limit: 100, Name: "clientname"},
+			searchResponse: mgclients.ClientsPage{},
+			identifyErr:    svcerr.ErrAuthentication,
+			err:            svcerr.ErrAuthentication,
+		},
+	}
+
+	for _, tc := range cases {
+		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
+		repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
+		repoCall1 := cRepo.On("SearchBasicInfo", context.Background(), tc.page).Return(tc.searchResponse, tc.responseErr)
+		page, err := svc.SearchThings(context.Background(), tc.token, tc.page)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, tc.searchResponse, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.searchResponse, page))
+		authCall.Unset()
+		repoCall.Unset()
+		repoCall1.Unset()
+	}
+}
+
 func TestDeleteClient(t *testing.T) {
 	svc, cRepo, auth, cache := newService()
 

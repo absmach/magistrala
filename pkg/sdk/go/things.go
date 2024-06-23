@@ -295,6 +295,25 @@ func (sdk mgSDK) ListThingUsers(thingID string, pm PageMetadata, token string) (
 	return up, nil
 }
 
+func (sdk mgSDK) SearchThings(pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/search", thingsEndpoint), pm)
+	if err != nil {
+		return ThingsPage{}, errors.NewSDKError(err)
+	}
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return ThingsPage{}, sdkerr
+	}
+
+	var tp ThingsPage
+	if err := json.Unmarshal(body, &tp); err != nil {
+		return ThingsPage{}, errors.NewSDKError(err)
+	}
+
+	return tp, nil
+}
+
 func (sdk mgSDK) DeleteThing(id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, id)
 	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)

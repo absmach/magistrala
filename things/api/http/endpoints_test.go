@@ -380,6 +380,7 @@ func TestListThings(t *testing.T) {
 			desc:   "list things with valid token",
 			token:  validToken,
 			status: http.StatusOK,
+			query:  "name=clientname",
 			listThingsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total: 1,
@@ -391,12 +392,14 @@ func TestListThings(t *testing.T) {
 		{
 			desc:   "list things with empty token",
 			token:  "",
+			query:  "name=clientname",
 			status: http.StatusUnauthorized,
 			err:    apiutil.ErrBearerToken,
 		},
 		{
 			desc:   "list things with invalid token",
 			token:  inValidToken,
+			query:  "name=clientname",
 			status: http.StatusUnauthorized,
 			err:    svcerr.ErrAuthentication,
 		},
@@ -410,14 +413,14 @@ func TestListThings(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client},
 			},
-			query:  "offset=1",
+			query:  "name=clientname&offset=1",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
 			desc:   "list things with invalid offset",
 			token:  validToken,
-			query:  "offset=invalid",
+			query:  "name=clientname&offset=invalid",
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrValidation,
 		},
@@ -431,16 +434,30 @@ func TestListThings(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client},
 			},
-			query:  "limit=1",
+			query:  "name=clientname&limit=1",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
 			desc:   "list things with invalid limit",
 			token:  validToken,
-			query:  "limit=invalid",
+			query:  "name=clientname&limit=invalid",
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "search things with empty query",
+			token:  validToken,
+			query:  "",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrEmptySearchQuery,
+		},
+		{
+			desc:   "search users with invalid length of query",
+			token:  validToken,
+			query:  "name=a",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrLenSearchQuery,
 		},
 		{
 			desc:   "list things with limit greater than max",
@@ -448,19 +465,6 @@ func TestListThings(t *testing.T) {
 			query:  fmt.Sprintf("limit=%d", api.MaxLimitSize+1),
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrValidation,
-		},
-		{
-			desc:  "list things with name",
-			token: validToken,
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			query:  "name=clientname",
-			status: http.StatusOK,
-			err:    nil,
 		},
 		{
 			desc:   "list things with invalid name",
@@ -477,31 +481,11 @@ func TestListThings(t *testing.T) {
 			err:    apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:  "list things with status",
-			token: validToken,
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			query:  "status=enabled",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
 			desc:   "list things with invalid status",
 			token:  validToken,
 			query:  "status=invalid",
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrValidation,
-		},
-		{
-			desc:   "list things with duplicate status",
-			token:  validToken,
-			query:  "status=enabled&status=disabled",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrInvalidQueryParams,
 		},
 		{
 			desc:  "list things with tags",
@@ -517,13 +501,6 @@ func TestListThings(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list things with invalid tags",
-			token:  validToken,
-			query:  "tag=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
 			desc:   "list things with duplicate tags",
 			token:  validToken,
 			query:  "tag=tag1&tag=tag2",
@@ -531,85 +508,17 @@ func TestListThings(t *testing.T) {
 			err:    apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:  "list things with metadata",
+			desc:  "list things with id",
 			token: validToken,
+			query: fmt.Sprintf("id=%s", client.ID),
 			listThingsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total: 1,
 				},
 				Clients: []mgclients.Client{client},
 			},
-			query:  "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status: http.StatusOK,
 			err:    nil,
-		},
-		{
-			desc:   "list things with invalid metadata",
-			token:  validToken,
-			query:  "metadata=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
-			desc:   "list things with duplicate metadata",
-			token:  validToken,
-			query:  "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&metadata=%7B%22domain%22%3A%20%22example.com%22%7D",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrInvalidQueryParams,
-		},
-		{
-			desc:  "list things with permissions",
-			token: validToken,
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			query:  "permission=view",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "list things with invalid permissions",
-			token:  validToken,
-			query:  "permission=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
-			desc:   "list things with duplicate permissions",
-			token:  validToken,
-			query:  "permission=view&permission=view",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrInvalidQueryParams,
-		},
-		{
-			desc:  "list things with list perms",
-			token: validToken,
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			query:  "list_perms=true",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "list things with invalid list perms",
-			token:  validToken,
-			query:  "list_perms=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
-			desc:   "list things with duplicate list perms",
-			token:  validToken,
-			query:  "list_perms=true&listPerms=true",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrInvalidQueryParams,
 		},
 	}
 
@@ -623,6 +532,113 @@ func TestListThings(t *testing.T) {
 		}
 
 		svcCall := svc.On("ListClients", mock.Anything, tc.token, "", mock.Anything).Return(tc.listThingsResponse, tc.err)
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		var bodyRes respBody
+		err = json.NewDecoder(res.Body).Decode(&bodyRes)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+		if bodyRes.Err != "" || bodyRes.Message != "" {
+			err = errors.Wrap(errors.New(bodyRes.Err), errors.New(bodyRes.Message))
+		}
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		svcCall.Unset()
+	}
+}
+
+func TestSearchThings(t *testing.T) {
+	ts, svc, _ := newThingsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc            string
+		query           string
+		token           string
+		searchThingsRes mgclients.ClientsPage
+		status          int
+		err             error
+	}{
+		{
+			desc:   "search things with valid token",
+			token:  validToken,
+			status: http.StatusOK,
+			query:  "name=clientname",
+			searchThingsRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			err: nil,
+		},
+		{
+			desc:   "search things with empty token",
+			token:  "",
+			query:  "name=clientname",
+			status: http.StatusUnauthorized,
+			err:    apiutil.ErrBearerToken,
+		},
+		{
+			desc:   "search things with invalid token",
+			token:  inValidToken,
+			query:  "name=clientname",
+			status: http.StatusUnauthorized,
+			err:    svcerr.ErrAuthentication,
+		},
+		{
+			desc:  "search things with offset",
+			token: validToken,
+			searchThingsRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Offset: 1,
+					Total:  1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			query:  "name=client&offset=1",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "search things with invalid offset",
+			token:  validToken,
+			query:  "name=clientname&offset=invalid",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:  "search things with limit",
+			token: validToken,
+			searchThingsRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Limit: 1,
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			query:  "name=clientname&limit=1",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "search things with invalid limit",
+			token:  validToken,
+			query:  "name=clientname&limit=invalid",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+	}
+	for _, tc := range cases {
+		req := testRequest{
+			client:      ts.Client(),
+			method:      http.MethodGet,
+			url:         fmt.Sprintf("%s/things/search?%s", ts.URL, tc.query),
+			contentType: contentType,
+			token:       tc.token,
+		}
+
+		svcCall := svc.On("SearchThings", mock.Anything, tc.token, mock.Anything).Return(tc.searchThingsRes, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 

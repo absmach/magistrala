@@ -20,6 +20,7 @@ const (
 	clientViewPerms    = clientPrefix + "view_perms"
 	clientList         = clientPrefix + "list"
 	clientListByGroup  = clientPrefix + "list_by_channel"
+	clientSearch       = clientPrefix + "search"
 	clientIdentify     = clientPrefix + "identify"
 	clientAuthorize    = clientPrefix + "authorize"
 )
@@ -270,6 +271,31 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 	}
 	if lcge.Identity != "" {
 		val["identity"] = lcge.Identity
+	}
+
+	return val, nil
+}
+
+type searchThingsEvent struct {
+	mgclients.Page
+}
+
+func (ste searchThingsEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation": clientSearch,
+		"total":     ste.Total,
+		"offset":    ste.Offset,
+		"limit":     ste.Limit,
+	}
+	if ste.Name != "" {
+		val["name"] = ste.Name
+	}
+	if ste.Tag != "" {
+		val["tag"] = ste.Tag
+	}
+	if ste.IDs != nil {
+		ids := fmt.Sprintf("[%s]", strings.Join(ste.IDs, ","))
+		val["ids"] = ids
 	}
 
 	return val, nil

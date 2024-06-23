@@ -147,6 +147,45 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
+func searchClientsEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(searchThingsReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		pm := mgclients.Page{
+			Status:   req.Status,
+			Offset:   req.Offset,
+			Limit:    req.Limit,
+			Name:     req.Name,
+			Tag:      req.Tag,
+			Metadata: req.Metadata,
+			Identity: req.Identity,
+			Order:    req.Order,
+			Dir:      req.Dir,
+		}
+		page, err := svc.SearchThings(ctx, req.token, pm)
+		if err != nil {
+			return nil, err
+		}
+
+		res := clientsPageRes{
+			pageRes: pageRes{
+				Total:  page.Total,
+				Offset: page.Offset,
+				Limit:  page.Limit,
+			},
+			Clients: []viewClientRes{},
+		}
+		for _, client := range page.Clients {
+			res.Clients = append(res.Clients, viewClientRes{Client: client})
+		}
+
+		return res, nil
+	}
+}
+
 func updateClientEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientReq)

@@ -110,6 +110,14 @@ func (ms *metricsMiddleware) ListClientsByGroup(ctx context.Context, token, grou
 	return ms.svc.ListClientsByGroup(ctx, token, groupID, pm)
 }
 
+func (ms *metricsMiddleware) SearchThings(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "search_things").Add(1)
+		ms.latency.With("method", "search_things").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.SearchThings(ctx, token, pm)
+}
+
 func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "identify_thing").Add(1)

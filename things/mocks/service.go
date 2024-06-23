@@ -242,6 +242,34 @@ func (_m *Service) ListClientsByGroup(ctx context.Context, token string, groupID
 	return r0, r1
 }
 
+// SearchThings provides a mock function with given fields: ctx, token, pm
+func (_m *Service) SearchThings(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error) {
+	ret := _m.Called(ctx, token, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchThings")
+	}
+
+	var r0 clients.ClientsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) (clients.ClientsPage, error)); ok {
+		return rf(ctx, token, pm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) clients.ClientsPage); ok {
+		r0 = rf(ctx, token, pm)
+	} else {
+		r0 = ret.Get(0).(clients.ClientsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Page) error); ok {
+		r1 = rf(ctx, token, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Share provides a mock function with given fields: ctx, token, id, relation, userids
 func (_m *Service) Share(ctx context.Context, token string, id string, relation string, userids ...string) error {
 	_va := make([]interface{}, len(userids))

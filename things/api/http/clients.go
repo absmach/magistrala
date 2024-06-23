@@ -217,10 +217,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error) {
-	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
 	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -237,10 +233,7 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	st, err := mgclients.ToStatus(s)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
+
 	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -248,7 +241,7 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 
 	req := searchThingsReq{
 		apiutil.ExtractBearerToken(r),
-		mgclients.Page{Status: st, Offset: o, Limit: l, Name: n, Tag: t, Identity: id},
+		mgclients.Page{Offset: o, Limit: l, Name: n, Tag: t, Identity: id},
 	}
 
 	for _, field := range []string{req.Name, req.Identity, req.Tag} {

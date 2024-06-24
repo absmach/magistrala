@@ -79,13 +79,11 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 	}
 
 	if err := insertChannels(cfg.DomainID, cfg.Channels, tx); err != nil {
-		err = errors.Wrap(errSaveChannels, err)
-		return "", err
+		return "", errors.Wrap(errSaveChannels, err)
 	}
 
 	if err := insertConnections(ctx, cfg, chsConnIDs, tx); err != nil {
-		err = errors.Wrap(errSaveConnections, err)
-		return "", err
+		return "", errors.Wrap(errSaveConnections, err)
 	}
 	return cfg.ThingID, nil
 }

@@ -61,10 +61,6 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 	defer func() {
 		if err != nil {
 			err = cr.rollback("Save method", err, tx)
-		} else {
-			if commitErr := tx.Commit(); commitErr != nil {
-				err = commitErr
-			}
 		}
 	}()
 
@@ -85,6 +81,11 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 	if err := insertConnections(ctx, cfg, chsConnIDs, tx); err != nil {
 		return "", errors.Wrap(errSaveConnections, err)
 	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return "", commitErr
+	}
+
 	return cfg.ThingID, nil
 }
 

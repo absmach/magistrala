@@ -31,7 +31,7 @@ services:
     ports:
       - ${MG_INFLUXDB_PORT}:${MG_INFLUXDB_PORT}
     volumes:
-      - magistrala-influxdb-volume:/var/lib/influxdb
+      - magistrala-influxdb-volume:/var/lib/influxdb2
 
   influxdb-writer:
     image: magistrala/influxdb-writer:${MG_RELEASE_TAG}

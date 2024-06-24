@@ -6,6 +6,7 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/absmach/magistrala/auth"
 	"go.opentelemetry.io/otel/attribute"
@@ -303,4 +304,83 @@ func (tm *tracingMiddleware) ListUserDomains(ctx context.Context, token, userID 
 	))
 	defer span.End()
 	return tm.svc.ListUserDomains(ctx, token, userID, p)
+}
+
+func (tm *tracingMiddleware) Create(ctx context.Context, token, name, description string, duration time.Duration, scope auth.Scope) (auth.PAT, error) {
+	ctx, span := tm.tracer.Start(ctx, "create_pat", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("description", description),
+		attribute.String("duration", duration.String()),
+		attribute.String("scope", scope.String()),
+	))
+	defer span.End()
+	return tm.svc.Create(ctx, token, name, description, duration, scope)
+}
+func (tm *tracingMiddleware) UpdateName(ctx context.Context, token, patID, name string) (auth.PAT, error) {
+	ctx, span := tm.tracer.Start(ctx, "update_pat_name", trace.WithAttributes(
+		attribute.String("pat_id", patID),
+		attribute.String("name", name),
+	))
+	defer span.End()
+	return tm.svc.UpdateName(ctx, token, patID, name)
+}
+func (tm *tracingMiddleware) UpdateDescription(ctx context.Context, token, patID, description string) (auth.PAT, error) {
+	ctx, span := tm.tracer.Start(ctx, "update_pat_description", trace.WithAttributes(
+		attribute.String("pat_id", patID),
+		attribute.String("description", description),
+	))
+	defer span.End()
+	return tm.svc.UpdateDescription(ctx, token, patID, description)
+}
+func (tm *tracingMiddleware) Retrieve(ctx context.Context, token string, patID string) (auth.PAT, error) {
+	ctx, span := tm.tracer.Start(ctx, "retrieve_pat", trace.WithAttributes(
+		attribute.String("pat_id", patID),
+	))
+	defer span.End()
+	return tm.svc.Retrieve(ctx, token, patID)
+}
+func (tm *tracingMiddleware) List(ctx context.Context, token string) (auth.PATSPage, error) {
+	ctx, span := tm.tracer.Start(ctx, "list_pat")
+	defer span.End()
+	return tm.svc.List(ctx, token)
+}
+func (tm *tracingMiddleware) Delete(ctx context.Context, token string, patID string) error {
+	ctx, span := tm.tracer.Start(ctx, "delete_pat", trace.WithAttributes(
+		attribute.String("pat_id", patID),
+	))
+	defer span.End()
+	return tm.svc.Delete(ctx, token, patID)
+}
+func (tm *tracingMiddleware) ResetToken(ctx context.Context, token, patID string, duration time.Duration) (auth.PAT, error) {
+	ctx, span := tm.tracer.Start(ctx, "reset_pat", trace.WithAttributes(
+		attribute.String("pat_id", patID),
+		attribute.String("duration", duration.String()),
+	))
+	defer span.End()
+	return tm.svc.ResetToken(ctx, token, patID, duration)
+}
+func (tm *tracingMiddleware) RevokeToken(ctx context.Context, token string, patID string) error {
+	ctx, span := tm.tracer.Start(ctx, "revoke_pat", trace.WithAttributes(
+		attribute.String("pat_id", patID),
+	))
+	defer span.End()
+	return tm.svc.RevokeToken(ctx, token, patID)
+}
+func (tm *tracingMiddleware) AddScope(ctx context.Context, token, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) (auth.Scope, error) {
+	return tm.svc.AddScope(ctx, token, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+}
+func (tm *tracingMiddleware) RemoveScope(ctx context.Context, token, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) (auth.Scope, error) {
+	return tm.svc.RemoveScope(ctx, token, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+}
+func (tm *tracingMiddleware) ClearAllScope(ctx context.Context, token, patID string) error {
+	return tm.svc.ClearAllScope(ctx, token, patID)
+}
+func (tm *tracingMiddleware) TestCheckScope(ctx context.Context, token, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) error {
+	return tm.svc.TestCheckScope(ctx, token, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+}
+func (tm *tracingMiddleware) IdentifyPAT(ctx context.Context, paToken string) (auth.PAT, error) {
+	return tm.svc.IdentifyPAT(ctx, paToken)
+}
+func (tm *tracingMiddleware) AuthorizationPAT(ctx context.Context, paToken string) (auth.PAT, error) {
+	return tm.svc.AuthorizationPAT(ctx, paToken)
 }

@@ -33,11 +33,14 @@ var (
 	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
 	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
 
-	errCreatePAT   = errors.New("failed to create PAT")
-	errUpdatePAT   = errors.New("failed to update PAT")
-	errRetrievePAT = errors.New("failed to retrieve PAT")
-	errDeletePAT   = errors.New("failed to delete PAT")
-	errRevokePAT   = errors.New("failed to revoke PAT")
+	errCreatePAT     = errors.New("failed to create PAT")
+	errUpdatePAT     = errors.New("failed to update PAT")
+	errRetrievePAT   = errors.New("failed to retrieve PAT")
+	errDeletePAT     = errors.New("failed to delete PAT")
+	errRevokePAT     = errors.New("failed to revoke PAT")
+	errAddScope      = errors.New("failed to add entry in scope")
+	errRemoveScope   = errors.New("failed to remove entry in scope")
+	errClearAllScope = errors.New("failed to clear all entry in scope")
 )
 
 // Authn specifies an API that must be fullfiled by the domain service
@@ -1079,37 +1082,52 @@ func (svc service) RevokeToken(ctx context.Context, token, patID string) error {
 	}
 	return nil
 }
+
 func (svc service) AddScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error) {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
 		return Scope{}, err
 	}
-	if err := svc.pats.AddScope(ctx, key.User, patID); err != nil {
-		return errors.Wrap(errRevokePAT, err)
+	scope, err := svc.pats.AddScopeEntry(ctx, key.User, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+	if err != nil {
+
+		return Scope{}, errors.Wrap(errRevokePAT, err)
 	}
-	return nil
+	return scope, nil
 }
 func (svc service) RemoveScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error) {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
 		return Scope{}, err
 	}
-	return nil
+	scope, err := svc.pats.RemoveScopeEntry(ctx, key.User, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+	if err != nil {
+		return Scope{}, err
+	}
+	return scope, nil
 }
 func (svc service) ClearAllScope(ctx context.Context, token, patID string) error {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
 		return err
 	}
-	return nil
-}
-func (svc service) TestCheckScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error {
-	key, err := svc.Identify(ctx, token)
-	if err != nil {
-		return PAT{}, err
+	if err := svc.pats.RemoveAllScopeEntry(ctx, key.User, patID); err != nil {
+		return errors.Wrap(errClearAllScope, err)
 	}
 	return nil
 }
+
+func (svc service) TestCheckScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error {
+	key, err := svc.Identify(ctx, token)
+	if err != nil {
+		return err
+	}
+	if err := svc.pats.CheckScopeEntry(ctx, key.User, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (svc service) IdentifyPAT(ctx context.Context, paToken string) (PAT, error) {
 	return PAT{}, nil
 }

@@ -873,7 +873,7 @@ func TestDisconnectThing(t *testing.T) {
 			id:          wrongID,
 			channels:    c.Channels,
 			connections: channels,
-			err:         repoerr.ErrNotFound,
+			err:         nil,
 		},
 		{
 			desc:        "disconnect random thing",
@@ -881,7 +881,7 @@ func TestDisconnectThing(t *testing.T) {
 			id:          randomThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
-			err:         repoerr.ErrNotFound,
+			err:         nil,
 		},
 		{
 			desc:        "disconnect empty thing",
@@ -889,7 +889,7 @@ func TestDisconnectThing(t *testing.T) {
 			id:          emptyThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
-			err:         repoerr.ErrNotFound,
+			err:         nil,
 		},
 	}
 

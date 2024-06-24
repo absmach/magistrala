@@ -476,12 +476,9 @@ func (cr configRepository) ConnectThing(ctx context.Context, channelID, thingID 
 func (cr configRepository) DisconnectThing(ctx context.Context, channelID, thingID string) error {
 	q := `UPDATE configs SET state = $1 WHERE EXISTS (
 		SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
-	result, err := cr.db.ExecContext(ctx, q, bootstrap.Inactive, thingID, channelID)
+	_, err := cr.db.ExecContext(ctx, q, bootstrap.Inactive, thingID, channelID)
 	if err != nil {
 		return errors.Wrap(errDisconnectThing, err)
-	}
-	if rows, _ := result.RowsAffected(); rows == 0 {
-		return repoerr.ErrNotFound
 	}
 	return nil
 }

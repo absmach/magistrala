@@ -83,7 +83,7 @@ type Service interface {
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
 	Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error)
 
-	// ChangeState changes state of the Thing with given ID and owner.
+	// ChangeState changes state of the Thing with given thing ID and domain ID.
 	ChangeState(ctx context.Context, token, id string, state State) error
 
 	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as

@@ -392,7 +392,7 @@ func TestUpdate(t *testing.T) {
 				"channels":    channels,
 				"external_id": modified.ExternalID,
 				"thing_id":    modified.ThingID,
-				"owner":       validID,
+				"domain_id":   domainID,
 				"state":       "0",
 				"occurred_at": time.Now().UnixNano(),
 			},

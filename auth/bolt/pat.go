@@ -43,6 +43,10 @@ func (pr *patRepo) UpdateTokenHash(ctx context.Context, userID, patID, tokenHash
 	return auth.PAT{}, nil
 }
 
+func (pr *patRepo) UpdateLastUsed(ctx context.Context, token, patID, description string) (auth.PAT, error) {
+	return auth.PAT{}, nil
+}
+
 func (pr *patRepo) RetrieveAll(ctx context.Context, userID string) (pats auth.PATSPage, err error) {
 	return auth.PATSPage{}, nil
 }
@@ -61,6 +65,10 @@ func (pr *patRepo) AddScopeEntry(ctx context.Context, userID, patID string, plat
 
 func (pr *patRepo) RemoveScopeEntry(ctx context.Context, userID, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) (auth.Scope, error) {
 	return auth.Scope{}, nil
+}
+
+func (pr *patRepo) CheckScopeEntry(ctx context.Context, userID, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) error {
+	return nil
 }
 
 func (pr *patRepo) RemoveAllScopeEntry(ctx context.Context, userID, patID string) error {

@@ -58,6 +58,7 @@ func ParseOperationType(ot string) (OperationType, error) {
 func (ot OperationType) MarshalJSON() ([]byte, error) {
 	return []byte(ot.String()), nil
 }
+
 func (ot OperationType) MarshalText() (text []byte, err error) {
 	return []byte(ot.String()), nil
 }
@@ -111,6 +112,7 @@ func ParseDomainEntityType(det string) (DomainEntityType, error) {
 func (det DomainEntityType) MarshalJSON() ([]byte, error) {
 	return []byte(det.String()), nil
 }
+
 func (det DomainEntityType) MarshalText() ([]byte, error) {
 	return []byte(det.String()), nil
 }
@@ -153,6 +155,7 @@ func ParsePlatformEntityType(pet string) (PlatformEntityType, error) {
 func (pet PlatformEntityType) MarshalJSON() ([]byte, error) {
 	return []byte(pet.String()), nil
 }
+
 func (pet PlatformEntityType) MarshalText() (text []byte, err error) {
 	return []byte(pet.String()), nil
 }
@@ -570,12 +573,12 @@ type PATS interface {
 	UpdateName(ctx context.Context, token, patID, name string) (PAT, error)
 	UpdateDescription(ctx context.Context, token, patID, description string) (PAT, error)
 
-	Retrieve(ctx context.Context, token string, patID string) (PAT, error)
+	Retrieve(ctx context.Context, token, patID string) (PAT, error)
 	List(ctx context.Context, token string) (PATSPage, error)
-	Delete(ctx context.Context, token string, patID string) error
+	Delete(ctx context.Context, token, patID string) error
 
 	ResetToken(ctx context.Context, token, patID string, duration time.Duration) (PAT, error)
-	RevokeToken(ctx context.Context, token string, patID string) error
+	RevokeToken(ctx context.Context, token, patID string) error
 
 	AddScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error)
 	RemoveScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error)

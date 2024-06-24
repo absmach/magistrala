@@ -140,7 +140,7 @@ func handleGet(m *mux.Message, w mux.ResponseWriter, msg *messaging.Message, key
 			}
 			if err != nil {
 				args = append(args, slog.Any("error", err))
-				logger.Warn("Unsubscribe idle client failed to complete successfully ", args...)
+				logger.Warn("Unsubscribe idle client failed ", args...)
 				return
 			}
 			logger.Warn("Unsubscribe idle client completed successfully", args...)

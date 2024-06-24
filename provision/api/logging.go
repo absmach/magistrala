@@ -33,7 +33,7 @@ func (lm *loggingMiddleware) Provision(token, name, externalID, externalKey stri
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Provision failed to complete successfully", args...)
+			lm.logger.Warn("Provision failed", args...)
 			return
 		}
 		lm.logger.Info("Provision completed successfully", args...)
@@ -67,7 +67,7 @@ func (lm *loggingMiddleware) Mapping(token string) (res map[string]interface{}, 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Mapping failed to complete successfully", args...)
+			lm.logger.Warn("Mapping failed", args...)
 			return
 		}
 		lm.logger.Info("Mapping completed successfully", args...)

@@ -36,7 +36,7 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token, kind string
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Create group failed to complete successfully", args...)
+			lm.logger.Warn("Create group failed", args...)
 			return
 		}
 		lm.logger.Info("Create group completed successfully", args...)
@@ -58,7 +58,7 @@ func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, grou
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update group failed to complete successfully", args...)
+			lm.logger.Warn("Update group failed", args...)
 			return
 		}
 		lm.logger.Info("Update group completed successfully", args...)
@@ -79,7 +79,7 @@ func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("View group failed to complete successfully", args...)
+			lm.logger.Warn("View group failed", args...)
 			return
 		}
 		lm.logger.Info("View group completed successfully", args...)
@@ -97,7 +97,7 @@ func (lm *loggingMiddleware) ViewGroupPerms(ctx context.Context, token, id strin
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("View group permissions failed to complete successfully", args...)
+			lm.logger.Warn("View group permissions failed", args...)
 			return
 		}
 		lm.logger.Info("View group permissions completed successfully", args...)
@@ -123,7 +123,7 @@ func (lm *loggingMiddleware) ListGroups(ctx context.Context, token, memberKind, 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List groups failed to complete successfully", args...)
+			lm.logger.Warn("List groups failed", args...)
 			return
 		}
 		lm.logger.Info("List groups completed successfully", args...)
@@ -144,7 +144,7 @@ func (lm *loggingMiddleware) EnableGroup(ctx context.Context, token, id string) 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Enable group failed to complete successfully", args...)
+			lm.logger.Warn("Enable group failed", args...)
 			return
 		}
 		lm.logger.Info("Enable group completed successfully", args...)
@@ -165,7 +165,7 @@ func (lm *loggingMiddleware) DisableGroup(ctx context.Context, token, id string)
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Disable group failed to complete successfully", args...)
+			lm.logger.Warn("Disable group failed", args...)
 			return
 		}
 		lm.logger.Info("Disable group completed successfully", args...)
@@ -185,7 +185,7 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID, pe
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List members failed to complete successfully", args...)
+			lm.logger.Warn("List members failed", args...)
 			return
 		}
 		lm.logger.Info("List members completed successfully", args...)
@@ -204,7 +204,7 @@ func (lm *loggingMiddleware) Assign(ctx context.Context, token, groupID, relatio
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Assign member to group failed to complete successfully", args...)
+			lm.logger.Warn("Assign member to group failed", args...)
 			return
 		}
 		lm.logger.Info("Assign member to group completed successfully", args...)
@@ -224,7 +224,7 @@ func (lm *loggingMiddleware) Unassign(ctx context.Context, token, groupID, relat
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Unassign member to group failed to complete successfully", args...)
+			lm.logger.Warn("Unassign member to group failed", args...)
 			return
 		}
 		lm.logger.Info("Unassign member to group completed successfully", args...)
@@ -241,7 +241,7 @@ func (lm *loggingMiddleware) DeleteGroup(ctx context.Context, token, id string) 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Delete group failed to complete successfully", args...)
+			lm.logger.Warn("Delete group failed", args...)
 			return
 		}
 		lm.logger.Info("Delete group completed successfully", args...)

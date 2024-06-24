@@ -35,7 +35,7 @@ func (lm *loggingMiddleware) Add(ctx context.Context, token string, cfg bootstra
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Add new bootstrap failed to complete successfully", args...)
+			lm.logger.Warn("Add new bootstrap failed", args...)
 			return
 		}
 		lm.logger.Info("Add new bootstrap completed successfully", args...)
@@ -54,7 +54,7 @@ func (lm *loggingMiddleware) View(ctx context.Context, token, id string) (saved 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("View thing config failed to complete successfully", args...)
+			lm.logger.Warn("View thing config failed", args...)
 			return
 		}
 		lm.logger.Info("View thing config completed successfully", args...)
@@ -76,7 +76,7 @@ func (lm *loggingMiddleware) Update(ctx context.Context, token string, cfg boots
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update bootstrap config failed to complete successfully", args...)
+			lm.logger.Warn("Update bootstrap config failed", args...)
 			return
 		}
 		lm.logger.Info("Update bootstrap config completed successfully", args...)
@@ -95,7 +95,7 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, token, thingID, cli
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update bootstrap config certificate failed to complete successfully", args...)
+			lm.logger.Warn("Update bootstrap config certificate failed", args...)
 			return
 		}
 		lm.logger.Info("Update bootstrap config certificate completed successfully", args...)
@@ -115,7 +115,7 @@ func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, token, id st
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update config connections failed to complete successfully", args...)
+			lm.logger.Warn("Update config connections failed", args...)
 			return
 		}
 		lm.logger.Info("Update config connections completed successfully", args...)
@@ -139,7 +139,7 @@ func (lm *loggingMiddleware) List(ctx context.Context, token string, filter boot
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List configs failed to complete successfully", args...)
+			lm.logger.Warn("List configs failed", args...)
 			return
 		}
 		lm.logger.Info("List configs completed successfully", args...)
@@ -158,7 +158,7 @@ func (lm *loggingMiddleware) Remove(ctx context.Context, token, id string) (err 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove bootstrap config failed to complete successfully", args...)
+			lm.logger.Warn("Remove bootstrap config failed", args...)
 			return
 		}
 		lm.logger.Info("Remove bootstrap config completed successfully", args...)
@@ -175,7 +175,7 @@ func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("View bootstrap config failed to complete successfully", args...)
+			lm.logger.Warn("View bootstrap config failed", args...)
 			return
 		}
 		lm.logger.Info("View bootstrap completed successfully", args...)
@@ -193,7 +193,7 @@ func (lm *loggingMiddleware) ChangeState(ctx context.Context, token, id string, 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Change thing state failed to complete successfully", args...)
+			lm.logger.Warn("Change thing state failed", args...)
 			return
 		}
 		lm.logger.Info("Change thing state completed successfully", args...)
@@ -214,7 +214,7 @@ func (lm *loggingMiddleware) UpdateChannelHandler(ctx context.Context, channel b
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update channel handler failed to complete successfully", args...)
+			lm.logger.Warn("Update channel handler failed", args...)
 			return
 		}
 		lm.logger.Info("Update channel handler completed successfully", args...)
@@ -231,7 +231,7 @@ func (lm *loggingMiddleware) RemoveConfigHandler(ctx context.Context, id string)
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove config handler failed to complete successfully", args...)
+			lm.logger.Warn("Remove config handler failed", args...)
 			return
 		}
 		lm.logger.Info("Remove config handler completed successfully", args...)
@@ -248,7 +248,7 @@ func (lm *loggingMiddleware) RemoveChannelHandler(ctx context.Context, id string
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove channel handler failed to complete successfully", args...)
+			lm.logger.Warn("Remove channel handler failed", args...)
 			return
 		}
 		lm.logger.Info("Remove channel handler completed successfully", args...)
@@ -266,7 +266,7 @@ func (lm *loggingMiddleware) ConnectThingHandler(ctx context.Context, channelID,
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Connect thing handler failed to complete successfully", args...)
+			lm.logger.Warn("Connect thing handler failed", args...)
 			return
 		}
 		lm.logger.Info("Connect thing handler completed successfully", args...)
@@ -284,7 +284,7 @@ func (lm *loggingMiddleware) DisconnectThingHandler(ctx context.Context, channel
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Disconnect thing handler failed to complete successfully", args...)
+			lm.logger.Warn("Disconnect thing handler failed", args...)
 			return
 		}
 		lm.logger.Info("Disconnect thing handler completed successfully", args...)

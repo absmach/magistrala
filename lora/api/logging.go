@@ -37,7 +37,7 @@ func (lm loggingMiddleware) CreateThing(ctx context.Context, thingID, loraDevEUI
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Create thing route-map failed to complete successfully", args...)
+			lm.logger.Warn("Create thing route-map failed", args...)
 			return
 		}
 		lm.logger.Info("Create thing route-map completed successfully", args...)
@@ -55,7 +55,7 @@ func (lm loggingMiddleware) UpdateThing(ctx context.Context, thingID, loraDevEUI
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update thing route-map failed to complete successfully", args...)
+			lm.logger.Warn("Update thing route-map failed", args...)
 			return
 		}
 		lm.logger.Info("Update thing route-map completed successfully", args...)
@@ -72,7 +72,7 @@ func (lm loggingMiddleware) RemoveThing(ctx context.Context, thingID string) (er
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove thing route-map failed to complete successfully", args...)
+			lm.logger.Warn("Remove thing route-map failed", args...)
 			return
 		}
 		lm.logger.Info("Remove thing route-map completed successfully", args...)
@@ -90,7 +90,7 @@ func (lm loggingMiddleware) CreateChannel(ctx context.Context, chanID, loraApp s
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Create channel route-map failed to complete successfully", args...)
+			lm.logger.Warn("Create channel route-map failed", args...)
 			return
 		}
 		lm.logger.Info("Create channel route-map completed successfully", args...)
@@ -107,7 +107,7 @@ func (lm loggingMiddleware) UpdateChannel(ctx context.Context, chanID, loraApp s
 			slog.String("lora_app", loraApp),
 		}
 		if err != nil {
-			lm.logger.Warn("Update channel route-map failed to complete successfully", args...)
+			lm.logger.Warn("Update channel route-map failed", args...)
 			return
 		}
 		lm.logger.Info("Update channel route-map completed successfully", args...)
@@ -123,7 +123,7 @@ func (lm loggingMiddleware) RemoveChannel(ctx context.Context, chanID string) (e
 			slog.String("channel_id", chanID),
 		}
 		if err != nil {
-			lm.logger.Warn("Remove channel route-map failed to complete successfully", args...)
+			lm.logger.Warn("Remove channel route-map failed", args...)
 			return
 		}
 		lm.logger.Info("Remove channel route-map completed successfully", args...)
@@ -141,7 +141,7 @@ func (lm loggingMiddleware) ConnectThing(ctx context.Context, chanID, thingID st
 		}
 		if err != nil {
 			args := append(args, slog.String("error", err.Error()))
-			lm.logger.Warn("Connect thing to channel failed to complete successfully", args...)
+			lm.logger.Warn("Connect thing to channel failed", args...)
 			return
 		}
 		lm.logger.Info("Connect thing to channel completed successfully", args...)
@@ -159,7 +159,7 @@ func (lm loggingMiddleware) DisconnectThing(ctx context.Context, chanID, thingID
 		}
 		if err != nil {
 			args := append(args, slog.String("error", err.Error()))
-			lm.logger.Warn("Disconnect thing from channel failed to complete successfully", args...)
+			lm.logger.Warn("Disconnect thing from channel failed", args...)
 			return
 		}
 		lm.logger.Info("Disconnect thing from channel completed successfully", args...)
@@ -179,7 +179,7 @@ func (lm loggingMiddleware) Publish(ctx context.Context, msg *lora.Message) (err
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Publish failed to complete successfully", args...)
+			lm.logger.Warn("Publish failed", args...)
 			return
 		}
 		lm.logger.Info("Publish completed successfully", args...)

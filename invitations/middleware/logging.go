@@ -31,7 +31,7 @@ func (lm *logging) SendInvitation(ctx context.Context, token string, invitation 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Send invitation failed to complete successfully", args...)
+			lm.logger.Warn("Send invitation failed", args...)
 			return
 		}
 		lm.logger.Info("Send invitation completed successfully", args...)
@@ -48,7 +48,7 @@ func (lm *logging) ViewInvitation(ctx context.Context, token, userID, domainID s
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("View invitation failed to complete successfully", args...)
+			lm.logger.Warn("View invitation failed", args...)
 			return
 		}
 		lm.logger.Info("View invitation completed successfully", args...)
@@ -68,7 +68,7 @@ func (lm *logging) ListInvitations(ctx context.Context, token string, page invit
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List invitations failed to complete successfully", args...)
+			lm.logger.Warn("List invitations failed", args...)
 			return
 		}
 		lm.logger.Info("List invitations completed successfully", args...)
@@ -84,7 +84,7 @@ func (lm *logging) AcceptInvitation(ctx context.Context, token, domainID string)
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Accept invitation failed to complete successfully", args...)
+			lm.logger.Warn("Accept invitation failed", args...)
 			return
 		}
 		lm.logger.Info("Accept invitation completed successfully", args...)
@@ -101,7 +101,7 @@ func (lm *logging) DeleteInvitation(ctx context.Context, token, userID, domainID
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Delete invitation failed to complete successfully", args...)
+			lm.logger.Warn("Delete invitation failed", args...)
 			return
 		}
 		lm.logger.Info("Delete invitation completed successfully", args...)

@@ -38,7 +38,7 @@ func (lm *loggingMiddleware) CreateSubscription(ctx context.Context, token strin
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Create subscription failed to complete successfully", args...)
+			lm.logger.Warn("Create subscription failed", args...)
 			return
 		}
 		lm.logger.Info("Create subscription completed successfully", args...)
@@ -60,7 +60,7 @@ func (lm *loggingMiddleware) ViewSubscription(ctx context.Context, token, topic 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("View subscription failed to complete successfully", args...)
+			lm.logger.Warn("View subscription failed", args...)
 			return
 		}
 		lm.logger.Info("View subscription completed successfully", args...)
@@ -84,7 +84,7 @@ func (lm *loggingMiddleware) ListSubscriptions(ctx context.Context, token string
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List subscriptions failed to complete successfully", args...)
+			lm.logger.Warn("List subscriptions failed", args...)
 			return
 		}
 		lm.logger.Info("List subscriptions completed successfully", args...)
@@ -103,7 +103,7 @@ func (lm *loggingMiddleware) RemoveSubscription(ctx context.Context, token, id s
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove subscription failed to complete successfully", args...)
+			lm.logger.Warn("Remove subscription failed", args...)
 			return
 		}
 		lm.logger.Info("Remove subscription completed successfully", args...)

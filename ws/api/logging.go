@@ -36,7 +36,7 @@ func (lm *loggingMiddleware) Subscribe(ctx context.Context, thingKey, chanID, su
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Subscibe failed to complete successfully", args...)
+			lm.logger.Warn("Subscibe failed", args...)
 			return
 		}
 		lm.logger.Info("Subscribe completed successfully", args...)

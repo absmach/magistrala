@@ -46,7 +46,7 @@ func (lm *loggingMiddleware) ReadAll(chanID string, rpm readers.PageMetadata) (p
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Read all failed to complete successfully", args...)
+			lm.logger.Warn("Read all failed", args...)
 			return
 		}
 		lm.logger.Info("Read all completed successfully", args...)

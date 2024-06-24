@@ -36,7 +36,7 @@ func (lm *loggingMiddleware) IssueCert(ctx context.Context, token, thingID, ttl 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Issue certificate failed to complete successfully", args...)
+			lm.logger.Warn("Issue certificate failed", args...)
 			return
 		}
 		lm.logger.Info("Issue certificate completed successfully", args...)
@@ -59,7 +59,7 @@ func (lm *loggingMiddleware) ListCerts(ctx context.Context, token, thingID strin
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List certificates failed to complete successfully", args...)
+			lm.logger.Warn("List certificates failed", args...)
 			return
 		}
 		lm.logger.Info("List certificates completed successfully", args...)
@@ -83,7 +83,7 @@ func (lm *loggingMiddleware) ListSerials(ctx context.Context, token, thingID str
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List certifcates serials failed to complete successfully", args...)
+			lm.logger.Warn("List certifcates serials failed", args...)
 			return
 		}
 		lm.logger.Info("List certificates serials completed successfully", args...)
@@ -102,7 +102,7 @@ func (lm *loggingMiddleware) ViewCert(ctx context.Context, token, serialID strin
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("View certificate failed to complete successfully", args...)
+			lm.logger.Warn("View certificate failed", args...)
 			return
 		}
 		lm.logger.Info("View certificate completed successfully", args...)
@@ -121,7 +121,7 @@ func (lm *loggingMiddleware) RevokeCert(ctx context.Context, token, thingID stri
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Revoke certificate failed to complete successfully", args...)
+			lm.logger.Warn("Revoke certificate failed", args...)
 			return
 		}
 		lm.logger.Info("Revoke certificate completed successfully", args...)

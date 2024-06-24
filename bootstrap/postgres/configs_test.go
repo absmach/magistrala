@@ -745,7 +745,7 @@ func TestConnectThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		owner       string
+		domainID    string
 		id          string
 		channels    []bootstrap.Channel
 		connections []string
@@ -753,7 +753,7 @@ func TestConnectThing(t *testing.T) {
 	}{
 		{
 			desc:        "connect disconnected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          saved,
 			channels:    c.Channels,
 			connections: channels,
@@ -761,7 +761,7 @@ func TestConnectThing(t *testing.T) {
 		},
 		{
 			desc:        "connect already connected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          connectedThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -769,7 +769,7 @@ func TestConnectThing(t *testing.T) {
 		},
 		{
 			desc:        "connect non-existent thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          wrongID,
 			channels:    c.Channels,
 			connections: channels,
@@ -777,7 +777,7 @@ func TestConnectThing(t *testing.T) {
 		},
 		{
 			desc:        "connect random thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          randomThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -785,7 +785,7 @@ func TestConnectThing(t *testing.T) {
 		},
 		{
 			desc:        "connect empty thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          emptyThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -797,7 +797,7 @@ func TestConnectThing(t *testing.T) {
 			if i == 0 {
 				err = repo.ConnectThing(context.Background(), ch.ID, tc.id)
 				assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
-				cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+				cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
 				assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 				assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
 			} else {
@@ -805,12 +805,11 @@ func TestConnectThing(t *testing.T) {
 			}
 		}
 
-		cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
 		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 		assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
 	}
 }
-
 func TestDisconnectThing(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(context.Background(), repo)

@@ -567,33 +567,56 @@ func (pat PAT) Expired() bool {
 	return pat.ExpiresAt.UTC().Before(time.Now().UTC())
 }
 
+// PATS specifies function which are required for Personal access Token implementation.
+//go:generate mockery --name PATS --output=./mocks --filename pats.go --quiet --note "Copyright (c) Abstract Machines"
+
 type PATS interface {
+	// Create function creates new PAT for given valid inputs.
 	Create(ctx context.Context, token, name, description string, duration time.Duration, scope Scope) (PAT, error)
 
+	// UpdateName function updates the name for the given PAT ID.
 	UpdateName(ctx context.Context, token, patID, name string) (PAT, error)
+
+	// UpdateDescription function updates the description for the given PAT ID.
 	UpdateDescription(ctx context.Context, token, patID, description string) (PAT, error)
 
+	// Retrieve function retrieves the PAT for given ID.
 	Retrieve(ctx context.Context, token, patID string) (PAT, error)
+
+	// List function lists all the PATs for the user.
 	List(ctx context.Context, token string) (PATSPage, error)
+
+	// Delete function deletes the PAT for given ID.
 	Delete(ctx context.Context, token, patID string) error
 
-	ResetToken(ctx context.Context, token, patID string, duration time.Duration) (PAT, error)
-	RevokeToken(ctx context.Context, token, patID string) error
+	// ResetSecret function reset the secret and creates new secret for the given ID.
+	ResetSecret(ctx context.Context, token, patID string, duration time.Duration) (PAT, error)
 
+	// RevokeSecret function revokes the secret for the given ID.
+	RevokeSecret(ctx context.Context, token, patID string) error
+
+	// AddScope function adds a new scope entry.
 	AddScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error)
+
+	// RemoveScope function removes a scope entry.
 	RemoveScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) (Scope, error)
+
+	// ClearAllScope function removes all scope entry.
 	ClearAllScope(ctx context.Context, token, patID string) error
 
-	// This will be removed during PR merge.
-	TestCheckScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error
+	// This will be removed during PR merge. TestCheckScope will check the given scope exists.
+	TestCheckScope(ctx context.Context, paToken string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error
 
+	// IdentifyPAT function will valid the secret.
 	IdentifyPAT(ctx context.Context, paToken string) (PAT, error)
-	AuthorizationPAT(ctx context.Context, paToken string) (PAT, error)
+
+	// AuthorizePAT function will valid the secret and check the given scope exists.
+	AuthorizePAT(ctx context.Context, paToken string) (PAT, error)
 }
 
-// PATSRepository specifies Key persistence API.
+// PATSRepository specifies PATS persistence API.
 //
-//go:generate mockery --name KeyRepository --output=./mocks --filename keys.go --quiet --note "Copyright (c) Abstract Machines"
+//go:generate mockery --name PATSRepository --output=./mocks --filename patsrepo.go --quiet --note "Copyright (c) Abstract Machines"
 type PATSRepository interface {
 	// Save persists the PAT
 	Save(ctx context.Context, pat PAT) (id string, err error)

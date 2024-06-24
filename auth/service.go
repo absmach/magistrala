@@ -1055,7 +1055,7 @@ func (svc service) Delete(ctx context.Context, token, patID string) error {
 	}
 	return nil
 }
-func (svc service) ResetToken(ctx context.Context, token, patID string, duration time.Duration) (PAT, error) {
+func (svc service) ResetSecret(ctx context.Context, token, patID string, duration time.Duration) (PAT, error) {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
 		return PAT{}, err
@@ -1071,7 +1071,7 @@ func (svc service) ResetToken(ctx context.Context, token, patID string, duration
 	}
 	return pat, nil
 }
-func (svc service) RevokeToken(ctx context.Context, token, patID string) error {
+func (svc service) RevokeSecret(ctx context.Context, token, patID string) error {
 	key, err := svc.Identify(ctx, token)
 	if err != nil {
 		return err
@@ -1117,12 +1117,12 @@ func (svc service) ClearAllScope(ctx context.Context, token, patID string) error
 	return nil
 }
 
-func (svc service) TestCheckScope(ctx context.Context, token, patID string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error {
-	key, err := svc.Identify(ctx, token)
+func (svc service) TestCheckScope(ctx context.Context, paToken string, platformEntityType PlatformEntityType, optionalDomainID string, optionalDomainEntityType DomainEntityType, operation OperationType, entityIDs ...string) error {
+	res, err := svc.IdentifyPAT(ctx, paToken)
 	if err != nil {
 		return err
 	}
-	if err := svc.pats.CheckScopeEntry(ctx, key.User, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...); err != nil {
+	if err := svc.pats.CheckScopeEntry(ctx, res.User, paToken, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...); err != nil {
 		return err
 	}
 	return nil
@@ -1131,6 +1131,7 @@ func (svc service) TestCheckScope(ctx context.Context, token, patID string, plat
 func (svc service) IdentifyPAT(ctx context.Context, paToken string) (PAT, error) {
 	return PAT{}, nil
 }
-func (svc service) AuthorizationPAT(ctx context.Context, paToken string) (PAT, error) {
+
+func (svc service) AuthorizePAT(ctx context.Context, paToken string) (PAT, error) {
 	return PAT{}, nil
 }

@@ -810,6 +810,7 @@ func TestConnectThing(t *testing.T) {
 		assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
 	}
 }
+
 func TestDisconnectThing(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(context.Background(), repo)

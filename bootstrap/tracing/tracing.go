@@ -158,6 +158,17 @@ func (tm *tracingMiddleware) RemoveChannelHandler(ctx context.Context, id string
 	return tm.svc.RemoveChannelHandler(ctx, id)
 }
 
+// ConnectThingHandler traces the "ConnectThingHandler" operation of the wrapped bootstrap.Service.
+func (tm *tracingMiddleware) ConnectThingHandler(ctx context.Context, channelID, thingID string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_connect_thing_handler", trace.WithAttributes(
+		attribute.String("channel_id", channelID),
+		attribute.String("thing_id", thingID),
+	))
+	defer span.End()
+
+	return tm.svc.ConnectThingHandler(ctx, channelID, thingID)
+}
+
 // DisconnectThingHandler traces the "DisconnectThingHandler" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_disconnect_thing_handler", trace.WithAttributes(

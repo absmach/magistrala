@@ -48,6 +48,7 @@ const (
 	thingBootstrap         = thingPrefix + "bootstrap"
 	thingStateChange       = thingPrefix + "change_state"
 	thingUpdateConnections = thingPrefix + "update_connections"
+	thingConnect           = thingPrefix + "connect"
 	thingDisconnect        = thingPrefix + "disconnect"
 
 	channelPrefix        = "group."
@@ -1039,6 +1040,87 @@ func TestRemoveConfigHandler(t *testing.T) {
 	}
 }
 
+func TestConnectThingHandler(t *testing.T) {
+	err := redisClient.FlushAll(context.Background()).Err()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	svc, boot, _, _ := newService(t, redisURL)
+
+	err = redisClient.FlushAll(context.Background()).Err()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	cases := []struct {
+		desc      string
+		channelID string
+		thingID   string
+		err       error
+		event     map[string]interface{}
+	}{
+		{
+			desc:      "connect thing handler successfully",
+			channelID: channel.ID,
+			thingID:   "1",
+			err:       nil,
+			event: map[string]interface{}{
+				"channel_id":  channel.ID,
+				"thing_id":    "1",
+				"operation":   thingConnect,
+				"timestamp":   time.Now().UnixNano(),
+				"occurred_at": time.Now().UnixNano(),
+			},
+		},
+		{
+			desc:      "add non-existing channel handler",
+			channelID: "unknown",
+			err:       nil,
+			event:     nil,
+		},
+		{
+			desc:      "add channel handler with empty ID",
+			channelID: "",
+			err:       nil,
+			event:     nil,
+		},
+		{
+			desc:      "add channel handler successfully",
+			channelID: channel.ID,
+			thingID:   "1",
+			err:       nil,
+			event: map[string]interface{}{
+				"channel_id":  channel.ID,
+				"thing_id":    "1",
+				"operation":   thingConnect,
+				"timestamp":   time.Now().UnixNano(),
+				"occurred_at": time.Now().UnixNano(),
+			},
+		},
+	}
+
+	lastID := "0"
+	for _, tc := range cases {
+		repoCall := boot.On("ConnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
+		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
+			Streams: []string{streamID, lastID},
+			Count:   1,
+			Block:   time.Second,
+		}).Val()
+
+		var event map[string]interface{}
+		if len(streams) > 0 && len(streams[0].Messages) > 0 {
+			msg := streams[0].Messages[0]
+			event = msg.Values
+			event["timestamp"] = msg.ID
+			lastID = msg.ID
+		}
+
+		test(t, tc.event, event, tc.desc)
+		repoCall.Unset()
+	}
+}
+
 func TestDisconnectThingHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -1097,7 +1179,7 @@ func TestDisconnectThingHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("DisconnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		repoCall := boot.On("DisconnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
 		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 

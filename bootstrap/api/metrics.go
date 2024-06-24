@@ -150,6 +150,16 @@ func (mm *metricsMiddleware) RemoveChannelHandler(ctx context.Context, id string
 	return mm.svc.RemoveChannelHandler(ctx, id)
 }
 
+// ConnectThingHandler instruments ConnectThingHandler method with metrics.
+func (mm *metricsMiddleware) ConnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "connect_thing_handler").Add(1)
+		mm.latency.With("method", "connect_thing_handler").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.svc.ConnectThingHandler(ctx, channelID, thingID)
+}
+
 // DisconnectThingHandler instruments DisconnectThingHandler method with metrics.
 func (mm *metricsMiddleware) DisconnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
 	defer func(begin time.Time) {

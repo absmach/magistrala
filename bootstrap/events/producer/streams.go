@@ -207,14 +207,27 @@ func (es *eventStore) UpdateChannelHandler(ctx context.Context, channel bootstra
 	return es.Publish(ctx, ev)
 }
 
+func (es *eventStore) ConnectThingHandler(ctx context.Context, channelID, thingID string) error {
+	if err := es.svc.ConnectThingHandler(ctx, channelID, thingID); err != nil {
+		return err
+	}
+
+	ev := connectThingEvent{
+		thingID:   thingID,
+		channelID: channelID,
+	}
+
+	return es.Publish(ctx, ev)
+}
+
 func (es *eventStore) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
 	if err := es.svc.DisconnectThingHandler(ctx, channelID, thingID); err != nil {
 		return err
 	}
 
 	ev := disconnectThingEvent{
-		thingID,
-		channelID,
+		thingID:   thingID,
+		channelID: channelID,
 	}
 
 	return es.Publish(ctx, ev)

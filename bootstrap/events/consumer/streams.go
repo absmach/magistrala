@@ -9,16 +9,21 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/bootstrap"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/events"
 )
 
 const (
 	thingRemove     = "thing.remove"
-	thingDisconnect = "policy.delete"
+	thingConnect    = "group.assign"
+	thingDisconnect = "group.unassign"
 
 	channelPrefix = "group."
 	channelUpdate = channelPrefix + "update"
 	channelRemove = channelPrefix + "remove"
+
+	memberKind = "things"
+	relation   = "group"
 )
 
 type eventHandler struct {
@@ -42,9 +47,32 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	case thingRemove:
 		rte := decodeRemoveThing(msg)
 		err = es.svc.RemoveConfigHandler(ctx, rte.id)
+	case thingConnect:
+		cte := decodeConnectThing(msg)
+		if cte.channelID == "" || len(cte.thingIDs) == 0 {
+			return svcerr.ErrMalformedEntity
+		}
+		for _, thingID := range cte.thingIDs {
+			if thingID == "" {
+				return svcerr.ErrMalformedEntity
+			}
+			if err := es.svc.ConnectThingHandler(ctx, cte.channelID, thingID); err != nil {
+				return err
+			}
+		}
 	case thingDisconnect:
 		dte := decodeDisconnectThing(msg)
-		err = es.svc.DisconnectThingHandler(ctx, dte.channelID, dte.thingID)
+		if dte.channelID == "" || len(dte.thingIDs) == 0 {
+			return svcerr.ErrMalformedEntity
+		}
+		for _, thingID := range dte.thingIDs {
+			if thingID == "" {
+				return svcerr.ErrMalformedEntity
+			}
+			if err = es.svc.DisconnectThingHandler(ctx, dte.channelID, thingID); err != nil {
+				return err
+			}
+		}
 	case channelUpdate:
 		uce := decodeUpdateChannel(msg)
 		err = es.handleUpdateChannel(ctx, uce)
@@ -87,10 +115,24 @@ func decodeRemoveChannel(event map[string]interface{}) removeEvent {
 	}
 }
 
-func decodeDisconnectThing(event map[string]interface{}) disconnectEvent {
-	return disconnectEvent{
-		channelID: read(event, "chan_id", ""),
-		thingID:   read(event, "thing_id", ""),
+func decodeConnectThing(event map[string]interface{}) connectionEvent {
+	if read(event, "memberKind", "") != memberKind && read(event, "relation", "") != relation {
+		return connectionEvent{}
+	}
+
+	return connectionEvent{
+		channelID: read(event, "group_id", ""),
+		thingIDs:  ReadStringSlice(event, "member_ids"),
+	}
+}
+
+func decodeDisconnectThing(event map[string]interface{}) connectionEvent {
+	if read(event, "memberKind", "") != memberKind && read(event, "relation", "") != relation {
+		return connectionEvent{}
+	}
+	return connectionEvent{
+		channelID: read(event, "group_id", ""),
+		thingIDs:  ReadStringSlice(event, "member_ids"),
 	}
 }
 
@@ -112,6 +154,25 @@ func read(event map[string]interface{}, key, def string) string {
 	}
 
 	return val
+}
+
+// ReadStringSlice reads string slice from event map.
+// If value is not a string slice, returns empty slice.
+func ReadStringSlice(event map[string]interface{}, key string) []string {
+	var res []string
+
+	vals, ok := event[key].([]interface{})
+	if !ok {
+		return res
+	}
+
+	for _, v := range vals {
+		if s, ok := v.(string); ok {
+			res = append(res, s)
+		}
+	}
+
+	return res
 }
 
 func readTime(event map[string]interface{}, key string, def time.Time) time.Time {

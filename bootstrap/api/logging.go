@@ -257,6 +257,24 @@ func (lm *loggingMiddleware) RemoveChannelHandler(ctx context.Context, id string
 	return lm.svc.RemoveChannelHandler(ctx, id)
 }
 
+func (lm *loggingMiddleware) ConnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", channelID),
+			slog.String("thing_id", thingID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Connect thing handler failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Connect thing handler completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.ConnectThingHandler(ctx, channelID, thingID)
+}
+
 func (lm *loggingMiddleware) DisconnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{

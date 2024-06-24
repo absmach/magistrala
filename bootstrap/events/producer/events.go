@@ -23,6 +23,7 @@ const (
 	thingBootstrap         = thingPrefix + "bootstrap"
 	thingStateChange       = thingPrefix + "change_state"
 	thingUpdateConnections = thingPrefix + "update_connections"
+	thingConnect           = thingPrefix + "connect"
 	thingDisconnect        = thingPrefix + "disconnect"
 
 	channelPrefix        = "group."
@@ -274,6 +275,19 @@ func (uche updateChannelHandlerEvent) Encode() (map[string]interface{}, error) {
 		val["metadata"] = metadata
 	}
 	return val, nil
+}
+
+type connectThingEvent struct {
+	thingID   string
+	channelID string
+}
+
+func (cte connectThingEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"thing_id":   cte.thingID,
+		"channel_id": cte.channelID,
+		"operation":  thingConnect,
+	}, nil
 }
 
 type disconnectThingEvent struct {

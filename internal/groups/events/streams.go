@@ -145,8 +145,10 @@ func (es eventStore) Assign(ctx context.Context, token, groupID, relation, membe
 	}
 
 	event := assignEvent{
-		groupID:   groupID,
-		memberIDs: memberIDs,
+		groupID:    groupID,
+		relation:   relation,
+		memberKind: memberKind,
+		memberIDs:  memberIDs,
 	}
 
 	if err := es.Publish(ctx, event); err != nil {
@@ -162,8 +164,10 @@ func (es eventStore) Unassign(ctx context.Context, token, groupID, relation, mem
 	}
 
 	event := unassignEvent{
-		groupID:   groupID,
-		memberIDs: memberIDs,
+		groupID:    groupID,
+		relation:   relation,
+		memberKind: memberKind,
+		memberIDs:  memberIDs,
 	}
 
 	if err := es.Publish(ctx, event); err != nil {

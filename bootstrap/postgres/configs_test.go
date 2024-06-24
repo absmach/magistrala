@@ -11,6 +11,7 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/postgres"
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/gofrs/uuid"
@@ -675,6 +676,107 @@ func TestRemoveChannel(t *testing.T) {
 	assert.NotContains(t, cfg.Channels, c.Channels[0], fmt.Sprintf("expected to remove channel %s from %s", c.Channels[0], cfg.Channels))
 }
 
+func TestConnectThing(t *testing.T) {
+	repo := postgres.NewConfigRepository(db, testLog)
+	err := deleteChannels(context.Background(), repo)
+	require.Nil(t, err, "Channels cleanup expected to succeed.")
+
+	c := config
+	// Use UUID to prevent conflicts.
+	uid, err := uuid.NewV4()
+	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+	c.ThingKey = uid.String()
+	c.ThingID = uid.String()
+	c.ExternalID = uid.String()
+	c.ExternalKey = uid.String()
+	c.State = bootstrap.Inactive
+	saved, err := repo.Save(context.Background(), c, channels)
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	wrongID := testsutil.GenerateUUID(&testing.T{})
+
+	connectedThing := c
+	connectedThing.State = bootstrap.Active
+
+	randomThing := c
+	randomThingID, err := uuid.NewV4()
+	randomThing.ThingID = randomThingID.String()
+
+	emptyThing := c
+	emptyThing.ThingID = ""
+	emptyThing.ThingKey = ""
+	emptyThing.ExternalID = ""
+	emptyThing.ExternalKey = ""
+	emptyThing.Channels = []bootstrap.Channel{}
+
+	cases := []struct {
+		desc        string
+		owner       string
+		id          string
+		channels    []bootstrap.Channel
+		connections []string
+		err         error
+	}{
+		{
+			desc:        "connect disconnected thing",
+			owner:       config.Owner,
+			id:          saved,
+			channels:    c.Channels,
+			connections: channels,
+			err:         nil,
+		},
+		{
+			desc:        "connect already connected thing",
+			owner:       config.Owner,
+			id:          connectedThing.ThingID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         nil,
+		},
+		{
+			desc:        "connect non-existent thing",
+			owner:       config.Owner,
+			id:          wrongID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         repoerr.ErrNotFound,
+		},
+		{
+			desc:        "connect random thing",
+			owner:       config.Owner,
+			id:          randomThing.ThingID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         repoerr.ErrNotFound,
+		},
+		{
+			desc:        "connect empty thing",
+			owner:       config.Owner,
+			id:          emptyThing.ThingID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         repoerr.ErrNotFound,
+		},
+	}
+	for _, tc := range cases {
+		for i, ch := range tc.channels {
+			if i == 0 {
+				err = repo.ConnectThing(context.Background(), ch.ID, tc.id)
+				assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
+				cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+				assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+				assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
+			} else {
+				_ = repo.ConnectThing(context.Background(), ch.ID, tc.id)
+			}
+		}
+
+		cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+		assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
+	}
+}
+
 func TestDisconnectThing(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(context.Background(), repo)
@@ -688,15 +790,85 @@ func TestDisconnectThing(t *testing.T) {
 	c.ThingID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
+	c.State = bootstrap.Inactive
 	saved, err := repo.Save(context.Background(), c, channels)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
-	err = repo.DisconnectThing(context.Background(), c.Channels[0].ID, saved)
-	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+	wrongID := testsutil.GenerateUUID(&testing.T{})
+
+	connectedThing := c
+	connectedThing.State = bootstrap.Active
+
+	randomThing := c
+	randomThingID, err := uuid.NewV4()
+	randomThing.ThingID = randomThingID.String()
+
+	emptyThing := c
+	emptyThing.ThingID = ""
+	emptyThing.ThingKey = ""
+	emptyThing.ExternalID = ""
+	emptyThing.ExternalKey = ""
+
+	cases := []struct {
+		desc        string
+		owner       string
+		id          string
+		channels    []bootstrap.Channel
+		connections []string
+		err         error
+	}{
+		{
+			desc:        "disconnect connected thing",
+			owner:       config.Owner,
+			id:          connectedThing.ThingID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         nil,
+		},
+		{
+			desc:        "disconnect already disconnected thing",
+			owner:       config.Owner,
+			id:          saved,
+			channels:    c.Channels,
+			connections: channels,
+			err:         nil,
+		},
+		{
+			desc:        "disconnect invalid thing",
+			owner:       config.Owner,
+			id:          wrongID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         repoerr.ErrNotFound,
+		},
+		{
+			desc:        "disconnect random thing",
+			owner:       config.Owner,
+			id:          randomThing.ThingID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         repoerr.ErrNotFound,
+		},
+		{
+			desc:        "disconnect empty thing",
+			owner:       config.Owner,
+			id:          emptyThing.ThingID,
+			channels:    c.Channels,
+			connections: channels,
+			err:         repoerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		for _, ch := range tc.channels {
+			err = repo.DisconnectThing(context.Background(), ch.ID, tc.id)
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
+		}
+	}
 
 	cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-	assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected ti be inactive when a connection is removed from %s", cfg))
+	assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
 }
 
 func deleteChannels(ctx context.Context, repo bootstrap.ConfigRepository) error {

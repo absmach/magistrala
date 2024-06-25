@@ -234,6 +234,7 @@ func (svc service) SearchGroups(ctx context.Context, token string, gm groups.Pag
 	if err != nil {
 		return groups.Page{}, err
 	}
+	fmt.Printf("\nPage: %+v\n", gm)
 	// if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.DomainType, res.GetDomainId()); err != nil {
 	return svc.groups.SearchBasicinfo(ctx, gm)
 }

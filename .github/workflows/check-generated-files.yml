@@ -79,9 +79,9 @@ jobs:
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
         run: |
-          PROTOC_VERSION=25.3
-          PROTOC_GEN_VERSION=v1.32.0
-          PROTOC_GRPC_VERSION=v1.3.0
+          PROTOC_VERSION=27.1
+          PROTOC_GEN_VERSION=v1.34.2
+          PROTOC_GRPC_VERSION=v1.4.0
 
           # Download and install protoc
           PROTOC_ZIP=protoc-$PROTOC_VERSION-linux-x86_64.zip
@@ -118,7 +118,7 @@ jobs:
       - name: Check Mocks are up to Date
         if: steps.changes.outputs.mocks == 'true'
         run: |
-          MOCKERY_VERSION=v2.42.3
+          MOCKERY_VERSION=v2.43.2
           go install github.com/vektra/mockery/v2@$MOCKERY_VERSION
 
           mv ./pkg/sdk/mocks/sdk.go ./pkg/sdk/mocks/sdk.go.tmp

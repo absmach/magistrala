@@ -2651,6 +2651,7 @@ func TestUnassignUsers(t *testing.T) {
 				Permission:  auth.MembershipPermission,
 			},
 			deletePoliciesErr1: errors.ErrMalformedEntity,
+			deletePoliciesErr:  errors.ErrMalformedEntity,
 			err:                errors.ErrMalformedEntity,
 		},
 	}
@@ -2662,7 +2663,8 @@ func TestUnassignUsers(t *testing.T) {
 		repoCall3 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
 		repoCall4 := prepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		repoCall5 := drepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr1)
-		err := svc.UnassignUsers(context.Background(), tc.token, tc.domainID, []string{" ", " "}, auth.AdministratorRelation)
+		repoCall6 := prepo.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
+		err := svc.UnassignUsers(context.Background(), tc.token, tc.domainID, []string{" ", " "})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -2670,6 +2672,7 @@ func TestUnassignUsers(t *testing.T) {
 		repoCall3.Unset()
 		repoCall4.Unset()
 		repoCall5.Unset()
+		repoCall6.Unset()
 	}
 }
 

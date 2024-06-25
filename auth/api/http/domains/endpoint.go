@@ -192,7 +192,7 @@ func unassignDomainUsersEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.UnassignUsers(ctx, req.token, req.domainID, req.UserIDs, req.Relation); err != nil {
+		if err := svc.UnassignUsers(ctx, req.token, req.domainID, req.UserIDs); err != nil {
 			return nil, err
 		}
 		return unassignUsersRes{}, nil

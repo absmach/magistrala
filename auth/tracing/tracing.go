@@ -287,14 +287,13 @@ func (tm *tracingMiddleware) AssignUsers(ctx context.Context, token, id string, 
 	return tm.svc.AssignUsers(ctx, token, id, userIds, relation)
 }
 
-func (tm *tracingMiddleware) UnassignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
+func (tm *tracingMiddleware) UnassignUsers(ctx context.Context, token, id string, userIds []string) error {
 	ctx, span := tm.tracer.Start(ctx, "unassign_users", trace.WithAttributes(
 		attribute.String("id", id),
 		attribute.StringSlice("user_ids", userIds),
-		attribute.String("relation", relation),
 	))
 	defer span.End()
-	return tm.svc.UnassignUsers(ctx, token, id, userIds, relation)
+	return tm.svc.UnassignUsers(ctx, token, id, userIds)
 }
 
 func (tm *tracingMiddleware) ListUserDomains(ctx context.Context, token, userID string, p auth.Page) (auth.DomainsPage, error) {

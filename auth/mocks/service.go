@@ -595,17 +595,17 @@ func (_m *Service) Revoke(ctx context.Context, token string, id string) error {
 	return r0
 }
 
-// UnassignUsers provides a mock function with given fields: ctx, token, id, userIds, relation
-func (_m *Service) UnassignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error {
-	ret := _m.Called(ctx, token, id, userIds, relation)
+// UnassignUsers provides a mock function with given fields: ctx, token, id, userIds
+func (_m *Service) UnassignUsers(ctx context.Context, token string, id string, userIds []string) error {
+	ret := _m.Called(ctx, token, id, userIds)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UnassignUsers")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string, string) error); ok {
-		r0 = rf(ctx, token, id, userIds, relation)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) error); ok {
+		r0 = rf(ctx, token, id, userIds)
 	} else {
 		r0 = ret.Error(0)
 	}

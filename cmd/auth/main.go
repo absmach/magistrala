@@ -18,6 +18,7 @@ import (
 	api "github.com/absmach/magistrala/auth/api"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
 	httpapi "github.com/absmach/magistrala/auth/api/http"
+	"github.com/absmach/magistrala/auth/events"
 	"github.com/absmach/magistrala/auth/jwt"
 	apostgres "github.com/absmach/magistrala/auth/postgres"
 	"github.com/absmach/magistrala/auth/spicedb"
@@ -67,6 +68,7 @@ type config struct {
 	SpicedbSchemaFile   string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
 	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
 	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	ESURL               string        `env:"MG_ES_URL"                       envDefault:"nats://localhost:4222"`
 }
 
 func main() {
@@ -127,7 +129,7 @@ func main() {
 		return
 	}
 
-	svc := newService(db, tracer, cfg, dbConfig, logger, spicedbclient)
+	svc := newService(ctx, db, tracer, cfg, dbConfig, logger, spicedbclient)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -201,7 +203,7 @@ func initSchema(ctx context.Context, client *authzed.ClientWithExperimental, sch
 	return nil
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental) auth.Service {
+func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental) auth.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
 	domainsRepo := apostgres.NewDomainRepository(database)
@@ -211,6 +213,11 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 	t := jwt.New([]byte(cfg.SecretKey))
 
 	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
+	svc, err := events.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to init event store middleware : %s", err))
+		return nil
+	}
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("groups", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

@@ -82,10 +82,10 @@ type Repository interface {
 
 	// ChangeStatus changes groups status to active or inactive
 	ChangeStatus(ctx context.Context, group Group) (Group, error)
-	
+
 	// SearchBasicinfo searches group basic info depending on the filters given
 	SearchBasicinfo(ctx context.Context, gm Page) (Page, error)
-	
+
 	// AssignParentGroup assigns parent group id to a given group id
 	AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error
 

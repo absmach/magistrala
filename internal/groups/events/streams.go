@@ -82,6 +82,22 @@ func (es eventStore) ViewGroup(ctx context.Context, token, id string) (groups.Gr
 	return group, nil
 }
 
+func (es eventStore) SearchGroups(ctx context.Context, token string, pm groups.Page) (groups.Page, error) {
+	gp, err := es.svc.SearchGroups(ctx, token, pm)
+	if err != nil {
+		return gp, err
+	}
+	event := searchGroupEvent{
+		pm,
+	}
+
+	if err := es.Publish(ctx, event); err != nil {
+		return gp, err
+	}
+
+	return gp, nil
+}
+
 func (es eventStore) ViewGroupPerms(ctx context.Context, token, id string) ([]string, error) {
 	permissions, err := es.svc.ViewGroupPerms(ctx, token, id)
 	if err != nil {

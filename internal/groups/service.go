@@ -229,6 +229,15 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 	return gp, nil
 }
 
+func (svc service) SearchGroups(ctx context.Context, token string, gm groups.Page) (groups.Page, error) {
+	_, err := svc.identify(ctx, token)
+	if err != nil {
+		return groups.Page{}, err
+	}
+	// if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.DomainType, res.GetDomainId()); err != nil {
+	return svc.groups.SearchBasicinfo(ctx, gm)
+}
+
 // Experimental functions used for async calling of svc.listUserThingPermission. This might be helpful during listing of large number of entities.
 func (svc service) retrievePermissions(ctx context.Context, userID string, group *groups.Group) error {
 	permissions, err := svc.listUserGroupPermission(ctx, userID, group.ID)

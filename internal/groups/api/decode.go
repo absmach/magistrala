@@ -73,6 +73,45 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 	return req, nil
 }
 
+func DecodeSearchGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	t, err := apiutil.ReadStringQuery(r, api.TagKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	req := searchGroupsReq{
+		token: apiutil.ExtractBearerToken(r),
+		Page: mggroups.Page{
+			PageMeta: mggroups.PageMeta{
+				Offset: o,
+				Limit:  l,
+				Name:   n,
+				Tag:    t,
+			},
+			ID: 	 id,
+		},
+	}
+
+	return req, nil
+}
+
 func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	pm, err := decodePageMeta(r)
 	if err != nil {

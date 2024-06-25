@@ -131,6 +131,28 @@ func (lm *loggingMiddleware) ListGroups(ctx context.Context, token, memberKind, 
 	return lm.svc.ListGroups(ctx, token, memberKind, memberID, gp)
 }
 
+// SearchGroups logs the search_groups request. It logs the page metadata and the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) SearchGroups(ctx context.Context, token string, gm groups.Page) (cg groups.Page, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("page",
+				slog.Uint64("limit", gm.Limit),
+				slog.Uint64("offset", gm.Offset),
+				slog.Uint64("total", cg.Total),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Search groups failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Search groups completed successfully", args...)
+	}(time.Now())
+	return lm.svc.SearchGroups(ctx, token, gm)
+}
+
 // EnableGroup logs the enable_group request. It logs the group name, id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) EnableGroup(ctx context.Context, token, id string) (g groups.Group, err error) {

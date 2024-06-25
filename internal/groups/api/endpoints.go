@@ -146,7 +146,7 @@ func ListGroupsEndpoint(svc groups.Service, groupType, memberKind string) endpoi
 }
 
 func SearchGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error){
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(searchGroupsReq)
 		if err := req.validate(); err != nil {
 			return groupPageRes{}, errors.Wrap(apiutil.ErrValidation, err)

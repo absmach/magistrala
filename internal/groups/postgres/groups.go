@@ -145,18 +145,18 @@ func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggrou
 	return toGroup(dbg)
 }
 
-func (repo groupRepository) SearchBasicinfo(ctx context.Context, gm mggroups.Page) (mggroups.Page, error){
+func (repo groupRepository) SearchBasicinfo(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
 	var query []string
 	var query1 string
 
 	if gm.Name != "" {
-		query =append(query, "name ~ :name")
+		query = append(query, "name ~ :name")
 	}
 	if gm.ID != "" {
-		query =append(query, "id ~ :id")
+		query = append(query, "id ~ :id")
 	}
 	if gm.Tag != "" {
-		query =append(query, "tag ~ :tag")
+		query = append(query, "tag ~ :tag")
 	}
 	if len(query) > 0 {
 		query1 = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))

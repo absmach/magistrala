@@ -79,7 +79,7 @@ func (req listGroupsReq) validate() error {
 
 type searchGroupsReq struct {
 	mggroups.Page
-	token      string
+	token string
 }
 
 func (req searchGroupsReq) validate() error {
@@ -88,7 +88,6 @@ func (req searchGroupsReq) validate() error {
 	}
 	return nil
 }
-
 
 type groupReq struct {
 	token string

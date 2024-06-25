@@ -106,7 +106,7 @@ func DecodeSearchGroupsRequest(_ context.Context, r *http.Request) (interface{},
 				Name:   n,
 				Tag:    t,
 			},
-			ID: 	 id,
+			ID: id,
 		},
 	}
 	fmt.Printf("\nReq: %+v\n", req)

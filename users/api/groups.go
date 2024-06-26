@@ -64,21 +64,21 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 		), "update_group").ServeHTTP)
 
 		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.ListGroupsEndpoint(svc, "users"),
+			gapi.ListGroupsEndpoint(svc, "groups", "users"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
 			opts...,
 		), "list_groups").ServeHTTP)
 
 		r.Get("/{groupID}/children", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.ListGroupsEndpoint(svc, "users"),
+			gapi.ListGroupsEndpoint(svc, "groups", "users"),
 			gapi.DecodeListChildrenRequest,
 			api.EncodeResponse,
 			opts...,
 		), "list_children").ServeHTTP)
 
 		r.Get("/{groupID}/parents", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.ListGroupsEndpoint(svc, "users"),
+			gapi.ListGroupsEndpoint(svc, "groups", "users"),
 			gapi.DecodeListParentsRequest,
 			api.EncodeResponse,
 			opts...,
@@ -130,14 +130,14 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 	// The ideal placeholder name should be {channelID}, but gapi.DecodeListGroupsRequest uses {memberID} as a placeholder for the ID.
 	// So here, we are using {memberID} as the placeholder.
 	r.Get("/channels/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, "channels"),
+		gapi.ListGroupsEndpoint(svc, "groups", "channels"),
 		gapi.DecodeListGroupsRequest,
 		api.EncodeResponse,
 		opts...,
 	), "list_groups_by_channel_id").ServeHTTP)
 
 	r.Get("/users/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, "users"),
+		gapi.ListGroupsEndpoint(svc, "groups", "users"),
 		gapi.DecodeListGroupsRequest,
 		api.EncodeResponse,
 		opts...,

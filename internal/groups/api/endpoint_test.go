@@ -19,6 +19,7 @@ import (
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var validGroupResp = groups.Group{
@@ -679,7 +680,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 			tc.req.memberKind = tc.memberKind
 		}
 		repoCall := svc.On("ListGroups", context.Background(), tc.req.token, tc.req.memberKind, tc.req.memberID, tc.req.Page).Return(tc.svcResp, tc.svcErr)
-		resp, err := ListGroupsEndpoint(svc, tc.memberKind)(context.Background(), tc.req)
+		resp, err := ListGroupsEndpoint(svc, mock.Anything, tc.memberKind)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(groupPageRes)

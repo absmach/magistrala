@@ -124,7 +124,7 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
-        "404":          
+        "404":
           description: A non-existent entity request.
         "415":
           description: Missing or invalid content type.
@@ -1370,7 +1370,7 @@ components:
     ChannelsPage:
       type: object
       properties:
-        groups:
+        channels:
           type: array
           minItems: 0
           uniqueItems: true
@@ -1388,7 +1388,7 @@ components:
           example: 10
           description: Maximum number of items to return in one page.
       required:
-        - groups
+        - channels
         - total
         - offset
 

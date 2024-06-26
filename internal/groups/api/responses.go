@@ -104,6 +104,23 @@ func (res groupPageRes) Empty() bool {
 	return false
 }
 
+type channelPageRes struct {
+	pageRes
+	Channels []viewGroupRes `json:"channels"`
+}
+
+func (res channelPageRes) Code() int {
+	return http.StatusOK
+}
+
+func (res channelPageRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res channelPageRes) Empty() bool {
+	return false
+}
+
 type updateGroupRes struct {
 	groups.Group `json:",inline"`
 }

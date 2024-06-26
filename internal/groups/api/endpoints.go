@@ -12,6 +12,8 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
+const groupTypeChannels = "channels"
+
 func CreateGroupEndpoint(svc groups.Service, kind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
@@ -111,17 +113,23 @@ func DisableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func ListGroupsEndpoint(svc groups.Service, memberKind string) endpoint.Endpoint {
+func ListGroupsEndpoint(svc groups.Service, groupType, memberKind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if memberKind != "" {
 			req.memberKind = memberKind
 		}
 		if err := req.validate(); err != nil {
+			if groupType == groupTypeChannels {
+				return channelPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			}
 			return groupPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		page, err := svc.ListGroups(ctx, req.token, req.memberKind, req.memberID, req.Page)
 		if err != nil {
+			if groupType == groupTypeChannels {
+				return channelPageRes{}, err
+			}
 			return groupPageRes{}, err
 		}
 
@@ -130,6 +138,9 @@ func ListGroupsEndpoint(svc groups.Service, memberKind string) endpoint.Endpoint
 		}
 		filterByID := req.Page.ID != ""
 
+		if groupType == groupTypeChannels {
+			return buildChannelsResponse(page, filterByID), nil
+		}
 		return buildGroupsResponse(page, filterByID), nil
 	}
 }
@@ -280,6 +291,28 @@ func buildGroupsResponse(gp groups.Page, filterByID bool) groupPageRes {
 			continue
 		}
 		res.Groups = append(res.Groups, view)
+	}
+
+	return res
+}
+
+func buildChannelsResponse(cp groups.Page, filterByID bool) channelPageRes {
+	res := channelPageRes{
+		pageRes: pageRes{
+			Total: cp.Total,
+			Level: cp.Level,
+		},
+		Channels: []viewGroupRes{},
+	}
+
+	for _, channel := range cp.Groups {
+		if filterByID && channel.Level == 0 {
+			continue
+		}
+		view := viewGroupRes{
+			Group: channel,
+		}
+		res.Channels = append(res.Channels, view)
 	}
 
 	return res

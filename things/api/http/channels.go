@@ -62,7 +62,7 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 		), "update_channel").ServeHTTP)
 
 		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.ListGroupsEndpoint(svc, "users"),
+			gapi.ListGroupsEndpoint(svc, "channels", "users"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
 			opts...,
@@ -139,7 +139,7 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 	// and channel service can access spiceDB and get this channel ids list with given thing id.
 	// Request to get list of channels to which thingID ({memberID}) belongs
 	r.Get("/things/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, "things"),
+		gapi.ListGroupsEndpoint(svc, "channels", "things"),
 		gapi.DecodeListGroupsRequest,
 		api.EncodeResponse,
 		opts...,
@@ -151,7 +151,7 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 	// and channel service can access spiceDB and get this user ids list with given thing id.
 	// Request to get list of channels to which userID ({memberID}) have permission.
 	r.Get("/users/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, "users"),
+		gapi.ListGroupsEndpoint(svc, "channels", "users"),
 		gapi.DecodeListGroupsRequest,
 		api.EncodeResponse,
 		opts...,
@@ -162,7 +162,7 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 	// and channel service can access spiceDB and get this user ids list with given user_group id.
 	// Request to get list of channels to which user_group_id ({memberID}) attached.
 	r.Get("/groups/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, "groups"),
+		gapi.ListGroupsEndpoint(svc, "channels", "groups"),
 		gapi.DecodeListGroupsRequest,
 		api.EncodeResponse,
 		opts...,

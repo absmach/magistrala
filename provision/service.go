@@ -237,11 +237,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		}
 
 		if ps.conf.Bootstrap.AutoWhiteList {
-			wlReq := sdk.BootstrapConfig{
-				ThingID: thing.ID,
-				State:   Active,
-			}
-			if err := ps.sdk.Whitelist(wlReq, token); err != nil {
+			if err := ps.sdk.Whitelist(thing.ID, Active, token); err != nil {
 				res.Error = err.Error()
 				return res, ErrThingUpdate
 			}

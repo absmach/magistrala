@@ -931,16 +931,9 @@ type SDK interface {
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	//
 	// example:
-	//  cfg := sdk.BootstrapConfig{
-	//    ThingID: "thingID",
-	//    Name: "bootstrap",
-	//    ExternalID: "externalID",
-	//    ExternalKey: "externalKey",
-	//    Channels: []string{"channel1", "channel2"},
-	//  }
-	//  err := sdk.Whitelist(cfg, "token")
+	//  err := sdk.Whitelist("thingID", 1, "token")
 	//  fmt.Println(err)
-	Whitelist(cfg BootstrapConfig, token string) errors.SDKError
+	Whitelist(thingID string, state int, token string) errors.SDKError
 
 	// IssueCert issues a certificate for a thing required for mTLS.
 	//

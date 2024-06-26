@@ -2830,17 +2830,17 @@ func (_m *SDK) ViewSubscription(id string, token string) (sdk.Subscription, erro
 	return r0, r1
 }
 
-// Whitelist provides a mock function with given fields: cfg, token
-func (_m *SDK) Whitelist(cfg sdk.BootstrapConfig, token string) errors.SDKError {
-	ret := _m.Called(cfg, token)
+// Whitelist provides a mock function with given fields: thingID, state, token
+func (_m *SDK) Whitelist(thingID string, state int, token string) errors.SDKError {
+	ret := _m.Called(thingID, state, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Whitelist")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.BootstrapConfig, string) errors.SDKError); ok {
-		r0 = rf(cfg, token)
+	if rf, ok := ret.Get(0).(func(string, int, string) errors.SDKError); ok {
+		r0 = rf(thingID, state, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)

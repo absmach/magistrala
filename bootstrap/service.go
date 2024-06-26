@@ -108,6 +108,8 @@ type Service interface {
 // as a JSON and consumed from the client side. The purpose of this interface
 // is to provide convenient way to generate custom configuration response
 // based on the specific Config which will be consumed by the client.
+//
+//go:generate mockery --name ConfigReader --output=./mocks --filename config_reader.go --quiet --note "Copyright (c) Abstract Machines"
 type ConfigReader interface {
 	ReadConfig(Config, bool) (interface{}, error)
 }

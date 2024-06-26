@@ -189,9 +189,6 @@ func (repo groupRepository) SearchBasicinfo(ctx context.Context, gm mggroups.Pag
 	page.Groups = items
 	page.Total = total
 
-	// fmt.Printf("Page: %+v\n", gm)
-	// fmt.Println("query: ", q)
-
 	return page, nil
 }
 

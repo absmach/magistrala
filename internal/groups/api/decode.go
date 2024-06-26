@@ -109,6 +109,16 @@ func DecodeSearchGroupsRequest(_ context.Context, r *http.Request) (interface{},
 		},
 	}
 
+	for _, field := range []string{req.Name, req.ID, req.Tag} {
+		if field != "" && len(field) < 3 {
+			req = searchGroupsReq{
+				token: apiutil.ExtractBearerToken(r),
+				Page:  mggroups.Page{},
+			}
+			return req, errors.Wrap(apiutil.ErrLenSearchQuery, apiutil.ErrValidation)
+		}
+	}
+
 	return req, nil
 }
 

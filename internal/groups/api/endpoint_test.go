@@ -691,6 +691,92 @@ func TestListGroupsEndpoint(t *testing.T) {
 	}
 }
 
+func TestSearchGroupsEndpoint(t *testing.T) {
+	svc := new(mocks.Service)
+	cases := []struct {
+		desc    string
+		req     searchGroupsReq
+		svcResp groups.Page
+		svcErr  error
+		resp    groupPageRes
+		err     error
+	}{
+		{
+			desc: "successfully",
+			req: searchGroupsReq{
+				token: valid,
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Name:   valid,
+						Offset: 0,
+						Limit:  10,
+					},
+				},
+			},
+			svcResp: groups.Page{
+				Groups: []groups.Group{validGroupResp},
+				PageMeta: groups.PageMeta{
+					Total:  1,
+					Offset: 0,
+					Limit:  10,
+				},
+			},
+			svcErr: nil,
+			resp: groupPageRes{
+				Groups: []viewGroupRes{
+					{
+						Group: validGroupResp,
+					},
+				},
+				pageRes: pageRes{
+					Total:  1,
+					Offset: 0,
+					Limit:  10,
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "successfully with empty request",
+			req: searchGroupsReq{
+				token: valid,
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Offset: 0,
+						Limit:  10,
+					},
+				},
+			},
+			resp: groupPageRes{},
+			err:  apiutil.ErrEmptySearchQuery,
+		},
+		{
+			desc: "unsuccessfully with empty token",
+			req: searchGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Name:   valid,
+						Offset: 0,
+						Limit:  10,
+					},
+				},
+			},
+			resp: groupPageRes{},
+			err:  apiutil.ErrBearerToken,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := svc.On("SearchGroups", context.Background(), tc.req.token, tc.req.Page).Return(tc.svcResp, tc.svcErr)
+		resp, err := SearchGroupsEndpoint(svc)(context.Background(), tc.req)
+		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+		response := resp.(groupPageRes)
+		assert.Equal(t, response.Code(), http.StatusOK)
+		repoCall.Unset()
+	}
+}
+
 func TestListMembersEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
 	cases := []struct {

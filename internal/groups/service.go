@@ -252,6 +252,8 @@ func (svc service) SearchGroups(ctx context.Context, token string, gm groups.Pag
 			page.Total += 1
 		}
 	}
+	page.Limit = cp.Limit
+	page.Offset = cp.Offset
 
 	return page, nil
 }

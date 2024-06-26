@@ -86,6 +86,11 @@ func (req searchGroupsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
+
+	if req.Name == "" && req.Tag == "" && req.ID == "" {
+		return apiutil.ErrEmptySearchQuery
+	}
+
 	return nil
 }
 

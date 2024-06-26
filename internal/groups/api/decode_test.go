@@ -135,6 +135,93 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 	}
 }
 
+func TestDecodeSearchGroupsRequest(t *testing.T) {
+	cases := []struct {
+		desc   string
+		url    string
+		header map[string][]string
+		resp   interface{}
+		err    error
+	}{
+		{
+			desc:   "valid request with no parameters",
+			url:    "http://localhost:8080",
+			header: map[string][]string{},
+			resp: searchGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Limit: 10,
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with all parameters",
+			url:  "http://localhost:8080?offset=1&limit=10&name=random&tag=tag1&id=1234",
+			header: map[string][]string{
+				"Authorization": {"Bearer 123"},
+			},
+			resp: searchGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Status: clients.EnabledStatus,
+						Offset: 1,
+						Limit:  10,
+						Name:   "random",
+						Tag:    "tag1",
+					},
+					ID: "1234",
+				},
+				token: "123",
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with duplicate names",
+			url:  "http://localhost:8080?name=random&name=random",
+			resp: nil,
+			err:  apiutil.ErrValidation,
+		},
+		{
+			desc: "valid request with invalid offset",
+			url:  "http://localhost:8080?offset=random",
+			resp: nil,
+			err:  apiutil.ErrValidation,
+		},
+		{
+			desc: "valid request with invalid limit",
+			url:  "http://localhost:8080?limit=random",
+			resp: nil,
+			err:  apiutil.ErrValidation,
+		},
+		{
+			desc: "valid request with invalid length of query",
+			url:  "http://localhost:8080?name=a",
+			header: map[string][]string{
+				"Authorization": {"Bearer 123"},
+			},
+			resp: searchGroupsReq{
+				token: "123",
+				Page:  groups.Page{},
+			},
+			err: apiutil.ErrLenSearchQuery,
+		},
+	}
+	for _, tc := range cases {
+		parsedURL, err := url.Parse(tc.url)
+		assert.NoError(t, err)
+
+		req := &http.Request{
+			URL:    parsedURL,
+			Header: tc.header,
+		}
+		resp, err := DecodeSearchGroupsRequest(context.Background(), req)
+		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+	}
+}
+
 func TestDecodeListParentsRequest(t *testing.T) {
 	cases := []struct {
 		desc   string

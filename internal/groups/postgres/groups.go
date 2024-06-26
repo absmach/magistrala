@@ -162,7 +162,7 @@ func (repo groupRepository) SearchBasicinfo(ctx context.Context, gm mggroups.Pag
 		query1 = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
 	}
 
-	q := fmt.Sprintf(`SELECT g.id, g.name, g.domain_id, g.created_at, g.updated_at, g.updated_by, status FROM groups g %s LIMIT :limit OFFSET :offset;`, query1)
+	q := fmt.Sprintf(`SELECT g.id, g.name, COALESCE(g.parent_id, '') AS parent_id, g.domain_id, g.created_at, g.updated_at, g.updated_by, status FROM groups g %s LIMIT :limit OFFSET :offset;`, query1)
 
 	dbPage, err := toDBGroupPage(gm)
 	if err != nil {

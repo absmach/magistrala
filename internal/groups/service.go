@@ -230,13 +230,30 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 }
 
 func (svc service) SearchGroups(ctx context.Context, token string, gm groups.Page) (groups.Page, error) {
-	_, err := svc.identify(ctx, token)
+	res, err := svc.identify(ctx, token)
 	if err != nil {
 		return groups.Page{}, err
 	}
-	fmt.Printf("\nPage: %+v\n", gm)
-	// if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.DomainType, res.GetDomainId()); err != nil {
-	return svc.groups.SearchBasicinfo(ctx, gm)
+
+	_, err = svc.authorizeToken(ctx, auth.UserType, token, auth.MembershipPermission, auth.DomainType, res.GetDomainId())
+	if err != nil {
+		return groups.Page{}, err
+	}
+
+	cp, err := svc.groups.SearchBasicinfo(ctx, gm)
+	if err != nil {
+		return groups.Page{}, err
+	}
+
+	page := groups.Page{}
+	for _, val := range cp.Groups {
+		if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.GroupType, val.ID); err == nil {
+			page.Groups = append(page.Groups, val)
+			page.Total += 1
+		}
+	}
+
+	return page, nil
 }
 
 // Experimental functions used for async calling of svc.listUserThingPermission. This might be helpful during listing of large number of entities.

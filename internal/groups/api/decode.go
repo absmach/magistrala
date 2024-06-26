@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -109,7 +108,6 @@ func DecodeSearchGroupsRequest(_ context.Context, r *http.Request) (interface{},
 			ID: id,
 		},
 	}
-	fmt.Printf("\nReq: %+v\n", req)
 
 	return req, nil
 }

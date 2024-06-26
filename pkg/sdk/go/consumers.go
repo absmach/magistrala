@@ -51,9 +51,9 @@ func (sdk mgSDK) ListSubscriptions(pm PageMetadata, token string) (SubscriptionP
 		return SubscriptionPage{}, errors.NewSDKError(err)
 	}
 
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
-	if err != nil {
-		return SubscriptionPage{}, errors.NewSDKError(err)
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return SubscriptionPage{}, sdkerr
 	}
 
 	var sp SubscriptionPage

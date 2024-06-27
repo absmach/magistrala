@@ -769,9 +769,9 @@ func TestSearchGroupsEndpoint(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := svc.On("SearchGroups", context.Background(), tc.req.token, tc.req.Page).Return(tc.svcResp, tc.svcErr)
 		resp, err := SearchGroupsEndpoint(svc)(context.Background(), tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(groupPageRes)
+		assert.Equal(t, tc.resp, response, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, response))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		assert.Equal(t, response.Code(), http.StatusOK)
 		repoCall.Unset()
 	}

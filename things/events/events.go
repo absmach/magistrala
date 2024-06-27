@@ -4,6 +4,8 @@
 package events
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"

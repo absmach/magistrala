@@ -162,6 +162,12 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		return Config{}, errors.Wrap(errThingNotFound, err)
 	}
 
+	for _, channel := range cfg.Channels {
+		if channel.DomainID != mgThing.DomainID {
+			return Config{}, svcerr.ErrAddPolicies
+		}
+	}
+
 	cfg.ThingID = mgThing.ID
 	cfg.DomainID = user.GetDomainId()
 	cfg.State = Inactive

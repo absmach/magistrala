@@ -86,6 +86,8 @@ func Migration() *migrate.MemoryMigrationSource {
 			{
 				Id: "configs_5",
 				Up: []string{
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS channel_domain_id`,
+					`ALTER TABLE IF EXISTS channels DROP COLUMN IF EXISTS config_domain_id`,
 					`ALTER TABLE IF EXISTS configs RENAME COLUMN owner TO domain_id`,
 					`ALTER TABLE IF EXISTS channels RENAME COLUMN owner TO domain_id`,
 					`ALTER TABLE IF EXISTS configs ADD CONSTRAINT configs_name_domain_id_key UNIQUE (name, domain_id)`,

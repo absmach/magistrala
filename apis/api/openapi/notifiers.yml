@@ -43,6 +43,8 @@ paths:
           $ref: "#/components/responses/Create"
         "400":
           description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.          
         "403":
           description: Failed to perform authorization over the entity.
         "409":
@@ -92,7 +94,7 @@ paths:
         "200":
           $ref: "#/components/responses/View"
         "400":
-          description: Failed due to malformed query parameters.          
+          description: Failed due to malformed ID.
         "401":
           description: Missing or invalid access token provided.
         "403":

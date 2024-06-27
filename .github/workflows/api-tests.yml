@@ -16,6 +16,7 @@ on:
       - "consumers/notifiers/api/**"
       - "http/api/**"
       - "invitations/api/**"
+      - "journal/api/**"
       - "provision/api/**"
       - "readers/api/**"
       - "things/api/**"
@@ -44,6 +45,7 @@ env:
   TIMESCALE_READER_URL: http://localhost:9011
   SMPP_NOTIFIER_URL: http://localhost:9014
   SMTP_NOTIFIER_URL: http://localhost:9015
+  JOURNAL_URL: http://localhost:9021
 
 jobs:
   api-test:
@@ -78,6 +80,11 @@ jobs:
         id: changes
         with:
           filters: |
+            journal:
+              - ".github/workflows/api-tests.yml"
+              - "api/openapi/journal.yml"
+              - "journal/api/**"
+                      
             auth:
               - ".github/workflows/api-tests.yml"
               - "api/openapi/auth.yml"
@@ -182,6 +189,17 @@ jobs:
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Journal API tests
+        if: steps.changes.outputs.journal == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: api/openapi/journal.yml
+          base-url: ${{ env.JOURNAL_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
 
       - name: Run Bootstrap API tests
         if: steps.changes.outputs.bootstrap == 'true'

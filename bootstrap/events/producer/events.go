@@ -4,14 +4,12 @@
 package producer
 
 import (
-	"encoding/json"
-
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/pkg/events"
 )
 
 const (
-	configPrefix        = "config."
+	configPrefix        = "bootstrap.config."
 	configCreate        = configPrefix + "create"
 	configUpdate        = configPrefix + "update"
 	configRemove        = configPrefix + "remove"
@@ -19,18 +17,18 @@ const (
 	configList          = configPrefix + "list"
 	configHandlerRemove = configPrefix + "remove_handler"
 
-	thingPrefix            = "thing."
+	thingPrefix            = "bootstrap.thing."
 	thingBootstrap         = thingPrefix + "bootstrap"
 	thingStateChange       = thingPrefix + "change_state"
 	thingUpdateConnections = thingPrefix + "update_connections"
 	thingConnect           = thingPrefix + "connect"
 	thingDisconnect        = thingPrefix + "disconnect"
 
-	channelPrefix        = "group."
+	channelPrefix        = "bootstrap.channel."
 	channelHandlerRemove = channelPrefix + "remove_handler"
 	channelUpdateHandler = channelPrefix + "update_handler"
 
-	certUpdate = "cert.update"
+	certUpdate = "bootstrap.cert.update"
 )
 
 var (
@@ -74,11 +72,7 @@ func (ce configEvent) Encode() (map[string]interface{}, error) {
 		for i, ch := range ce.Channels {
 			channels[i] = ch.ID
 		}
-		data, err := json.Marshal(channels)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-		val["channels"] = string(data)
+		val["channels"] = channels
 	}
 	if ce.ClientCert != "" {
 		val["client_cert"] = ce.ClientCert
@@ -121,21 +115,11 @@ func (rce listConfigsEvent) Encode() (map[string]interface{}, error) {
 		"operation": configList,
 	}
 	if len(rce.fullMatch) > 0 {
-		data, err := json.Marshal(rce.fullMatch)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["full_match"] = data
+		val["full_match"] = rce.fullMatch
 	}
 
 	if len(rce.partialMatch) > 0 {
-		data, err := json.Marshal(rce.partialMatch)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["full_match"] = data
+		val["full_match"] = rce.partialMatch
 	}
 	return val, nil
 }
@@ -173,11 +157,7 @@ func (be bootstrapEvent) Encode() (map[string]interface{}, error) {
 		for i, ch := range be.Channels {
 			channels[i] = ch.ID
 		}
-		data, err := json.Marshal(channels)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-		val["channels"] = string(data)
+		val["channels"] = channels
 	}
 	if be.ClientCert != "" {
 		val["client_cert"] = be.ClientCert
@@ -213,14 +193,9 @@ type updateConnectionsEvent struct {
 }
 
 func (uce updateConnectionsEvent) Encode() (map[string]interface{}, error) {
-	data, err := json.Marshal(uce.mgChannels)
-	if err != nil {
-		return map[string]interface{}{}, err
-	}
-
 	return map[string]interface{}{
 		"thing_id":  uce.mgThing,
-		"channels":  string(data),
+		"channels":  uce.mgChannels,
 		"operation": thingUpdateConnections,
 	}, nil
 }
@@ -267,12 +242,7 @@ func (uche updateChannelHandlerEvent) Encode() (map[string]interface{}, error) {
 		val["name"] = uche.Name
 	}
 	if uche.Metadata != nil {
-		metadata, err := json.Marshal(uche.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = uche.Metadata
 	}
 	return val, nil
 }

@@ -9,14 +9,14 @@ var _ events.Event = (*mqttEvent)(nil)
 
 type mqttEvent struct {
 	clientID  string
-	eventType string
+	operation string
 	instance  string
 }
 
 func (me mqttEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"thing_id":   me.clientID,
-		"event_type": me.eventType,
-		"instance":   me.instance,
+		"thing_id":  me.clientID,
+		"operation": me.operation,
+		"instance":  me.instance,
 	}, nil
 }

@@ -10,6 +10,7 @@ user_token = ""
   topic = ""
 
 [remotes]
+  journal_url = "http://localhost:9021"
   bootstrap_url = "http://localhost:9013"
   certs_url = "http://localhost:9019"
   domains_url = "http://localhost:8189"

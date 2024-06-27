@@ -5,6 +5,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -98,8 +99,15 @@ func (re redisEvent) Encode() (map[string]interface{}, error) {
 
 func (es *subEventStore) handle(ctx context.Context, stream string, msgs []redis.XMessage, h events.EventHandler) {
 	for _, msg := range msgs {
+		var data map[string]interface{}
+		if err := json.Unmarshal([]byte(msg.Values["data"].(string)), &data); err != nil {
+			es.logger.Warn(fmt.Sprintf("failed to unmarshal redis event: %s", err))
+
+			return
+		}
+
 		event := redisEvent{
-			Data: msg.Values,
+			Data: data,
 		}
 
 		if err := h.Handle(ctx, event); err != nil {

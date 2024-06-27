@@ -116,6 +116,12 @@ type PageMetadata struct {
 	UserID          string   `json:"user_id,omitempty"`
 	DomainID        string   `json:"domain_id,omitempty"`
 	Relation        string   `json:"relation,omitempty"`
+	Operation       string   `json:"operation,omitempty"`
+	From            int64    `json:"from,omitempty"`
+	To              int64    `json:"to,omitempty"`
+	WithMetadata    bool     `json:"with_metadata,omitempty"`
+	WithAttributes  bool     `json:"with_attributes,omitempty"`
+	ID              string   `json:"id,omitempty"`
 }
 
 // Credentials represent client credentials: it contains
@@ -1148,6 +1154,13 @@ type SDK interface {
 	//  err := sdk.DeleteInvitation("userID", "domainID", "token")
 	//  fmt.Println(err)
 	DeleteInvitation(userID, domainID, token string) (err error)
+
+	// Journal returns a list of journal logs.
+	//
+	// For example:
+	//  journals, _ := sdk.Journal("thing", "thingID", PageMetadata{Offset: 0, Limit: 10, Operation: "users.create"}, "token")
+	//  fmt.Println(journals)
+	Journal(entityType, entityID string, pm PageMetadata, token string) (journal JournalsPage, err error)
 }
 
 type mgSDK struct {
@@ -1159,6 +1172,7 @@ type mgSDK struct {
 	usersURL       string
 	domainsURL     string
 	invitationsURL string
+	journalURL     string
 	HostURL        string
 
 	msgContentType ContentType
@@ -1176,6 +1190,7 @@ type Config struct {
 	UsersURL       string
 	DomainsURL     string
 	InvitationsURL string
+	JournalURL     string
 	HostURL        string
 
 	MsgContentType  ContentType
@@ -1194,6 +1209,7 @@ func NewSDK(conf Config) SDK {
 		usersURL:       conf.UsersURL,
 		domainsURL:     conf.DomainsURL,
 		invitationsURL: conf.InvitationsURL,
+		journalURL:     conf.JournalURL,
 		HostURL:        conf.HostURL,
 
 		msgContentType: conf.MsgContentType,
@@ -1354,6 +1370,17 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Relation != "" {
 		q.Add("relation", pm.Relation)
 	}
+	if pm.Operation != "" {
+		q.Add("operation", pm.Operation)
+	}
+	if pm.From != 0 {
+		q.Add("from", strconv.FormatInt(pm.From, 10))
+	}
+	if pm.To != 0 {
+		q.Add("to", strconv.FormatInt(pm.To, 10))
+	}
+	q.Add("with_attributes", strconv.FormatBool(pm.WithAttributes))
+	q.Add("with_metadata", strconv.FormatBool(pm.WithMetadata))
 
 	return q.Encode(), nil
 }

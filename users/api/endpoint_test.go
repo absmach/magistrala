@@ -617,6 +617,13 @@ func TestListClients(t *testing.T) {
 			err:    apiutil.ErrInvalidQueryParams,
 		},
 		{
+			desc:   "list users with invalid order direction",
+			token:  validToken,
+			query:  "dir=invalid",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
 			desc:   "list users with duplicate order direction",
 			token:  validToken,
 			query:  "dir=asc&dir=asc",

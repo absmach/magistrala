@@ -75,6 +75,7 @@ jobs:
               - "twins/twins.go"
               - "twins/states.go"
               - "twins/service.go"
+              - "journal/journal.go"
 
       - name: Set up protoc
         if: steps.changes.outputs.proto == 'true'
@@ -157,6 +158,8 @@ jobs:
           mv ./twins/mocks/states.go ./twins/mocks/states.go.tmp
           mv ./twins/mocks/repository.go ./twins/mocks/repository.go.tmp
           mv ./twins/mocks/cache.go ./twins/mocks/cache.go.tmp
+          mv ./journal/mocks/repository.go ./journal/mocks/repository.go.tmp
+          mv ./journal/mocks/service.go ./journal/mocks/service.go.tmp
 
           make mocks
 
@@ -208,3 +211,5 @@ jobs:
           check_mock_changes ./twins/mocks/states.go "Twins States ./twins/mocks/states.go"
           check_mock_changes ./twins/mocks/repository.go "Twins Repository ./twins/mocks/repository.go"
           check_mock_changes ./twins/mocks/cache.go "Twins Cache ./twins/mocks/cache.go"
+          check_mock_changes ./journal/mocks/repository.go "Journal Repository ./journal/mocks/repository.go"
+          check_mock_changes ./journal/mocks/service.go "Journal Service ./journal/mocks/service.go"

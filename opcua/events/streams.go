@@ -5,8 +5,6 @@ package events
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 
 	"github.com/absmach/magistrala/opcua"
@@ -14,16 +12,16 @@ import (
 )
 
 const (
-	keyType       = "opcua"
-	keyNodeID     = "node_id"
-	keyServerURI  = "server_uri"
-	channelPrefix = "group."
-	thingPrefix   = "thing."
+	keyType      = "opcua"
+	keyNodeID    = "node_id"
+	keyServerURI = "server_uri"
 
+	thingPrefix = "thing."
 	thingCreate = thingPrefix + "create"
 	thingUpdate = thingPrefix + "update"
 	thingRemove = thingPrefix + "remove"
 
+	channelPrefix     = "channel."
 	channelCreate     = channelPrefix + "create"
 	channelUpdate     = channelPrefix + "update"
 	channelRemove     = channelPrefix + "remove"
@@ -108,20 +106,10 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 }
 
 func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
-	strmeta := read(event, "metadata", "{}")
-
-	// Metadata is base64 encoded since it is marshalled as []byte.
-	meta, err := base64.StdEncoding.DecodeString(strmeta)
-	if err != nil {
-		return createThingEvent{}, err
-	}
-	var metadata map[string]interface{}
-	if err := json.Unmarshal(meta, &metadata); err != nil {
-		return createThingEvent{}, err
-	}
+	metadata := events.Read(event, "metadata", map[string]interface{}{})
 
 	cte := createThingEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
 
 	metadataOpcua, ok := metadata[keyType]
@@ -145,23 +133,15 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 
 func decodeRemoveThing(event map[string]interface{}) removeThingEvent {
 	return removeThingEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
 }
 
 func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, error) {
-	strmeta := read(event, "metadata", "{}")
-	meta, err := base64.StdEncoding.DecodeString(strmeta)
-	if err != nil {
-		return createChannelEvent{}, err
-	}
-	var metadata map[string]interface{}
-	if err := json.Unmarshal(meta, &metadata); err != nil {
-		return createChannelEvent{}, err
-	}
+	metadata := events.Read(event, "metadata", map[string]interface{}{})
 
 	cce := createChannelEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
 
 	metadataOpcua, ok := metadata[keyType]
@@ -185,45 +165,20 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 
 func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 	return removeChannelEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
 }
 
 func decodeConnectThing(event map[string]interface{}) connectThingEvent {
 	return connectThingEvent{
-		chanID:   read(event, "group_id", ""),
-		thingIDs: readMemberIDs(event, "member_ids"),
+		chanID:   events.Read(event, "group_id", ""),
+		thingIDs: events.ReadStringSlice(event, "member_ids"),
 	}
 }
 
 func decodeDisconnectThing(event map[string]interface{}) connectThingEvent {
 	return connectThingEvent{
-		chanID:   read(event, "chan_id", ""),
-		thingIDs: readMemberIDs(event, "member_ids"),
+		chanID:   events.Read(event, "group_id", ""),
+		thingIDs: events.ReadStringSlice(event, "member_ids"),
 	}
-}
-
-func read(event map[string]interface{}, key, def string) string {
-	val, ok := event[key].(string)
-	if !ok {
-		return def
-	}
-
-	return val
-}
-
-func readMemberIDs(event map[string]interface{}, key string) []string {
-	var memberIDs []string
-	val, ok := event[key].([]interface{})
-	if !ok {
-		return memberIDs
-	}
-
-	for _, v := range val {
-		if str, ok := v.(string); ok {
-			memberIDs = append(memberIDs, str)
-		}
-	}
-
-	return memberIDs
 }

@@ -15,6 +15,9 @@ import (
 	"github.com/absmach/magistrala/pkg/events/nats"
 )
 
+// StreamAllEvents represents subject to subscribe for all the events.
+const StreamAllEvents = "events.>"
+
 func init() {
 	log.Println("The binary was build using nats as the events store")
 }

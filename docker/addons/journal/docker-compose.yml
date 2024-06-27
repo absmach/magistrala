@@ -1,0 +1,67 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional Postgres and journal services
+# for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
+# from <project_root>/docker. In order to run these services, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/journal/docker-compose.yml up
+# from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
+# inspection and data visualization.
+
+networks:
+  magistrala-base-net:
+
+volumes:
+  magistrala-journal-volume:
+
+services:
+  journal-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-journal-db
+    restart: on-failure
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_JOURNAL_USER}
+      POSTGRES_PASSWORD: ${MG_JOURNAL_PASS}
+      POSTGRES_DB: ${MG_JOURNAL_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-journal-volume:/var/lib/postgresql/data
+
+  journal:
+    image: magistrala/journal:${MG_RELEASE_TAG}
+    container_name: magistrala-journal
+    depends_on:
+      - journal-db
+    restart: on-failure
+    environment:
+      MG_JOURNAL_LOG_LEVEL: ${MG_JOURNAL_LOG_LEVEL}
+      MG_JOURNAL_HTTP_HOST: ${MG_JOURNAL_HTTP_HOST}
+      MG_JOURNAL_HTTP_PORT: ${MG_JOURNAL_HTTP_PORT}
+      MG_JOURNAL_HTTP_SERVER_CERT: ${MG_JOURNAL_HTTP_SERVER_CERT}
+      MG_JOURNAL_HTTP_SERVER_KEY: ${MG_JOURNAL_HTTP_SERVER_KEY}
+      MG_JOURNAL_HOST: ${MG_JOURNAL_HOST}
+      MG_JOURNAL_PORT: ${MG_JOURNAL_PORT}
+      MG_JOURNAL_USER: ${MG_JOURNAL_USER}
+      MG_JOURNAL_PASS: ${MG_JOURNAL_PASS}
+      MG_JOURNAL_NAME: ${MG_JOURNAL_NAME}
+      MG_JOURNAL_SSL_MODE: ${MG_JOURNAL_SSL_MODE}
+      MG_JOURNAL_SSL_CERT: ${MG_JOURNAL_SSL_CERT}
+      MG_JOURNAL_SSL_KEY: ${MG_JOURNAL_SSL_KEY}
+      MG_JOURNAL_SSL_ROOT_CERT: ${MG_JOURNAL_SSL_ROOT_CERT}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_ES_URL: ${MG_ES_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_JOURNAL_INSTANCE_ID: ${MG_JOURNAL_INSTANCE_ID}
+    ports:
+      - ${MG_JOURNAL_HTTP_PORT}:${MG_JOURNAL_HTTP_PORT}
+    networks:
+      - magistrala-base-net

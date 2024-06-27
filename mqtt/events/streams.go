@@ -42,7 +42,7 @@ func NewEventStore(ctx context.Context, url, instance string) (EventStore, error
 func (es *eventStore) Connect(ctx context.Context, clientID string) error {
 	ev := mqttEvent{
 		clientID:  clientID,
-		eventType: "connect",
+		operation: "connect",
 		instance:  es.instance,
 	}
 
@@ -53,7 +53,7 @@ func (es *eventStore) Connect(ctx context.Context, clientID string) error {
 func (es *eventStore) Disconnect(ctx context.Context, clientID string) error {
 	ev := mqttEvent{
 		clientID:  clientID,
-		eventType: "disconnect",
+		operation: "disconnect",
 		instance:  es.instance,
 	}
 

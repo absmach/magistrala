@@ -55,3 +55,33 @@ type Subscriber interface {
 	// Close gracefully closes event subscriber's connection.
 	Close() error
 }
+
+// Read reads value from event map.
+// If value is not of type T, returns default value.
+func Read[T any](event map[string]interface{}, key string, def T) T {
+	val, ok := event[key].(T)
+	if !ok {
+		return def
+	}
+
+	return val
+}
+
+// ReadStringSlice reads string slice from event map.
+// If value is not a string slice, returns empty slice.
+func ReadStringSlice(event map[string]interface{}, key string) []string {
+	var res []string
+
+	vals, ok := event[key].([]interface{})
+	if !ok {
+		return res
+	}
+
+	for _, v := range vals {
+		if s, ok := v.(string); ok {
+			res = append(res, s)
+		}
+	}
+
+	return res
+}

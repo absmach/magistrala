@@ -1,0 +1,285 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.0.3
+info:
+  title: Magistrala Journal Log Service
+  description: |
+    This is the Journal Log Server based on the OpenAPI 3.0 specification.  It is the HTTP API for viewing journal log history. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    Some useful links:
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/absmach/magistrala/blob/master/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:9021
+  - url: https://localhost:9021
+
+tags:
+  - name: journal-log
+    description: Everything about your Journal Log
+    externalDocs:
+      description: Find out more about Journal Log
+      url: http://docs.mainflux.io/
+
+paths:
+  /journal/{entity_type}/{id}:
+    get:
+      tags:
+        - journal-log
+      summary: List journal log
+      description: |
+        Retrieves a list of journal. Due to performance concerns, data
+        is retrieved in subsets. The API must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      parameters:
+        - $ref: "#/components/parameters/entity_type"
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/operation"
+        - $ref: "#/components/parameters/with_attributes"
+        - $ref: "#/components/parameters/with_metadata"
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/dir"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/JournalsPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthRes"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  schemas:
+    Journal:
+      type: object
+      properties:
+        operation:
+          type: string
+          example: user.create
+          description: Journal operation.
+        occurred_at:
+          type: string
+          format: date-time
+          example: "2024-01-11T12:05:07.449053Z"
+          description: Time when the journal occurred.
+        attributes:
+          type: object
+          description: Journal attributes.
+          example:
+            {
+              "created_at": "2024-06-12T11:34:32.991591Z",
+              "id": "29d425c8-542b-4614-8a4d-a5951945d720",
+              "identity": "Gawne-Havlicek@email.com",
+              "name": "Newgard-Frisina",
+              "status": "enabled",
+              "updated_at": "2024-06-12T11:34:33.116795Z",
+              "updated_by": "ad228f20-4741-47c5-bef7-d871b541c019",
+            }
+        metadata:
+          type: object
+          description: Journal payload.
+          example: { "Update": "Calvo-Felkins" }
+      xml:
+        name: journal
+
+    JournalPage:
+      type: object
+      properties:
+        journals:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Journal"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - journals
+        - total
+        - offset
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      example: { "error": "malformed entity specification" }
+
+  parameters:
+    entity_type:
+      name: entity_type
+      description: Type of entity, e.g. user, group, thing, etc.
+      in: path
+      schema:
+        type: string
+        enum:
+          - user
+          - group
+          - thing
+          - channel
+      required: true
+      example: user
+
+    id:
+      name: id
+      description: Unique identifier for an entity, e.g. user, group, domain, etc. Used together with entity_type.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+      example: "0"
+
+    limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 10
+        minimum: 1
+      required: false
+      example: "10"
+
+    operation:
+      name: operation
+      description: Journal operation.
+      in: query
+      schema:
+        type: string
+      required: false
+      example: user.create
+
+    with_attributes:
+      name: with_attributes
+      description: Include journal attributes.
+      in: query
+      schema:
+        type: boolean
+      required: false
+      example: true
+
+    with_metadata:
+      name: with_metadata
+      description: Include journal metadata.
+      in: query
+      schema:
+        type: boolean
+      required: false
+      example: true
+
+    from:
+      name: from
+      description: Start date in unix time.
+      in: query
+      schema:
+        type: string
+        format: int64
+      required: false
+      example: 1966777289
+
+    to:
+      name: to
+      description: End date in unix time.
+      in: query
+      schema:
+        type: string
+        format: int64
+      required: false
+      example: 1966777289
+
+    dir:
+      name: dir
+      description: Sort direction.
+      in: query
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+      required: false
+      example: desc
+
+  responses:
+    JournalsPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JournalPage"
+
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/health+json:
+          schema:
+            $ref: "./schemas/HealthInfo.yml"
+
+    ServiceError:
+      description: Unexpected server-side error occurred.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * User access: "Authorization: Bearer <user_access_token>"
+
+security:
+  - bearerAuth: []

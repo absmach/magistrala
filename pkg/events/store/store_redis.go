@@ -15,6 +15,9 @@ import (
 	"github.com/absmach/magistrala/pkg/events/redis"
 )
 
+// StreamAllEvents represents subject to subscribe for all the events.
+const StreamAllEvents = ">"
+
 func init() {
 	log.Println("The binary was build using redis as the events store")
 }

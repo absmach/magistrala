@@ -4,9 +4,6 @@
 package events
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
@@ -57,19 +54,13 @@ func (cce createClientEvent) Encode() (map[string]interface{}, error) {
 		val["name"] = cce.Name
 	}
 	if len(cce.Tags) > 0 {
-		tags := fmt.Sprintf("[%s]", strings.Join(cce.Tags, ","))
-		val["tags"] = tags
+		val["tags"] = cce.Tags
 	}
 	if cce.Domain != "" {
 		val["domain"] = cce.Domain
 	}
 	if cce.Metadata != nil {
-		metadata, err := json.Marshal(cce.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = cce.Metadata
 	}
 	if cce.Credentials.Identity != "" {
 		val["identity"] = cce.Credentials.Identity
@@ -100,8 +91,7 @@ func (uce updateClientEvent) Encode() (map[string]interface{}, error) {
 		val["name"] = uce.Name
 	}
 	if len(uce.Tags) > 0 {
-		tags := fmt.Sprintf("[%s]", strings.Join(uce.Tags, ","))
-		val["tags"] = tags
+		val["tags"] = uce.Tags
 	}
 	if uce.Domain != "" {
 		val["domain"] = uce.Domain
@@ -110,12 +100,7 @@ func (uce updateClientEvent) Encode() (map[string]interface{}, error) {
 		val["identity"] = uce.Credentials.Identity
 	}
 	if uce.Metadata != nil {
-		metadata, err := json.Marshal(uce.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = uce.Metadata
 	}
 	if !uce.CreatedAt.IsZero() {
 		val["created_at"] = uce.CreatedAt
@@ -158,8 +143,7 @@ func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
 		val["name"] = vce.Name
 	}
 	if len(vce.Tags) > 0 {
-		tags := fmt.Sprintf("[%s]", strings.Join(vce.Tags, ","))
-		val["tags"] = tags
+		val["tags"] = vce.Tags
 	}
 	if vce.Domain != "" {
 		val["domain"] = vce.Domain
@@ -168,12 +152,7 @@ func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
 		val["identity"] = vce.Credentials.Identity
 	}
 	if vce.Metadata != nil {
-		metadata, err := json.Marshal(vce.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = vce.Metadata
 	}
 	if !vce.CreatedAt.IsZero() {
 		val["created_at"] = vce.CreatedAt
@@ -227,12 +206,7 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 		val["dir"] = lce.Dir
 	}
 	if lce.Metadata != nil {
-		metadata, err := json.Marshal(lce.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = lce.Metadata
 	}
 	if lce.Domain != "" {
 		val["domain"] = lce.Domain
@@ -247,8 +221,7 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 		val["status"] = lce.Status.String()
 	}
 	if len(lce.IDs) > 0 {
-		ids := fmt.Sprintf("[%s]", strings.Join(lce.IDs, ","))
-		val["ids"] = ids
+		val["ids"] = lce.IDs
 	}
 	if lce.Identity != "" {
 		val["identity"] = lce.Identity
@@ -281,12 +254,7 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 		val["dir"] = lcge.Dir
 	}
 	if lcge.Metadata != nil {
-		metadata, err := json.Marshal(lcge.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = lcge.Metadata
 	}
 	if lcge.Domain != "" {
 		val["domain"] = lcge.Domain
@@ -314,7 +282,7 @@ type identifyClientEvent struct {
 func (ice identifyClientEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": clientIdentify,
-		"thing_id":  ice.thingID,
+		"id":        ice.thingID,
 	}, nil
 }
 
@@ -334,7 +302,7 @@ type authorizeClientEvent struct {
 func (ice authorizeClientEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"operation": clientAuthorize,
-		"thing_id":  ice.thingID,
+		"id":        ice.thingID,
 	}
 	if ice.namespace != "" {
 		val["namespace"] = ice.namespace
@@ -379,7 +347,7 @@ func (sce shareClientEvent) Encode() (map[string]interface{}, error) {
 		"operation": clientPrefix + sce.action,
 		"id":        sce.id,
 		"relation":  sce.relation,
-		"user_ids":  strings.Join(sce.userIDs, ","),
+		"user_ids":  sce.userIDs,
 	}, nil
 }
 

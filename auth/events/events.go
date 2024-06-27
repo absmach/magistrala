@@ -4,9 +4,6 @@
 package events
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/absmach/magistrala/auth"
@@ -59,16 +56,10 @@ func (cde createDomainEvent) Encode() (map[string]interface{}, error) {
 		val["permission"] = cde.Permission
 	}
 	if len(cde.Tags) > 0 {
-		tags := fmt.Sprintf("[%s]", strings.Join(cde.Tags, ","))
-		val["tags"] = tags
+		val["tags"] = cde.Tags
 	}
 	if cde.Metadata != nil {
-		metadata, err := json.Marshal(cde.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = cde.Metadata
 	}
 
 	return val, nil
@@ -91,16 +82,10 @@ func (rde retrieveDomainEvent) Encode() (map[string]interface{}, error) {
 		val["name"] = rde.Name
 	}
 	if len(rde.Tags) > 0 {
-		tags := fmt.Sprintf("[%s]", strings.Join(rde.Tags, ","))
-		val["tags"] = tags
+		val["tags"] = rde.Tags
 	}
 	if rde.Metadata != nil {
-		metadata, err := json.Marshal(rde.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = rde.Metadata
 	}
 
 	if !rde.UpdatedAt.IsZero() {
@@ -124,12 +109,7 @@ func (rpe retrieveDomainPermissionsEvent) Encode() (map[string]interface{}, erro
 	}
 
 	if rpe.permissions != nil {
-		permissions, err := json.Marshal(rpe.permissions)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["permissions"] = permissions
+		val["permissions"] = rpe.permissions
 	}
 
 	return val, nil
@@ -155,16 +135,10 @@ func (ude updateDomainEvent) Encode() (map[string]interface{}, error) {
 		val["name"] = ude.Name
 	}
 	if len(ude.Tags) > 0 {
-		tags := fmt.Sprintf("[%s]", strings.Join(ude.Tags, ","))
-		val["tags"] = tags
+		val["tags"] = ude.Tags
 	}
 	if ude.Metadata != nil {
-		metadata, err := json.Marshal(ude.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = ude.Metadata
 	}
 
 	return val, nil
@@ -210,12 +184,7 @@ func (lde listDomainsEvent) Encode() (map[string]interface{}, error) {
 		val["dir"] = lde.Dir
 	}
 	if lde.Metadata != nil {
-		metadata, err := json.Marshal(lde.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = lde.Metadata
 	}
 	if lde.Tag != "" {
 		val["tag"] = lde.Tag
@@ -298,12 +267,7 @@ func (lde listUserDomainsEvent) Encode() (map[string]interface{}, error) {
 		val["dir"] = lde.Dir
 	}
 	if lde.Metadata != nil {
-		metadata, err := json.Marshal(lde.Metadata)
-		if err != nil {
-			return map[string]interface{}{}, err
-		}
-
-		val["metadata"] = metadata
+		val["metadata"] = lde.Metadata
 	}
 	if lde.Tag != "" {
 		val["tag"] = lde.Tag

@@ -12,9 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	defURL string = "http://localhost"
-)
+const defURL string = "http://localhost"
 
 func main() {
 	msgContentType := string(sdk.CTJSONSenML)
@@ -52,6 +50,7 @@ func main() {
 	subscriptionsCmd := cli.NewSubscriptionCmd()
 	configCmd := cli.NewConfigCmd()
 	invitationsCmd := cli.NewInvitationsCmd()
+	journalCmd := cli.NewJournalCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(healthCmd)
@@ -67,6 +66,7 @@ func main() {
 	rootCmd.AddCommand(subscriptionsCmd)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(invitationsCmd)
+	rootCmd.AddCommand(journalCmd)
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(
@@ -131,6 +131,14 @@ func main() {
 		"v",
 		sdkConf.InvitationsURL,
 		"Inivitations URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.JournalURL,
+		"journal-url",
+		"a",
+		sdkConf.JournalURL,
+		"Journal Log URL",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

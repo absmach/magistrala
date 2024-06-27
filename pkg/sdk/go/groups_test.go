@@ -441,7 +441,7 @@ func TestListGroups(t *testing.T) {
 			svcRes:   groups.Page{},
 			svcErr:   nil,
 			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidLevel), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidLevel), http.StatusBadRequest),
 		},
 		{
 			desc:  "list groups with invalid page metadata",

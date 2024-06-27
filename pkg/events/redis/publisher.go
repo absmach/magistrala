@@ -5,6 +5,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -45,11 +46,16 @@ func (es *pubEventStore) Publish(ctx context.Context, event events.Event) error 
 	}
 	values["occurred_at"] = time.Now().UnixNano()
 
+	data, err := json.Marshal(values)
+	if err != nil {
+		return err
+	}
+
 	record := &redis.XAddArgs{
 		Stream: es.stream,
 		MaxLen: events.MaxEventStreamLen,
 		Approx: true,
-		Values: values,
+		Values: map[string]interface{}{"data": string(data)},
 	}
 
 	switch err := es.checkConnection(ctx); err {

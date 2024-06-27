@@ -15,6 +15,9 @@ import (
 	"github.com/absmach/magistrala/pkg/events/rabbitmq"
 )
 
+// StreamAllEvents represents subject to subscribe for all the events.
+const StreamAllEvents = "events.#"
+
 func init() {
 	log.Println("The binary was build using rabbitmq as the events store")
 }

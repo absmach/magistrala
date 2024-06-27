@@ -5,8 +5,8 @@ MG_DOCKER_IMAGE_NAME_PREFIX ?= magistrala
 BUILD_DIR = build
 SERVICES = auth users things http coap ws lora influxdb-writer influxdb-reader mongodb-writer \
 	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader timescale-writer timescale-reader cli \
-	bootstrap opcua twins mqtt provision certs smtp-notifier smpp-notifier invitations
-TEST_API_SERVICES = auth bootstrap certs http invitations notifiers provision readers things twins users
+	bootstrap opcua twins mqtt provision certs smtp-notifier smpp-notifier invitations journal
+TEST_API_SERVICES = journal auth bootstrap certs http invitations notifiers provision readers things twins users
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -73,7 +73,7 @@ endef
 ADDON_SERVICES = bootstrap cassandra-reader cassandra-writer certs \
 					influxdb-reader influxdb-writer lora-adapter mongodb-reader mongodb-writer \
 					opcua-adapter postgres-reader postgres-writer provision smpp-notifier smtp-notifier \
-					timescale-reader timescale-writer twins
+					timescale-reader timescale-writer twins journal
 
 EXTERNAL_SERVICES = vault prometheus
 
@@ -177,6 +177,7 @@ test_api_twins: TEST_API_URL := http://localhost:9018
 test_api_provision: TEST_API_URL := http://localhost:9016
 test_api_readers: TEST_API_URL := http://localhost:9009 # This can be the URL of any reader service.
 test_api_notifiers: TEST_API_URL := http://localhost:9014 # This can be the URL of any notifier service.
+test_api_journal: TEST_API_URL := http://localhost:9021
 
 $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))

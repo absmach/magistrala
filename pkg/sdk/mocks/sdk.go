@@ -1412,6 +1412,34 @@ func (_m *SDK) IssueCert(thingID string, validity string, token string) (sdk.Cer
 	return r0, r1
 }
 
+// Journal provides a mock function with given fields: entityType, entityID, pm, token
+func (_m *SDK) Journal(entityType string, entityID string, pm sdk.PageMetadata, token string) (sdk.JournalsPage, error) {
+	ret := _m.Called(entityType, entityID, pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Journal")
+	}
+
+	var r0 sdk.JournalsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, sdk.PageMetadata, string) (sdk.JournalsPage, error)); ok {
+		return rf(entityType, entityID, pm, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, sdk.PageMetadata, string) sdk.JournalsPage); ok {
+		r0 = rf(entityType, entityID, pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.JournalsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, sdk.PageMetadata, string) error); ok {
+		r1 = rf(entityType, entityID, pm, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListChannelUserGroups provides a mock function with given fields: channelID, pm, token
 func (_m *SDK) ListChannelUserGroups(channelID string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
 	ret := _m.Called(channelID, pm, token)

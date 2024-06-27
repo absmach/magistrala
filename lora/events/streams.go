@@ -5,7 +5,6 @@ package events
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 
 	"github.com/absmach/magistrala/lora"
@@ -58,35 +57,20 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	}
 
 	switch msg["operation"] {
-	case thingCreate:
+	case thingCreate, thingUpdate:
 		cte, derr := decodeCreateThing(msg)
 		if derr != nil {
 			err = derr
 			break
 		}
 		err = es.svc.CreateThing(ctx, cte.id, cte.loraDevEUI)
-	case thingUpdate:
-		ute, derr := decodeCreateThing(msg)
-		if derr != nil {
-			err = derr
-			break
-		}
-		err = es.svc.CreateThing(ctx, ute.id, ute.loraDevEUI)
-
-	case channelCreate:
+	case channelCreate, channelUpdate:
 		cce, derr := decodeCreateChannel(msg)
 		if derr != nil {
 			err = derr
 			break
 		}
 		err = es.svc.CreateChannel(ctx, cce.id, cce.loraAppID)
-	case channelUpdate:
-		uce, derr := decodeCreateChannel(msg)
-		if derr != nil {
-			err = derr
-			break
-		}
-		err = es.svc.CreateChannel(ctx, uce.id, uce.loraAppID)
 	case thingRemove:
 		rte := decodeRemoveThing(msg)
 		err = es.svc.RemoveThing(ctx, rte.id)
@@ -95,10 +79,22 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 		err = es.svc.RemoveChannel(ctx, rce.id)
 	case thingConnect:
 		tce := decodeConnectionThing(msg)
-		err = es.svc.ConnectThing(ctx, tce.chanID, tce.thingID)
+
+		for _, thingID := range tce.thingIDs {
+			err = es.svc.ConnectThing(ctx, tce.chanID, thingID)
+			if err != nil {
+				return err
+			}
+		}
 	case thingDisconnect:
 		tde := decodeConnectionThing(msg)
-		err = es.svc.DisconnectThing(ctx, tde.chanID, tde.thingID)
+
+		for _, thingID := range tde.thingIDs {
+			err = es.svc.DisconnectThing(ctx, tde.chanID, thingID)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	if err != nil && err != errMetadataType {
 		return err
@@ -108,14 +104,10 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 }
 
 func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
-	strmeta := read(event, "metadata", "{}")
-	var metadata map[string]interface{}
-	if err := json.Unmarshal([]byte(strmeta), &metadata); err != nil {
-		return createThingEvent{}, err
-	}
+	metadata := events.Read(event, "metadata", map[string]interface{}{})
 
 	cte := createThingEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
 
 	m, ok := metadata[keyType]
@@ -139,19 +131,15 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 
 func decodeRemoveThing(event map[string]interface{}) removeThingEvent {
 	return removeThingEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
 }
 
 func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, error) {
-	strmeta := read(event, "metadata", "{}")
-	var metadata map[string]interface{}
-	if err := json.Unmarshal([]byte(strmeta), &metadata); err != nil {
-		return createChannelEvent{}, err
-	}
+	metadata := events.Read(event, "metadata", map[string]interface{}{})
 
 	cce := createChannelEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
 
 	m, ok := metadata[keyType]
@@ -175,22 +163,13 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 
 func decodeConnectionThing(event map[string]interface{}) connectionThingEvent {
 	return connectionThingEvent{
-		chanID:  read(event, "chan_id", ""),
-		thingID: read(event, "thing_id", ""),
+		chanID:   events.Read(event, "group_id", ""),
+		thingIDs: events.ReadStringSlice(event, "member_ids"),
 	}
 }
 
 func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 	return removeChannelEvent{
-		id: read(event, "id", ""),
+		id: events.Read(event, "id", ""),
 	}
-}
-
-func read(event map[string]interface{}, key, def string) string {
-	val, ok := event[key].(string)
-	if !ok {
-		return def
-	}
-
-	return val
 }

@@ -5,11 +5,9 @@ package redis_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
-	"strconv"
 	"testing"
 	"time"
 
@@ -33,23 +31,11 @@ type testEvent struct {
 }
 
 func (te testEvent) Encode() (map[string]interface{}, error) {
-	data := make(map[string]interface{})
-	for k, v := range te.Data {
-		switch v.(type) {
-		case string:
-			data[k] = v
-		case float64:
-			data[k] = v
-		default:
-			b, err := json.Marshal(v)
-			if err != nil {
-				return nil, err
-			}
-			data[k] = string(b)
-		}
+	if te.Data == nil {
+		return map[string]interface{}{}, nil
 	}
 
-	return data, nil
+	return te.Data, nil
 }
 
 func TestPublish(t *testing.T) {
@@ -87,12 +73,12 @@ func TestPublish(t *testing.T) {
 			desc: "publish event successfully",
 			err:  nil,
 			event: map[string]interface{}{
-				"temperature": fmt.Sprintf("%f", rand.Float64()),
-				"humidity":    fmt.Sprintf("%f", rand.Float64()),
+				"temperature": float64(rand.Float64()),
+				"humidity":    float64(rand.Float64()),
 				"sensor_id":   "abc123",
 				"location":    "Earth",
 				"status":      "normal",
-				"timestamp":   fmt.Sprintf("%d", time.Now().UnixNano()),
+				"timestamp":   float64(time.Now().UnixNano()),
 				"operation":   "create",
 				"occurred_at": time.Now().UnixNano(),
 			},
@@ -106,22 +92,22 @@ func TestPublish(t *testing.T) {
 			desc: "publish event with invalid event location",
 			err:  fmt.Errorf("json: unsupported type: chan int"),
 			event: map[string]interface{}{
-				"temperature": fmt.Sprintf("%f", rand.Float64()),
-				"humidity":    fmt.Sprintf("%f", rand.Float64()),
+				"temperature": float64(rand.Float64()),
+				"humidity":    float64(rand.Float64()),
 				"sensor_id":   "abc123",
 				"location":    make(chan int),
 				"status":      "normal",
 				"timestamp":   "invalid",
 				"operation":   "create",
-				"occurred_at": time.Now().UnixNano(),
+				"occurred_at": float64(time.Now().UnixNano()),
 			},
 		},
 		{
 			desc: "publish event with nested sting value",
 			err:  nil,
 			event: map[string]interface{}{
-				"temperature": fmt.Sprintf("%f", rand.Float64()),
-				"humidity":    fmt.Sprintf("%f", rand.Float64()),
+				"temperature": float64(rand.Float64()),
+				"humidity":    float64(rand.Float64()),
 				"sensor_id":   "abc123",
 				"location": map[string]string{
 					"lat": fmt.Sprintf("%f", rand.Float64()),
@@ -130,7 +116,7 @@ func TestPublish(t *testing.T) {
 				"status":      "normal",
 				"timestamp":   "invalid",
 				"operation":   "create",
-				"occurred_at": time.Now().UnixNano(),
+				"occurred_at": float64(time.Now().UnixNano()),
 			},
 		},
 	}
@@ -144,9 +130,9 @@ func TestPublish(t *testing.T) {
 			case nil:
 				receivedEvent := <-eventsChan
 
-				roa, err := strconv.ParseInt(receivedEvent["occurred_at"].(string), 10, 64)
+				roa := receivedEvent["occurred_at"].(float64)
 				assert.Nil(t, err)
-				if assert.WithinRange(t, time.Unix(0, roa), time.Now().Add(-time.Second), time.Now().Add(time.Second)) {
+				if assert.WithinRange(t, time.Unix(0, int64(roa)), time.Now().Add(-time.Second), time.Now().Add(time.Second)) {
 					delete(receivedEvent, "occurred_at")
 					delete(tc.event, "occurred_at")
 				}

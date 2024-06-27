@@ -171,16 +171,8 @@ var (
 	// ErrEmptyMessage indicates empty message.
 	ErrEmptyMessage = errors.New("empty message")
 
-	// ErrMissingEntityType indicates missing entity type.
-	ErrMissingEntityType = errors.New("missing entity type")
-
-	// ErrInvalidEntityType indicates invalid entity type.
-	ErrInvalidEntityType = errors.New("invalid entity type")
-
-	// ErrInvalidTimeFormat indicates invalid time format i.e not unix time.
-	ErrInvalidTimeFormat = errors.New("invalid time format use unix time")
-
 	ErrEmptySearchQuery = errors.New("search query must not be empty")
 
+	// ErrLenSearchQuery indicates search query length.
 	ErrLenSearchQuery = errors.New("search query must be at least 3 characters")
 )

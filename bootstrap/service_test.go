@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala"
+	authsvc "github.com/absmach/magistrala/auth"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/mocks"
@@ -638,7 +639,10 @@ func TestList(t *testing.T) {
 		token               string
 		userID              string
 		domainID            string
-		authorizeRes        *magistrala.AuthorizeRes
+		superAdminAuthRes   *magistrala.AuthorizeRes
+		domainAdminAuthRes  *magistrala.AuthorizeRes
+		superAdmiAuthErr    error
+		domainAdmiAuthErr   error
 		listObjectsResponse *magistrala.ListObjectsRes
 		authorizeErr        error
 		identifyErr         error
@@ -647,7 +651,7 @@ func TestList(t *testing.T) {
 		err                 error
 	}{
 		{
-			desc: "list configs successfully",
+			desc: "list configs successfully as super admin",
 			config: bootstrap.ConfigsPage{
 				Total:   uint64(len(saved)),
 				Offset:  0,
@@ -658,28 +662,130 @@ func TestList(t *testing.T) {
 			token:               validToken,
 			userID:              validID,
 			domainID:            domainID,
-			authorizeRes:        &magistrala.AuthorizeRes{Authorized: true},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: true},
 			listObjectsResponse: &magistrala.ListObjectsRes{},
 			offset:              0,
 			limit:               10,
 			err:                 nil,
 		},
 		{
-			desc: "list configs with specified name",
+			desc:                "list configs with failed super admin check",
+			config:              bootstrap.ConfigsPage{},
+			filter:              bootstrap.Filter{},
+			token:               validID,
+			userID:              validID,
+			domainID:            domainID,
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			offset:              0,
+			limit:               10,
+			err:                 nil,
+		},
+		{
+			desc: "list configs successfully as domain admin",
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  0,
+				Limit:   10,
+				Configs: saved[0:10],
+			},
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			offset:              0,
+			limit:               10,
+			err:                 nil,
+		},
+		{
+			desc:                "list configs wit failed domain admin check",
+			config:              bootstrap.ConfigsPage{},
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			offset:              0,
+			limit:               10,
+			err:                 nil,
+		},
+		{
+			desc: "list configs successfully as non admin",
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  0,
+				Limit:   10,
+				Configs: saved[0:10],
+			},
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			offset:              0,
+			limit:               10,
+			err:                 nil,
+		},
+		{
+			desc: "list configs with specified name as super admin",
 			config: bootstrap.ConfigsPage{
 				Total:   1,
 				Offset:  0,
 				Limit:   100,
 				Configs: saved[95:96],
 			},
-			filter:       bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
-			offset:       0,
-			limit:        100,
-			err:          nil,
+			filter:            bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			token:             validToken,
+			userID:            validID,
+			domainID:          domainID,
+			superAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
+			offset:            0,
+			limit:             100,
+			err:               nil,
+		},
+		{
+			desc: "list configs with specified name as domain admin",
+			config: bootstrap.ConfigsPage{
+				Total:   1,
+				Offset:  0,
+				Limit:   100,
+				Configs: saved[95:96],
+			},
+			filter:             bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			token:              validToken,
+			userID:             validID,
+			domainID:           domainID,
+			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
+			offset:             0,
+			limit:              100,
+			err:                nil,
+		},
+		{
+			desc: "list configs with specified name as non admin",
+			config: bootstrap.ConfigsPage{
+				Total:   1,
+				Offset:  0,
+				Limit:   100,
+				Configs: saved[95:96],
+			},
+			filter:              bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			offset:              0,
+			limit:               100,
+			err:                 nil,
 		},
 		{
 			desc:        "list configs with invalid token",
@@ -692,51 +798,129 @@ func TestList(t *testing.T) {
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc: "list last page",
+			desc: "List configs with empty domain",
+			config: bootstrap.ConfigsPage{
+				Total:   0,
+				Offset:  0,
+				Limit:   10,
+				Configs: []bootstrap.Config{},
+			},
+			filter:   bootstrap.Filter{},
+			token:    validToken,
+			userID:   validID,
+			domainID: "",
+			offset:   0,
+			limit:    10,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc: "list last page as super admin",
 			config: bootstrap.ConfigsPage{
 				Total:   uint64(len(saved)),
 				Offset:  95,
 				Limit:   10,
 				Configs: saved[95:],
 			},
-			filter:       bootstrap.Filter{},
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
-			offset:       95,
-			limit:        10,
-			err:          nil,
+			filter:             bootstrap.Filter{},
+			token:              validToken,
+			userID:             validID,
+			domainID:           domainID,
+			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
+			domainAdminAuthRes: &magistrala.AuthorizeRes{Authorized: false},
+			offset:             95,
+			limit:              10,
+			err:                nil,
 		},
 		{
-			desc: "list configs with Active state",
+			desc: "list last page as domain admin",
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  95,
+				Limit:   10,
+				Configs: saved[95:],
+			},
+			filter:             bootstrap.Filter{},
+			token:              validToken,
+			userID:             validID,
+			domainID:           domainID,
+			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
+			offset:             95,
+			limit:              10,
+			err:                nil,
+		},
+		{
+			desc: "list last page as non admin",
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  95,
+				Limit:   10,
+				Configs: saved[95:],
+			},
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			offset:              95,
+			limit:               10,
+			err:                 nil,
+		},
+		{
+			desc: "list configs with Active state as super admin",
 			config: bootstrap.ConfigsPage{
 				Total:   1,
 				Offset:  35,
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:       bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authorizeRes: &magistrala.AuthorizeRes{Authorized: true},
-			offset:       35,
-			limit:        20,
-			err:          nil,
+			filter:             bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
+			token:              validToken,
+			userID:             validID,
+			domainID:           domainID,
+			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
+			domainAdminAuthRes: &magistrala.AuthorizeRes{Authorized: false},
+			offset:             35,
+			limit:              20,
+			err:                nil,
 		},
 		{
-			desc:                "list configs with failed authorization",
-			config:              bootstrap.ConfigsPage{},
-			filter:              bootstrap.Filter{},
+			desc: "list configs with Active state as domain admin",
+			config: bootstrap.ConfigsPage{
+				Total:   1,
+				Offset:  35,
+				Limit:   20,
+				Configs: []bootstrap.Config{saved[41]},
+			},
+			filter:             bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
+			token:              validToken,
+			userID:             validID,
+			domainID:           domainID,
+			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
+			offset:             35,
+			limit:              20,
+			err:                nil,
+		},
+		{
+			desc: "list configs with Active state as non admin",
+			config: bootstrap.ConfigsPage{
+				Total:   1,
+				Offset:  35,
+				Limit:   20,
+				Configs: []bootstrap.Config{saved[41]},
+			},
+			filter:              bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
 			token:               validToken,
 			userID:              validID,
 			domainID:            domainID,
-			authorizeRes:        &magistrala.AuthorizeRes{Authorized: false},
-			authorizeErr:        svcerr.ErrAuthorization,
-			listObjectsResponse: &magistrala.ListObjectsRes{},
-			offset:              0,
-			limit:               10,
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			offset:              35,
+			limit:               20,
 			err:                 nil,
 		},
 		{
@@ -748,18 +932,38 @@ func TestList(t *testing.T) {
 			token:               validToken,
 			userID:              validID,
 			domainID:            domainID,
-			authorizeRes:        &magistrala.AuthorizeRes{Authorized: true},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
 			listObjectsResponse: &magistrala.ListObjectsRes{},
 			listObjectsErr:      svcerr.ErrNotFound,
-			err:                 nil,
+			err:                 svcerr.ErrNotFound,
 		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeRes, tc.authorizeErr)
-		authCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		svcCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
+		authCall1 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			Subject:     tc.userID,
+			Permission:  authsvc.AdminPermission,
+			ObjectType:  authsvc.PlatformType,
+			Object:      authsvc.MagistralaObject,
+		}).Return(tc.superAdminAuthRes, tc.superAdmiAuthErr)
+		authCall2 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     tc.userID,
+			Permission:  authsvc.AdminPermission,
+			ObjectType:  authsvc.DomainType,
+			Object:      tc.domainID,
+		}).Return(tc.domainAdminAuthRes, tc.domainAdmiAuthErr)
+		authCall3 := auth.On("ListAllObjects", mock.Anything, &magistrala.ListObjectsReq{
+			SubjectType: authsvc.UserType,
+			Subject:     tc.userID,
+			Permission:  authsvc.ViewPermission,
+			ObjectType:  authsvc.ThingType,
+		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
+		repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 
 		result, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
 		assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
@@ -768,7 +972,8 @@ func TestList(t *testing.T) {
 		authCall.Unset()
 		authCall1.Unset()
 		authCall2.Unset()
-		svcCall.Unset()
+		authCall3.Unset()
+		repoCall.Unset()
 	}
 }
 

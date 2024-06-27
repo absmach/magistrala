@@ -336,12 +336,22 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
 	}
 
+	// Handle non-admin users
 	thingIDs, err := bs.listClientIDs(ctx, user.GetId())
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
-	return bs.configs.RetrieveAll(ctx, "", thingIDs, filter, offset, limit), nil
+	if len(thingIDs) == 0 {
+		return ConfigsPage{
+			Total:   0,
+			Offset:  offset,
+			Limit:   limit,
+			Configs: []Config{},
+		}, nil
+	}
+
+	return bs.configs.RetrieveAll(ctx, user.GetDomainId(), thingIDs, filter, offset, limit), nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {

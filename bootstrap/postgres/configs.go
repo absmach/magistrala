@@ -486,13 +486,11 @@ func (cr configRepository) retrieveAll(domainID string, thingIDs []string, filte
 	params := []interface{}{}
 	queries := []string{}
 
-	if domainID != "" {
-		params = append(params, domainID)
-		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
-	}
-
 	if len(thingIDs) != 0 {
 		queries = append(queries, fmt.Sprintf("magistrala_thing IN ('%s')", strings.Join(thingIDs, "','")))
+	} else if domainID != "" {
+		params = append(params, domainID)
+		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
 	}
 
 	// Adjust the starting point for placeholders based on the current length of params

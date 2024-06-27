@@ -693,6 +693,23 @@ func TestListGroupsEndpoint(t *testing.T) {
 
 func TestSearchGroupsEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+
+	validGroup := groups.Group{
+		ID:          testsutil.GenerateUUID(&testing.T{}),
+		Name:        valid,
+		Description: valid,
+		Domain:      testsutil.GenerateUUID(&testing.T{}),
+		Parent:      testsutil.GenerateUUID(&testing.T{}),
+		Metadata: clients.Metadata{
+			"name": "test",
+		},
+		Children:  []*groups.Group{},
+		CreatedAt: time.Now().Add(-1 * time.Second),
+		UpdatedAt: time.Now(),
+		UpdatedBy: testsutil.GenerateUUID(&testing.T{}),
+		Status:    clients.EnabledStatus,
+	}
+
 	cases := []struct {
 		desc    string
 		req     searchGroupsReq
@@ -714,7 +731,7 @@ func TestSearchGroupsEndpoint(t *testing.T) {
 				},
 			},
 			svcResp: groups.Page{
-				Groups: []groups.Group{validGroupResp},
+				Groups: []groups.Group{validGroup},
 				PageMeta: groups.PageMeta{
 					Total:  1,
 					Offset: 0,
@@ -725,7 +742,7 @@ func TestSearchGroupsEndpoint(t *testing.T) {
 			resp: groupPageRes{
 				Groups: []viewGroupRes{
 					{
-						Group: validGroupResp,
+						Group: validGroup,
 					},
 				},
 				pageRes: pageRes{

@@ -582,6 +582,18 @@ type SDK interface {
 	//  fmt.Println(group)
 	DisableGroup(id, token string) (Group, errors.SDKError)
 
+	//SearchGroups returns page of groups.
+	//
+	// example:
+	//  pm := sdk.PageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//    Name:   "My Group",
+	//  }
+	//  groups, _ := sdk.SearchGroups(pm, "token")
+	//  fmt.Println(groups)
+	SearchGroups(pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+
 	// AddUserToGroup add user to a group.
 	//
 	// example:
@@ -747,6 +759,18 @@ type SDK interface {
 	//  users, _ := sdk.ListChannelUsers("channel_id", pm, "token")
 	//  fmt.Println(users)
 	ListChannelUsers(channelID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
+
+	// SearchChannel search channel by name.
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Name:   "My Channel",
+	//	}
+	// channels, _ := sdk.SearchChannels(pm, "token")
+	// fmt.Println(channels)
+	SearchChannels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
 
 	// AddUserGroupToChannel add user group to a channel.
 	//

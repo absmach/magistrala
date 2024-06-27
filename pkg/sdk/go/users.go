@@ -22,6 +22,7 @@ const (
 	refreshTokenEndpoint  = "tokens/refresh"
 	membersEndpoint       = "members"
 	PasswordResetEndpoint = "password"
+	searchEndpoint        = "search"
 )
 
 // User represents magistrala user its credentials.

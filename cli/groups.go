@@ -5,6 +5,9 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/url"
+	"strconv"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -247,6 +250,44 @@ var cmdGroups = []cobra.Command{
 			}
 
 			logJSON(group)
+		},
+	},
+	{
+		Use:   "search <query> <user_auth_token>",
+		Short: "Search groups",
+		Long: "Search groups by name, id or tags\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli groups search <query> <user_auth_token>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			values, err := url.ParseQuery(args[0])
+			if err != nil {
+				logError(fmt.Errorf("Failed to parse query: %s", err))
+			}
+
+			pm := mgxsdk.PageMetadata{
+				Name:     values.Get("name"),
+				Tag:      values.Get("tags"),
+				Identity: values.Get("id"),
+			}
+
+			if off, err := strconv.Atoi(values.Get("offset")); err == nil {
+				pm.Offset = uint64(off)
+			}
+
+			if lim, err := strconv.Atoi(values.Get("limit")); err == nil {
+				pm.Limit = uint64(lim)
+			}
+			groups, err := sdk.SearchGroups(pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+			logJSON(groups)
 		},
 	},
 }

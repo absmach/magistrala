@@ -183,6 +183,25 @@ func (sdk mgSDK) ListChannelUsers(channelID string, pm PageMetadata, token strin
 	return up, nil
 }
 
+func (sdk mgSDK) SearchChannels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s", channelsEndpoint, searchEndpoint), pm)
+	if err != nil {
+		return ChannelsPage{}, errors.NewSDKError(err)
+	}
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return ChannelsPage{}, sdkerr
+	}
+
+	var cp ChannelsPage
+	if err := json.Unmarshal(body, &cp); err != nil {
+		return ChannelsPage{}, errors.NewSDKError(err)
+	}
+
+	return cp, nil
+}
+
 func (sdk mgSDK) AddUserGroupToChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError {
 	data, err := json.Marshal(req)
 	if err != nil {

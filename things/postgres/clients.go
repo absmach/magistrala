@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/absmach/magistrala/internal/api"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -191,13 +192,13 @@ func constructSearchQuery(pm mgclients.Page) (string, string) {
 	var tq string
 
 	if pm.Name != "" {
-		query = append(query, "name ~ :name")
+		query = append(query, "name ~* :name")
 	}
 	if pm.Identity != "" {
-		query = append(query, "id ~ :identity")
+		query = append(query, "id ~* :identity")
 	}
 	if pm.Tag != "" {
-		query = append(query, ":tag ~ ANY(tags)")
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
 	}
 
 	if len(query) > 0 {

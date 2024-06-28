@@ -239,3 +239,11 @@ func (ms *metricsMiddleware) ListUserDomains(ctx context.Context, token, userID 
 	}(time.Now())
 	return ms.svc.ListUserDomains(ctx, token, userID, page)
 }
+
+func (ms *metricsMiddleware) DeleteEntityPolicies(ctx context.Context, entityType, id string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "delete_entity_policies").Add(1)
+		ms.latency.With("method", "delete_entity_policies").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.DeleteEntityPolicies(ctx, entityType, id)
+}

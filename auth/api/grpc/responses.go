@@ -27,11 +27,7 @@ type addPoliciesRes struct {
 	added bool
 }
 
-type deletePolicyFilterRes struct {
-	deleted bool
-}
-
-type deletePoliciesRes struct {
+type deletePolicyRes struct {
 	deleted bool
 }
 

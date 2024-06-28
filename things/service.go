@@ -438,40 +438,22 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		return err
 	}
 
-	// Remove from cache
 	if err := svc.clientCache.Remove(ctx, id); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
-	// Remove policy of groups
-	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
-		SubjectType: auth.GroupType,
-		Object:      id,
-		ObjectType:  auth.ThingType,
-	}); err != nil {
+	deleteRes, err := svc.auth.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+		EntityType: auth.ThingType,
+		Id:         id,
+	})
+	if err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
-
-	// Remove policy from domain
-	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
-		SubjectType: auth.DomainType,
-		Object:      id,
-		ObjectType:  auth.ThingType,
-	}); err != nil {
-		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	if !deleteRes.Deleted {
+		return svcerr.ErrAuthorization
 	}
 
-	// Remove thing from database
 	if err := svc.clients.Delete(ctx, id); err != nil {
-		return errors.Wrap(svcerr.ErrRemoveEntity, err)
-	}
-
-	// Remove policy of users
-	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
-		SubjectType: auth.UserType,
-		Object:      id,
-		ObjectType:  auth.ThingType,
-	}); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 

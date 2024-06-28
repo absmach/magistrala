@@ -127,6 +127,24 @@ func (_m *Authz) CountSubjects(ctx context.Context, pr auth.PolicyReq) (uint64, 
 	return r0, r1
 }
 
+// DeleteEntityPolicies provides a mock function with given fields: ctx, entityType, id
+func (_m *Authz) DeleteEntityPolicies(ctx context.Context, entityType string, id string) error {
+	ret := _m.Called(ctx, entityType, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteEntityPolicies")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, entityType, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeletePolicies provides a mock function with given fields: ctx, prs
 func (_m *Authz) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
 	ret := _m.Called(ctx, prs)

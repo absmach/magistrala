@@ -338,7 +338,24 @@ var cmdUsers = []cobra.Command{
 			logJSON(user)
 		},
 	},
-
+	{
+		Use:   "delete <user_id> <user_auth_token>",
+		Short: "Delete user",
+		Long: "Delete user by id\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli users delete <user_id> $USERTOKEN - delete user with <user_id>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+			if err := sdk.DeleteUser(args[0], args[1]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
 	{
 		Use:   "channels <user_id> <user_auth_token>",
 		Short: "List channels",
@@ -451,7 +468,7 @@ var cmdUsers = []cobra.Command{
 // NewUsersCmd returns users command.
 func NewUsersCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "users [create | get | update | token | password | enable | disable | channels | things | groups]",
+		Use:   "users [create | get | update | token | password | enable | disable | delete | channels | things | groups]",
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
 	}

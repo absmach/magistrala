@@ -435,8 +435,10 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	if err != nil {
 		return mgclients.Client{}, err
 	}
-	if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
-		return mgclients.Client{}, err
+	if tokenUserID != client.ID {
+		if err := svc.checkSuperAdmin(ctx, tokenUserID); err != nil {
+			return mgclients.Client{}, err
+		}
 	}
 	dbClient, err := svc.clients.RetrieveByID(ctx, client.ID)
 	if err != nil {
@@ -452,6 +454,20 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return client, nil
+}
+
+func (svc service) DeleteClient(ctx context.Context, token, id string) error {
+	client := mgclients.Client{
+		ID:        id,
+		UpdatedAt: time.Now(),
+		Status:    mgclients.DeletedStatus,
+	}
+
+	if _, err := svc.changeClientStatus(ctx, token, client); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {

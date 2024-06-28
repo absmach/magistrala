@@ -1734,6 +1734,74 @@ func TestDisableClient(t *testing.T) {
 	}
 }
 
+func TestDeleteClient(t *testing.T) {
+	us, svc, _ := newUsersServer()
+	defer us.Close()
+
+	cases := []struct {
+		desc     string
+		client   mgclients.Client
+		response mgclients.Client
+		token    string
+		status   int
+		err      error
+	}{
+		{
+			desc:   "delete user with valid token",
+			client: client,
+			response: mgclients.Client{
+				ID: client.ID,
+			},
+			token:  validToken,
+			status: http.StatusNoContent,
+			err:    nil,
+		},
+		{
+			desc:   "delete user with invalid token",
+			client: client,
+			token:  inValidToken,
+			status: http.StatusUnauthorized,
+			err:    svcerr.ErrAuthentication,
+		},
+		{
+			desc: "delete user with empty id",
+			client: mgclients.Client{
+				ID: "",
+			},
+			token:  validToken,
+			status: http.StatusMethodNotAllowed,
+			err:    apiutil.ErrMissingID,
+		},
+		{
+			desc: "delete user with invalid id",
+			client: mgclients.Client{
+				ID: "invalid",
+			},
+			token:  validToken,
+			status: http.StatusForbidden,
+			err:    svcerr.ErrAuthorization,
+		},
+	}
+
+	for _, tc := range cases {
+		data := toJSON(tc.client)
+		req := testRequest{
+			client:      us.Client(),
+			method:      http.MethodDelete,
+			url:         fmt.Sprintf("%s/users/%s", us.URL, tc.client.ID),
+			contentType: contentType,
+			token:       tc.token,
+			body:        strings.NewReader(data),
+		}
+
+		repoCall := svc.On("DeleteClient", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		repoCall.Unset()
+	}
+}
+
 func TestListUsersByUserGroupId(t *testing.T) {
 	us, svc, _ := newUsersServer()
 	defer us.Close()

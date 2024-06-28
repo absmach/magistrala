@@ -28,6 +28,11 @@ func TestStatusString(t *testing.T) {
 			expected: "disabled",
 		},
 		{
+			desc:     "Deleted",
+			status:   clients.DeletedStatus,
+			expected: "deleted",
+		},
+		{
 			desc:     "All",
 			status:   clients.AllStatus,
 			expected: "all",
@@ -64,6 +69,12 @@ func TestToStatus(t *testing.T) {
 			desc:      "Disabled",
 			status:    "disabled",
 			expetcted: clients.DisabledStatus,
+			err:       nil,
+		},
+		{
+			desc:      "Deleted",
+			status:    "deleted",
+			expetcted: clients.DeletedStatus,
 			err:       nil,
 		},
 		{
@@ -109,6 +120,12 @@ func TestStatusMarshalJSON(t *testing.T) {
 			err:      nil,
 		},
 		{
+			desc:     "Deleted",
+			expected: []byte(`"deleted"`),
+			status:   clients.DeletedStatus,
+			err:      nil,
+		},
+		{
 			desc:     "All",
 			expected: []byte(`"all"`),
 			status:   clients.AllStatus,
@@ -148,6 +165,12 @@ func TestStatusUnmarshalJSON(t *testing.T) {
 			desc:     "Disabled",
 			expected: clients.DisabledStatus,
 			status:   []byte(`"disabled"`),
+			err:      nil,
+		},
+		{
+			desc:     "Deleted",
+			expected: clients.DeletedStatus,
+			status:   []byte(`"deleted"`),
 			err:      nil,
 		},
 		{
@@ -191,6 +214,12 @@ func TestUserMarshalJSON(t *testing.T) {
 			desc:     "Disabled",
 			expected: []byte(`{"id":"","credentials":{},"created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","status":"disabled"}`),
 			user:     clients.Client{Status: clients.DisabledStatus},
+			err:      nil,
+		},
+		{
+			desc:     "Deleted",
+			expected: []byte(`{"id":"","credentials":{},"created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","status":"deleted"}`),
+			user:     clients.Client{Status: clients.DeletedStatus},
 			err:      nil,
 		},
 		{

@@ -12,13 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const defURL string = "http://localhost"
-
 func main() {
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
 		MsgContentType: sdk.ContentType(msgContentType),
-		HostURL:        defURL,
 	}
 
 	// Root

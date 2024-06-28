@@ -19,6 +19,8 @@ const (
 	EnabledStatus Status = iota
 	// DisabledStatus represents disabled Client.
 	DisabledStatus
+	// DeletedStatus represents a client that will be deleted.
+	DeletedStatus
 
 	// AllStatus is used for querying purposes to list clients irrespective
 	// of their status - both enabled and disabled. It is never stored in the
@@ -31,6 +33,7 @@ const (
 const (
 	Disabled = "disabled"
 	Enabled  = "enabled"
+	Deleted  = "deleted"
 	All      = "all"
 	Unknown  = "unknown"
 )
@@ -42,6 +45,8 @@ func (s Status) String() string {
 		return Disabled
 	case EnabledStatus:
 		return Enabled
+	case DeletedStatus:
+		return Deleted
 	case AllStatus:
 		return All
 	default:
@@ -56,6 +61,8 @@ func ToStatus(status string) (Status, error) {
 		return EnabledStatus, nil
 	case Disabled:
 		return DisabledStatus, nil
+	case Deleted:
+		return DeletedStatus, nil
 	case All:
 		return AllStatus, nil
 	}

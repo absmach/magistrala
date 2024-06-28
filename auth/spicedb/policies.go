@@ -158,16 +158,27 @@ func (pa *policyAgent) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq
 		RelationshipFilter: &v1.RelationshipFilter{
 			ResourceType:       pr.ObjectType,
 			OptionalResourceId: pr.Object,
-			OptionalRelation:   pr.Relation,
-			OptionalSubjectFilter: &v1.SubjectFilter{
-				OptionalSubjectId: pr.Subject,
-				SubjectType:       pr.SubjectType,
-				OptionalRelation: &v1.SubjectFilter_RelationFilter{
-					Relation: pr.SubjectRelation,
-				},
-			},
 		},
 	}
+
+	if pr.Relation != "" {
+		req.RelationshipFilter.OptionalRelation = pr.Relation
+	}
+
+	if pr.SubjectType != "" {
+		req.RelationshipFilter.OptionalSubjectFilter = &v1.SubjectFilter{
+			SubjectType: pr.SubjectType,
+		}
+		if pr.Subject != "" {
+			req.RelationshipFilter.OptionalSubjectFilter.OptionalSubjectId = pr.Subject
+		}
+		if pr.SubjectRelation != "" {
+			req.RelationshipFilter.OptionalSubjectFilter.OptionalRelation = &v1.SubjectFilter_RelationFilter{
+				Relation: pr.SubjectRelation,
+			}
+		}
+	}
+
 	if _, err := pa.permissionClient.DeleteRelationships(ctx, req); err != nil {
 		return errors.Wrap(errRemovePolicies, handleSpicedbError(err))
 	}

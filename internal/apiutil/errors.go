@@ -66,6 +66,9 @@ var (
 	// ErrMalformedPolicyAct indicates missing policies action.
 	ErrMalformedPolicyAct = errors.New("malformed policy action")
 
+	// ErrMissingPolicyEntityType indicates missing policies entity type.
+	ErrMissingPolicyEntityType = errors.New("missing policy entity type")
+
 	// ErrMalformedPolicyPer indicates missing policies relation.
 	ErrMalformedPolicyPer = errors.New("malformed policy permission")
 

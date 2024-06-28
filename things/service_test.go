@@ -65,7 +65,7 @@ func TestCreateThings(t *testing.T) {
 		token             string
 		authResponse      *magistrala.AuthorizeRes
 		addPolicyResponse *magistrala.AddPoliciesRes
-		deletePolicyRes   *magistrala.DeletePoliciesRes
+		deletePolicyRes   *magistrala.DeletePolicyRes
 		authorizeErr      error
 		identifyErr       error
 		addPolicyErr      error
@@ -320,7 +320,7 @@ func TestCreateThings(t *testing.T) {
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
 			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
 			saveErr:           repoerr.ErrConflict,
-			deletePolicyRes:   &magistrala.DeletePoliciesRes{Deleted: false},
+			deletePolicyRes:   &magistrala.DeletePolicyRes{Deleted: false},
 			deletePolicyErr:   svcerr.ErrInvalidPolicy,
 			err:               repoerr.ErrConflict,
 		},
@@ -1609,33 +1609,27 @@ func TestDeleteClient(t *testing.T) {
 	invalidClientID := "invalidClientID"
 	_ = invalidClientID
 	cases := []struct {
-		desc                  string
-		token                 string
-		identifyResponse      *magistrala.IdentityRes
-		authorizeResponse     *magistrala.AuthorizeRes
-		deletePolicyResponse  *magistrala.DeletePolicyFilterRes
-		deletePolicyResponse1 *magistrala.DeletePolicyFilterRes
-		deletePolicyResponse2 *magistrala.DeletePolicyFilterRes
-		clientID              string
-		identifyErr           error
-		authorizeErr          error
-		removeErr             error
-		deleteErr             error
-		deletePolicyErr       error
-		deletePolicyErr1      error
-		deletePolicyErr2      error
-		err                   error
+		desc                 string
+		token                string
+		identifyResponse     *magistrala.IdentityRes
+		authorizeResponse    *magistrala.AuthorizeRes
+		deletePolicyResponse *magistrala.DeletePolicyRes
+		clientID             string
+		identifyErr          error
+		authorizeErr         error
+		removeErr            error
+		deleteErr            error
+		deletePolicyErr      error
+		err                  error
 	}{
 		{
-			desc:                  "Delete client with authorized token",
-			token:                 validToken,
-			clientID:              client.ID,
-			identifyResponse:      &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:     &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse:  &magistrala.DeletePolicyFilterRes{Deleted: true},
-			deletePolicyResponse1: &magistrala.DeletePolicyFilterRes{Deleted: true},
-			deletePolicyResponse2: &magistrala.DeletePolicyFilterRes{Deleted: true},
-			err:                   nil,
+			desc:                 "Delete client with authorized token",
+			token:                validToken,
+			clientID:             client.ID,
+			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			err:                  nil,
 		},
 		{
 			desc:             "Delete client with unauthorized token",
@@ -1655,15 +1649,14 @@ func TestDeleteClient(t *testing.T) {
 			err:               svcerr.ErrAuthorization,
 		},
 		{
-			desc:                  "Delete client with repo error ",
-			token:                 validToken,
-			clientID:              client.ID,
-			identifyResponse:      &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:     &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse:  &magistrala.DeletePolicyFilterRes{Deleted: true},
-			deletePolicyResponse1: &magistrala.DeletePolicyFilterRes{Deleted: true},
-			deleteErr:             repoerr.ErrRemoveEntity,
-			err:                   repoerr.ErrRemoveEntity,
+			desc:                 "Delete client with repo error ",
+			token:                validToken,
+			clientID:             client.ID,
+			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			deleteErr:            repoerr.ErrRemoveEntity,
+			err:                  repoerr.ErrRemoveEntity,
 		},
 		{
 			desc:              "Delete client with cache error ",
@@ -1675,37 +1668,14 @@ func TestDeleteClient(t *testing.T) {
 			err:               repoerr.ErrRemoveEntity,
 		},
 		{
-			desc:                 "Delete client with failed to delete groups policy",
+			desc:                 "Delete client with failed to delete policy",
 			token:                validToken,
 			clientID:             client.ID,
 			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: &magistrala.DeletePolicyFilterRes{Deleted: false},
+			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: false},
 			deletePolicyErr:      errRemovePolicies,
 			err:                  errRemovePolicies,
-		},
-		{
-			desc:                  "Delete client with failed to delete domains policy",
-			token:                 validToken,
-			clientID:              client.ID,
-			identifyResponse:      &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:     &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse:  &magistrala.DeletePolicyFilterRes{Deleted: true},
-			deletePolicyResponse1: &magistrala.DeletePolicyFilterRes{Deleted: false},
-			deletePolicyErr1:      errRemovePolicies,
-			err:                   errRemovePolicies,
-		},
-		{
-			desc:                  "Delete client with failed to delete users policy",
-			token:                 validToken,
-			clientID:              client.ID,
-			identifyResponse:      &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:     &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse:  &magistrala.DeletePolicyFilterRes{Deleted: true},
-			deletePolicyResponse1: &magistrala.DeletePolicyFilterRes{Deleted: true},
-			deletePolicyResponse2: &magistrala.DeletePolicyFilterRes{Deleted: false},
-			deletePolicyErr2:      errRemovePolicies,
-			err:                   errRemovePolicies,
 		},
 	}
 
@@ -1713,22 +1683,11 @@ func TestDeleteClient(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
 		repoCall2 := cache.On("Remove", mock.Anything, tc.clientID).Return(tc.removeErr)
-		repoCall3 := auth.On("DeletePolicyFilter", context.Background(), &magistrala.DeletePolicyFilterReq{
-			SubjectType: authsvc.GroupType,
-			Object:      tc.clientID,
-			ObjectType:  authsvc.ThingType,
+		repoCall3 := auth.On("DeleteEntityPolicies", context.Background(), &magistrala.DeleteEntityPoliciesReq{
+			EntityType: authsvc.ThingType,
+			Id:         tc.clientID,
 		}).Return(tc.deletePolicyResponse, tc.deletePolicyErr)
-		repoCall4 := auth.On("DeletePolicyFilter", mock.Anything, &magistrala.DeletePolicyFilterReq{
-			SubjectType: authsvc.DomainType,
-			Object:      tc.clientID,
-			ObjectType:  authsvc.ThingType,
-		}).Return(tc.deletePolicyResponse1, tc.deletePolicyErr1)
-		repoCall5 := cRepo.On("Delete", context.Background(), tc.clientID).Return(tc.deleteErr)
-		repoCall6 := auth.On("DeletePolicyFilter", mock.Anything, &magistrala.DeletePolicyFilterReq{
-			SubjectType: authsvc.UserType,
-			Object:      tc.clientID,
-			ObjectType:  authsvc.ThingType,
-		}).Return(tc.deletePolicyResponse2, tc.deletePolicyErr2)
+		repoCall4 := cRepo.On("Delete", context.Background(), tc.clientID).Return(tc.deleteErr)
 		err := svc.DeleteClient(context.Background(), tc.token, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -1736,8 +1695,6 @@ func TestDeleteClient(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 		repoCall4.Unset()
-		repoCall5.Unset()
-		repoCall6.Unset()
 	}
 }
 
@@ -1832,7 +1789,7 @@ func TestUnShare(t *testing.T) {
 		userID                 string
 		identifyResponse       *magistrala.IdentityRes
 		authorizeResponse      *magistrala.AuthorizeRes
-		deletePoliciesResponse *magistrala.DeletePoliciesRes
+		deletePoliciesResponse *magistrala.DeletePolicyRes
 		identifyErr            error
 		authorizeErr           error
 		deletePoliciesErr      error
@@ -1844,7 +1801,7 @@ func TestUnShare(t *testing.T) {
 			clientID:               clientID,
 			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: &magistrala.DeletePoliciesRes{Deleted: true},
+			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
 			err:                    nil,
 		},
 		{
@@ -1870,7 +1827,7 @@ func TestUnShare(t *testing.T) {
 			clientID:               clientID,
 			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: &magistrala.DeletePoliciesRes{},
+			deletePoliciesResponse: &magistrala.DeletePolicyRes{},
 			deletePoliciesErr:      svcerr.ErrInvalidPolicy,
 			err:                    svcerr.ErrInvalidPolicy,
 		},
@@ -1880,7 +1837,7 @@ func TestUnShare(t *testing.T) {
 			clientID:               clientID,
 			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: &magistrala.DeletePoliciesRes{Deleted: false},
+			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: false},
 			err:                    nil,
 		},
 	}

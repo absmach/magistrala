@@ -155,7 +155,7 @@ func deletePolicyFilterEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(policyReq)
 		if err := req.validate(); err != nil {
-			return deletePolicyFilterRes{}, err
+			return deletePolicyRes{}, err
 		}
 
 		err := svc.DeletePolicyFilter(ctx, auth.PolicyReq{
@@ -170,9 +170,9 @@ func deletePolicyFilterEndpoint(svc auth.Service) endpoint.Endpoint {
 			Object:      req.Object,
 		})
 		if err != nil {
-			return deletePolicyFilterRes{}, err
+			return deletePolicyRes{}, err
 		}
-		return deletePolicyFilterRes{deleted: true}, nil
+		return deletePolicyRes{deleted: true}, nil
 	}
 }
 
@@ -180,7 +180,7 @@ func deletePoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		reqs := request.(policiesReq)
 		if err := reqs.validate(); err != nil {
-			return deletePoliciesRes{}, err
+			return deletePolicyRes{}, err
 		}
 
 		prs := []auth.PolicyReq{}
@@ -200,9 +200,9 @@ func deletePoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 
 		if err := svc.DeletePolicies(ctx, prs); err != nil {
-			return deletePoliciesRes{}, err
+			return deletePolicyRes{}, err
 		}
-		return deletePoliciesRes{deleted: true}, nil
+		return deletePolicyRes{deleted: true}, nil
 	}
 }
 
@@ -347,5 +347,20 @@ func listPermissionsEndpoint(svc auth.Service) endpoint.Endpoint {
 			ObjectType:      req.ObjectType,
 			Permissions:     permissions,
 		}, nil
+	}
+}
+
+func deleteEntityPoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(deleteEntityPoliciesReq)
+		if err := req.validate(); err != nil {
+			return deletePolicyRes{}, err
+		}
+
+		if err := svc.DeleteEntityPolicies(ctx, req.EntityType, req.ID); err != nil {
+			return deletePolicyRes{}, err
+		}
+
+		return deletePolicyRes{deleted: true}, nil
 	}
 }

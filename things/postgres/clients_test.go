@@ -25,7 +25,6 @@ var (
 	invalidName     = strings.Repeat("m", maxNameSize+10)
 	clientIdentity  = "client-identity@example.com"
 	clientName      = "client name"
-	invalidClientID = "invalidClientID"
 	invalidDomainID = strings.Repeat("m", maxNameSize+10)
 	namesgen        = namegenerator.NewGenerator()
 )
@@ -363,53 +362,5 @@ func TestClientsRetrieveBySecret(t *testing.T) {
 		res, err := repo.RetrieveBySecret(context.Background(), tc.secret)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, res, tc.response, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, res))
-	}
-}
-
-func TestDelete(t *testing.T) {
-	t.Cleanup(func() {
-		_, err := db.Exec("DELETE FROM clients")
-		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
-	})
-	repo := postgres.NewRepository(database)
-
-	client := clients.Client{
-		ID:   testsutil.GenerateUUID(t),
-		Name: clientName,
-		Credentials: clients.Credentials{
-			Identity: clientIdentity,
-			Secret:   testsutil.GenerateUUID(t),
-		},
-		Status: clients.EnabledStatus,
-	}
-
-	_, err := repo.Save(context.Background(), client)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-
-	cases := []struct {
-		desc string
-		id   string
-		err  error
-	}{
-		{
-			desc: "delete client successfully",
-			id:   client.ID,
-			err:  nil,
-		},
-		{
-			desc: "delete client with invalid id",
-			id:   invalidClientID,
-			err:  repoerr.ErrNotFound,
-		},
-		{
-			desc: "delete client with empty id",
-			id:   "",
-			err:  repoerr.ErrNotFound,
-		},
-	}
-
-	for _, tc := range cases {
-		err := repo.Delete(context.Background(), tc.id)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

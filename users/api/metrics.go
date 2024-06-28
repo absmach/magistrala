@@ -199,3 +199,12 @@ func (ms *metricsMiddleware) OAuthCallback(ctx context.Context, client mgclients
 	}(time.Now())
 	return ms.svc.OAuthCallback(ctx, client)
 }
+
+// DeleteClient instruments DeleteClient method with metrics.
+func (ms *metricsMiddleware) DeleteClient(ctx context.Context, token, id string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "delete_client").Add(1)
+		ms.latency.With("method", "delete_client").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.DeleteClient(ctx, token, id)
+}

@@ -20,21 +20,22 @@ var _ magistrala.AuthServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
 	magistrala.UnimplementedAuthServiceServer
-	issue              kitgrpc.Handler
-	refresh            kitgrpc.Handler
-	identify           kitgrpc.Handler
-	authorize          kitgrpc.Handler
-	addPolicy          kitgrpc.Handler
-	addPolicies        kitgrpc.Handler
-	deletePolicyFilter kitgrpc.Handler
-	deletePolicies     kitgrpc.Handler
-	listObjects        kitgrpc.Handler
-	listAllObjects     kitgrpc.Handler
-	countObjects       kitgrpc.Handler
-	listSubjects       kitgrpc.Handler
-	listAllSubjects    kitgrpc.Handler
-	countSubjects      kitgrpc.Handler
-	listPermissions    kitgrpc.Handler
+	issue                kitgrpc.Handler
+	refresh              kitgrpc.Handler
+	identify             kitgrpc.Handler
+	authorize            kitgrpc.Handler
+	addPolicy            kitgrpc.Handler
+	addPolicies          kitgrpc.Handler
+	deletePolicyFilter   kitgrpc.Handler
+	deletePolicies       kitgrpc.Handler
+	listObjects          kitgrpc.Handler
+	listAllObjects       kitgrpc.Handler
+	countObjects         kitgrpc.Handler
+	listSubjects         kitgrpc.Handler
+	listAllSubjects      kitgrpc.Handler
+	countSubjects        kitgrpc.Handler
+	listPermissions      kitgrpc.Handler
+	deleteEntityPolicies kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -115,6 +116,11 @@ func NewServer(svc auth.Service) magistrala.AuthServiceServer {
 			decodeListPermissionsRequest,
 			encodeListPermissionsResponse,
 		),
+		deleteEntityPolicies: kitgrpc.NewServer(
+			(deleteEntityPoliciesEndpoint(svc)),
+			decodeDeleteEntityPoliciesRequest,
+			encodeDeleteEntityPoliciesResponse,
+		),
 	}
 }
 
@@ -166,20 +172,20 @@ func (s *grpcServer) AddPolicies(ctx context.Context, req *magistrala.AddPolicie
 	return res.(*magistrala.AddPoliciesRes), nil
 }
 
-func (s *grpcServer) DeletePolicyFilter(ctx context.Context, req *magistrala.DeletePolicyFilterReq) (*magistrala.DeletePolicyFilterRes, error) {
+func (s *grpcServer) DeletePolicyFilter(ctx context.Context, req *magistrala.DeletePolicyFilterReq) (*magistrala.DeletePolicyRes, error) {
 	_, res, err := s.deletePolicyFilter.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
-	return res.(*magistrala.DeletePolicyFilterRes), nil
+	return res.(*magistrala.DeletePolicyRes), nil
 }
 
-func (s *grpcServer) DeletePolicies(ctx context.Context, req *magistrala.DeletePoliciesReq) (*magistrala.DeletePoliciesRes, error) {
+func (s *grpcServer) DeletePolicies(ctx context.Context, req *magistrala.DeletePoliciesReq) (*magistrala.DeletePolicyRes, error) {
 	_, res, err := s.deletePolicies.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
-	return res.(*magistrala.DeletePoliciesRes), nil
+	return res.(*magistrala.DeletePolicyRes), nil
 }
 
 func (s *grpcServer) ListObjects(ctx context.Context, req *magistrala.ListObjectsReq) (*magistrala.ListObjectsRes, error) {
@@ -236,6 +242,14 @@ func (s *grpcServer) ListPermissions(ctx context.Context, req *magistrala.ListPe
 		return nil, encodeError(err)
 	}
 	return res.(*magistrala.ListPermissionsRes), nil
+}
+
+func (s *grpcServer) DeleteEntityPolicies(ctx context.Context, req *magistrala.DeleteEntityPoliciesReq) (*magistrala.DeletePolicyRes, error) {
+	_, res, err := s.deleteEntityPolicies.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*magistrala.DeletePolicyRes), nil
 }
 
 func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -351,8 +365,8 @@ func decodeDeletePolicyFilterRequest(_ context.Context, grpcReq interface{}) (in
 }
 
 func encodeDeletePolicyFilterResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(deletePolicyFilterRes)
-	return &magistrala.DeletePolicyFilterRes{Deleted: res.deleted}, nil
+	res := grpcRes.(deletePolicyRes)
+	return &magistrala.DeletePolicyRes{Deleted: res.deleted}, nil
 }
 
 func decodeDeletePoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -375,8 +389,8 @@ func decodeDeletePoliciesRequest(_ context.Context, grpcReq interface{}) (interf
 }
 
 func encodeDeletePoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(deletePoliciesRes)
-	return &magistrala.DeletePoliciesRes{Deleted: res.deleted}, nil
+	res := grpcRes.(deletePolicyRes)
+	return &magistrala.DeletePolicyRes{Deleted: res.deleted}, nil
 }
 
 func decodeListObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -477,6 +491,19 @@ func encodeListPermissionsResponse(_ context.Context, grpcRes interface{}) (inte
 		Object:          res.Object,
 		Permissions:     res.Permissions,
 	}, nil
+}
+
+func decodeDeleteEntityPoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*magistrala.DeleteEntityPoliciesReq)
+	return deleteEntityPoliciesReq{
+		EntityType: req.GetEntityType(),
+		ID:         req.GetId(),
+	}, nil
+}
+
+func encodeDeleteEntityPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(deletePolicyRes)
+	return &magistrala.DeletePolicyRes{Deleted: res.deleted}, nil
 }
 
 func encodeError(err error) error {

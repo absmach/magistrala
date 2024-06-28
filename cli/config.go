@@ -45,6 +45,7 @@ type remotes struct {
 	CertsURL        string `toml:"certs_url"`
 	InvitationsURL  string `toml:"invitations_url"`
 	JournalURL      string `toml:"journal_url"`
+	HostURL         string `toml:"host_url"`
 	TLSVerification bool   `toml:"tls_verification"`
 }
 
@@ -115,6 +116,7 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 				CertsURL:        defCertsURL,
 				InvitationsURL:  defInvitationsURL,
 				JournalURL:      defJournalURL,
+				HostURL:         defURL,
 				TLSVerification: defTLSVerification,
 			},
 			Filter: filter{
@@ -203,6 +205,10 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 
 	if sdkConf.JournalURL == "" && config.Remotes.JournalURL != "" {
 		sdkConf.JournalURL = config.Remotes.JournalURL
+	}
+
+	if sdkConf.HostURL == "" && config.Remotes.HostURL != "" {
+		sdkConf.HostURL = config.Remotes.HostURL
 	}
 
 	sdkConf.TLSVerification = config.Remotes.TLSVerification || sdkConf.TLSVerification

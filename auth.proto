@@ -23,8 +23,8 @@ service AuthService {
   rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
   rpc AddPolicy(AddPolicyReq) returns (AddPolicyRes) {}
   rpc AddPolicies(AddPoliciesReq) returns (AddPoliciesRes) {}
-  rpc DeletePolicyFilter(DeletePolicyFilterReq) returns (DeletePolicyFilterRes) {}
-  rpc DeletePolicies(DeletePoliciesReq) returns (DeletePoliciesRes) {}
+  rpc DeletePolicyFilter(DeletePolicyFilterReq) returns (DeletePolicyRes) {}
+  rpc DeletePolicies(DeletePoliciesReq) returns (DeletePolicyRes) {}
   rpc ListObjects(ListObjectsReq) returns (ListObjectsRes) {}
   rpc ListAllObjects(ListObjectsReq) returns (ListObjectsRes) {}
   rpc CountObjects(CountObjectsReq) returns (CountObjectsRes) {}
@@ -32,6 +32,7 @@ service AuthService {
   rpc ListAllSubjects(ListSubjectsReq) returns (ListSubjectsRes) {}
   rpc CountSubjects(CountSubjectsReq) returns (CountSubjectsRes) {}
   rpc ListPermissions(ListPermissionsReq) returns (ListPermissionsRes) {}
+  rpc DeleteEntityPolicies(DeleteEntityPoliciesReq) returns (DeletePolicyRes) {}
 }
 
 // If a token is not carrying any information itself, the type
@@ -115,8 +116,6 @@ message DeletePolicyFilterReq {
   string object_type = 10;
 }
 
-message DeletePolicyFilterRes { bool deleted = 1; }
-
 message DeletePoliciesReq {
   repeated DeletePolicyReq deletePoliciesReq = 1;
 }
@@ -134,7 +133,7 @@ message DeletePolicyReq {
   string object_type = 10;
 }
 
-message DeletePoliciesRes { bool deleted = 1; }
+message DeletePolicyRes { bool deleted = 1; }
 
 message ListObjectsReq {
   string domain = 1;
@@ -218,4 +217,9 @@ message ListPermissionsRes {
   string object = 5;
   string object_type = 6;
   repeated string permissions = 7;
+}
+
+message DeleteEntityPoliciesReq{
+  string entity_type = 1;
+  string id          = 2;
 }

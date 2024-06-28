@@ -181,7 +181,7 @@ func TestCreateClient(t *testing.T) {
 			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
-		repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: true}, nil)
+		repoCall2 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
 		repoCall3 := crepo.On("Save", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		rClient, err := mgsdk.CreateUser(tc.client, tc.token)
 		tc.response.ID = rClient.ID
@@ -957,7 +957,7 @@ func TestUpdateClientRole(t *testing.T) {
 			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
 		}
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := auth.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyFilterRes{Deleted: true}, nil)
+		repoCall2 := auth.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
 		repoCall3 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&magistrala.AddPolicyRes{Added: true}, nil)
 		repoCall4 := crepo.On("UpdateRole", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
 		uClient, err := mgsdk.UpdateUserRole(tc.client, tc.token)
@@ -1051,59 +1051,6 @@ func TestEnableClient(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 	}
-
-	cases2 := []struct {
-		desc     string
-		token    string
-		status   string
-		metadata sdk.Metadata
-		response sdk.UsersPage
-		size     uint64
-	}{
-		{
-			desc:   "list enabled clients",
-			status: mgclients.EnabledStatus.String(),
-			size:   2,
-			response: sdk.UsersPage{
-				Users: []sdk.User{enabledClient1, endisabledClient1},
-			},
-		},
-		{
-			desc:   "list disabled clients",
-			status: mgclients.DisabledStatus.String(),
-			size:   1,
-			response: sdk.UsersPage{
-				Users: []sdk.User{disabledClient1},
-			},
-		},
-		{
-			desc:   "list enabled and disabled clients",
-			status: mgclients.AllStatus.String(),
-			size:   3,
-			response: sdk.UsersPage{
-				Users: []sdk.User{enabledClient1, disabledClient1, endisabledClient1},
-			},
-		},
-	}
-
-	for _, tc := range cases2 {
-		pm := sdk.PageMetadata{
-			Total:  100,
-			Offset: 0,
-			Limit:  100,
-			Status: tc.status,
-		}
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
-		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := crepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(convertClientsPage(tc.response), nil)
-		clientsPage, err := mgsdk.Users(pm, validToken)
-		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		size := uint64(len(clientsPage.Users))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
-		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
-	}
 }
 
 func TestDisableClient(t *testing.T) {
@@ -1180,57 +1127,79 @@ func TestDisableClient(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 	}
+}
 
-	cases2 := []struct {
+func TestDeleteUser(t *testing.T) {
+	ts, crepo, _, auth := setupUsers()
+	defer ts.Close()
+
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus.String()}
+	deletedClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DeletedStatus.String()}
+	deletedenabledClient1 := enabledClient1
+	deletedenabledClient1.Status = mgclients.DisabledStatus.String()
+	deletedenabledClient1.ID = testsutil.GenerateUUID(t)
+
+	cases := []struct {
 		desc     string
+		id       string
 		token    string
-		status   string
-		metadata sdk.Metadata
-		response sdk.UsersPage
-		size     uint64
+		client   sdk.User
+		response sdk.User
+		repoErr  error
+		err      errors.SDKError
 	}{
 		{
-			desc:   "list enabled clients",
-			status: mgclients.EnabledStatus.String(),
-			size:   2,
-			response: sdk.UsersPage{
-				Users: []sdk.User{enabledClient1, disenabledClient1},
-			},
+			desc:     "delete enabled client",
+			id:       enabledClient1.ID,
+			token:    validToken,
+			client:   enabledClient1,
+			response: deletedenabledClient1,
+			err:      nil,
+			repoErr:  nil,
 		},
 		{
-			desc:   "list disabled clients",
-			status: mgclients.DisabledStatus.String(),
-			size:   1,
-			response: sdk.UsersPage{
-				Users: []sdk.User{disabledClient1},
-			},
+			desc:     "delete disabled client",
+			id:       deletedClient1.ID,
+			token:    validToken,
+			client:   deletedClient1,
+			response: sdk.User{},
+			repoErr:  sdk.ErrFailedDisable,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
 		},
 		{
-			desc:   "list enabled and disabled clients",
-			status: mgclients.AllStatus.String(),
-			size:   3,
-			response: sdk.UsersPage{
-				Users: []sdk.User{enabledClient1, disabledClient1, disenabledClient1},
-			},
+			desc:     "delete non-existing client",
+			id:       wrongID,
+			client:   sdk.User{},
+			token:    validToken,
+			response: sdk.User{},
+			repoErr:  sdk.ErrFailedDisable,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
 		},
 	}
 
-	for _, tc := range cases2 {
-		pm := sdk.PageMetadata{
-			Total:  100,
-			Offset: 0,
-			Limit:  100,
-			Status: tc.status,
-		}
+	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{UserId: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := crepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(convertClientsPage(tc.response), nil)
-		page, err := mgsdk.Users(pm, validToken)
-		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		size := uint64(len(page.Users))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
+		repoCall2 := crepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertClient(tc.client), tc.repoErr)
+		repoCall3 := crepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.repoErr)
+		err := mgsdk.DeleteUser(tc.id, tc.token)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+		if tc.err == nil {
+			ok := repoCall.Parent.AssertCalled(t, "Identify", mock.Anything, mock.Anything)
+			assert.True(t, ok, fmt.Sprintf("Identify was not called on %s", tc.desc))
+			ok = repoCall2.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, tc.id)
+			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
+			ok = repoCall3.Parent.AssertCalled(t, "ChangeStatus", mock.Anything, mock.Anything)
+			assert.True(t, ok, fmt.Sprintf("ChangeStatus was not called on %s", tc.desc))
+		}
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
 	}
 }

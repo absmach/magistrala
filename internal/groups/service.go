@@ -581,54 +581,28 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 	return nil
 }
 
-func (svc service) DeleteGroup(ctx context.Context, token, groupID string) error {
+func (svc service) DeleteGroup(ctx context.Context, token, id string) error {
 	res, err := svc.identify(ctx, token)
 	if err != nil {
 		return err
 	}
-	if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.GroupType, groupID); err != nil {
+	if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.DeletePermission, auth.GroupType, id); err != nil {
 		return err
 	}
 
-	// Remove policy of child groups
-	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
-		SubjectType: auth.GroupType,
-		Subject:     groupID,
-		ObjectType:  auth.GroupType,
-	}); err != nil {
+	deleteRes, err := svc.auth.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+		EntityType: auth.GroupType,
+		Id:         id,
+	})
+	if err != nil {
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
-
-	// Remove policy of things
-	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
-		SubjectType: auth.GroupType,
-		Subject:     groupID,
-		ObjectType:  auth.ThingType,
-	}); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+	if !deleteRes.Deleted {
+		return svcerr.ErrAuthorization
 	}
 
-	// Remove policy from domain
-	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
-		SubjectType: auth.DomainType,
-		Object:      groupID,
-		ObjectType:  auth.GroupType,
-	}); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
-	}
-
-	// Remove group from database
-	if err := svc.groups.Delete(ctx, groupID); err != nil {
-		return errors.Wrap(svcerr.ErrRemoveEntity, err)
-	}
-
-	// Remove policy of users
-	if _, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
-		SubjectType: auth.UserType,
-		Object:      groupID,
-		ObjectType:  auth.GroupType,
-	}); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+	if err := svc.groups.Delete(ctx, id); err != nil {
+		return err
 	}
 
 	return nil

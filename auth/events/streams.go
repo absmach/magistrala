@@ -227,6 +227,10 @@ func (es *eventStore) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq)
 	return es.svc.DeletePolicyFilter(ctx, pr)
 }
 
+func (es *eventStore) DeleteEntityPolicies(ctx context.Context, entityType, id string) error {
+	return es.svc.DeleteEntityPolicies(ctx, entityType, id)
+}
+
 func (es *eventStore) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
 	return es.svc.DeletePolicies(ctx, prs)
 }

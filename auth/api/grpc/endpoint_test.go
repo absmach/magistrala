@@ -471,7 +471,7 @@ func TestDeletePolicyFilter(t *testing.T) {
 		desc                  string
 		token                 string
 		deletePolicyFilterReq *magistrala.DeletePolicyFilterReq
-		deletePolicyFilterRes *magistrala.DeletePolicyFilterRes
+		deletePolicyFilterRes *magistrala.DeletePolicyRes
 		err                   error
 	}{
 		{
@@ -485,7 +485,7 @@ func TestDeletePolicyFilter(t *testing.T) {
 				Relation:    readRelation,
 				Permission:  readRelation,
 			},
-			deletePolicyFilterRes: &magistrala.DeletePolicyFilterRes{Deleted: true},
+			deletePolicyFilterRes: &magistrala.DeletePolicyRes{Deleted: true},
 			err:                   nil,
 		},
 		{
@@ -499,7 +499,7 @@ func TestDeletePolicyFilter(t *testing.T) {
 				Relation:    readRelation,
 				Permission:  readRelation,
 			},
-			deletePolicyFilterRes: &magistrala.DeletePolicyFilterRes{Deleted: false},
+			deletePolicyFilterRes: &magistrala.DeletePolicyRes{Deleted: false},
 			err:                   svcerr.ErrAuthorization,
 		},
 	}
@@ -524,7 +524,7 @@ func TestDeletePolicies(t *testing.T) {
 		desc              string
 		token             string
 		deletePoliciesReq *magistrala.DeletePoliciesReq
-		deletePoliciesRes *magistrala.DeletePoliciesRes
+		deletePoliciesRes *magistrala.DeletePolicyRes
 		err               error
 	}{
 		{
@@ -542,7 +542,7 @@ func TestDeletePolicies(t *testing.T) {
 					},
 				},
 			},
-			deletePoliciesRes: &magistrala.DeletePoliciesRes{Deleted: true},
+			deletePoliciesRes: &magistrala.DeletePolicyRes{Deleted: true},
 			err:               nil,
 		},
 		{
@@ -560,7 +560,7 @@ func TestDeletePolicies(t *testing.T) {
 					},
 				},
 			},
-			deletePoliciesRes: &magistrala.DeletePoliciesRes{Deleted: false},
+			deletePoliciesRes: &magistrala.DeletePolicyRes{Deleted: false},
 			err:               svcerr.ErrAuthorization,
 		},
 	}
@@ -1008,5 +1008,55 @@ func TestListPermissions(t *testing.T) {
 		}
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		svcCall.Unset()
+	}
+}
+
+func TestDeleteEntityPolicies(t *testing.T) {
+	conn, err := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
+	client := grpcapi.NewClient(conn, time.Second)
+
+	cases := []struct {
+		desc                    string
+		token                   string
+		deleteEntityPoliciesReq *magistrala.DeleteEntityPoliciesReq
+		deletePolicyRes         *magistrala.DeletePolicyRes
+		err                     error
+	}{
+		{
+			desc:  "delete valid req",
+			token: validToken,
+			deleteEntityPoliciesReq: &magistrala.DeleteEntityPoliciesReq{
+				Id:         id,
+				EntityType: usersType,
+			},
+			deletePolicyRes: &magistrala.DeletePolicyRes{Deleted: true},
+			err:             nil,
+		},
+		{
+			desc:  "delete invalid req with invalid token",
+			token: inValidToken,
+			deleteEntityPoliciesReq: &magistrala.DeleteEntityPoliciesReq{
+				EntityType: usersType,
+			},
+			deletePolicyRes: &magistrala.DeletePolicyRes{Deleted: false},
+			err:             apiutil.ErrMissingID,
+		},
+		{
+			desc:  "delete invalid req with invalid token",
+			token: inValidToken,
+			deleteEntityPoliciesReq: &magistrala.DeleteEntityPoliciesReq{
+				Id: id,
+			},
+			deletePolicyRes: &magistrala.DeletePolicyRes{Deleted: false},
+			err:             apiutil.ErrMissingPolicyEntityType,
+		},
+	}
+	for _, tc := range cases {
+		repoCall := svc.On("DeleteEntityPolicies", mock.Anything, tc.deleteEntityPoliciesReq.EntityType, tc.deleteEntityPoliciesReq.Id).Return(tc.err)
+		dpr, err := client.DeleteEntityPolicies(context.Background(), tc.deleteEntityPoliciesReq)
+		assert.Equal(t, tc.deletePolicyRes.GetDeleted(), dpr.GetDeleted(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.deletePolicyRes.GetDeleted(), dpr.GetDeleted()))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repoCall.Unset()
 	}
 }

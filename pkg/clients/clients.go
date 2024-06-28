@@ -101,6 +101,9 @@ type Repository interface {
 
 	// ChangeStatus changes client status to enabled or disabled
 	ChangeStatus(ctx context.Context, client Client) (Client, error)
+
+	// Delete deletes client with given id
+	Delete(ctx context.Context, id string) error
 }
 
 // Validate returns an error if client representation is invalid.

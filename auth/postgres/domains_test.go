@@ -1091,3 +1091,58 @@ func TestCheckPolicy(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 	}
 }
+
+func TestDeleteUserPolicies(t *testing.T) {
+	repo := postgres.NewDomainRepository(database)
+
+	domain := auth.Domain{
+		ID:    domainID,
+		Name:  "test",
+		Alias: "test",
+		Tags:  []string{"test"},
+		Metadata: map[string]interface{}{
+			"test": "test",
+		},
+		CreatedBy:  userID,
+		UpdatedBy:  userID,
+		Status:     auth.EnabledStatus,
+		Permission: "admin",
+	}
+
+	policy := auth.Policy{
+		SubjectType:     auth.UserType,
+		SubjectID:       userID,
+		SubjectRelation: "admin",
+		Relation:        "admin",
+		ObjectType:      auth.DomainType,
+		ObjectID:        domainID,
+	}
+
+	_, err := repo.Save(context.Background(), domain)
+	require.Nil(t, err, fmt.Sprintf("failed to save domain %s", domain.ID))
+
+	err = repo.SavePolicies(context.Background(), policy)
+	require.Nil(t, err, fmt.Sprintf("failed to save policy %s", policy.SubjectID))
+
+	cases := []struct {
+		desc string
+		id   string
+		err  error
+	}{
+		{
+			desc: "delete valid user policy",
+			id:   userID,
+			err:  nil,
+		},
+		{
+			desc: "delete invalid user policy",
+			id:   inValid,
+			err:  nil,
+		},
+	}
+
+	for _, tc := range cases {
+		err := repo.DeleteUserPolicies(context.Background(), tc.id)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
+	}
+}

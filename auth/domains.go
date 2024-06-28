@@ -199,4 +199,7 @@ type DomainsRepository interface {
 
 	// CheckPolicy check policy in domains database.
 	CheckPolicy(ctx context.Context, pc Policy) error
+
+	// DeleteUserPolicies deletes user policies from domains database.
+	DeleteUserPolicies(ctx context.Context, id string) (err error)
 }

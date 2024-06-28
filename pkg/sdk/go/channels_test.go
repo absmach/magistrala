@@ -140,7 +140,7 @@ func TestCreateChannel(t *testing.T) {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		authCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(&magistrala.AddPoliciesRes{Added: true}, nil)
 		authCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		authCall3 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePoliciesRes{Deleted: false}, nil)
+		authCall3 := auth.On("DeletePolicies", mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: false}, nil)
 		repoCall := grepo.On("Save", mock.Anything, mock.Anything).Return(convertChannel(sdk.Channel{}), tc.err)
 		rChannel, err := mgsdk.CreateChannel(tc.channel, validToken)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -771,7 +771,7 @@ func TestDeleteChannel(t *testing.T) {
 	authCall1.Unset()
 	repoCall.Unset()
 
-	authCall = auth.On("DeletePolicyFilter", mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyFilterRes{Deleted: true}, nil)
+	authCall = auth.On("DeleteEntityPolicies", mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.DeletePolicyRes{Deleted: true}, nil)
 	authCall1 = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 	authCall2 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 	repoCall = grepo.On("Delete", mock.Anything, mock.Anything).Return(nil)

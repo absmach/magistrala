@@ -14,7 +14,10 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
-const recoveryDuration = 5 * time.Minute
+const (
+	recoveryDuration = 5 * time.Minute
+	defLimit         = 100
+)
 
 var (
 	// ErrExpiry indicates that the token is expired.
@@ -32,6 +35,8 @@ var (
 	errRollbackPolicy     = errors.New("failed to rollback policy")
 	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
 	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
+	// errInvalidEntityType indicates invalid entity type.
+	errInvalidEntityType = errors.New("invalid entity type")
 )
 
 var (
@@ -997,5 +1002,73 @@ func DecodeDomainUserID(domainUserID string) (string, string) {
 		fallthrough
 	default:
 		return "", ""
+	}
+}
+
+func (svc service) DeleteEntityPolicies(ctx context.Context, entityType, id string) (err error) {
+	switch entityType {
+	case ThingType:
+		req := PolicyReq{
+			Object:     id,
+			ObjectType: ThingType,
+		}
+
+		return svc.DeletePolicyFilter(ctx, req)
+	case UserType:
+		domainsPage, err := svc.domains.ListDomains(ctx, Page{SubjectID: id, Limit: defLimit})
+		if err != nil {
+			return err
+		}
+
+		if domainsPage.Total > defLimit {
+			for i := defLimit; i < int(domainsPage.Total); i += defLimit {
+				page := Page{SubjectID: id, Offset: uint64(i), Limit: defLimit}
+				dp, err := svc.domains.ListDomains(ctx, page)
+				if err != nil {
+					return err
+				}
+				domainsPage.Domains = append(domainsPage.Domains, dp.Domains...)
+			}
+		}
+
+		for _, domain := range domainsPage.Domains {
+			policy := PolicyReq{
+				Subject:     EncodeDomainUserID(domain.ID, id),
+				SubjectType: UserType,
+			}
+			if err := svc.agent.DeletePolicyFilter(ctx, policy); err != nil {
+				return err
+			}
+		}
+
+		req := PolicyReq{
+			Subject:     id,
+			SubjectType: UserType,
+		}
+		if err := svc.agent.DeletePolicyFilter(ctx, req); err != nil {
+			return err
+		}
+
+		if err := svc.domains.DeleteUserPolicies(ctx, id); err != nil {
+			return err
+		}
+
+		return nil
+	case GroupType:
+		req := PolicyReq{
+			SubjectType: GroupType,
+			Subject:     id,
+		}
+		if err := svc.DeletePolicyFilter(ctx, req); err != nil {
+			return err
+		}
+
+		req = PolicyReq{
+			Object:     id,
+			ObjectType: GroupType,
+		}
+		return svc.DeletePolicyFilter(ctx, req)
+	default:
+		return errInvalidEntityType
 	}
 }

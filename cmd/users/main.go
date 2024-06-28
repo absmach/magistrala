@@ -64,19 +64,21 @@ const (
 )
 
 type config struct {
-	LogLevel           string  `env:"MG_USERS_LOG_LEVEL"              envDefault:"info"`
-	AdminEmail         string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:"admin@example.com"`
-	AdminPassword      string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:"12345678"`
-	PassRegexText      string  `env:"MG_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
-	ResetURL           string  `env:"MG_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
-	JaegerURL          url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:14268/api/traces"`
-	SendTelemetry      bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID         string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
-	ESURL              string  `env:"MG_ES_URL"                       envDefault:"nats://localhost:4222"`
-	TraceRatio         float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
-	SelfRegister       bool    `env:"MG_USERS_ALLOW_SELF_REGISTER"    envDefault:"false"`
-	OAuthUIRedirectURL string  `env:"MG_OAUTH_UI_REDIRECT_URL"        envDefault:"http://localhost:9095/domains"`
-	OAuthUIErrorURL    string  `env:"MG_OAUTH_UI_ERROR_URL"           envDefault:"http://localhost:9095/error"`
+	LogLevel           string        `env:"MG_USERS_LOG_LEVEL"           envDefault:"info"`
+	AdminEmail         string        `env:"MG_USERS_ADMIN_EMAIL"         envDefault:"admin@example.com"`
+	AdminPassword      string        `env:"MG_USERS_ADMIN_PASSWORD"      envDefault:"12345678"`
+	PassRegexText      string        `env:"MG_USERS_PASS_REGEX"          envDefault:"^.{8,}$"`
+	ResetURL           string        `env:"MG_TOKEN_RESET_ENDPOINT"      envDefault:"/reset-request"`
+	JaegerURL          url.URL       `env:"MG_JAEGER_URL"                envDefault:"http://localhost:14268/api/traces"`
+	SendTelemetry      bool          `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
+	InstanceID         string        `env:"MG_USERS_INSTANCE_ID"         envDefault:""`
+	ESURL              string        `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
+	TraceRatio         float64       `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
+	SelfRegister       bool          `env:"MG_USERS_ALLOW_SELF_REGISTER" envDefault:"false"`
+	OAuthUIRedirectURL string        `env:"MG_OAUTH_UI_REDIRECT_URL"     envDefault:"http://localhost:9095/domains"`
+	OAuthUIErrorURL    string        `env:"MG_OAUTH_UI_ERROR_URL"        envDefault:"http://localhost:9095/error"`
+	DeleteInterval     time.Duration `env:"MG_USERS_DELETE_INTERVAL"     envDefault:"24h"`
+	DeleteAfter        time.Duration `env:"MG_USERS_DELETE_AFTER"        envDefault:"720h"`
 	PassRegex          *regexp.Regexp
 }
 
@@ -248,6 +250,9 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 	if err := createAdminPolicy(ctx, clientID, authClient); err != nil {
 		return nil, nil, err
 	}
+
+	users.NewDeleteHandler(ctx, cRepo, authClient, c.DeleteInterval, c.DeleteAfter, logger)
+
 	return csvc, gsvc, err
 }
 

@@ -158,3 +158,19 @@ type listPermissionsReq struct {
 	Object            string
 	FilterPermissions []string
 }
+
+type deleteEntityPoliciesReq struct {
+	EntityType string
+	ID         string
+}
+
+func (req deleteEntityPoliciesReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
+	}
+	if req.EntityType == "" {
+		return apiutil.ErrMissingPolicyEntityType
+	}
+
+	return nil
+}

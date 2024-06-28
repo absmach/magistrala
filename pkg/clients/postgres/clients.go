@@ -320,6 +320,20 @@ func (repo *Repository) update(ctx context.Context, client clients.Client, query
 	return clients.Client{}, repoerr.ErrNotFound
 }
 
+func (repo *Repository) Delete(ctx context.Context, id string) error {
+	q := "DELETE FROM clients AS c  WHERE c.id = $1 ;"
+
+	result, err := repo.DB.ExecContext(ctx, q, id)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
+	}
+
+	return nil
+}
+
 type DBClient struct {
 	ID        string           `db:"id"`
 	Name      string           `db:"name,omitempty"`

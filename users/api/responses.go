@@ -18,9 +18,16 @@ var (
 	_ magistrala.Response = (*tokenRes)(nil)
 	_ magistrala.Response = (*viewClientRes)(nil)
 	_ magistrala.Response = (*createClientRes)(nil)
-	_ magistrala.Response = (*deleteClientRes)(nil)
+	_ magistrala.Response = (*changeClientStatusClientRes)(nil)
 	_ magistrala.Response = (*clientsPageRes)(nil)
 	_ magistrala.Response = (*viewMembersRes)(nil)
+	_ magistrala.Response = (*passwResetReqRes)(nil)
+	_ magistrala.Response = (*passwChangeRes)(nil)
+	_ magistrala.Response = (*assignUsersRes)(nil)
+	_ magistrala.Response = (*unassignUsersRes)(nil)
+	_ magistrala.Response = (*updateClientRes)(nil)
+	_ magistrala.Response = (*tokenRes)(nil)
+	_ magistrala.Response = (*deleteClientRes)(nil)
 )
 
 type pageRes struct {
@@ -139,19 +146,19 @@ func (res viewMembersRes) Empty() bool {
 	return false
 }
 
-type deleteClientRes struct {
+type changeClientStatusClientRes struct {
 	mgclients.Client `json:",inline"`
 }
 
-func (res deleteClientRes) Code() int {
+func (res changeClientStatusClientRes) Code() int {
 	return http.StatusOK
 }
 
-func (res deleteClientRes) Headers() map[string]string {
+func (res changeClientStatusClientRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res deleteClientRes) Empty() bool {
+func (res changeClientStatusClientRes) Empty() bool {
 	return false
 }
 
@@ -210,5 +217,25 @@ func (res unassignUsersRes) Headers() map[string]string {
 }
 
 func (res unassignUsersRes) Empty() bool {
+	return true
+}
+
+type deleteClientRes struct {
+	deleted bool
+}
+
+func (res deleteClientRes) Code() int {
+	if res.deleted {
+		return http.StatusNoContent
+	}
+
+	return http.StatusOK
+}
+
+func (res deleteClientRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res deleteClientRes) Empty() bool {
 	return true
 }

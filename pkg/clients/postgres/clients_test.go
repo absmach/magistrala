@@ -1798,6 +1798,43 @@ func TestUpdateRole(t *testing.T) {
 	}
 }
 
+func TestDelete(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
+	repo := &postgres.Repository{database}
+
+	client := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
+
+	cases := []struct {
+		desc string
+		id   string
+		err  error
+	}{
+		{
+			desc: "delete client successfully",
+			id:   client.ID,
+			err:  nil,
+		},
+		{
+			desc: "delete client with invalid id",
+			id:   testsutil.GenerateUUID(t),
+			err:  repoerr.ErrNotFound,
+		},
+		{
+			desc: "delete client with empty id",
+			id:   "",
+			err:  repoerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		err := repo.Delete(context.Background(), tc.id)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
 func findClients(clis []mgclients.Client, query string, offset, limit uint64) []mgclients.Client {
 	rclients := []mgclients.Client{}
 	for _, client := range clis {

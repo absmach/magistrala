@@ -78,6 +78,24 @@ func (_m *DomainsRepository) DeletePolicies(ctx context.Context, pcs ...auth.Pol
 	return r0
 }
 
+// DeleteUserPolicies provides a mock function with given fields: ctx, id
+func (_m *DomainsRepository) DeleteUserPolicies(ctx context.Context, id string) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUserPolicies")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ListDomains provides a mock function with given fields: ctx, pm
 func (_m *DomainsRepository) ListDomains(ctx context.Context, pm auth.Page) (auth.DomainsPage, error) {
 	ret := _m.Called(ctx, pm)

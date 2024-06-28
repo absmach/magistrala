@@ -390,6 +390,16 @@ func (repo domainRepo) DeletePolicies(ctx context.Context, pcs ...auth.Policy) (
 	return tx.Commit()
 }
 
+func (repo domainRepo) DeleteUserPolicies(ctx context.Context, id string) (err error) {
+	q := "DELETE FROM policies WHERE subject_id = $1;"
+
+	if _, err := repo.db.ExecContext(ctx, q, id); err != nil {
+		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
+	}
+
+	return nil
+}
+
 func (repo domainRepo) processRows(rows *sqlx.Rows) ([]auth.Domain, error) {
 	var items []auth.Domain
 	for rows.Next() {

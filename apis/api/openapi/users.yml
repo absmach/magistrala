@@ -178,6 +178,32 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+    delete:
+      summary: Delete a user
+      description: |
+        Delete a specific user that is identifier by the user ID.
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: User deleted.
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "405":
+          description: Method not allowed.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
   /users/{userID}/tags:
     patch:
       operationId: updateUserTags

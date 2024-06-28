@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 )
 
 // Invitation is an invitation to join a domain.

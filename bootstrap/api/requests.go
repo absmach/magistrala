@@ -5,7 +5,7 @@ package api
 
 import (
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 )
 
 const maxLimitSize = 100

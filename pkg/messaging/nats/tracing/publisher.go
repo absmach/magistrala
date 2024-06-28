@@ -5,9 +5,9 @@ package tracing
 import (
 	"context"
 
-	"github.com/absmach/magistrala/internal/server"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/tracing"
+	"github.com/absmach/magistrala/pkg/server"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

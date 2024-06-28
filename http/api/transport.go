@@ -11,7 +11,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-chi/chi/v5"

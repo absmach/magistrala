@@ -19,12 +19,12 @@ import (
 	"github.com/absmach/magistrala/consumers/writers/api"
 	"github.com/absmach/magistrala/consumers/writers/influxdb"
 	influxdbclient "github.com/absmach/magistrala/internal/clients/influxdb"
-	"github.com/absmach/magistrala/internal/clients/jaeger"
-	"github.com/absmach/magistrala/internal/server"
-	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
 	"golang.org/x/sync/errgroup"
@@ -140,7 +140,7 @@ func main() {
 		return
 	}
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)

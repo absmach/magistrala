@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 

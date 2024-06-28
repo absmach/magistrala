@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	ipostgres "github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/clients"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
@@ -20,6 +19,7 @@ import (
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	ipostgres "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

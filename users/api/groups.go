@@ -11,8 +11,8 @@ import (
 
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/internal/apiutil"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/go-chi/chi/v5"

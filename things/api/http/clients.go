@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/things"

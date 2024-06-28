@@ -13,7 +13,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/pkg/server"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -22,35 +22,27 @@ import (
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-const stopWaitTime = 5 * time.Second
+type serviceRegister func(srv *grpc.Server)
 
-type Server struct {
+type grpcServer struct {
 	server.BaseServer
 	server          *grpc.Server
 	registerService serviceRegister
 	health          *health.Server
 }
 
-type serviceRegister func(srv *grpc.Server)
+var _ server.Server = (*grpcServer)(nil)
 
-var _ server.Server = (*Server)(nil)
+func NewServer(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, registerService serviceRegister, logger *slog.Logger) server.Server {
+	baseServer := server.NewBaseServer(ctx, cancel, name, config, logger)
 
-func New(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, registerService serviceRegister, logger *slog.Logger) server.Server {
-	listenFullAddress := fmt.Sprintf("%s:%s", config.Host, config.Port)
-	return &Server{
-		BaseServer: server.BaseServer{
-			Ctx:     ctx,
-			Cancel:  cancel,
-			Name:    name,
-			Address: listenFullAddress,
-			Config:  config,
-			Logger:  logger,
-		},
+	return &grpcServer{
+		BaseServer:      baseServer,
 		registerService: registerService,
 	}
 }
 
-func (s *Server) Start() error {
+func (s *grpcServer) Start() error {
 	errCh := make(chan error)
 	grpcServerOptions := []grpc.ServerOption{
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
@@ -135,7 +127,7 @@ func (s *Server) Start() error {
 	}
 }
 
-func (s *Server) Stop() error {
+func (s *grpcServer) Stop() error {
 	defer s.Cancel()
 	c := make(chan bool)
 	go func() {
@@ -145,7 +137,7 @@ func (s *Server) Stop() error {
 	}()
 	select {
 	case <-c:
-	case <-time.After(stopWaitTime):
+	case <-time.After(server.StopWaitTime):
 	}
 	s.Logger.Info(fmt.Sprintf("%s gRPC service shutdown at %s", s.Name, s.Address))
 

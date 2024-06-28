@@ -25,6 +25,8 @@ var (
 )
 
 // NewProvider initializes Jaeger TraceProvider.
+//
+//	tp, err := jaeger.NewProvider(ctx, "demo-service", "http://localhost:14268/api/traces", "2cb32911-6833-469c-9cad-4d3e93c528d8", "1.0")
 func NewProvider(ctx context.Context, svcName string, jaegerUrl url.URL, instanceID string, fraction float64) (*trace.TracerProvider, error) {
 	if jaegerUrl == (url.URL{}) {
 		return nil, errNoURL

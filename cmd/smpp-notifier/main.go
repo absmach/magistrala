@@ -20,15 +20,15 @@ import (
 	notifierpg "github.com/absmach/magistrala/consumers/notifiers/postgres"
 	mgsmpp "github.com/absmach/magistrala/consumers/notifiers/smpp"
 	"github.com/absmach/magistrala/consumers/notifiers/tracing"
-	"github.com/absmach/magistrala/internal"
-	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
-	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
-	"github.com/absmach/magistrala/internal/server"
-	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/auth"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/ulid"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
@@ -155,7 +155,7 @@ func main() {
 		return
 	}
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -182,7 +182,7 @@ func newService(db *sqlx.DB, tracer trace.Tracer, authClient magistrala.AuthServ
 	notifier := mgsmpp.New(sc)
 	svc := notifiers.New(authClient, repo, idp, notifier, c.From)
 	svc = api.LoggingMiddleware(svc, logger)
-	counter, latency := internal.MakeMetrics("notifier", "smpp")
+	counter, latency := prometheus.MakeMetrics("notifier", "smpp")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
 	return svc

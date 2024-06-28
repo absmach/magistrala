@@ -6,8 +6,8 @@ package api
 import (
 	"errors"
 
-	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/invitations"
+	"github.com/absmach/magistrala/pkg/apiutil"
 )
 
 const maxLimitSize = 100

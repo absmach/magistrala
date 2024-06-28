@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/internal/postgres"
 	"github.com/absmach/magistrala/journal"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/postgres"
 )
 
 type repository struct {

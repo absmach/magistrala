@@ -9,13 +9,20 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
+const StopWaitTime = 5 * time.Second
+
+// Server is an interface that defines the methods to start and stop a server.
 type Server interface {
+	// Start starts the server.
 	Start() error
+	// Stop stops the server.
 	Stop() error
 }
 
+// Config is a struct that contains the configuration for the server.
 type Config struct {
 	Host         string `env:"HOST"            envDefault:"localhost"`
 	Port         string `env:"PORT"            envDefault:""`
@@ -35,6 +42,19 @@ type BaseServer struct {
 	Protocol string
 }
 
+func NewBaseServer(ctx context.Context, cancel context.CancelFunc, name string, config Config, logger *slog.Logger) BaseServer {
+	address := fmt.Sprintf("%s:%s", config.Host, config.Port)
+
+	return BaseServer{
+		Ctx:     ctx,
+		Cancel:  cancel,
+		Name:    name,
+		Address: address,
+		Config:  config,
+		Logger:  logger,
+	}
+}
+
 func stopAllServer(servers ...Server) error {
 	var err error
 	for _, server := range servers {
@@ -50,9 +70,10 @@ func stopAllServer(servers ...Server) error {
 	return err
 }
 
+// StopSignalHandler stops the server when a signal is received.
 func StopSignalHandler(ctx context.Context, cancel context.CancelFunc, logger *slog.Logger, svcName string, servers ...Server) error {
 	var err error
-	c := make(chan os.Signal, 2)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGABRT)
 	select {
 	case sig := <-c:

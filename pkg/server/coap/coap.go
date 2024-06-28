@@ -9,38 +9,28 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/pkg/server"
 	gocoap "github.com/plgd-dev/go-coap/v3"
 	"github.com/plgd-dev/go-coap/v3/mux"
 )
 
-const (
-	stopWaitTime = 5 * time.Second
-)
-
-type Server struct {
+type coapServer struct {
 	server.BaseServer
 	handler mux.HandlerFunc
 }
 
-var _ server.Server = (*Server)(nil)
+var _ server.Server = (*coapServer)(nil)
 
-func New(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, handler mux.HandlerFunc, logger *slog.Logger) server.Server {
-	listenFullAddress := fmt.Sprintf("%s:%s", config.Host, config.Port)
-	return &Server{
-		BaseServer: server.BaseServer{
-			Ctx:     ctx,
-			Cancel:  cancel,
-			Name:    name,
-			Address: listenFullAddress,
-			Config:  config,
-			Logger:  logger,
-		},
-		handler: handler,
+func NewServer(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, handler mux.HandlerFunc, logger *slog.Logger) server.Server {
+	baseServer := server.NewBaseServer(ctx, cancel, name, config, logger)
+
+	return &coapServer{
+		BaseServer: baseServer,
+		handler:    handler,
 	}
 }
 
-func (s *Server) Start() error {
+func (s *coapServer) Start() error {
 	errCh := make(chan error)
 	s.Logger.Info(fmt.Sprintf("%s service started using http, exposed port %s", s.Name, s.Address))
 	s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s without TLS", s.Name, s.Protocol, s.Address))
@@ -57,13 +47,13 @@ func (s *Server) Start() error {
 	}
 }
 
-func (s *Server) Stop() error {
+func (s *coapServer) Stop() error {
 	defer s.Cancel()
 	c := make(chan bool)
 	defer close(c)
 	select {
 	case <-c:
-	case <-time.After(stopWaitTime):
+	case <-time.After(server.StopWaitTime):
 	}
 	s.Logger.Info(fmt.Sprintf("%s service shutdown of http at %s", s.Name, s.Address))
 	return nil

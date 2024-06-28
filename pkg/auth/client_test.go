@@ -12,11 +12,11 @@ import (
 	"github.com/absmach/magistrala"
 	authgrpcapi "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/auth/mocks"
-	"github.com/absmach/magistrala/internal/server"
-	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/server"
+	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
 	thingsgrpcapi "github.com/absmach/magistrala/things/api/grpc"
 	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestSetupAuth(t *testing.T) {
 	registerAuthServiceServer := func(srv *grpc.Server) {
 		magistrala.RegisterAuthServiceServer(srv, authgrpcapi.NewServer(new(mocks.Service)))
 	}
-	gs := grpcserver.New(ctx, cancel, "auth", server.Config{Port: "12345"}, registerAuthServiceServer, mglog.NewMock())
+	gs := grpcserver.NewServer(ctx, cancel, "auth", server.Config{Port: "12345"}, registerAuthServiceServer, mglog.NewMock())
 	go func() {
 		err := gs.Start()
 		assert.Nil(t, err, fmt.Sprintf(`"Unexpected error creating server %s"`, err))
@@ -80,7 +80,7 @@ func TestSetupAuthz(t *testing.T) {
 	registerAuthaServiceServer := func(srv *grpc.Server) {
 		magistrala.RegisterAuthzServiceServer(srv, thingsgrpcapi.NewServer(new(thmocks.Service)))
 	}
-	gs := grpcserver.New(ctx, cancel, "things", server.Config{Port: "12345"}, registerAuthaServiceServer, mglog.NewMock())
+	gs := grpcserver.NewServer(ctx, cancel, "things", server.Config{Port: "12345"}, registerAuthaServiceServer, mglog.NewMock())
 	go func() {
 		err := gs.Start()
 		assert.Nil(t, err, fmt.Sprintf(`"Unexpected error creating server %s"`, err))

@@ -7,7 +7,7 @@ import (
 	"context"
 
 	notifiers "github.com/absmach/magistrala/consumers/notifiers"
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-kit/kit/endpoint"
 )

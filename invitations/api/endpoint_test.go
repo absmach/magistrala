@@ -11,12 +11,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/invitations/api"
 	"github.com/absmach/magistrala/invitations/mocks"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

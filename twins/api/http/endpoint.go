@@ -6,7 +6,7 @@ package http
 import (
 	"context"
 
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/twins"
 	"github.com/go-kit/kit/endpoint"

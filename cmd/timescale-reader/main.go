@@ -13,12 +13,12 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/internal"
-	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
-	"github.com/absmach/magistrala/internal/server"
-	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/auth"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/magistrala/readers/api"
@@ -123,7 +123,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, ac, tc, svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, ac, tc, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -146,7 +146,7 @@ func main() {
 func newService(db *sqlx.DB, logger *slog.Logger) readers.MessageRepository {
 	svc := timescale.New(db)
 	svc = api.LoggingMiddleware(svc, logger)
-	counter, latency := internal.MakeMetrics("timescale", "message_reader")
+	counter, latency := prometheus.MakeMetrics("timescale", "message_reader")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
 	return svc

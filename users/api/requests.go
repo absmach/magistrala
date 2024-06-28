@@ -5,7 +5,7 @@ package api
 
 import (
 	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 )
 

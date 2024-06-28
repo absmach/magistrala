@@ -10,6 +10,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
@@ -72,7 +73,11 @@ func (ns *notifierService) CreateSubscription(ctx context.Context, token string,
 	}
 
 	sub.OwnerID = res.GetId()
-	return ns.subs.Save(ctx, sub)
+	id, err := ns.subs.Save(ctx, sub)
+	if err != nil {
+		return "", errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	return id, nil
 }
 
 func (ns *notifierService) ViewSubscription(ctx context.Context, token, id string) (Subscription, error) {

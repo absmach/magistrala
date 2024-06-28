@@ -18,14 +18,14 @@ import (
 	consumertracing "github.com/absmach/magistrala/consumers/tracing"
 	"github.com/absmach/magistrala/consumers/writers/api"
 	writerpg "github.com/absmach/magistrala/consumers/writers/postgres"
-	"github.com/absmach/magistrala/internal"
-	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
-	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
-	"github.com/absmach/magistrala/internal/server"
-	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
@@ -125,7 +125,7 @@ func main() {
 		return
 	}
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -148,7 +148,7 @@ func main() {
 func newService(db *sqlx.DB, logger *slog.Logger) consumers.BlockingConsumer {
 	svc := writerpg.New(db)
 	svc = api.LoggingMiddleware(svc, logger)
-	counter, latency := internal.MakeMetrics("postgres", "message_writer")
+	counter, latency := prometheus.MakeMetrics("postgres", "message_writer")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 	return svc
 }

@@ -18,14 +18,14 @@ import (
 	consumertracing "github.com/absmach/magistrala/consumers/tracing"
 	"github.com/absmach/magistrala/consumers/writers/api"
 	"github.com/absmach/magistrala/consumers/writers/mongodb"
-	"github.com/absmach/magistrala/internal"
-	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
 	mongoclient "github.com/absmach/magistrala/internal/clients/mongo"
-	"github.com/absmach/magistrala/internal/server"
-	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -119,7 +119,7 @@ func main() {
 		return
 	}
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -142,7 +142,7 @@ func main() {
 func newService(db *mongo.Database, logger *slog.Logger) consumers.BlockingConsumer {
 	repo := mongodb.New(db)
 	repo = api.LoggingMiddleware(repo, logger)
-	counter, latency := internal.MakeMetrics("mongodb", "message_writer")
+	counter, latency := prometheus.MakeMetrics("mongodb", "message_writer")
 	repo = api.MetricsMiddleware(repo, counter, latency)
 	return repo
 }

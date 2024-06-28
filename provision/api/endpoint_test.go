@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/magistrala/provision/api"

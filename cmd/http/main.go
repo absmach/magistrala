@@ -18,16 +18,16 @@ import (
 	"github.com/absmach/magistrala"
 	adapter "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
-	"github.com/absmach/magistrala/internal"
-	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
-	"github.com/absmach/magistrala/internal/server"
-	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/auth"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/messaging/handler"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/mproxy"
 	mproxyhttp "github.com/absmach/mproxy/pkg/http"
@@ -129,7 +129,7 @@ func main() {
 	svc := newService(pub, authClient, logger, tracer)
 	targetServerCfg := server.Config{Port: targetHTTPPort}
 
-	hs := httpserver.New(ctx, cancel, svcName, targetServerCfg, api.MakeHandler(logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, targetServerCfg, api.MakeHandler(logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -157,7 +157,7 @@ func newService(pub messaging.Publisher, tc magistrala.AuthzServiceClient, logge
 	svc := adapter.NewHandler(pub, logger, tc)
 	svc = handler.NewTracing(tracer, svc)
 	svc = handler.LoggingMiddleware(svc, logger)
-	counter, latency := internal.MakeMetrics(svcName, "api")
+	counter, latency := prometheus.MakeMetrics(svcName, "api")
 	svc = handler.MetricsMiddleware(svc, counter, latency)
 	return svc
 }

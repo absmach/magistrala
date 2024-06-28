@@ -15,11 +15,7 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/internal"
-	"github.com/absmach/magistrala/internal/clients/jaeger"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
-	"github.com/absmach/magistrala/internal/server"
-	httpserver "github.com/absmach/magistrala/internal/server/http"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/lora"
 	"github.com/absmach/magistrala/lora/api"
@@ -27,9 +23,13 @@ import (
 	"github.com/absmach/magistrala/lora/mqtt"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
 	mqttpaho "github.com/eclipse/paho.mqtt.golang"
@@ -150,7 +150,7 @@ func main() {
 
 	logger.Info("Subscribed to Event Store")
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -226,7 +226,7 @@ func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, c
 
 	svc := lora.New(pub, thingsRM, chansRM, connsRM)
 	svc = api.LoggingMiddleware(svc, logger)
-	counter, latency := internal.MakeMetrics("lora_adapter", "api")
+	counter, latency := prometheus.MakeMetrics("lora_adapter", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
 	return svc

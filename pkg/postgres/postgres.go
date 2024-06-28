@@ -31,14 +31,17 @@ type Config struct {
 
 // Setup creates a connection to the PostgreSQL instance and applies any
 // unapplied database migrations. A non-nil error is returned to indicate failure.
+//
+// For example:
+//
+//	db, err := postgres.Setup(postgres.Config{}, migrate.MemoryMigrationSource{})
 func Setup(cfg Config, migrations migrate.MemoryMigrationSource) (*sqlx.DB, error) {
 	db, err := Connect(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = migrate.Exec(db.DB, "postgres", migrations, migrate.Up)
-	if err != nil {
+	if _, err = migrate.Exec(db.DB, "postgres", migrations, migrate.Up); err != nil {
 		return nil, errors.Wrap(errMigration, err)
 	}
 
@@ -46,6 +49,10 @@ func Setup(cfg Config, migrations migrate.MemoryMigrationSource) (*sqlx.DB, erro
 }
 
 // Connect creates a connection to the PostgreSQL instance.
+//
+// For example:
+//
+//	db, err := postgres.Connect(postgres.Config{})
 func Connect(cfg Config) (*sqlx.DB, error) {
 	url := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", cfg.Host, cfg.Port, cfg.User, cfg.Name, cfg.Pass, cfg.SSLMode, cfg.SSLCert, cfg.SSLKey, cfg.SSLRootCert)
 

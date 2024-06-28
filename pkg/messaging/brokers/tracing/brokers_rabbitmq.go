@@ -9,9 +9,9 @@ package brokers
 import (
 	"log"
 
-	"github.com/absmach/magistrala/internal/server"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/rabbitmq/tracing"
+	"github.com/absmach/magistrala/pkg/server"
 	"go.opentelemetry.io/otel/trace"
 )
 

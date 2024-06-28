@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -18,7 +17,7 @@ import (
 var _ Database = (*database)(nil)
 
 type database struct {
-	postgres.Config
+	Config
 	db     *sqlx.DB
 	tracer trace.Tracer
 }
@@ -48,7 +47,7 @@ type Database interface {
 }
 
 // NewDatabase creates a Clients'Database instance.
-func NewDatabase(db *sqlx.DB, config postgres.Config, tracer trace.Tracer) Database {
+func NewDatabase(db *sqlx.DB, config Config, tracer trace.Tracer) Database {
 	database := &database{
 		Config: config,
 		db:     db,

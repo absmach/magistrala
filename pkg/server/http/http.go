@@ -8,41 +8,33 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
-	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/pkg/server"
 )
 
 const (
-	stopWaitTime  = 5 * time.Second
 	httpProtocol  = "http"
 	httpsProtocol = "https"
 )
 
-type Server struct {
+type httpServer struct {
 	server.BaseServer
 	server *http.Server
 }
 
-var _ server.Server = (*Server)(nil)
+var _ server.Server = (*httpServer)(nil)
 
-func New(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, handler http.Handler, logger *slog.Logger) server.Server {
-	listenFullAddress := fmt.Sprintf("%s:%s", config.Host, config.Port)
-	httpServer := &http.Server{Addr: listenFullAddress, Handler: handler}
-	return &Server{
-		BaseServer: server.BaseServer{
-			Ctx:     ctx,
-			Cancel:  cancel,
-			Name:    name,
-			Address: listenFullAddress,
-			Config:  config,
-			Logger:  logger,
-		},
-		server: httpServer,
+func NewServer(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, handler http.Handler, logger *slog.Logger) server.Server {
+	baseServer := server.NewBaseServer(ctx, cancel, name, config, logger)
+	hserver := &http.Server{Addr: baseServer.Address, Handler: handler}
+
+	return &httpServer{
+		BaseServer: baseServer,
+		server:     hserver,
 	}
 }
 
-func (s *Server) Start() error {
+func (s *httpServer) Start() error {
 	errCh := make(chan error)
 	s.Protocol = httpProtocol
 	switch {
@@ -66,11 +58,11 @@ func (s *Server) Start() error {
 	}
 }
 
-func (s *Server) Stop() error {
+func (s *httpServer) Stop() error {
 	defer s.Cancel()
-	ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
-	defer cancelShutdown()
-	if err := s.server.Shutdown(ctxShutdown); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), server.StopWaitTime)
+	defer cancel()
+	if err := s.server.Shutdown(ctx); err != nil {
 		s.Logger.Error(fmt.Sprintf("%s service %s server error occurred during shutdown at %s: %s", s.Name, s.Protocol, s.Address, err))
 		return fmt.Errorf("%s service %s server error occurred during shutdown at %s: %w", s.Name, s.Protocol, s.Address, err)
 	}

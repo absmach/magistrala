@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/stretchr/testify/assert"
 )
 

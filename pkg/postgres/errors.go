@@ -20,6 +20,8 @@ const (
 	errInvalidChar    = "22021" // character_not_in_repertoire
 )
 
+// HandleError handles the error and returns a wrapped error.
+// It checks the error code and returns a specific error.
 func HandleError(wrapper, err error) error {
 	pqErr, ok := err.(*pgconn.PgError)
 	if ok {

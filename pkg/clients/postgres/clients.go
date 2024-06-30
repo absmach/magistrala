@@ -563,7 +563,7 @@ func ConstructThingSearchQuery(pm clients.Page) (string, string) {
 	if pm.Name != "" {
 		query = append(query, "name ILIKE :name")
 	}
-	if pm.ID != "" {
+	if pm.Id != "" {
 		query = append(query, "id ILIKE :id")
 	}
 	if pm.Tag != "" {

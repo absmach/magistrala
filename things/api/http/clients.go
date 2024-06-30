@@ -61,8 +61,8 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger *slog.Logger) http.Ha
 		), "view_thing_permissions").ServeHTTP)
 
 		r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
-			searchClientsEndpoint(svc),
-			decodeSearchClients,
+			searchThingsEndpoint(svc),
+			decodeSearchThings,
 			api.EncodeResponse,
 			opts...,
 		), "search_things").ServeHTTP)
@@ -216,7 +216,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	return req, nil
 }
 
-func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeSearchThings(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -241,10 +241,10 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 
 	req := searchThingsReq{
 		apiutil.ExtractBearerToken(r),
-		mgclients.Page{Offset: o, Limit: l, Name: n, Tag: t, ID: id},
+		mgclients.Page{Offset: o, Limit: l, Name: n, Tag: t, Id: id},
 	}
 
-	for _, field := range []string{req.Name, req.ID, req.Tag} {
+	for _, field := range []string{req.Name, req.Id, req.Tag} {
 		if field != "" && len(field) < 3 {
 			req = searchThingsReq{
 				token: apiutil.ExtractBearerToken(r),

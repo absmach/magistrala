@@ -1340,6 +1340,9 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Name != "" {
 		q.Add("name", pm.Name)
 	}
+	if pm.ID != "" {
+		q.Add("id", pm.ID)
+	}
 	if pm.Type != "" {
 		q.Add("type", pm.Type)
 	}

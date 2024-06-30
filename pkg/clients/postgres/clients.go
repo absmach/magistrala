@@ -554,3 +554,34 @@ func ConstructSearchQuery(pm clients.Page) (string, string) {
 
 	return emq, tq
 }
+
+func ConstructThingSearchQuery(pm clients.Page) (string, string) {
+	var query []string
+	var emq string
+	var tq string
+
+	if pm.Name != "" {
+		query = append(query, "name ILIKE :name")
+	}
+	if pm.ID != "" {
+		query = append(query, "id ILIKE :id")
+	}
+	if pm.Tag != "" {
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
+	}
+
+	if len(query) > 0 {
+		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	tq = emq
+
+	switch pm.Order {
+	case "name", "tag", "created_at", "updated_at":
+		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)
+		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
+			emq = fmt.Sprintf("%s %s", emq, pm.Dir)
+		}
+	}
+	return emq, tq
+}

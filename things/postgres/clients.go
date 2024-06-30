@@ -6,9 +6,7 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/absmach/magistrala/internal/api"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -139,14 +137,14 @@ func (repo clientRepo) Delete(ctx context.Context, id string) error {
 }
 
 func (repo clientRepo) SearchBasicInfo(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	sq, tq := constructSearchQuery(pm)
+	sq, tq := pgclients.ConstructThingSearchQuery(pm)
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, sq)
 	dbPage, err := pgclients.ToDBClientsPage(pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
-
+	fmt.Println("query: ", q)
 	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
@@ -184,35 +182,4 @@ func (repo clientRepo) SearchBasicInfo(ctx context.Context, pm mgclients.Page) (
 	}
 
 	return page, nil
-}
-
-func constructSearchQuery(pm mgclients.Page) (string, string) {
-	var query []string
-	var emq string
-	var tq string
-
-	if pm.Name != "" {
-		query = append(query, "name ~* :name")
-	}
-	if pm.Identity != "" {
-		query = append(query, "id ~* :identity")
-	}
-	if pm.Tag != "" {
-		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
-	}
-
-	if len(query) > 0 {
-		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
-	}
-
-	tq = emq
-
-	switch pm.Order {
-	case "name", "tag", "created_at", "updated_at":
-		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)
-		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
-			emq = fmt.Sprintf("%s %s", emq, pm.Dir)
-		}
-	}
-	return emq, tq
 }

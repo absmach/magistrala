@@ -241,10 +241,10 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 
 	req := searchThingsReq{
 		apiutil.ExtractBearerToken(r),
-		mgclients.Page{Offset: o, Limit: l, Name: n, Tag: t, Identity: id},
+		mgclients.Page{Offset: o, Limit: l, Name: n, Tag: t, ID: id},
 	}
 
-	for _, field := range []string{req.Name, req.Identity, req.Tag} {
+	for _, field := range []string{req.Name, req.ID, req.Tag} {
 		if field != "" && len(field) < 3 {
 			req = searchThingsReq{
 				token: apiutil.ExtractBearerToken(r),

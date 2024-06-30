@@ -383,9 +383,9 @@ var cmdThings = []cobra.Command{
 			}
 
 			pm := mgxsdk.PageMetadata{
-				Name:     values.Get("name"),
-				Tag:      values.Get("tags"),
-				Identity: values.Get("id"),
+				Name: values.Get("name"),
+				Tag:  values.Get("tags"),
+				ID:   values.Get("id"),
 			}
 
 			if off, err := strconv.Atoi(values.Get("offset")); err == nil {

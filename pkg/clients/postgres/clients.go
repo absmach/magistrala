@@ -561,10 +561,10 @@ func ConstructThingSearchQuery(pm clients.Page) (string, string) {
 	var tq string
 
 	if pm.Name != "" {
-		query = append(query, "name ILIKE :name")
+		query = append(query, "name ILIKE '%' || :name || '%'")
 	}
 	if pm.Id != "" {
-		query = append(query, "id ILIKE :id")
+		query = append(query, "id ILIKE '%' || :id || '%'")
 	}
 	if pm.Tag != "" {
 		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")

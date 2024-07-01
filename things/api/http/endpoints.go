@@ -155,7 +155,6 @@ func searchThingsEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		pm := mgclients.Page{
-			Status: req.Status,
 			Offset: req.Offset,
 			Limit:  req.Limit,
 			Name:   req.Name,

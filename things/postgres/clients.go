@@ -33,6 +33,9 @@ type Repository interface {
 
 	// RetrieveBySecret retrieves a client based on the secret (key).
 	RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error)
+
+	// SearchBasicInfo retrieves basic information about clients.
+	SearchBasicInfo(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error)
 }
 
 // NewRepository instantiates a PostgreSQL
@@ -120,20 +123,6 @@ func (repo clientRepo) RetrieveBySecret(ctx context.Context, key string) (mgclie
 	}
 
 	return mgclients.Client{}, repoerr.ErrNotFound
-}
-
-func (repo clientRepo) Delete(ctx context.Context, id string) error {
-	q := "DELETE FROM clients AS c  WHERE c.id = $1 ;"
-
-	result, err := repo.DB.ExecContext(ctx, q, id)
-	if err != nil {
-		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
-	}
-	if rows, _ := result.RowsAffected(); rows == 0 {
-		return repoerr.ErrNotFound
-	}
-
-	return nil
 }
 
 func (repo clientRepo) SearchBasicInfo(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error) {

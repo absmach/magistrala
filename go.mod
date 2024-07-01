@@ -21,7 +21,7 @@ require (
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gookit/color v1.5.4
 	github.com/gopcua/opcua v0.1.6
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/vault/api v1.14.0
 	github.com/hashicorp/vault/api/auth/approle v0.7.0
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f

@@ -495,7 +495,7 @@ type SDK interface {
 	//  things, _ := sdk.SearchThings(pm, "token")
 	//  fmt.Println(things)
 	SearchThings(pm PageMetadata, token string) (ThingsPage, errors.SDKError)
-	
+
 	// DeleteThing deletes a thing with the given id.
 	//
 	// example:

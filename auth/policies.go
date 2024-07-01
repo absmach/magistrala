@@ -91,8 +91,8 @@ type PolicyReq struct {
 	// Relation contains the relation. Supported relations are administrator, editor, contributor, member, guest, parent_group,group,domain.
 	Relation string `json:"relation,omitempty"`
 
-	// Permission contains the permission. Supported permissions are admin, delete, edit, share, view, membership, create.
-	// admin_only, edit_only, viewer_only, membership_only, ext_admin, ext_edit, ext_view.
+	// Permission contains the permission. Supported permissions are admin, delete, edit, share, view,
+	// membership, create, admin_only, edit_only, view_only, membership_only, ext_admin, ext_edit, ext_view.
 	Permission string `json:"permission,omitempty"`
 }
 

@@ -16,7 +16,7 @@ definition thing {
 	// These permission are made for only list purpose. It helps to list users have only particular permission excluding other higher and lower permission.
 	permission admin_only = admin
 	permission edit_only = edit - admin
-	permission viewer_only = view - edit
+	permission view_only = view
 
 	// These permission are made for only list purpose. It helps to list users from external, users who are not in group but have permission on the group through parent group
 	permission ext_admin = admin - administrator // For list of external admin , not having direct relation with group, but have indirect relation from parent group
@@ -43,7 +43,7 @@ definition group {
 	// These permissions are made for listing purposes. They enable listing users who have only particular permission excluding higher-level permissions users.
 	permission admin_only = admin
 	permission edit_only = edit - admin
-	permission viewer_only = view - edit
+	permission view_only = view
 	permission membership_only = membership - view
 
 	// These permission are made for only list purpose. They enable listing users who have only particular permission from parent group excluding higher-level permissions.

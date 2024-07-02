@@ -170,6 +170,25 @@ func (sdk mgSDK) DisableGroup(id, token string) (Group, errors.SDKError) {
 	return sdk.changeGroupStatus(id, disableEndpoint, token)
 }
 
+func (sdk mgSDK) SearchGroups(pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s", groupsEndpoint, searchEndpoint), pm)
+	if err != nil {
+		return GroupsPage{}, errors.NewSDKError(err)
+	}
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return GroupsPage{}, sdkerr
+	}
+
+	var gp GroupsPage
+	if err := json.Unmarshal(body, &gp); err != nil {
+		return GroupsPage{}, errors.NewSDKError(err)
+	}
+
+	return gp, nil
+}
+
 func (sdk mgSDK) AddUserToGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError {
 	data, err := json.Marshal(req)
 	if err != nil {

@@ -83,6 +83,9 @@ type Repository interface {
 	// ChangeStatus changes groups status to active or inactive
 	ChangeStatus(ctx context.Context, group Group) (Group, error)
 
+	// SearchBasicinfo searches group basic info depending on the filters given
+	SearchBasicinfo(ctx context.Context, gm Page) (Page, error)
+
 	// AssignParentGroup assigns parent group id to a given group id
 	AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error
 
@@ -103,6 +106,9 @@ type Service interface {
 
 	// ViewGroup retrieves data about the group identified by ID.
 	ViewGroup(ctx context.Context, token, id string) (Group, error)
+
+	// SearchGroups retrieves groups based on the search criteria.
+	SearchGroups(ctx context.Context, token string, gm Page) (Page, error)
 
 	// ViewGroupPerms retrieves permissions on the group id for the given authorized token.
 	ViewGroupPerms(ctx context.Context, token, id string) ([]string, error)

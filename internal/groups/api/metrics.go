@@ -73,6 +73,15 @@ func (ms *metricsMiddleware) ListGroups(ctx context.Context, token, memberKind, 
 	return ms.svc.ListGroups(ctx, token, memberKind, memberID, gp)
 }
 
+// SearchGroups instruments SearchGroups method with metrics.
+func (ms *metricsMiddleware) SearchGroups(ctx context.Context, token string, gm groups.Page) (pg groups.Page, err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "search_groups").Add(1)
+		ms.latency.With("method", "search_groups").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.SearchGroups(ctx, token, gm)
+}
+
 // EnableGroup instruments EnableGroup method with metrics.
 func (ms *metricsMiddleware) EnableGroup(ctx context.Context, token, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {

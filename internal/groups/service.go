@@ -229,6 +229,35 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 	return gp, nil
 }
 
+func (svc service) SearchGroups(ctx context.Context, token string, gm groups.Page) (groups.Page, error) {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return groups.Page{}, err
+	}
+
+	_, err = svc.authorizeToken(ctx, auth.UserType, token, auth.MembershipPermission, auth.DomainType, res.GetDomainId())
+	if err != nil {
+		return groups.Page{}, err
+	}
+
+	cp, err := svc.groups.SearchBasicinfo(ctx, gm)
+	if err != nil {
+		return groups.Page{}, err
+	}
+
+	page := groups.Page{}
+	for _, val := range cp.Groups {
+		if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.GroupType, val.ID); err == nil {
+			page.Groups = append(page.Groups, val)
+			page.Total += 1
+		}
+	}
+	page.Limit = cp.Limit
+	page.Offset = cp.Offset
+
+	return page, nil
+}
+
 // Experimental functions used for async calling of svc.listUserThingPermission. This might be helpful during listing of large number of entities.
 func (svc service) retrievePermissions(ctx context.Context, userID string, group *groups.Group) error {
 	permissions, err := svc.listUserGroupPermission(ctx, userID, group.ID)

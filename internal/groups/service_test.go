@@ -28,16 +28,21 @@ import (
 )
 
 var (
-	idProvider = uuid.New()
-	token      = "token"
-	namegen    = namegenerator.NewGenerator()
-	validGroup = mggroups.Group{
+	idProvider   = uuid.New()
+	token        = "token"
+	invalidToken = "invalid"
+	namegen      = namegenerator.NewGenerator()
+	domainID     = testsutil.GenerateUUID(&testing.T{})
+	id           = testsutil.GenerateUUID(&testing.T{})
+	validGroup   = mggroups.Group{
 		Name:        namegen.Generate(),
 		Description: namegen.Generate(),
 		Metadata: map[string]interface{}{
 			"key": "value",
 		},
 		Status: clients.Status(groups.EnabledStatus),
+		Domain: domainID,
+		ID:     id,
 	}
 	allowedIDs = []string{
 		testsutil.GenerateUUID(&testing.T{}),
@@ -1640,6 +1645,106 @@ func TestListGroups(t *testing.T) {
 					adminCheck.Unset()
 				}
 			}
+		})
+	}
+}
+
+func TestSearchGroups(t *testing.T) {
+	repo := new(mocks.Repository)
+	authsvc := new(authmocks.AuthClient)
+	svc := groups.NewService(repo, idProvider, authsvc)
+
+	cases := []struct {
+		desc      string
+		token     string
+		page      mggroups.Page
+		idResp    *magistrala.IdentityRes
+		idErr     error
+		authzResp *magistrala.AuthorizeRes
+		authzErr  error
+		repoResp  mggroups.Page
+		repoErr   error
+		err       error
+	}{
+		{
+			desc:  "successfully search with valid token",
+			token: token,
+			page: mggroups.Page{
+				PageMeta: mggroups.PageMeta{
+					Name:     validGroup.Name,
+					DomainID: validGroup.Domain,
+					Offset:   0,
+					Limit:    10,
+				},
+			},
+			idResp: &magistrala.IdentityRes{
+				Id:       testsutil.GenerateUUID(t),
+				DomainId: domainID,
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			repoResp: mggroups.Page{
+				Groups: []mggroups.Group{
+					validGroup,
+				},
+				PageMeta: mggroups.PageMeta{
+					Total:    1,
+					Offset:   0,
+					Limit:    10,
+					DomainID: domainID,
+				},
+			},
+			idErr:    nil,
+			authzErr: nil,
+			repoErr:  nil,
+		},
+		{
+			desc:  "unsuccessfully search with invalid token",
+			token: invalidToken,
+			page: mggroups.Page{
+				PageMeta: mggroups.PageMeta{
+					Name:     validGroup.Name,
+					DomainID: validGroup.Domain,
+					Offset:   0,
+					Limit:    10,
+				},
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: false,
+			},
+			authzErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:  "unsuccessfully search with failed to authorize over domain",
+			token: token,
+			page: mggroups.Page{
+				PageMeta: mggroups.PageMeta{
+					Name:   validGroup.Name,
+					Offset: 0,
+					Limit:  10,
+				},
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: false,
+			},
+			authzErr: svcerr.ErrDomainAuthorization,
+			err:      svcerr.ErrDomainAuthorization,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			authcall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
+			authcall1 := authsvc.On("Authorize", context.Background(), mock.Anything).Return(tc.authzResp, tc.authzErr)
+			repocall := repo.On("SearchBasicinfo", context.Background(), tc.page).Return(tc.repoResp, tc.repoErr)
+			gp, err := svc.SearchGroups(context.Background(), tc.token, tc.page)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected %s got %s\n", err, tc.err))
+			assert.Equal(t, tc.repoResp.Groups, gp.Groups, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.repoResp.Groups, gp.Groups))
+			authcall.Unset()
+			authcall1.Unset()
+			repocall.Unset()
 		})
 	}
 }

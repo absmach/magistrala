@@ -18,6 +18,7 @@ var (
 	groupView            = groupPrefix + "view"
 	groupViewPerms       = groupPrefix + "view_perms"
 	groupList            = groupPrefix + "list"
+	groupSearch          = groupPrefix + "search"
 	groupListMemberships = groupPrefix + "list_by_user"
 	groupRemove          = groupPrefix + "remove"
 	groupAssign          = groupPrefix + "assign"
@@ -34,6 +35,7 @@ var (
 	_ events.Event = (*deleteGroupEvent)(nil)
 	_ events.Event = (*viewGroupEvent)(nil)
 	_ events.Event = (*listGroupEvent)(nil)
+	_ events.Event = (*searchGroupEvent)(nil)
 	_ events.Event = (*listGroupMembershipEvent)(nil)
 )
 
@@ -239,6 +241,31 @@ func (lge listGroupEvent) Encode() (map[string]interface{}, error) {
 	}
 	if lge.Status.String() != "" {
 		val["status"] = lge.Status.String()
+	}
+
+	return val, nil
+}
+
+type searchGroupEvent struct {
+	groups.Page
+}
+
+func (sge searchGroupEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation": groupSearch,
+		"total":     sge.Total,
+		"offset":    sge.Offset,
+		"limit":     sge.Limit,
+	}
+
+	if sge.Name != "" {
+		val["name"] = sge.Name
+	}
+	if sge.Tag != "" {
+		val["tag"] = sge.Tag
+	}
+	if sge.ID != "" {
+		val["id"] = sge.ID
 	}
 
 	return val, nil

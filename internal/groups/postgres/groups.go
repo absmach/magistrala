@@ -145,6 +145,53 @@ func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggrou
 	return toGroup(dbg)
 }
 
+func (repo groupRepository) SearchBasicinfo(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
+	var query []string
+	var query1 string
+
+	if gm.Name != "" {
+		query = append(query, "name ~ :name")
+	}
+	if gm.ID != "" {
+		query = append(query, "id ~ :id")
+	}
+	if gm.Tag != "" {
+		query = append(query, "tag ~ :tag")
+	}
+	if len(query) > 0 {
+		query1 = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	q := fmt.Sprintf(`SELECT g.id, g.name, COALESCE(g.parent_id, '') AS parent_id, g.domain_id, g.created_at, g.updated_at, g.updated_by, status FROM groups g %s LIMIT :limit OFFSET :offset;`, query1)
+
+	dbPage, err := toDBGroupPage(gm)
+	if err != nil {
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	defer rows.Close()
+
+	items, err := repo.processRows(rows)
+	if err != nil {
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+
+	cq := fmt.Sprintf("SELECT COUNT(*) FROM groups g %s;", query1)
+	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
+	if err != nil {
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+
+	page := gm
+	page.Groups = items
+	page.Total = total
+
+	return page, nil
+}
+
 func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
 	var q string
 	query := buildQuery(gm)

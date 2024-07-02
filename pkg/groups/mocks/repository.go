@@ -192,6 +192,34 @@ func (_m *Repository) Save(ctx context.Context, g groups.Group) (groups.Group, e
 	return r0, r1
 }
 
+// SearchBasicinfo provides a mock function with given fields: ctx, gm
+func (_m *Repository) SearchBasicinfo(ctx context.Context, gm groups.Page) (groups.Page, error) {
+	ret := _m.Called(ctx, gm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchBasicinfo")
+	}
+
+	var r0 groups.Page
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, groups.Page) (groups.Page, error)); ok {
+		return rf(ctx, gm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, groups.Page) groups.Page); ok {
+		r0 = rf(ctx, gm)
+	} else {
+		r0 = ret.Get(0).(groups.Page)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, groups.Page) error); ok {
+		r1 = rf(ctx, gm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UnassignParentGroup provides a mock function with given fields: ctx, parentGroupID, groupIDs
 func (_m *Repository) UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error {
 	ret := _m.Called(ctx, parentGroupID, groupIDs)

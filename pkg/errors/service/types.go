@@ -60,4 +60,7 @@ var (
 
 	// ErrDeletePolicies indicates error in removing policies.
 	ErrDeletePolicies = errors.New("failed to remove policies")
+
+	// ErrSearch indicates error in searching clients.
+	ErrSearch = errors.New("failed to search clients")
 )

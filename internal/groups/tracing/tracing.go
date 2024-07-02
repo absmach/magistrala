@@ -55,6 +55,13 @@ func (tm *tracingMiddleware) ListGroups(ctx context.Context, token, memberKind, 
 	return tm.gsvc.ListGroups(ctx, token, memberKind, memberID, gm)
 }
 
+func (rm *tracingMiddleware) SearchGroups(ctx context.Context, token string, gm groups.Page) (groups.Page, error) {
+	ctx, span := rm.tracer.Start(ctx, "svc_search_groups")
+	defer span.End()
+
+	return rm.gsvc.SearchGroups(ctx, token, gm)
+}
+
 // ListMembers traces the "ListMembers" operation of the wrapped groups.Service.
 func (tm *tracingMiddleware) ListMembers(ctx context.Context, token, groupID, permission, memberKind string) (groups.MembersPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_members", trace.WithAttributes(attribute.String("groupID", groupID)))

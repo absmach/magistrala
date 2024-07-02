@@ -691,6 +691,109 @@ func TestListGroupsEndpoint(t *testing.T) {
 	}
 }
 
+func TestSearchGroupsEndpoint(t *testing.T) {
+	svc := new(mocks.Service)
+
+	validGroup := groups.Group{
+		ID:          testsutil.GenerateUUID(&testing.T{}),
+		Name:        valid,
+		Description: valid,
+		Domain:      testsutil.GenerateUUID(&testing.T{}),
+		Parent:      testsutil.GenerateUUID(&testing.T{}),
+		Metadata: clients.Metadata{
+			"name": "test",
+		},
+		Children:  []*groups.Group{},
+		CreatedAt: time.Now().Add(-1 * time.Second),
+		UpdatedAt: time.Now(),
+		UpdatedBy: testsutil.GenerateUUID(&testing.T{}),
+		Status:    clients.EnabledStatus,
+	}
+
+	cases := []struct {
+		desc    string
+		req     searchGroupsReq
+		svcResp groups.Page
+		svcErr  error
+		resp    groupPageRes
+		err     error
+	}{
+		{
+			desc: "successfully",
+			req: searchGroupsReq{
+				token: valid,
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Name:   valid,
+						Offset: 0,
+						Limit:  10,
+					},
+				},
+			},
+			svcResp: groups.Page{
+				Groups: []groups.Group{validGroup},
+				PageMeta: groups.PageMeta{
+					Total:  1,
+					Offset: 0,
+					Limit:  10,
+				},
+			},
+			svcErr: nil,
+			resp: groupPageRes{
+				Groups: []viewGroupRes{
+					{
+						Group: validGroup,
+					},
+				},
+				pageRes: pageRes{
+					Total:  1,
+					Offset: 0,
+					Limit:  10,
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "successfully with empty request",
+			req: searchGroupsReq{
+				token: valid,
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Offset: 0,
+						Limit:  10,
+					},
+				},
+			},
+			resp: groupPageRes{},
+			err:  apiutil.ErrEmptySearchQuery,
+		},
+		{
+			desc: "unsuccessfully with empty token",
+			req: searchGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Name:   valid,
+						Offset: 0,
+						Limit:  10,
+					},
+				},
+			},
+			resp: groupPageRes{},
+			err:  apiutil.ErrBearerToken,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := svc.On("SearchGroups", context.Background(), tc.req.token, tc.req.Page).Return(tc.svcResp, tc.svcErr)
+		resp, err := SearchGroupsEndpoint(svc)(context.Background(), tc.req)
+		response := resp.(groupPageRes)
+		assert.Equal(t, tc.resp, response, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, response))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+		assert.Equal(t, response.Code(), http.StatusOK)
+		repoCall.Unset()
+	}
+}
+
 func TestListMembersEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
 	cases := []struct {

@@ -77,6 +77,23 @@ func (req listGroupsReq) validate() error {
 	return nil
 }
 
+type searchGroupsReq struct {
+	mggroups.Page
+	token string
+}
+
+func (req searchGroupsReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	if req.Name == "" && req.Tag == "" && req.ID == "" {
+		return apiutil.ErrEmptySearchQuery
+	}
+
+	return nil
+}
+
 type groupReq struct {
 	token string
 	id    string

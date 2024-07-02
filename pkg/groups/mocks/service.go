@@ -192,6 +192,34 @@ func (_m *Service) ListMembers(ctx context.Context, token string, groupID string
 	return r0, r1
 }
 
+// SearchGroups provides a mock function with given fields: ctx, token, gm
+func (_m *Service) SearchGroups(ctx context.Context, token string, gm groups.Page) (groups.Page, error) {
+	ret := _m.Called(ctx, token, gm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchGroups")
+	}
+
+	var r0 groups.Page
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, groups.Page) (groups.Page, error)); ok {
+		return rf(ctx, token, gm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, groups.Page) groups.Page); ok {
+		r0 = rf(ctx, token, gm)
+	} else {
+		r0 = ret.Get(0).(groups.Page)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, groups.Page) error); ok {
+		r1 = rf(ctx, token, gm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Unassign provides a mock function with given fields: ctx, token, groupID, relation, memberKind, memberIDs
 func (_m *Service) Unassign(ctx context.Context, token string, groupID string, relation string, memberKind string, memberIDs ...string) error {
 	ret := _m.Called(ctx, token, groupID, relation, memberKind, memberIDs)

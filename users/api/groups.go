@@ -70,6 +70,13 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 			opts...,
 		), "list_groups").ServeHTTP)
 
+		r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
+			gapi.SearchGroupsEndpoint(svc),
+			gapi.DecodeSearchGroupsRequest,
+			api.EncodeResponse,
+			opts...,
+		), "search_groups").ServeHTTP)
+
 		r.Get("/{groupID}/children", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ListGroupsEndpoint(svc, "groups", "users"),
 			gapi.DecodeListChildrenRequest,

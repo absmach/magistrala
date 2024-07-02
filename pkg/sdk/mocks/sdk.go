@@ -2050,6 +2050,66 @@ func (_m *SDK) RevokeCert(thingID string, token string) (time.Time, errors.SDKEr
 	return r0, r1
 }
 
+// SearchChannels provides a mock function with given fields: pm, token
+func (_m *SDK) SearchChannels(pm sdk.PageMetadata, token string) (sdk.ChannelsPage, errors.SDKError) {
+	ret := _m.Called(pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchChannels")
+	}
+
+	var r0 sdk.ChannelsPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) (sdk.ChannelsPage, errors.SDKError)); ok {
+		return rf(pm, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) sdk.ChannelsPage); ok {
+		r0 = rf(pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ChannelsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = rf(pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// SearchGroups provides a mock function with given fields: pm, token
+func (_m *SDK) SearchGroups(pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
+	ret := _m.Called(pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchGroups")
+	}
+
+	var r0 sdk.GroupsPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) (sdk.GroupsPage, errors.SDKError)); ok {
+		return rf(pm, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) sdk.GroupsPage); ok {
+		r0 = rf(pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.GroupsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = rf(pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
 // SendInvitation provides a mock function with given fields: invitation, token
 func (_m *SDK) SendInvitation(invitation sdk.Invitation, token string) error {
 	ret := _m.Called(invitation, token)

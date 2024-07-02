@@ -555,6 +555,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 			ID:       ch.ID,
 			Name:     ch.Name,
 			Metadata: ch.Metadata,
+			DomainID: ch.DomainID,
 		})
 	}
 

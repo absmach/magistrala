@@ -36,7 +36,7 @@ import (
 	mproxymqtt "github.com/absmach/mproxy/pkg/mqtt"
 	"github.com/absmach/mproxy/pkg/mqtt/websocket"
 	"github.com/absmach/mproxy/pkg/session"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"github.com/cenkalti/backoff/v4"
 	"golang.org/x/sync/errgroup"
 )
@@ -44,6 +44,8 @@ import (
 const (
 	svcName        = "mqtt"
 	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
+	envPrefixMQTT  = "MG_MQTT_ADAPTER_"
+	envPrefixWS    = "MG_MQTT_ADAPTER_WS_"
 )
 
 type config struct {
@@ -57,7 +59,6 @@ type config struct {
 	HTTPPort              string        `env:"MG_MQTT_ADAPTER_WS_PORT"                      envDefault:"8080"`
 	HTTPTargetHost        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_HOST"               envDefault:"localhost"`
 	HTTPTargetPort        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
-	HTTPTargetPath        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
 	Instance              string        `env:"MG_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
 	JaegerURL             url.URL       `env:"MG_JAEGER_URL"                                envDefault:"http://localhost:14268/api/traces"`
 	BrokerURL             string        `env:"MG_MESSAGE_BROKER_URL"                        envDefault:"nats://localhost:4222"`
@@ -75,7 +76,6 @@ func main() {
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
-
 	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
@@ -188,16 +188,16 @@ func main() {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
-
 	var interceptor session.Interceptor
+
 	logger.Info(fmt.Sprintf("Starting MQTT proxy on port %s", cfg.MQTTPort))
 	g.Go(func() error {
-		return proxyMQTT(ctx, cfg, logger, h, interceptor)
+		return proxyMQTT(ctx, logger, h, interceptor)
 	})
 
 	logger.Info(fmt.Sprintf("Starting MQTT over WS  proxy on port %s", cfg.HTTPPort))
 	g.Go(func() error {
-		return proxyWS(ctx, cfg, logger, h, interceptor)
+		return proxyWS(ctx, logger, h, interceptor)
 	})
 
 	g.Go(func() error {
@@ -209,36 +209,36 @@ func main() {
 	}
 }
 
-func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
-	config := mproxy.Config{
-		Address: fmt.Sprintf(":%s", cfg.MQTTPort),
-		Target:  fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort),
+func proxyMQTT(ctx context.Context, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
+	mqttConfig, err := mproxy.NewConfig(env.Options{Prefix: envPrefixMQTT})
+	if err != nil {
+		return (err)
 	}
-	mproxy := mproxymqtt.New(config, sessionHandler, interceptor, logger)
+
+	mqttProxy := mproxymqtt.New(mqttConfig, sessionHandler, interceptor, logger)
 
 	errCh := make(chan error)
 	go func() {
-		errCh <- mproxy.Listen(ctx)
+		errCh <- mqttProxy.Listen(ctx)
 	}()
 
 	select {
 	case <-ctx.Done():
-		logger.Info(fmt.Sprintf("proxy MQTT shutdown at %s", config.Target))
+		logger.Info(fmt.Sprintf("proxy MQTT shutdown at %s", mqttConfig.Target))
 		return nil
 	case err := <-errCh:
 		return err
 	}
 }
 
-func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
-	config := mproxy.Config{
-		Address:    fmt.Sprintf("%s:%s", "", cfg.HTTPPort),
-		Target:     fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort),
-		PathPrefix: "/mqtt",
+func proxyWS(ctx context.Context, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
+	wsConfig, err := mproxy.NewConfig(env.Options{Prefix: envPrefixWS})
+	if err != nil {
+		return (err)
 	}
 
-	wp := websocket.New(config, sessionHandler, interceptor, logger)
-	http.HandleFunc("/mqtt", wp.ServeHTTP)
+	wp := websocket.New(wsConfig, sessionHandler, interceptor, logger)
+	http.Handle("/mqtt", wp)
 
 	errCh := make(chan error)
 
@@ -248,7 +248,7 @@ func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandle
 
 	select {
 	case <-ctx.Done():
-		logger.Info(fmt.Sprintf("proxy MQTT WS shutdown at %s", config.Target))
+		logger.Info(fmt.Sprintf("proxy MQTT WS shutdown at %s", wsConfig.Target))
 		return nil
 	case err := <-errCh:
 		return err

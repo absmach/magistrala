@@ -23,7 +23,7 @@ import (
 	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/magistrala/readers/api"
 	"github.com/absmach/magistrala/readers/cassandra"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"github.com/gocql/gocql"
 	"golang.org/x/sync/errgroup"
 )

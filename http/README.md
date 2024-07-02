@@ -23,6 +23,13 @@ The service is configured using the environment variables presented in the follo
 | MG_JAEGER_TRACE_RATIO            | Jaeger sampling ratio                                                              | 1.0                                 |
 | MG_SEND_TELEMETRY                | Send telemetry to magistrala call home server                                      | true                                |
 | MG_HTTP_ADAPTER_INSTANCE_ID      | Service instance ID                                                                | ""                                  |
+| MG_HTTP_ADAPTER_ADDRESS          | Mproxy listening Address                                                           | :80                                 |
+| MG_HTTP_ADAPTER_TARGET           | Target server address                                                              | http://localhost:81                 |
+| MG_HTTP_ADAPTER_PATH_PREFIX      | Prefix added to the requests                                                       | /                                   |
+| MG_HTTP_ADAPTER_CERT_FILE        | Server’s certificate file                                                          | ./ssl/certs/magistrala-server.crt   |
+| MG_HTTP_ADAPTER_KEY_FILE         | Server’s key file                                                                  | ./ssl/certs/magistrala-server.key   |
+| MG_HTTP_ADAPTER_SERVER_CA_FILE   | Server’s ca file                                                                   | ./ssl/certs/ca.crt                  |
+| MG_HTTP_ADAPTER_CLIENT_CA_FILE   | Client's ca file                                                                   | ./ssl/certs/ca.crt                  |
 
 ## Deployment
 
@@ -59,6 +66,13 @@ MG_JAEGER_URL=http://localhost:14268/api/traces \
 MG_JAEGER_TRACE_RATIO=1.0 \
 MG_SEND_TELEMETRY=true \
 MG_HTTP_ADAPTER_INSTANCE_ID="" \
+MG_HTTP_ADAPTER_ADDRESS=:80 \
+MG_HTTP_ADAPTER_PATH_PREFIX=/ \
+MG_HTTP_ADAPTER_TARGET=http://localhost:81 \
+MG_HTTP_ADAPTER_CERT_FILE="" \
+MG_HTTP_ADAPTER_KEY_FILE="" \
+MG_HTTP_ADAPTER_SERVER_CA_FILE="" \
+MG_HTTP_ADAPTER_CLIENT_CA_FILE="" \
 $GOBIN/magistrala-http
 ```
 

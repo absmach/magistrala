@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 

@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

@@ -33,7 +33,7 @@ import (
 	"github.com/absmach/magistrala/twins/events"
 	twmongodb "github.com/absmach/magistrala/twins/mongodb"
 	"github.com/absmach/magistrala/twins/tracing"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/otel/trace"

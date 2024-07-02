@@ -23,7 +23,7 @@ import (
 	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/magistrala/readers/api"
 	"github.com/absmach/magistrala/readers/mongodb"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/sync/errgroup"
 )

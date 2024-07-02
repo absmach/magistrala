@@ -190,8 +190,8 @@ func (repo *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clien
 	return page, nil
 }
 
-func (repo *Repository) RetrieveAllBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	sq, tq := constructSearchQuery(pm)
+func (repo *Repository) SearchBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+	sq, tq := ConstructSearchQuery(pm)
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, sq)
 
@@ -334,6 +334,24 @@ func (repo *Repository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (repo *Repository) CheckSuperAdmin(ctx context.Context, adminID string) error {
+	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
+	rows, err := repo.DB.QueryContext(ctx, q, adminID, clients.AdminRole)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		if err := rows.Err(); err != nil {
+			return postgres.HandleError(repoerr.ErrViewEntity, err)
+		}
+		return nil
+	}
+
+	return repoerr.ErrNotFound
+}
+
 type DBClient struct {
 	ID        string           `db:"id"`
 	Name      string           `db:"name,omitempty"`
@@ -437,6 +455,7 @@ func ToDBClientsPage(pm clients.Page) (dbClientsPage, error) {
 	return dbClientsPage{
 		Name:     pm.Name,
 		Identity: pm.Identity,
+		Id:       pm.Id,
 		Metadata: data,
 		Domain:   pm.Domain,
 		Total:    pm.Total,
@@ -453,6 +472,7 @@ type dbClientsPage struct {
 	Limit    uint64         `db:"limit"`
 	Offset   uint64         `db:"offset"`
 	Name     string         `db:"name"`
+	Id       string         `db:"id"`
 	Domain   string         `db:"domain_id"`
 	Identity string         `db:"identity"`
 	Metadata []byte         `db:"metadata"`
@@ -475,11 +495,14 @@ func PageQuery(pm clients.Page) (string, error) {
 	if len(pm.IDs) != 0 {
 		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
 	}
-	if pm.Identity != "" {
-		query = append(query, "c.identity = :identity")
-	}
 	if pm.Name != "" {
-		query = append(query, "c.name = :name")
+		query = append(query, "name ILIKE '%' || :name || '%'")
+	}
+	if pm.Identity != "" {
+		query = append(query, "identity ILIKE '%' || :identity || '%'")
+	}
+	if pm.Id != "" {
+		query = append(query, "id ILIKE '%' || :id || '%'")
 	}
 	if pm.Tag != "" {
 		query = append(query, ":tag = ANY(c.tags)")
@@ -500,16 +523,19 @@ func PageQuery(pm clients.Page) (string, error) {
 	return emq, nil
 }
 
-func constructSearchQuery(pm clients.Page) (string, string) {
+func ConstructSearchQuery(pm clients.Page) (string, string) {
 	var query []string
 	var emq string
 	var tq string
 
 	if pm.Name != "" {
-		query = append(query, "name ~ :name")
+		query = append(query, "name ILIKE '%' || :name || '%'")
 	}
 	if pm.Identity != "" {
-		query = append(query, "identity ~ :identity")
+		query = append(query, "identity ILIKE '%' || :identity || '%'")
+	}
+	if pm.Id != "" {
+		query = append(query, "id ILIKE '%' || :id || '%'")
 	}
 
 	if len(query) > 0 {

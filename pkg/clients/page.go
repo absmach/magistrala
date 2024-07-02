@@ -9,6 +9,7 @@ type Page struct {
 	Offset     uint64   `json:"offset"`
 	Limit      uint64   `json:"limit"`
 	Name       string   `json:"name,omitempty"`
+	Id         string   `json:"id,omitempty"`
 	Order      string   `json:"order,omitempty"`
 	Dir        string   `json:"dir,omitempty"`
 	Metadata   Metadata `json:"metadata,omitempty"`

@@ -18,6 +18,7 @@ const (
 	valid   = "valid"
 	invalid = "invalid"
 	secret  = "QJg58*aMan7j"
+	name    = "client"
 )
 
 var validID = testsutil.GenerateUUID(&testing.T{})

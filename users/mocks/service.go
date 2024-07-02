@@ -331,6 +331,34 @@ func (_m *Service) ResetSecret(ctx context.Context, resetToken string, secret st
 	return r0
 }
 
+// SearchUsers provides a mock function with given fields: ctx, token, pm
+func (_m *Service) SearchUsers(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error) {
+	ret := _m.Called(ctx, token, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchUsers")
+	}
+
+	var r0 clients.ClientsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) (clients.ClientsPage, error)); ok {
+		return rf(ctx, token, pm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) clients.ClientsPage); ok {
+		r0 = rf(ctx, token, pm)
+	} else {
+		r0 = ret.Get(0).(clients.ClientsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Page) error); ok {
+		r1 = rf(ctx, token, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SendPasswordReset provides a mock function with given fields: ctx, host, email, user, token
 func (_m *Service) SendPasswordReset(ctx context.Context, host string, email string, user string, token string) error {
 	ret := _m.Called(ctx, host, email, user, token)

@@ -246,6 +246,10 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
@@ -262,6 +266,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		tag:      t,
 		order:    order,
 		dir:      dir,
+		id:       id,
 	}
 
 	return req, nil

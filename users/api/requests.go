@@ -72,6 +72,7 @@ type listClientsReq struct {
 	metadata mgclients.Metadata
 	order    string
 	dir      string
+	id       string
 }
 
 func (req listClientsReq) validate() error {

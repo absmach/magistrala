@@ -91,34 +91,6 @@ func (_m *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clients
 	return r0, r1
 }
 
-// RetrieveAllBasicInfo provides a mock function with given fields: ctx, pm
-func (_m *Repository) RetrieveAllBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	ret := _m.Called(ctx, pm)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RetrieveAllBasicInfo")
-	}
-
-	var r0 clients.ClientsPage
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) (clients.ClientsPage, error)); ok {
-		return rf(ctx, pm)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) clients.ClientsPage); ok {
-		r0 = rf(ctx, pm)
-	} else {
-		r0 = ret.Get(0).(clients.ClientsPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Page) error); ok {
-		r1 = rf(ctx, pm)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RetrieveAllByIDs provides a mock function with given fields: ctx, pm
 func (_m *Repository) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	ret := _m.Called(ctx, pm)
@@ -261,6 +233,34 @@ func (_m *Repository) Save(ctx context.Context, client ...clients.Client) ([]cli
 
 	if rf, ok := ret.Get(1).(func(context.Context, ...clients.Client) error); ok {
 		r1 = rf(ctx, client...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SearchBasicInfo provides a mock function with given fields: ctx, pm
+func (_m *Repository) SearchBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+	ret := _m.Called(ctx, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchBasicInfo")
+	}
+
+	var r0 clients.ClientsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) (clients.ClientsPage, error)); ok {
+		return rf(ctx, pm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) clients.ClientsPage); ok {
+		r0 = rf(ctx, pm)
+	} else {
+		r0 = ret.Get(0).(clients.ClientsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, clients.Page) error); ok {
+		r1 = rf(ctx, pm)
 	} else {
 		r1 = ret.Error(1)
 	}

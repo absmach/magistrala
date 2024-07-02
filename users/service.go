@@ -196,11 +196,10 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		Identity: pm.Identity,
 		Role:     mgclients.UserRole,
 	}
-	pg, err := svc.clients.RetrieveAll(ctx, p)
+	pg, err := svc.clients.SearchBasicInfo(ctx, p)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-
 	for i, c := range pg.Clients {
 		pg.Clients[i] = mgclients.Client{ID: c.ID, Name: c.Name}
 	}
@@ -552,6 +551,20 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 		Page:    cp.Page,
 		Members: cp.Clients,
 	}, nil
+}
+
+func (svc service) SearchUsers(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	_, err := svc.identify(ctx, token)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+
+	cp, err := svc.clients.SearchBasicInfo(ctx, pm)
+	if err != nil {
+		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrSearch, err)
+	}
+
+	return cp, nil
 }
 
 func (svc service) retrieveObjectUsersPermissions(ctx context.Context, domainID, objectType, objectID string, client *mgclients.Client) error {

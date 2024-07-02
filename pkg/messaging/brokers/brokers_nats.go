@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !rabbitmq
-// +build !rabbitmq
+//go:build !rabbitmq && !kafka
+// +build !rabbitmq,!kafka
 
 package brokers
 

@@ -1042,7 +1042,7 @@ func TestEnableThing(t *testing.T) {
 			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
 		}
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response.Things)}, nil)
-		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
+		repoCall3 := cRepo.On("SearchBasicInfo", mock.Anything, mock.Anything).Return(convertThingsPage(tc.response), nil)
 		clientsPage, err := mgsdk.Things(pm, validToken)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(clientsPage.Things))

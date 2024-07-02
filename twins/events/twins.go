@@ -9,7 +9,7 @@ import (
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/twins"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 const (

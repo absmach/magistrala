@@ -181,7 +181,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 
 	pm.IDs = ids
 
-	tp, err := svc.clients.SearchBasicInfo(ctx, pm)
+	tp, err := svc.SearchThings(ctx, token, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -547,7 +547,7 @@ func (svc service) SearchThings(ctx context.Context, token string, pm mgclients.
 
 	things := mgclients.ClientsPage{}
 	for _, val := range cp.Clients {
-		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.ThingType, val.ID); err == nil {
+		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, val.ID); err == nil {
 			things.Clients = append(things.Clients, val)
 			things.Page.Total += 1
 		}

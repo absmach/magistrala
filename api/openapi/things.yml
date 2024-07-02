@@ -401,34 +401,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/search:
-    get:
-      operationId: searchThings
-      summary: Searches for things
-      description: |
-        Searches for things based on the provided query parameters i.e name, id and tags.
-      tags:
-        - Things
-      parameters:
-        - $ref: "#/components/parameters/ThingName"
-        - $ref: "#/components/parameters/ThingID"
-        - $ref: "#/components/parameters/Tags"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-      responses:
-        "200":
-          $ref: "#/components/responses/ThingPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
   /channels/{chanID}/things:
     get:
       operationId: listThingsInaChannel

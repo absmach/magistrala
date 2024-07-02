@@ -33,9 +33,6 @@ type Repository interface {
 
 	// RetrieveBySecret retrieves a client based on the secret (key).
 	RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error)
-
-	// SearchBasicInfo retrieves basic information about clients.
-	SearchBasicInfo(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error)
 }
 
 // NewRepository instantiates a PostgreSQL
@@ -123,52 +120,4 @@ func (repo clientRepo) RetrieveBySecret(ctx context.Context, key string) (mgclie
 	}
 
 	return mgclients.Client{}, repoerr.ErrNotFound
-}
-
-func (repo clientRepo) SearchBasicInfo(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	sq, tq := pgclients.ConstructThingSearchQuery(pm)
-
-	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, sq)
-	dbPage, err := pgclients.ToDBClientsPage(pm)
-	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
-	}
-	fmt.Println("query: ", q)
-	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
-	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
-	}
-	defer rows.Close()
-
-	var items []mgclients.Client
-	for rows.Next() {
-		dbc := pgclients.DBClient{}
-		if err := rows.StructScan(&dbc); err != nil {
-			return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-
-		c, err := pgclients.ToClient(dbc)
-		if err != nil {
-			return mgclients.ClientsPage{}, err
-		}
-
-		items = append(items, c)
-	}
-
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, tq)
-	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
-	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-
-	page := mgclients.ClientsPage{
-		Clients: items,
-		Page: mgclients.Page{
-			Total:  total,
-			Offset: pm.Offset,
-			Limit:  pm.Limit,
-		},
-	}
-
-	return page, nil
 }

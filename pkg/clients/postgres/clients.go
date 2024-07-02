@@ -191,7 +191,7 @@ func (repo *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clien
 }
 
 func (repo *Repository) SearchBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	sq, tq := ConstructSearchQuery(pm)
+	sq, tq := constructSearchQuery(pm)
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, sq)
 
@@ -332,24 +332,6 @@ func (repo *Repository) Delete(ctx context.Context, id string) error {
 	}
 
 	return nil
-}
-
-func (repo *Repository) CheckSuperAdmin(ctx context.Context, adminID string) error {
-	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
-	rows, err := repo.DB.QueryContext(ctx, q, adminID, clients.AdminRole)
-	if err != nil {
-		return postgres.HandleError(repoerr.ErrViewEntity, err)
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		if err := rows.Err(); err != nil {
-			return postgres.HandleError(repoerr.ErrViewEntity, err)
-		}
-		return nil
-	}
-
-	return repoerr.ErrNotFound
 }
 
 type DBClient struct {
@@ -523,45 +505,16 @@ func PageQuery(pm clients.Page) (string, error) {
 	return emq, nil
 }
 
-func ConstructSearchQuery(pm clients.Page) (string, string) {
+func constructSearchQuery(pm clients.Page) (string, string) {
 	var query []string
 	var emq string
 	var tq string
-
+	fmt.Printf("PM: %+v\n", pm)
 	if pm.Name != "" {
 		query = append(query, "name ILIKE '%' || :name || '%'")
 	}
 	if pm.Identity != "" {
 		query = append(query, "identity ILIKE '%' || :identity || '%'")
-	}
-	if pm.Id != "" {
-		query = append(query, "id ILIKE '%' || :id || '%'")
-	}
-
-	if len(query) > 0 {
-		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
-	}
-
-	tq = emq
-
-	switch pm.Order {
-	case "name", "identity", "created_at", "updated_at":
-		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)
-		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
-			emq = fmt.Sprintf("%s %s", emq, pm.Dir)
-		}
-	}
-
-	return emq, tq
-}
-
-func ConstructThingSearchQuery(pm clients.Page) (string, string) {
-	var query []string
-	var emq string
-	var tq string
-
-	if pm.Name != "" {
-		query = append(query, "name ILIKE '%' || :name || '%'")
 	}
 	if pm.Id != "" {
 		query = append(query, "id ILIKE '%' || :id || '%'")
@@ -580,11 +533,12 @@ func ConstructThingSearchQuery(pm clients.Page) (string, string) {
 	tq = emq
 
 	switch pm.Order {
-	case "name", "tag", "created_at", "updated_at":
+	case "name", "identity", "created_at", "updated_at":
 		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)
 		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
 			emq = fmt.Sprintf("%s %s", emq, pm.Dir)
 		}
 	}
+
 	return emq, tq
 }

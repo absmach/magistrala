@@ -5,9 +5,6 @@ package cli
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/url"
-	"strconv"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -363,46 +360,6 @@ var cmdThings = []cobra.Command{
 			}
 
 			logJSON(ul)
-		},
-	},
-	{
-		Use:   "search <query> <user_auth_token>",
-		Short: "Search things",
-		Long: "Search things by name, id or tags\n" +
-			"Usage:\n" +
-			"\tmagistrala-cli things search <query> <user_auth_token>\n",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
-				logUsage(cmd.Use)
-				return
-			}
-
-			values, err := url.ParseQuery(args[0])
-			if err != nil {
-				logError(fmt.Errorf("Failed to parse query: %s", err))
-			}
-
-			pm := mgxsdk.PageMetadata{
-				Name: values.Get("name"),
-				ID:   values.Get("id"),
-				Tag:  values.Get("tag"),
-			}
-
-			if off, err := strconv.Atoi(values.Get("offset")); err == nil {
-				pm.Offset = uint64(off)
-			}
-
-			if lim, err := strconv.Atoi(values.Get("limit")); err == nil {
-				pm.Limit = uint64(lim)
-			}
-
-			things, err := sdk.SearchThings(pm, args[1])
-			if err != nil {
-				logError(err)
-				return
-			}
-
-			logJSON(things)
 		},
 	},
 }

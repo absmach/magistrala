@@ -484,18 +484,6 @@ type SDK interface {
 	//  fmt.Println(users)
 	ListThingUsers(thingID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
-	// SearchThings returns page of things based on the search criteria.
-	//
-	// example:
-	// pm := sdk.PageMetadata{
-	//		Offset: 0,
-	//		Limit:  10,
-	//		Name:   "My Thing",
-	//	}
-	//  things, _ := sdk.SearchThings(pm, "token")
-	//  fmt.Println(things)
-	SearchThings(pm PageMetadata, token string) (ThingsPage, errors.SDKError)
-
 	// DeleteThing deletes a thing with the given id.
 	//
 	// example:

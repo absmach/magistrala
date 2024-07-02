@@ -60,13 +60,6 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger *slog.Logger) http.Ha
 			opts...,
 		), "view_thing_permissions").ServeHTTP)
 
-		r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
-			searchThingsEndpoint(svc),
-			decodeSearchThings,
-			api.EncodeResponse,
-			opts...,
-		), "search_things").ServeHTTP)
-
 		r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 			updateClientEndpoint(svc),
 			decodeUpdateClient,
@@ -218,47 +211,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		userID:     chi.URLParam(r, "userID"),
 		id:         id,
 	}
-	return req, nil
-}
-
-func decodeSearchThings(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	t, err := apiutil.ReadStringQuery(r, api.TagKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	req := searchThingsReq{
-		apiutil.ExtractBearerToken(r),
-		mgclients.Page{Offset: o, Limit: l, Name: n, Tag: t, Id: id},
-	}
-
-	for _, field := range []string{req.Name, req.Id, req.Tag} {
-		if field != "" && len(field) < 3 {
-			req = searchThingsReq{
-				token: apiutil.ExtractBearerToken(r),
-				Page:  mgclients.Page{},
-			}
-			return req, errors.Wrap(apiutil.ErrLenSearchQuery, apiutil.ErrValidation)
-		}
-	}
-
 	return req, nil
 }
 

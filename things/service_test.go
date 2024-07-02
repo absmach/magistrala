@@ -428,6 +428,7 @@ func TestListClients(t *testing.T) {
 		identifyResponse        *magistrala.IdentityRes
 		authorizeResponse       *magistrala.AuthorizeRes
 		authorizeResponse1      *magistrala.AuthorizeRes
+		authorizeResponse2      *magistrala.AuthorizeRes
 		listObjectsResponse     *magistrala.ListObjectsRes
 		listObjectsResponse1    *magistrala.ListObjectsRes
 		retrieveAllResponse     mgclients.ClientsPage
@@ -438,6 +439,7 @@ func TestListClients(t *testing.T) {
 		identifyErr             error
 		authorizeErr            error
 		authorizeErr1           error
+		authorizeErr2           error
 		listObjectsErr          error
 		retrieveAllErr          error
 		listPermissionsErr      error
@@ -455,6 +457,7 @@ func TestListClients(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			authorizeResponse2:  &magistrala.AuthorizeRes{Authorized: true},
 			listObjectsResponse: &magistrala.ListObjectsRes{},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -531,8 +534,9 @@ func TestListClients(t *testing.T) {
 				Limit:     100,
 				ListPerms: true,
 			},
-			identifyResponse:  &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			identifyResponse:   &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			authorizeResponse2: &magistrala.AuthorizeRes{Authorized: true},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -618,8 +622,17 @@ func TestListClients(t *testing.T) {
 			ObjectType:  "domain",
 			Object:      tc.identifyResponse.DomainId,
 		}).Return(tc.authorizeResponse1, tc.authorizeErr1)
+		authorizeCall3 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			Domain:      domainID,
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     tc.identifyResponse.UserId,
+			Permission:  "view",
+			ObjectType:  "thing",
+			Object:      client.ID,
+		}).Return(tc.authorizeResponse2, tc.authorizeErr2)
 		listAllObjectsCall := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		retrieveAllCall := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
+		retrieveAllCall := cRepo.On("SearchBasicInfo", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
 		listPermissionsCall := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 
 		page, err := svc.ListClients(context.Background(), tc.token, tc.id, tc.page)
@@ -631,6 +644,7 @@ func TestListClients(t *testing.T) {
 		listAllObjectsCall.Unset()
 		retrieveAllCall.Unset()
 		listPermissionsCall.Unset()
+		authorizeCall3.Unset()
 	}
 
 	cases2 := []struct {
@@ -799,7 +813,7 @@ func TestListClients(t *testing.T) {
 			Permission:  "",
 			ObjectType:  authsvc.ThingType,
 		}).Return(tc.listObjectsResponse1, tc.listObjectsErr1)
-		retrieveAllCall := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
+		retrieveAllCall := cRepo.On("SearchBasicInfo", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
 		listPermissionsCall := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 
 		page, err := svc.ListClients(context.Background(), tc.token, tc.id, tc.page)
@@ -1193,7 +1207,7 @@ func TestEnableClient(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
-		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, nil)
+		repoCall3 := cRepo.On("SearchBasicInfo", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(page.Clients))
@@ -1363,7 +1377,7 @@ func TestDisableClient(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
-		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, nil)
+		repoCall3 := cRepo.On("SearchBasicInfo", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(page.Clients))

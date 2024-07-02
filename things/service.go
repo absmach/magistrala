@@ -536,10 +536,6 @@ func (svc service) SearchThings(ctx context.Context, token string, pm mgclients.
 		return mgclients.ClientsPage{}, err
 	}
 
-	if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
-		return mgclients.ClientsPage{}, err
-	}
-
 	cp, err := svc.clients.SearchBasicInfo(ctx, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, err

@@ -19,6 +19,7 @@ import (
 const (
 	valid   = "valid"
 	invalid = "invalid"
+	name    = "client"
 )
 
 var validID = testsutil.GenerateUUID(&testing.T{})

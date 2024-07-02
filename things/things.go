@@ -33,6 +33,9 @@ type Service interface {
 	// the provided key.
 	ListClientsByGroup(ctx context.Context, token, groupID string, pm clients.Page) (clients.MembersPage, error)
 
+	// SearchThings searches for things with provided filters for a valid auth token.
+	SearchThings(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error)
+
 	// UpdateClient updates the client's name and metadata.
 	UpdateClient(ctx context.Context, token string, client clients.Client) (clients.Client, error)
 

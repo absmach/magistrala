@@ -214,6 +214,26 @@ func (lm *loggingMiddleware) ListClientsByGroup(ctx context.Context, token, chan
 	return lm.svc.ListClientsByGroup(ctx, token, channelID, cp)
 }
 
+func (lm *loggingMiddleware) SearchThings(ctx context.Context, token string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("page",
+				slog.Uint64("limit", pm.Limit),
+				slog.Uint64("offset", pm.Offset),
+				slog.Uint64("total", cp.Total),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Search things failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Search things completed successfully", args...)
+	}(time.Now())
+	return lm.svc.SearchThings(ctx, token, pm)
+}
+
 func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id string, err error) {
 	defer func(begin time.Time) {
 		args := []any{

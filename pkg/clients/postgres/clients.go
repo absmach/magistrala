@@ -191,7 +191,7 @@ func (repo *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clien
 }
 
 func (repo *Repository) SearchBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	sq, tq := ConstructSearchQuery(pm)
+	sq, tq := constructSearchQuery(pm)
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, sq)
 
@@ -332,24 +332,6 @@ func (repo *Repository) Delete(ctx context.Context, id string) error {
 	}
 
 	return nil
-}
-
-func (repo *Repository) CheckSuperAdmin(ctx context.Context, adminID string) error {
-	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
-	rows, err := repo.DB.QueryContext(ctx, q, adminID, clients.AdminRole)
-	if err != nil {
-		return postgres.HandleError(repoerr.ErrViewEntity, err)
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		if err := rows.Err(); err != nil {
-			return postgres.HandleError(repoerr.ErrViewEntity, err)
-		}
-		return nil
-	}
-
-	return repoerr.ErrNotFound
 }
 
 type DBClient struct {
@@ -505,7 +487,7 @@ func PageQuery(pm clients.Page) (string, error) {
 		query = append(query, "id ILIKE '%' || :id || '%'")
 	}
 	if pm.Tag != "" {
-		query = append(query, ":tag = ANY(c.tags)")
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
 	}
 	if pm.Status != clients.AllStatus {
 		query = append(query, "c.status = :status")
@@ -523,11 +505,11 @@ func PageQuery(pm clients.Page) (string, error) {
 	return emq, nil
 }
 
-func ConstructSearchQuery(pm clients.Page) (string, string) {
+func constructSearchQuery(pm clients.Page) (string, string) {
 	var query []string
 	var emq string
 	var tq string
-
+	fmt.Printf("PM: %+v\n", pm)
 	if pm.Name != "" {
 		query = append(query, "name ILIKE '%' || :name || '%'")
 	}
@@ -536,6 +518,12 @@ func ConstructSearchQuery(pm clients.Page) (string, string) {
 	}
 	if pm.Id != "" {
 		query = append(query, "id ILIKE '%' || :id || '%'")
+	}
+	if pm.Tag != "" {
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
+	}
+	if len(pm.IDs) != 0 {
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
 	}
 
 	if len(query) > 0 {

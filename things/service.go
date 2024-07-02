@@ -181,7 +181,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 
 	pm.IDs = ids
 
-	tp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
+	tp, err := svc.SearchThings(ctx, token, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -528,6 +528,30 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 		Page:    cp.Page,
 		Members: cp.Clients,
 	}, nil
+}
+
+func (svc service) SearchThings(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+
+	cp, err := svc.clients.SearchBasicInfo(ctx, pm)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+
+	things := mgclients.ClientsPage{}
+	for _, val := range cp.Clients {
+		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, val.ID); err == nil {
+			things.Clients = append(things.Clients, val)
+			things.Page.Total += 1
+		}
+	}
+	things.Page.Offset = cp.Offset
+	things.Page.Limit = cp.Limit
+
+	return things, nil
 }
 
 func (svc service) Identify(ctx context.Context, key string) (string, error) {

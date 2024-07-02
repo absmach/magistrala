@@ -185,14 +185,14 @@ func assignDomainUsersEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
-func unassignDomainUsersEndpoint(svc auth.Service) endpoint.Endpoint {
+func unassignDomainUserEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(unassignUsersReq)
+		req := request.(unassignUserReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		if err := svc.UnassignUsers(ctx, req.token, req.domainID, req.UserIDs); err != nil {
+		if err := svc.UnassignUser(ctx, req.token, req.domainID, req.UserID); err != nil {
 			return nil, err
 		}
 		return unassignUsersRes{}, nil

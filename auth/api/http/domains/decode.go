@@ -116,12 +116,12 @@ func decodeAssignUsersRequest(_ context.Context, r *http.Request) (interface{}, 
 	return req, nil
 }
 
-func decodeUnassignUsersRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUnassignUserRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := unassignUsersReq{
+	req := unassignUserReq{
 		token:    apiutil.ExtractBearerToken(r),
 		domainID: chi.URLParam(r, "domainID"),
 	}

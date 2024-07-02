@@ -278,9 +278,9 @@ paths:
 
   /domains/{domainID}/users/unassign:
     post:
-      summary: Unassign users from domain
+      summary: Unassign user from domain
       description: |
-        Unassign users from domain that is identified by the domain ID.
+        Unassign user from domain that is identified by the domain ID.
       tags:
         - Domains
       parameters:
@@ -418,7 +418,7 @@ paths:
         "400":
           description: Failed due to malformed JSON.
         "401":
-          description: Missing or invalid access token provided.          
+          description: Missing or invalid access token provided.
         "404":
           description: A non-existent entity request.
         "409":
@@ -610,7 +610,7 @@ components:
             type: string
           description: Permissions
 
-    UserDomainRelationReq:
+    AssignUserDomainRelationReq:
       type: object
       properties:
         user_ids:
@@ -632,6 +632,16 @@ components:
       required:
         - user_ids
         - relation
+    UnassignUserDomainRelationReq:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: User unique identifier.
+      required:
+        - user_id
     Key:
       type: object
       properties:
@@ -795,15 +805,15 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UserDomainRelationReq"
+            $ref: "#/components/schemas/AssignUserDomainRelationReq"
 
     UnassignUsersReq:
-      description: JSON-formated document describing the policy related to unassigning users to a domain
+      description: JSON-formated document describing the policy related to unassigning user from a domain
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UserDomainRelationReq"
+            $ref: "#/components/schemas/UnassignUserDomainRelationReq"
 
     KeyRequest:
       description: JSON-formatted document describing key request.

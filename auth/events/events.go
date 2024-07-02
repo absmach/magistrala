@@ -229,14 +229,14 @@ func (ase assignUsersEvent) Encode() (map[string]interface{}, error) {
 }
 
 type unassignUsersEvent struct {
-	userIDs  []string
+	userID   string
 	domainID string
 }
 
 func (use unassignUsersEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"operation": domainUnassign,
-		"user_ids":  use.userIDs,
+		"user_id":   use.userID,
 		"domain_id": use.domainID,
 	}
 

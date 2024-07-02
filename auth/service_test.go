@@ -2198,7 +2198,7 @@ func TestAssignUsers(t *testing.T) {
 			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2207,7 +2207,7 @@ func TestAssignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2224,7 +2224,7 @@ func TestAssignUsers(t *testing.T) {
 			checkPolicyReq33: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
@@ -2239,7 +2239,7 @@ func TestAssignUsers(t *testing.T) {
 			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2248,7 +2248,7 @@ func TestAssignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2271,7 +2271,7 @@ func TestAssignUsers(t *testing.T) {
 			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      inValid,
@@ -2280,7 +2280,7 @@ func TestAssignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      inValid,
@@ -2290,7 +2290,7 @@ func TestAssignUsers(t *testing.T) {
 			checkPolicyReq33: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
@@ -2305,7 +2305,7 @@ func TestAssignUsers(t *testing.T) {
 			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2314,7 +2314,7 @@ func TestAssignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2331,7 +2331,7 @@ func TestAssignUsers(t *testing.T) {
 			checkPolicyReq33: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
@@ -2346,7 +2346,7 @@ func TestAssignUsers(t *testing.T) {
 			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2355,7 +2355,7 @@ func TestAssignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2372,7 +2372,7 @@ func TestAssignUsers(t *testing.T) {
 			checkPolicyReq33: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
@@ -2387,7 +2387,7 @@ func TestAssignUsers(t *testing.T) {
 			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2396,7 +2396,7 @@ func TestAssignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2413,7 +2413,7 @@ func TestAssignUsers(t *testing.T) {
 			checkPolicyReq33: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
@@ -2428,7 +2428,7 @@ func TestAssignUsers(t *testing.T) {
 			relation: auth.ContributorRelation,
 			checkPolicyReq3: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2437,7 +2437,7 @@ func TestAssignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2454,7 +2454,7 @@ func TestAssignUsers(t *testing.T) {
 			checkPolicyReq33: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
@@ -2486,36 +2486,38 @@ func TestAssignUsers(t *testing.T) {
 	}
 }
 
-func TestUnassignUsers(t *testing.T) {
+func TestUnassignUser(t *testing.T) {
 	svc, accessToken := newService()
 
 	cases := []struct {
-		desc                 string
-		token                string
-		domainID             string
-		checkPolicyReq3      auth.PolicyReq
-		checkAdminPolicyReq  auth.PolicyReq
-		checkDomainPolicyReq auth.PolicyReq
-		checkPolicyErr       error
-		checkPolicyErr1      error
-		deletePoliciesErr    error
-		deletePoliciesErr1   error
-		err                  error
+		desc                  string
+		token                 string
+		domainID              string
+		userID                string
+		checkPolicyReq        auth.PolicyReq
+		checkAdminPolicyReq   auth.PolicyReq
+		checkDomainPolicyReq  auth.PolicyReq
+		checkPolicyErr        error
+		checkPolicyErr1       error
+		deletePolicyFilterErr error
+		deletePoliciesErr     error
+		err                   error
 	}{
 		{
-			desc:     "unassign users successfully",
+			desc:     "unassign user successfully",
 			token:    accessToken,
 			domainID: validID,
-			checkPolicyReq3: auth.PolicyReq{
+			userID:   validID,
+			checkPolicyReq: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2524,7 +2526,7 @@ func TestUnassignUsers(t *testing.T) {
 			},
 			checkDomainPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2537,9 +2539,10 @@ func TestUnassignUsers(t *testing.T) {
 			desc:     "unassign users with invalid token",
 			token:    inValidToken,
 			domainID: validID,
-			checkPolicyReq3: auth.PolicyReq{
+			userID:   validID,
+			checkPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2548,7 +2551,7 @@ func TestUnassignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2561,9 +2564,10 @@ func TestUnassignUsers(t *testing.T) {
 			desc:     "unassign users with invalid domainID",
 			token:    accessToken,
 			domainID: inValid,
-			checkPolicyReq3: auth.PolicyReq{
+			userID:   validID,
+			checkPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      inValid,
@@ -2572,7 +2576,7 @@ func TestUnassignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      inValid,
@@ -2582,7 +2586,7 @@ func TestUnassignUsers(t *testing.T) {
 			checkDomainPolicyReq: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
@@ -2593,9 +2597,10 @@ func TestUnassignUsers(t *testing.T) {
 			desc:     "unassign users with failed to delete policies from agent",
 			token:    accessToken,
 			domainID: validID,
-			checkPolicyReq3: auth.PolicyReq{
+			userID:   validID,
+			checkPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2604,7 +2609,7 @@ func TestUnassignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2614,20 +2619,21 @@ func TestUnassignUsers(t *testing.T) {
 			checkDomainPolicyReq: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
-			deletePoliciesErr: errors.ErrMalformedEntity,
-			err:               errors.ErrMalformedEntity,
+			deletePolicyFilterErr: errors.ErrMalformedEntity,
+			err:                   errors.ErrMalformedEntity,
 		},
 		{
 			desc:     "unassign users with failed to delete policies from domain",
 			token:    accessToken,
 			domainID: validID,
-			checkPolicyReq3: auth.PolicyReq{
+			userID:   validID,
+			checkPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2636,7 +2642,7 @@ func TestUnassignUsers(t *testing.T) {
 			},
 			checkAdminPolicyReq: auth.PolicyReq{
 				Domain:      groupName,
-				Subject:     "testID",
+				Subject:     id,
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Object:      validID,
@@ -2646,25 +2652,57 @@ func TestUnassignUsers(t *testing.T) {
 			checkDomainPolicyReq: auth.PolicyReq{
 				Subject:     id,
 				SubjectType: auth.UserType,
-				Object:      "mgx",
+				Object:      groupName,
 				ObjectType:  auth.DomainType,
 				Permission:  auth.MembershipPermission,
 			},
-			deletePoliciesErr1: errors.ErrMalformedEntity,
-			deletePoliciesErr:  errors.ErrMalformedEntity,
-			err:                errors.ErrMalformedEntity,
+			deletePoliciesErr:     errors.ErrMalformedEntity,
+			deletePolicyFilterErr: errors.ErrMalformedEntity,
+			err:                   errors.ErrMalformedEntity,
+		},
+		{
+			desc:     "unassign user with failed to delete policy from domain",
+			token:    accessToken,
+			domainID: validID,
+			userID:   validID,
+			checkPolicyReq: auth.PolicyReq{
+				Subject:     id,
+				SubjectType: auth.UserType,
+				Object:      groupName,
+				ObjectType:  auth.DomainType,
+				Permission:  auth.MembershipPermission,
+			},
+			checkAdminPolicyReq: auth.PolicyReq{
+				Domain:      groupName,
+				Subject:     id,
+				SubjectType: auth.UserType,
+				SubjectKind: auth.TokenKind,
+				Object:      validID,
+				ObjectType:  auth.DomainType,
+				Permission:  auth.AdminPermission,
+			},
+			checkDomainPolicyReq: auth.PolicyReq{
+				Domain:      groupName,
+				Subject:     id,
+				SubjectType: auth.UserType,
+				SubjectKind: auth.TokenKind,
+				Object:      validID,
+				ObjectType:  auth.DomainType,
+				Permission:  auth.SharePermission,
+			},
+			deletePoliciesErr: errors.ErrMalformedEntity,
+			err:               errors.ErrMalformedEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, nil)
-		repoCall1 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq3).Return(tc.checkPolicyErr)
+		repoCall1 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkPolicyErr)
 		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
 		repoCall3 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
-		repoCall4 := prepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
-		repoCall5 := drepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr1)
-		repoCall6 := prepo.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
-		err := svc.UnassignUsers(context.Background(), tc.token, tc.domainID, []string{" ", " "})
+		repoCall4 := prepo.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePolicyFilterErr)
+		repoCall5 := drepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
+		err := svc.UnassignUser(context.Background(), tc.token, tc.domainID, tc.userID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -2672,7 +2710,6 @@ func TestUnassignUsers(t *testing.T) {
 		repoCall3.Unset()
 		repoCall4.Unset()
 		repoCall5.Unset()
-		repoCall6.Unset()
 	}
 }
 

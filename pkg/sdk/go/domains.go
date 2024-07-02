@@ -181,7 +181,10 @@ func (sdk mgSDK) AddUserToDomain(domainID string, req UsersRelationRequest, toke
 	return sdkerr
 }
 
-func (sdk mgSDK) RemoveUserFromDomain(domainID string, req UsersRelationRequest, token string) errors.SDKError {
+func (sdk mgSDK) RemoveUserFromDomain(domainID, userID, token string) errors.SDKError {
+	req := map[string]string{
+		"user_id": userID,
+	}
 	data, err := json.Marshal(req)
 	if err != nil {
 		return errors.NewSDKError(err)

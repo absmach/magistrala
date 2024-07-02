@@ -86,8 +86,8 @@ func MakeHandler(svc auth.Service, mux *chi.Mux, logger *slog.Logger) *chi.Mux {
 				), "assign_domain_users").ServeHTTP)
 
 				r.Post("/unassign", otelhttp.NewHandler(kithttp.NewServer(
-					unassignDomainUsersEndpoint(svc),
-					decodeUnassignUsersRequest,
+					unassignDomainUserEndpoint(svc),
+					decodeUnassignUserRequest,
 					api.EncodeResponse,
 					opts...,
 				), "unassign_domain_users").ServeHTTP)

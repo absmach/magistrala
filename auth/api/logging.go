@@ -458,21 +458,21 @@ func (lm *loggingMiddleware) AssignUsers(ctx context.Context, token, id string, 
 	return lm.svc.AssignUsers(ctx, token, id, userIds, relation)
 }
 
-func (lm *loggingMiddleware) UnassignUsers(ctx context.Context, token, id string, userIds []string) (err error) {
+func (lm *loggingMiddleware) UnassignUser(ctx context.Context, token, id, userID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("domain_id", id),
-			slog.Any("user_ids", userIds),
+			slog.Any("user_id", userID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Unassign users to domain failed", args...)
+			lm.logger.Warn("Unassign user from domain failed", args...)
 			return
 		}
-		lm.logger.Info("Unassign users to domain completed successfully", args...)
+		lm.logger.Info("Unassign user from domain completed successfully", args...)
 	}(time.Now())
-	return lm.svc.UnassignUsers(ctx, token, id, userIds)
+	return lm.svc.UnassignUser(ctx, token, id, userID)
 }
 
 func (lm *loggingMiddleware) ListUserDomains(ctx context.Context, token, userID string, page auth.Page) (do auth.DomainsPage, err error) {

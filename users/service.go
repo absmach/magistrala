@@ -528,6 +528,7 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 			Name:      c.Name,
 			CreatedAt: c.CreatedAt,
 			UpdatedAt: c.UpdatedAt,
+			Status:    c.Status,
 		}
 	}
 

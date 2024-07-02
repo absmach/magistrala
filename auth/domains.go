@@ -162,7 +162,7 @@ type Domains interface {
 	ChangeDomainStatus(ctx context.Context, token string, id string, d DomainReq) (Domain, error)
 	ListDomains(ctx context.Context, token string, page Page) (DomainsPage, error)
 	AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error
-	UnassignUsers(ctx context.Context, token string, id string, userIds []string) error
+	UnassignUser(ctx context.Context, token string, id string, userID string) error
 	ListUserDomains(ctx context.Context, token string, userID string, page Page) (DomainsPage, error)
 }
 

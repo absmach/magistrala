@@ -786,7 +786,7 @@ func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []
 	return svc.addDomainPolicies(ctx, id, relation, userIds...)
 }
 
-func (svc service) UnassignUsers(ctx context.Context, token, id string, userIds []string) error {
+func (svc service) UnassignUser(ctx context.Context, token, id, userID string) error {
 	pr := PolicyReq{
 		Subject:     token,
 		SubjectType: UserType,
@@ -803,36 +803,30 @@ func (svc service) UnassignUsers(ctx context.Context, token, id string, userIds 
 	if err := svc.Authorize(ctx, pr); err != nil {
 		pr.SubjectKind = UsersKind
 		// User is not admin.
-		for _, userID := range userIds {
-			pr.Subject = userID
-			if err := svc.Authorize(ctx, pr); err == nil {
-				// Non admin attempts to remove admin.
-				return errors.Wrap(svcerr.ErrAuthorization, err)
-			}
+		pr.Subject = userID
+		if err := svc.Authorize(ctx, pr); err == nil {
+			// Non admin attempts to remove admin.
+			return errors.Wrap(svcerr.ErrAuthorization, err)
 		}
 	}
 
-	var pcs []Policy
-
-	for _, userID := range userIds {
-		pcs = append(pcs, Policy{
-			SubjectType: UserType,
-			SubjectID:   userID,
-			ObjectType:  DomainType,
-			ObjectID:    id,
-		})
-		if err := svc.DeletePolicyFilter(ctx, PolicyReq{
-			Subject:     EncodeDomainUserID(id, userID),
-			SubjectType: UserType,
-			SubjectKind: UsersKind,
-			Object:      id,
-			ObjectType:  DomainType,
-		}); err != nil {
-			return errors.Wrap(errRemovePolicies, err)
-		}
+	pc := Policy{
+		SubjectType: UserType,
+		SubjectID:   userID,
+		ObjectType:  DomainType,
+		ObjectID:    id,
+	}
+	if err := svc.DeletePolicyFilter(ctx, PolicyReq{
+		Subject:     EncodeDomainUserID(id, userID),
+		SubjectType: UserType,
+		SubjectKind: UsersKind,
+		Object:      id,
+		ObjectType:  DomainType,
+	}); err != nil {
+		return errors.Wrap(errRemovePolicies, err)
 	}
 
-	if err := svc.domains.DeletePolicies(ctx, pcs...); err != nil {
+	if err := svc.domains.DeletePolicies(ctx, pc); err != nil {
 		return errors.Wrap(errRemovePolicies, err)
 	}
 

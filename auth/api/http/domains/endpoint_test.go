@@ -1092,7 +1092,7 @@ func TestAssignDomainUsers(t *testing.T) {
 	}
 }
 
-func TestUnassignDomainUsers(t *testing.T) {
+func TestUnassignDomainUser(t *testing.T) {
 	ds, svc := newDomainsServer()
 	defer ds.Close()
 
@@ -1106,8 +1106,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 		err         error
 	}{
 		{
-			desc:        "unassign domain users with valid token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
+			desc:        "unassign domain user with valid token",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       validToken,
@@ -1115,8 +1115,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc:        "unassign domain users with invalid token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
+			desc:        "unassign domain user with invalid token",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       inValidToken,
@@ -1124,8 +1124,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "unassign domain users with empty token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
+			desc:        "unassign domain user with empty token",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       "",
@@ -1133,8 +1133,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 			err:         apiutil.ErrBearerToken,
 		},
 		{
-			desc:        "unassign domain users with empty domain id",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
+			desc:        "unassign domain user with empty domain id",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
 			domainID:    "",
 			contentType: contentType,
 			token:       validToken,
@@ -1142,8 +1142,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 			err:         apiutil.ErrMissingID,
 		},
 		{
-			desc:        "unassign domain users with invalid id",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
+			desc:        "unassign domain user with invalid id",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
 			domainID:    "invalid",
 			contentType: contentType,
 			token:       validToken,
@@ -1151,8 +1151,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 			err:         svcerr.ErrAuthorization,
 		},
 		{
-			desc:        "unassign domain users with malformed data",
-			data:        fmt.Sprintf(`{"relation": "%s", user_ids : ["%s", "%s"]}`, "editor", validID, validID),
+			desc:        "unassign domain user with malformed data",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s}`, "editor", validID),
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       validToken,
@@ -1160,8 +1160,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 			err:         apiutil.ErrValidation,
 		},
 		{
-			desc:        "unassign domain users with invalid content type",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
+			desc:        "unassign domain user with invalid content type",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
 			domainID:    domain.ID,
 			contentType: "application/xml",
 			token:       validToken,
@@ -1169,8 +1169,8 @@ func TestUnassignDomainUsers(t *testing.T) {
 			err:         apiutil.ErrUnsupportedContentType,
 		},
 		{
-			desc:        "unassign domain users with empty user ids",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : []}`, "editor"),
+			desc:        "unassign domain user with empty user id",
+			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : ""}`, "editor"),
 			domainID:    domain.ID,
 			contentType: contentType,
 			token:       validToken,
@@ -1189,7 +1189,7 @@ func TestUnassignDomainUsers(t *testing.T) {
 			body:        strings.NewReader(tc.data),
 		}
 
-		svcCall := svc.On("UnassignUsers", mock.Anything, tc.token, tc.domainID, mock.Anything, mock.Anything).Return(tc.err)
+		svcCall := svc.On("UnassignUser", mock.Anything, tc.token, tc.domainID, mock.Anything, mock.Anything).Return(tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))

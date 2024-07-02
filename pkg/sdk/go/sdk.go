@@ -1114,13 +1114,9 @@ type SDK interface {
 	// RemoveUserFromDomain removes a user from a domain.
 	//
 	// example:
-	// req := sdk.UsersRelationRequest{
-	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor" , "member", "guest"
-	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
-	// }
-	// err := sdk.RemoveUserFromDomain("domainID", req, "token")
+	// err := sdk.RemoveUserFromDomain("domainID", "userID", "token")
 	// fmt.Println(err)
-	RemoveUserFromDomain(domainID string, req UsersRelationRequest, token string) errors.SDKError
+	RemoveUserFromDomain(domainID, userID, token string) errors.SDKError
 
 	// SendInvitation sends an invitation to the email address associated with the given user.
 	//

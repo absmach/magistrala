@@ -201,22 +201,18 @@ var domainAssignCmds = []cobra.Command{
 
 var domainUnassignCmds = []cobra.Command{
 	{
-		Use:   "users <relation> <user_ids> <domain_id> <token>",
+		Use:   "users <user_id> <domain_id> <token>",
 		Short: "Unassign users",
 		Long: "Unassign users from a domain\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli domains unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <domain_id> $TOKEN\n",
+			"\tmagistrala-cli domains unassign users <user_id> <domain_id> $TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 3 {
 				logUsage(cmd.Use)
 				return
 			}
-			var userIDs []string
-			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
-				logError(err)
-				return
-			}
-			if err := sdk.RemoveUserFromDomain(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+
+			if err := sdk.RemoveUserFromDomain(args[1], args[0], args[2]); err != nil {
 				logError(err)
 				return
 			}

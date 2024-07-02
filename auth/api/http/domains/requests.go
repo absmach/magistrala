@@ -190,14 +190,13 @@ func (req assignUsersReq) validate() error {
 	return nil
 }
 
-type unassignUsersReq struct {
+type unassignUserReq struct {
 	token    string
 	domainID string
-	UserIDs  []string `json:"user_ids"`
-	Relation string   `json:"relation"`
+	UserID   string `json:"user_id"`
 }
 
-func (req unassignUsersReq) validate() error {
+func (req unassignUserReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
@@ -206,7 +205,7 @@ func (req unassignUsersReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	if len(req.UserIDs) == 0 {
+	if req.UserID == "" {
 		return apiutil.ErrMalformedPolicy
 	}
 

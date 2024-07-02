@@ -1920,17 +1920,17 @@ func (_m *SDK) RemoveUserFromChannel(channelID string, req sdk.UsersRelationRequ
 	return r0
 }
 
-// RemoveUserFromDomain provides a mock function with given fields: domainID, req, token
-func (_m *SDK) RemoveUserFromDomain(domainID string, req sdk.UsersRelationRequest, token string) errors.SDKError {
-	ret := _m.Called(domainID, req, token)
+// RemoveUserFromDomain provides a mock function with given fields: domainID, userID, token
+func (_m *SDK) RemoveUserFromDomain(domainID string, userID string, token string) errors.SDKError {
+	ret := _m.Called(domainID, userID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveUserFromDomain")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.UsersRelationRequest, string) errors.SDKError); ok {
-		r0 = rf(domainID, req, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) errors.SDKError); ok {
+		r0 = rf(domainID, userID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)

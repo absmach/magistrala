@@ -159,15 +159,15 @@ func (es *eventStore) AssignUsers(ctx context.Context, token, id string, userIds
 	return nil
 }
 
-func (es *eventStore) UnassignUsers(ctx context.Context, token, id string, userIds []string) error {
-	err := es.svc.UnassignUsers(ctx, token, id, userIds)
+func (es *eventStore) UnassignUser(ctx context.Context, token, id, userID string) error {
+	err := es.svc.UnassignUser(ctx, token, id, userID)
 	if err != nil {
 		return err
 	}
 
 	event := unassignUsersEvent{
 		domainID: id,
-		userIDs:  userIds,
+		userID:   userID,
 	}
 
 	if err := es.Publish(ctx, event); err != nil {

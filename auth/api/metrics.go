@@ -224,12 +224,12 @@ func (ms *metricsMiddleware) AssignUsers(ctx context.Context, token, id string, 
 	return ms.svc.AssignUsers(ctx, token, id, userIds, relation)
 }
 
-func (ms *metricsMiddleware) UnassignUsers(ctx context.Context, token, id string, userIds []string) error {
+func (ms *metricsMiddleware) UnassignUser(ctx context.Context, token, id, userID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "unassign_users").Add(1)
 		ms.latency.With("method", "unassign_users").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.UnassignUsers(ctx, token, id, userIds)
+	return ms.svc.UnassignUser(ctx, token, id, userID)
 }
 
 func (ms *metricsMiddleware) ListUserDomains(ctx context.Context, token, userID string, page auth.Page) (auth.DomainsPage, error) {

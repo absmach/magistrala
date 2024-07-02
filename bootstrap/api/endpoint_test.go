@@ -328,25 +328,20 @@ func TestView(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	svcCall.Unset()
-
 	var channels []channel
-	for _, ch := range saved.Channels {
+	for _, ch := range c.Channels {
 		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
 	}
 
 	data := config{
-		ThingID:     saved.ThingID,
-		ThingKey:    saved.ThingKey,
-		State:       saved.State,
+		ThingID:     c.ThingID,
+		ThingKey:    c.ThingKey,
+		State:       c.State,
 		Channels:    channels,
-		ExternalID:  saved.ExternalID,
-		ExternalKey: saved.ExternalKey,
-		Name:        saved.Name,
-		Content:     saved.Content,
+		ExternalID:  c.ExternalID,
+		ExternalKey: c.ExternalKey,
+		Name:        c.Name,
+		Content:     c.Content,
 	}
 
 	cases := []struct {
@@ -360,7 +355,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view a config with invalid token",
 			auth:   invalidToken,
-			id:     saved.ThingID,
+			id:     c.ThingID,
 			status: http.StatusUnauthorized,
 			res:    config{},
 			err:    svcerr.ErrAuthentication,
@@ -368,7 +363,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view a config",
 			auth:   validToken,
-			id:     saved.ThingID,
+			id:     c.ThingID,
 			status: http.StatusOK,
 			res:    data,
 			err:    nil,
@@ -384,15 +379,23 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view a config with an empty token",
 			auth:   "",
-			id:     saved.ThingID,
+			id:     c.ThingID,
 			status: http.StatusUnauthorized,
 			res:    config{},
 			err:    svcerr.ErrAuthentication,
 		},
+		{
+			desc:   "view config without authorization",
+			auth:   validToken,
+			id:     c.ThingID,
+			status: http.StatusForbidden,
+			res:    config{},
+			err:    svcerr.ErrAuthorization,
+		},
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("View", mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+		svcCall := svc.On("View", mock.Anything, tc.auth, tc.id).Return(c, tc.err)
 		req := testRequest{
 			client: bs.Client(),
 			method: http.MethodGet,
@@ -422,11 +425,6 @@ func TestUpdate(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	svcCall.Unset()
-
 	data := toJSON(updateReq)
 
 	cases := []struct {
@@ -441,7 +439,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update with invalid token",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        invalidToken,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -450,7 +448,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update with an empty token",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -459,7 +457,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a valid config",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -468,7 +466,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a config with wrong content type",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -486,7 +484,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -494,7 +492,7 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			req:         "",
 			auth:        validToken,
 			contentType: contentType,
@@ -504,7 +502,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svcCall.On("Update", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+		svcCall := svc.On("Update", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPut,
@@ -525,11 +523,6 @@ func TestUpdateCert(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	svcCall.Unset()
-
 	data := toJSON(updateReq)
 
 	cases := []struct {
@@ -544,7 +537,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update with invalid token",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        invalidToken,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -553,7 +546,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update with an empty token",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -562,7 +555,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a valid config",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -571,7 +564,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with wrong content type",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -589,7 +582,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          saved.ThingKey,
+			id:          c.ThingKey,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -597,7 +590,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			req:         "",
 			auth:        validToken,
 			contentType: contentType,
@@ -627,12 +620,6 @@ func TestUpdateConnections(t *testing.T) {
 	bs, svc := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
-
-	svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	svcCall.Unset()
-
 	data := toJSON(updateReq)
 
 	invalidChannels := updateReq
@@ -652,7 +639,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections with invalid token",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        invalidToken,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -661,7 +648,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections with an empty token",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -670,7 +657,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections valid config",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -679,7 +666,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections with wrong content type",
 			req:         data,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -697,7 +684,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections with invalid channels",
 			req:         wrongData,
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusNotFound,
@@ -706,7 +693,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -714,7 +701,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			req:         "",
 			auth:        validToken,
 			contentType: contentType,
@@ -724,7 +711,7 @@ func TestUpdateConnections(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svcCall.On("UpdateConnections", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+		repoCall := svc.On("UpdateConnections", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPut,
@@ -758,28 +745,22 @@ func TestList(t *testing.T) {
 		c.Name = fmt.Sprintf("%s-%d", addName, i)
 		c.ExternalKey = fmt.Sprintf("%s%s", addExternalKey, strconv.Itoa(i))
 
-		svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-		saved, err := svc.Add(context.Background(), validToken, c)
-		assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-		svcCall.Unset()
-
 		var channels []channel
-		for _, ch := range saved.Channels {
+		for _, ch := range c.Channels {
 			channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
 		}
 		s := config{
-			ThingID:     saved.ThingID,
-			ThingKey:    saved.ThingKey,
+			ThingID:     c.ThingID,
+			ThingKey:    c.ThingKey,
 			Channels:    channels,
-			ExternalID:  saved.ExternalID,
-			ExternalKey: saved.ExternalKey,
-			Name:        saved.Name,
-			Content:     saved.Content,
-			State:       saved.State,
+			ExternalID:  c.ExternalID,
+			ExternalKey: c.ExternalKey,
+			Name:        c.Name,
+			Content:     c.Content,
+			State:       c.State,
 		}
 		list[i] = s
 	}
-
 	// Change state of first 20 elements for filtering tests.
 	for i := 0; i < changedStateNum; i++ {
 		state := bootstrap.Active
@@ -1020,11 +1001,6 @@ func TestRemove(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	svcCall.Unset()
-
 	cases := []struct {
 		desc   string
 		id     string
@@ -1034,14 +1010,14 @@ func TestRemove(t *testing.T) {
 	}{
 		{
 			desc:   "remove with invalid token",
-			id:     saved.ThingID,
+			id:     c.ThingID,
 			auth:   invalidToken,
 			status: http.StatusUnauthorized,
 			err:    svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "remove with an empty token",
-			id:     saved.ThingID,
+			id:     c.ThingID,
 			auth:   "",
 			status: http.StatusUnauthorized,
 			err:    svcerr.ErrAuthentication,
@@ -1055,7 +1031,7 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			desc:   "remove config",
-			id:     saved.ThingID,
+			id:     c.ThingID,
 			auth:   validToken,
 			status: http.StatusNoContent,
 			err:    nil,
@@ -1089,16 +1065,11 @@ func TestBootstrap(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	svcCall.Unset()
-
 	encExternKey, err := enc([]byte(c.ExternalKey))
 	assert.Nil(t, err, fmt.Sprintf("Encrypting config expected to succeed: %s.\n", err))
 
 	var channels []channel
-	for _, ch := range saved.Channels {
+	for _, ch := range c.Channels {
 		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
 	}
 
@@ -1111,13 +1082,13 @@ func TestBootstrap(t *testing.T) {
 		ClientKey  string    `json:"client_key"`
 		CACert     string    `json:"ca_cert"`
 	}{
-		ThingID:    saved.ThingID,
-		ThingKey:   saved.ThingKey,
+		ThingID:    c.ThingID,
+		ThingKey:   c.ThingKey,
 		Channels:   channels,
-		Content:    saved.Content,
-		ClientCert: saved.ClientCert,
-		ClientKey:  saved.ClientKey,
-		CACert:     saved.CACert,
+		Content:    c.Content,
+		ClientCert: c.ClientCert,
+		ClientKey:  c.ClientKey,
+		CACert:     c.CACert,
 	}
 
 	data := toJSON(s)
@@ -1225,11 +1196,6 @@ func TestChangeState(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	svcCall := svc.On("Add", context.Background(), mock.Anything, mock.Anything).Return(c, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	svcCall.Unset()
-
 	inactive := fmt.Sprintf("{\"state\": %d}", bootstrap.Inactive)
 	active := fmt.Sprintf("{\"state\": %d}", bootstrap.Active)
 
@@ -1244,7 +1210,7 @@ func TestChangeState(t *testing.T) {
 	}{
 		{
 			desc:        "change state with invalid token",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        invalidToken,
 			state:       active,
 			contentType: contentType,
@@ -1253,7 +1219,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state with an empty token",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        "",
 			state:       active,
 			contentType: contentType,
@@ -1262,7 +1228,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state with invalid content type",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			state:       active,
 			contentType: "",
@@ -1271,7 +1237,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state to active",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			state:       active,
 			contentType: contentType,
@@ -1280,7 +1246,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state to inactive",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			state:       inactive,
 			contentType: contentType,
@@ -1298,7 +1264,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state to invalid value",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			state:       fmt.Sprintf("{\"state\": %d}", -3),
 			contentType: contentType,
@@ -1307,7 +1273,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state with invalid data",
-			id:          saved.ThingID,
+			id:          c.ThingID,
 			auth:        validToken,
 			state:       "",
 			contentType: contentType,

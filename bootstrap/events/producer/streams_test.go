@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	authsvc "github.com/absmach/magistrala/auth"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
@@ -30,14 +31,17 @@ import (
 )
 
 const (
-	streamID      = "magistrala.bootstrap"
-	email         = "user@example.com"
-	validToken    = "token"
-	channelsNum   = 3
-	defaultTimout = 5
+	streamID       = "magistrala.bootstrap"
+	email          = "user@example.com"
+	validToken     = "validToken"
+	invalidToken   = "invalid"
+	unknownThingID = "unknown"
+	channelsNum    = 3
+	defaultTimout  = 5
 
 	configPrefix        = "config."
 	configCreate        = configPrefix + "create"
+	configView          = configPrefix + "view"
 	configUpdate        = configPrefix + "update"
 	configRemove        = configPrefix + "remove"
 	configList          = configPrefix + "list"
@@ -55,12 +59,14 @@ const (
 	channelUpdateHandler = channelPrefix + "update_handler"
 
 	certUpdate = "cert.update"
-	validID    = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 	instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var (
 	encKey = []byte("1234567891011121")
+
+	domainID = testsutil.GenerateUUID(&testing.T{})
+	validID  = testsutil.GenerateUUID(&testing.T{})
 
 	channel = bootstrap.Channel{
 		ID:       testsutil.GenerateUUID(&testing.T{}),
@@ -107,20 +113,32 @@ func TestAdd(t *testing.T) {
 	invalidConfig.Channels = []bootstrap.Channel{{ID: "empty"}}
 
 	cases := []struct {
-		desc   string
-		config bootstrap.Config
-		token  string
-		err    error
-		event  map[string]interface{}
+		desc         string
+		config       bootstrap.Config
+		token        string
+		id           string
+		domainID     string
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		thingErr     error
+		channel      []bootstrap.Channel
+		listErr      error
+		saveErr      error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
-			desc:   "create config successfully",
-			config: config,
-			token:  validToken,
-			err:    nil,
+			desc:         "create config successfully",
+			config:       config,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			channel:      config.Channels,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
 			event: map[string]interface{}{
 				"thing_id":    "1",
-				"owner":       email,
+				"domain_id":   domainID,
 				"name":        config.Name,
 				"channels":    channels,
 				"external_id": config.ExternalID,
@@ -128,23 +146,70 @@ func TestAdd(t *testing.T) {
 				"timestamp":   time.Now().Unix(),
 				"operation":   configCreate,
 			},
+			err: nil,
 		},
 		{
-			desc:   "create invalid config",
-			config: invalidConfig,
-			token:  validToken,
-			err:    svcerr.ErrMalformedEntity,
-			event:  nil,
+			desc:        "create config with invalid token",
+			config:      config,
+			token:       invalidToken,
+			event:       nil,
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
+			desc:         "create config with failed authorization",
+			config:       config,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: false},
+			event:        nil,
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+		},
+		{
+			desc:         "create config with failed to fetch thing",
+			config:       config,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			event:        nil,
+			thingErr:     svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
+		},
+		{
+			desc:         "create config with failed to list existing",
+			config:       config,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			event:        nil,
+			listErr:      svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
+		},
+		{
+			desc:         "create invalid config",
+			config:       invalidConfig,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			event:        nil,
+			listErr:      svcerr.ErrMalformedEntity,
+			err:          svcerr.ErrMalformedEntity,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-		repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.err))
-		repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(tc.config.Channels[0]), errors.NewSDKError(tc.err))
-		repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(tc.config.Channels, tc.err)
-		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.err)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		sdkCall := sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
+		repoCall := boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
+		repoCall1 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+
 		_, err := svc.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -162,94 +227,163 @@ func TestAdd(t *testing.T) {
 
 		test(t, tc.event, event, tc.desc)
 
+		authCall.Unset()
+		authCall1.Unset()
+		sdkCall.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
-		repoCall4.Unset()
 	}
 }
 
 func TestView(t *testing.T) {
-	svc, boot, auth, sdk := newService(t, redisURL)
+	err := redisClient.FlushAll(context.Background()).Err()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(config.Channels[0]), nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(config.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	saved, err := svc.Add(context.Background(), validToken, config)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
+	svc, boot, auth, _ := newService(t, redisURL)
 
-	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 = boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
-	svcConfig, svcErr := svc.View(context.Background(), validToken, saved.ThingID)
-	repoCall.Unset()
-	repoCall1.Unset()
+	nonExisting := config
+	nonExisting.ThingID = unknownThingID
 
-	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 = boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
-	esConfig, esErr := svc.View(context.Background(), validToken, saved.ThingID)
-	repoCall.Unset()
-	repoCall1.Unset()
+	cases := []struct {
+		desc         string
+		config       bootstrap.Config
+		token        string
+		id           string
+		domainID     string
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		retrieveErr  error
+		err          error
+		event        map[string]interface{}
+	}{
+		{
+			desc:         "view successfully",
+			config:       config,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
+			event: map[string]interface{}{
+				"thing_id":    config.ThingID,
+				"domain_id":   config.DomainID,
+				"name":        config.Name,
+				"channels":    config.Channels,
+				"external_id": config.ExternalID,
+				"content":     config.Content,
+				"timestamp":   time.Now().Unix(),
+				"operation":   configView,
+			},
+		},
+		{
+			desc:        "view with invalid token",
+			config:      config,
+			token:       invalidToken,
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+			event:       nil,
+		},
+		{
+			desc:         "view with failed authorization",
+			config:       config,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+			event:        nil,
+		},
+		{
+			desc:         "view with failed retrieve",
+			config:       nonExisting,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			retrieveErr:  svcerr.ErrViewEntity,
+			err:          svcerr.ErrViewEntity,
+			event:        nil,
+		},
+	}
 
-	assert.Equal(t, svcConfig, esConfig, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcConfig, esConfig))
-	assert.Equal(t, svcErr, esErr, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcErr, esErr))
+	lastID := "0"
+	for _, tc := range cases {
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ThingID).Return(config, tc.retrieveErr)
+
+		_, err := svc.View(context.Background(), tc.token, tc.config.ThingID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
+			Streams: []string{streamID, lastID},
+			Count:   1,
+			Block:   time.Second,
+		}).Val()
+
+		var event map[string]interface{}
+		if len(streams) > 0 && len(streams[0].Messages) > 0 {
+			msg := streams[0].Messages[0]
+			event = msg.Values
+			event["timestamp"] = msg.ID
+			lastID = msg.ID
+		}
+
+		test(t, tc.event, event, tc.desc)
+		authCall.Unset()
+		authCall1.Unset()
+		repoCall.Unset()
+	}
 }
 
 func TestUpdate(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, sdk := newService(t, redisURL)
+	svc, boot, auth, _ := newService(t, redisURL)
 
 	c := config
 
-	ch := channel
-	ch.ID = testsutil.GenerateUUID(t)
-	c.Channels = append(c.Channels, ch)
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: c.ThingID, Credentials: mgsdk.Credentials{Secret: c.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(c.Channels[0]), nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(c.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
+	ch1 := channel
+	ch1.ID = testsutil.GenerateUUID(t)
 
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	ch2 := channel
+	ch2.ID = testsutil.GenerateUUID(t)
 
-	modified := saved
+	c.Channels = append(c.Channels, ch1, ch2)
+
+	modified := c
 	modified.Content = "new-config"
 	modified.Name = "new name"
 
 	nonExisting := config
-	nonExisting.ThingID = "unknown"
+	nonExisting.ThingID = unknownThingID
 
 	channels := []string{modified.Channels[0].ID, modified.Channels[1].ID}
 
 	cases := []struct {
-		desc   string
-		config bootstrap.Config
-		token  string
-		err    error
-		event  map[string]interface{}
+		desc         string
+		config       bootstrap.Config
+		token        string
+		id           string
+		domainID     string
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		updateErr    error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
-			desc:   "update config successfully",
-			config: modified,
-			token:  validToken,
-			err:    nil,
+			desc:         "update config successfully",
+			config:       modified,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 			event: map[string]interface{}{
 				"name":        modified.Name,
 				"content":     modified.Content,
@@ -258,24 +392,48 @@ func TestUpdate(t *testing.T) {
 				"channels":    channels,
 				"external_id": modified.ExternalID,
 				"thing_id":    modified.ThingID,
-				"owner":       validID,
+				"domain_id":   domainID,
 				"state":       "0",
 				"occurred_at": time.Now().UnixNano(),
 			},
 		},
 		{
-			desc:   "update non-existing config",
-			config: nonExisting,
-			token:  validToken,
-			err:    svcerr.ErrNotFound,
-			event:  nil,
+			desc:        "update with invalid token",
+			config:      modified,
+			token:       invalidToken,
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+			event:       nil,
+		},
+		{
+			desc:         "update with failed authorization",
+			config:       modified,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+			event:        nil,
+		},
+		{
+			desc:         "update with failed update",
+			config:       nonExisting,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			updateErr:    svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
+			event:        nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-		repocall1 := boot.On("Update", context.Background(), mock.Anything).Return(tc.err)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
 		err := svc.Update(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -294,8 +452,9 @@ func TestUpdate(t *testing.T) {
 		}
 
 		test(t, tc.event, event, tc.desc)
+		authCall.Unset()
+		authCall1.Unset()
 		repoCall.Unset()
-		repocall1.Unset()
 	}
 }
 
@@ -305,62 +464,119 @@ func TestUpdateConnections(t *testing.T) {
 
 	svc, boot, auth, sdk := newService(t, redisURL)
 
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(config.Channels[0]), nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(config.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	saved, err := svc.Add(context.Background(), validToken, config)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	cases := []struct {
-		desc        string
-		id          string
-		token       string
-		connections []string
-		err         error
-		event       map[string]interface{}
+		desc         string
+		configID     string
+		id           string
+		domainID     string
+		token        string
+		connections  []string
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		thingErr     error
+		channelErr   error
+		retrieveErr  error
+		listErr      error
+		updateErr    error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
-			desc:        "update connections successfully",
-			id:          saved.ThingID,
-			token:       validToken,
-			connections: []string{config.Channels[0].ID},
-			err:         nil,
+			desc:         "update connections successfully",
+			configID:     config.ThingID,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			connections:  []string{config.Channels[0].ID},
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 			event: map[string]interface{}{
-				"thing_id":  saved.ThingID,
-				"channels":  []string{"2"},
+				"thing_id":  config.ThingID,
+				"channels":  "2",
 				"timestamp": time.Now().Unix(),
 				"operation": thingUpdateConnections,
 			},
 		},
 		{
-			desc:        "update connections unsuccessfully",
-			id:          saved.ThingID,
-			token:       validToken,
-			connections: []string{"256"},
-			err:         svcerr.ErrNotFound,
+			desc:        "update connections with invalid token",
+			configID:    config.ThingID,
+			token:       invalidToken,
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
 			event:       nil,
+		},
+		{
+			desc:         "update connections with failed authorization",
+			configID:     config.ThingID,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			connections:  []string{config.Channels[0].ID},
+			authResponse: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+			event:        nil,
+		},
+		{
+			desc:         "update connections with failed channel fetch",
+			configID:     config.ThingID,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			connections:  []string{"256"},
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			channelErr:   errors.NewSDKError(svcerr.ErrNotFound),
+			err:          svcerr.ErrNotFound,
+			event:        nil,
+		},
+		{
+			desc:         "update connections with failed RetrieveByID",
+			configID:     config.ThingID,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			connections:  []string{config.Channels[0].ID},
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			retrieveErr:  svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
+			event:        nil,
+		},
+		{
+			desc:         "update connections with failed ListExisting",
+			configID:     config.ThingID,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			connections:  []string{config.Channels[0].ID},
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			listErr:      svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
+			event:        nil,
+		},
+		{
+			desc:         "update connections with failed UpdateConnections",
+			configID:     config.ThingID,
+			token:        validToken,
+			id:           validID,
+			domainID:     domainID,
+			connections:  []string{config.Channels[0].ID},
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			updateErr:    svcerr.ErrUpdateEntity,
+			err:          svcerr.ErrUpdateEntity,
+			event:        nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-		repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-		repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
-		repoCall3 := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
-		repoCall4 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(config.Channels, nil)
-		repoCall5 := boot.On("UpdateConnections", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.UpdateConnections(context.Background(), tc.token, tc.id, tc.connections)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		sdkCall := sdk.On("Channel", mock.Anything, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
+		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.configID).Return(config, tc.retrieveErr)
+		repoCall1 := boot.On("ListExisting", context.Background(), domainID, mock.Anything, mock.Anything).Return(config.Channels, tc.listErr)
+		repoCall2 := boot.On("UpdateConnections", context.Background(), tc.domainID, tc.configID, mock.Anything, tc.connections).Return(tc.updateErr)
+		err := svc.UpdateConnections(context.Background(), tc.token, tc.configID, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -376,12 +592,12 @@ func TestUpdateConnections(t *testing.T) {
 		}
 
 		test(t, tc.event, event, tc.desc)
+		authCall.Unset()
+		authCall1.Unset()
+		sdkCall.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
-		repoCall3.Unset()
-		repoCall4.Unset()
-		repoCall5.Unset()
 	}
 }
 
@@ -389,44 +605,37 @@ func TestUpdateCert(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, sdk := newService(t, redisURL)
-
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(config.Channels[0]), nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(config.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	saved, err := svc.Add(context.Background(), validToken, config)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	svc, boot, auth, _ := newService(t, redisURL)
 
 	cases := []struct {
-		desc       string
-		id         string
-		token      string
-		clientCert string
-		clientKey  string
-		caCert     string
-		err        error
-		event      map[string]interface{}
+		desc         string
+		configID     string
+		userID       string
+		domainID     string
+		token        string
+		clientCert   string
+		clientKey    string
+		caCert       string
+		authResponse *magistrala.AuthorizeRes
+		identifyErr  error
+		authorizeErr error
+		updateErr    error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
-			desc:       "update cert successfully",
-			id:         saved.ThingID,
-			token:      validToken,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        nil,
+			desc:         "update cert successfully",
+			configID:     config.ThingID,
+			userID:       validID,
+			domainID:     domainID,
+			token:        validToken,
+			clientCert:   "clientCert",
+			clientKey:    "clientKey",
+			caCert:       "caCert",
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 			event: map[string]interface{}{
-				"thing_key":   saved.ThingKey,
+				"thing_key":   config.ThingKey,
 				"client_cert": "clientCert",
 				"client_key":  "clientKey",
 				"ca_cert":     "caCert",
@@ -434,85 +643,96 @@ func TestUpdateCert(t *testing.T) {
 			},
 		},
 		{
-			desc:       "invalid token",
-			id:         saved.ThingID,
-			token:      "invalid",
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        svcerr.ErrAuthentication,
-			event:      nil,
+			desc:        "update cert with invalid token",
+			configID:    config.ThingID,
+			token:       "invalid",
+			clientCert:  "clientCert",
+			clientKey:   "clientKey",
+			caCert:      "caCert",
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+			event:       nil,
 		},
 		{
-			desc:       "invalid thing ID",
-			id:         "invalidThingID",
-			token:      validToken,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        svcerr.ErrNotFound,
-			event:      nil,
+			desc:         "update cert with failed authorization",
+			configID:     config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			clientCert:   "clientCert",
+			clientKey:    "clientKey",
+			caCert:       "caCert",
+			authResponse: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+			event:        nil,
 		},
 		{
-			desc:       "empty client certificate",
-			id:         saved.ThingID,
-			token:      validToken,
-			clientCert: "",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        nil,
-			event:      nil,
+			desc:         "update cert with failed update",
+			configID:     "invalidThingID",
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			clientCert:   "clientCert",
+			clientKey:    "clientKey",
+			caCert:       "caCert",
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			updateErr:    svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
+			event:        nil,
 		},
 		{
-			desc:       "empty client key",
-			id:         saved.ThingID,
-			token:      validToken,
-			clientCert: "clientCert",
-			clientKey:  "",
-			caCert:     "caCert",
-			err:        nil,
-			event:      nil,
+			desc:         "update cert with empty client certificate",
+			configID:     config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			clientCert:   "",
+			clientKey:    "clientKey",
+			caCert:       "caCert",
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
+			event:        nil,
 		},
 		{
-			desc:       "empty CA certificate",
-			id:         saved.ThingID,
-			token:      validToken,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "",
-			err:        nil,
-			event:      nil,
+			desc:         "update cert with empty client key",
+			configID:     config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			clientCert:   "clientCert",
+			clientKey:    "",
+			caCert:       "caCert",
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
+			event:        nil,
 		},
 		{
-			desc:       "update cert with invalid token",
-			id:         saved.ThingID,
-			token:      "invalid",
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        svcerr.ErrAuthentication,
-			event:      nil,
+			desc:         "update cert with empty CA certificate",
+			configID:     config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			clientCert:   "clientCert",
+			clientKey:    "clientKey",
+			caCert:       "",
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
+			event:        nil,
 		},
 		{
-			desc:       "update cert with invalid thing ID",
-			id:         "invalidThingID",
-			token:      validToken,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "caCert",
-			err:        svcerr.ErrNotFound,
-			event:      nil,
-		},
-		{
-			desc:       "successful update without CA certificate",
-			id:         saved.ThingID,
-			token:      validToken,
-			clientCert: "clientCert",
-			clientKey:  "clientKey",
-			caCert:     "",
-			err:        nil,
+			desc:         "successful update without CA certificate",
+			configID:     config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			clientCert:   "clientCert",
+			clientKey:    "clientKey",
+			caCert:       "",
+			err:          nil,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
 			event: map[string]interface{}{
-				"thing_key":   saved.ThingKey,
+				"thing_key":   config.ThingKey,
 				"client_cert": "clientCert",
 				"client_key":  "clientKey",
 				"ca_cert":     "caCert",
@@ -524,9 +744,11 @@ func TestUpdateCert(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-		repoCall1 := boot.On("UpdateCert", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(config, tc.err)
-		_, err := svc.UpdateCert(context.Background(), tc.token, tc.id, tc.clientCert, tc.clientKey, tc.caCert)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := boot.On("UpdateCert", context.Background(), tc.domainID, tc.configID, tc.clientCert, tc.clientKey, tc.caCert).Return(config, tc.updateErr)
+		_, err := svc.UpdateCert(context.Background(), tc.token, tc.configID, tc.clientCert, tc.clientKey, tc.caCert)
+
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -543,100 +765,361 @@ func TestUpdateCert(t *testing.T) {
 
 		test(t, tc.event, event, tc.desc)
 
+		authCall.Unset()
+		authCall1.Unset()
 		repoCall.Unset()
-		repoCall1.Unset()
 	}
 }
 
 func TestList(t *testing.T) {
-	svc, boot, auth, sdk := newService(t, redisURL)
+	svc, boot, auth, _ := newService(t, redisURL)
+	numThings := 101
+	var c bootstrap.Config
+	saved := make([]bootstrap.Config, 0)
+	for i := 0; i < numThings; i++ {
+		c := config
+		c.ExternalID = testsutil.GenerateUUID(t)
+		c.ExternalKey = testsutil.GenerateUUID(t)
+		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
+		if i == 41 {
+			c.State = bootstrap.Active
+		}
+		saved = append(saved, c)
+	}
 
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(config.Channels[0]), nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(config.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	_, err := svc.Add(context.Background(), validToken, config)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
+	cases := []struct {
+		desc                string
+		token               string
+		userID              string
+		domainID            string
+		config              bootstrap.ConfigsPage
+		filter              bootstrap.Filter
+		offset              uint64
+		limit               uint64
+		identifyErr         error
+		superAdminAuthRes   *magistrala.AuthorizeRes
+		domainAdminAuthRes  *magistrala.AuthorizeRes
+		listObjectsResponse *magistrala.ListObjectsRes
+		listObjectsErr      error
+		superAdmiAuthErr    error
+		domainAdmiAuthErr   error
+		retrieveErr         error
+		err                 error
+		event               map[string]interface{}
+	}{
+		{
+			desc:              "list successfully as super admin",
+			token:             validToken,
+			userID:            validID,
+			domainID:          domainID,
+			superAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  0,
+				Limit:   10,
+				Configs: saved[0:10],
+			},
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			err:                 nil,
+			event: map[string]interface{}{
+				"thing_id":    c.ThingID,
+				"domain_id":   c.DomainID,
+				"name":        c.Name,
+				"channels":    c.Channels,
+				"external_id": c.ExternalID,
+				"content":     c.Content,
+				"timestamp":   time.Now().Unix(),
+				"operation":   configList,
+			},
+		},
+		{
+			desc:               "list successfully as domain admin",
+			token:              validToken,
+			userID:             validID,
+			domainID:           domainID,
+			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  0,
+				Limit:   10,
+				Configs: saved[0:10],
+			},
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			err:                 nil,
+			event: map[string]interface{}{
+				"thing_id":    c.ThingID,
+				"domain_id":   c.DomainID,
+				"name":        c.Name,
+				"channels":    c.Channels,
+				"external_id": c.ExternalID,
+				"content":     c.Content,
+				"timestamp":   time.Now().Unix(),
+				"operation":   configList,
+			},
+		},
+		{
+			desc:               "list successfully as non admin",
+			token:              validToken,
+			userID:             validID,
+			domainID:           domainID,
+			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes: &magistrala.AuthorizeRes{Authorized: false},
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  0,
+				Limit:   10,
+				Configs: saved[0:10],
+			},
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			err:                 nil,
+			event: map[string]interface{}{
+				"thing_id":    c.ThingID,
+				"domain_id":   c.DomainID,
+				"name":        c.Name,
+				"channels":    c.Channels,
+				"external_id": c.ExternalID,
+				"content":     c.Content,
+				"timestamp":   time.Now().Unix(),
+				"operation":   configList,
+			},
+		},
+		{
+			desc:        "list with invalid token",
+			token:       invalidToken,
+			filter:      bootstrap.Filter{},
+			offset:      0,
+			limit:       10,
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+			event:       nil,
+		},
+		{
+			desc:                "list as super admin with failed authorization",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			superAdmiAuthErr:    svcerr.ErrAuthorization,
+			err:                 nil,
+			event:               nil,
+		},
+		{
+			desc:                "list as domain admin with failed authorization",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			superAdmiAuthErr:    svcerr.ErrAuthorization,
+			domainAdmiAuthErr:   svcerr.ErrAuthorization,
+			err:                 nil,
+			event:               nil,
+		},
+		{
+			desc:                "list as non admin with failed list all objects",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			listObjectsErr:      svcerr.ErrNotFound,
+			err:                 svcerr.ErrNotFound,
+			event:               nil,
+		},
 
-	offset := uint64(0)
-	limit := uint64(10)
-	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 = boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{})
-	svcConfigs, svcErr := svc.List(context.Background(), validToken, bootstrap.Filter{}, offset, limit)
-	repoCall.Unset()
-	repoCall1.Unset()
+		{
+			desc:                "list as super admin with failed retrieve all",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveErr:         nil,
+			err:                 nil,
+			event:               nil,
+		},
+		{
+			desc:                "list as domain admin with failed retrieve all",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
+			retrieveErr:         nil,
+			err:                 nil,
+			event:               nil,
+		},
+		{
+			desc:                "list as non admin with failed retrieve all",
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			filter:              bootstrap.Filter{},
+			offset:              0,
+			limit:               10,
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
+			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
+			retrieveErr:         nil,
+			err:                 nil,
+			event:               nil,
+		},
+	}
 
-	repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 = boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{})
-	esConfigs, esErr := svc.List(context.Background(), validToken, bootstrap.Filter{}, offset, limit)
-	repoCall.Unset()
-	repoCall1.Unset()
-	assert.Equal(t, svcConfigs, esConfigs)
-	assert.Equal(t, svcErr, esErr)
+	lastID := "0"
+	for _, tc := range cases {
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			Subject:     tc.userID,
+			Permission:  authsvc.AdminPermission,
+			ObjectType:  authsvc.PlatformType,
+			Object:      authsvc.MagistralaObject,
+		}).Return(tc.superAdminAuthRes, tc.superAdmiAuthErr)
+		authCall2 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     tc.userID,
+			Permission:  authsvc.AdminPermission,
+			ObjectType:  authsvc.DomainType,
+			Object:      tc.domainID,
+		}).Return(tc.domainAdminAuthRes, tc.domainAdmiAuthErr)
+		authCall3 := auth.On("ListAllObjects", mock.Anything, &magistrala.ListObjectsReq{
+			SubjectType: authsvc.UserType,
+			Subject:     tc.userID,
+			Permission:  authsvc.ViewPermission,
+			ObjectType:  authsvc.ThingType,
+		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
+		repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
+
+		_, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
+			Streams: []string{streamID, lastID},
+			Count:   1,
+			Block:   time.Second,
+		}).Val()
+
+		var event map[string]interface{}
+		if len(streams) > 0 && len(streams[0].Messages) > 0 {
+			event := streams[0].Messages
+			lastID = event[0].ID
+		}
+
+		test(t, tc.event, event, tc.desc)
+
+		authCall.Unset()
+		authCall1.Unset()
+		authCall2.Unset()
+		authCall3.Unset()
+		repoCall.Unset()
+	}
 }
 
 func TestRemove(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, sdk := newService(t, redisURL)
+	svc, boot, auth, _ := newService(t, redisURL)
 
-	c := config
-
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(config.Channels[0]), nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(config.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	nonExisting := config
+	nonExisting.ThingID = unknownThingID
 
 	cases := []struct {
-		desc  string
-		id    string
-		token string
-		err   error
-		event map[string]interface{}
+		desc         string
+		configID     string
+		userID       string
+		domainID     string
+		token        string
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		identifyErr  error
+		removeErr    error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
-			desc:  "remove config successfully",
-			id:    saved.ThingID,
-			token: validToken,
-			err:   nil,
+			desc:         "remove config successfully",
+			configID:     config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 			event: map[string]interface{}{
-				"thing_id":  saved.ThingID,
+				"thing_id":  config.ThingID,
 				"timestamp": time.Now().Unix(),
 				"operation": configRemove,
 			},
 		},
 		{
-			desc:  "remove config with invalid credentials",
-			id:    saved.ThingID,
-			token: "",
-			err:   svcerr.ErrAuthentication,
-			event: nil,
+			desc:        "remove config with invalid credentials",
+			configID:    config.ThingID,
+			token:       "",
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+			event:       nil,
+		},
+		{
+			desc:         "remove config with failed authorization",
+			configID:     config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr: svcerr.ErrAuthorization,
+			err:          svcerr.ErrAuthorization,
+			event:        nil,
+		},
+		{
+			desc:         "remove config with failed removal",
+			configID:     nonExisting.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			removeErr:    svcerr.ErrNotFound,
+			err:          svcerr.ErrNotFound,
+			event:        nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-		repoCall1 := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.Remove(context.Background(), tc.token, tc.id)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
+		err := svc.Remove(context.Background(), tc.token, tc.configID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -652,8 +1135,9 @@ func TestRemove(t *testing.T) {
 		}
 
 		test(t, tc.event, event, tc.desc)
+		authCall.Unset()
+		authCall1.Unset()
 		repoCall.Unset()
-		repoCall1.Unset()
 	}
 }
 
@@ -661,40 +1145,23 @@ func TestBootstrap(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, sdk := newService(t, redisURL)
-
-	c := config
-
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(mgsdk.Channel{}, nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(config.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	svc, boot, _, _ := newService(t, redisURL)
 
 	cases := []struct {
 		desc        string
 		externalID  string
 		externalKey string
 		err         error
+		retrieveErr error
 		event       map[string]interface{}
 	}{
 		{
 			desc:        "bootstrap successfully",
-			externalID:  saved.ExternalID,
-			externalKey: saved.ExternalKey,
+			externalID:  config.ExternalID,
+			externalKey: config.ExternalKey,
 			err:         nil,
 			event: map[string]interface{}{
-				"external_id": saved.ExternalID,
+				"external_id": config.ExternalID,
 				"success":     "1",
 				"timestamp":   time.Now().Unix(),
 				"operation":   thingBootstrap,
@@ -704,6 +1171,7 @@ func TestBootstrap(t *testing.T) {
 			desc:        "bootstrap with an error",
 			externalID:  "external_id1",
 			externalKey: "external_id",
+			retrieveErr: bootstrap.ErrBootstrap,
 			err:         bootstrap.ErrBootstrap,
 			event: map[string]interface{}{
 				"external_id": "external_id",
@@ -716,7 +1184,7 @@ func TestBootstrap(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(config, tc.err)
+		repoCall := boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(config, tc.retrieveErr)
 		_, err = svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, false)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -742,62 +1210,88 @@ func TestChangeState(t *testing.T) {
 
 	svc, boot, auth, sdk := newService(t, redisURL)
 
-	c := config
-
-	repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	repoCall1 := sdk.On("Thing", mock.Anything, mock.Anything).Return(mgsdk.Thing{ID: config.ThingID, Credentials: mgsdk.Credentials{Secret: config.ThingKey}}, nil)
-	repoCall2 := sdk.On("Channel", mock.Anything, mock.Anything).Return(toChannel(c.Channels[0]), nil)
-	repoCall3 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything).Return(config.Channels, nil)
-	repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	saved, err := svc.Add(context.Background(), validToken, c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	repoCall.Unset()
-	repoCall1.Unset()
-	repoCall2.Unset()
-	repoCall3.Unset()
-	repoCall4.Unset()
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	cases := []struct {
-		desc  string
-		id    string
-		token string
-		state bootstrap.State
-		err   error
-		event map[string]interface{}
+		desc         string
+		id           string
+		userID       string
+		domainID     string
+		token        string
+		state        bootstrap.State
+		authResponse *magistrala.AuthorizeRes
+		authorizeErr error
+		connectErr   error
+		retrieveErr  error
+		stateErr     error
+		identifyErr  error
+		err          error
+		event        map[string]interface{}
 	}{
 		{
-			desc:  "change state to active",
-			id:    saved.ThingID,
-			token: validToken,
-			state: bootstrap.Active,
-			err:   nil,
+			desc:         "change state to active",
+			id:           config.ThingID,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			state:        bootstrap.Active,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 			event: map[string]interface{}{
-				"thing_id":  saved.ThingID,
+				"thing_id":  config.ThingID,
 				"state":     bootstrap.Active.String(),
 				"timestamp": time.Now().Unix(),
 				"operation": thingStateChange,
 			},
 		},
 		{
-			desc:  "change state invalid credentials",
-			id:    saved.ThingID,
-			token: "invalid",
-			state: bootstrap.Inactive,
-			err:   svcerr.ErrAuthentication,
-			event: nil,
+			desc:        "change state invalid credentials",
+			id:          config.ThingID,
+			token:       "invalid",
+			state:       bootstrap.Inactive,
+			identifyErr: svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+			event:       nil,
+		},
+		{
+			desc:        "change state with failed retrieve by ID",
+			id:          "",
+			token:       validToken,
+			userID:      validID,
+			domainID:    domainID,
+			state:       bootstrap.Active,
+			retrieveErr: svcerr.ErrNotFound,
+			err:         svcerr.ErrNotFound,
+			event:       nil,
+		},
+		{
+			desc:       "change state with failed connect",
+			id:         config.ThingID,
+			token:      validToken,
+			userID:     validID,
+			domainID:   domainID,
+			state:      bootstrap.Active,
+			connectErr: bootstrap.ErrThings,
+			err:        bootstrap.ErrThings,
+			event:      nil,
+		},
+		{
+			desc:     "change state unsuccessfully",
+			id:       config.ThingID,
+			token:    validToken,
+			userID:   validID,
+			domainID: domainID,
+			state:    bootstrap.Active,
+			stateErr: svcerr.ErrUpdateEntity,
+			err:      svcerr.ErrUpdateEntity,
+			event:    nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
-		repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 = sdk.On("Connect", mock.Anything, mock.Anything).Return(nil)
-		repoCall3 := boot.On("RetrieveByID", context.Background(), mock.Anything, mock.Anything).Return(config, nil)
-		repoCall4 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
+		sdkCall1 := sdk.On("Connect", mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
+		repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
 		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -814,11 +1308,10 @@ func TestChangeState(t *testing.T) {
 		}
 
 		test(t, tc.event, event, tc.desc)
+		authCall.Unset()
+		sdkCall1.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
-		repoCall4.Unset()
 	}
 }
 
@@ -827,9 +1320,6 @@ func TestUpdateChannelHandler(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	svc, boot, _, _ := newService(t, redisURL)
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
 		desc    string
@@ -913,9 +1403,6 @@ func TestRemoveChannelHandler(t *testing.T) {
 
 	svc, boot, _, _ := newService(t, redisURL)
 
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	cases := []struct {
 		desc      string
 		channelID string
@@ -977,9 +1464,6 @@ func TestRemoveConfigHandler(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	svc, boot, _, _ := newService(t, redisURL)
-
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
 		desc     string
@@ -1043,9 +1527,6 @@ func TestConnectThingHandler(t *testing.T) {
 
 	svc, boot, _, _ := newService(t, redisURL)
 
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	cases := []struct {
 		desc      string
 		channelID string
@@ -1067,35 +1548,31 @@ func TestConnectThingHandler(t *testing.T) {
 			},
 		},
 		{
-			desc:      "add non-existing channel handler",
-			channelID: "unknown",
-			err:       nil,
-			event:     nil,
-		},
-		{
-			desc:      "add channel handler with empty ID",
-			channelID: "",
-			err:       nil,
-			event:     nil,
-		},
-		{
-			desc:      "add channel handler successfully",
+			desc:      "connect non-existing thing handler",
 			channelID: channel.ID,
+			thingID:   "unknown",
+			err:       nil,
+			event:     nil,
+		},
+		{
+			desc:      "connect thing handler with empty thing ID",
+			channelID: channel.ID,
+			thingID:   "",
+			err:       nil,
+			event:     nil,
+		},
+		{
+			desc:      "connect thing handler with empty channel ID",
+			channelID: "",
 			thingID:   "1",
 			err:       nil,
-			event: map[string]interface{}{
-				"channel_id":  channel.ID,
-				"thing_id":    "1",
-				"operation":   thingConnect,
-				"timestamp":   time.Now().UnixNano(),
-				"occurred_at": time.Now().UnixNano(),
-			},
+			event:     nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("ConnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
+		repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
 		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -1124,9 +1601,6 @@ func TestDisconnectThingHandler(t *testing.T) {
 
 	svc, boot, _, _ := newService(t, redisURL)
 
-	err = redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	cases := []struct {
 		desc      string
 		channelID string
@@ -1148,19 +1622,25 @@ func TestDisconnectThingHandler(t *testing.T) {
 			},
 		},
 		{
-			desc:      "remove non-existing channel handler",
+			desc:      "remove non-existing thing handler",
 			channelID: "unknown",
+			err:       nil,
+		},
+		{
+			desc:      "remove thing handler with empty thing ID",
+			channelID: channel.ID,
+			thingID:   "",
 			err:       nil,
 			event:     nil,
 		},
 		{
-			desc:      "remove channel handler with empty ID",
+			desc:      "remove thing handler with empty channel ID",
 			channelID: "",
 			err:       nil,
 			event:     nil,
 		},
 		{
-			desc:      "remove channel handler successfully",
+			desc:      "remove thing handler successfully",
 			channelID: channel.ID,
 			thingID:   "1",
 			err:       nil,
@@ -1235,13 +1715,5 @@ func test(t *testing.T, expected, actual map[string]interface{}, description str
 		}
 
 		assert.Equal(t, expected, actual, fmt.Sprintf("%s: got incorrect event\n", description))
-	}
-}
-
-func toChannel(ch bootstrap.Channel) mgsdk.Channel {
-	return mgsdk.Channel{
-		ID:       ch.ID,
-		Name:     ch.Name,
-		Metadata: ch.Metadata,
 	}
 }

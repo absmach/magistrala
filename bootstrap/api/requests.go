@@ -36,6 +36,16 @@ func (req addReq) validate() error {
 		return apiutil.ErrBearerKey
 	}
 
+	if len(req.Channels) == 0 {
+		return apiutil.ErrEmptyList
+	}
+
+	for _, channel := range req.Channels {
+		if channel == "" {
+			return apiutil.ErrMissingID
+		}
+	}
+
 	return nil
 }
 

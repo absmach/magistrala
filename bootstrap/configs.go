@@ -17,7 +17,7 @@ import (
 // MGChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
 type Config struct {
 	ThingID     string    `json:"thing_id"`
-	Owner       string    `json:"owner,omitempty"`
+	DomainID    string    `json:"domain_id,omitempty"`
 	Name        string    `json:"name,omitempty"`
 	ClientCert  string    `json:"client_cert,omitempty"`
 	ClientKey   string    `json:"client_key,omitempty"`
@@ -35,7 +35,7 @@ type Channel struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	Owner       string                 `json:"owner_id"`
+	DomainID    string                 `json:"domain_id"`
 	Parent      string                 `json:"parent_id,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	CreatedAt   time.Time              `json:"created_at"`
@@ -69,11 +69,11 @@ type ConfigRepository interface {
 
 	// RetrieveByID retrieves the Config having the provided identifier, that is owned
 	// by the specified user.
-	RetrieveByID(ctx context.Context, owner, id string) (Config, error)
+	RetrieveByID(ctx context.Context, domainID, id string) (Config, error)
 
 	// RetrieveAll retrieves a subset of Configs that are owned
 	// by the specific user, with given filter parameters.
-	RetrieveAll(ctx context.Context, owner string, filter Filter, offset, limit uint64) ConfigsPage
+	RetrieveAll(ctx context.Context, domainID string, thingIDs []string, filter Filter, offset, limit uint64) ConfigsPage
 
 	// RetrieveByExternalID returns Config for given external ID.
 	RetrieveByExternalID(ctx context.Context, externalID string) (Config, error)
@@ -82,23 +82,23 @@ type ConfigRepository interface {
 	// to indicate operation failure.
 	Update(ctx context.Context, cfg Config) error
 
-	// UpdateCerts updates and returns an existing Config certificate and owner.
+	// UpdateCerts updates and returns an existing Config certificate and domainID.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(ctx context.Context, owner, thingID, clientCert, clientKey, caCert string) (Config, error)
+	UpdateCert(ctx context.Context, domainID, thingID, clientCert, clientKey, caCert string) (Config, error)
 
 	// UpdateConnections updates a list of Channels the Config is connected to
 	// adding new Channels if needed.
-	UpdateConnections(ctx context.Context, owner, id string, channels []Channel, connections []string) error
+	UpdateConnections(ctx context.Context, domainID, id string, channels []Channel, connections []string) error
 
 	// Remove removes the Config having the provided identifier, that is owned
 	// by the specified user.
-	Remove(ctx context.Context, owner, id string) error
+	Remove(ctx context.Context, domainID, id string) error
 
 	// ChangeState changes of the Config, that is owned by the specific user.
-	ChangeState(ctx context.Context, owner, id string, state State) error
+	ChangeState(ctx context.Context, domainID, id string, state State) error
 
 	// ListExisting retrieves those channels from the given list that exist in DB.
-	ListExisting(ctx context.Context, owner string, ids []string) ([]Channel, error)
+	ListExisting(ctx context.Context, domainID string, ids []string) ([]Channel, error)
 
 	// Methods RemoveThing, UpdateChannel, and RemoveChannel are related to
 	// event sourcing. That's why these methods surpass ownership check.

@@ -147,6 +147,8 @@ const (
 //
 // AuthService is a service that provides authentication and authorization
 // functionalities for the users service.
+
+//go:generate mockery --name=AuthServiceClient --output=./auth/mocks --filename auth_client.go --quiet --note "Copyright (c) Abstract Machines"
 type AuthServiceClient interface {
 	Issue(ctx context.Context, in *IssueReq, opts ...grpc.CallOption) (*Token, error)
 	Refresh(ctx context.Context, in *RefreshReq, opts ...grpc.CallOption) (*Token, error)

@@ -56,9 +56,9 @@ var (
 	}
 )
 
-func newService() (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthClient, *sdkmocks.SDK) {
+func newService() (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthServiceClient, *sdkmocks.SDK) {
 	boot := new(mocks.ConfigRepository)
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 

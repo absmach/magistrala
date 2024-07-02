@@ -37,10 +37,10 @@ const (
 	validID   = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
-func newService(_ *testing.T) (certs.Service, *mocks.Repository, *mocks.Agent, *authmocks.AuthClient, *sdkmocks.SDK) {
+func newService(_ *testing.T) (certs.Service, *mocks.Repository, *mocks.Agent, *authmocks.AuthServiceClient, *sdkmocks.SDK) {
 	repo := new(mocks.Repository)
 	agent := new(mocks.Agent)
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
 	sdk := new(sdkmocks.SDK)
 
 	return certs.New(auth, repo, sdk, agent), repo, agent, auth, sdk

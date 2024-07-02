@@ -50,9 +50,9 @@ var (
 	errHashPassword = errors.New("generate hash from password failed")
 )
 
-func newService(selfRegister bool) (users.Service, *mocks.Repository, *authmocks.AuthClient, *mocks.Emailer) {
+func newService(selfRegister bool) (users.Service, *mocks.Repository, *authmocks.AuthServiceClient, *mocks.Emailer) {
 	cRepo := new(mocks.Repository)
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
 	e := new(mocks.Emailer)
 	return users.NewService(cRepo, auth, e, phasher, idProvider, selfRegister), cRepo, auth, e
 }

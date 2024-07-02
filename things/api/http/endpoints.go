@@ -109,6 +109,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			Metadata:   req.metadata,
 			ListPerms:  req.listPerms,
 			Role:       mgclients.AllRole, // retrieve all things since things don't have roles
+			Id:         req.id,
 		}
 		page, err := svc.ListClients(ctx, req.token, req.userID, pm)
 		if err != nil {

@@ -505,7 +505,7 @@ func PageQuery(pm clients.Page) (string, error) {
 		query = append(query, "id ILIKE '%' || :id || '%'")
 	}
 	if pm.Tag != "" {
-		query = append(query, ":tag = ANY(c.tags)")
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
 	}
 	if pm.Status != clients.AllStatus {
 		query = append(query, "c.status = :status")
@@ -568,6 +568,9 @@ func ConstructThingSearchQuery(pm clients.Page) (string, string) {
 	}
 	if pm.Tag != "" {
 		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
+	}
+	if len(pm.IDs) != 0 {
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
 	}
 
 	if len(query) > 0 {

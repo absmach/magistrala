@@ -117,8 +117,8 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 
 	q = `SELECT magistrala_channel, name, metadata FROM channels ch
 		 INNER JOIN connections conn
-		 ON ch.magistrala_channel = conn.channel_id AND ch.domain_id = conn.config_owner
-		 WHERE conn.config_id = :magistrala_thing AND conn.config_owner = :domain_id`
+		 ON ch.magistrala_channel = conn.channel_id AND ch.domain_id = conn.domain_id
+		 WHERE conn.config_id = :magistrala_thing AND conn.domain_id = :domain_id`
 
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
@@ -220,9 +220,9 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 	}
 
 	q = `SELECT magistrala_channel, name, metadata FROM channels ch
-		 INNER JOIN connections conn
-		 ON ch.magistrala_channel = conn.channel_id AND ch.domain_id = conn.config_owner
-		 WHERE conn.config_id = :magistrala_thing AND conn.config_owner = :domain_id`
+     INNER JOIN connections conn
+     ON ch.magistrala_channel = conn.channel_id AND ch.domain_id = conn.domain_id
+     WHERE conn.config_id = :magistrala_thing AND conn.domain_id = :domain_id`
 
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
@@ -550,15 +550,15 @@ func insertConnections(_ context.Context, cfg bootstrap.Config, connections []st
 		return nil
 	}
 
-	q := `INSERT INTO connections (config_id, channel_id, config_owner, channel_owner)
-		  VALUES (:config_id, :channel_id, :config_owner, :channel_owner)`
+	q := `INSERT INTO connections (config_id, channel_id, domain_id)
+      VALUES (:config_id, :channel_id, :domain_id)`
+
 	conns := []dbConnection{}
 	for _, conn := range connections {
 		dbconn := dbConnection{
-			Config:          cfg.ThingID,
-			Channel:         conn,
-			ConfigDomainID:  cfg.DomainID,
-			ChannelDomainID: cfg.DomainID,
+			Config:   cfg.ThingID,
+			Channel:  conn,
+			DomainID: cfg.DomainID,
 		}
 		conns = append(conns, dbconn)
 	}
@@ -573,7 +573,7 @@ func updateConnections(domainID, id string, connections []string, tx *sqlx.Tx) e
 	}
 
 	q := `DELETE FROM connections
-		  WHERE config_id = $1 AND config_owner = $2 AND channel_owner = $2
+		  WHERE config_id = $1 AND domain_id = $2
 		  AND channel_id NOT IN ($3)`
 
 	var conn pgtype.TextArray
@@ -591,16 +591,15 @@ func updateConnections(domainID, id string, connections []string, tx *sqlx.Tx) e
 		return err
 	}
 
-	q = `INSERT INTO connections (config_id, channel_id, config_owner, channel_owner)
-		 VALUES (:config_id, :channel_id, :config_owner, :channel_owner)`
+	q = `INSERT INTO connections (config_id, channel_id, domain_id)
+		 VALUES (:config_id, :channel_id, :domain_id)`
 
 	conns := []dbConnection{}
 	for _, conn := range connections {
 		dbconn := dbConnection{
-			Config:          id,
-			Channel:         conn,
-			ConfigDomainID:  domainID,
-			ChannelDomainID: domainID,
+			Config:   id,
+			Channel:  conn,
+			DomainID: domainID,
 		}
 		conns = append(conns, dbconn)
 	}
@@ -769,8 +768,7 @@ func toChannel(dbch dbChannel) (bootstrap.Channel, error) {
 }
 
 type dbConnection struct {
-	Config          string `db:"config_id"`
-	Channel         string `db:"channel_id"`
-	ConfigDomainID  string `db:"config_owner"`
-	ChannelDomainID string `db:"channel_owner"`
+	Config   string `db:"config_id"`
+	Channel  string `db:"channel_id"`
+	DomainID string `db:"domain_id"`
 }

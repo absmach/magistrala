@@ -28,7 +28,7 @@ import (
 var (
 	secret         = "strongsecret"
 	validCMetadata = mgclients.Metadata{"role": "client"}
-	ID             = testsutil.GenerateUUID(&testing.T{})
+	ID             = "6e5e10b3-d4df-4758-b426-4929d55ad740"
 	client         = mgclients.Client{
 		ID:          ID,
 		Name:        "clientname",
@@ -1628,6 +1628,44 @@ func TestSearchThings(t *testing.T) {
 			searchResponse: mgclients.ClientsPage{},
 			identifyErr:    svcerr.ErrAuthentication,
 			err:            svcerr.ErrAuthentication,
+		},
+		{
+			desc:  "search clients with id",
+			token: validToken,
+			page:  mgclients.Page{Offset: 0, Id: "6e5e10b3-d4df-4758-b426-4929d55ad740", Limit: 100},
+			searchResponse: mgclients.ClientsPage{
+				Page:    mgclients.Page{Total: 1, Offset: 0, Limit: 100},
+				Clients: []mgclients.Client{client},
+			},
+			identifyResponse:  &magistrala.IdentityRes{Id: client.ID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			identifyErr:       nil,
+			err:               nil,
+		},
+		{
+			desc:  "search clients with tag",
+			token: validToken,
+			page:  mgclients.Page{Offset: 0, Tag: "tag1", Limit: 100},
+			searchResponse: mgclients.ClientsPage{
+				Page:    mgclients.Page{Total: 1, Offset: 0, Limit: 100},
+				Clients: []mgclients.Client{client},
+			},
+			identifyResponse:  &magistrala.IdentityRes{Id: client.ID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			identifyErr:       nil,
+			err:               nil,
+		},
+		{
+			desc:  "search clients with random name",
+			token: validToken,
+			page:  mgclients.Page{Offset: 0, Name: "randomname", Limit: 100},
+			searchResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{Total: 0, Offset: 0, Limit: 100},
+			},
+			identifyResponse:  &magistrala.IdentityRes{Id: client.ID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			identifyErr:       nil,
+			err:               nil,
 		},
 	}
 

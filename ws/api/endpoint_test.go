@@ -90,7 +90,7 @@ func handshake(tsURL, chanID, subtopic, thingKey string, addHeader bool) (*webso
 }
 
 func TestHandshake(t *testing.T) {
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
 	svc, pubsub := newService(auth)
 	target := newHTTPServer(svc)
 	defer target.Close()

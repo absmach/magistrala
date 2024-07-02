@@ -45,8 +45,8 @@ type statesPageRes struct {
 	States []stateRes `json:"states"`
 }
 
-func NewService() (twins.Service, *authmocks.AuthClient, *mocks.TwinRepository, *mocks.TwinCache, *mocks.StateRepository) {
-	auth := new(authmocks.AuthClient)
+func NewService() (twins.Service, *authmocks.AuthServiceClient, *mocks.TwinRepository, *mocks.TwinCache, *mocks.StateRepository) {
+	auth := new(authmocks.AuthServiceClient)
 	twinsRepo := new(mocks.TwinRepository)
 	twinCache := new(mocks.TwinCache)
 	statesRepo := new(mocks.StateRepository)

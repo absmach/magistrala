@@ -30,8 +30,8 @@ var (
 	errFailedPublish  = errors.New("failed to publish")
 )
 
-func setupMessages() (*httptest.Server, *authmocks.AuthClient, *pubsub.PubSub) {
-	auth := new(authmocks.AuthClient)
+func setupMessages() (*httptest.Server, *authmocks.AuthServiceClient, *pubsub.PubSub) {
+	auth := new(authmocks.AuthServiceClient)
 	pub := new(pubsub.PubSub)
 	handler := adapter.NewHandler(pub, mglog.NewMock(), auth)
 

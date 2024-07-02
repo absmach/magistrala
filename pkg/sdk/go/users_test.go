@@ -38,11 +38,11 @@ var (
 	wrongID    = testsutil.GenerateUUID(&testing.T{})
 )
 
-func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *authmocks.AuthClient) {
+func setupUsers() (*httptest.Server, *umocks.Repository, *gmocks.Repository, *authmocks.AuthServiceClient) {
 	crepo := new(umocks.Repository)
 	gRepo := new(gmocks.Repository)
 
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
 	csvc := users.NewService(crepo, auth, emailer, phasher, idProvider, true)
 	gsvc := groups.NewService(gRepo, idProvider, auth)
 

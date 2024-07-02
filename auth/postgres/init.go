@@ -57,6 +57,17 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE domains ALTER COLUMN alias SET NOT NULL`,
 				},
 			},
+			{
+				Id: "auth_3",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS tokens (
+						id          VARCHAR(36) PRIMARY KEY
+					);`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS tokens`,
+				},
+			},
 		},
 	}
 }

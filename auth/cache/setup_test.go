@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package redis_test
+package cache_test
 
 import (
 	"context"
@@ -13,26 +13,24 @@ import (
 	"testing"
 
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/redis/go-redis/v9"
 )
 
-var (
-	redisClient *redis.Client
-	redisURL    string
-	pool        *dockertest.Pool
-	container   *dockertest.Resource
-)
+var redisURL string
 
 func TestMain(m *testing.M) {
-	var err error
-	pool, err = dockertest.NewPool("")
+	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	container, err = pool.RunWithOptions(&dockertest.RunOptions{
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "redis",
 		Tag:        "7.2.4-alpine",
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
 	})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
@@ -41,13 +39,13 @@ func TestMain(m *testing.M) {
 	handleInterrupt(pool, container)
 
 	redisURL = fmt.Sprintf("redis://localhost:%s/0", container.GetPort("6379/tcp"))
-	ropts, err := redis.ParseURL(redisURL)
+	opts, err := redis.ParseURL(redisURL)
 	if err != nil {
 		log.Fatalf("Could not parse redis URL: %s", err)
 	}
 
 	if err := pool.Retry(func() error {
-		redisClient = redis.NewClient(ropts)
+		redisClient := redis.NewClient(opts)
 
 		return redisClient.Ping(context.Background()).Err()
 	}); err != nil {

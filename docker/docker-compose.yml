@@ -17,6 +17,7 @@ volumes:
   magistrala-auth-db-volume:
   magistrala-invitations-db-volume:
   magistrala-ui-db-volume:
+  magistrala-auth-redis-volume:
 
 services:
   spicedb:
@@ -64,6 +65,15 @@ services:
     volumes:
       - magistrala-spicedb-db-volume:/var/lib/postgresql/data
 
+  auth-redis:
+    image: redis:7.2.4-alpine
+    container_name: magistrala-auth-redis
+    restart: on-failure
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-auth-redis-volume:/data
+
   auth-db:
     image: postgres:16.2-alpine
     container_name: magistrala-auth-db
@@ -83,6 +93,7 @@ services:
     image: magistrala/auth:${MG_RELEASE_TAG}
     container_name: magistrala-auth
     depends_on:
+      - auth-redis
       - auth-db
       - spicedb
     expose:
@@ -120,6 +131,8 @@ services:
       MG_AUTH_DB_SSL_CERT: ${MG_AUTH_DB_SSL_CERT}
       MG_AUTH_DB_SSL_KEY: ${MG_AUTH_DB_SSL_KEY}
       MG_AUTH_DB_SSL_ROOT_CERT: ${MG_AUTH_DB_SSL_ROOT_CERT}
+      MG_AUTH_CACHE_URL: ${MG_AUTH_CACHE_URL}
+      MG_AUTH_CACHE_KEY_DURATION: ${MG_AUTH_CACHE_KEY_DURATION}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
@@ -295,6 +308,7 @@ services:
     image: magistrala/things:${MG_RELEASE_TAG}
     container_name: magistrala-things
     depends_on:
+      - things-redis
       - things-db
       - users
       - auth

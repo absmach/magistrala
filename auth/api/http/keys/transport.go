@@ -33,6 +33,13 @@ func MakeHandler(svc auth.Service, mux *chi.Mux, logger *slog.Logger) *chi.Mux {
 			opts...,
 		).ServeHTTP)
 
+		r.Delete("/", kithttp.NewServer(
+			revokeTokenEndpoint(svc),
+			decodeRevokeTokenReq,
+			api.EncodeResponse,
+			opts...,
+		).ServeHTTP)
+
 		r.Get("/{id}", kithttp.NewServer(
 			(retrieveEndpoint(svc)),
 			decodeKeyReq,
@@ -68,5 +75,13 @@ func decodeKeyReq(_ context.Context, r *http.Request) (interface{}, error) {
 		token: apiutil.ExtractBearerToken(r),
 		id:    chi.URLParam(r, "id"),
 	}
+	return req, nil
+}
+
+func decodeRevokeTokenReq(_ context.Context, r *http.Request) (interface{}, error) {
+	req := revokeTokenReq{
+		token: apiutil.ExtractBearerToken(r),
+	}
+
 	return req, nil
 }

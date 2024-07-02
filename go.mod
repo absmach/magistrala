@@ -3,7 +3,7 @@ module github.com/absmach/magistrala
 go 1.22.2
 
 require (
-	github.com/0x6flab/namegenerator v1.3.1
+	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
 	github.com/absmach/mproxy v0.4.3-0.20240430090627-27dad4c91c6c
 	github.com/absmach/senml v1.0.5

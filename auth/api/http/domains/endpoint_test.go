@@ -1070,7 +1070,7 @@ func TestAssignDomainUsers(t *testing.T) {
 			contentType: contentType,
 			token:       validToken,
 			status:      http.StatusBadRequest,
-			err:         apiutil.ErrMalformedPolicy,
+			err:         apiutil.ErrMissingRelation,
 		},
 	}
 

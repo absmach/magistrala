@@ -180,11 +180,11 @@ func (req assignUsersReq) validate() error {
 	}
 
 	if len(req.UserIDs) == 0 {
-		return apiutil.ErrMalformedPolicy
+		return apiutil.ErrMissingID
 	}
 
 	if req.Relation == "" {
-		return apiutil.ErrMalformedPolicy
+		return apiutil.ErrMissingRelation
 	}
 
 	return nil

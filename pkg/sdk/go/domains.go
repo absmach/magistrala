@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
@@ -51,12 +52,15 @@ func (sdk mgSDK) CreateDomain(domain Domain, token string) (Domain, errors.SDKEr
 }
 
 func (sdk mgSDK) UpdateDomain(domain Domain, token string) (Domain, errors.SDKError) {
+	if domain.ID == "" {
+		return Domain{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
+	url := fmt.Sprintf("%s/%s/%s", sdk.domainsURL, domainsEndpoint, domain.ID)
+
 	data, err := json.Marshal(domain)
 	if err != nil {
 		return Domain{}, errors.NewSDKError(err)
 	}
-
-	url := fmt.Sprintf("%s/%s/%s", sdk.domainsURL, domainsEndpoint, domain.ID)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -71,6 +75,9 @@ func (sdk mgSDK) UpdateDomain(domain Domain, token string) (Domain, errors.SDKEr
 }
 
 func (sdk mgSDK) Domain(domainID, token string) (Domain, errors.SDKError) {
+	if domainID == "" {
+		return Domain{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.domainsURL, domainsEndpoint, domainID)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)

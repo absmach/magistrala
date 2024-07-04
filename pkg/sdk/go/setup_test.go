@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/absmach/magistrala/invitations"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -234,6 +235,20 @@ func convertChannel(g sdk.Channel) mggroups.Group {
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
 		Status:      status,
+	}
+}
+
+func convertInvitation(i sdk.Invitation) invitations.Invitation {
+	return invitations.Invitation{
+		InvitedBy:   i.InvitedBy,
+		UserID:      i.UserID,
+		DomainID:    i.DomainID,
+		Token:       i.Token,
+		Relation:    i.Relation,
+		CreatedAt:   i.CreatedAt,
+		UpdatedAt:   i.UpdatedAt,
+		ConfirmedAt: i.ConfirmedAt,
+		Resend:      i.Resend,
 	}
 }
 

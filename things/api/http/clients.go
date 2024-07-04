@@ -181,6 +181,10 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -205,6 +209,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		permission: p,
 		listPerms:  lp,
 		userID:     chi.URLParam(r, "userID"),
+		id:         id,
 	}
 	return req, nil
 }

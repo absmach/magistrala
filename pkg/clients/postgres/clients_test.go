@@ -927,7 +927,7 @@ func TestRetrieveByIDs(t *testing.T) {
 	}
 }
 
-func TestSearchBasicInfo(t *testing.T) {
+func TestSearchClients(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
@@ -1289,7 +1289,7 @@ func TestSearchBasicInfo(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			switch response, err := repo.SearchBasicInfo(context.Background(), c.page); {
+			switch response, err := repo.SearchClients(context.Background(), c.page); {
 			case err == nil:
 				if c.page.Order != "" && c.page.Dir != "" {
 					c.response = response

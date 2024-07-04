@@ -143,6 +143,7 @@ func (repo *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clien
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
+	query = applyOrdering(query, pm)
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.domain_id, '') AS domain_id, c.status,
 					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
@@ -190,10 +191,16 @@ func (repo *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clien
 	return page, nil
 }
 
-func (repo *Repository) SearchBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
-	sq, tq := ConstructSearchQuery(pm)
+func (repo *Repository) SearchClients(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+	query, err := PageQuery(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
 
-	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, sq)
+	tq := query
+	query = applyOrdering(query, pm)
+
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, query)
 
 	dbPage, err := ToDBClientsPage(pm)
 	if err != nil {
@@ -249,6 +256,7 @@ func (repo *Repository) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (
 	if err != nil {
 		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
+	query = applyOrdering(query, pm)
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.domain_id, '') AS domain_id, c.status,
 					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
@@ -332,24 +340,6 @@ func (repo *Repository) Delete(ctx context.Context, id string) error {
 	}
 
 	return nil
-}
-
-func (repo *Repository) CheckSuperAdmin(ctx context.Context, adminID string) error {
-	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
-	rows, err := repo.DB.QueryContext(ctx, q, adminID, clients.AdminRole)
-	if err != nil {
-		return postgres.HandleError(repoerr.ErrViewEntity, err)
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		if err := rows.Err(); err != nil {
-			return postgres.HandleError(repoerr.ErrViewEntity, err)
-		}
-		return nil
-	}
-
-	return repoerr.ErrNotFound
 }
 
 type DBClient struct {
@@ -487,14 +477,8 @@ func PageQuery(pm clients.Page) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(errors.ErrMalformedEntity, err)
 	}
+
 	var query []string
-	var emq string
-	if mq != "" {
-		query = append(query, mq)
-	}
-	if len(pm.IDs) != 0 {
-		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
-	}
 	if pm.Name != "" {
 		query = append(query, "name ILIKE '%' || :name || '%'")
 	}
@@ -505,7 +489,23 @@ func PageQuery(pm clients.Page) (string, error) {
 		query = append(query, "id ILIKE '%' || :id || '%'")
 	}
 	if pm.Tag != "" {
-		query = append(query, ":tag = ANY(c.tags)")
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
+	}
+	if pm.Role != clients.AllRole {
+		query = append(query, "c.role = :role")
+	}
+	// If there are search params presents, use search and ignore other options.
+	// Always combine role with search params, so len(query) > 1.
+	if len(query) > 1 {
+		return fmt.Sprintf("WHERE %s", strings.Join(query, " AND ")), nil
+	}
+
+	if mq != "" {
+		query = append(query, mq)
+	}
+
+	if len(pm.IDs) != 0 {
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
 	}
 	if pm.Status != clients.AllStatus {
 		query = append(query, "c.status = :status")
@@ -513,37 +513,14 @@ func PageQuery(pm clients.Page) (string, error) {
 	if pm.Domain != "" {
 		query = append(query, "c.domain_id = :domain_id")
 	}
-
-	if pm.Role != clients.AllRole {
-		query = append(query, "c.role = :role")
-	}
+	var emq string
 	if len(query) > 0 {
 		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
 	}
 	return emq, nil
 }
 
-func ConstructSearchQuery(pm clients.Page) (string, string) {
-	var query []string
-	var emq string
-	var tq string
-
-	if pm.Name != "" {
-		query = append(query, "name ILIKE '%' || :name || '%'")
-	}
-	if pm.Identity != "" {
-		query = append(query, "identity ILIKE '%' || :identity || '%'")
-	}
-	if pm.Id != "" {
-		query = append(query, "id ILIKE '%' || :id || '%'")
-	}
-
-	if len(query) > 0 {
-		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
-	}
-
-	tq = emq
-
+func applyOrdering(emq string, pm clients.Page) string {
 	switch pm.Order {
 	case "name", "identity", "created_at", "updated_at":
 		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)
@@ -551,6 +528,5 @@ func ConstructSearchQuery(pm clients.Page) (string, string) {
 			emq = fmt.Sprintf("%s %s", emq, pm.Dir)
 		}
 	}
-
-	return emq, tq
+	return emq
 }

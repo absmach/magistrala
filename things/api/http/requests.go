@@ -98,6 +98,7 @@ type listClientsReq struct {
 	userID     string
 	listPerms  bool
 	metadata   mgclients.Metadata
+	id         string
 }
 
 func (req listClientsReq) validate() error {

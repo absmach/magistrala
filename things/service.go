@@ -181,7 +181,7 @@ func (svc service) ListClients(ctx context.Context, token, reqUserID string, pm 
 
 	pm.IDs = ids
 
-	tp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
+	tp, err := svc.clients.SearchClients(ctx, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

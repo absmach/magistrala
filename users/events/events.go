@@ -19,7 +19,6 @@ const (
 	profileView        = clientPrefix + "view_profile"
 	clientList         = clientPrefix + "list"
 	clientListByGroup  = clientPrefix + "list_by_group"
-	clientSearch       = clientPrefix + "search"
 	clientIdentify     = clientPrefix + "identify"
 	generateResetToken = clientPrefix + "generate_reset_token"
 	issueToken         = clientPrefix + "issue_token"
@@ -303,27 +302,6 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 	}
 	if lcge.Identity != "" {
 		val["identity"] = lcge.Identity
-	}
-
-	return val, nil
-}
-
-type searchClientEvent struct {
-	mgclients.Page
-}
-
-func (sce searchClientEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
-		"operation": clientSearch,
-		"total":     sce.Total,
-		"offset":    sce.Offset,
-		"limit":     sce.Limit,
-	}
-	if sce.Name != "" {
-		val["name"] = sce.Name
-	}
-	if sce.Identity != "" {
-		val["identity"] = sce.Identity
 	}
 
 	return val, nil

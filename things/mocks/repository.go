@@ -240,12 +240,12 @@ func (_m *Repository) Save(ctx context.Context, client ...clients.Client) ([]cli
 	return r0, r1
 }
 
-// SearchBasicInfo provides a mock function with given fields: ctx, pm
-func (_m *Repository) SearchBasicInfo(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+// SearchClients provides a mock function with given fields: ctx, pm
+func (_m *Repository) SearchClients(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SearchBasicInfo")
+		panic("no return value specified for SearchClients")
 	}
 
 	var r0 clients.ClientsPage

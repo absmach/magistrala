@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/absmach/magistrala/invitations"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
@@ -15,7 +16,6 @@ import (
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users/hasher"
-	umocks "github.com/absmach/magistrala/users/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,14 +32,8 @@ var (
 	idProvider    = uuid.New()
 	phasher       = hasher.New()
 	validMetadata = sdk.Metadata{"role": "client"}
-	user          = sdk.User{
-		Name:        "clientname",
-		Tags:        []string{"tag1", "tag2"},
-		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: secret},
-		Metadata:    validMetadata,
-		Status:      mgclients.EnabledStatus.String(),
-	}
-	thing = sdk.Thing{
+	user          = generateTestUser(&testing.T{})
+	thing         = sdk.Thing{
 		Name:        "thingname",
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: generateUUID(&testing.T{})},
@@ -55,7 +49,6 @@ var (
 
 	subject   = generateUUID(&testing.T{})
 	object    = generateUUID(&testing.T{})
-	emailer   = new(umocks.Emailer)
 	passRegex = regexp.MustCompile("^.{8,}$")
 )
 
@@ -180,7 +173,10 @@ func convertClient(c sdk.User) mgclients.Client {
 	if err != nil {
 		return mgclients.Client{}
 	}
-
+	role, err := mgclients.ToRole(c.Role)
+	if err != nil {
+		return mgclients.Client{}
+	}
 	return mgclients.Client{
 		ID:          c.ID,
 		Name:        c.Name,
@@ -191,6 +187,7 @@ func convertClient(c sdk.User) mgclients.Client {
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 		Status:      status,
+		Role:        role,
 	}
 }
 
@@ -249,6 +246,24 @@ func convertInvitation(i sdk.Invitation) invitations.Invitation {
 		UpdatedAt:   i.UpdatedAt,
 		ConfirmedAt: i.ConfirmedAt,
 		Resend:      i.Resend,
+	}
+}
+
+func generateTestUser(t *testing.T) sdk.User {
+	createdAt, err := time.Parse(time.RFC3339, "2024-01-01T00:00:00Z")
+	assert.Nil(t, err, fmt.Sprintf("Unexpected error parsing time: %v", err))
+	return sdk.User{
+		ID:   generateUUID(t),
+		Name: "clientname",
+		Credentials: sdk.Credentials{
+			Identity: "clientidentity@email.com",
+			Secret:   secret,
+		},
+		Tags:      []string{"tag1", "tag2"},
+		Metadata:  validMetadata,
+		CreatedAt: createdAt,
+		UpdatedAt: createdAt,
+		Status:    mgclients.EnabledStatus.String(),
 	}
 }
 

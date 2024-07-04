@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
@@ -78,26 +79,29 @@ func (sdk mgSDK) Users(pm PageMetadata, token string) (UsersPage, errors.SDKErro
 	return cp, nil
 }
 
-func (sdk mgSDK) Members(groupID string, meta PageMetadata, token string) (MembersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, membersEndpoint), meta)
+func (sdk mgSDK) Members(groupID string, meta PageMetadata, token string) (UsersPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, usersEndpoint), meta)
 	if err != nil {
-		return MembersPage{}, errors.NewSDKError(err)
+		return UsersPage{}, errors.NewSDKError(err)
 	}
 
 	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
-		return MembersPage{}, sdkerr
+		return UsersPage{}, sdkerr
 	}
 
-	var mp MembersPage
-	if err := json.Unmarshal(body, &mp); err != nil {
-		return MembersPage{}, errors.NewSDKError(err)
+	var up UsersPage
+	if err := json.Unmarshal(body, &up); err != nil {
+		return UsersPage{}, errors.NewSDKError(err)
 	}
 
-	return mp, nil
+	return up, nil
 }
 
 func (sdk mgSDK) User(id, token string) (User, errors.SDKError) {
+	if id == "" {
+		return User{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, id)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -130,12 +134,15 @@ func (sdk mgSDK) UserProfile(token string) (User, errors.SDKError) {
 }
 
 func (sdk mgSDK) UpdateUser(user User, token string) (User, errors.SDKError) {
+	if user.ID == "" {
+		return User{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
+	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, user.ID)
+
 	data, err := json.Marshal(user)
 	if err != nil {
 		return User{}, errors.NewSDKError(err)
 	}
-
-	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, user.ID)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -346,6 +353,9 @@ func (sdk mgSDK) changeClientStatus(token, id, status string) (User, errors.SDKE
 }
 
 func (sdk mgSDK) DeleteUser(id, token string) errors.SDKError {
+	if id == "" {
+		return errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, id)
 	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return sdkerr

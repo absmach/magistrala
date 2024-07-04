@@ -169,6 +169,17 @@ type SDK interface {
 	//	fmt.Println(users)
 	Users(pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
+	// Members returns list of users that are members of a group.
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//	}
+	//	members, _ := sdk.Members("groupID", pm, "token")
+	//	fmt.Println(members)
+	Members(groupID string, meta PageMetadata, token string) (UsersPage, errors.SDKError)
+
 	// UserProfile returns user logged in.
 	//
 	// example:

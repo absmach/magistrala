@@ -18,8 +18,7 @@ func TestHealth(t *testing.T) {
 	auth.Test(t)
 	defer ths.Close()
 
-	usclsv, _, _, auth := setupUsers()
-	auth.Test(t)
+	usclsv, _ := setupUsers()
 	defer usclsv.Close()
 
 	CertTs, _ := setupCerts()

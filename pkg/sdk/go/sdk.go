@@ -454,13 +454,6 @@ type SDK interface {
 	//  fmt.Println(thing)
 	DisableThing(id, token string) (Thing, errors.SDKError)
 
-	// IdentifyThing validates thing's key and returns its ID
-	//
-	// example:
-	//  id, _ := sdk.IdentifyThing("thingKey")
-	//  fmt.Println(id)
-	IdentifyThing(key string) (string, errors.SDKError)
-
 	// ShareThing shares thing with other users.
 	//
 	// example:

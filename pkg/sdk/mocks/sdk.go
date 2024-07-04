@@ -1316,36 +1316,6 @@ func (_m *SDK) Health(service string) (sdk.HealthInfo, errors.SDKError) {
 	return r0, r1
 }
 
-// IdentifyThing provides a mock function with given fields: key
-func (_m *SDK) IdentifyThing(key string) (string, errors.SDKError) {
-	ret := _m.Called(key)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IdentifyThing")
-	}
-
-	var r0 string
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string) (string, errors.SDKError)); ok {
-		return rf(key)
-	}
-	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(key)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(string) errors.SDKError); ok {
-		r1 = rf(key)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
 // Invitation provides a mock function with given fields: userID, domainID, token
 func (_m *SDK) Invitation(userID string, domainID string, token string) (sdk.Invitation, error) {
 	ret := _m.Called(userID, domainID, token)

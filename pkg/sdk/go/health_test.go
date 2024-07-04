@@ -14,8 +14,7 @@ import (
 )
 
 func TestHealth(t *testing.T) {
-	ths, auth := setupThingsMinimal()
-	auth.Test(t)
+	ths, _ := setupThings()
 	defer ths.Close()
 
 	usclsv, _ := setupUsers()

@@ -15,7 +15,6 @@ import (
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
-	"github.com/absmach/magistrala/users/hasher"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,26 +29,15 @@ const (
 
 var (
 	idProvider    = uuid.New()
-	phasher       = hasher.New()
 	validMetadata = sdk.Metadata{"role": "client"}
 	user          = generateTestUser(&testing.T{})
-	thing         = sdk.Thing{
-		Name:        "thingname",
-		Tags:        []string{"tag1", "tag2"},
-		Credentials: sdk.Credentials{Identity: "clientidentity", Secret: generateUUID(&testing.T{})},
-		Metadata:    validMetadata,
-		Status:      mgclients.EnabledStatus.String(),
-	}
-	description = "shortdescription"
-	gName       = "groupname"
+	description   = "shortdescription"
+	gName         = "groupname"
 
-	limit  uint64 = 5
-	offset uint64 = 0
-	total  uint64 = 200
-
-	subject   = generateUUID(&testing.T{})
-	object    = generateUUID(&testing.T{})
-	passRegex = regexp.MustCompile("^.{8,}$")
+	limit     uint64 = 5
+	offset    uint64 = 0
+	total     uint64 = 200
+	passRegex        = regexp.MustCompile("^.{8,}$")
 )
 
 func generateUUID(t *testing.T) string {
@@ -57,12 +45,6 @@ func generateUUID(t *testing.T) string {
 	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	return ulid
-}
-
-func convertThingsPage(cp sdk.ThingsPage) mgclients.ClientsPage {
-	return mgclients.ClientsPage{
-		Clients: convertThings(cp.Things...),
-	}
 }
 
 func convertClients(cs []sdk.User) []mgclients.Client {
@@ -103,26 +85,6 @@ func convertChannels(cs []sdk.Channel) []mggroups.Group {
 	}
 
 	return cgs
-}
-
-func convertClientPage(p sdk.PageMetadata) mgclients.Page {
-	if p.Status == "" {
-		p.Status = mgclients.EnabledStatus.String()
-	}
-	status, err := mgclients.ToStatus(p.Status)
-	if err != nil {
-		return mgclients.Page{}
-	}
-
-	return mgclients.Page{
-		Status:   status,
-		Total:    p.Total,
-		Offset:   p.Offset,
-		Limit:    p.Limit,
-		Name:     p.Name,
-		Tag:      p.Tag,
-		Metadata: mgclients.Metadata(p.Metadata),
-	}
 }
 
 func convertGroup(g sdk.Group) mggroups.Group {

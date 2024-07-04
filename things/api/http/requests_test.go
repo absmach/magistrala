@@ -11,8 +11,6 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -815,7 +813,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 				UserIDs:  []string{validID},
 				Relation: valid,
 			},
-			err: errors.ErrMalformedEntity,
+			err: apiutil.ErrMissingID,
 		},
 		{
 			desc: "empty user ids",
@@ -825,7 +823,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 				UserIDs:  []string{},
 				Relation: valid,
 			},
-			err: svcerr.ErrCreateEntity,
+			err: apiutil.ErrMalformedPolicy,
 		},
 		{
 			desc: "empty relation",
@@ -835,7 +833,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 				UserIDs:  []string{validID},
 				Relation: "",
 			},
-			err: svcerr.ErrCreateEntity,
+			err: apiutil.ErrMalformedPolicy,
 		},
 	}
 	for _, c := range cases {
@@ -868,7 +866,7 @@ func TestThingUnshareRequestValidate(t *testing.T) {
 				UserIDs:  []string{validID},
 				Relation: valid,
 			},
-			err: errors.ErrMalformedEntity,
+			err: apiutil.ErrMissingID,
 		},
 		{
 			desc: "empty user ids",
@@ -878,7 +876,7 @@ func TestThingUnshareRequestValidate(t *testing.T) {
 				UserIDs:  []string{},
 				Relation: valid,
 			},
-			err: svcerr.ErrCreateEntity,
+			err: apiutil.ErrMalformedPolicy,
 		},
 		{
 			desc: "empty relation",
@@ -888,7 +886,7 @@ func TestThingUnshareRequestValidate(t *testing.T) {
 				UserIDs:  []string{validID},
 				Relation: "",
 			},
-			err: svcerr.ErrCreateEntity,
+			err: apiutil.ErrMalformedPolicy,
 		},
 	}
 	for _, c := range cases {

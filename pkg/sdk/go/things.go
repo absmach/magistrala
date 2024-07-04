@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
@@ -117,6 +118,9 @@ func (sdk mgSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (
 }
 
 func (sdk mgSDK) Thing(id, token string) (Thing, errors.SDKError) {
+	if id == "" {
+		return Thing{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, id)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
@@ -149,12 +153,15 @@ func (sdk mgSDK) ThingPermissions(id, token string) (Thing, errors.SDKError) {
 }
 
 func (sdk mgSDK) UpdateThing(t Thing, token string) (Thing, errors.SDKError) {
+	if t.ID == "" {
+		return Thing{}, errors.NewSDKError(apiutil.ErrMissingID)
+	}
+	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, t.ID)
+
 	data, err := json.Marshal(t)
 	if err != nil {
 		return Thing{}, errors.NewSDKError(err)
 	}
-
-	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, t.ID)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -237,22 +244,6 @@ func (sdk mgSDK) changeThingStatus(id, status, token string) (Thing, errors.SDKE
 	return t, nil
 }
 
-func (sdk mgSDK) IdentifyThing(key string) (string, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s", sdk.thingsURL, identifyEndpoint)
-
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, ThingPrefix+key, nil, nil, http.StatusOK)
-	if sdkerr != nil {
-		return "", sdkerr
-	}
-
-	var i identifyThingResp
-	if err := json.Unmarshal(body, &i); err != nil {
-		return "", errors.NewSDKError(err)
-	}
-
-	return i.ID, nil
-}
-
 func (sdk mgSDK) ShareThing(thingID string, req UsersRelationRequest, token string) errors.SDKError {
 	data, err := json.Marshal(req)
 	if err != nil {
@@ -296,6 +287,9 @@ func (sdk mgSDK) ListThingUsers(thingID string, pm PageMetadata, token string) (
 }
 
 func (sdk mgSDK) DeleteThing(id, token string) errors.SDKError {
+	if id == "" {
+		return errors.NewSDKError(apiutil.ErrMissingID)
+	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, id)
 	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return sdkerr

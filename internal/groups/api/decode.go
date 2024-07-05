@@ -63,7 +63,7 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 		memberID:   chi.URLParam(r, "memberID"),
 		Page: mggroups.Page{
 			Level:      level,
-			ID:         parentID,
+			ParentID:   parentID,
 			Permission: permission,
 			PageMeta:   pm,
 			Direction:  dir,
@@ -102,7 +102,7 @@ func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, 
 		tree:  tree,
 		Page: mggroups.Page{
 			Level:      level,
-			ID:         chi.URLParam(r, "groupID"),
+			ParentID:   chi.URLParam(r, "groupID"),
 			Permission: permission,
 			PageMeta:   pm,
 			Direction:  +1,
@@ -141,7 +141,7 @@ func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{},
 		tree:  tree,
 		Page: mggroups.Page{
 			Level:      level,
-			ID:         chi.URLParam(r, "groupID"),
+			ParentID:   chi.URLParam(r, "groupID"),
 			Permission: permission,
 			PageMeta:   pm,
 			Direction:  -1,
@@ -272,6 +272,10 @@ func decodePageMeta(r *http.Request) (mggroups.PageMeta, error) {
 	if err != nil {
 		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
+	if err != nil {
+		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	meta, err := apiutil.ReadMetadataQuery(r, api.MetadataKey, nil)
 	if err != nil {
 		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -281,6 +285,7 @@ func decodePageMeta(r *http.Request) (mggroups.PageMeta, error) {
 		Offset:   offset,
 		Limit:    limit,
 		Name:     name,
+		ID:       id,
 		Metadata: meta,
 		Status:   st,
 	}

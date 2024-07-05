@@ -136,7 +136,7 @@ func ListGroupsEndpoint(svc groups.Service, groupType, memberKind string) endpoi
 		if req.tree {
 			return buildGroupsResponseTree(page), nil
 		}
-		filterByID := req.Page.ID != ""
+		filterByID := req.Page.ParentID != ""
 
 		if groupType == groupTypeChannels {
 			return buildChannelsResponse(page, filterByID), nil

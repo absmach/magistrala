@@ -598,7 +598,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					PageMeta: groups.PageMeta{
 						Limit: 10,
 					},
-					ID:        validGroupResp.ID,
+					ParentID:  validGroupResp.ID,
 					Direction: -1,
 				},
 				tree:       false,
@@ -627,7 +627,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					PageMeta: groups.PageMeta{
 						Limit: 10,
 					},
-					ID:        validGroupResp.ID,
+					ParentID:  validGroupResp.ID,
 					Direction: 1,
 				},
 				tree:       false,

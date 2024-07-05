@@ -60,7 +60,7 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 						},
 					},
 					Level:      2,
-					ID:         "random",
+					ParentID:   "random",
 					Permission: "random",
 					Direction:  -1,
 					ListPerms:  true,

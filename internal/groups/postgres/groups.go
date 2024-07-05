@@ -149,10 +149,10 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 	var q string
 	query := buildQuery(gm)
 
-	if gm.ID != "" {
+	if gm.ParentID != "" {
 		q = buildHierachy(gm)
 	}
-	if gm.ID == "" {
+	if gm.ParentID == "" {
 		q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
 		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
 	}
@@ -197,10 +197,10 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 	}
 	query := buildQuery(gm, ids...)
 
-	if gm.ID != "" {
+	if gm.ParentID != "" {
 		q = buildHierachy(gm)
 	}
-	if gm.ID == "" {
+	if gm.ParentID == "" {
 		q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
 		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
 	}
@@ -310,14 +310,14 @@ func buildHierachy(gm mggroups.Page) string {
 	switch {
 	case gm.Direction >= 0: // ancestors
 		query = `WITH RECURSIVE groups_cte as (
-			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level from groups WHERE id = :id
+			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level from groups WHERE id = :parent_id
 			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.domain_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level - 1 from groups x
 			INNER JOIN groups_cte a ON a.parent_id = x.id
 		) SELECT * FROM groups_cte g`
 
 	case gm.Direction < 0: // descendants
 		query = `WITH RECURSIVE groups_cte as (
-			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level, CONCAT('', '', id) as path from groups WHERE id = :id
+			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level, CONCAT('', '', id) as path from groups WHERE id = :parent_id
 			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.domain_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level + 1, CONCAT(path, '.', x.id) as path from groups x
 			INNER JOIN groups_cte d ON d.id = x.parent_id
 		) SELECT * FROM groups_cte g`
@@ -332,7 +332,10 @@ func buildQuery(gm mggroups.Page, ids ...string) string {
 		queries = append(queries, fmt.Sprintf(" id in ('%s') ", strings.Join(ids, "', '")))
 	}
 	if gm.Name != "" {
-		queries = append(queries, "g.name = :name")
+		queries = append(queries, "g.name ILIKE '%' || :name || '%'")
+	}
+	if gm.PageMeta.ID != "" {
+		queries = append(queries, "g.id ILIKE '%' || :id || '%'")
 	}
 	if gm.Status != mgclients.AllStatus {
 		queries = append(queries, "g.status = :status")
@@ -459,7 +462,7 @@ func toDBGroupPage(pm mggroups.Page) (dbGroupPage, error) {
 		Total:    pm.Total,
 		Offset:   pm.Offset,
 		Limit:    pm.Limit,
-		ParentID: pm.ID,
+		ParentID: pm.ParentID,
 		DomainID: pm.DomainID,
 		Status:   pm.Status,
 	}, nil

@@ -54,7 +54,7 @@ type Page struct {
 	PageMeta
 	Path       string
 	Level      uint64
-	ID         string
+	ParentID   string
 	Permission string
 	ListPerms  bool
 	Direction  int64 // ancestors (+1) or descendants (-1)

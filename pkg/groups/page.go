@@ -11,6 +11,7 @@ type PageMeta struct {
 	Offset   uint64           `json:"offset"`
 	Limit    uint64           `json:"limit"`
 	Name     string           `json:"name,omitempty"`
+	ID       string           `json:"id,omitempty"`
 	DomainID string           `json:"domain_id,omitempty"`
 	Tag      string           `json:"tag,omitempty"`
 	Metadata clients.Metadata `json:"metadata,omitempty"`

@@ -205,7 +205,6 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 	default:
 		return groups.Page{}, errMemberKind
 	}
-
 	gp, err := svc.groups.RetrieveByIDs(ctx, gm, ids...)
 	if err != nil {
 		return groups.Page{}, errors.Wrap(svcerr.ErrViewEntity, err)

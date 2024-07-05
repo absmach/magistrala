@@ -1521,22 +1521,22 @@ func (_m *SDK) ListDomainUsers(domainID string, pm sdk.PageMetadata, token strin
 }
 
 // ListGroupChannels provides a mock function with given fields: groupID, pm, token
-func (_m *SDK) ListGroupChannels(groupID string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
+func (_m *SDK) ListGroupChannels(groupID string, pm sdk.PageMetadata, token string) (sdk.ChannelsPage, errors.SDKError) {
 	ret := _m.Called(groupID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListGroupChannels")
 	}
 
-	var r0 sdk.GroupsPage
+	var r0 sdk.ChannelsPage
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) (sdk.GroupsPage, errors.SDKError)); ok {
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) (sdk.ChannelsPage, errors.SDKError)); ok {
 		return rf(groupID, pm, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) sdk.GroupsPage); ok {
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) sdk.ChannelsPage); ok {
 		r0 = rf(groupID, pm, token)
 	} else {
-		r0 = ret.Get(0).(sdk.GroupsPage)
+		r0 = ret.Get(0).(sdk.ChannelsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string) errors.SDKError); ok {

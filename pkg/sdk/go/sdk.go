@@ -630,7 +630,7 @@ type SDK interface {
 	//	}
 	//  groups, _ := sdk.ListGroupChannels("groupID", pm, "token")
 	//  fmt.Println(groups)
-	ListGroupChannels(groupID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+	ListGroupChannels(groupID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
 
 	// DeleteGroup delete given group id.
 	//

@@ -42,7 +42,7 @@ type Client struct {
 	ID          string      `json:"id"`
 	Name        string      `json:"name,omitempty"`
 	Tags        []string    `json:"tags,omitempty"`
-	Domain      string      `json:"domain,omitempty"`
+	Domain      string      `json:"domain_id,omitempty"`
 	Credentials Credentials `json:"credentials,omitempty"`
 	Metadata    Metadata    `json:"metadata,omitempty"`
 	CreatedAt   time.Time   `json:"created_at,omitempty"`

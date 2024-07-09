@@ -58,8 +58,8 @@ func (ce configEvent) Encode() (map[string]interface{}, error) {
 	if ce.Content != "" {
 		val["content"] = ce.Content
 	}
-	if ce.Owner != "" {
-		val["owner"] = ce.Owner
+	if ce.DomainID != "" {
+		val["domain_id "] = ce.DomainID
 	}
 	if ce.Name != "" {
 		val["name"] = ce.Name
@@ -143,8 +143,8 @@ func (be bootstrapEvent) Encode() (map[string]interface{}, error) {
 	if be.Content != "" {
 		val["content"] = be.Content
 	}
-	if be.Owner != "" {
-		val["owner"] = be.Owner
+	if be.DomainID != "" {
+		val["domain_id "] = be.DomainID
 	}
 	if be.Name != "" {
 		val["name"] = be.Name

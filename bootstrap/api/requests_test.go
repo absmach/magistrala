@@ -8,8 +8,14 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/stretchr/testify/assert"
+)
+
+var (
+	channel1 = testsutil.GenerateUUID(&testing.T{})
+	channel2 = testsutil.GenerateUUID(&testing.T{})
 )
 
 func TestAddReqValidation(t *testing.T) {
@@ -18,13 +24,23 @@ func TestAddReqValidation(t *testing.T) {
 		token       string
 		externalID  string
 		externalKey string
+		channels    []string
 		err         error
 	}{
 		{
-			desc:        "empty key",
+			desc:        "valid request",
+			token:       "token",
+			externalID:  "external-id",
+			externalKey: "external-key",
+			channels:    []string{channel1, channel2},
+			err:         nil,
+		},
+		{
+			desc:        "empty token",
 			token:       "",
 			externalID:  "external-id",
 			externalKey: "external-key",
+			channels:    []string{channel1, channel2},
 			err:         apiutil.ErrBearerToken,
 		},
 		{
@@ -32,6 +48,7 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "token",
 			externalID:  "",
 			externalKey: "external-key",
+			channels:    []string{channel1, channel2},
 			err:         apiutil.ErrMissingID,
 		},
 		{
@@ -39,7 +56,32 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "token",
 			externalID:  "external-id",
 			externalKey: "",
+			channels:    []string{channel1, channel2},
 			err:         apiutil.ErrBearerKey,
+		},
+		{
+			desc:        "empty external key and external ID",
+			token:       "token",
+			externalID:  "",
+			externalKey: "",
+			channels:    []string{channel1, channel2},
+			err:         apiutil.ErrMissingID,
+		},
+		{
+			desc:        "empty channels",
+			token:       "token",
+			externalID:  "external-id",
+			externalKey: "external-key",
+			channels:    []string{},
+			err:         apiutil.ErrEmptyList,
+		},
+		{
+			desc:        "empty channel value",
+			token:       "token",
+			externalID:  "external-id",
+			externalKey: "external-key",
+			channels:    []string{channel1, ""},
+			err:         apiutil.ErrMissingID,
 		},
 	}
 
@@ -48,6 +90,7 @@ func TestAddReqValidation(t *testing.T) {
 			token:       tc.token,
 			ExternalID:  tc.externalID,
 			ExternalKey: tc.externalKey,
+			Channels:    tc.channels,
 		}
 
 		err := req.validate()
@@ -93,6 +136,12 @@ func TestUpdateReqValidation(t *testing.T) {
 		id    string
 		err   error
 	}{
+		{
+			desc:  "valid request",
+			token: "token",
+			id:    "id",
+			err:   nil,
+		},
 		{
 			desc:  "empty token",
 			token: "",

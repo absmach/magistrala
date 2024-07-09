@@ -27,7 +27,7 @@ var (
 		ThingKey:    "mg-key",
 		ExternalID:  "external-id",
 		ExternalKey: "external-key",
-		Owner:       "user@email.com",
+		DomainID:    testsutil.GenerateUUID(&testing.T{}),
 		Channels: []bootstrap.Channel{
 			{ID: "1", Name: "name 1", Metadata: map[string]interface{}{"meta": 1.0}},
 			{ID: "2", Name: "name 2", Metadata: map[string]interface{}{"meta": 2.0}},
@@ -121,38 +121,38 @@ func TestRetrieveByID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
 
 	cases := []struct {
-		desc  string
-		owner string
-		id    string
-		err   error
+		desc     string
+		domainID string
+		id       string
+		err      error
 	}{
 		{
-			desc:  "retrieve config",
-			owner: c.Owner,
-			id:    id,
-			err:   nil,
+			desc:     "retrieve config",
+			domainID: c.DomainID,
+			id:       id,
+			err:      nil,
 		},
 		{
-			desc:  "retrieve config with wrong owner",
-			owner: "2",
-			id:    id,
-			err:   repoerr.ErrNotFound,
+			desc:     "retrieve config with wrong domain ID ",
+			domainID: "2",
+			id:       id,
+			err:      repoerr.ErrNotFound,
 		},
 		{
-			desc:  "retrieve a non-existing config",
-			owner: c.Owner,
-			id:    nonexistentConfID.String(),
-			err:   repoerr.ErrNotFound,
+			desc:     "retrieve a non-existing config",
+			domainID: c.DomainID,
+			id:       nonexistentConfID.String(),
+			err:      repoerr.ErrNotFound,
 		},
 		{
-			desc:  "retrieve a config with invalid ID",
-			owner: c.Owner,
-			id:    "invalid",
-			err:   repoerr.ErrNotFound,
+			desc:     "retrieve a config with invalid ID",
+			domainID: c.DomainID,
+			id:       "invalid",
+			err:      repoerr.ErrNotFound,
 		},
 	}
 	for _, tc := range cases {
-		_, err := repo.RetrieveByID(context.Background(), tc.owner, tc.id)
+		_, err := repo.RetrieveByID(context.Background(), tc.domainID, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -161,6 +161,8 @@ func TestRetrieveAll(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
+
+	thingIDs := make([]string, numConfigs)
 
 	for i := 0; i < numConfigs; i++ {
 		c := config
@@ -173,6 +175,8 @@ func TestRetrieveAll(t *testing.T) {
 		c.ThingID = uid.String()
 		c.ThingKey = uid.String()
 
+		thingIDs[i] = c.ThingID
+
 		if i%2 == 0 {
 			c.State = bootstrap.Active
 		}
@@ -184,55 +188,85 @@ func TestRetrieveAll(t *testing.T) {
 		_, err = repo.Save(context.Background(), c, channels)
 		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	}
-
 	cases := []struct {
-		desc   string
-		owner  string
-		offset uint64
-		limit  uint64
-		filter bootstrap.Filter
-		size   int
+		desc     string
+		domainID string
+		thingID  []string
+		offset   uint64
+		limit    uint64
+		filter   bootstrap.Filter
+		size     int
 	}{
 		{
-			desc:   "retrieve all",
-			owner:  config.Owner,
-			offset: 0,
-			limit:  uint64(numConfigs),
-			size:   numConfigs,
+			desc:     "retrieve all configs",
+			domainID: config.DomainID,
+			thingID:  []string{},
+			offset:   0,
+			limit:    uint64(numConfigs),
+			size:     numConfigs,
 		},
 		{
-			desc:   "retrieve subset",
-			owner:  config.Owner,
-			offset: 5,
-			limit:  uint64(numConfigs - 5),
-			size:   numConfigs - 5,
+			desc:     "retrieve a subset of configs",
+			domainID: config.DomainID,
+			thingID:  []string{},
+			offset:   5,
+			limit:    uint64(numConfigs - 5),
+			size:     numConfigs - 5,
 		},
 		{
-			desc:   "retrieve wrong owner",
-			owner:  "2",
-			offset: 0,
-			limit:  uint64(numConfigs),
-			size:   0,
+			desc:     "retrieve with wrong domain ID ",
+			domainID: "2",
+			thingID:  []string{},
+			offset:   0,
+			limit:    uint64(numConfigs),
+			size:     0,
 		},
 		{
-			desc:   "retrieve all active",
-			owner:  config.Owner,
-			offset: 0,
-			limit:  uint64(numConfigs),
-			filter: bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
-			size:   numConfigs / 2,
+			desc:     "retrieve all active configs ",
+			domainID: config.DomainID,
+			thingID:  []string{},
+			offset:   0,
+			limit:    uint64(numConfigs),
+			filter:   bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
+			size:     numConfigs / 2,
 		},
 		{
-			desc:   "retrieve search by name",
-			owner:  config.Owner,
-			offset: 0,
-			limit:  uint64(numConfigs),
-			filter: bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
-			size:   1,
+			desc:     "retrieve all with partial match filter",
+			domainID: config.DomainID,
+			thingID:  []string{},
+			offset:   0,
+			limit:    uint64(numConfigs),
+			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
+			size:     1,
+		},
+		{
+			desc:     "retrieve search by name",
+			domainID: config.DomainID,
+			thingID:  []string{},
+			offset:   0,
+			limit:    uint64(numConfigs),
+			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
+			size:     1,
+		},
+		{
+			desc:     "retrieve by valid thingIDs",
+			domainID: config.DomainID,
+			thingID:  thingIDs,
+			offset:   0,
+			limit:    uint64(numConfigs),
+			size:     10,
+		},
+		{
+			desc:     "retrieve by non-existing thingID",
+			domainID: config.DomainID,
+			thingID:  []string{"non-existing"},
+			offset:   0,
+			limit:    uint64(numConfigs),
+			size:     0,
 		},
 	}
 	for _, tc := range cases {
-		ret := repo.RetrieveAll(context.Background(), tc.owner, tc.filter, tc.offset, tc.limit)
+		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.thingID, tc.filter, tc.offset, tc.limit)
 		size := len(ret.Configs)
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
 	}
@@ -295,8 +329,8 @@ func TestUpdate(t *testing.T) {
 	c.Content = "new content"
 	c.Name = "new name"
 
-	wrongOwner := c
-	wrongOwner.Owner = "3"
+	wrongDomainID := c
+	wrongDomainID.DomainID = "3"
 
 	cases := []struct {
 		desc   string
@@ -305,8 +339,8 @@ func TestUpdate(t *testing.T) {
 		err    error
 	}{
 		{
-			desc:   "update with wrong owner",
-			config: wrongOwner,
+			desc:   "update with wrong domainID ",
+			config: wrongDomainID,
 			err:    repoerr.ErrNotFound,
 		},
 		{
@@ -340,13 +374,13 @@ func TestUpdateCert(t *testing.T) {
 	c.Content = "new content"
 	c.Name = "new name"
 
-	wrongOwner := c
-	wrongOwner.Owner = "3"
+	wrongDomainID := c
+	wrongDomainID.DomainID = "3"
 
 	cases := []struct {
 		desc           string
 		thingID        string
-		owner          string
+		domainID       string
 		cert           string
 		certKey        string
 		ca             string
@@ -354,34 +388,34 @@ func TestUpdateCert(t *testing.T) {
 		err            error
 	}{
 		{
-			desc:           "update with wrong owner",
+			desc:           "update with wrong domain ID ",
 			thingID:        "",
 			cert:           "cert",
 			certKey:        "certKey",
 			ca:             "",
-			owner:          "wrong",
+			domainID:       wrongDomainID.DomainID,
 			expectedConfig: bootstrap.Config{},
 			err:            repoerr.ErrNotFound,
 		},
 		{
-			desc:    "update a config",
-			thingID: c.ThingID,
-			cert:    "cert",
-			certKey: "certKey",
-			ca:      "ca",
-			owner:   c.Owner,
+			desc:     "update a config",
+			thingID:  c.ThingID,
+			cert:     "cert",
+			certKey:  "certKey",
+			ca:       "ca",
+			domainID: c.DomainID,
 			expectedConfig: bootstrap.Config{
 				ThingID:    c.ThingID,
 				ClientCert: "cert",
 				CACert:     "ca",
 				ClientKey:  "certKey",
-				Owner:      c.Owner,
+				DomainID:   c.DomainID,
 			},
 			err: nil,
 		},
 	}
 	for _, tc := range cases {
-		cfg, err := repo.UpdateCert(context.Background(), tc.owner, tc.thingID, tc.cert, tc.certKey, tc.ca)
+		cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.thingID, tc.cert, tc.certKey, tc.ca)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
 	}
@@ -415,7 +449,7 @@ func TestUpdateConnections(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		owner       string
+		domainID    string
 		id          string
 		channels    []bootstrap.Channel
 		connections []string
@@ -423,7 +457,7 @@ func TestUpdateConnections(t *testing.T) {
 	}{
 		{
 			desc:        "update connections of non-existing config",
-			owner:       config.Owner,
+			domainID:    config.DomainID,
 			id:          "unknown",
 			channels:    nil,
 			connections: []string{channels[1]},
@@ -431,7 +465,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections",
-			owner:       config.Owner,
+			domainID:    config.DomainID,
 			id:          c.ThingID,
 			channels:    nil,
 			connections: []string{channels[1]},
@@ -439,7 +473,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections with existing channels",
-			owner:       config.Owner,
+			domainID:    config.DomainID,
 			id:          c2,
 			channels:    nil,
 			connections: channels,
@@ -447,7 +481,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections no channels",
-			owner:       config.Owner,
+			domainID:    config.DomainID,
 			id:          c.ThingID,
 			channels:    nil,
 			connections: nil,
@@ -455,7 +489,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := repo.UpdateConnections(context.Background(), tc.owner, tc.id, tc.channels, tc.connections)
+		err := repo.UpdateConnections(context.Background(), tc.domainID, tc.id, tc.channels, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -479,10 +513,10 @@ func TestRemove(t *testing.T) {
 	// Removal works the same for both existing and non-existing
 	// (removed) config
 	for i := 0; i < 2; i++ {
-		err := repo.Remove(context.Background(), c.Owner, id)
+		err := repo.Remove(context.Background(), c.DomainID, id)
 		assert.Nil(t, err, fmt.Sprintf("%d: failed to remove config due to: %s", i, err))
 
-		_, err = repo.RetrieveByID(context.Background(), c.Owner, id)
+		_, err = repo.RetrieveByID(context.Background(), c.DomainID, id)
 		assert.True(t, errors.Contains(err, repoerr.ErrNotFound), fmt.Sprintf("%d: expected %s got %s", i, repoerr.ErrNotFound, err))
 	}
 }
@@ -504,41 +538,41 @@ func TestChangeState(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
-		desc  string
-		owner string
-		id    string
-		state bootstrap.State
-		err   error
+		desc     string
+		domainID string
+		id       string
+		state    bootstrap.State
+		err      error
 	}{
 		{
-			desc:  "change state with wrong owner",
-			id:    saved,
-			owner: "2",
-			err:   repoerr.ErrNotFound,
+			desc:     "change state with wrong domain ID ",
+			id:       saved,
+			domainID: "2",
+			err:      repoerr.ErrNotFound,
 		},
 		{
-			desc:  "change state with wrong id",
-			id:    "wrong",
-			owner: c.Owner,
-			err:   repoerr.ErrNotFound,
+			desc:     "change state with wrong id",
+			id:       "wrong",
+			domainID: c.DomainID,
+			err:      repoerr.ErrNotFound,
 		},
 		{
-			desc:  "change state to Active",
-			id:    saved,
-			owner: c.Owner,
-			state: bootstrap.Active,
-			err:   nil,
+			desc:     "change state to Active",
+			id:       saved,
+			domainID: c.DomainID,
+			state:    bootstrap.Active,
+			err:      nil,
 		},
 		{
-			desc:  "change state to Inactive",
-			id:    saved,
-			owner: c.Owner,
-			state: bootstrap.Inactive,
-			err:   nil,
+			desc:     "change state to Inactive",
+			id:       saved,
+			domainID: c.DomainID,
+			state:    bootstrap.Inactive,
+			err:      nil,
 		},
 	}
 	for _, tc := range cases {
-		err := repo.ChangeState(context.Background(), tc.owner, tc.id, tc.state)
+		err := repo.ChangeState(context.Background(), tc.domainID, tc.id, tc.state)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -564,31 +598,31 @@ func TestListExisting(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		owner       string
+		domainID    string
 		connections []string
 		existing    []bootstrap.Channel
 	}{
 		{
 			desc:        "list all existing channels",
-			owner:       c.Owner,
+			domainID:    c.DomainID,
 			connections: channels,
 			existing:    chs,
 		},
 		{
 			desc:        "list a subset of existing channels",
-			owner:       c.Owner,
+			domainID:    c.DomainID,
 			connections: []string{channels[0], "5"},
 			existing:    []bootstrap.Channel{chs[0]},
 		},
 		{
 			desc:        "list a subset of existing channels empty",
-			owner:       c.Owner,
+			domainID:    c.DomainID,
 			connections: []string{"5", "6"},
 			existing:    []bootstrap.Channel{},
 		},
 	}
 	for _, tc := range cases {
-		existing, err := repo.ListExisting(context.Background(), tc.owner, tc.connections)
+		existing, err := repo.ListExisting(context.Background(), tc.domainID, tc.connections)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error: %s", tc.desc, err))
 		assert.ElementsMatch(t, tc.existing, existing, fmt.Sprintf("%s: Got non-matching elements.", tc.desc))
 	}
@@ -640,7 +674,7 @@ func TestUpdateChannel(t *testing.T) {
 	err = repo.UpdateChannel(context.Background(), update)
 	assert.Nil(t, err, fmt.Sprintf("updating config expected to succeed: %s.\n", err))
 
-	cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 	var retreved bootstrap.Channel
 	for _, c := range cfg.Channels {
@@ -649,7 +683,7 @@ func TestUpdateChannel(t *testing.T) {
 			break
 		}
 	}
-	update.Owner = retreved.Owner
+	update.DomainID = retreved.DomainID
 	assert.Equal(t, update, retreved, fmt.Sprintf("expected %s, go %s", update, retreved))
 }
 
@@ -671,7 +705,7 @@ func TestRemoveChannel(t *testing.T) {
 	err = repo.RemoveChannel(context.Background(), c.Channels[0].ID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 
-	cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 	assert.NotContains(t, cfg.Channels, c.Channels[0], fmt.Sprintf("expected to remove channel %s from %s", c.Channels[0], cfg.Channels))
 }
@@ -704,38 +738,37 @@ func TestConnectThing(t *testing.T) {
 
 	emptyThing := c
 	emptyThing.ThingID = ""
-	emptyThing.ThingKey = ""
-	emptyThing.ExternalID = ""
-	emptyThing.ExternalKey = ""
-	emptyThing.Channels = []bootstrap.Channel{}
 
 	cases := []struct {
 		desc        string
-		owner       string
+		domainID    string
 		id          string
+		state       bootstrap.State
 		channels    []bootstrap.Channel
 		connections []string
 		err         error
 	}{
 		{
 			desc:        "connect disconnected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          saved,
+			state:       bootstrap.Inactive,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
 		},
 		{
 			desc:        "connect already connected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          connectedThing.ThingID,
+			state:       connectedThing.State,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
 		},
 		{
 			desc:        "connect non-existent thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          wrongID,
 			channels:    c.Channels,
 			connections: channels,
@@ -743,7 +776,7 @@ func TestConnectThing(t *testing.T) {
 		},
 		{
 			desc:        "connect random thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          randomThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -751,7 +784,7 @@ func TestConnectThing(t *testing.T) {
 		},
 		{
 			desc:        "connect empty thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          emptyThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
@@ -763,7 +796,7 @@ func TestConnectThing(t *testing.T) {
 			if i == 0 {
 				err = repo.ConnectThing(context.Background(), ch.ID, tc.id)
 				assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
-				cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+				cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
 				assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 				assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
 			} else {
@@ -771,7 +804,7 @@ func TestConnectThing(t *testing.T) {
 			}
 		}
 
-		cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
+		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
 		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 		assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
 	}
@@ -805,57 +838,57 @@ func TestDisconnectThing(t *testing.T) {
 
 	emptyThing := c
 	emptyThing.ThingID = ""
-	emptyThing.ThingKey = ""
-	emptyThing.ExternalID = ""
-	emptyThing.ExternalKey = ""
 
 	cases := []struct {
 		desc        string
-		owner       string
+		domainID    string
 		id          string
+		state       bootstrap.State
 		channels    []bootstrap.Channel
 		connections []string
 		err         error
 	}{
 		{
 			desc:        "disconnect connected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          connectedThing.ThingID,
+			state:       connectedThing.State,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
 		},
 		{
 			desc:        "disconnect already disconnected thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          saved,
+			state:       bootstrap.Inactive,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
 		},
 		{
 			desc:        "disconnect invalid thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          wrongID,
 			channels:    c.Channels,
 			connections: channels,
-			err:         repoerr.ErrNotFound,
+			err:         nil,
 		},
 		{
 			desc:        "disconnect random thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          randomThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
-			err:         repoerr.ErrNotFound,
+			err:         nil,
 		},
 		{
 			desc:        "disconnect empty thing",
-			owner:       config.Owner,
+			domainID:    c.DomainID,
 			id:          emptyThing.ThingID,
 			channels:    c.Channels,
 			connections: channels,
-			err:         repoerr.ErrNotFound,
+			err:         nil,
 		},
 	}
 
@@ -864,11 +897,11 @@ func TestDisconnectThing(t *testing.T) {
 			err = repo.DisconnectThing(context.Background(), ch.ID, tc.id)
 			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
 		}
-	}
 
-	cfg, err := repo.RetrieveByID(context.Background(), c.Owner, c.ThingID)
-	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-	assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
+		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+		assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
+	}
 }
 
 func deleteChannels(ctx context.Context, repo bootstrap.ConfigRepository) error {

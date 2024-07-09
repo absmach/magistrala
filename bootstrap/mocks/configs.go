@@ -17,9 +17,9 @@ type ConfigRepository struct {
 	mock.Mock
 }
 
-// ChangeState provides a mock function with given fields: ctx, owner, id, state
-func (_m *ConfigRepository) ChangeState(ctx context.Context, owner string, id string, state bootstrap.State) error {
-	ret := _m.Called(ctx, owner, id, state)
+// ChangeState provides a mock function with given fields: ctx, domainID, id, state
+func (_m *ConfigRepository) ChangeState(ctx context.Context, domainID string, id string, state bootstrap.State) error {
+	ret := _m.Called(ctx, domainID, id, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ChangeState")
@@ -27,7 +27,7 @@ func (_m *ConfigRepository) ChangeState(ctx context.Context, owner string, id st
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, bootstrap.State) error); ok {
-		r0 = rf(ctx, owner, id, state)
+		r0 = rf(ctx, domainID, id, state)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -71,9 +71,9 @@ func (_m *ConfigRepository) DisconnectThing(ctx context.Context, channelID strin
 	return r0
 }
 
-// ListExisting provides a mock function with given fields: ctx, owner, ids
-func (_m *ConfigRepository) ListExisting(ctx context.Context, owner string, ids []string) ([]bootstrap.Channel, error) {
-	ret := _m.Called(ctx, owner, ids)
+// ListExisting provides a mock function with given fields: ctx, domainID, ids
+func (_m *ConfigRepository) ListExisting(ctx context.Context, domainID string, ids []string) ([]bootstrap.Channel, error) {
+	ret := _m.Called(ctx, domainID, ids)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListExisting")
@@ -82,10 +82,10 @@ func (_m *ConfigRepository) ListExisting(ctx context.Context, owner string, ids 
 	var r0 []bootstrap.Channel
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, []string) ([]bootstrap.Channel, error)); ok {
-		return rf(ctx, owner, ids)
+		return rf(ctx, domainID, ids)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, []string) []bootstrap.Channel); ok {
-		r0 = rf(ctx, owner, ids)
+		r0 = rf(ctx, domainID, ids)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]bootstrap.Channel)
@@ -93,7 +93,7 @@ func (_m *ConfigRepository) ListExisting(ctx context.Context, owner string, ids 
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, []string) error); ok {
-		r1 = rf(ctx, owner, ids)
+		r1 = rf(ctx, domainID, ids)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -101,9 +101,9 @@ func (_m *ConfigRepository) ListExisting(ctx context.Context, owner string, ids 
 	return r0, r1
 }
 
-// Remove provides a mock function with given fields: ctx, owner, id
-func (_m *ConfigRepository) Remove(ctx context.Context, owner string, id string) error {
-	ret := _m.Called(ctx, owner, id)
+// Remove provides a mock function with given fields: ctx, domainID, id
+func (_m *ConfigRepository) Remove(ctx context.Context, domainID string, id string) error {
+	ret := _m.Called(ctx, domainID, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Remove")
@@ -111,7 +111,7 @@ func (_m *ConfigRepository) Remove(ctx context.Context, owner string, id string)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, owner, id)
+		r0 = rf(ctx, domainID, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -155,17 +155,17 @@ func (_m *ConfigRepository) RemoveThing(ctx context.Context, id string) error {
 	return r0
 }
 
-// RetrieveAll provides a mock function with given fields: ctx, owner, filter, offset, limit
-func (_m *ConfigRepository) RetrieveAll(ctx context.Context, owner string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
-	ret := _m.Called(ctx, owner, filter, offset, limit)
+// RetrieveAll provides a mock function with given fields: ctx, domainID, thingIDs, filter, offset, limit
+func (_m *ConfigRepository) RetrieveAll(ctx context.Context, domainID string, thingIDs []string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
+	ret := _m.Called(ctx, domainID, thingIDs, filter, offset, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
 	}
 
 	var r0 bootstrap.ConfigsPage
-	if rf, ok := ret.Get(0).(func(context.Context, string, bootstrap.Filter, uint64, uint64) bootstrap.ConfigsPage); ok {
-		r0 = rf(ctx, owner, filter, offset, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, string, []string, bootstrap.Filter, uint64, uint64) bootstrap.ConfigsPage); ok {
+		r0 = rf(ctx, domainID, thingIDs, filter, offset, limit)
 	} else {
 		r0 = ret.Get(0).(bootstrap.ConfigsPage)
 	}
@@ -201,9 +201,9 @@ func (_m *ConfigRepository) RetrieveByExternalID(ctx context.Context, externalID
 	return r0, r1
 }
 
-// RetrieveByID provides a mock function with given fields: ctx, owner, id
-func (_m *ConfigRepository) RetrieveByID(ctx context.Context, owner string, id string) (bootstrap.Config, error) {
-	ret := _m.Called(ctx, owner, id)
+// RetrieveByID provides a mock function with given fields: ctx, domainID, id
+func (_m *ConfigRepository) RetrieveByID(ctx context.Context, domainID string, id string) (bootstrap.Config, error) {
+	ret := _m.Called(ctx, domainID, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveByID")
@@ -212,16 +212,16 @@ func (_m *ConfigRepository) RetrieveByID(ctx context.Context, owner string, id s
 	var r0 bootstrap.Config
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bootstrap.Config, error)); ok {
-		return rf(ctx, owner, id)
+		return rf(ctx, domainID, id)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) bootstrap.Config); ok {
-		r0 = rf(ctx, owner, id)
+		r0 = rf(ctx, domainID, id)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, owner, id)
+		r1 = rf(ctx, domainID, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -275,9 +275,9 @@ func (_m *ConfigRepository) Update(ctx context.Context, cfg bootstrap.Config) er
 	return r0
 }
 
-// UpdateCert provides a mock function with given fields: ctx, owner, thingID, clientCert, clientKey, caCert
-func (_m *ConfigRepository) UpdateCert(ctx context.Context, owner string, thingID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
-	ret := _m.Called(ctx, owner, thingID, clientCert, clientKey, caCert)
+// UpdateCert provides a mock function with given fields: ctx, domainID, thingID, clientCert, clientKey, caCert
+func (_m *ConfigRepository) UpdateCert(ctx context.Context, domainID string, thingID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
+	ret := _m.Called(ctx, domainID, thingID, clientCert, clientKey, caCert)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCert")
@@ -286,16 +286,16 @@ func (_m *ConfigRepository) UpdateCert(ctx context.Context, owner string, thingI
 	var r0 bootstrap.Config
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (bootstrap.Config, error)); ok {
-		return rf(ctx, owner, thingID, clientCert, clientKey, caCert)
+		return rf(ctx, domainID, thingID, clientCert, clientKey, caCert)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) bootstrap.Config); ok {
-		r0 = rf(ctx, owner, thingID, clientCert, clientKey, caCert)
+		r0 = rf(ctx, domainID, thingID, clientCert, clientKey, caCert)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) error); ok {
-		r1 = rf(ctx, owner, thingID, clientCert, clientKey, caCert)
+		r1 = rf(ctx, domainID, thingID, clientCert, clientKey, caCert)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -321,9 +321,9 @@ func (_m *ConfigRepository) UpdateChannel(ctx context.Context, c bootstrap.Chann
 	return r0
 }
 
-// UpdateConnections provides a mock function with given fields: ctx, owner, id, channels, connections
-func (_m *ConfigRepository) UpdateConnections(ctx context.Context, owner string, id string, channels []bootstrap.Channel, connections []string) error {
-	ret := _m.Called(ctx, owner, id, channels, connections)
+// UpdateConnections provides a mock function with given fields: ctx, domainID, id, channels, connections
+func (_m *ConfigRepository) UpdateConnections(ctx context.Context, domainID string, id string, channels []bootstrap.Channel, connections []string) error {
+	ret := _m.Called(ctx, domainID, id, channels, connections)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateConnections")
@@ -331,7 +331,7 @@ func (_m *ConfigRepository) UpdateConnections(ctx context.Context, owner string,
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, []bootstrap.Channel, []string) error); ok {
-		r0 = rf(ctx, owner, id, channels, connections)
+		r0 = rf(ctx, domainID, id, channels, connections)
 	} else {
 		r0 = ret.Error(0)
 	}

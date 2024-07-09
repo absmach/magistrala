@@ -19,7 +19,8 @@ type Journal struct {
 	ID         string    `json:"id,omitempty"`
 	Operation  string    `json:"operation,omitempty"`
 	OccurredAt time.Time `json:"occurred_at,omitempty"`
-	Payload    Metadata  `json:"payload,omitempty"`
+	Attributes Metadata  `json:"attributes,omitempty"`
+	Metadata   Metadata  `json:"metadata,omitempty"`
 }
 
 type JournalsPage struct {

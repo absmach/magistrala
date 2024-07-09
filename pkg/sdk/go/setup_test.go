@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/invitations"
+	"github.com/absmach/magistrala/journal"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -208,6 +209,16 @@ func convertInvitation(i sdk.Invitation) invitations.Invitation {
 		UpdatedAt:   i.UpdatedAt,
 		ConfirmedAt: i.ConfirmedAt,
 		Resend:      i.Resend,
+	}
+}
+
+func convertJournal(j sdk.Journal) journal.Journal {
+	return journal.Journal{
+		ID:         j.ID,
+		Operation:  j.Operation,
+		OccurredAt: j.OccurredAt,
+		Attributes: j.Attributes,
+		Metadata:   j.Metadata,
 	}
 }
 

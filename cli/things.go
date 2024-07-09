@@ -20,23 +20,23 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things create '{\"name\":\"new thing\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			var thing mgxsdk.Thing
 			if err := json.Unmarshal([]byte(args[0]), &thing); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			thing.Status = mgclients.EnabledStatus.String()
 			thing, err := sdk.CreateThing(thing, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(thing)
+			logJSONCmd(*cmd, thing)
 		},
 	},
 	{
@@ -49,12 +49,12 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things get <thing_id> $USERTOKEN - shows thing with provided <thing_id>\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			metadata, err := convertMetadata(Metadata)
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
@@ -66,19 +66,19 @@ var cmdThings = []cobra.Command{
 			if args[0] == all {
 				l, err := sdk.Things(pageMetadata, args[1])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(l)
+				logJSONCmd(*cmd, l)
 				return
 			}
 			t, err := sdk.Thing(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(t)
+			logJSONCmd(*cmd, t)
 		},
 	},
 	{
@@ -89,14 +89,14 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things delete <thing_id> $USERTOKEN - delete thing with <thing_id>\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			if err := sdk.DeleteThing(args[0], args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -109,50 +109,50 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things update secret <thing_id> <newsecret> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 && len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			var thing mgxsdk.Thing
 			if args[0] == "tags" {
 				if err := json.Unmarshal([]byte(args[2]), &thing.Tags); err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 				thing.ID = args[1]
 				thing, err := sdk.UpdateThingTags(thing, args[3])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
-				logJSON(thing)
+				logJSONCmd(*cmd, thing)
 				return
 			}
 
 			if args[0] == "secret" {
 				thing, err := sdk.UpdateThingSecret(args[1], args[2], args[3])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
-				logJSON(thing)
+				logJSONCmd(*cmd, thing)
 				return
 			}
 
 			if err := json.Unmarshal([]byte(args[1]), &thing); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			thing.ID = args[0]
 			thing, err := sdk.UpdateThing(thing, args[2])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(thing)
+			logJSONCmd(*cmd, thing)
 		},
 	},
 	{
@@ -163,17 +163,17 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things enable <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			thing, err := sdk.EnableThing(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(thing)
+			logJSONCmd(*cmd, thing)
 		},
 	},
 	{
@@ -184,17 +184,17 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things disable <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			thing, err := sdk.DisableThing(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(thing)
+			logJSONCmd(*cmd, thing)
 		},
 	},
 	{
@@ -205,7 +205,7 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things share <thing_id> <user_id> <relation> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			req := mgxsdk.UsersRelationRequest{
@@ -214,11 +214,11 @@ var cmdThings = []cobra.Command{
 			}
 			err := sdk.ShareThing(args[0], req, args[3])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -229,7 +229,7 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things share  <thing_id> <user_id> <relation> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			req := mgxsdk.UsersRelationRequest{
@@ -238,11 +238,11 @@ var cmdThings = []cobra.Command{
 			}
 			err := sdk.UnshareThing(args[0], req, args[3])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -253,7 +253,7 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things connect <thing_id> <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
@@ -262,11 +262,11 @@ var cmdThings = []cobra.Command{
 				ThingID:   args[0],
 			}
 			if err := sdk.Connect(connIDs, args[2]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -277,7 +277,7 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things disconnect <thing_id> <channel_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
@@ -286,11 +286,11 @@ var cmdThings = []cobra.Command{
 				ChannelID: args[1],
 			}
 			if err := sdk.Disconnect(connIDs, args[2]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -301,7 +301,7 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli connections <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
@@ -310,11 +310,11 @@ var cmdThings = []cobra.Command{
 			}
 			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(cl)
+			logJSONCmd(*cmd, cl)
 		},
 	},
 	{
@@ -325,7 +325,7 @@ var cmdThings = []cobra.Command{
 			"\tmagistrala-cli things users <thing_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
@@ -334,11 +334,11 @@ var cmdThings = []cobra.Command{
 			}
 			ul, err := sdk.ListThingUsers(args[0], pm, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(ul)
+			logJSONCmd(*cmd, ul)
 		},
 	},
 }

@@ -14,24 +14,24 @@ var cmdCerts = []cobra.Command{
 		Long:  `Gets a certificate for a given cert ID.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			if args[0] == "thing" {
 				cert, err := sdk.ViewCertByThing(args[1], args[2])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(cert)
+				logJSONCmd(*cmd, cert)
 				return
 			}
 			cert, err := sdk.ViewCert(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(cert)
+			logJSONCmd(*cmd, cert)
 		},
 	},
 	{
@@ -40,15 +40,15 @@ var cmdCerts = []cobra.Command{
 		Long:  `Revokes a certificate for a given thing ID.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			rtime, err := sdk.RevokeCert(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logRevokedTime(rtime)
+			logRevokedTimeCmd(*cmd, rtime)
 		},
 	},
 }
@@ -63,7 +63,7 @@ func NewCertsCmd() *cobra.Command {
 		Long:  `Issues new certificate for a thing`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
@@ -71,10 +71,10 @@ func NewCertsCmd() *cobra.Command {
 
 			c, err := sdk.IssueCert(thingID, ttl, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(c)
+			logJSONCmd(*cmd, c)
 		},
 	}
 

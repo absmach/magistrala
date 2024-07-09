@@ -6,11 +6,11 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/hokaccha/go-prettyjson"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -38,52 +38,52 @@ var (
 	RawOutput bool = false
 )
 
-func logJSON(iList ...interface{}) {
+func logJSONCmd(cmd cobra.Command, iList ...interface{}) {
 	for _, i := range iList {
 		m, err := json.Marshal(i)
 		if err != nil {
-			logError(err)
+			logErrorCmd(cmd, err)
 			return
 		}
 
 		pj, err := prettyjson.Format(m)
 		if err != nil {
-			logError(err)
+			logErrorCmd(cmd, err)
 			return
 		}
 
-		fmt.Fprintf(os.Stdout, "\n%s\n\n", string(pj))
+		fmt.Fprintf(cmd.OutOrStdout(), "\n%s\n\n", string(pj))
 	}
 }
 
-func logUsage(u string) {
-	fmt.Fprintf(os.Stdout, color.YellowString("\nusage: %s\n\n"), u)
+func logUsageCmd(cmd cobra.Command, u string) {
+	fmt.Fprintf(cmd.OutOrStdout(), color.YellowString("\nusage: %s\n\n"), u)
 }
 
-func logError(err error) {
+func logErrorCmd(cmd cobra.Command, err error) {
 	boldRed := color.New(color.FgRed, color.Bold)
-	boldRed.Fprintf(os.Stderr, "\nerror: ")
+	boldRed.Fprintf(cmd.ErrOrStderr(), "\nerror: ")
 
-	fmt.Fprintf(os.Stderr, "%s\n\n", color.RedString(err.Error()))
+	fmt.Fprintf(cmd.ErrOrStderr(), "%s\n\n", color.RedString(err.Error()))
 }
 
-func logOK() {
-	fmt.Fprintf(os.Stdout, "\n%s\n\n", color.BlueString("ok"))
+func logOKCmd(cmd cobra.Command) {
+	fmt.Fprintf(cmd.OutOrStdout(), "\n%s\n\n", color.BlueString("ok"))
 }
 
-func logCreated(e string) {
+func logCreatedCmd(cmd cobra.Command, e string) {
 	if RawOutput {
-		fmt.Fprintln(os.Stdout, e)
+		fmt.Fprintln(cmd.OutOrStdout(), e)
 	} else {
-		fmt.Fprintf(os.Stdout, color.BlueString("\ncreated: %s\n\n"), e)
+		fmt.Fprintf(cmd.OutOrStdout(), color.BlueString("\ncreated: %s\n\n"), e)
 	}
 }
 
-func logRevokedTime(t time.Time) {
+func logRevokedTimeCmd(cmd cobra.Command, t time.Time) {
 	if RawOutput {
-		fmt.Fprintln(os.Stdout, t)
+		fmt.Fprintln(cmd.OutOrStdout(), t)
 	} else {
-		fmt.Fprintf(os.Stdout, color.BlueString("\nrevoked: %v\n\n"), t)
+		fmt.Fprintf(cmd.OutOrStdout(), color.BlueString("\nrevoked: %v\n\n"), t)
 	}
 }
 

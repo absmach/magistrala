@@ -20,21 +20,21 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups create '{\"name\":\"new group\", \"description\":\"new group description\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			var group mgxsdk.Group
 			if err := json.Unmarshal([]byte(args[0]), &group); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			group.Status = mgclients.EnabledStatus.String()
 			group, err := sdk.CreateGroup(group, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(group)
+			logJSONCmd(*cmd, group)
 		},
 	},
 	{
@@ -45,23 +45,23 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups update '{\"id\":\"<group_id>\", \"name\":\"new group\", \"description\":\"new group description\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			var group mgxsdk.Group
 			if err := json.Unmarshal([]byte(args[0]), &group); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			group, err := sdk.UpdateGroup(group, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(group)
+			logJSONCmd(*cmd, group)
 		},
 	},
 	{
@@ -75,12 +75,12 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups get <group_id> $USERTOKEN - shows group with provided group ID\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			if args[0] == all {
 				if len(args) > 2 {
-					logUsage(cmd.Use)
+					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
 				pm := mgxsdk.PageMetadata{
@@ -89,15 +89,15 @@ var cmdGroups = []cobra.Command{
 				}
 				l, err := sdk.Groups(pm, args[1])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(l)
+				logJSONCmd(*cmd, l)
 				return
 			}
 			if args[0] == "children" {
 				if len(args) > 3 {
-					logUsage(cmd.Use)
+					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
 				pm := mgxsdk.PageMetadata{
@@ -106,15 +106,15 @@ var cmdGroups = []cobra.Command{
 				}
 				l, err := sdk.Children(args[1], pm, args[2])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(l)
+				logJSONCmd(*cmd, l)
 				return
 			}
 			if args[0] == "parents" {
 				if len(args) > 3 {
-					logUsage(cmd.Use)
+					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
 				pm := mgxsdk.PageMetadata{
@@ -123,22 +123,22 @@ var cmdGroups = []cobra.Command{
 				}
 				l, err := sdk.Parents(args[1], pm, args[2])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(l)
+				logJSONCmd(*cmd, l)
 				return
 			}
 			if len(args) > 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			t, err := sdk.Group(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(t)
+			logJSONCmd(*cmd, t)
 		},
 	},
 	{
@@ -149,14 +149,14 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups delete <group_id> $USERTOKEN - delete the given group ID\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			if err := sdk.DeleteGroup(args[0], args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -167,7 +167,7 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups users <group_id> $USERTOKEN",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
@@ -177,10 +177,10 @@ var cmdGroups = []cobra.Command{
 			}
 			users, err := sdk.ListGroupUsers(args[0], pm, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(users)
+			logJSONCmd(*cmd, users)
 		},
 	},
 	{
@@ -191,7 +191,7 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups channels <group_id> $USERTOKEN",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
@@ -201,10 +201,10 @@ var cmdGroups = []cobra.Command{
 			}
 			channels, err := sdk.ListGroupChannels(args[0], pm, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(channels)
+			logJSONCmd(*cmd, channels)
 		},
 	},
 	{
@@ -215,17 +215,17 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups enable <group_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			group, err := sdk.EnableGroup(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(group)
+			logJSONCmd(*cmd, group)
 		},
 	},
 	{
@@ -236,17 +236,17 @@ var cmdGroups = []cobra.Command{
 			"\tmagistrala-cli groups disable <group_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			group, err := sdk.DisableGroup(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(group)
+			logJSONCmd(*cmd, group)
 		},
 	},
 }
@@ -260,19 +260,19 @@ var groupAssignCmds = []cobra.Command{
 			"\tmagistrala-cli groups assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			var userIDs []string
 			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			if err := sdk.AddUserToGroup(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 }
@@ -286,19 +286,19 @@ var groupUnassignCmds = []cobra.Command{
 			"\tmagistrala-cli groups unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			var userIDs []string
 			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			if err := sdk.RemoveUserFromGroup(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 }

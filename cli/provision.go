@@ -36,28 +36,28 @@ var cmdProvision = []cobra.Command{
 		Long:  `Bulk create things`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if _, err := os.Stat(args[0]); os.IsNotExist(err) {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			things, err := thingsFromFile(args[0])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			things, err = sdk.CreateThings(things, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(things)
+			logJSONCmd(*cmd, things)
 		},
 	},
 	{
@@ -66,13 +66,13 @@ var cmdProvision = []cobra.Command{
 		Long:  `Bulk create channels`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			channels, err := channelsFromFile(args[0])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
@@ -80,14 +80,14 @@ var cmdProvision = []cobra.Command{
 			for _, c := range channels {
 				c, err = sdk.CreateChannel(c, args[1])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 				chs = append(chs, c)
 			}
 			channels = chs
 
-			logJSON(channels)
+			logJSONCmd(*cmd, channels)
 		},
 	},
 	{
@@ -96,23 +96,23 @@ var cmdProvision = []cobra.Command{
 		Long:  `Bulk connect things to channels`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			connIDs, err := connectionsFromFile(args[0])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			for _, conn := range connIDs {
 				if err := sdk.Connect(conn, args[1]); err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -128,7 +128,7 @@ var cmdProvision = []cobra.Command{
 			channels := []mgxsdk.Channel{}
 
 			if len(args) != 0 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
@@ -144,14 +144,14 @@ var cmdProvision = []cobra.Command{
 			}
 			user, err := sdk.CreateUser(user, "")
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			user.Credentials.Secret = "12345678"
 			ut, err := sdk.CreateToken(mgxsdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret})
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
@@ -162,14 +162,14 @@ var cmdProvision = []cobra.Command{
 			}
 			domain, err = sdk.CreateDomain(domain, ut.AccessToken)
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			// domain login
 			ut, err = sdk.CreateToken(mgxsdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret, DomainID: domain.ID})
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
@@ -184,7 +184,7 @@ var cmdProvision = []cobra.Command{
 			}
 			things, err = sdk.CreateThings(things, ut.AccessToken)
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
@@ -196,7 +196,7 @@ var cmdProvision = []cobra.Command{
 				}
 				c, err = sdk.CreateChannel(c, ut.AccessToken)
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
@@ -209,7 +209,7 @@ var cmdProvision = []cobra.Command{
 				ThingID:   things[0].ID,
 			}
 			if err := sdk.Connect(conIDs, ut.AccessToken); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
@@ -218,7 +218,7 @@ var cmdProvision = []cobra.Command{
 				ThingID:   things[0].ID,
 			}
 			if err := sdk.Connect(conIDs, ut.AccessToken); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
@@ -227,25 +227,25 @@ var cmdProvision = []cobra.Command{
 				ThingID:   things[1].ID,
 			}
 			if err := sdk.Connect(conIDs, ut.AccessToken); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			// send message to test connectivity
 			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[0].Credentials.Secret); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[1].Credentials.Secret); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			if err := sdk.SendMessage(channels[1].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[0].Credentials.Secret); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(user, ut, things, channels)
+			logJSONCmd(*cmd, user, ut, things, channels)
 		},
 	},
 }

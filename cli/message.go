@@ -15,16 +15,16 @@ var cmdMessages = []cobra.Command{
 		Long:  `Sends message on the channel`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if err := sdk.SendMessage(args[0], args[1], args[2]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -35,7 +35,7 @@ var cmdMessages = []cobra.Command{
 			"\tmagistrala-cli messages read <channel_id.subtopic> <user_token> --offset <offset> --limit <limit> - lists all messages with provided offset and limit\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pageMetadata := mgxsdk.MessagePageMetadata{
@@ -47,11 +47,11 @@ var cmdMessages = []cobra.Command{
 
 			m, err := sdk.ReadMessages(pageMetadata, args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(m)
+			logJSONCmd(*cmd, m)
 		},
 	},
 }

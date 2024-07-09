@@ -17,23 +17,23 @@ var cmdBootstrap = []cobra.Command{
 		Long:  `Create new Thing Bootstrap Config to the user identified by the provided key`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			var cfg mgxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			id, err := sdk.AddBootstrap(cfg, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logCreated(id)
+			logCreatedCmd(*cmd, id)
 		},
 	},
 	{
@@ -44,7 +44,7 @@ var cmdBootstrap = []cobra.Command{
 				<thing_id> - view config of <thing_id>`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
@@ -56,20 +56,20 @@ var cmdBootstrap = []cobra.Command{
 			if args[0] == "all" {
 				l, err := sdk.Bootstraps(pageMetadata, args[1])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(l)
+				logJSONCmd(*cmd, l)
 				return
 			}
 
 			c, err := sdk.ViewBootstrap(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(c)
+			logJSONCmd(*cmd, c)
 		},
 	},
 	{
@@ -82,49 +82,49 @@ var cmdBootstrap = []cobra.Command{
 				certs  <id> <client_cert> <client_key> <ca> - Update bootstrap config certificates.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			if args[0] == "config" {
 				var cfg mgxsdk.BootstrapConfig
 				if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
 				if err := sdk.UpdateBootstrap(cfg, args[1]); err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
-				logOK()
+				logOKCmd(*cmd)
 				return
 			}
 			if args[0] == "connection" {
 				var ids []string
 				if err := json.Unmarshal([]byte(args[1]), &ids); err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 				if err := sdk.UpdateBootstrapConnection(args[0], ids, args[2]); err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
-				logOK()
+				logOKCmd(*cmd)
 				return
 			}
 			if args[0] == "certs" {
 				cfg, err := sdk.UpdateBootstrapCerts(args[0], args[1], args[2], args[3], args[4])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
-				logJSON(cfg)
+				logJSONCmd(*cmd, cfg)
 				return
 			}
-			logUsage(cmd.Use)
+			logUsageCmd(*cmd, cmd.Use)
 		},
 	},
 	{
@@ -133,16 +133,16 @@ var cmdBootstrap = []cobra.Command{
 		Long:  `Removes Config with specified key that belongs to the user identified by the given key`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if err := sdk.RemoveBootstrap(args[0], args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -152,26 +152,26 @@ var cmdBootstrap = []cobra.Command{
 				secure - Retrieves a configuration with given external ID and encrypted external key.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			if args[0] == "secure" {
 				c, err := sdk.BootstrapSecure(args[1], args[2], args[3])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
 
-				logJSON(c)
+				logJSONCmd(*cmd, c)
 				return
 			}
 			c, err := sdk.Bootstrap(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(c)
+			logJSONCmd(*cmd, c)
 		},
 	},
 	{
@@ -180,22 +180,22 @@ var cmdBootstrap = []cobra.Command{
 		Long:  `Whitelist updates thing state config with given id from the authenticated user`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			var cfg mgxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
 			if err := sdk.Whitelist(cfg.ThingID, cfg.State, args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 }

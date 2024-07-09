@@ -224,16 +224,16 @@ func NewConfigCmd() *cobra.Command {
 		Long:  "Local param storage to prevent repetitive passing of keys",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if err := setConfigValue(args[0], args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	}
 }

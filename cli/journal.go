@@ -17,7 +17,7 @@ var cmdJournal = cobra.Command{
 		"\tmagistrala-cli journal get <entity_type> <entity_id> <user_auth_token> --offset <offset> --limit <limit> - lists journal logs with provided offset and limit\n",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 3 {
-			logUsage(cmd.Use)
+			logUsageCmd(*cmd, cmd.Use)
 			return
 		}
 
@@ -28,11 +28,11 @@ var cmdJournal = cobra.Command{
 
 		journal, err := sdk.Journal(args[0], args[1], pageMetadata, args[2])
 		if err != nil {
-			logError(err)
+			logErrorCmd(*cmd, err)
 			return
 		}
 
-		logJSON(journal)
+		logJSONCmd(*cmd, journal)
 	},
 }
 

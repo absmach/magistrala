@@ -19,7 +19,7 @@ var cmdDomains = []cobra.Command{
 			"\tmagistrala-cli domains create domain_1 domain_1_alias $TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
@@ -29,10 +29,10 @@ var cmdDomains = []cobra.Command{
 			}
 			user, err := sdk.CreateDomain(user, args[2])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(user)
+			logJSONCmd(*cmd, user)
 		},
 	},
 	{
@@ -41,12 +41,12 @@ var cmdDomains = []cobra.Command{
 		Long:  "Get all domains. Users can be filtered by name or metadata or status",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			metadata, err := convertMetadata(Metadata)
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
@@ -59,19 +59,19 @@ var cmdDomains = []cobra.Command{
 			if args[0] == all {
 				l, err := sdk.Domains(pageMetadata, args[1])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(l)
+				logJSONCmd(*cmd, l)
 				return
 			}
 			d, err := sdk.Domain(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(d)
+			logJSONCmd(*cmd, d)
 		},
 	},
 
@@ -81,12 +81,12 @@ var cmdDomains = []cobra.Command{
 		Long:  "List Domain users",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			metadata, err := convertMetadata(Metadata)
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
@@ -98,10 +98,10 @@ var cmdDomains = []cobra.Command{
 
 			l, err := sdk.ListDomainUsers(args[0], pageMetadata, args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(l)
+			logJSONCmd(*cmd, l)
 		},
 	},
 
@@ -113,23 +113,23 @@ var cmdDomains = []cobra.Command{
 			"\tmagistrala-cli domains update <domain_id> '{\"name\":\"new name\", \"alias\":\"new_alias\", \"metadata\":{\"key\": \"value\"}}' $TOKEN \n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 && len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			var d mgxsdk.Domain
 
 			if err := json.Unmarshal([]byte(args[1]), &d); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			d.ID = args[0]
 			d, err := sdk.UpdateDomain(d, args[2])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSON(d)
+			logJSONCmd(*cmd, d)
 		},
 	},
 
@@ -141,15 +141,15 @@ var cmdDomains = []cobra.Command{
 			"\tmagistrala-cli domains enable <domain_id> <token>\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if err := sdk.EnableDomain(args[0], args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 	{
@@ -160,15 +160,15 @@ var cmdDomains = []cobra.Command{
 			"\tmagistrala-cli domains disable <domain_id> <token>\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if err := sdk.DisableDomain(args[0], args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 }
@@ -182,19 +182,19 @@ var domainAssignCmds = []cobra.Command{
 			"\tmagistrala-cli domains assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <domain_id> $TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			var userIDs []string
 			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 			if err := sdk.AddUserToDomain(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 }
@@ -208,15 +208,15 @@ var domainUnassignCmds = []cobra.Command{
 			"\tmagistrala-cli domains unassign users <user_id> <domain_id> $TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if err := sdk.RemoveUserFromDomain(args[1], args[0], args[2]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 }

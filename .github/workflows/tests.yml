@@ -92,6 +92,11 @@ jobs:
               - "auth/**"
               - "pkg/sdk/**"
 
+            cli:
+              - "cli/**"
+              - "cmd/cli/**"
+              - "pkg/sdk/**"
+
             coap:
               - "coap/**"
               - "cmd/coap/**"
@@ -295,6 +300,11 @@ jobs:
         if: steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/certs.out ./certs/...
+
+      - name: Run cli tests
+        if: steps.changes.outputs.cli == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/cli.out ./cli/...
 
       - name: Run CoAP tests
         if: steps.changes.outputs.coap == 'true' || steps.changes.outputs.workflow == 'true'

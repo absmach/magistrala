@@ -15,17 +15,17 @@ var cmdSubscription = []cobra.Command{
 		Long:  `Create new subscription`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			id, err := sdk.CreateSubscription(args[0], args[1], args[2])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logCreated(id)
+			logCreatedCmd(*cmd, id)
 		},
 	},
 	{
@@ -36,7 +36,7 @@ var cmdSubscription = []cobra.Command{
 				<sub_id> - view subscription of <sub_id>`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
@@ -48,20 +48,20 @@ var cmdSubscription = []cobra.Command{
 			if args[0] == "all" {
 				sub, err := sdk.ListSubscriptions(pageMetadata, args[1])
 				if err != nil {
-					logError(err)
+					logErrorCmd(*cmd, err)
 					return
 				}
-				logJSON(sub)
+				logJSONCmd(*cmd, sub)
 				return
 			}
 
 			c, err := sdk.ViewSubscription(args[0], args[1])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(c)
+			logJSONCmd(*cmd, c)
 		},
 	},
 	{
@@ -70,16 +70,16 @@ var cmdSubscription = []cobra.Command{
 		Long:  `Removes removes a subscription with the provided id`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
 			if err := sdk.DeleteSubscription(args[0], args[1]); err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logOK()
+			logOKCmd(*cmd)
 		},
 	},
 }

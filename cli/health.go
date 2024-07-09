@@ -15,16 +15,16 @@ func NewHealthCmd() *cobra.Command {
 			"\tmagistrala-cli health <service>",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
-				logUsage(cmd.Use)
+				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			v, err := sdk.Health(args[0])
 			if err != nil {
-				logError(err)
+				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSON(v)
+			logJSONCmd(*cmd, v)
 		},
 	}
 }

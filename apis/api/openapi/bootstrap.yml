@@ -100,6 +100,8 @@ paths:
           description: Missing or invalid config.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Config does not exist.
         "422":
@@ -126,6 +128,8 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Config does not exist.
         "415":
@@ -151,6 +155,8 @@ paths:
           description: Failed due to malformed config ID.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "422":
           description: Database can't process request.
         "500":
@@ -176,6 +182,8 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Config does not exist.
         "415":
@@ -204,6 +212,8 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: Config does not exist.
         "415":

@@ -542,6 +542,291 @@ func TestListUsers(t *testing.T) {
 	}
 }
 
+func TestListChannelUsers(t *testing.T) {
+	ts, crepo, _, auth := setupUsers()
+	defer ts.Close()
+
+	var cls []sdk.User
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	for i := 10; i < 20; i++ {
+		cl := sdk.User{
+			ID:     generateUUID(t),
+			Name:   fmt.Sprintf("client_%d", i),
+			Status: mgclients.EnabledStatus.String(),
+		}
+		cls = append(cls, cl)
+	}
+
+	cases := []struct {
+		desc     string
+		token    string
+		pageMeta sdk.PageMetadata
+		svcReq   mgclients.Page
+		svcRes   mgclients.ClientsPage
+		svcErr   error
+		response sdk.UsersPage
+		err      errors.SDKError
+	}{
+		{
+			desc:  "list users successfully",
+			token: token,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+			},
+			svcReq: mgclients.Page{
+				Offset: offset,
+				Limit:  limit,
+				Order:  internalapi.DefOrder,
+				Dir:    internalapi.DefDir,
+			},
+			svcRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(cls[offset:limit])),
+				},
+				Clients: convertClients(cls[offset:limit]),
+			},
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: uint64(len(cls[offset:limit])),
+				},
+				Users: cls[offset:limit],
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with invalid token",
+			token: invalidToken,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+			},
+			svcReq: mgclients.Page{
+				Offset: offset,
+				Limit:  limit,
+				Order:  internalapi.DefOrder,
+				Dir:    internalapi.DefDir,
+			},
+			svcRes:   mgclients.ClientsPage{},
+			svcErr:   svcerr.ErrAuthentication,
+			response: sdk.UsersPage{},
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:  "list users with empty token",
+			token: "",
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+			},
+			svcReq:   mgclients.Page{},
+			svcRes:   mgclients.ClientsPage{},
+			svcErr:   nil,
+			response: sdk.UsersPage{},
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+		},
+		{
+			desc:  "list users with zero limit",
+			token: token,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  0,
+			},
+			svcReq: mgclients.Page{
+				Offset: offset,
+				Limit:  10,
+				Order:  internalapi.DefOrder,
+				Dir:    internalapi.DefDir,
+			},
+			svcRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(cls[offset:10])),
+				},
+				Clients: convertClients(cls[offset:10]),
+			},
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: uint64(len(cls[offset:10])),
+				},
+				Users: cls[offset:10],
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with limit greater than max",
+			token: token,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  101,
+			},
+			svcReq:   mgclients.Page{},
+			svcRes:   mgclients.ClientsPage{},
+			svcErr:   nil,
+			response: sdk.UsersPage{},
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
+		},
+		{
+			desc:  "list users with given metadata",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset:   offset,
+				Limit:    limit,
+				Metadata: sdk.Metadata{"name": "client_99"},
+			},
+			svcReq: mgclients.Page{
+				Offset:   offset,
+				Limit:    limit,
+				Metadata: mgclients.Metadata{"name": "client_99"},
+				Order:    internalapi.DefOrder,
+				Dir:      internalapi.DefDir,
+			},
+			svcRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{convertClient(cls[89])},
+			},
+			svcErr: nil,
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: 1,
+				},
+				Users: []sdk.User{cls[89]},
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with given status",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Status: mgclients.DisabledStatus.String(),
+			},
+			svcReq: mgclients.Page{
+				Offset: offset,
+				Limit:  limit,
+				Status: mgclients.DisabledStatus,
+				Order:  internalapi.DefOrder,
+				Dir:    internalapi.DefDir,
+			},
+			svcRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{convertClient(cls[50])},
+			},
+			svcErr: nil,
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: 1,
+				},
+				Users: []sdk.User{cls[50]},
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with given tag",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Tag:    "tag1",
+			},
+			svcReq: mgclients.Page{
+				Offset: offset,
+				Limit:  limit,
+				Tag:    "tag1",
+				Order:  internalapi.DefOrder,
+				Dir:    internalapi.DefDir,
+			},
+			svcRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{convertClient(cls[50])},
+			},
+			svcErr: nil,
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: 1,
+				},
+				Users: []sdk.User{cls[50]},
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with request that can't be marshalled",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Metadata: sdk.Metadata{
+					"test": make(chan int),
+				},
+			},
+			svcReq: mgclients.Page{
+				Offset: offset,
+				Limit:  limit,
+				Order:  internalapi.DefOrder,
+				Dir:    internalapi.DefDir,
+			},
+			svcRes:   mgclients.ClientsPage{},
+			svcErr:   nil,
+			response: sdk.UsersPage{},
+			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
+		},
+		{
+			desc:  "list users with response that can't be unmarshalled",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+			},
+			svcReq: mgclients.Page{
+				Offset: offset,
+				Limit:  limit,
+				Order:  internalapi.DefOrder,
+				Dir:    internalapi.DefDir,
+			},
+			svcRes: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(cls[offset:limit])),
+				},
+				Clients: []mgclients.Client{
+					{
+						ID:   id,
+						Name: "client_99",
+						Metadata: mgclients.Metadata{
+							"key": make(chan int),
+						},
+					},
+				},
+			},
+			response: sdk.UsersPage{},
+			err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("ListClients", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.Users(tc.pageMeta, tc.token)
+			assert.Equal(t, tc.err, err)
+			assert.Equal(t, tc.response, resp)
+			if tc.err == nil {
+				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, tc.token, tc.svcReq)
+				assert.True(t, ok)
+			}
+			svcCall.Unset()
+		})
+	}
+}
+
 func TestSearchClients(t *testing.T) {
 	ts, svc := setupUsers()
 	defer ts.Close()

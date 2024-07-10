@@ -125,13 +125,12 @@ func (es *eventStore) ViewClientPerms(ctx context.Context, token, id string) ([]
 	return permissions, nil
 }
 
-func (es *eventStore) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	cp, err := es.svc.ListClients(ctx, token, reqUserID, pm)
+func (es *eventStore) ListClients(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	cp, err := es.svc.ListClients(ctx, token, pm)
 	if err != nil {
 		return cp, err
 	}
 	event := listClientEvent{
-		reqUserID,
 		pm,
 	}
 	if err := es.Publish(ctx, event); err != nil {
@@ -140,22 +139,6 @@ func (es *eventStore) ListClients(ctx context.Context, token, reqUserID string, 
 
 	return cp, nil
 }
-
-func (es *eventStore) ListClientsByGroup(ctx context.Context, token, chID string, pm mgclients.Page) (mgclients.MembersPage, error) {
-	mp, err := es.svc.ListClientsByGroup(ctx, token, chID, pm)
-	if err != nil {
-		return mp, err
-	}
-	event := listClientByGroupEvent{
-		pm, chID,
-	}
-	if err := es.Publish(ctx, event); err != nil {
-		return mp, err
-	}
-
-	return mp, nil
-}
-
 func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	cli, err := es.svc.EnableClient(ctx, token, id)
 	if err != nil {

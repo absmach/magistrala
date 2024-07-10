@@ -26,12 +26,7 @@ type Service interface {
 	ViewClientPerms(ctx context.Context, token, id string) ([]string, error)
 
 	// ListClients retrieves clients list for a valid auth token.
-	ListClients(ctx context.Context, token string, reqUserID string, pm clients.Page) (clients.ClientsPage, error)
-
-	// ListClientsByGroup retrieves data about subset of things that are
-	// connected or not connected to specified channel and belong to the user identified by
-	// the provided key.
-	ListClientsByGroup(ctx context.Context, token, groupID string, pm clients.Page) (clients.MembersPage, error)
+	ListClients(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error)
 
 	// UpdateClient updates the client's name and metadata.
 	UpdateClient(ctx context.Context, token string, client clients.Client) (clients.Client, error)

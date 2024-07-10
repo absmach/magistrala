@@ -1651,7 +1651,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with offset",
 			token:    validToken,
-			query:    "offset=1",
+			query:    "&offset=1",
 			groupdID: client.ID,
 			listMembersResponse: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1666,7 +1666,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with invalid offset",
 			token:    validToken,
-			query:    "offset=invalid",
+			query:    "&offset=invalid",
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrValidation,
@@ -1674,7 +1674,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with limit",
 			token:    validToken,
-			query:    "limit=1",
+			query:    "&limit=1",
 			groupdID: client.ID,
 			listMembersResponse: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1689,7 +1689,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with invalid limit",
 			token:    validToken,
-			query:    "limit=invalid",
+			query:    "&limit=invalid",
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrValidation,
@@ -1697,7 +1697,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with limit greater than 100",
 			token:    validToken,
-			query:    fmt.Sprintf("limit=%d", api.MaxLimitSize+1),
+			query:    fmt.Sprintf("&limit=%d", api.MaxLimitSize+1),
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrValidation,
@@ -1705,7 +1705,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with channel_id",
 			token:    validToken,
-			query:    fmt.Sprintf("channel_id=%s", validID),
+			query:    fmt.Sprintf("&channel_id=%s", validID),
 			groupdID: client.ID,
 			listMembersResponse: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1719,7 +1719,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with invalid channel_id",
 			token:    validToken,
-			query:    "channel_id=invalid",
+			query:    "&channel_id=invalid",
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrValidation,
@@ -1727,7 +1727,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with duplicate channel_id",
 			token:    validToken,
-			query:    fmt.Sprintf("channel_id=%s&channel_id=%s", validID, validID),
+			query:    fmt.Sprintf("&channel_id=%s&channel_id=%s", validID, validID),
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrValidation,
@@ -1735,7 +1735,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with connected set",
 			token:    validToken,
-			query:    "connected=true",
+			query:    "&connected=true",
 			groupdID: client.ID,
 			listMembersResponse: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1749,7 +1749,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:     "list members with invalid connected set",
 			token:    validToken,
-			query:    "connected=invalid",
+			query:    "&connected=invalid",
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrValidation,
@@ -1757,7 +1757,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:   "list members with duplicate connected set",
 			token:  validToken,
-			query:  "connected=true&connected=false",
+			query:  "&connected=true&connected=false",
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrValidation,
 		},
@@ -1779,7 +1779,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:  "list members with status",
-			query: fmt.Sprintf("status=%s", mgclients.EnabledStatus),
+			query: fmt.Sprintf("&status=%s", mgclients.EnabledStatus),
 			listMembersResponse: mgclients.MembersPage{
 				Page: mgclients.Page{
 					Total: 1,
@@ -1793,7 +1793,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with invalid status",
-			query:    "status=invalid",
+			query:    "&status=invalid",
 			token:    validToken,
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
@@ -1801,7 +1801,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with duplicate status",
-			query:    fmt.Sprintf("status=%s&status=%s", mgclients.EnabledStatus, mgclients.DisabledStatus),
+			query:    fmt.Sprintf("&status=%s&status=%s", mgclients.EnabledStatus, mgclients.DisabledStatus),
 			token:    validToken,
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
@@ -1817,13 +1817,13 @@ func TestListMembers(t *testing.T) {
 				Members: []mgclients.Client{client},
 			},
 			groupdID: client.ID,
-			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
+			query:    "&metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status:   http.StatusOK,
 			err:      nil,
 		},
 		{
 			desc:     "list members with invalid metadata",
-			query:    "metadata=invalid",
+			query:    "&metadata=invalid",
 			groupdID: client.ID,
 			token:    validToken,
 			status:   http.StatusBadRequest,
@@ -1831,7 +1831,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with duplicate metadata",
-			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&metadata=%7B%22domain%22%3A%20%22example.com%22%7D",
+			query:    "&metadata=%7B%22domain%22%3A%20%22example.com%22%7D&metadata=%7B%22domain%22%3A%20%22example.com%22%7D",
 			groupdID: client.ID,
 			token:    validToken,
 			status:   http.StatusBadRequest,
@@ -1839,7 +1839,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:  "list members with permission",
-			query: fmt.Sprintf("permission=%s", "read"),
+			query: fmt.Sprintf("&permission=%s", "read"),
 			listMembersResponse: mgclients.MembersPage{
 				Page: mgclients.Page{
 					Total: 1,
@@ -1853,7 +1853,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with invalid permission",
-			query:    "permission=invalid",
+			query:    "&permission=invalid",
 			token:    validToken,
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
@@ -1861,7 +1861,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with duplicate permission",
-			query:    fmt.Sprintf("permission=%s&permission=%s", "read", "write"),
+			query:    fmt.Sprintf("&permission=%s&permission=%s", "read", "write"),
 			token:    validToken,
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
@@ -1869,7 +1869,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:  "list members with list permission",
-			query: "list_perms=true",
+			query: "&list_perms=true",
 			token: validToken,
 			listMembersResponse: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1883,7 +1883,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with invalid list permission",
-			query:    "list_perms=invalid",
+			query:    "&list_perms=invalid",
 			token:    validToken,
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
@@ -1891,7 +1891,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with duplicate list permission",
-			query:    "list_perms=true&list_perms=false",
+			query:    "&list_perms=true&list_perms=false",
 			token:    validToken,
 			groupdID: client.ID,
 			status:   http.StatusBadRequest,
@@ -1899,7 +1899,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with all query params",
-			query:    fmt.Sprintf("offset=1&limit=1&channel_id=%s&connected=true&status=%s&metadata=%s&permission=%s&list_perms=true", validID, mgclients.EnabledStatus, "%7B%22domain%22%3A%20%22example.com%22%7D", "read"),
+			query:    fmt.Sprintf("&offset=1&limit=1&channel_id=%s&connected=true&status=%s&metadata=%s&permission=%s&list_perms=true", validID, mgclients.EnabledStatus, "%7B%22domain%22%3A%20%22example.com%22%7D", "read"),
 			token:    validToken,
 			groupdID: client.ID,
 			listMembersResponse: mgclients.MembersPage{
@@ -1919,12 +1919,342 @@ func TestListMembers(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodGet,
-			url:         ts.URL + fmt.Sprintf("/channels/%s/things?", tc.groupdID) + tc.query,
+			url:         ts.URL + fmt.Sprintf("/things/members?channel=%s", tc.groupdID) + tc.query,
 			contentType: contentType,
 			token:       tc.token,
 		}
-
 		svcCall := svc.On("ListClientsByGroup", mock.Anything, tc.token, mock.Anything, mock.Anything).Return(tc.listMembersResponse, tc.err)
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		var bodyRes respBody
+		err = json.NewDecoder(res.Body).Decode(&bodyRes)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+		if bodyRes.Err != "" || bodyRes.Message != "" {
+			err = errors.Wrap(errors.New(bodyRes.Err), errors.New(bodyRes.Message))
+		}
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		svcCall.Unset()
+	}
+}
+
+func TestListClients(t *testing.T) {
+	ts, svc, _ := newThingsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc                string
+		query               string
+		token               string
+		listClientsResponse mgclients.ClientsPage
+		status              int
+		err                 error
+		userID              string
+	}{
+		{
+			desc:   "list clients with valid token",
+			token:  validToken,
+			userID: client.ID,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with empty token",
+			token:  "",
+			userID: client.ID,
+			status: http.StatusUnauthorized,
+			err:    apiutil.ErrBearerToken,
+		},
+		{
+			desc:   "list clients with invalid token",
+			token:  inValidToken,
+			userID: client.ID,
+			status: http.StatusUnauthorized,
+			err:    svcerr.ErrAuthentication,
+		},
+		{
+			desc:   "list clients with offset",
+			token:  validToken,
+			query:  "&offset=1",
+			userID: client.ID,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Offset: 1,
+					Total:  1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid offset",
+			token:  validToken,
+			query:  "&offset=invalid",
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with limit",
+			token:  validToken,
+			query:  "&limit=1",
+			userID: client.ID,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Limit: 1,
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid limit",
+			token:  validToken,
+			query:  "&limit=invalid",
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with limit greater than 100",
+			token:  validToken,
+			query:  fmt.Sprintf("&limit=%d", api.MaxLimitSize+1),
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with channel_id",
+			token:  validToken,
+			query:  fmt.Sprintf("&channel_id=%s", validID),
+			userID: client.ID,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid channel_id",
+			token:  validToken,
+			query:  "&channel_id=invalid",
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with duplicate channel_id",
+			token:  validToken,
+			query:  fmt.Sprintf("&channel_id=%s&channel_id=%s", validID, validID),
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with connected set",
+			token:  validToken,
+			query:  "&connected=true",
+			userID: client.ID,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid connected set",
+			token:  validToken,
+			query:  "&connected=invalid",
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with duplicate connected set",
+			token:  validToken,
+			query:  "&connected=true&connected=false",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with invalid group id",
+			token:  validToken,
+			query:  "",
+			userID: "invalid",
+			status: http.StatusForbidden,
+			err:    svcerr.ErrAuthorization,
+		},
+		{
+			desc:   "list clients with empty group id",
+			token:  validToken,
+			query:  "",
+			userID: "",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrMissingID,
+		},
+		{
+			desc:  "list clients with status",
+			query: fmt.Sprintf("&status=%s", mgclients.EnabledStatus),
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid status",
+			query:  "&status=invalid",
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with duplicate status",
+			query:  fmt.Sprintf("&status=%s&status=%s", mgclients.EnabledStatus, mgclients.DisabledStatus),
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:  "list clients with metadata",
+			token: validToken,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			userID: client.ID,
+			query:  "&metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid metadata",
+			query:  "&metadata=invalid",
+			userID: client.ID,
+			token:  validToken,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with duplicate metadata",
+			query:  "&metadata=%7B%22domain%22%3A%20%22example.com%22%7D&metadata=%7B%22domain%22%3A%20%22example.com%22%7D",
+			userID: client.ID,
+			token:  validToken,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:  "list clients with permission",
+			query: fmt.Sprintf("&permission=%s", "read"),
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid permission",
+			query:  "&permission=invalid",
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with duplicate permission",
+			query:  fmt.Sprintf("&permission=%s&permission=%s", "read", "write"),
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:  "list clients with list permission",
+			query: "&list_perms=true",
+			token: validToken,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			userID: client.ID,
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list clients with invalid list permission",
+			query:  "&list_perms=invalid",
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with duplicate list permission",
+			query:  "&list_perms=true&list_perms=false",
+			token:  validToken,
+			userID: client.ID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "list clients with all query params",
+			query:  fmt.Sprintf("&offset=1&limit=1&channel_id=%s&connected=true&status=%s&metadata=%s&permission=%s&list_perms=true", validID, mgclients.EnabledStatus, "%7B%22domain%22%3A%20%22example.com%22%7D", "read"),
+			token:  validToken,
+			userID: client.ID,
+			listClientsResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Offset: 1,
+					Limit:  1,
+					Total:  1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      ts.Client(),
+			method:      http.MethodGet,
+			url:         ts.URL + fmt.Sprintf("/things?users=%s", tc.userID) + tc.query,
+			contentType: contentType,
+			token:       tc.token,
+		}
+		svcCall := svc.On("ListClients", mock.Anything, tc.token, mock.Anything, mock.Anything).Return(tc.listClientsResponse, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 

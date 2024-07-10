@@ -48,10 +48,10 @@ func (tm *tracingMiddleware) ViewClientPerms(ctx context.Context, token, id stri
 }
 
 // ListClients traces the "ListClients" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+func (tm *tracingMiddleware) ListClients(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_clients")
 	defer span.End()
-	return tm.svc.ListClients(ctx, token, reqUserID, pm)
+	return tm.svc.ListClients(ctx, token, pm)
 }
 
 // UpdateClient traces the "UpdateClient" operation of the wrapped policies.Service.
@@ -95,14 +95,6 @@ func (tm *tracingMiddleware) DisableClient(ctx context.Context, token, id string
 	defer span.End()
 
 	return tm.svc.DisableClient(ctx, token, id)
-}
-
-// ListClientsByGroup traces the "ListClientsByGroup" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) ListClientsByGroup(ctx context.Context, token, groupID string, pm mgclients.Page) (mgclients.MembersPage, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_list_things_by_channel", trace.WithAttributes(attribute.String("groupID", groupID)))
-	defer span.End()
-
-	return tm.svc.ListClientsByGroup(ctx, token, groupID, pm)
 }
 
 // ListMemberships traces the "ListMemberships" operation of the wrapped policies.Service.

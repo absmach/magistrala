@@ -193,7 +193,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "valid request",
 			req: listClientsReq{
 				token: valid,
-				limit: 10,
+				page:  mgclients.Page{Limit: 10},
 			},
 			err: nil,
 		},
@@ -201,7 +201,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "empty token",
 			req: listClientsReq{
 				token: "",
-				limit: 10,
+				page:  mgclients.Page{Limit: 10},
 			},
 			err: apiutil.ErrBearerToken,
 		},
@@ -209,7 +209,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "limit too big",
 			req: listClientsReq{
 				token: valid,
-				limit: api.MaxLimitSize + 1,
+				page:  mgclients.Page{Limit: api.MaxLimitSize + 1},
 			},
 			err: apiutil.ErrLimitSize,
 		},
@@ -217,7 +217,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "limit too small",
 			req: listClientsReq{
 				token: valid,
-				limit: 0,
+				page:  mgclients.Page{Limit: 0},
 			},
 			err: apiutil.ErrLimitSize,
 		},
@@ -225,8 +225,10 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "invalid direction",
 			req: listClientsReq{
 				token: valid,
-				limit: 10,
-				dir:   "invalid",
+				page: mgclients.Page{
+					Limit: 10,
+					Dir:   "invalid",
+				},
 			},
 			err: apiutil.ErrInvalidDirection,
 		},

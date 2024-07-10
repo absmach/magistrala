@@ -79,6 +79,11 @@ paths:
         - $ref: "#/components/parameters/UserName"
         - $ref: "#/components/parameters/UserIdentity"
         - $ref: "#/components/parameters/Tags"
+        - $ref: "#/components/parameters/Group"
+        - $ref: "#/components/parameters/Domain"
+        - $ref: "#/components/parameters/Channel"
+        - $ref: "#/components/parameters/Thing"
+        - $ref: "#/components/parameters/Permission"
       security:
         - bearerAuth: []
       responses:
@@ -478,81 +483,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/users:
-    get:
-      operationId: listUsersInGroup
-      tags:
-        - Users
-      summary: List users in a group
-      description: |
-        Retrieves a list of users in a group. Due to performance concerns, data
-        is retrieved in subsets. The API must ensure that the entire
-        dataset is consumed either by making subsequent requests, or by
-        increasing the subset size of the initial request.
-      parameters:
-        - $ref: "#/components/parameters/GroupID"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Level"
-        - $ref: "#/components/parameters/Tree"
-        - $ref: "#/components/parameters/Metadata"
-        - $ref: "#/components/parameters/GroupName"
-        - $ref: "#/components/parameters/ParentID"
-      responses:
-        "200":
-          $ref: "#/components/responses/MembersPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: |
-            Missing or invalid access token provided.
-            This endpoint is available only for administrators.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: A non-existent entity request.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /channels/{channelID}/users:
-    get:
-      operationId: listUsersInChannel
-      tags:
-        - Users
-      summary: List users in a channel
-      description: |
-        Retrieves a list of users in a channel. Due to performance concerns, data
-        is retrieved in subsets. The API must ensure that the entire
-        dataset is consumed either by making subsequent requests, or by
-        increasing the subset size of the initial request.
-      parameters:
-        - $ref: "#/components/parameters/ChannelID"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Level"
-        - $ref: "#/components/parameters/Tree"
-        - $ref: "#/components/parameters/Metadata"
-        - $ref: "#/components/parameters/ChannelName"
-        - $ref: "#/components/parameters/ParentID"
-      responses:
-        "200":
-          $ref: "#/components/responses/MembersPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: |
-            Missing or invalid access token provided.
-            This endpoint is available only for administrators.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: A non-existent entity request.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
 
   /users/tokens/issue:
     post:
@@ -960,102 +890,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{memberID}/groups:
-    get:
-      operationId: listGroupsInChannel
-      summary: Get group associated with the member
-      description: |
-        Gets groups associated with the channel member specified by id.
-      tags:
-        - Groups
-      parameters:
-        - $ref: "#/components/parameters/MemberID"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Metadata"
-        - $ref: "#/components/parameters/Status"
-        - $ref: "#/components/parameters/Tags"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          $ref: "#/components/responses/GroupPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: Group does not exist.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /users/{memberID}/groups:
-    get:
-      operationId: listGroupsByUser
-      summary: Get group associated with the member
-      description: |
-        Gets groups associated with the user member specified by id.
-      tags:
-        - Groups
-      parameters:
-        - $ref: "#/components/parameters/MemberID"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Metadata"
-        - $ref: "#/components/parameters/Status"
-        - $ref: "#/components/parameters/Tags"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          $ref: "#/components/responses/GroupPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: Group does not exist.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-  /domains/{domainID}/users:
-    get:
-      summary: List users assigned to domain
-      description: |
-        List users assigned to domain that is identified by the domain ID.
-      tags:
-        - Domains
-      parameters:
-        - $ref: "auth.yml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Metadata"
-        - $ref: "#/components/parameters/Status"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          $ref: "#/components/responses/UserPageRes"
-          description: List of users assigned to domain.
-        "400":
-          description: Failed due to malformed domain's ID.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Unauthorized access the domain ID.
-        "404":
-          description: A non-existent entity request.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
   /health:
     get:
       operationId: health
@@ -1670,18 +1504,66 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
-    MemberID:
-      name: memberID
-      description: Unique member identifier.
-      in: path
+    Channel:
+      name: channel
+      description: Unique channel identifier.
+      in: query
       schema:
         type: string
         format: uuid
-        minLength: 36
-        maxLength: 36
-        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
-      required: true
+      required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    User:
+      name: user
+      description: Unique user identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Group:
+      name: group
+      description: Unique group identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Thing:
+      name: thing
+      description: Unique thing identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Domain:
+      name: domain
+      description: Unique domain identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Permission:
+      name: permission
+      description: permission .
+      in: query
+      schema:
+        type: string
+        enum: ["admin", "delete", "edit", "view", "share", "publish", "subscribe", "membership", "create", "administrator", "editor", "contributor", "member", "guest"]
+      required: false
+      example: edit
+
 
     ParentID:
       name: parentID
@@ -1911,14 +1793,6 @@ components:
           operationId: getUser
           parameters:
             userID: $response.body#/id
-        get_groups:
-          operationId: listUsersInGroup
-          parameters:
-            groupID: $response.body#/id
-        get_channels:
-          operationId: listUsersInChannel
-          parameters:
-            channelID: $response.body#/id
         update:
           operationId: updateUser
           parameters:
@@ -1950,15 +1824,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
-      links:
-        get_groups:
-          operationId: listUsersInGroup
-          parameters:
-            groupID: $response.body#/id
-        get_channels:
-          operationId: listUsersInChannel
-          parameters:
-            channelID: $response.body#/id
 
     UserPageRes:
       description: Data retrieved.
@@ -1992,14 +1857,6 @@ components:
           operationId: listParents
           parameters:
             groupID: $response.body#/id
-        get_channels:
-          operationId: listGroupsInChannel
-          parameters:
-            memberID: $response.body#/id
-        get_users:
-          operationId: listGroupsByUser
-          parameters:
-            memberID: $response.body#/id
         update:
           operationId: updateGroup
           parameters:
@@ -2036,14 +1893,6 @@ components:
           operationId: listParents
           parameters:
             groupID: $response.body#/id
-        get_channels:
-          operationId: listGroupsInChannel
-          parameters:
-            memberID: $response.body#/id
-        get_users:
-          operationId: listGroupsByUser
-          parameters:
-            memberID: $response.body#/id
         assign:
           operationId: assignUser
           parameters:

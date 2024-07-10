@@ -67,6 +67,7 @@ paths:
         - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/DomainName"
         - $ref: "#/components/parameters/Permission"
+        - $ref: "#/components/parameters/User"
       tags:
         - Domains
       security:
@@ -78,6 +79,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to domain."
         "404":
           description: A non-existent entity request.
         "422":
@@ -427,39 +430,6 @@ paths:
           description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /users/{memberID}/domains:
-    get:
-      tags:
-        - Domains
-      summary: List users in a group
-      description: |
-        Retrieves a list of users in a domain. Due to performance concerns, data
-        is retrieved in subsets. The API must ensure that the entire
-        dataset is consumed either by making subsequent requests, or by
-        increasing the subset size of the initial request.
-      parameters:
-        - $ref: "users.yml#/components/parameters/MemberID"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Metadata"
-        - $ref: "#/components/parameters/Status"
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          $ref: "#/components/responses/DomainsPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: |
-            Missing or invalid access token provided.
-            This endpoint is available only for administrators.
-        "404":
-          description: A non-existent entity request.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
 
   /health:
     get:
@@ -707,6 +677,15 @@ components:
         format: uuid
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+    User:
+      name: user
+      description: Unique user id.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+      example: 5dc1ce4b-7cc9-4f12-98a6-9d74cc4980bb
     Status:
       name: status
       description: Domain status.

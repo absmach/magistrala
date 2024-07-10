@@ -174,8 +174,9 @@ var cmdGroups = []cobra.Command{
 				Offset: Offset,
 				Limit:  Limit,
 				Status: Status,
+				Domain: args[0],
 			}
-			users, err := sdk.ListGroupUsers(args[0], pm, args[1])
+			users, err := sdk.ListGroupUsers(pm, args[1])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -198,8 +199,9 @@ var cmdGroups = []cobra.Command{
 				Offset: Offset,
 				Limit:  Limit,
 				Status: Status,
+				Group:  args[0],
 			}
-			channels, err := sdk.ListGroupChannels(args[0], pm, args[1])
+			channels, err := sdk.ListGroupChannels(pm, args[1])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

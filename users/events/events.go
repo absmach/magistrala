@@ -258,35 +258,13 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 	if lce.Identity != "" {
 		val["identity"] = lce.Identity
 	}
-
-	return val, nil
-}
-
-type listClientByGroupEvent struct {
-	mgclients.Page
-	objectKind string
-	objectID   string
-}
-
-func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
-		"operation":   clientListByGroup,
-		"total":       lcge.Total,
-		"offset":      lcge.Offset,
-		"limit":       lcge.Limit,
-		"object_kind": lcge.objectKind,
-		"object_id":   lcge.objectID,
+	if lce.EntityID != "" {
+		val["entity_id"] = lce.EntityID
+	}
+	if lce.EntityType != "" {
+		val["entity_type"] = lce.EntityType
 	}
 
-	if lcge.Name != "" {
-		val["name"] = lcge.Name
-	}
-	if lcge.Order != "" {
-		val["order"] = lcge.Order
-	}
-	if lcge.Dir != "" {
-		val["dir"] = lcge.Dir
-	}
 	if lcge.Metadata != nil {
 		val["metadata"] = lcge.Metadata
 	}

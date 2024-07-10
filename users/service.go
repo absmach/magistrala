@@ -176,7 +176,9 @@ func (svc service) ViewProfile(ctx context.Context, token string) (mgclients.Cli
 }
 
 func (svc service) ListClients(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	userID, err := svc.Identify(ctx, token)
+	// After implementing search API, this will be removed for accessing by normal user. At here if err it should return after search API becomes stable.
+	var isSuperAdmin bool = false
+	res, err := svc.identify(ctx, token)
 	if err != nil {
 		return mgclients.ClientsPage{}, err
 	}
@@ -461,6 +463,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	}
 	return client, nil
 }
+
 
 func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 	client := mgclients.Client{

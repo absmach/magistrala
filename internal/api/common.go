@@ -58,6 +58,10 @@ const (
 	SharedVisibility = "shared"
 	MyVisibility     = "mine"
 	AllVisibility    = "all"
+	ThingKey         = "thing"
+	UserKey          = "user"
+	DomainKey        = "domain"
+	ChannelKey       = "channel"
 	// ContentType represents JSON content type.
 	ContentType = "application/json"
 

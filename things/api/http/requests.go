@@ -100,17 +100,22 @@ type listClientsReq struct {
 }
 
 func (req listClientsReq) validate() error {
-	if req.limit > api.MaxLimitSize || req.limit < 1 {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if req.page.Limit > api.MaxLimitSize || req.page.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
-	if req.visibility != "" &&
-		req.visibility != api.AllVisibility &&
-		req.visibility != api.MyVisibility &&
-		req.visibility != api.SharedVisibility {
-		return apiutil.ErrInvalidVisibilityType
-	}
-	if len(req.name) > api.MaxNameSize {
+	if len(req.page.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
+	}
+	if req.page.Dir != "" && (req.page.Dir != api.AscDir && req.page.Dir != api.DescDir) {
+		return apiutil.ErrInvalidDirection
+	}
+
+	if (req.page.EntityID == "" && req.page.EntityType != "") ||
+		(req.page.EntityID != "" && req.page.EntityType == "") {
+		return apiutil.ErrInvalidEntityTypeID
 	}
 
 	return nil

@@ -23,7 +23,16 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-var passRegex = regexp.MustCompile("^.{8,}$")
+var (
+	passRegex   = regexp.MustCompile("^.{8,}$")
+	queryKeys   = []string{api.ThingKey, api.ChannelKey, api.DomainKey, api.GroupKey}
+	entityTypes = map[string]string{
+		api.ThingKey:   auth.ThingType,
+		api.ChannelKey: auth.GroupType,
+		api.DomainKey:  auth.DomainType,
+		api.GroupKey:   auth.GroupType,
+	}
+)
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, pr *regexp.Regexp, providers ...oauth2.Provider) http.Handler {
@@ -156,44 +165,6 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, pr *rege
 		), "password_reset").ServeHTTP)
 	})
 
-	// Ideal location: users service, groups endpoint.
-	// Reason for placing here :
-	// SpiceDB provides list of user ids in given user_group_id
-	// and users service can access spiceDB and get the user list with user_group_id.
-	// Request to get list of users present in the user_group_id {groupID}
-	r.Get("/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByGroupEndpoint(svc),
-		decodeListMembersByGroup,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_user_group_id").ServeHTTP)
-
-	// Ideal location: things service, channels endpoint.
-	// Reason for placing here :
-	// SpiceDB provides list of user ids in given channel_id
-	// and users service can access spiceDB and get the user list with channel_id.
-	// Request to get list of users present in the user_group_id {channelID}
-	r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByChannelEndpoint(svc),
-		decodeListMembersByChannel,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_channel_id").ServeHTTP)
-
-	r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByThingEndpoint(svc),
-		decodeListMembersByThing,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_thing_id").ServeHTTP)
-
-	r.Get("/domains/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByDomainEndpoint(svc),
-		decodeListMembersByDomain,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_domain_id").ServeHTTP)
-
 	for _, provider := range providers {
 		r.HandleFunc("/oauth/callback/"+provider.Name(), oauth2CallbackHandler(provider, svc))
 	}
@@ -260,7 +231,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 
 	st, err := mgclients.ToStatus(s)
 	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
+		return nil, err
 	}
 	req := listClientsReq{
 		token:    apiutil.ExtractBearerToken(r),
@@ -485,64 +456,8 @@ func decodeChangeClientStatus(_ context.Context, r *http.Request) (interface{}, 
 	return req, nil
 }
 
-func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, api.DefPermission)
-	if err != nil {
-		return nil, err
-	}
-	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "groupID"),
-	}
-
-	return req, nil
-}
-
-func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, api.DefPermission)
-	if err != nil {
-		return nil, err
-	}
-	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "channelID"),
-	}
-
-	return req, nil
-}
-
-func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, api.DefPermission)
-	if err != nil {
-		return nil, err
-	}
-	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "thingID"),
-	}
-
-	return req, nil
-}
-
-func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, auth.MembershipPermission)
-	if err != nil {
-		return nil, err
-	}
-
-	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
-		Page:     page,
-		objectID: chi.URLParam(r, "domainID"),
-	}
-
-	return req, nil
-}
-
-func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, error) {
+func queryPageParams(r *http.Request) (mgclients.Page, error) {
+	var entityID, entityType string
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -575,11 +490,33 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, defPermission)
+	for _, key := range queryKeys {
+		entityID, err = apiutil.ReadStringQuery(r, key, "")
+		if err != nil {
+			return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		if entityID != "" {
+			var ok bool
+			entityType, ok = entityTypes[key]
+			if !ok {
+				return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+			}
+			break
+		}
+	}
+	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
+	if err != nil {
+		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -591,8 +528,12 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 		Identity:   i,
 		Name:       n,
 		Tag:        t,
+		EntityType: entityType,
+		EntityID:   entityID,
 		Permission: p,
 		ListPerms:  lp,
+		Order:      order,
+		Dir:        dir,
 	}, nil
 }
 

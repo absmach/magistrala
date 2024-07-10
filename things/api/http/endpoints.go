@@ -132,22 +132,6 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-		req.Page.Role = mgclients.AllRole // retrieve all things since things don't have roles
-		page, err := svc.ListClientsByGroup(ctx, req.token, req.groupID, req.Page)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildClientsResponse(page), nil
-	}
-}
-
 func updateClientEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientReq)

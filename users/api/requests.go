@@ -79,10 +79,10 @@ func (req listClientsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.limit > maxLimitSize || req.limit < 1 {
+	if req.page.Limit > maxLimitSize || req.page.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
-	if req.dir != "" && (req.dir != api.AscDir && req.dir != api.DescDir) {
+	if req.page.Dir != "" && (req.page.Dir != api.AscDir && req.page.Dir != api.DescDir) {
 		return apiutil.ErrInvalidDirection
 	}
 

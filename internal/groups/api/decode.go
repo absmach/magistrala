@@ -9,12 +9,24 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/go-chi/chi/v5"
+)
+
+var (
+	queryKeys   = []string{api.ThingKey, api.ChannelKey, api.DomainKey, api.GroupKey, api.UserKey}
+	entityTypes = map[string]string{
+		api.ThingKey:   auth.ThingsKind,
+		api.ChannelKey: auth.GroupsKind,
+		api.DomainKey:  auth.DomainsKind,
+		api.GroupKey:   auth.GroupsKind,
+		api.UserKey:    auth.UsersKind,
+	}
 )
 
 func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
@@ -42,9 +54,16 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	memberKind, err := apiutil.ReadStringQuery(r, api.MemberKindKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	var entityID, entityType string
+	for _, key := range queryKeys {
+		entityID, err = apiutil.ReadStringQuery(r, key, "")
+		if err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		if entityID != "" {
+			entityType = entityTypes[key]
+			break
+		}
 	}
 
 	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
@@ -59,8 +78,8 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 	req := listGroupsReq{
 		token:      apiutil.ExtractBearerToken(r),
 		tree:       tree,
-		memberKind: memberKind,
-		memberID:   chi.URLParam(r, "memberID"),
+		memberKind: entityType,
+		memberID:   entityID,
 		Page: mggroups.Page{
 			Level:      level,
 			ParentID:   parentID,

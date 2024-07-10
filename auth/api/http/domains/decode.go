@@ -68,9 +68,16 @@ func decodeListDomainRequest(ctx context.Context, r *http.Request) (interface{},
 	if err != nil {
 		return nil, err
 	}
+
+	usr, err := apiutil.ReadStringQuery(r, api.UserKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
 	req := listDomainsReq{
-		token: apiutil.ExtractBearerToken(r),
-		page:  page,
+		token:  apiutil.ExtractBearerToken(r),
+		page:   page,
+		userID: usr,
 	}
 
 	return req, nil
@@ -129,19 +136,6 @@ func decodeUnassignUserRequest(_ context.Context, r *http.Request) (interface{},
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
-	return req, nil
-}
-
-func decodeListUserDomainsRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	page, err := decodePageRequest(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	req := listUserDomainsReq{
-		token:  apiutil.ExtractBearerToken(r),
-		userID: chi.URLParam(r, "userID"),
-		page:   page,
-	}
 	return req, nil
 }
 

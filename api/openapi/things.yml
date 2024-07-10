@@ -85,6 +85,7 @@ paths:
         - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/ThingName"
         - $ref: "#/components/parameters/Tags"
+        - $ref: "#/components/parameters/User"
       security:
         - bearerAuth: []
       responses:
@@ -103,7 +104,44 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-
+  
+  /things/members:
+    get:
+      operationId: listThingMembers
+      tags:
+        - Things
+      summary: Retrieves things members
+      description: |
+        Retrieves a list of things members. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/ThingName"
+        - $ref: "#/components/parameters/Tags"
+        - $ref: "#/components/parameters/Channel"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ThingPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: |
+            Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
   /things/bulk:
     post:
       operationId: bulkCreateThings
@@ -401,35 +439,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/things:
-    get:
-      operationId: listThingsInaChannel
-      summary: List of things connected to specified channel
-      description: |
-        Retrieves list of things connected to specified channel with pagination
-        metadata.
-      tags:
-        - Things
-      parameters:
-        - $ref: "#/components/parameters/chanID"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Connected"
-      responses:
-        "200":
-          $ref: "#/components/responses/ThingsPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: A non-existent entity request.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
 
   /channels:
     post:
@@ -480,6 +489,9 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/ChannelName"
+        - $ref: "#/components/parameters/User"
+        - $ref: "#/components/parameters/Group"
+        - $ref: "#/components/parameters/Thing"
       responses:
         "200":
           $ref: "#/components/responses/ChannelPageRes"
@@ -761,92 +773,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/channels:
-    get:
-      operationId: listChannelsConnectedToThing
-      summary: List of channels connected to specified thing
-      description: |
-        Retrieves list of channels connected to specified thing with pagination
-        metadata.
-      tags:
-        - Channels
-      parameters:
-        - $ref: "#/components/parameters/ThingID"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-      responses:
-        "200":
-          $ref: "#/components/responses/ChannelPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: Thing does not exist.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /users/{memberID}/channels:
-    get:
-      operationId: listChannelsConnectedToUser
-      summary: List of channels connected to specified user
-      description: |
-        Retrieves list of channels connected to specified user with pagination
-        metadata.
-      tags:
-        - Channels
-      parameters:
-        - $ref: "#/components/parameters/MemberID"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-      responses:
-        "200":
-          $ref: "#/components/responses/ChannelPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: Thing does not exist.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /groups/{memberID}/channels:
-    get:
-      operationId: listChannelsConnectedToGroup
-      summary: List of channels connected to specified group
-      description: |
-        Retrieves list of channels connected to specified group with pagination
-        metadata.
-      tags:
-        - Channels
-      parameters:
-        - $ref: "#/components/parameters/MemberID"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-      responses:
-        "200":
-          $ref: "#/components/responses/ChannelPageRes"
-        "400":
-          description: Failed due to malformed query parameters.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Failed to perform authorization over the entity.
-        "404":
-          description: Thing does not exist.
-        "422":
-          description: Database can't process request.
-        "500":
-          $ref: "#/components/responses/ServiceError"
 
   /connect:
     post:
@@ -1627,6 +1553,46 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
+    Channel:
+      name: channel
+      description: Unique channel identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    User:
+      name: user
+      description: Unique user identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Group:
+      name: group
+      description: Unique group identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Thing:
+      name: thing
+      description: Unique thing identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
     ParentId:
       name: parentId
       description: Unique parent identifier for a channel.
@@ -1822,10 +1788,6 @@ components:
           operationId: getThing
           parameters:
             thingID: $response.body#/id
-        get_channels:
-          operationId: listChannelsConnectedToThing
-          parameters:
-            thingID: $response.body#/id
         update:
           operationId: updateThing
           parameters:
@@ -1862,10 +1824,6 @@ components:
           schema:
             $ref: "#/components/schemas/Thing"
       links:
-        get_channels:
-          operationId: listChannelsConnectedToThing
-          parameters:
-            thingID: $response.body#/id
         share:
           operationId: shareThing
           parameters:
@@ -1906,18 +1864,6 @@ components:
           operationId: getChannel
           parameters:
             chanID: $response.body#/id
-        get_things:
-          operationId: listThingsInaChannel
-          parameters:
-            chanID: $response.body#/id
-        get_users:
-          operationId: listChannelsConnectedToUser
-          parameters:
-            memberID: $response.body#/id
-        get_groups:
-          operationId: listChannelsConnectedToGroup
-          parameters:
-            memberID: $response.body#/id
         update:
           operationId: updateChannel
           parameters:
@@ -1954,18 +1900,6 @@ components:
           schema:
             $ref: "#/components/schemas/Channel"
       links:
-        get_things:
-          operationId: listThingsInaChannel
-          parameters:
-            chanID: $response.body#/id
-        get_users:
-          operationId: listChannelsConnectedToUser
-          parameters:
-            memberID: $response.body#/id
-        get_groups:
-          operationId: listChannelsConnectedToGroup
-          parameters:
-            memberID: $response.body#/id
         assign_users:
           operationId: assignUsersToChannel
           parameters:

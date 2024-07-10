@@ -19,6 +19,8 @@ type Page struct {
 	Status     Status   `json:"status,omitempty"`
 	IDs        []string `json:"ids,omitempty"`
 	Identity   string   `json:"identity,omitempty"`
+	EntityType string   `json:"entity_type,omitempty"`
+	EntityID   string   `json:"entity_id,omitempty"`
 	Role       Role     `json:"-"`
 	ListPerms  bool     `json:"-"`
 }

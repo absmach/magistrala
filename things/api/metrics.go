@@ -54,12 +54,12 @@ func (ms *metricsMiddleware) ViewClientPerms(ctx context.Context, token, id stri
 	return ms.svc.ViewClientPerms(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+func (ms *metricsMiddleware) ListClients(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things").Add(1)
 		ms.latency.With("method", "list_things").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.ListClients(ctx, token, reqUserID, pm)
+	return ms.svc.ListClients(ctx, token, pm)
 }
 
 func (ms *metricsMiddleware) UpdateClient(ctx context.Context, token string, client mgclients.Client) (mgclients.Client, error) {
@@ -100,14 +100,6 @@ func (ms *metricsMiddleware) DisableClient(ctx context.Context, token, id string
 		ms.latency.With("method", "disable_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 	return ms.svc.DisableClient(ctx, token, id)
-}
-
-func (ms *metricsMiddleware) ListClientsByGroup(ctx context.Context, token, groupID string, pm mgclients.Page) (mp mgclients.MembersPage, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "list_things_by_channel").Add(1)
-		ms.latency.With("method", "list_things_by_channel").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.ListClientsByGroup(ctx, token, groupID, pm)
 }
 
 func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, error) {

@@ -289,6 +289,139 @@ func TestListChannels(t *testing.T) {
 	}
 }
 
+func TestListUserChannels(t *testing.T) {
+	ts, grepo, auth := setupChannels()
+	defer ts.Close()
+
+	var chs []sdk.Channel
+	conf := sdk.Config{
+		ThingsURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	for i := 10; i < 100; i++ {
+		gr := sdk.Channel{
+			ID:       generateUUID(t),
+			Name:     fmt.Sprintf("channel_%d", i),
+			Metadata: sdk.Metadata{"name": fmt.Sprintf("thing_%d", i)},
+			Status:   mgclients.EnabledStatus.String(),
+		}
+		chs = append(chs, gr)
+	}
+
+	cases := []struct {
+		desc     string
+		token    string
+		status   mgclients.Status
+		total    uint64
+		offset   uint64
+		limit    uint64
+		level    int
+		name     string
+		userID   string
+		metadata sdk.Metadata
+		err      errors.SDKError
+		response []sdk.Channel
+		ctx      context.Context
+	}{
+		{
+			desc:     "get a list of user channels",
+			token:    token,
+			limit:    limit,
+			offset:   offset,
+			total:    total,
+			userID:   validID,
+			err:      nil,
+			response: chs[offset:limit],
+		},
+		{
+			desc:     "get a list of user channels with invalid token",
+			token:    invalidToken,
+			offset:   offset,
+			limit:    limit,
+			userID:   validID,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			response: nil,
+		},
+		{
+			desc:     "get a list of user channels with empty token",
+			token:    "",
+			offset:   offset,
+			limit:    limit,
+			userID:   validID,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			response: nil,
+		},
+		{
+			desc:     "get a list of user channels with limit greater than max",
+			token:    token,
+			userID:   validID,
+			offset:   offset,
+			limit:    110,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
+			response: []sdk.Channel(nil),
+		},
+		{
+			desc:     "get a list of user channels with given name",
+			token:    token,
+			offset:   0,
+			limit:    1,
+			userID:   validID,
+			err:      nil,
+			metadata: sdk.Metadata{},
+			response: []sdk.Channel{chs[89]},
+		},
+		{
+			desc:     "get a list of user channels with level",
+			token:    token,
+			offset:   0,
+			limit:    1,
+			userID:   validID,
+			level:    1,
+			err:      nil,
+			response: []sdk.Channel{chs[0]},
+		},
+		{
+			desc:     "get a list of user channels with metadata",
+			token:    token,
+			offset:   0,
+			limit:    1,
+			userID:   validID,
+			err:      nil,
+			metadata: sdk.Metadata{},
+			response: []sdk.Channel{chs[89]},
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		if tc.token == invalidToken {
+			repoCall = auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: invalidToken}).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
+		}
+		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
+		repoCall3 := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
+		pm := sdk.PageMetadata{
+			Offset: tc.offset,
+			Limit:  tc.limit,
+			Level:  uint64(tc.level),
+			User:   tc.userID,
+		}
+		page, err := mgsdk.ListUserChannels(pm, tc.token)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+		assert.Equal(t, len(tc.response), len(page.Channels), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
+		if tc.err == nil {
+			ok := repoCall3.Parent.AssertCalled(t, "RetrieveByIDs", mock.Anything, mock.Anything, mock.Anything)
+			assert.True(t, ok, fmt.Sprintf("RetrieveByIDs was not called on %s", tc.desc))
+		}
+		repoCall.Unset()
+		repoCall1.Unset()
+		repoCall2.Unset()
+		repoCall3.Unset()
+	}
+}
+
 func TestViewChannel(t *testing.T) {
 	ts, grepo, auth := setupChannels()
 	defer ts.Close()
@@ -544,79 +677,80 @@ func TestListChannelsByThing(t *testing.T) {
 	cases := []struct {
 		desc     string
 		token    string
-		clientID string
 		page     sdk.PageMetadata
 		response []sdk.Channel
 		err      errors.SDKError
 	}{
 		{
-			desc:     "list channel with authorized token",
-			token:    validToken,
-			clientID: testsutil.GenerateUUID(t),
-			page:     sdk.PageMetadata{},
+			desc:  "list channel with authorized token",
+			token: validToken,
+			page: sdk.PageMetadata{
+				Thing: testsutil.GenerateUUID(t),
+			},
 			response: aChannels,
 			err:      nil,
 		},
 		{
-			desc:     "list channel with offset and limit",
-			token:    validToken,
-			clientID: testsutil.GenerateUUID(t),
+			desc:  "list channel with offset and limit",
+			token: validToken,
 			page: sdk.PageMetadata{
 				Offset: 6,
 				Total:  nChannels,
 				Limit:  nChannels,
 				Status: mgclients.AllStatus.String(),
+				Thing:  testsutil.GenerateUUID(t),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
 		},
 		{
-			desc:     "list channel with given name",
-			token:    validToken,
-			clientID: testsutil.GenerateUUID(t),
+			desc:  "list channel with given name",
+			token: validToken,
 			page: sdk.PageMetadata{
 				Name:   gName,
 				Offset: 6,
 				Total:  nChannels,
 				Limit:  nChannels,
 				Status: mgclients.AllStatus.String(),
+				Thing:  testsutil.GenerateUUID(t),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
 		},
 		{
-			desc:     "list channel with given level",
-			token:    validToken,
-			clientID: testsutil.GenerateUUID(t),
+			desc:  "list channel with given level",
+			token: validToken,
 			page: sdk.PageMetadata{
 				Level:  1,
 				Offset: 6,
 				Total:  nChannels,
 				Limit:  nChannels,
 				Status: mgclients.AllStatus.String(),
+				Thing:  testsutil.GenerateUUID(t),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
 		},
 		{
-			desc:     "list channel with metadata",
-			token:    validToken,
-			clientID: testsutil.GenerateUUID(t),
+			desc:  "list channel with metadata",
+			token: validToken,
 			page: sdk.PageMetadata{
 				Metadata: validMetadata,
 				Offset:   6,
 				Total:    nChannels,
 				Limit:    nChannels,
 				Status:   mgclients.AllStatus.String(),
+				Thing:    testsutil.GenerateUUID(t),
 			},
 			response: aChannels[6 : nChannels-1],
 			err:      nil,
 		},
 		{
-			desc:     "list channel with an invalid token",
-			token:    invalidToken,
-			clientID: testsutil.GenerateUUID(t),
-			page:     sdk.PageMetadata{},
+			desc:  "list channel with an invalid token",
+			token: invalidToken,
+			page: sdk.PageMetadata{
+				Thing: testsutil.GenerateUUID(t),
+			},
 			response: []sdk.Channel(nil),
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
@@ -629,6 +763,7 @@ func TestListChannelsByThing(t *testing.T) {
 		authCall3 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
 		repoCall := grepo.On("RetrieveByIDs", mock.Anything, mock.Anything, mock.Anything).Return(mggroups.Page{Groups: convertChannels(tc.response)}, tc.err)
 		page, err := mgsdk.ChannelsByThing(tc.clientID, tc.page, tc.token)
+
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page.Channels))
 		authCall.Unset()

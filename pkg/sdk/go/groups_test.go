@@ -506,6 +506,116 @@ func TestListGroups(t *testing.T) {
 	}
 }
 
+func TestListGroupsByUser(t *testing.T) {
+	ts, gsvc := setupGroups()
+	defer ts.Close()
+
+	var grps []sdk.Group
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	for i := 10; i < 100; i++ {
+		gr := sdk.Group{
+			ID:       generateUUID(t),
+			Name:     fmt.Sprintf("group_%d", i),
+			Metadata: sdk.Metadata{"name": fmt.Sprintf("user_%d", i)},
+			Status:   mgclients.EnabledStatus.String(),
+		}
+		grps = append(grps, gr)
+	}
+
+	cases := []struct {
+		desc     string
+		token    string
+		status   mgclients.Status
+		total    uint64
+		offset   uint64
+		limit    uint64
+		level    int
+		name     string
+		userID   string
+		metadata sdk.Metadata
+		err      errors.SDKError
+		svcRes   groups.Page
+		response sdk.GroupsPage
+	}{
+		{
+			desc:     "get a list of groups with valid user id",
+			token:    token,
+			limit:    limit,
+			offset:   offset,
+			total:    total,
+			userID:   validID,
+			err:      nil,
+			response: sdk.GroupsPage(sdk.GroupsPage{Groups: grps[offset:limit], PageRes: sdk.PageRes{Total: 5, Offset: 0x0, Limit: 0x0}}),
+			svcRes: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: uint64(len(grps[offset:limit])),
+				},
+				Groups: convertGroups(grps[offset:limit]),
+			},
+		},
+		{
+			desc:     "get a list of groups with invalid token",
+			token:    invalidToken,
+			offset:   offset,
+			limit:    limit,
+			userID:   validID,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			response: sdk.GroupsPage(sdk.GroupsPage{Groups: []sdk.Group(nil), PageRes: sdk.PageRes{Total: 0x0, Offset: 0x0, Limit: 0x0}}),
+		},
+		{
+			desc:     "get a list of groups with empty token",
+			token:    "",
+			offset:   offset,
+			limit:    limit,
+			userID:   validID,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			response: sdk.GroupsPage(sdk.GroupsPage{Groups: []sdk.Group(nil), PageRes: sdk.PageRes{Total: 0x0, Offset: 0x0, Limit: 0x0}}),
+		},
+		{
+			desc:     "get a list of groups with invalid user id",
+			token:    token,
+			offset:   offset,
+			limit:    limit,
+			userID:   "invalid",
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
+			response: sdk.GroupsPage(sdk.GroupsPage{Groups: []sdk.Group(nil), PageRes: sdk.PageRes{Total: 0x0, Offset: 0x0, Limit: 0x0}}),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			pm := sdk.PageMetadata{
+				Offset: tc.offset,
+				Limit:  tc.limit,
+				Level:  uint64(tc.level),
+				User:   tc.userID,
+			}
+			svcReq := groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset: tc.offset,
+					Limit:  tc.limit,
+				},
+				Level:      uint64(tc.level),
+				Permission: auth.ViewPermission,
+				Direction:  -1,
+			}
+			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.UsersKind, tc.userID, svcReq).Return(tc.svcRes, tc.err)
+			resp, err := mgsdk.ListUserGroups(pm, tc.token)
+			assert.Equal(t, tc.err, err)
+			assert.Equal(t, tc.response, resp)
+			if tc.err == nil {
+				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.token, auth.UsersKind, tc.userID, svcReq)
+				assert.True(t, ok)
+			}
+			svcCall.Unset()
+		})
+	}
+}
+
 func TestListParentGroups(t *testing.T) {
 	ts, gsvc := setupGroups()
 	defer ts.Close()
@@ -755,6 +865,115 @@ func TestListParentGroups(t *testing.T) {
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.token, auth.UsersKind, "", tc.svcReq)
+				assert.True(t, ok)
+			}
+			svcCall.Unset()
+		})
+	}
+}
+
+func TestListGroupsByChannel(t *testing.T) {
+	ts, gsvc := setupGroups()
+	defer ts.Close()
+
+	var grps []sdk.Group
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	for i := 10; i < 100; i++ {
+		gr := sdk.Group{
+			ID:       generateUUID(t),
+			Name:     fmt.Sprintf("group_%d", i),
+			Metadata: sdk.Metadata{"name": fmt.Sprintf("user_%d", i)},
+			Status:   mgclients.EnabledStatus.String(),
+		}
+		grps = append(grps, gr)
+	}
+
+	cases := []struct {
+		desc      string
+		token     string
+		status    mgclients.Status
+		total     uint64
+		offset    uint64
+		limit     uint64
+		level     int
+		name      string
+		channelID string
+		metadata  sdk.Metadata
+		err       errors.SDKError
+		response  sdk.GroupsPage
+		svcRes    groups.Page
+	}{
+		{
+			desc:      "get a list of groups with valid user id",
+			token:     token,
+			limit:     limit,
+			offset:    offset,
+			total:     total,
+			channelID: validID,
+			err:       nil,
+			response:  sdk.GroupsPage(sdk.GroupsPage{Groups: grps[offset:limit], PageRes: sdk.PageRes{Total: 5, Offset: 0x0, Limit: 0x0}}),
+			svcRes: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: uint64(len(grps[offset:limit])),
+				},
+				Groups: convertGroups(grps[offset:limit]),
+			},
+		},
+		{
+			desc:      "get a list of groups with invalid token",
+			token:     invalidToken,
+			offset:    offset,
+			limit:     limit,
+			channelID: validID,
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			response:  sdk.GroupsPage(sdk.GroupsPage{Groups: []sdk.Group(nil), PageRes: sdk.PageRes{Total: 0x0, Offset: 0x0, Limit: 0x0}}),
+		},
+		{
+			desc:      "get a list of groups with empty token",
+			token:     "",
+			offset:    offset,
+			limit:     limit,
+			channelID: validID,
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			response:  sdk.GroupsPage(sdk.GroupsPage{Groups: []sdk.Group(nil), PageRes: sdk.PageRes{Total: 0x0, Offset: 0x0, Limit: 0x0}}),
+		},
+		{
+			desc:      "get a list of groups with invalid user id",
+			token:     token,
+			limit:     limit,
+			channelID: invalidIdentity,
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
+			response:  sdk.GroupsPage(sdk.GroupsPage{Groups: []sdk.Group(nil), PageRes: sdk.PageRes{Total: 0x0, Offset: 0x0, Limit: 0x0}}),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcReq := groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset: tc.offset,
+					Limit:  tc.limit,
+				},
+				Level:      uint64(tc.level),
+				Permission: auth.ViewPermission,
+				Direction:  -1,
+			}
+			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.UsersKind, tc.channelID, svcReq).Return(tc.svcRes, tc.err)
+			pm := sdk.PageMetadata{
+				Offset:  tc.offset,
+				Limit:   tc.limit,
+				Level:   uint64(tc.level),
+				Channel: tc.channelID,
+			}
+			resp, err := mgsdk.ListChannelUserGroups(pm, tc.token)
+			assert.Equal(t, tc.err, err)
+			assert.Equal(t, tc.response, resp)
+			if tc.err == nil {
+				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.token, auth.UsersKind, tc.channelID, svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

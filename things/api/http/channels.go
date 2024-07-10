@@ -133,6 +133,7 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger *slog.Logger) http.Han
 		), "disconnect_channel_thing").ServeHTTP)
 	})
 
+
 	// Ideal location: things service,  things endpoint
 	// Reason for placing here :
 	// SpiceDB provides list of channel ids to which thing id attached

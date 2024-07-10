@@ -482,6 +482,193 @@ func TestListThings(t *testing.T) {
 	}
 }
 
+func TestListUserThings(t *testing.T) {
+	ts, cRepo, _, auth, _ := setupThings()
+	defer ts.Close()
+
+	var ths []sdk.Thing
+	conf := sdk.Config{
+		ThingsURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	for i := 10; i < 100; i++ {
+		th := sdk.Thing{
+			ID:   generateUUID(t),
+			Name: fmt.Sprintf("thing_%d", i),
+			Credentials: sdk.Credentials{
+				Identity: fmt.Sprintf("identity_%d", i),
+				Secret:   generateUUID(t),
+			},
+			Metadata: sdk.Metadata{"name": fmt.Sprintf("thing_%d", i)},
+			Status:   mgclients.EnabledStatus.String(),
+		}
+		if i == 50 {
+			th.Status = mgclients.DisabledStatus.String()
+			th.Tags = []string{"tag1", "tag2"}
+		}
+		ths = append(ths, th)
+	}
+
+	cases := []struct {
+		desc       string
+		token      string
+		status     string
+		total      uint64
+		offset     uint64
+		limit      uint64
+		name       string
+		userID     string
+		identifier string
+		tag        string
+		metadata   sdk.Metadata
+		err        errors.SDKError
+		response   []sdk.Thing
+	}{
+		{
+			desc:     "get a list of user things",
+			token:    token,
+			limit:    limit,
+			offset:   offset,
+			total:    total,
+			userID:   validID,
+			err:      nil,
+			response: ths[offset:limit],
+		},
+		{
+			desc:     "get a list of user things with invalid token",
+			token:    authmocks.InvalidValue,
+			offset:   offset,
+			limit:    limit,
+			userID:   validID,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			response: nil,
+		},
+		{
+			desc:     "get a list of user things with empty token",
+			token:    "",
+			offset:   offset,
+			limit:    limit,
+			userID:   validID,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			response: nil,
+		},
+		{
+			desc:     "get a list of user things with zero limit",
+			token:    token,
+			offset:   offset,
+			limit:    0,
+			userID:   validID,
+			err:      nil,
+			response: []sdk.Thing{},
+		},
+		{
+			desc:     "get a list of user things with limit greater than max",
+			token:    token,
+			offset:   offset,
+			limit:    110,
+			userID:   validID,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
+			response: []sdk.Thing(nil),
+		},
+		{
+			desc:       "get a list of user things with same identity",
+			token:      token,
+			offset:     0,
+			limit:      1,
+			err:        nil,
+			identifier: Identity,
+			userID:     validID,
+			metadata:   sdk.Metadata{},
+			response:   []sdk.Thing{ths[89]},
+		},
+		{
+			desc:       "get a list of user things with same identity and metadata",
+			token:      token,
+			offset:     0,
+			limit:      1,
+			err:        nil,
+			userID:     validID,
+			identifier: Identity,
+			metadata: sdk.Metadata{
+				"name": "client99",
+			},
+			response: []sdk.Thing{ths[89]},
+		},
+		{
+			desc:   "list user things with given metadata",
+			token:  validToken,
+			offset: 0,
+			limit:  1,
+			metadata: sdk.Metadata{
+				"name": "client99",
+			},
+			userID:   validID,
+			response: []sdk.Thing{ths[89]},
+			err:      nil,
+		},
+		{
+			desc:     "list user things with given name",
+			token:    validToken,
+			offset:   0,
+			limit:    1,
+			name:     "client10",
+			userID:   validID,
+			response: []sdk.Thing{ths[0]},
+			err:      nil,
+		},
+		{
+			desc:     "list user things with given status",
+			token:    validToken,
+			offset:   0,
+			limit:    1,
+			userID:   validID,
+			status:   mgclients.DisabledStatus.String(),
+			response: []sdk.Thing{ths[50]},
+			err:      nil,
+		},
+		{
+			desc:     "list user things with given tag",
+			token:    validToken,
+			offset:   0,
+			limit:    1,
+			tag:      "tag1",
+			response: []sdk.Thing{ths[50]},
+			userID:   validID,
+			err:      nil,
+		},
+	}
+
+	for _, tc := range cases {
+		pm := sdk.PageMetadata{
+			Status:   tc.status,
+			Total:    total,
+			Offset:   tc.offset,
+			Limit:    tc.limit,
+			Name:     tc.name,
+			Metadata: tc.metadata,
+			Tag:      tc.tag,
+			User:     tc.userID,
+		}
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
+		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: toIDs(tc.response)}, nil)
+		if tc.token != validToken {
+			repoCall = auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{}, svcerr.ErrAuthentication)
+			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false}, svcerr.ErrAuthorization)
+			repoCall2 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, svcerr.ErrAuthorization)
+		}
+		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(pm), Clients: convertThings(tc.response...)}, tc.err)
+		page, err := mgsdk.ListUserThings(pm, validToken)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+		assert.Equal(t, tc.response, page.Things, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
+		repoCall2.Unset()
+		repoCall.Unset()
+		repoCall1.Unset()
+		repoCall3.Unset()
+	}
+}
+
 func TestListThingsByChannel(t *testing.T) {
 	ts, cRepo, _, auth, _ := setupThings()
 	defer ts.Close()
@@ -508,83 +695,85 @@ func TestListThingsByChannel(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc      string
-		token     string
-		channelID string
-		page      sdk.PageMetadata
-		response  []sdk.Thing
-		err       errors.SDKError
+		desc     string
+		token    string
+		page     sdk.PageMetadata
+		response []sdk.Thing
+		err      errors.SDKError
 	}{
 		{
-			desc:      "list things with authorized token",
-			token:     validToken,
-			channelID: testsutil.GenerateUUID(t),
-			page:      sdk.PageMetadata{},
-			response:  aThings,
-			err:       nil,
+			desc:  "list things with authorized token",
+			token: validToken,
+			page: sdk.PageMetadata{
+				Channel: testsutil.GenerateUUID(t),
+			},
+			response: aThings,
+			err:      nil,
 		},
 		{
-			desc:      "list things with offset and limit",
-			token:     validToken,
-			channelID: testsutil.GenerateUUID(t),
+			desc:  "list things with offset and limit",
+			token: validToken,
 			page: sdk.PageMetadata{
-				Offset: 4,
-				Limit:  nThing,
+				Offset:  4,
+				Limit:   nThing,
+				Channel: testsutil.GenerateUUID(t),
 			},
 			response: aThings[4:],
 			err:      nil,
 		},
 		{
-			desc:      "list things with given name",
-			token:     validToken,
-			channelID: testsutil.GenerateUUID(t),
+			desc:  "list things with given name",
+			token: validToken,
 			page: sdk.PageMetadata{
-				Name:   Identity,
-				Offset: 6,
-				Limit:  nThing,
+				Name:    Identity,
+				Offset:  6,
+				Limit:   nThing,
+				Channel: testsutil.GenerateUUID(t),
 			},
 			response: aThings[6:],
 			err:      nil,
 		},
 		{
-			desc:      "list things with given subject",
-			token:     validToken,
-			channelID: testsutil.GenerateUUID(t),
+			desc:  "list things with given subject",
+			token: validToken,
 			page: sdk.PageMetadata{
 				Subject: subject,
 				Offset:  6,
 				Limit:   nThing,
+				Channel: testsutil.GenerateUUID(t),
 			},
 			response: aThings[6:],
 			err:      nil,
 		},
 		{
-			desc:      "list things with given object",
-			token:     validToken,
-			channelID: testsutil.GenerateUUID(t),
+			desc:  "list things with given object",
+			token: validToken,
 			page: sdk.PageMetadata{
-				Object: object,
-				Offset: 6,
-				Limit:  nThing,
+				Object:  object,
+				Offset:  6,
+				Limit:   nThing,
+				Channel: testsutil.GenerateUUID(t),
 			},
 			response: aThings[6:],
 			err:      nil,
 		},
 		{
-			desc:      "list things with an invalid token",
-			token:     invalidToken,
-			channelID: testsutil.GenerateUUID(t),
-			page:      sdk.PageMetadata{},
-			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:  "list things with an invalid token",
+			token: invalidToken,
+			page: sdk.PageMetadata{
+				Channel: testsutil.GenerateUUID(t),
+			},
+			response: []sdk.Thing(nil),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:      "list things with an invalid id",
-			token:     validToken,
-			channelID: wrongID,
-			page:      sdk.PageMetadata{},
-			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
+			desc:  "list things with an invalid id",
+			token: validToken,
+			page: sdk.PageMetadata{
+				Channel: wrongID,
+			},
+			response: []sdk.Thing(nil),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
 		},
 	}
 
@@ -593,7 +782,7 @@ func TestListThingsByChannel(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{}, nil)
 		repoCall3 := cRepo.On("RetrieveAllByIDs", mock.Anything, mock.Anything).Return(mgclients.ClientsPage{Page: convertClientPage(tc.page), Clients: convertThings(tc.response...)}, tc.err)
-		membersPage, err := mgsdk.ThingsByChannel(tc.channelID, tc.page, tc.token)
+		membersPage, err := mgsdk.ThingsByChannel(tc.page, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, membersPage.Things, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, membersPage.Things))
 		if tc.err == nil {

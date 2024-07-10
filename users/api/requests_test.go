@@ -192,7 +192,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "valid request",
 			req: listClientsReq{
 				token: valid,
-				limit: 10,
+				page:  mgclients.Page{Limit: 10},
 			},
 			err: nil,
 		},
@@ -200,7 +200,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "empty token",
 			req: listClientsReq{
 				token: "",
-				limit: 10,
+				page:  mgclients.Page{Limit: 10},
 			},
 			err: apiutil.ErrBearerToken,
 		},
@@ -208,7 +208,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "limit too big",
 			req: listClientsReq{
 				token: valid,
-				limit: api.MaxLimitSize + 1,
+				page:  mgclients.Page{Limit: api.MaxLimitSize + 1},
 			},
 			err: apiutil.ErrLimitSize,
 		},
@@ -216,7 +216,7 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "limit too small",
 			req: listClientsReq{
 				token: valid,
-				limit: 0,
+				page:  mgclients.Page{Limit: 0},
 			},
 			err: apiutil.ErrLimitSize,
 		},
@@ -224,8 +224,10 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "invalid direction",
 			req: listClientsReq{
 				token: valid,
-				limit: 10,
-				dir:   "invalid",
+				page: mgclients.Page{
+					Limit: 10,
+					Dir:   "invalid",
+				},
 			},
 			err: apiutil.ErrInvalidDirection,
 		},
@@ -233,55 +235,6 @@ func TestListClientsReqValidate(t *testing.T) {
 	for _, c := range cases {
 		err := c.req.validate()
 		assert.Equal(t, c.err, err, "%s: expected %s got %s\n", c.desc, c.err, err)
-	}
-}
-
-func TestListMembersByObjectReqValidate(t *testing.T) {
-	cases := []struct {
-		desc string
-		req  listMembersByObjectReq
-		err  error
-	}{
-		{
-			desc: "valid request",
-			req: listMembersByObjectReq{
-				token:      valid,
-				objectKind: "group",
-				objectID:   validID,
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			req: listMembersByObjectReq{
-				token:      "",
-				objectKind: "group",
-				objectID:   validID,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
-			desc: "empty object kind",
-			req: listMembersByObjectReq{
-				token:      valid,
-				objectKind: "",
-				objectID:   validID,
-			},
-			err: apiutil.ErrMissingMemberKind,
-		},
-		{
-			desc: "empty object id",
-			req: listMembersByObjectReq{
-				token:      valid,
-				objectKind: "group",
-				objectID:   "",
-			},
-			err: apiutil.ErrMissingID,
-		},
-	}
-	for _, c := range cases {
-		err := c.req.validate()
-		assert.Equal(t, c.err, err)
 	}
 }
 

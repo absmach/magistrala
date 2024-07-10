@@ -62,48 +62,24 @@ func (req viewProfileReq) validate() error {
 }
 
 type listClientsReq struct {
-	token    string
-	status   mgclients.Status
-	offset   uint64
-	limit    uint64
-	name     string
-	tag      string
-	identity string
-	metadata mgclients.Metadata
-	order    string
-	dir      string
+	token string
+	page  mgclients.Page
 }
 
 func (req listClientsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.limit > maxLimitSize || req.limit < 1 {
+	if req.page.Limit > maxLimitSize || req.page.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
-	if req.dir != "" && (req.dir != api.AscDir && req.dir != api.DescDir) {
+	if req.page.Dir != "" && (req.page.Dir != api.AscDir && req.page.Dir != api.DescDir) {
 		return apiutil.ErrInvalidDirection
 	}
 
-	return nil
-}
-
-type listMembersByObjectReq struct {
-	mgclients.Page
-	token      string
-	objectKind string
-	objectID   string
-}
-
-func (req listMembersByObjectReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-	if req.objectID == "" {
-		return apiutil.ErrMissingID
-	}
-	if req.objectKind == "" {
-		return apiutil.ErrMissingMemberKind
+	if (req.page.EntityID == "" && req.page.EntityType != "") ||
+		(req.page.EntityID != "" && req.page.EntityType == "") {
+		return apiutil.ErrInvalidEntityTypeID
 	}
 
 	return nil

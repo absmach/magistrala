@@ -30,6 +30,7 @@ const (
 	svcName       = "test-service"
 	thingToken    = "1"
 	userToken     = "token"
+	invalidToken  = "invalid"
 	email         = "user@example.com"
 	invalid       = "invalid"
 	numOfMessages = 100
@@ -213,7 +214,7 @@ func TestReadAll(t *testing.T) {
 		{
 			desc:         "read page with invalid token as thing",
 			url:          fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
-			token:        authmocks.InvalidValue,
+			token:        invalidToken,
 			authResponse: false,
 			status:       http.StatusUnauthorized,
 			err:          svcerr.ErrAuthorization,
@@ -622,7 +623,7 @@ func TestReadAll(t *testing.T) {
 		{
 			desc:         "read page with invalid token as user",
 			url:          fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
-			token:        authmocks.InvalidValue,
+			token:        invalidToken,
 			authResponse: false,
 			status:       http.StatusUnauthorized,
 			err:          svcerr.ErrAuthorization,

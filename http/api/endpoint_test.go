@@ -25,7 +25,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
+const (
+	instanceID   = "5de9b29a-feb9-11ed-be56-0242ac120002"
+	invalidValue = "invalid"
+)
 
 func newService(auth magistrala.AuthzServiceClient) (session.Handler, *pubsub.PubSub) {
 	pub := new(pubsub.PubSub)
@@ -84,7 +87,7 @@ func TestPublish(t *testing.T) {
 	ctSenmlCBOR := "application/senml+cbor"
 	ctJSON := "application/json"
 	thingKey := "thing_key"
-	invalidKey := authmocks.InvalidValue
+	invalidKey := invalidValue
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	msgJSON := `{"field1":"val1","field2":"val2"}`
 	msgCBOR := `81A3616E6763757272656E746174206176FB3FF999999999999A`

@@ -730,10 +730,9 @@ func TestConnectThing(t *testing.T) {
 	wrongID := testsutil.GenerateUUID(&testing.T{})
 
 	connectedThing := c
-	connectedThing.State = bootstrap.Active
 
 	randomThing := c
-	randomThingID, err := uuid.NewV4()
+	randomThingID, _ := uuid.NewV4()
 	randomThing.ThingID = randomThingID.String()
 
 	emptyThing := c
@@ -830,10 +829,9 @@ func TestDisconnectThing(t *testing.T) {
 	wrongID := testsutil.GenerateUUID(&testing.T{})
 
 	connectedThing := c
-	connectedThing.State = bootstrap.Active
 
 	randomThing := c
-	randomThingID, err := uuid.NewV4()
+	randomThingID, _ := uuid.NewV4()
 	randomThing.ThingID = randomThingID.String()
 
 	emptyThing := c

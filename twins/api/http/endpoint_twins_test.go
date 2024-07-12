@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
@@ -26,15 +25,16 @@ import (
 )
 
 const (
-	twinName    = "name"
-	contentType = "application/json"
-	email       = "user@example.com"
-	token       = "token"
-	wrongID     = 0
-	maxNameSize = 1024
-	instanceID  = "5de9b29a-feb9-11ed-be56-0242ac120002"
-	retained    = "saved"
-	validID     = "123e4567-e89b-12d3-a456-426614174000"
+	twinName     = "name"
+	contentType  = "application/json"
+	email        = "user@example.com"
+	token        = "token"
+	invalidtoken = "invalid"
+	wrongID      = 0
+	maxNameSize  = 1024
+	instanceID   = "5de9b29a-feb9-11ed-be56-0242ac120002"
+	retained     = "saved"
+	validID      = "123e4567-e89b-12d3-a456-426614174000"
 )
 
 var invalidName = strings.Repeat("m", maxNameSize+1)
@@ -153,7 +153,7 @@ func TestAddTwin(t *testing.T) {
 			desc:        "add twin with invalid auth token",
 			req:         data,
 			contentType: contentType,
-			auth:        authmocks.InvalidValue,
+			auth:        invalidtoken,
 			status:      http.StatusUnauthorized,
 			location:    "",
 			err:         svcerr.ErrAuthentication,
@@ -318,7 +318,7 @@ func TestUpdateTwin(t *testing.T) {
 			req:         data,
 			id:          twin.ID,
 			contentType: contentType,
-			auth:        authmocks.InvalidValue,
+			auth:        invalidtoken,
 			status:      http.StatusUnauthorized,
 			err:         svcerr.ErrAuthentication,
 			retrieveErr: svcerr.ErrNotFound,
@@ -468,7 +468,7 @@ func TestViewTwin(t *testing.T) {
 		{
 			desc:        "view twin by passing invalid token",
 			id:          twin.ID,
-			auth:        authmocks.InvalidValue,
+			auth:        invalidtoken,
 			status:      http.StatusForbidden,
 			res:         twinRes{},
 			err:         svcerr.ErrAuthentication,
@@ -560,7 +560,7 @@ func TestListTwins(t *testing.T) {
 		},
 		{
 			desc:        "get a list of twins with invalid token",
-			auth:        authmocks.InvalidValue,
+			auth:        invalidtoken,
 			status:      http.StatusUnauthorized,
 			url:         fmt.Sprintf(queryFmt, baseURL, 0, 1),
 			res:         nil,
@@ -767,10 +767,7 @@ func TestRemoveTwin(t *testing.T) {
 	defer ts.Close()
 
 	twin := twins.Twin{
-		Owner:    email,
-		ID:       testsutil.GenerateUUID(t),
-		Name:     twinName,
-		Revision: 50,
+		ID: testsutil.GenerateUUID(t),
 	}
 
 	cases := []struct {
@@ -816,7 +813,7 @@ func TestRemoveTwin(t *testing.T) {
 		{
 			desc:        "delete twin with invalid token",
 			id:          twin.ID,
-			auth:        authmocks.InvalidValue,
+			auth:        invalidtoken,
 			status:      http.StatusUnauthorized,
 			err:         svcerr.ErrAuthentication,
 			removeErr:   svcerr.ErrRemoveEntity,

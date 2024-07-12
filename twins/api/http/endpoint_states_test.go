@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	numRecs   = 100
-	publisher = "twins"
+	numRecs      = 100
+	publisher    = "twins"
+	validToken   = "validToken"
+	invalidToken = "invalidToken"
 )
 
 var (
@@ -81,7 +83,7 @@ func TestListStates(t *testing.T) {
 	queryFmt := "%s?offset=%d&limit=%d"
 	cases := []struct {
 		desc        string
-		auth        string
+		token       string
 		status      int
 		url         string
 		res         []stateRes
@@ -92,7 +94,7 @@ func TestListStates(t *testing.T) {
 	}{
 		{
 			desc:   "get a list of states",
-			auth:   token,
+			token:  validToken,
 			status: http.StatusOK,
 			url:    baseURL,
 			res:    data[0:10],
@@ -105,7 +107,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:   "get a list of states with valid offset and limit",
-			auth:   token,
+			token:  validToken,
 			status: http.StatusOK,
 			url:    fmt.Sprintf(queryFmt, baseURL, 20, 15),
 			res:    data[20:35],
@@ -118,7 +120,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with invalid token",
-			auth:        authmocks.InvalidValue,
+			token:       invalidToken,
 			status:      http.StatusUnauthorized,
 			url:         fmt.Sprintf(queryFmt, baseURL, 0, 5),
 			res:         nil,
@@ -127,7 +129,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with empty token",
-			auth:        "",
+			token:       "",
 			status:      http.StatusUnauthorized,
 			url:         fmt.Sprintf(queryFmt, baseURL, 0, 5),
 			res:         nil,
@@ -136,7 +138,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:   "get a list of states with + limit > total",
-			auth:   token,
+			token:  validToken,
 			status: http.StatusOK,
 			url:    fmt.Sprintf(queryFmt, baseURL, 91, 20),
 			res:    data[91:],
@@ -149,7 +151,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with negative offset",
-			auth:        token,
+			token:       validToken,
 			status:      http.StatusBadRequest,
 			url:         fmt.Sprintf(queryFmt, baseURL, -1, 5),
 			res:         nil,
@@ -159,7 +161,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with negative limit",
-			auth:        token,
+			token:       validToken,
 			status:      http.StatusBadRequest,
 			url:         fmt.Sprintf(queryFmt, baseURL, 0, -5),
 			res:         nil,
@@ -169,7 +171,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with zero limit",
-			auth:        token,
+			token:       validToken,
 			status:      http.StatusBadRequest,
 			url:         fmt.Sprintf(queryFmt, baseURL, 0, 0),
 			res:         nil,
@@ -179,7 +181,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with limit greater than max",
-			auth:        token,
+			token:       validToken,
 			status:      http.StatusBadRequest,
 			url:         fmt.Sprintf(queryFmt, baseURL, 0, 110),
 			res:         nil,
@@ -189,7 +191,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with invalid offset",
-			auth:        token,
+			token:       validToken,
 			status:      http.StatusBadRequest,
 			url:         fmt.Sprintf("%s?offset=invalid&limit=%d", baseURL, 15),
 			res:         nil,
@@ -199,7 +201,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with invalid limit",
-			auth:        token,
+			token:       validToken,
 			status:      http.StatusBadRequest,
 			url:         fmt.Sprintf("%s?offset=%d&limit=invalid", baseURL, 0),
 			res:         nil,
@@ -209,7 +211,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:   "get a list of states without offset",
-			auth:   token,
+			token:  validToken,
 			status: http.StatusOK,
 			url:    fmt.Sprintf("%s?limit=%d", baseURL, 15),
 			res:    data[0:15],
@@ -222,7 +224,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:   "get a list of states without limit",
-			auth:   token,
+			token:  validToken,
 			status: http.StatusOK,
 			url:    fmt.Sprintf("%s?offset=%d", baseURL, 14),
 			res:    data[14:24],
@@ -235,7 +237,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:        "get a list of states with invalid number of parameters",
-			auth:        token,
+			token:       validToken,
 			status:      http.StatusBadRequest,
 			url:         fmt.Sprintf("%s%s", baseURL, "?offset=4&limit=4&limit=5&offset=5"),
 			res:         nil,
@@ -245,7 +247,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:   "get a list of states with redundant query parameters",
-			auth:   token,
+			token:  validToken,
 			status: http.StatusOK,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&value=something", baseURL, 0, 5),
 			res:    data[0:5],
@@ -259,13 +261,13 @@ func TestListStates(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.auth}).Return(&magistrala.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID}, tc.identifyErr)
 		repoCall := stateRepo.On("RetrieveAll", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.err)
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
 			url:    tc.url,
-			token:  tc.auth,
+			token:  tc.token,
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))

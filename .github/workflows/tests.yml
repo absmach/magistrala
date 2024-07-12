@@ -27,6 +27,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.59.1
+          args: --config ./tools/config/.golangci.yml
 
       - name: Build all Binaries
         run: |

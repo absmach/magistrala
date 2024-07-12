@@ -350,9 +350,9 @@ func (pa *policyAgent) RetrieveAllSubjectsCount(ctx context.Context, pr auth.Pol
 }
 
 func (pa *policyAgent) RetrievePermissions(ctx context.Context, pr auth.PolicyReq, filterPermission []string) (auth.Permissions, error) {
-	var permissionChecks []*v1.BulkCheckPermissionRequestItem
+	var permissionChecks []*v1.CheckBulkPermissionsRequestItem
 	for _, fp := range filterPermission {
-		permissionChecks = append(permissionChecks, &v1.BulkCheckPermissionRequestItem{
+		permissionChecks = append(permissionChecks, &v1.CheckBulkPermissionsRequestItem{
 			Resource: &v1.ObjectReference{
 				ObjectType: pr.ObjectType,
 				ObjectId:   pr.Object,
@@ -367,7 +367,7 @@ func (pa *policyAgent) RetrievePermissions(ctx context.Context, pr auth.PolicyRe
 			},
 		})
 	}
-	resp, err := pa.client.ExperimentalServiceClient.BulkCheckPermission(ctx, &v1.BulkCheckPermissionRequest{
+	resp, err := pa.client.PermissionsServiceClient.CheckBulkPermissions(ctx, &v1.CheckBulkPermissionsRequest{
 		Consistency: &v1.Consistency{
 			Requirement: &v1.Consistency_FullyConsistent{
 				FullyConsistent: true,

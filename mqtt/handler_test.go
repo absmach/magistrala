@@ -29,7 +29,8 @@ const (
 	password              = "password"
 	password1             = "password1"
 	chanID                = "123e4567-e89b-12d3-a456-000000000001"
-	invalidID             = authmocks.InvalidValue
+	invalidID             = "invalidID"
+	invalidValue          = "invalidValue"
 	clientID              = "clientID"
 	clientID1             = "clientID1"
 	subtopic              = "testSubtopic"
@@ -39,11 +40,11 @@ const (
 var (
 	topicMsg            = "channels/%s/messages"
 	topic               = fmt.Sprintf(topicMsg, chanID)
-	invalidTopic        = authmocks.InvalidValue
+	invalidTopic        = invalidValue
 	payload             = []byte("[{'n':'test-name', 'v': 1.2}]")
 	topics              = []string{topic}
-	invalidTopics       = []string{authmocks.InvalidValue}
-	invalidChanIDTopics = []string{fmt.Sprintf(topicMsg, authmocks.InvalidValue)}
+	invalidTopics       = []string{invalidValue}
+	invalidChanIDTopics = []string{fmt.Sprintf(topicMsg, invalidValue)}
 	// Test log messages for cases the handler does not provide a return value.
 	logBuffer     = bytes.Buffer{}
 	sessionClient = session.Session{

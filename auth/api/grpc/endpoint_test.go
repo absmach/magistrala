@@ -1012,7 +1012,7 @@ func TestListPermissions(t *testing.T) {
 }
 
 func TestDeleteEntityPolicies(t *testing.T) {
-	conn, err := grpc.Dial(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	client := grpcapi.NewClient(conn, time.Second)
 

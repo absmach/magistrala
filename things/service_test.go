@@ -375,7 +375,7 @@ func TestViewClient(t *testing.T) {
 		{
 			desc:              "view client with an invalid token",
 			response:          mgclients.Client{},
-			token:             authmocks.InvalidValue,
+			token:             inValidToken,
 			clientID:          "",
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
 			authorizeErr:      svcerr.ErrAuthorization,
@@ -1475,7 +1475,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:             "list members with an invalid token",
-			token:            authmocks.InvalidValue,
+			token:            inValidToken,
 			groupID:          testsutil.GenerateUUID(t),
 			identifyResponse: &magistrala.IdentityRes{},
 			response: mgclients.MembersPage{
@@ -1637,7 +1637,7 @@ func TestDeleteClient(t *testing.T) {
 		},
 		{
 			desc:             "Delete client with unauthorized token",
-			token:            authmocks.InvalidValue,
+			token:            inValidToken,
 			clientID:         client.ID,
 			identifyResponse: &magistrala.IdentityRes{},
 			identifyErr:      svcerr.ErrAuthentication,
@@ -1646,7 +1646,7 @@ func TestDeleteClient(t *testing.T) {
 		{
 			desc:              "Delete invalid client",
 			token:             validToken,
-			clientID:          authmocks.InvalidValue,
+			clientID:          wrongID,
 			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
 			authorizeErr:      svcerr.ErrAuthorization,

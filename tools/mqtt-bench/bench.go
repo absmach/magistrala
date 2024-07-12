@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	mglog "github.com/absmach/magistrala/logger"
@@ -34,7 +35,7 @@ func Benchmark(cfg Config) error {
 
 		defer func() {
 			if err = caFile.Close(); err != nil {
-				logger.Warn(fmt.Sprintf("Could  not close file: %s", err))
+				logger.Warn(fmt.Sprintf("Could not close file: %s", err))
 			}
 		}()
 		if err != nil {
@@ -63,30 +64,41 @@ func Benchmark(cfg Config) error {
 
 	start := time.Now()
 
-	// Publishers
+	var wg sync.WaitGroup
+	errorChan := make(chan error, cfg.Test.Pubs)
+
 	for i := 0; i < cfg.Test.Pubs; i++ {
-		mgChan := mg.Channels[i%n]
-		mgThing := mg.Things[i%n]
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			mgChan := mg.Channels[i%n]
+			mgThing := mg.Things[i%n]
 
-		if cfg.MQTT.TLS.MTLS {
-			cert, err = tls.X509KeyPair([]byte(mgThing.MTLSCert), []byte(mgThing.MTLSKey))
-			if err != nil {
-				return err
+			if cfg.MQTT.TLS.MTLS {
+				cert, err = tls.X509KeyPair([]byte(mgThing.MTLSCert), []byte(mgThing.MTLSKey))
+				if err != nil {
+					errorChan <- err
+					return
+				}
 			}
-		}
-		c, err := makeClient(i, cfg, mgChan, mgThing, startStamp, caByte, cert)
+			c, err := makeClient(i, cfg, mgChan, mgThing, startStamp, caByte, cert)
+			if err != nil {
+				errorChan <- fmt.Errorf("unable to create message payload %s", err.Error())
+				return
+			}
+
+			c.publish(resCh, errorChan)
+		}(i)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errorChan)
+	}()
+
+	for err := range errorChan {
 		if err != nil {
-			return fmt.Errorf("unable to create message payload %s", err.Error())
-		}
-
-		errorChan := make(chan error)
-		go c.publish(resCh, errorChan)
-
-		for {
-			err := <-errorChan
-			if err != nil {
-				return err
-			}
+			return err
 		}
 	}
 
@@ -112,7 +124,6 @@ func Benchmark(cfg Config) error {
 		return fmt.Errorf("totals not assigned")
 	}
 
-	// Print sats
 	printResults(results, totals, cfg.MQTT.Message.Format, cfg.Log.Quiet)
 	return nil
 }

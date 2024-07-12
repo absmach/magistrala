@@ -13,7 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/consumers/notifiers"
 	httpapi "github.com/absmach/magistrala/consumers/notifiers/api"
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
@@ -27,14 +26,15 @@ import (
 )
 
 const (
-	contentType = "application/json"
-	email       = "user@example.com"
-	contact1    = "email1@example.com"
-	contact2    = "email2@example.com"
-	token       = "token"
-	topic       = "topic"
-	instanceID  = "5de9b29a-feb9-11ed-be56-0242ac120002"
-	validID     = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	contentType  = "application/json"
+	email        = "user@example.com"
+	contact1     = "email1@example.com"
+	contact2     = "email2@example.com"
+	token        = "token"
+	invalidToken = "invalid"
+	topic        = "topic"
+	instanceID   = "5de9b29a-feb9-11ed-be56-0242ac120002"
+	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
 var (
@@ -145,7 +145,7 @@ func TestCreate(t *testing.T) {
 			desc:        "add with invalid auth token",
 			req:         data,
 			contentType: contentType,
-			auth:        authmocks.InvalidValue,
+			auth:        invalidToken,
 			status:      http.StatusUnauthorized,
 			location:    "",
 			err:         svcerr.ErrAuthentication,
@@ -249,7 +249,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view with invalid auth token",
 			id:     sub.ID,
-			auth:   authmocks.InvalidValue,
+			auth:   invalidToken,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
 			err:    svcerr.ErrAuthentication,
@@ -406,7 +406,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "list with invalid auth token",
-			auth:   authmocks.InvalidValue,
+			auth:   invalidToken,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
 			err:    svcerr.ErrAuthentication,
@@ -477,7 +477,7 @@ func TestRemove(t *testing.T) {
 		{
 			desc:   "view with invalid auth token",
 			id:     id,
-			auth:   authmocks.InvalidValue,
+			auth:   invalidToken,
 			status: http.StatusUnauthorized,
 			res:    unauthRes,
 			err:    svcerr.ErrAuthentication,

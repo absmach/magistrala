@@ -23,13 +23,14 @@ import (
 )
 
 const (
-	twinName = "name"
-	wrongID  = ""
-	token    = "token"
-	email    = "user@example.com"
-	numRecs  = 100
-	retained = "saved"
-	validID  = "123e4567-e89b-12d3-a456-426614174000"
+	twinName     = "name"
+	wrongID      = ""
+	token        = "token"
+	invalidToken = "invalidToken"
+	email        = "user@example.com"
+	numRecs      = 100
+	retained     = "saved"
+	validID      = "123e4567-e89b-12d3-a456-426614174000"
 )
 
 var (
@@ -75,7 +76,7 @@ func TestAddTwin(t *testing.T) {
 		{
 			desc:        "add twin with wrong credentials",
 			twin:        twin,
-			token:       authmocks.InvalidValue,
+			token:       invalidToken,
 			err:         svcerr.ErrAuthentication,
 			saveErr:     svcerr.ErrCreateEntity,
 			identifyErr: svcerr.ErrAuthentication,
@@ -128,7 +129,7 @@ func TestUpdateTwin(t *testing.T) {
 		{
 			desc:        "update twin with wrong credentials",
 			twin:        twin,
-			token:       authmocks.InvalidValue,
+			token:       invalidToken,
 			err:         svcerr.ErrAuthentication,
 			retrieveErr: svcerr.ErrNotFound,
 			updateErr:   svcerr.ErrUpdateEntity,
@@ -188,7 +189,7 @@ func TestViewTwin(t *testing.T) {
 		{
 			desc:        "view twin with wrong credentials",
 			id:          twin.ID,
-			token:       authmocks.InvalidValue,
+			token:       invalidToken,
 			err:         svcerr.ErrAuthentication,
 			identifyErr: svcerr.ErrAuthentication,
 		},
@@ -265,7 +266,7 @@ func TestListTwins(t *testing.T) {
 		},
 		{
 			desc:        "list with wrong credentials",
-			token:       authmocks.InvalidValue,
+			token:       invalidToken,
 			limit:       0,
 			offset:      n,
 			err:         svcerr.ErrAuthentication,
@@ -303,7 +304,7 @@ func TestRemoveTwin(t *testing.T) {
 		{
 			desc:        "remove twin with wrong credentials",
 			id:          twin.ID,
-			token:       authmocks.InvalidValue,
+			token:       invalidToken,
 			err:         svcerr.ErrAuthentication,
 			removeErr:   svcerr.ErrRemoveEntity,
 			identifyErr: svcerr.ErrAuthentication,
@@ -545,7 +546,7 @@ func TestListStates(t *testing.T) {
 		{
 			desc:        "get a list with wrong user token",
 			id:          twin.ID,
-			token:       authmocks.InvalidValue,
+			token:       invalidToken,
 			offset:      0,
 			limit:       10,
 			size:        0,

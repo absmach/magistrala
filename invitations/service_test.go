@@ -28,7 +28,8 @@ var (
 		DomainID: testsutil.GenerateUUID(&testing.T{}),
 		Relation: auth.ContributorRelation,
 	}
-	validToken = "token"
+	validToken   = "token"
+	invalidToken = "invalid"
 )
 
 func TestSendInvitation(t *testing.T) {
@@ -262,7 +263,7 @@ func TestViewInvitation(t *testing.T) {
 		},
 		{
 			desc:        "invalid token",
-			token:       authmocks.InvalidValue,
+			token:       invalidToken,
 			tokenUserID: "",
 			userID:      validInvitation.UserID,
 			domainID:    validInvitation.DomainID,

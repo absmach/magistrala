@@ -90,6 +90,9 @@ var (
 	// ErrMissingHost indicates missing host.
 	ErrMissingHost = errors.New("missing host")
 
+	// ErrMissingDescription indicates missing description.
+	ErrMissingDescription = errors.New("missing description")
+
 	// ErrMissingPass indicates missing password.
 	ErrMissingPass = errors.New("missing password")
 
@@ -179,4 +182,7 @@ var (
 
 	// ErrInvalidTimeFormat indicates invalid time format i.e not unix time.
 	ErrInvalidTimeFormat = errors.New("invalid time format use unix time")
+
+	// ErrInvalidDuration indicates invalid duration value.
+	ErrInvalidDuration = errors.New("invalid duration value")
 )

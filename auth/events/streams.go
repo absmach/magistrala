@@ -5,6 +5,7 @@ package events
 
 import (
 	"context"
+	"time"
 
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/events"
@@ -261,4 +262,60 @@ func (es *eventStore) CountSubjects(ctx context.Context, pr auth.PolicyReq) (uin
 
 func (es *eventStore) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermission []string) (auth.Permissions, error) {
 	return es.svc.ListPermissions(ctx, pr, filterPermission)
+}
+
+func (es *eventStore) CreatePAT(ctx context.Context, token, name, description string, duration time.Duration, scope auth.Scope) (auth.PAT, error) {
+	return es.svc.CreatePAT(ctx, token, name, description, duration, scope)
+}
+
+func (es *eventStore) UpdatePATName(ctx context.Context, token, patID, name string) (auth.PAT, error) {
+	return es.svc.UpdatePATName(ctx, token, patID, name)
+}
+
+func (es *eventStore) UpdatePATDescription(ctx context.Context, token, patID, description string) (auth.PAT, error) {
+	return es.svc.UpdatePATDescription(ctx, token, patID, description)
+}
+
+func (es *eventStore) RetrievePAT(ctx context.Context, token, patID string) (auth.PAT, error) {
+	return es.svc.RetrievePAT(ctx, token, patID)
+}
+
+func (es *eventStore) ListPATS(ctx context.Context, token string, pm auth.PATSPageMeta) (auth.PATSPage, error) {
+	return es.svc.ListPATS(ctx, token, pm)
+}
+
+func (es *eventStore) DeletePAT(ctx context.Context, token, patID string) error {
+	return es.svc.DeletePAT(ctx, token, patID)
+}
+
+func (es *eventStore) ResetPATSecret(ctx context.Context, token, patID string, duration time.Duration) (auth.PAT, error) {
+	return es.svc.ResetPATSecret(ctx, token, patID, duration)
+}
+
+func (es *eventStore) RevokePATSecret(ctx context.Context, token, patID string) error {
+	return es.svc.RevokePATSecret(ctx, token, patID)
+}
+
+func (es *eventStore) AddPATScopeEntry(ctx context.Context, token, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) (auth.Scope, error) {
+	return es.svc.AddPATScopeEntry(ctx, token, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+}
+
+func (es *eventStore) RemovePATScopeEntry(ctx context.Context, token, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) (auth.Scope, error) {
+	return es.svc.RemovePATScopeEntry(ctx, token, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+}
+
+func (es *eventStore) ClearPATAllScopeEntry(ctx context.Context, token, patID string) error {
+	return es.svc.ClearPATAllScopeEntry(ctx, token, patID)
+}
+
+func (es *eventStore) IdentifyPAT(ctx context.Context, paToken string) (auth.PAT, error) {
+	return es.svc.IdentifyPAT(ctx, paToken)
+}
+
+func (es *eventStore) AuthorizePAT(ctx context.Context, paToken string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) error {
+	return es.svc.AuthorizePAT(ctx, paToken, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
+}
+
+func (es *eventStore) CheckPAT(ctx context.Context, userID, patID string, platformEntityType auth.PlatformEntityType, optionalDomainID string, optionalDomainEntityType auth.DomainEntityType, operation auth.OperationType, entityIDs ...string) error {
+	return es.svc.CheckPAT(ctx, userID, patID, platformEntityType, optionalDomainID, optionalDomainEntityType, operation, entityIDs...)
 }

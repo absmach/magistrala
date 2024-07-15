@@ -15,6 +15,7 @@ volumes:
   magistrala-mqtt-broker-volume:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
+  magistrala-pat-db-volume:
   magistrala-invitations-db-volume:
   magistrala-ui-db-volume:
 
@@ -132,6 +133,7 @@ services:
       - magistrala-base-net
     volumes:
       - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
+      - magistrala-pat-db-volume:/magistrala-data
       # Auth gRPC mTLS server certificates
       - type: bind
         source: ${MG_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}

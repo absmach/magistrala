@@ -282,7 +282,7 @@ func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) err
 }
 
 func (cr configRepository) UpdateCert(ctx context.Context, domainID, thingID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE magistrala_thing = :magistrala_thing AND domain_id = :domain_id 
+	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE magistrala_thing = :magistrala_thing AND domain_id = :domain_id
 	RETURNING magistrala_thing, client_cert, client_key, ca_cert`
 
 	dbcfg := dbConfig{
@@ -443,7 +443,7 @@ func (cr configRepository) UpdateChannel(ctx context.Context, c bootstrap.Channe
 		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by 
+	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by
 			WHERE magistrala_channel = :magistrala_channel`
 	if _, err = cr.db.NamedExecContext(ctx, q, dbch); err != nil {
 		return errors.Wrap(errUpdateChannels, err)

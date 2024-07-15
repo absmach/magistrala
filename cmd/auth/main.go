@@ -18,11 +18,14 @@ import (
 	api "github.com/absmach/magistrala/auth/api"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
 	httpapi "github.com/absmach/magistrala/auth/api/http"
+	"github.com/absmach/magistrala/auth/bolt"
 	"github.com/absmach/magistrala/auth/events"
+	"github.com/absmach/magistrala/auth/hasher"
 	"github.com/absmach/magistrala/auth/jwt"
 	apostgres "github.com/absmach/magistrala/auth/postgres"
 	"github.com/absmach/magistrala/auth/spicedb"
 	"github.com/absmach/magistrala/auth/tracing"
+	boltclient "github.com/absmach/magistrala/internal/clients/bolt"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/postgres"
@@ -37,6 +40,7 @@ import (
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
+	"go.etcd.io/bbolt"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -49,6 +53,7 @@ const (
 	envPrefixHTTP  = "MG_AUTH_HTTP_"
 	envPrefixGrpc  = "MG_AUTH_GRPC_"
 	envPrefixDB    = "MG_AUTH_DB_"
+	envPrefixPATDB = "MG_AUTH_PAT_DB_"
 	defDB          = "auth"
 	defSvcHTTPPort = "8189"
 	defSvcGRPCPort = "8181"
@@ -129,7 +134,22 @@ func main() {
 		return
 	}
 
-	svc := newService(ctx, db, tracer, cfg, dbConfig, logger, spicedbclient)
+	boltDBConfig := boltclient.Config{}
+	if err := env.ParseWithOptions(&boltDBConfig, env.Options{Prefix: envPrefixPATDB}); err != nil {
+		logger.Error(fmt.Sprintf("failed to parse bolt db config : %s\n", err.Error()))
+		exitCode = 1
+		return
+	}
+
+	bClient, err := boltclient.Connect(boltDBConfig, bolt.Init)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to bolt db : %s\n", err.Error()))
+		exitCode = 1
+		return
+	}
+	defer bClient.Close()
+
+	svc := newService(ctx, db, tracer, cfg, dbConfig, logger, spicedbclient, bClient, boltDBConfig)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -203,16 +223,18 @@ func initSchema(ctx context.Context, client *authzed.ClientWithExperimental, sch
 	return nil
 }
 
-func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental) auth.Service {
+func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, bClient *bbolt.DB, bConfig boltclient.Config) auth.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
 	domainsRepo := apostgres.NewDomainRepository(database)
+	patsRepo := bolt.NewPATSRepository(bClient, bConfig.Bucket)
+	hasher := hasher.New()
 	pa := spicedb.NewPolicyAgent(spicedbClient, logger)
 	idProvider := uuid.New()
 
 	t := jwt.New([]byte(cfg.SecretKey))
 
-	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
+	svc := auth.New(keysRepo, domainsRepo, patsRepo, hasher, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
 	svc, err := events.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init event store middleware : %s", err))

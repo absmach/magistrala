@@ -15,19 +15,18 @@ Magistrala is modern, scalable, secure, open-source, and patent-free IoT cloud p
 It accepts user and thing (sensor, actuator, application) connections over various network protocols (i.e. HTTP, MQTT, WebSocket, CoAP), thus making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
 For more details, check out the [official documentation][docs].
+For extra bits and services see [our contrib repository][contrib].
 
 ## Features
 
-- Multi-protocol connectivity and bridging (HTTP, MQTT, WebSocket and CoAP)
+- Multi-protocol connectivity and bridging (HTTP, MQTT, WebSocket and CoAP; see [contrib repository][contrib] for LoRa and OPC UA)
 - Device management and provisioning (Zero Touch provisioning)
 - Mutual TLS Authentication (mTLS) using X.509 Certificates
 - Fine-grained access control (policies, ABAC/RBAC)
-- Message persistence (Cassandra, InfluxDB, MongoDB and PostgresSQL)
+- Message persistence (Timescale and PostgresSQL - see [contrib repository][contrib] for Cassandra, InfluxDB, and MongoDB support)
 - Platform logging and instrumentation support (Prometheus and OpenTelemetry)
 - Event sourcing
 - Container-based deployment using [Docker][docker] and [Kubernetes][kubernetes]
-- [LoRaWAN][lora] network integration
-- [OPC UA][opcua] integration
 - Edge [Agent][agent] and [Export][export] services for remote IoT gateway management and edge computing
 - SDK
 - CLI
@@ -120,6 +119,8 @@ Thank you for your interest in Magistrala and the desire to contribute!
 2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
 3. Make your changes compatible to our workflow.
 
+Also, explore our [contrib][contrib] repository for extra services such as Cassandra, InfluxDB, MongoDB readers and writers, LoRa, OPC UA support, Digital Twins, and more. If you have a contribution that is not a good fit for the core monorepo (it's specific to your use case, it's an additional feature or a new service, it's optional or an add-on), this is a great place to submit the pull request.
+
 ### We're Hiring
 
 You like Magistrala and you would like to make it your day job? We're always looking for talented engineers interested in open-source, IoT and distributed systems. If you recognize yourself, reach out to [@drasko][drasko] - he will contact you back.
@@ -167,8 +168,6 @@ By utilizing Magistrala, you actively contribute to its improvement. Together, w
 [cov-url]: https://codecov.io/gh/absmach/magistrala
 [license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
 [twitter]: https://twitter.com/absmach
-[lora]: https://lora-alliance.org/
-[opcua]: https://opcfoundation.org/about/opc-technologies/opc-ua/
 [agent]: https://github.com/absmach/agent
 [export]: https://github.com/absmach/export
 [kubernetes]: https://kubernetes.io/
@@ -189,3 +188,4 @@ By utilizing Magistrala, you actively contribute to its improvement. Together, w
 [mirko]: https://github.com/mteodor
 [rodneyosodo]: https://github.com/rodneyosodo
 [callhome]: https://deployments.magistrala.abstractmachines.fr/
+[contrib]: https://www.github.com/absmach/mg-contrib

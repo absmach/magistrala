@@ -72,9 +72,6 @@ jobs:
               - "certs/certs.go"
               - "certs/pki/vault.go"
               - "certs/service.go"
-              - "twins/twins.go"
-              - "twins/states.go"
-              - "twins/service.go"
               - "journal/journal.go"
               - "magistrala/auth_grpc.pb.go"
 
@@ -148,17 +145,12 @@ jobs:
           mv ./users/mocks/hasher.go ./users/mocks/hasher.go.tmp
           mv ./mqtt/mocks/events.go ./mqtt/mocks/events.go.tmp
           mv ./readers/mocks/messages.go ./readers/mocks/messages.go.tmp
-          mv ./lora/mocks/routes.go ./lora/mocks/routes.go.tmp
           mv ./consumers/notifiers/mocks/notifier.go ./consumers/notifiers/mocks/notifier.go.tmp
           mv ./consumers/notifiers/mocks/service.go ./consumers/notifiers/mocks/service.go.tmp
           mv ./consumers/notifiers/mocks/repository.go ./consumers/notifiers/mocks/repository.go.tmp
           mv ./certs/mocks/certs.go ./certs/mocks/certs.go.tmp
           mv ./certs/mocks/pki.go ./certs/mocks/pki.go.tmp
           mv ./certs/mocks/service.go ./certs/mocks/service.go.tmp
-          mv ./twins/mocks/service.go ./twins/mocks/service.go.tmp
-          mv ./twins/mocks/states.go ./twins/mocks/states.go.tmp
-          mv ./twins/mocks/repository.go ./twins/mocks/repository.go.tmp
-          mv ./twins/mocks/cache.go ./twins/mocks/cache.go.tmp
           mv ./journal/mocks/repository.go ./journal/mocks/repository.go.tmp
           mv ./journal/mocks/service.go ./journal/mocks/service.go.tmp
           mv ./auth/mocks/auth_client.go ./auth/mocks/auth_client.go.tmp
@@ -202,17 +194,12 @@ jobs:
           check_mock_changes ./users/mocks/hasher.go "Users Hasher ./users/mocks/hasher.go"
           check_mock_changes ./mqtt/mocks/events.go "MQTT Events Store ./mqtt/mocks/events.go"
           check_mock_changes ./readers/mocks/messages.go "Message Readers ./readers/mocks/messages.go"
-          check_mock_changes ./lora/mocks/routes.go "LoRa Repository ./lora/mocks/routes.go"
           check_mock_changes ./consumers/notifiers/mocks/notifier.go "Notifiers Notifier ./consumers/notifiers/mocks/notifier.go"
           check_mock_changes ./consumers/notifiers/mocks/service.go "Notifiers Service ./consumers/notifiers/mocks/service.go"
           check_mock_changes ./consumers/notifiers/mocks/repository.go "Notifiers Repository ./consumers/notifiers/mocks/repository.go"
           check_mock_changes ./certs/mocks/certs.go "Certs Repository ./certs/mocks/certs.go"
           check_mock_changes ./certs/mocks/pki.go "PKI ./certs/mocks/pki.go"
           check_mock_changes ./certs/mocks/service.go "Certs Service ./certs/mocks/service.go"
-          check_mock_changes ./twins/mocks/service.go "Twins Service ./twins/mocks/service.go"
-          check_mock_changes ./twins/mocks/states.go "Twins States ./twins/mocks/states.go"
-          check_mock_changes ./twins/mocks/repository.go "Twins Repository ./twins/mocks/repository.go"
-          check_mock_changes ./twins/mocks/cache.go "Twins Cache ./twins/mocks/cache.go"
           check_mock_changes ./journal/mocks/repository.go "Journal Repository ./journal/mocks/repository.go"
           check_mock_changes ./journal/mocks/service.go "Journal Service ./journal/mocks/service.go"
           check_mock_changes ./auth/mocks/auth_client.go "Auth Service Client ./auth/mocks/auth_client.go"

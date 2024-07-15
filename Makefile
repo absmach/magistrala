@@ -3,10 +3,9 @@
 
 MG_DOCKER_IMAGE_NAME_PREFIX ?= magistrala
 BUILD_DIR = build
-SERVICES = auth users things http coap ws lora influxdb-writer influxdb-reader mongodb-writer \
-	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader timescale-writer timescale-reader cli \
-	bootstrap opcua twins mqtt provision certs smtp-notifier smpp-notifier invitations journal
-TEST_API_SERVICES = journal auth bootstrap certs http invitations notifiers provision readers things twins users
+SERVICES = auth users things http coap ws postgres-writer postgres-reader timescale-writer \
+	timescale-reader cli bootstrap mqtt provision certs invitations journal
+TEST_API_SERVICES = journal auth bootstrap certs http invitations notifiers provision readers things users
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -70,10 +69,7 @@ define make_docker_dev
 		-f docker/Dockerfile.dev ./build
 endef
 
-ADDON_SERVICES = bootstrap cassandra-reader cassandra-writer certs \
-					influxdb-reader influxdb-writer lora-adapter mongodb-reader mongodb-writer \
-					opcua-adapter postgres-reader postgres-writer provision smpp-notifier smtp-notifier \
-					timescale-reader timescale-writer twins journal
+ADDON_SERVICES = bootstrap journal provision certs timescale-reader timescale-writer postgres-reader postgres-writer
 
 EXTERNAL_SERVICES = vault prometheus
 
@@ -124,13 +120,13 @@ mocks:
 	mockery --config ./tools/config/mockery.yaml
 
 
-DIRS = consumers readers postgres internal opcua
+DIRS = consumers readers postgres internal
 test: mocks
 	mkdir -p coverage
 	@for dir in $(DIRS); do \
         go test -v --race -count 1 -tags test -coverprofile=coverage/$$dir.out $$(go list ./... | grep $$dir | grep -v 'cmd'); \
     done
-	go test -v --race -count 1 -tags test -coverprofile=coverage/coverage.out $$(go list ./... | grep -v 'consumers\|readers\|postgres\|internal\|opcua\|cmd')
+	go test -v --race -count 1 -tags test -coverprofile=coverage/coverage.out $$(go list ./... | grep -v 'consumers\|readers\|postgres\|internal\|cmd')
 
 define test_api_service
 	$(eval svc=$(subst test_api_,,$(1)))
@@ -174,10 +170,8 @@ test_api_invitations: TEST_API_URL := http://localhost:9020
 test_api_auth: TEST_API_URL := http://localhost:8189
 test_api_bootstrap: TEST_API_URL := http://localhost:9013
 test_api_certs: TEST_API_URL := http://localhost:9019
-test_api_twins: TEST_API_URL := http://localhost:9018
 test_api_provision: TEST_API_URL := http://localhost:9016
 test_api_readers: TEST_API_URL := http://localhost:9009 # This can be the URL of any reader service.
-test_api_notifiers: TEST_API_URL := http://localhost:9014 # This can be the URL of any notifier service.
 test_api_journal: TEST_API_URL := http://localhost:9021
 
 $(TEST_API):

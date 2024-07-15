@@ -244,7 +244,6 @@ func TestGetUsersCmd(t *testing.T) {
 		sdkCall1 := sdkMock.On("User", tc.args[1], tc.args[2]).Return(tc.user, tc.sdkerr)
 
 		out = executeCommand(t, rootCmd, tc.args...)
-		fmt.Println("out: ", out)
 
 		if tc.logType == entityLog {
 			switch {
@@ -604,7 +603,6 @@ func TestUpdateUserCmd(t *testing.T) {
 			}, tc.args[3]).Return(tc.user, tc.sdkerr)
 		}
 		out := executeCommand(t, rootCmd, tc.args...)
-		fmt.Println(out)
 
 		switch tc.logType {
 		case entityLog:
@@ -1039,8 +1037,8 @@ func TestDeleteUserCmd(t *testing.T) {
 		out := executeCommand(t, rootCmd, tc.args...)
 
 		switch tc.logType {
-		case entityLog:
-			assert.True(t, strings.Contains(out, "OK"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+		case okLog:
+			assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
 		case errLog:
 			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
 		case usageLog:

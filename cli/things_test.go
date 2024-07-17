@@ -37,16 +37,9 @@ var thing = mgsdk.Thing{
 	Status:   mgclients.EnabledStatus.String(),
 }
 
-var channel = mgsdk.Channel{
-	ID:       testsutil.GenerateUUID(&testing.T{}),
-	Name:     "testchannel",
-	DomainID: thing.DomainID,
-}
-
 func TestCreateThingsCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	createCommand := "create"
 	thingJson := "{\"name\":\"testthing\", \"metadata\":{\"key1\":\"value1\"}}"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
@@ -64,7 +57,6 @@ func TestCreateThingsCmd(t *testing.T) {
 		{
 			desc: "create thing successfully with token",
 			args: []string{
-				createCommand,
 				thingJson,
 				token,
 			},
@@ -74,7 +66,6 @@ func TestCreateThingsCmd(t *testing.T) {
 		{
 			desc: "create thing without token",
 			args: []string{
-				createCommand,
 				thingJson,
 			},
 			logType: usageLog,
@@ -82,7 +73,6 @@ func TestCreateThingsCmd(t *testing.T) {
 		{
 			desc: "create thing with invalid token",
 			args: []string{
-				createCommand,
 				thingJson,
 				invalidToken,
 			},
@@ -93,7 +83,6 @@ func TestCreateThingsCmd(t *testing.T) {
 		{
 			desc: "failed to create thing",
 			args: []string{
-				createCommand,
 				thingJson,
 				token,
 			},
@@ -104,7 +93,6 @@ func TestCreateThingsCmd(t *testing.T) {
 		{
 			desc: "create thing without domain token",
 			args: []string{
-				createCommand,
 				thingJson,
 				tokenWithoutDomain,
 			},
@@ -113,9 +101,8 @@ func TestCreateThingsCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "create thing with invalid metdata",
+			desc: "create thing with invalid metadata",
 			args: []string{
-				createCommand,
 				"{\"name\":\"testthing\", \"metadata\":{\"key1\":value1}}",
 				token,
 			},
@@ -126,29 +113,29 @@ func TestCreateThingsCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("CreateThing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("CreateThing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{createCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case entityLog:
-			err := json.Unmarshal([]byte(out), &tg)
-			assert.Nil(t, err)
-			assert.Equal(t, tc.thing, tg, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, tg))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		}
+			switch tc.logType {
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &tg)
+				assert.Nil(t, err)
+				assert.Equal(t, tc.thing, tg, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, tg))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			}
 
-		sdkCall.Unset()
+			sdkCall.Unset()
+		})
 	}
 }
 
 func TestGetThingsCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	getCommand := "get"
-
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -165,9 +152,8 @@ func TestGetThingsCmd(t *testing.T) {
 		logType       outputLog
 	}{
 		{
-			desc: "get things successfully",
+			desc: "get all things successfully",
 			args: []string{
-				getCommand,
 				all,
 				token,
 			},
@@ -177,9 +163,8 @@ func TestGetThingsCmd(t *testing.T) {
 			},
 		},
 		{
-			desc: "get things successfully with id",
+			desc: "get thing successfully with id",
 			args: []string{
-				getCommand,
 				thing.ID,
 				token,
 			},
@@ -189,7 +174,6 @@ func TestGetThingsCmd(t *testing.T) {
 		{
 			desc: "get things with invalid token",
 			args: []string{
-				getCommand,
 				all,
 				invalidToken,
 			},
@@ -201,7 +185,6 @@ func TestGetThingsCmd(t *testing.T) {
 		{
 			desc: "get thing without domain token",
 			args: []string{
-				getCommand,
 				all,
 				tokenWithoutDomain,
 			},
@@ -212,7 +195,6 @@ func TestGetThingsCmd(t *testing.T) {
 		{
 			desc: "get things with invalid args",
 			args: []string{
-				getCommand,
 				all,
 				invalidToken,
 				all,
@@ -227,7 +209,6 @@ func TestGetThingsCmd(t *testing.T) {
 		{
 			desc: "get thing without token",
 			args: []string{
-				getCommand,
 				all,
 			},
 			logType: usageLog,
@@ -235,7 +216,6 @@ func TestGetThingsCmd(t *testing.T) {
 		{
 			desc: "get thing with invalid thing id",
 			args: []string{
-				getCommand,
 				invalidID,
 				token,
 			},
@@ -246,50 +226,51 @@ func TestGetThingsCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("Things", mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
-		sdkCall1 := sdkMock.On("Thing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("Things", mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Thing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 
-		out := executeCommand(t, rootCmd, tc.args...)
+			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 
-		if tc.logType == entityLog {
-			switch {
-			case tc.args[1] == all:
-				err := json.Unmarshal([]byte(out), &page)
-				if err != nil {
-					t.Fatalf("Failed to unmarshal JSON: %v", err)
-				}
-			default:
-				err := json.Unmarshal([]byte(out), &tg)
-				if err != nil {
-					t.Fatalf("Failed to unmarshal JSON: %v", err)
+			if tc.logType == entityLog {
+				switch {
+				case tc.args[1] == all:
+					err := json.Unmarshal([]byte(out), &page)
+					if err != nil {
+						t.Fatalf("Failed to unmarshal JSON: %v", err)
+					}
+				default:
+					err := json.Unmarshal([]byte(out), &tg)
+					if err != nil {
+						t.Fatalf("Failed to unmarshal JSON: %v", err)
+					}
 				}
 			}
-		}
 
-		switch tc.logType {
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		}
-
-		if tc.logType == entityLog {
-			if tc.args[1] != all {
-				assert.Equal(t, tc.thing, tg, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.thing, tg))
-			} else {
-				assert.Equal(t, tc.page, page, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.page, page))
+			switch tc.logType {
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
 			}
-		}
 
-		sdkCall.Unset()
-		sdkCall1.Unset()
+			if tc.logType == entityLog {
+				if tc.args[1] != all {
+					assert.Equal(t, tc.thing, tg, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.thing, tg))
+				} else {
+					assert.Equal(t, tc.page, page, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.page, page))
+				}
+			}
+
+			sdkCall.Unset()
+			sdkCall1.Unset()
+		})
 	}
 }
 
 func TestUpdateThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	updateCommand := "update"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -311,7 +292,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing name and metadata successfully",
 			args: []string{
-				updateCommand,
 				thing.ID,
 				newNameandMeta,
 				token,
@@ -332,7 +312,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing name and metadata with invalid json",
 			args: []string{
-				updateCommand,
 				thing.ID,
 				"{\"name\": \"thingName\", \"metadata\": {\"role\": \"general\"}",
 				token,
@@ -344,7 +323,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing name and metadata with invalid thing id",
 			args: []string{
-				updateCommand,
 				invalidID,
 				newNameandMeta,
 				token,
@@ -356,7 +334,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing tags successfully",
 			args: []string{
-				updateCommand,
 				tagUpdateType,
 				thing.ID,
 				newTagsJson,
@@ -374,7 +351,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing with invalid tags",
 			args: []string{
-				updateCommand,
 				tagUpdateType,
 				thing.ID,
 				"[\"tag1\", \"tag2\"",
@@ -387,7 +363,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing tags with invalid thing id",
 			args: []string{
-				updateCommand,
 				tagUpdateType,
 				invalidID,
 				newTagsJson,
@@ -400,7 +375,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing secret successfully",
 			args: []string{
-				updateCommand,
 				secretUpdateType,
 				thing.ID,
 				newSecret,
@@ -420,7 +394,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing with invalid secret",
 			args: []string{
-				updateCommand,
 				secretUpdateType,
 				thing.ID,
 				"",
@@ -433,7 +406,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing with invalid token",
 			args: []string{
-				updateCommand,
 				secretUpdateType,
 				thing.ID,
 				newSecret,
@@ -446,7 +418,6 @@ func TestUpdateThingCmd(t *testing.T) {
 		{
 			desc: "update thing with invalid args",
 			args: []string{
-				updateCommand,
 				secretUpdateType,
 				thing.ID,
 				newSecret,
@@ -458,48 +429,49 @@ func TestUpdateThingCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		var tg mgsdk.Thing
-		sdkCall := sdkMock.On("UpdateThing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
-		sdkCall1 := sdkMock.On("UpdateThingTags", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
-		sdkCall2 := sdkMock.On("UpdateThingSecret", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+		t.Run(tc.desc, func(t *testing.T) {
+			var tg mgsdk.Thing
+			sdkCall := sdkMock.On("UpdateThing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			sdkCall1 := sdkMock.On("UpdateThingTags", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			sdkCall2 := sdkMock.On("UpdateThingSecret", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 
-		switch {
-		case tc.args[1] == tagUpdateType:
-			var th mgsdk.Thing
-			th.Tags = []string{"tag1", "tag2"}
-			th.ID = tc.args[2]
+			switch {
+			case tc.args[0] == tagUpdateType:
+				var th mgsdk.Thing
+				th.Tags = []string{"tag1", "tag2"}
+				th.ID = tc.args[1]
 
-			sdkCall1 = sdkMock.On("UpdateThingTags", th, tc.args[4]).Return(tc.thing, tc.sdkErr)
-		case tc.args[1] == secretUpdateType:
-			var th mgsdk.Thing
-			th.Credentials.Secret = tc.args[3]
-			th.ID = tc.args[2]
+				sdkCall1 = sdkMock.On("UpdateThingTags", th, tc.args[3]).Return(tc.thing, tc.sdkErr)
+			case tc.args[0] == secretUpdateType:
+				var th mgsdk.Thing
+				th.Credentials.Secret = tc.args[2]
+				th.ID = tc.args[1]
 
-			sdkCall2 = sdkMock.On("UpdateThingSecret", th, tc.args[3], tc.args[4]).Return(tc.thing, tc.sdkErr)
-		}
-		out := executeCommand(t, rootCmd, tc.args...)
+				sdkCall2 = sdkMock.On("UpdateThingSecret", th, tc.args[2], tc.args[3]).Return(tc.thing, tc.sdkErr)
+			}
+			out := executeCommand(t, rootCmd, append([]string{updCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case entityLog:
-			err := json.Unmarshal([]byte(out), &tg)
-			assert.Nil(t, err)
-			assert.Equal(t, tc.thing, tg, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, tg))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		}
+			switch tc.logType {
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &tg)
+				assert.Nil(t, err)
+				assert.Equal(t, tc.thing, tg, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, tg))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			}
 
-		sdkCall.Unset()
-		sdkCall1.Unset()
-		sdkCall2.Unset()
+			sdkCall.Unset()
+			sdkCall1.Unset()
+			sdkCall2.Unset()
+		})
 	}
 }
 
 func TestDeleteThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	deleteCommand := "delete"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -513,7 +485,6 @@ func TestDeleteThingCmd(t *testing.T) {
 		{
 			desc: "delete thing successfully",
 			args: []string{
-				deleteCommand,
 				thing.ID,
 				token,
 			},
@@ -522,7 +493,6 @@ func TestDeleteThingCmd(t *testing.T) {
 		{
 			desc: "delete thing with invalid token",
 			args: []string{
-				deleteCommand,
 				thing.ID,
 				invalidToken,
 			},
@@ -533,7 +503,6 @@ func TestDeleteThingCmd(t *testing.T) {
 		{
 			desc: "delete thing with invalid thing id",
 			args: []string{
-				deleteCommand,
 				invalidID,
 				token,
 			},
@@ -544,7 +513,6 @@ func TestDeleteThingCmd(t *testing.T) {
 		{
 			desc: "delete thing with invalid args",
 			args: []string{
-				deleteCommand,
 				thing.ID,
 				token,
 				extraArg,
@@ -554,25 +522,26 @@ func TestDeleteThingCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("DeleteThing", mock.Anything, mock.Anything).Return(tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("DeleteThing", tc.args[0], tc.args[1]).Return(tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{delCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case okLog:
-			assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		}
-		sdkCall.Unset()
+			switch tc.logType {
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			}
+			sdkCall.Unset()
+		})
 	}
 }
 
 func TestEnableThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	enableCommand := "enable"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 	var tg mgsdk.Thing
@@ -588,7 +557,6 @@ func TestEnableThingCmd(t *testing.T) {
 		{
 			desc: "enable thing successfully",
 			args: []string{
-				enableCommand,
 				thing.ID,
 				validToken,
 			},
@@ -599,7 +567,6 @@ func TestEnableThingCmd(t *testing.T) {
 		{
 			desc: "delete thing with invalid token",
 			args: []string{
-				enableCommand,
 				thing.ID,
 				invalidToken,
 			},
@@ -610,7 +577,6 @@ func TestEnableThingCmd(t *testing.T) {
 		{
 			desc: "delete thing with invalid thing ID",
 			args: []string{
-				enableCommand,
 				invalidID,
 				token,
 			},
@@ -621,7 +587,6 @@ func TestEnableThingCmd(t *testing.T) {
 		{
 			desc: "enable thing with invalid args",
 			args: []string{
-				enableCommand,
 				thing.ID,
 				validToken,
 				extraArg,
@@ -631,32 +596,33 @@ func TestEnableThingCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("EnableThing", tc.args[1], tc.args[2]).Return(tc.thing, tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("EnableThing", tc.args[0], tc.args[1]).Return(tc.thing, tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{enableCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case entityLog:
-			err := json.Unmarshal([]byte(out), &tg)
-			assert.Nil(t, err)
-			assert.Equal(t, tc.thing, tg, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, tg))
-		}
+			switch tc.logType {
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &tg)
+				assert.Nil(t, err)
+				assert.Equal(t, tc.thing, tg, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, tg))
+			}
 
-		sdkCall.Unset()
+			sdkCall.Unset()
+		})
 	}
 }
 
 func TestDisablethingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	disableCommand := "disable"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
-	var usr mgsdk.Thing
+	var tg mgsdk.Thing
 
 	cases := []struct {
 		desc          string
@@ -669,7 +635,6 @@ func TestDisablethingCmd(t *testing.T) {
 		{
 			desc: "disable thing successfully",
 			args: []string{
-				disableCommand,
 				thing.ID,
 				validToken,
 			},
@@ -679,7 +644,6 @@ func TestDisablethingCmd(t *testing.T) {
 		{
 			desc: "delete thing with invalid token",
 			args: []string{
-				disableCommand,
 				thing.ID,
 				invalidToken,
 			},
@@ -690,7 +654,6 @@ func TestDisablethingCmd(t *testing.T) {
 		{
 			desc: "delete thing with invalid thing ID",
 			args: []string{
-				disableCommand,
 				invalidID,
 				token,
 			},
@@ -701,7 +664,6 @@ func TestDisablethingCmd(t *testing.T) {
 		{
 			desc: "disable thing with invalid args",
 			args: []string{
-				disableCommand,
 				thing.ID,
 				validToken,
 				extraArg,
@@ -711,30 +673,31 @@ func TestDisablethingCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("DisableThing", tc.args[1], tc.args[2]).Return(tc.thing, tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("DisableThing", tc.args[0], tc.args[1]).Return(tc.thing, tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{disableCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case entityLog:
-			err := json.Unmarshal([]byte(out), &usr)
-			if err != nil {
-				t.Fatalf("json.Unmarshal failed: %v", err)
+			switch tc.logType {
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &tg)
+				if err != nil {
+					t.Fatalf("json.Unmarshal failed: %v", err)
+				}
+				assert.Equal(t, tc.thing, tg, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, tg))
 			}
-			assert.Equal(t, tc.thing, usr, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.thing, usr))
-		}
 
-		sdkCall.Unset()
+			sdkCall.Unset()
+		})
 	}
 }
 
-func TestUsersthingCmd(t *testing.T) {
+func TestUsersThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	usersCommand := "users"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -751,7 +714,6 @@ func TestUsersthingCmd(t *testing.T) {
 		{
 			desc: "get thing's users successfully",
 			args: []string{
-				usersCommand,
 				thing.ID,
 				token,
 			},
@@ -768,7 +730,6 @@ func TestUsersthingCmd(t *testing.T) {
 		{
 			desc: "list thing users' with invalid args",
 			args: []string{
-				usersCommand,
 				thing.ID,
 				token,
 				extraArg,
@@ -778,7 +739,6 @@ func TestUsersthingCmd(t *testing.T) {
 		{
 			desc: "list thing users' without domain token",
 			args: []string{
-				usersCommand,
 				thing.ID,
 				tokenWithoutDomain,
 			},
@@ -787,9 +747,8 @@ func TestUsersthingCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "list thing users' with invalid thing ID",
+			desc: "list thing users with invalid id",
 			args: []string{
-				usersCommand,
 				invalidID,
 				token,
 			},
@@ -800,7 +759,6 @@ func TestUsersthingCmd(t *testing.T) {
 		{
 			desc: "list thing users' without domain token",
 			args: []string{
-				usersCommand,
 				thing.ID,
 				tokenWithoutDomain,
 			},
@@ -811,29 +769,30 @@ func TestUsersthingCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("ListThingUsers", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("ListThingUsers", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{usrCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case entityLog:
-			err := json.Unmarshal([]byte(out), &page)
-			if err != nil {
-				t.Fatalf("Failed to unmarshal JSON: %v", err)
+			switch tc.logType {
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &page)
+				if err != nil {
+					t.Fatalf("Failed to unmarshal JSON: %v", err)
+				}
+				assert.Equal(t, tc.page, page, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.page, page))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
 			}
-			assert.Equal(t, tc.page, page, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.page, page))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		}
-		sdkCall.Unset()
+			sdkCall.Unset()
+		})
 	}
 }
 
 func TestConnectThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	connectCommand := "connect"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -847,7 +806,6 @@ func TestConnectThingCmd(t *testing.T) {
 		{
 			desc: "Connect thing to channel successfully",
 			args: []string{
-				connectCommand,
 				thing.ID,
 				channel.ID,
 				token,
@@ -857,7 +815,6 @@ func TestConnectThingCmd(t *testing.T) {
 		{
 			desc: "connect with invalid args",
 			args: []string{
-				connectCommand,
 				thing.ID,
 				channel.ID,
 				token,
@@ -868,7 +825,6 @@ func TestConnectThingCmd(t *testing.T) {
 		{
 			desc: "connect with invalid thing id",
 			args: []string{
-				connectCommand,
 				invalidID,
 				channel.ID,
 				token,
@@ -880,7 +836,6 @@ func TestConnectThingCmd(t *testing.T) {
 		{
 			desc: "connect with invalid channel id",
 			args: []string{
-				connectCommand,
 				thing.ID,
 				invalidID,
 				token,
@@ -892,7 +847,6 @@ func TestConnectThingCmd(t *testing.T) {
 		{
 			desc: "list thing users' without domain token",
 			args: []string{
-				connectCommand,
 				thing.ID,
 				channel.ID,
 				tokenWithoutDomain,
@@ -904,25 +858,26 @@ func TestConnectThingCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("Connect", mock.Anything, mock.Anything).Return(tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("Connect", mock.Anything, tc.args[2]).Return(tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{connCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case okLog:
-			assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		}
-		sdkCall.Unset()
+			switch tc.logType {
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			}
+			sdkCall.Unset()
+		})
 	}
 }
 
 func TestDisconnectThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	disconnectCommand := "disconnect"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -936,7 +891,6 @@ func TestDisconnectThingCmd(t *testing.T) {
 		{
 			desc: "Disconnect thing to channel successfully",
 			args: []string{
-				disconnectCommand,
 				thing.ID,
 				channel.ID,
 				token,
@@ -946,7 +900,6 @@ func TestDisconnectThingCmd(t *testing.T) {
 		{
 			desc: "Disconnect with invalid args",
 			args: []string{
-				disconnectCommand,
 				thing.ID,
 				channel.ID,
 				token,
@@ -957,7 +910,6 @@ func TestDisconnectThingCmd(t *testing.T) {
 		{
 			desc: "disconnect with invalid thing id",
 			args: []string{
-				disconnectCommand,
 				invalidID,
 				channel.ID,
 				token,
@@ -969,7 +921,6 @@ func TestDisconnectThingCmd(t *testing.T) {
 		{
 			desc: "disconnect with invalid channel id",
 			args: []string{
-				disconnectCommand,
 				thing.ID,
 				invalidID,
 				token,
@@ -979,9 +930,8 @@ func TestDisconnectThingCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "list thing users' without domain token",
+			desc: "disconnect thing without domain token",
 			args: []string{
-				disconnectCommand,
 				thing.ID,
 				channel.ID,
 				tokenWithoutDomain,
@@ -993,25 +943,26 @@ func TestDisconnectThingCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("Disconnect", mock.Anything, mock.Anything).Return(tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("Disconnect", mock.Anything, tc.args[2]).Return(tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{disconnCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case okLog:
-			assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		}
-		sdkCall.Unset()
+			switch tc.logType {
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			}
+			sdkCall.Unset()
+		})
 	}
 }
 
-func TestConnectionCmd(t *testing.T) {
+func TestListConnectionCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	connectionsCmd := "connections"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -1027,7 +978,6 @@ func TestConnectionCmd(t *testing.T) {
 		{
 			desc: "list connections successfully",
 			args: []string{
-				connectionsCmd,
 				thing.ID,
 				token,
 			},
@@ -1044,7 +994,6 @@ func TestConnectionCmd(t *testing.T) {
 		{
 			desc: "list connections with invalid args",
 			args: []string{
-				connectionsCmd,
 				thing.ID,
 				token,
 				extraArg,
@@ -1054,7 +1003,6 @@ func TestConnectionCmd(t *testing.T) {
 		{
 			desc: "list connections with invalid thing ID",
 			args: []string{
-				connectionsCmd,
 				invalidID,
 				token,
 			},
@@ -1065,7 +1013,6 @@ func TestConnectionCmd(t *testing.T) {
 		{
 			desc: "list connections with invalid token",
 			args: []string{
-				connectionsCmd,
 				thing.ID,
 				invalidToken,
 			},
@@ -1075,30 +1022,31 @@ func TestConnectionCmd(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("ChannelsByThing", tc.args[1], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("ChannelsByThing", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{connsCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case entityLog:
-			err := json.Unmarshal([]byte(out), &cp)
-			if err != nil {
-				t.Fatalf("Failed to unmarshal JSON: %v", err)
+			switch tc.logType {
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &cp)
+				if err != nil {
+					t.Fatalf("Failed to unmarshal JSON: %v", err)
+				}
+				assert.Equal(t, tc.page, cp, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.page, cp))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
 			}
-			assert.Equal(t, tc.page, cp, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.page, cp))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		}
 
-		sdkCall.Unset()
+			sdkCall.Unset()
+		})
 	}
 }
 
 func TestShareThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	shareCmd := "share"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -1112,7 +1060,6 @@ func TestShareThingCmd(t *testing.T) {
 		{
 			desc: "share thing successfully",
 			args: []string{
-				shareCmd,
 				thing.ID,
 				user.ID,
 				relation,
@@ -1123,7 +1070,6 @@ func TestShareThingCmd(t *testing.T) {
 		{
 			desc: "share thing with invalid user id",
 			args: []string{
-				shareCmd,
 				thing.ID,
 				invalidID,
 				relation,
@@ -1136,7 +1082,6 @@ func TestShareThingCmd(t *testing.T) {
 		{
 			desc: "share thing with invalid thing ID",
 			args: []string{
-				shareCmd,
 				invalidID,
 				user.ID,
 				relation,
@@ -1149,7 +1094,6 @@ func TestShareThingCmd(t *testing.T) {
 		{
 			desc: "share thing with invalid args",
 			args: []string{
-				shareCmd,
 				thing.ID,
 				user.ID,
 				relation,
@@ -1161,7 +1105,6 @@ func TestShareThingCmd(t *testing.T) {
 		{
 			desc: "share thing with invalid relation",
 			args: []string{
-				shareCmd,
 				thing.ID,
 				user.ID,
 				"invalid",
@@ -1173,25 +1116,26 @@ func TestShareThingCmd(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("ShareThing", tc.args[1], mock.Anything, tc.args[4]).Return(tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("ShareThing", tc.args[0], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{shrCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case okLog:
-			assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		}
-		sdkCall.Unset()
+			switch tc.logType {
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			}
+			sdkCall.Unset()
+		})
 	}
 }
 
 func TestUnshareThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
-	unshareCmd := "unshare"
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
@@ -1205,7 +1149,6 @@ func TestUnshareThingCmd(t *testing.T) {
 		{
 			desc: "unshare thing successfully",
 			args: []string{
-				unshareCmd,
 				thing.ID,
 				user.ID,
 				relation,
@@ -1216,7 +1159,6 @@ func TestUnshareThingCmd(t *testing.T) {
 		{
 			desc: "unshare thing with invalid thing ID",
 			args: []string{
-				unshareCmd,
 				invalidID,
 				user.ID,
 				relation,
@@ -1229,7 +1171,6 @@ func TestUnshareThingCmd(t *testing.T) {
 		{
 			desc: "unshare thing with invalid args",
 			args: []string{
-				unshareCmd,
 				thing.ID,
 				user.ID,
 				relation,
@@ -1241,7 +1182,6 @@ func TestUnshareThingCmd(t *testing.T) {
 		{
 			desc: "unshare thing with invalid relation",
 			args: []string{
-				unshareCmd,
 				thing.ID,
 				user.ID,
 				"invalid",
@@ -1253,17 +1193,19 @@ func TestUnshareThingCmd(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		sdkCall := sdkMock.On("UnshareThing", tc.args[1], mock.Anything, tc.args[4]).Return(tc.sdkErr)
-		out := executeCommand(t, rootCmd, tc.args...)
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("UnshareThing", tc.args[0], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{unshrCmd}, tc.args...)...)
 
-		switch tc.logType {
-		case okLog:
-			assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
-		case usageLog:
-			assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
-		case errLog:
-			assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
-		}
-		sdkCall.Unset()
+			switch tc.logType {
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			}
+			sdkCall.Unset()
+		})
 	}
 }

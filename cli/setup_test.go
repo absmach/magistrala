@@ -19,6 +19,8 @@ const (
 	errLog
 	entityLog
 	okLog
+	createLog
+	revokeLog
 )
 
 func executeCommand(t *testing.T, root *cobra.Command, args ...string) string {

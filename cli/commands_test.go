@@ -3,31 +3,58 @@
 
 package cli_test
 
+// CRUD and common commands
 const (
-	createCmd     = "create"
-	getCmd        = "get"
+	createCmd  = "create"
+	updateCmd  = "update"
+	getCmd     = "get"
+	enableCmd  = "enable"
+	disableCmd = "disable"
+	updCmd     = "update"
+	delCmd     = "delete"
+	rmCmd      = "remove"
+)
+
+// Users commands
+const (
 	tokCmd        = "token"
 	refTokCmd     = "refreshtoken"
-	updCmd        = "update"
 	profCmd       = "profile"
 	resPassReqCmd = "resetpasswordrequest"
 	resPassCmd    = "resetpassword"
 	passCmd       = "password"
-	enableCmd     = "enable"
-	disableCmd    = "disable"
-	delCmd        = "delete"
-	chansCmd      = "channels"
-	thsCmd        = "things"
 	domsCmd       = "domains"
-	grpCmd        = "groups"
-	connsCmd      = "connections"
-	connCmd       = "connect"
-	disconnCmd    = "disconnect"
-	shrCmd        = "share"
-	unshrCmd      = "unshare"
-	childCmd      = "children"
-	parentCmd     = "parents"
-	usrCmd        = "users"
-	assignCmd     = "assign"
-	unassignCmd   = "unassign"
+)
+
+// Things commands
+const (
+	thsCmd     = "things"
+	connsCmd   = "connections"
+	connCmd    = "connect"
+	disconnCmd = "disconnect"
+	shrCmd     = "share"
+	unshrCmd   = "unshare"
+)
+
+// Groups and channels commands
+const (
+	chansCmd    = "channels"
+	grpCmd      = "groups"
+	childCmd    = "children"
+	parentCmd   = "parents"
+	usrCmd      = "users"
+	assignCmd   = "assign"
+	unassignCmd = "unassign"
+)
+
+// Certs commands
+const (
+	revokeCmd = "revoke"
+	issueCmd  = "issue"
+)
+
+// Messages commands
+const (
+	sendCmd = "send"
+	readCmd = "read"
 )

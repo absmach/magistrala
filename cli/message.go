@@ -10,7 +10,7 @@ import (
 
 var cmdMessages = []cobra.Command{
 	{
-		Use:   "send <channel_id.subtopic> <JSON_string> <thing_key>",
+		Use:   "send <channel_id.subtopic> <JSON_string> <thing_secret>",
 		Short: "Send messages",
 		Long:  `Sends message on the channel`,
 		Run: func(cmd *cobra.Command, args []string) {

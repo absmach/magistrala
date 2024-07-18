@@ -12,6 +12,10 @@ issues:
   exclude:
     - "string `Usage:\n` has (\\d+) occurrences, make it a constant"
     - "string `For example:\n` has (\\d+) occurrences, make it a constant"
+  exclude-rules:
+    - path: cli/commands_test.go
+      linters:
+        - godot
 
 linters-settings:
   importas:

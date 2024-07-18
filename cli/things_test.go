@@ -31,8 +31,11 @@ var (
 )
 
 var thing = mgsdk.Thing{
-	ID:       testsutil.GenerateUUID(&testing.T{}),
-	Name:     "testthing",
+	ID:   testsutil.GenerateUUID(&testing.T{}),
+	Name: "testthing",
+	Credentials: mgsdk.Credentials{
+		Secret: "secret",
+	},
 	DomainID: testsutil.GenerateUUID(&testing.T{}),
 	Status:   mgclients.EnabledStatus.String(),
 }

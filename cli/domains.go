@@ -23,16 +23,16 @@ var cmdDomains = []cobra.Command{
 				return
 			}
 
-			user := mgxsdk.Domain{
+			dom := mgxsdk.Domain{
 				Name:  args[0],
 				Alias: args[1],
 			}
-			user, err := sdk.CreateDomain(user, args[2])
+			d, err := sdk.CreateDomain(dom, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			logJSONCmd(*cmd, user)
+			logJSONCmd(*cmd, d)
 		},
 	},
 	{

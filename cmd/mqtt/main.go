@@ -44,6 +44,7 @@ import (
 const (
 	svcName        = "mqtt"
 	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
+	wsPathPrefix   = "/mqtt"
 )
 
 type config struct {
@@ -233,12 +234,12 @@ func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHand
 func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
 	config := mproxy.Config{
 		Address:    fmt.Sprintf("%s:%s", "", cfg.HTTPPort),
-		Target:     fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort),
-		PathPrefix: "/mqtt",
+		Target:     fmt.Sprintf("ws://%s:%s%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort, wsPathPrefix),
+		PathPrefix: wsPathPrefix,
 	}
 
 	wp := websocket.New(config, sessionHandler, interceptor, logger)
-	http.HandleFunc("/mqtt", wp.ServeHTTP)
+	http.HandleFunc(wsPathPrefix, wp.ServeHTTP)
 
 	errCh := make(chan error)
 

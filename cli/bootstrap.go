@@ -87,7 +87,7 @@ var cmdBootstrap = []cobra.Command{
 			}
 			if args[0] == "config" {
 				var cfg mgxsdk.BootstrapConfig
-				if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
+				if err := json.Unmarshal([]byte(args[1]), &cfg); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}
@@ -102,11 +102,11 @@ var cmdBootstrap = []cobra.Command{
 			}
 			if args[0] == "connection" {
 				var ids []string
-				if err := json.Unmarshal([]byte(args[1]), &ids); err != nil {
+				if err := json.Unmarshal([]byte(args[2]), &ids); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}
-				if err := sdk.UpdateBootstrapConnection(args[0], ids, args[2]); err != nil {
+				if err := sdk.UpdateBootstrapConnection(args[1], ids, args[3]); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}

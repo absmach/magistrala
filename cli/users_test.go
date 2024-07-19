@@ -508,6 +508,30 @@ func TestUpdateUserCmd(t *testing.T) {
 			user:    user,
 		},
 		{
+			desc: "update user tags with invalid json",
+			args: []string{
+				tagUpdateType,
+				userID,
+				"[\"tag1\", \"tag2\"",
+				validToken,
+			},
+			sdkerr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.New("unexpected end of JSON input")),
+			logType:       errLog,
+		},
+		{
+			desc: "update user tags with invalid token",
+			args: []string{
+				tagUpdateType,
+				userID,
+				newTagsJSON,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
+		},
+		{
 			desc: "update user identity successfully",
 			args: []string{
 				identityUpdateType,
@@ -517,6 +541,18 @@ func TestUpdateUserCmd(t *testing.T) {
 			},
 			logType: entityLog,
 			user:    user,
+		},
+		{
+			desc: "update user identity with invalid token",
+			args: []string{
+				identityUpdateType,
+				userID,
+				newIdentity,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 		{
 			desc: "update user successfully",
@@ -529,6 +565,28 @@ func TestUpdateUserCmd(t *testing.T) {
 			user:    user,
 		},
 		{
+			desc: "update user with invalid token",
+			args: []string{
+				userID,
+				newNameMetadataJSON,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
+		},
+		{
+			desc: "update user with invalid json",
+			args: []string{
+				userID,
+				"{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}",
+				validToken,
+			},
+			sdkerr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.New("unexpected end of JSON input")),
+			logType:       errLog,
+		},
+		{
 			desc: "update user role successfully",
 			args: []string{
 				roleUpdateType,
@@ -538,6 +596,18 @@ func TestUpdateUserCmd(t *testing.T) {
 			},
 			logType: entityLog,
 			user:    user,
+		},
+		{
+			desc: "update user role with invalid token",
+			args: []string{
+				roleUpdateType,
+				userID,
+				newRole,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 		{
 			desc: "update user with invalid args",
@@ -636,6 +706,15 @@ func TestGetUserProfileCmd(t *testing.T) {
 			},
 			logType: usageLog,
 		},
+		{
+			desc: "get user profile with invalid token",
+			args: []string{
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
+		},
 	}
 
 	for _, tc := range cases {
@@ -688,18 +767,29 @@ func TestResetPasswordRequestCmd(t *testing.T) {
 			},
 			logType: usageLog,
 		},
+		{
+			desc: "failed request password reset",
+			args: []string{
+				exampleEmail,
+			},
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity).Error()),
+			logType:       errLog,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sdkCall := sdkMock.On("ResetPasswordRequest", tc.args[0]).Return(tc.sdkerr)
-			out := executeCommand(t, rootCmd, append([]string{resPassCmd}, tc.args...)...)
+			out := executeCommand(t, rootCmd, append([]string{resPassReqCmd}, tc.args...)...)
 
 			switch tc.logType {
 			case errLog:
 				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
 			case usageLog:
 				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
 			}
 			sdkCall.Unset()
 		})
@@ -739,6 +829,17 @@ func TestResetPasswordCmd(t *testing.T) {
 				extraArg,
 			},
 			logType: usageLog,
+		},
+		{
+			desc: "reset password with invalid token",
+			args: []string{
+				newPassword,
+				newPassword,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 	}
 
@@ -801,6 +902,17 @@ func TestUpdatePasswordCmd(t *testing.T) {
 			logType: usageLog,
 			user:    user,
 		},
+		{
+			desc: "update password with invalid token",
+			args: []string{
+				oldPassword,
+				newPassword,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
+		},
 	}
 
 	for _, tc := range cases {
@@ -857,6 +969,16 @@ func TestEnableUserCmd(t *testing.T) {
 				extraArg,
 			},
 			logType: usageLog,
+		},
+		{
+			desc: "enable user with invalid token",
+			args: []string{
+				user.ID,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 	}
 
@@ -916,6 +1038,16 @@ func TestDisableUserCmd(t *testing.T) {
 			},
 			logType: usageLog,
 		},
+		{
+			desc: "disable user with invalid token",
+			args: []string{
+				user.ID,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
+		},
 	}
 
 	for _, tc := range cases {
@@ -961,6 +1093,15 @@ func TestDeleteUserCmd(t *testing.T) {
 				validToken,
 			},
 			logType: okLog,
+		},
+		{
+			desc: "delete user with invalid args",
+			args: []string{
+				user.ID,
+				validToken,
+				extraArg,
+			},
+			logType: usageLog,
 		},
 		{
 			desc: "delete user with invalid token",
@@ -1078,6 +1219,16 @@ func TestListUserChannelsCmd(t *testing.T) {
 			},
 			logType: usageLog,
 		},
+		{
+			desc: "list user channels with invalid token",
+			args: []string{
+				user.ID,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
+		},
 	}
 
 	for _, tc := range cases {
@@ -1145,6 +1296,16 @@ func TestListUserThingsCmd(t *testing.T) {
 			},
 			logType: usageLog,
 		},
+		{
+			desc: "list user things with invalid token",
+			args: []string{
+				user.ID,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
+		},
 	}
 
 	for _, tc := range cases {
@@ -1208,6 +1369,16 @@ func TestListUserDomainsCmd(t *testing.T) {
 				extraArg,
 			},
 			logType: usageLog,
+		},
+		{
+			desc: "list user domains with invalid token",
+			args: []string{
+				user.ID,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 	}
 
@@ -1273,6 +1444,16 @@ func TestListUserGroupsCmd(t *testing.T) {
 				extraArg,
 			},
 			logType: usageLog,
+		},
+		{
+			desc: "list user groups with invalid token",
+			args: []string{
+				user.ID,
+				invalidToken,
+			},
+			logType:       errLog,
+			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 	}
 

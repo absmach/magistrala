@@ -180,24 +180,38 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	if err != nil {
 		return mgclients.ClientsPage{}, err
 	}
-	if err := svc.checkSuperAdmin(ctx, userID); err == nil {
-		pm.Role = mgclients.AllRole
-		pg, err := svc.clients.RetrieveAll(ctx, pm)
-		if err != nil {
-			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-		}
-		return pg, err
+	if err := svc.checkSuperAdmin(ctx, userID); err != nil {
+		return mgclients.ClientsPage{}, err
 	}
 
-	pg, err := svc.clients.SearchClients(ctx, pm)
+	pm.Role = mgclients.AllRole
+	pg, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	for i, c := range pg.Clients {
-		pg.Clients[i] = mgclients.Client{ID: c.ID, Name: c.Name}
+	return pg, err
+}
+
+func (svc service) SearchUsers(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	_, err := svc.Identify(ctx, token)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
 	}
 
-	return pg, nil
+	page := mgclients.Page{
+		Offset: pm.Offset,
+		Limit:  pm.Limit,
+		Name:   pm.Name,
+		Id:     pm.Id,
+		Role:   mgclients.UserRole,
+	}
+
+	cp, err := svc.clients.SearchClients(ctx, page)
+	if err != nil {
+		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	return cp, nil
 }
 
 func (svc service) UpdateClient(ctx context.Context, token string, cli mgclients.Client) (mgclients.Client, error) {

@@ -89,6 +89,28 @@ func (req listClientsReq) validate() error {
 	return nil
 }
 
+type searchClientsReq struct {
+	token  string
+	Offset uint64
+	Limit  uint64
+	Name   string
+	Id     string
+	Order  string
+	Dir    string
+}
+
+func (req searchClientsReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	if req.Name == "" && req.Id == "" {
+		return apiutil.ErrEmptySearchQuery
+	}
+
+	return nil
+}
+
 type listMembersByObjectReq struct {
 	mgclients.Page
 	token      string

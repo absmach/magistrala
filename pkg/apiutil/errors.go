@@ -179,4 +179,10 @@ var (
 
 	// ErrInvalidTimeFormat indicates invalid time format i.e not unix time.
 	ErrInvalidTimeFormat = errors.New("invalid time format use unix time")
+
+	// ErrEmptySearchQuery indicates search query should not be empty.
+	ErrEmptySearchQuery = errors.New("search query must not be empty")
+
+	// ErrLenSearchQuery indicates search query length.
+	ErrLenSearchQuery = errors.New("search query must be at least 3 characters")
 )

@@ -5,6 +5,9 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/url"
+	"strconv"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -463,12 +466,54 @@ var cmdUsers = []cobra.Command{
 			logJSONCmd(*cmd, users)
 		},
 	},
+
+	{
+		Use:   "search <query> <user_auth_token>",
+		Short: "Search users",
+		Long: "Search users by query\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli users search <query> <user_auth_token>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsageCmd(*cmd, cmd.Use)
+				return
+			}
+
+			values, err := url.ParseQuery(args[0])
+			if err != nil {
+				logErrorCmd(*cmd, fmt.Errorf("failed to parse query: %s", err))
+			}
+
+			pm := mgxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+				Name:   values.Get("name"),
+				ID:     values.Get("id"),
+			}
+
+			if off, err := strconv.Atoi(values.Get("offset")); err == nil {
+				pm.Offset = uint64(off)
+			}
+
+			if lim, err := strconv.Atoi(values.Get("limit")); err == nil {
+				pm.Limit = uint64(lim)
+			}
+
+			users, err := sdk.SearchUsers(pm, args[1])
+			if err != nil {
+				logErrorCmd(*cmd, err)
+				return
+			}
+
+			logJSONCmd(*cmd, users)
+		},
+	},
 }
 
 // NewUsersCmd returns users command.
 func NewUsersCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "users [create | get | update | token | password | enable | disable | delete | channels | things | groups]",
+		Use:   "users [create | get | update | token | password | enable | disable | delete | channels | things | groups | search]",
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
 	}

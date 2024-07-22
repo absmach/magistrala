@@ -152,6 +152,27 @@ func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, pm m
 	return lm.svc.ListClients(ctx, token, pm)
 }
 
+// SearchUsers logs the search_users request. It logs the page metadata and the time it took to complete the request.
+func (lm *loggingMiddleware) SearchUsers(ctx context.Context, token string, cp mgclients.Page) (mp mgclients.ClientsPage, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("page",
+				slog.Uint64("limit", cp.Limit),
+				slog.Uint64("offset", cp.Offset),
+				slog.Uint64("total", mp.Total),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Search clients failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Search clients completed successfully", args...)
+	}(time.Now())
+	return lm.svc.SearchUsers(ctx, token, cp)
+}
+
 // UpdateClient logs the update_client request. It logs the client id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {

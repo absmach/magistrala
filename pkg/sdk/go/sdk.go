@@ -336,6 +336,18 @@ type SDK interface {
 	//  fmt.Println(things)
 	ListUserThings(userID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError)
 
+	// SeachUsers filters users and returns a page result.
+	//
+	// example:
+	//  pm := sdk.PageMetadata{
+	//	Offset: 0,
+	//	Limit:  10,
+	//	Name:   "John Doe",
+	//  }
+	//  users, _ := sdk.SearchUsers(pm, "token")
+	//  fmt.Println(users)
+	SearchUsers(pm PageMetadata, token string) (UsersPage, errors.SDKError)
+
 	// CreateThing registers new thing and returns its id.
 	//
 	// example:

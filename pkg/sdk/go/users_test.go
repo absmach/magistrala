@@ -542,6 +542,127 @@ func TestListUsers(t *testing.T) {
 	}
 }
 
+func TestSearchClients(t *testing.T) {
+	ts, svc := setupUsers()
+	defer ts.Close()
+
+	var cls []sdk.User
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	for i := 10; i < 100; i++ {
+		cl := sdk.User{
+			ID:   generateUUID(t),
+			Name: fmt.Sprintf("client_%d", i),
+			Credentials: sdk.Credentials{
+				Identity: fmt.Sprintf("identity_%d", i),
+				Secret:   fmt.Sprintf("password_%d", i),
+			},
+			Metadata: sdk.Metadata{"name": fmt.Sprintf("client_%d", i)},
+			Status:   mgclients.EnabledStatus.String(),
+		}
+		if i == 50 {
+			cl.Status = mgclients.DisabledStatus.String()
+			cl.Tags = []string{"tag1", "tag2"}
+		}
+		cls = append(cls, cl)
+	}
+
+	cases := []struct {
+		desc         string
+		token        string
+		page         sdk.PageMetadata
+		response     []sdk.User
+		searchreturn mgclients.ClientsPage
+		err          errors.SDKError
+		identifyErr  error
+	}{
+		{
+			desc:  "search for users",
+			token: validToken,
+			err:   nil,
+			page: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Name:   "client_10",
+			},
+			response: []sdk.User{cls[10]},
+			searchreturn: mgclients.ClientsPage{
+				Clients: []mgclients.Client{convertClient(cls[10])},
+				Page: mgclients.Page{
+					Total:  1,
+					Offset: offset,
+					Limit:  limit,
+				},
+			},
+		},
+		{
+			desc:  "search for users with invalid token",
+			token: invalidToken,
+			page: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Name:   "client_10",
+			},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			response:    nil,
+			identifyErr: svcerr.ErrAuthentication,
+		},
+		{
+			desc:  "search for users with empty token",
+			token: "",
+			page: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Name:   "client_10",
+			},
+			err:         errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			response:    nil,
+			identifyErr: svcerr.ErrAuthentication,
+		},
+		{
+			desc:  "search for users with empty query",
+			token: validToken,
+			page: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Name:   "",
+			},
+			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrEmptySearchQuery), http.StatusBadRequest),
+		},
+		{
+			desc:  "search for users with invalid length of query",
+			token: validToken,
+			page: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  limit,
+				Name:   "a",
+			},
+			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrLenSearchQuery, apiutil.ErrValidation), http.StatusBadRequest),
+		},
+		{
+			desc:  "search for users with invalid limit",
+			token: validToken,
+			page: sdk.PageMetadata{
+				Offset: offset,
+				Limit:  0,
+				Name:   "client_10",
+			},
+			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := svc.On("SearchUsers", mock.Anything, mock.Anything, mock.Anything).Return(tc.searchreturn, tc.err)
+		page, err := mgsdk.SearchUsers(tc.page, tc.token)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+		assert.Equal(t, tc.response, page.Users, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
+		repoCall.Unset()
+	}
+}
+
 func TestViewUser(t *testing.T) {
 	ts, svc := setupUsers()
 	defer ts.Close()

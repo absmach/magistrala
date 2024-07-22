@@ -656,6 +656,125 @@ func TestListClients(t *testing.T) {
 	}
 }
 
+func TestSearchUsers(t *testing.T) {
+	us, svc, _ := newUsersServer()
+	defer us.Close()
+
+	cases := []struct {
+		desc              string
+		token             string
+		page              mgclients.Page
+		status            int
+		query             string
+		listUsersResponse mgclients.ClientsPage
+		err               error
+	}{
+		{
+			desc:   "search users with valid token",
+			token:  validToken,
+			status: http.StatusOK,
+			query:  "name=clientname",
+			listUsersResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			err: nil,
+		},
+		{
+			desc:   "search users with empty token",
+			token:  "",
+			query:  "name=clientname",
+			status: http.StatusUnauthorized,
+			err:    apiutil.ErrBearerToken,
+		},
+		{
+			desc:   "search users with invalid token",
+			token:  inValidToken,
+			query:  "name=clientname",
+			status: http.StatusUnauthorized,
+			err:    svcerr.ErrAuthentication,
+		},
+		{
+			desc:  "search users with offset",
+			token: validToken,
+			listUsersResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Offset: 1,
+					Total:  1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			query:  "name=clientname&offset=1",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "search users with invalid offset",
+			token:  validToken,
+			query:  "name=clientname&offset=invalid",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:  "search users with limit",
+			token: validToken,
+			listUsersResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Limit: 1,
+					Total: 1,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			query:  "name=clientname&limit=1",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "search users with invalid limit",
+			token:  validToken,
+			query:  "name=clientname&limit=invalid",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrValidation,
+		},
+		{
+			desc:   "search users with empty query",
+			token:  validToken,
+			query:  "",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrEmptySearchQuery,
+		},
+		{
+			desc:   "search users with invalid length of query",
+			token:  validToken,
+			query:  "name=a",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrLenSearchQuery,
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client: us.Client(),
+			method: http.MethodGet,
+			url:    fmt.Sprintf("%s/users/search?", us.URL) + tc.query,
+			token:  tc.token,
+		}
+
+		svcCall := svc.On("SearchUsers", mock.Anything, tc.token, mock.Anything).Return(
+			mgclients.ClientsPage{
+				Page:    tc.listUsersResponse.Page,
+				Clients: tc.listUsersResponse.Clients,
+			},
+			tc.err)
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		svcCall.Unset()
+	}
+}
+
 func TestUpdateClient(t *testing.T) {
 	us, svc, _ := newUsersServer()
 	defer us.Close()

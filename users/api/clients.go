@@ -62,6 +62,13 @@ func clientsHandler(svc users.Service, r *chi.Mux, logger *slog.Logger, pr *rege
 			opts...,
 		), "list_clients").ServeHTTP)
 
+		r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
+			searchClientsEndpoint(svc),
+			decodeSearchClients,
+			api.EncodeResponse,
+			opts...,
+		), "search_clients").ServeHTTP)
+
 		r.Patch("/secret", otelhttp.NewHandler(kithttp.NewServer(
 			updateClientSecretEndpoint(svc),
 			decodeUpdateClientSecret,
@@ -267,6 +274,54 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		order:    order,
 		dir:      dir,
 		id:       id,
+	}
+
+	return req, nil
+}
+
+func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	req := searchClientsReq{
+		token:  apiutil.ExtractBearerToken(r),
+		Offset: o,
+		Limit:  l,
+		Name:   n,
+		Id:     id,
+		Order:  order,
+		Dir:    dir,
+	}
+
+	for _, field := range []string{req.Name, req.Id} {
+		if field != "" && len(field) < 3 {
+			req = searchClientsReq{
+				token: apiutil.ExtractBearerToken(r),
+			}
+			return req, errors.Wrap(apiutil.ErrLenSearchQuery, apiutil.ErrValidation)
+		}
 	}
 
 	return req, nil

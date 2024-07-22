@@ -237,6 +237,42 @@ func TestListClientsReqValidate(t *testing.T) {
 	}
 }
 
+func TestSearchClientsReqValidate(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  searchClientsReq
+		err  error
+	}{
+		{
+			desc: "valid request",
+			req: searchClientsReq{
+				token: valid,
+				Name:  name,
+			},
+			err: nil,
+		},
+		{
+			desc: "empty token",
+			req: searchClientsReq{
+				token: "",
+				Name:  name,
+			},
+			err: apiutil.ErrBearerToken,
+		},
+		{
+			desc: "empty query",
+			req: searchClientsReq{
+				token: valid,
+			},
+			err: apiutil.ErrEmptySearchQuery,
+		},
+	}
+	for _, c := range cases {
+		err := c.req.validate()
+		assert.Equal(t, c.err, err)
+	}
+}
+
 func TestListMembersByObjectReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string

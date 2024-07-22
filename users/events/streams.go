@@ -160,6 +160,22 @@ func (es *eventStore) ListClients(ctx context.Context, token string, pm mgclient
 	return cp, nil
 }
 
+func (es *eventStore) SearchUsers(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	cp, err := es.svc.SearchUsers(ctx, token, pm)
+	if err != nil {
+		return cp, err
+	}
+	event := searchClientEvent{
+		pm,
+	}
+
+	if err := es.Publish(ctx, event); err != nil {
+		return cp, err
+	}
+
+	return cp, nil
+}
+
 func (es *eventStore) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
 	mp, err := es.svc.ListMembers(ctx, token, objectKind, objectID, pm)
 	if err != nil {

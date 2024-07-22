@@ -397,6 +397,32 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+    /users/search:
+    get:
+      operationId: searchUsers
+      summary: Search users
+      description: |
+        Search users by name and identity.
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/UserName"
+        - $ref: "#/components/parameters/UserIdentity"
+        - $ref: "#/components/parameters/UserID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/UserPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
   /password/reset-request:
     post:
       operationId: requestPasswordReset

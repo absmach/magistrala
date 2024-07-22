@@ -2050,6 +2050,36 @@ func (_m *SDK) RevokeCert(thingID string, token string) (time.Time, errors.SDKEr
 	return r0, r1
 }
 
+// SearchUsers provides a mock function with given fields: pm, token
+func (_m *SDK) SearchUsers(pm sdk.PageMetadata, token string) (sdk.UsersPage, errors.SDKError) {
+	ret := _m.Called(pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchUsers")
+	}
+
+	var r0 sdk.UsersPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) (sdk.UsersPage, errors.SDKError)); ok {
+		return rf(pm, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) sdk.UsersPage); ok {
+		r0 = rf(pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.UsersPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = rf(pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
 // SendInvitation provides a mock function with given fields: invitation, token
 func (_m *SDK) SendInvitation(invitation sdk.Invitation, token string) error {
 	ret := _m.Called(invitation, token)

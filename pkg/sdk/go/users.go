@@ -328,6 +328,25 @@ func (sdk mgSDK) ListUserThings(userID string, pm PageMetadata, token string) (T
 	return tp, nil
 }
 
+func (sdk mgSDK) SearchUsers(pm PageMetadata, token string) (UsersPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/search", usersEndpoint), pm)
+	if err != nil {
+		return UsersPage{}, errors.NewSDKError(err)
+	}
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return UsersPage{}, sdkerr
+	}
+
+	var cp UsersPage
+	if err := json.Unmarshal(body, &cp); err != nil {
+		return UsersPage{}, errors.NewSDKError(err)
+	}
+
+	return cp, nil
+}
+
 func (sdk mgSDK) EnableUser(id, token string) (User, errors.SDKError) {
 	return sdk.changeClientStatus(token, id, enableEndpoint)
 }

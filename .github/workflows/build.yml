@@ -83,7 +83,5 @@ jobs:
       - name: Deploy to DigitalOcean Droplet
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_IP }} << 'EOF'
-            git pull origin main
-            docker-compose down
-            docker-compose up -d --build
+            docker compose pull && docker compose down && docker compose up -d
           EOF

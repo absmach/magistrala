@@ -61,8 +61,8 @@ jobs:
         run: |
           make latest -j $(nproc)
 
-  deploy:
-    name: Deploy
+  testing-deployment:
+    name: Testing Deployment
     runs-on: ubuntu-latest
     needs: build-and-push
 

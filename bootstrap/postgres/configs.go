@@ -460,8 +460,10 @@ func (cr configRepository) RemoveChannel(ctx context.Context, id string) error {
 }
 
 func (cr configRepository) ConnectThing(ctx context.Context, channelID, thingID string) error {
-	q := `UPDATE configs SET state = $1 WHERE EXISTS (
-		SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
+	q := `UPDATE configs SET state = $1
+		WHERE magistrala_thing = $2
+		AND EXISTS (SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
+
 	result, err := cr.db.ExecContext(ctx, q, bootstrap.Active, thingID, channelID)
 	if err != nil {
 		return errors.Wrap(errConnectThing, err)
@@ -473,8 +475,9 @@ func (cr configRepository) ConnectThing(ctx context.Context, channelID, thingID 
 }
 
 func (cr configRepository) DisconnectThing(ctx context.Context, channelID, thingID string) error {
-	q := `UPDATE configs SET state = $1 WHERE EXISTS (
-		SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
+	q := `UPDATE configs SET state = $1
+		WHERE magistrala_thing = $2
+		AND EXISTS (SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
 	_, err := cr.db.ExecContext(ctx, q, bootstrap.Inactive, thingID, channelID)
 	if err != nil {
 		return errors.Wrap(errDisconnectThing, err)

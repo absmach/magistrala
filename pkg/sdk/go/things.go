@@ -143,7 +143,6 @@ func (sdk mgSDK) VerifyConnections(pm PageMetadata, token string) (ConnectionsPa
 	}
 
 	return cp, nil
-
 }
 
 func (sdk mgSDK) Thing(id, token string) (Thing, errors.SDKError) {

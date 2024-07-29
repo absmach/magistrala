@@ -34,6 +34,7 @@ const (
 	disconnCmd = "disconnect"
 	shrCmd     = "share"
 	unshrCmd   = "unshare"
+	verifyCmd  = "verify"
 )
 
 // Groups and channels commands

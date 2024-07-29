@@ -122,6 +122,8 @@ type PageMetadata struct {
 	WithMetadata    bool     `json:"with_metadata,omitempty"`
 	WithAttributes  bool     `json:"with_attributes,omitempty"`
 	ID              string   `json:"id,omitempty"`
+	ThingsID        []string `json:"things_id,omitempty"`
+	ChannelsID      []string `json:"channels_id,omitempty"`
 }
 
 // Credentials represent client credentials: it contains
@@ -405,6 +407,17 @@ type SDK interface {
 	//  things, _ := sdk.ThingsByChannel("channelID", pm, "token")
 	//  fmt.Println(things)
 	ThingsByChannel(chanID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError)
+
+	// VerifyConnectons returns page og things and channels that both connected and disconnected.
+	//
+	//example:
+	//  pm := sdk.PageMetadata{
+	//		ThingsID []string{"df7f3e08-d234-4142-860e-4aebfb557fc5"}
+	//		ChannelsID []string{"c9091851-bdcc-43aa-878a-7fe75794cf37"}
+	//	}
+	//	connections, _ := sdk.VerifyConnections(pm, "token")
+	//	fmt.Println(connections)
+	VerifyConnections(pm PageMetadata, token string) (ConnectionsPage, errors.SDKError)
 
 	// Thing returns thing object by id.
 	//

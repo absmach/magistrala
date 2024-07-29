@@ -727,6 +727,94 @@ func TestListThingsByChannel(t *testing.T) {
 	}
 }
 
+func TestVerifyConnections(t *testing.T) {
+	ts, tsvc := setupThings()
+	defer ts.Close()
+
+	var (
+		connected = "connected"
+		allCon    = "all_connected"
+	)
+	conf := sdk.Config{
+		ThingsURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+	pm := sdk.PageMetadata{
+		ThingsID:   []string{testsutil.GenerateUUID(t)},
+		ChannelsID: []string{testsutil.GenerateUUID(t)},
+	}
+
+	connsSDK := []sdk.ConnectionStatus{
+		{
+			ChannelID: pm.ChannelsID[0],
+			ThingID:   pm.ThingsID[0],
+			Status:    connected,
+		},
+	}
+	connsClients := []mgclients.ConnectionStatus{
+		{
+			ChannelID: pm.ChannelsID[0],
+			ThingID:   pm.ThingsID[0],
+			Status:    connected,
+		},
+	}
+
+	cases := []struct {
+		desc     string
+		token    string
+		pageMeta sdk.PageMetadata
+		svcRes   mgclients.ConnectionsPage
+		response sdk.ConnectionsPage
+		err      errors.SDKError
+		svcErr   error
+	}{
+		{
+			desc:     "verify connections successfully",
+			token:    validToken,
+			pageMeta: pm,
+			svcRes: mgclients.ConnectionsPage{
+				Status:      allCon,
+				Connections: connsClients,
+			},
+			response: sdk.ConnectionsPage{
+				Status:      allCon,
+				Connections: connsSDK,
+			},
+		},
+		{
+			desc:     "verify connections with an invalid token",
+			token:    invalidToken,
+			pageMeta: pm,
+			svcErr:   svcerr.ErrAuthentication,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:  "verify connections with empty token",
+			token: "",
+			err:   errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+		},
+		{
+			desc:  "verify connection with that can't be unmarshalled",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Metadata: sdk.Metadata{
+					"test": make(chan int),
+				},
+			},
+			err: errors.NewSDKError(errors.New("json: unsupported type: chan int")),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := tsvc.On("VerifyConnections", mock.Anything, tc.token, tc.pageMeta.ThingsID, tc.pageMeta.ChannelsID).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.VerifyConnections(tc.pageMeta, tc.token)
+			assert.Equal(t, tc.err, err)
+			assert.Equal(t, tc.response, resp)
+			svcCall.Unset()
+		})
+	}
+}
+
 func TestViewThing(t *testing.T) {
 	ts, tsvc := setupThings()
 	defer ts.Close()

@@ -31,6 +31,11 @@ type ChannelsPage struct {
 	PageRes
 }
 
+type ConnectionsPage struct {
+	Status      string                       `json:"status"`
+	Connections []ConnectionStatus `json:"connection_status"`
+}
+
 // MessagesPage contains list of messages in a page with proper metadata.
 type MessagesPage struct {
 	Messages []senml.Message `json:"messages,omitempty"`

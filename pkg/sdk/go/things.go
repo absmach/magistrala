@@ -35,6 +35,13 @@ type Thing struct {
 	UpdatedAt   time.Time              `json:"updated_at,omitempty"`
 	Status      string                 `json:"status,omitempty"`
 	Permissions []string               `json:"permissions,omitempty"`
+	ThingsID    []string               `json:"things_id,omitempty"`
+}
+
+type ConnectionStatus struct {
+	ChannelID string `json:"channel_id"`
+	ThingID   string `json:"thing_id"`
+	Status    string `json:"status"`
 }
 
 func (sdk mgSDK) CreateThing(thing Thing, token string) (Thing, errors.SDKError) {
@@ -115,6 +122,28 @@ func (sdk mgSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (
 	}
 
 	return tp, nil
+}
+
+func (sdk mgSDK) VerifyConnections(pm PageMetadata, token string) (ConnectionsPage, errors.SDKError) {
+	data, err := json.Marshal(pm)
+	if err != nil {
+		return ConnectionsPage{}, errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/verify-connections", sdk.thingsURL, thingsEndpoint)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, data, nil, http.StatusOK)
+	if sdkerr != nil {
+		return ConnectionsPage{}, sdkerr
+	}
+
+	var cp ConnectionsPage
+	if err := json.Unmarshal(body, &cp); err != nil {
+		return ConnectionsPage{}, errors.NewSDKError(err)
+	}
+
+	return cp, nil
+
 }
 
 func (sdk mgSDK) Thing(id, token string) (Thing, errors.SDKError) {

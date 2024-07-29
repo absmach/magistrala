@@ -19,6 +19,9 @@ import (
 const (
 	connected    = "connected"
 	disconnected = "disconnected"
+	allConn      = "all_connected"
+	allDisConn   = "all_disconnected"
+	partConn     = "partially_connected"
 )
 
 type service struct {
@@ -582,11 +585,11 @@ func (svc service) VerifyConnections(ctx context.Context, token string, thingID,
 	var overallStatus string
 	switch {
 	case totalConnectedCount == totalConnectionsCount:
-		overallStatus = "all_connected"
+		overallStatus = allConn
 	case totalConnectedCount == 0:
-		overallStatus = "all_disconnected"
+		overallStatus = allDisConn
 	default:
-		overallStatus = "partially_connected"
+		overallStatus = partConn
 	}
 
 	return mgclients.ConnectionsPage{

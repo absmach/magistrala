@@ -810,20 +810,18 @@ func (svc service) UnassignUser(ctx context.Context, token, id, userID string) e
 		}
 	}
 
+	if err := svc.DeletePolicyFilter(ctx, PolicyReq{
+		Subject:     EncodeDomainUserID(id, userID),
+		SubjectType: UserType,
+	}); err != nil {
+		return errors.Wrap(errRemovePolicies, err)
+	}
+
 	pc := Policy{
 		SubjectType: UserType,
 		SubjectID:   userID,
 		ObjectType:  DomainType,
 		ObjectID:    id,
-	}
-	if err := svc.DeletePolicyFilter(ctx, PolicyReq{
-		Subject:     EncodeDomainUserID(id, userID),
-		SubjectType: UserType,
-		SubjectKind: UsersKind,
-		Object:      id,
-		ObjectType:  DomainType,
-	}); err != nil {
-		return errors.Wrap(errRemovePolicies, err)
 	}
 
 	if err := svc.domains.DeletePolicies(ctx, pc); err != nil {

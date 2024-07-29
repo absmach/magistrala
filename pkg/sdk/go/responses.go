@@ -32,7 +32,7 @@ type ChannelsPage struct {
 }
 
 type ConnectionsPage struct {
-	Status      string                       `json:"status"`
+	Status      string             `json:"status"`
 	Connections []ConnectionStatus `json:"connection_status"`
 }
 

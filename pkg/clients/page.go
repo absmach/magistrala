@@ -26,5 +26,5 @@ type Page struct {
 type ConnectionStatus struct {
 	ChannelID string `json:"channel_id"`
 	ThingID   string `json:"thing_id"`
-	Status    string    `json:"status"`
+	Status    string `json:"status"`
 }

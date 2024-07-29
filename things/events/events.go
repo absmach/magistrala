@@ -22,7 +22,7 @@ const (
 	clientListByGroup  = clientPrefix + "list_by_channel"
 	clientIdentify     = clientPrefix + "identify"
 	clientAuthorize    = clientPrefix + "authorize"
-	verifyConnections = clientPrefix + "verify"
+	verifyConnections  = clientPrefix + "verify"
 )
 
 var (
@@ -283,8 +283,8 @@ type verifyConnectionEvent struct {
 
 func (vce verifyConnectionEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation": verifyConnections,
-		"thing_id": vce.thingID,
+		"operation":  verifyConnections,
+		"thing_id":   vce.thingID,
 		"channel_id": vce.groupID,
 	}, nil
 }

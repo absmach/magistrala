@@ -124,7 +124,7 @@ func (res clientsPageRes) Empty() bool {
 }
 
 type verifyConnectionRes struct {
-	Status       string                       `json:"status"`
+	Status      string                       `json:"status"`
 	Connections []mgclients.ConnectionStatus `json:"connection_status"`
 }
 

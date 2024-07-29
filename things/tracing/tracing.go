@@ -108,9 +108,9 @@ func (tm *tracingMiddleware) ListClientsByGroup(ctx context.Context, token, grou
 // VerifyConnections traces the "VerifyConnections" operation of the wrapped policies.Service.
 func (tm *tracingMiddleware) VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (mgclients.ConnectionsPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_verify_connection", trace.WithAttributes(
-		attribute.StringSlice("thingID",thingID),
+		attribute.StringSlice("thingID", thingID),
 		attribute.StringSlice("channelID", groupID),
-		))
+	))
 	defer span.End()
 
 	return tm.svc.VerifyConnections(ctx, token, thingID, groupID)

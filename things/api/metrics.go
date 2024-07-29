@@ -111,7 +111,7 @@ func (ms *metricsMiddleware) ListClientsByGroup(ctx context.Context, token, grou
 }
 
 func (ms *metricsMiddleware) VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (mc mgclients.ConnectionsPage, err error) {
-	defer func (begin time.Time)  {
+	defer func(begin time.Time) {
 		ms.counter.With("method", "verify_connections").Add(1)
 		ms.latency.With("method", "verify_connections").Observe(time.Since(begin).Seconds())
 	}(time.Now())

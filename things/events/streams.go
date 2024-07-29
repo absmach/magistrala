@@ -161,7 +161,7 @@ func (es *eventStore) VerifyConnections(ctx context.Context, token string, thing
 	if err != nil {
 		return mc, err
 	}
-	event := verifyConnectionEvent {
+	event := verifyConnectionEvent{
 		thingID: thingID,
 		groupID: groupID,
 	}

@@ -105,6 +105,17 @@ func (tm *tracingMiddleware) ListClientsByGroup(ctx context.Context, token, grou
 	return tm.svc.ListClientsByGroup(ctx, token, groupID, pm)
 }
 
+// VerifyConnections traces the "VerifyConnections" operation of the wrapped policies.Service.
+func (tm *tracingMiddleware) VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (mgclients.ConnectionsPage, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_verify_connection", trace.WithAttributes(
+		attribute.StringSlice("thingID",thingID),
+		attribute.StringSlice("channelID", groupID),
+		))
+	defer span.End()
+
+	return tm.svc.VerifyConnections(ctx, token, thingID, groupID)
+}
+
 // ListMemberships traces the "ListMemberships" operation of the wrapped policies.Service.
 func (tm *tracingMiddleware) Identify(ctx context.Context, key string) (string, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_identify", trace.WithAttributes(attribute.String("key", key)))

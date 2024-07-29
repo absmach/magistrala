@@ -123,6 +123,23 @@ func (res clientsPageRes) Empty() bool {
 	return false
 }
 
+type verifyConnectionRes struct {
+	Status       string                       `json:"status"`
+	Connections []mgclients.ConnectionStatus `json:"connection_status"`
+}
+
+func (res verifyConnectionRes) Code() int {
+	return http.StatusOK
+}
+
+func (res verifyConnectionRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res verifyConnectionRes) Empty() bool {
+	return false
+}
+
 type viewMembersRes struct {
 	mgclients.Client
 }

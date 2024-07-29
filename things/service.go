@@ -16,6 +16,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const (
+	connected    = "connected"
+	disconnected = "disconnected"
+)
+
 type service struct {
 	auth        magistrala.AuthServiceClient
 	clients     postgres.Repository
@@ -529,6 +534,64 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	return mgclients.MembersPage{
 		Page:    cp.Page,
 		Members: cp.Clients,
+	}, nil
+}
+
+func (svc service) VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (mgclients.ConnectionsPage, error) {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+
+	connections := make([]mgclients.ConnectionStatus, 0, len(groupID)*len(thingID))
+	totalConnectedCount := 0
+	totalConnectionsCount := len(groupID) * len(thingID)
+
+	for _, grpID := range groupID {
+		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, grpID); err != nil {
+			return mgclients.ConnectionsPage{}, err
+		}
+		tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+			SubjectType: auth.GroupType,
+			Subject:     grpID,
+			Permission:  auth.GroupRelation,
+			ObjectType:  auth.ThingType,
+		})
+		if err != nil {
+			return mgclients.ConnectionsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+		}
+		thIds := make(map[string]struct{}, len(tids.Policies))
+		for _, id := range tids.Policies {
+			thIds[id] = struct{}{}
+		}
+
+		for _, t := range thingID {
+			status := disconnected
+			if _, ok := thIds[t]; ok {
+				status = connected
+				totalConnectedCount++
+			}
+			connections = append(connections, mgclients.ConnectionStatus{
+				ChannelID: grpID,
+				ThingID:   t,
+				Status:    status,
+			})
+		}
+	}
+
+	var overallStatus string
+	switch {
+	case totalConnectedCount == totalConnectionsCount:
+		overallStatus = "all_connected"
+	case totalConnectedCount == 0:
+		overallStatus = "all_disconnected"
+	default:
+		overallStatus = "partially_connected"
+	}
+
+	return mgclients.ConnectionsPage{
+		Status:      overallStatus,
+		Connections: connections,
 	}, nil
 }
 

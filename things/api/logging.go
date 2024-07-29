@@ -214,6 +214,23 @@ func (lm *loggingMiddleware) ListClientsByGroup(ctx context.Context, token, chan
 	return lm.svc.ListClientsByGroup(ctx, token, channelID, cp)
 }
 
+func (lm *loggingMiddleware) VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (cp mgclients.ConnectionsPage, err error) {
+	defer func (begin time.Time)  {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Any("thing_id", thingID),
+			slog.Any("channel_id", groupID),
+		}
+		if err != nil{
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Verify connections failed", args...)
+			return
+		}
+		lm.logger.Info("Verify connections completed successfully", args...)	
+	}(time.Now())
+	return lm.svc.VerifyConnections(ctx,token,thingID, groupID)
+}
+
 func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id string, err error) {
 	defer func(begin time.Time) {
 		args := []any{

@@ -22,3 +22,9 @@ type Page struct {
 	Role       Role     `json:"-"`
 	ListPerms  bool     `json:"-"`
 }
+
+type ConnectionStatus struct {
+	ChannelID string `json:"channel_id"`
+	ThingID   string `json:"thing_id"`
+	Status    string    `json:"status"`
+}

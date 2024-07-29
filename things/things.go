@@ -33,6 +33,9 @@ type Service interface {
 	// the provided key.
 	ListClientsByGroup(ctx context.Context, token, groupID string, pm clients.Page) (clients.MembersPage, error)
 
+	// VerifyConnections verifies if a list of channels is connected to a list of channels.
+	VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (clients.ConnectionsPage, error)
+
 	// UpdateClient updates the client's name and metadata.
 	UpdateClient(ctx context.Context, token string, client clients.Client) (clients.Client, error)
 

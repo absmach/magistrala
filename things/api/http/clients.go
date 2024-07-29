@@ -129,6 +129,13 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger *slog.Logger) http.Ha
 		opts...,
 	), "list_things_by_channel_id").ServeHTTP)
 
+	r.Get("/things/verify-connections", otelhttp.NewHandler(kithttp.NewServer(
+		verifyConnectionsEndpoint(svc),
+		decodeVerifyConnectionRequest,
+		api.EncodeResponse,
+		opts...,
+	), "verify_connection").ServeHTTP)
+
 	r.Get("/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
 		listClientsEndpoint(svc),
 		decodeListClients,
@@ -343,6 +350,20 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 		},
 		groupID: chi.URLParam(r, "groupID"),
 	}
+	return req, nil
+}
+
+func decodeVerifyConnectionRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+	req := verifyConnectionReq{
+		token: apiutil.ExtractBearerToken(r),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
 	return req, nil
 }
 

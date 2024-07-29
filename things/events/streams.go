@@ -156,6 +156,22 @@ func (es *eventStore) ListClientsByGroup(ctx context.Context, token, chID string
 	return mp, nil
 }
 
+func (es *eventStore) VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (mgclients.ConnectionsPage, error) {
+	mc, err := es.svc.VerifyConnections(ctx, token, thingID, groupID)
+	if err != nil {
+		return mc, err
+	}
+	event := verifyConnectionEvent {
+		thingID: thingID,
+		groupID: groupID,
+	}
+	if err := es.Publish(ctx, event); err != nil {
+		return mc, err
+	}
+
+	return mc, nil
+}
+
 func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	cli, err := es.svc.EnableClient(ctx, token, id)
 	if err != nil {

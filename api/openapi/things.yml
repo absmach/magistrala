@@ -401,6 +401,35 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+  /things/verify-connections:
+    get:
+      operationId: verifyConnections
+      summary: Verify Connections
+      description: |
+        Verify the connections between a list of channels and things, and provide 
+        a list showing which channels and things are connected and which are disconnected.
+      tags:
+        - Things
+      requestBody:
+        $ref: "#/components/requestBodies/VerifyConnectionsReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/VerifyConnectionPageRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
   /channels/{chanID}/things:
     get:
       operationId: listThingsInaChannel
@@ -1066,6 +1095,36 @@ components:
         - user_ids
         - relation
 
+    VerifyReqObj:
+      type: object
+      properties:
+        things_id:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          description: things IDs
+          example:
+            [
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+            ]
+        channels_id:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          description: channels IDs
+          example:
+            [
+              "cb7edb32-2eac-4aad-aebe-ed96fe073879",
+              "cb7edb32-2eac-4aad-aebe-ed96fe073879",
+            ]
+        required:
+          - things_id
+          - channels_id
+
+
     AssignReqObj:
       type: object
       properties:
@@ -1366,6 +1425,36 @@ components:
         - things
         - total
         - offset
+
+    VerifyConnectionsPage:
+      type: object
+      properties:
+        status:
+          type: string
+          example: all_connected
+          description: All things and channels are connected.
+        connection_status:
+          type: array
+          items:
+            type: object
+            properties:
+              things_id:
+                type: string
+                example: "bb7edb32-2eac-4aad-aebe-ed96fe073879"
+              channels_id:
+                type: string
+                example: "cb7edb32-2eac-4aad-aebe-ed96fe073879"
+              status:
+                type: string
+                example: "connected"
+            required:
+              - things_id
+              - channels_id
+              - status
+          description: Array of things and channels connection statuses
+      required:
+        - status
+        - connection_status
 
     ChannelsPage:
       type: object
@@ -1738,6 +1827,14 @@ components:
           schema:
             $ref: "#/components/schemas/PolicyReqObj"
 
+    VerifyConnectionsReq:
+      description: JSON-formated document listing connected and disconnected things and channels.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/VerifyReqObj"
+
     AssignReq:
       description: JSON-formated document describing the policy related to assigning members to a channel
       required: true
@@ -1889,6 +1986,13 @@ components:
           schema:
             $ref: "#/components/schemas/ThingsPage"
 
+    VerifyConnectionPageRes:
+      description: Verified connection between channels and things.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/VerifyConnectionsPage"
+            
     ChannelCreateRes:
       description: Registered new channel.
       headers:

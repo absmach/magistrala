@@ -410,7 +410,7 @@ type SDK interface {
 
 	// VerifyConnectons returns page og things and channels that both connected and disconnected.
 	//
-	//example:
+	// example:
 	//  pm := sdk.PageMetadata{
 	//		ThingsID []string{"df7f3e08-d234-4142-860e-4aebfb557fc5"}
 	//		ChannelsID []string{"c9091851-bdcc-43aa-878a-7fe75794cf37"}

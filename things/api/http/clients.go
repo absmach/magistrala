@@ -129,7 +129,7 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger *slog.Logger) http.Ha
 		opts...,
 	), "list_things_by_channel_id").ServeHTTP)
 
-	r.Get("/things/verify-connections", otelhttp.NewHandler(kithttp.NewServer(
+	r.Post("/things/verify-connections", otelhttp.NewHandler(kithttp.NewServer(
 		verifyConnectionsEndpoint(svc),
 		decodeVerifyConnectionRequest,
 		api.EncodeResponse,

@@ -56,6 +56,17 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		return groups.Group{}, svcerr.ErrInvalidStatus
 	}
 
+	if g.Parent != "" {
+		x,y := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
+			SubjectType: auth.GroupType,
+			SubjectKind: auth.GroupsKind,
+			Subject:     g.Parent,
+			Permission:  auth.MembershipPermission,
+			Object:      res.GetDomainId(),
+			ObjectType:  auth.DomainType,	
+		})
+		fmt.Printf("Response is %+v and error is %+v\n", x, y)
+	}
 	g.ID = groupID
 	g.CreatedAt = time.Now()
 	g.Domain = res.GetDomainId()

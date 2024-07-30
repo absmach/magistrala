@@ -2036,7 +2036,7 @@ func TestVerifyConnections(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			req := testRequest{
 				client:      ts.Client(),
-				method:      http.MethodGet,
+				method:      http.MethodPost,
 				url:         ts.URL + "/things/verify-connections",
 				contentType: tc.contentType,
 				token:       tc.token,

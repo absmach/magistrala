@@ -132,7 +132,7 @@ func (sdk mgSDK) VerifyConnections(pm PageMetadata, token string) (ConnectionsPa
 
 	url := fmt.Sprintf("%s/%s/verify-connections", sdk.thingsURL, thingsEndpoint)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, data, nil, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
 		return ConnectionsPage{}, sdkerr
 	}

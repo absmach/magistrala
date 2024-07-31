@@ -75,7 +75,7 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 			return groups.Group{}, err
 		}
 		if !contains(allowedGrps.Policies, g.Parent) {
-			return groups.Group{}, errors.Wrap(errParentUnAuthz, errParentChildDom)
+			return groups.Group{}, errors.Wrap(svcerr.ErrAuthorization, errParentChildDom)
 		}
 	}
 
@@ -444,7 +444,6 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 }
 
 func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) (err error) {
-
 	allowedGrps, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
 		SubjectType: auth.DomainType,
 		Subject:     domain,
@@ -455,7 +454,7 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 		return err
 	}
 	if !contains(allowedGrps.Policies, parentGroupID) {
-		return errors.Wrap(errParentUnAuthz, errParentChildDom)
+		return errors.Wrap(svcerr.ErrAuthorization, errParentChildDom)
 	}
 
 	groupsPage, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)

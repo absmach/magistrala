@@ -51,6 +51,8 @@ func TestCreateGroup(t *testing.T) {
 	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
+	parentID := testsutil.GenerateUUID(t)
+	domainID := testsutil.GenerateUUID(t)
 	cases := []struct {
 		desc          string
 		token         string
@@ -69,6 +71,9 @@ func TestCreateGroup(t *testing.T) {
 		deletePolResp *magistrala.DeletePolicyRes
 		deletePolErr  error
 		err           error
+		listObjReq    *magistrala.ListObjectsReq
+		listObjErr    error
+		listObjRes    *magistrala.ListObjectsRes
 	}{
 		{
 			desc:  "successfully",
@@ -77,7 +82,7 @@ func TestCreateGroup(t *testing.T) {
 			group: validGroup,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
@@ -167,11 +172,11 @@ func TestCreateGroup(t *testing.T) {
 				Name:        namegen.Generate(),
 				Description: namegen.Generate(),
 				Status:      clients.Status(groups.EnabledStatus),
-				Parent:      testsutil.GenerateUUID(t),
+				Parent:      parentID,
 			},
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
@@ -182,12 +187,82 @@ func TestCreateGroup(t *testing.T) {
 			repoResp: mggroups.Group{
 				ID:        testsutil.GenerateUUID(t),
 				CreatedAt: time.Now(),
-				Domain:    testsutil.GenerateUUID(t),
-				Parent:    testsutil.GenerateUUID(t),
+				Domain:    domainID,
+				Parent:    parentID,
 			},
 			addPolResp: &magistrala.AddPoliciesRes{
 				Added: true,
 			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
+			},
+		},
+		{
+			desc:  "unsuccessfully with parent due to the parent and child not being in the same domain",
+			token: token,
+			kind:  auth.NewGroupKind,
+			group: mggroups.Group{
+				Name:        namegen.Generate(),
+				Description: namegen.Generate(),
+				Status:      clients.Status(groups.EnabledStatus),
+				Parent:      parentID,
+			},
+			idResp: &magistrala.IdentityRes{
+				Id:       testsutil.GenerateUUID(t),
+				DomainId: domainID,
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			authzTknResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{testsutil.GenerateUUID(t)},
+			},
+			err: svcerr.ErrAuthorization,
+		},
+		{
+			desc:  "unsuccessfully with parent due to failed list objects",
+			token: token,
+			kind:  auth.NewGroupKind,
+			group: mggroups.Group{
+				Name:        namegen.Generate(),
+				Description: namegen.Generate(),
+				Status:      clients.Status(groups.EnabledStatus),
+				Parent:      parentID,
+			},
+			idResp: &magistrala.IdentityRes{
+				Id:       testsutil.GenerateUUID(t),
+				DomainId: domainID,
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			authzTknResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{},
+			listObjErr: svcerr.ErrAuthorization,
+			err:        svcerr.ErrAuthorization,
 		},
 		{
 			desc:  "unsuccessfully with parent due to authorization error",
@@ -266,17 +341,26 @@ func TestCreateGroup(t *testing.T) {
 				Name:        namegen.Generate(),
 				Description: namegen.Generate(),
 				Status:      clients.Status(groups.EnabledStatus),
-				Parent:      testsutil.GenerateUUID(t),
+				Parent:      parentID,
 			},
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
 			authzTknResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoErr:      errors.ErrMalformedEntity,
 			addPolResp:   &magistrala.AddPoliciesRes{Added: true},
@@ -304,9 +388,10 @@ func TestCreateGroup(t *testing.T) {
 				Object:      tc.group.Parent,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzTknResp, tc.authzTknErr)
+			authcall3 := authsvc.On("ListAllObjects", context.Background(), tc.listObjReq).Return(tc.listObjRes, tc.listObjErr)
 			repocall := repo.On("Save", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
-			authcall3 := authsvc.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolResp, tc.addPolErr)
-			authCall4 := authsvc.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolResp, tc.deletePolErr)
+			authCall4 := authsvc.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolResp, tc.addPolErr)
+			authCall5 := authsvc.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolResp, tc.deletePolErr)
 			got, err := svc.CreateGroup(context.Background(), tc.token, tc.kind, tc.group)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -323,6 +408,7 @@ func TestCreateGroup(t *testing.T) {
 			repocall.Unset()
 			authcall3.Unset()
 			authCall4.Unset()
+			authCall5.Unset()
 		})
 	}
 }
@@ -1649,6 +1735,8 @@ func TestAssign(t *testing.T) {
 	authsvc := new(authmocks.AuthClient)
 	svc := groups.NewService(repo, idProvider, authsvc)
 
+	domainID := testsutil.GenerateUUID(t)
+	parentID := testsutil.GenerateUUID(t)
 	cases := []struct {
 		desc                    string
 		token                   string
@@ -1670,6 +1758,9 @@ func TestAssign(t *testing.T) {
 		deleteParentPoliciesErr error
 		repoParentGroupErr      error
 		err                     error
+		listObjReq              *magistrala.ListObjectsReq
+		listObjErr              error
+		listObjRes              *magistrala.ListObjectsRes
 	}{
 		{
 			desc:       "successfully with things kind",
@@ -1710,16 +1801,25 @@ func TestAssign(t *testing.T) {
 		{
 			desc:       "successfully with groups kind",
 			token:      token,
-			groupID:    testsutil.GenerateUUID(t),
+			groupID:    parentID,
 			relation:   auth.ContributorRelation,
 			memberKind: auth.GroupsKind,
 			memberIDs:  allowedIDs,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
@@ -1754,34 +1854,105 @@ func TestAssign(t *testing.T) {
 		{
 			desc:       "unsuccessfully with groups kind due to repo err",
 			token:      token,
-			groupID:    testsutil.GenerateUUID(t),
+			groupID:    parentID,
 			relation:   auth.ContributorRelation,
 			memberKind: auth.GroupsKind,
 			memberIDs:  allowedIDs,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoResp: mggroups.Page{},
 			repoErr:  repoerr.ErrViewEntity,
 			err:      repoerr.ErrViewEntity,
 		},
 		{
-			desc:       "unsuccessfully with groups kind due to empty page",
+			desc:       "Unsuccessfully with groups kind due to the parent and child not being in the same domain",
 			token:      token,
-			groupID:    testsutil.GenerateUUID(t),
+			groupID:    parentID,
 			relation:   auth.ContributorRelation,
 			memberKind: auth.GroupsKind,
 			memberIDs:  allowedIDs,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{
+					testsutil.GenerateUUID(t),
+				},
+			},
+			repoResp:   mggroups.Page{},
+			listObjErr: nil,
+			err:        svcerr.ErrAuthorization,
+		},
+		{
+			desc:       "Unsuccessfully with groups kind due to the failed list objects",
+			token:      token,
+			groupID:    parentID,
+			relation:   auth.ContributorRelation,
+			memberKind: auth.GroupsKind,
+			memberIDs:  allowedIDs,
+			idResp: &magistrala.IdentityRes{
+				Id:       testsutil.GenerateUUID(t),
+				DomainId: domainID,
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{},
+			listObjErr: svcerr.ErrAuthorization,
+			err:        svcerr.ErrAuthorization,
+		},
+		{
+			desc:       "unsuccessfully with groups kind due to empty page",
+			token:      token,
+			groupID:    parentID,
+			relation:   auth.ContributorRelation,
+			memberKind: auth.GroupsKind,
+			memberIDs:  allowedIDs,
+			idResp: &magistrala.IdentityRes{
+				Id:       testsutil.GenerateUUID(t),
+				DomainId: domainID,
+			},
+			authzResp: &magistrala.AuthorizeRes{
+				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{},
@@ -1791,16 +1962,25 @@ func TestAssign(t *testing.T) {
 		{
 			desc:       "unsuccessfully with groups kind due to non empty parent",
 			token:      token,
-			groupID:    testsutil.GenerateUUID(t),
+			groupID:    parentID,
 			relation:   auth.ContributorRelation,
 			memberKind: auth.GroupsKind,
 			memberIDs:  allowedIDs,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
@@ -1815,16 +1995,25 @@ func TestAssign(t *testing.T) {
 		{
 			desc:       "unsuccessfully with groups kind due to failed to add policies",
 			token:      token,
-			groupID:    testsutil.GenerateUUID(t),
+			groupID:    parentID,
 			relation:   auth.ContributorRelation,
 			memberKind: auth.GroupsKind,
 			memberIDs:  allowedIDs,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
@@ -1842,16 +2031,25 @@ func TestAssign(t *testing.T) {
 		{
 			desc:       "unsuccessfully with groups kind due to failed to assign parent",
 			token:      token,
-			groupID:    testsutil.GenerateUUID(t),
+			groupID:    parentID,
 			relation:   auth.ContributorRelation,
 			memberKind: auth.GroupsKind,
 			memberIDs:  allowedIDs,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
@@ -1869,16 +2067,25 @@ func TestAssign(t *testing.T) {
 		{
 			desc:       "unsuccessfully with groups kind due to failed to assign parent and delete policy",
 			token:      token,
-			groupID:    testsutil.GenerateUUID(t),
+			groupID:    parentID,
 			relation:   auth.ContributorRelation,
 			memberKind: auth.GroupsKind,
 			memberIDs:  allowedIDs,
 			idResp: &magistrala.IdentityRes{
 				Id:       testsutil.GenerateUUID(t),
-				DomainId: testsutil.GenerateUUID(t),
+				DomainId: domainID,
 			},
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
+			},
+			listObjReq: &magistrala.ListObjectsReq{
+				SubjectType: auth.DomainType,
+				Subject:     domainID,
+				Permission:  auth.DomainRelation,
+				ObjectType:  auth.GroupType,
+			},
+			listObjRes: &magistrala.ListObjectsRes{
+				Policies: []string{parentID},
 			},
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
@@ -1978,6 +2185,7 @@ func TestAssign(t *testing.T) {
 			retrieveByIDsCall := &mock.Call{}
 			deletePoliciesCall := &mock.Call{}
 			assignParentCall := &mock.Call{}
+			authcall3 := &mock.Call{}
 			policies := magistrala.AddPoliciesReq{}
 			switch tc.memberKind {
 			case auth.ThingsKind:
@@ -1993,6 +2201,7 @@ func TestAssign(t *testing.T) {
 					})
 				}
 			case auth.GroupsKind:
+				authcall3 = authsvc.On("ListAllObjects", context.Background(), tc.listObjReq).Return(tc.listObjRes, tc.listObjErr)
 				retrieveByIDsCall = repo.On("RetrieveByIDs", context.Background(), mggroups.Page{PageMeta: mggroups.PageMeta{Limit: 1<<63 - 1}}, mock.Anything).Return(tc.repoResp, tc.repoErr)
 				var deletePolicies magistrala.DeletePoliciesReq
 				for _, group := range tc.repoResp.Groups {
@@ -2048,6 +2257,7 @@ func TestAssign(t *testing.T) {
 				retrieveByIDsCall.Unset()
 				deletePoliciesCall.Unset()
 				assignParentCall.Unset()
+				authcall3.Unset()
 			}
 		})
 	}

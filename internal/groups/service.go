@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	errParentUnAuthz = errors.New("failed to authorize parent group")
-	errMemberKind    = errors.New("invalid member kind")
-	errGroupIDs      = errors.New("invalid group ids")
+	errParentUnAuthz  = errors.New("failed to authorize parent group")
+	errParentChildDom = errors.New("parent and child are not in the same domain")
+	errMemberKind     = errors.New("invalid member kind")
+	errGroupIDs       = errors.New("invalid group ids")
 )
 
 type service struct {
@@ -56,17 +57,6 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		return groups.Group{}, svcerr.ErrInvalidStatus
 	}
 
-	if g.Parent != "" {
-		x,y := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
-			SubjectType: auth.GroupType,
-			SubjectKind: auth.GroupsKind,
-			Subject:     g.Parent,
-			Permission:  auth.MembershipPermission,
-			Object:      res.GetDomainId(),
-			ObjectType:  auth.DomainType,	
-		})
-		fmt.Printf("Response is %+v and error is %+v\n", x, y)
-	}
 	g.ID = groupID
 	g.CreatedAt = time.Now()
 	g.Domain = res.GetDomainId()
@@ -74,6 +64,18 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		_, err := svc.authorizeToken(ctx, auth.UserType, token, auth.EditPermission, auth.GroupType, g.Parent)
 		if err != nil {
 			return groups.Group{}, errors.Wrap(errParentUnAuthz, err)
+		}
+		allowedGrps, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+			SubjectType: auth.DomainType,
+			Subject:     res.GetDomainId(),
+			Permission:  auth.DomainRelation,
+			ObjectType:  auth.GroupType,
+		})
+		if err != nil {
+			return groups.Group{}, err
+		}
+		if !contains(allowedGrps.Policies, g.Parent) {
+			return groups.Group{}, errors.Wrap(errParentUnAuthz, errParentChildDom)
 		}
 	}
 
@@ -442,6 +444,20 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 }
 
 func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID string, groupIDs []string) (err error) {
+
+	allowedGrps, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+		SubjectType: auth.DomainType,
+		Subject:     domain,
+		Permission:  auth.DomainRelation,
+		ObjectType:  auth.GroupType,
+	})
+	if err != nil {
+		return err
+	}
+	if !contains(allowedGrps.Policies, parentGroupID) {
+		return errors.Wrap(errParentUnAuthz, errParentChildDom)
+	}
+
 	groupsPage, err := svc.groups.RetrieveByIDs(ctx, groups.Page{PageMeta: groups.PageMeta{Limit: 1<<63 - 1}}, groupIDs...)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrViewEntity, err)
@@ -787,4 +803,13 @@ func (svc service) addGroupPolicyRollback(ctx context.Context, userID, domainID,
 	}
 
 	return nil
+}
+
+func contains(slice []string, id string) bool {
+	for _, s := range slice {
+		if s == id {
+			return true
+		}
+	}
+	return false
 }

@@ -37,7 +37,7 @@ import (
 
 const (
 	svcName        = "journal"
-	envPrefixDB    = "MG_JOURNAL_"
+	envPrefixDB    = "MG_JOURNAL_DB_"
 	envPrefixHTTP  = "MG_JOURNAL_HTTP_"
 	envPrefixAuth  = "MG_AUTH_GRPC_"
 	defDB          = "journal"

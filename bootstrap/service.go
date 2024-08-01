@@ -18,6 +18,10 @@ import (
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
+const (
+	allConn      = "all_connected"
+)
+
 var (
 	// ErrThings indicates failure to communicate with Magistrala Things service.
 	// It can be due to networking error or invalid/unauthenticated request.
@@ -154,6 +158,19 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
 
+	pm := mgsdk.PageMetadata{
+		ThingsID:   []string{cfg.ThingID},
+		ChannelsID: toConnect,
+	}
+	cp, err := bs.sdk.VerifyConnections(pm, token)
+	if err != nil {
+		return Config{}, err
+	}
+	State := Inactive
+	if cp.Status == allConn {
+		State = Active
+	}
+
 	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)
@@ -173,7 +190,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 
 	cfg.ThingID = mgThing.ID
 	cfg.DomainID = user.GetDomainId()
-	cfg.State = Inactive
+	cfg.State = State
 	cfg.ThingKey = mgThing.Credentials.Secret
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)

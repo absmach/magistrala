@@ -38,6 +38,8 @@ const (
 	channelsNum     = 3
 	instanceID      = "5de9b29a-feb9-11ed-be56-0242ac120002"
 	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	allConn         = "all_connected"
+	allDisConn      = "all_disconnected"
 )
 
 var (
@@ -100,6 +102,8 @@ func TestAdd(t *testing.T) {
 		userID          string
 		domainID        string
 		authResponse    *magistrala.AuthorizeRes
+		page            mgsdk.ConnectionsPage
+		verifyErr       errors.SDKError
 		authorizeErr    error
 		identifyErr     error
 		thingErr        error
@@ -111,13 +115,39 @@ func TestAdd(t *testing.T) {
 		err             error
 	}{
 		{
-			desc:         "add a new config",
+			desc:         "add a new config with active state",
 			config:       config,
 			token:        validToken,
 			userID:       validID,
 			domainID:     domainID,
 			authResponse: &magistrala.AuthorizeRes{Authorized: true},
-			err:          nil,
+			page: mgsdk.ConnectionsPage{
+				Status: allConn,
+			},
+			err: nil,
+		},
+		{
+			desc:         "add a new config with inactive state",
+			config:       config,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			page: mgsdk.ConnectionsPage{
+				Status: allDisConn,
+			},
+			err: nil,
+		},
+		{
+			desc:         "add a new config with failed verify connections",
+			config:       config,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			page:         mgsdk.ConnectionsPage{},
+			verifyErr:    errors.NewSDKError(svcerr.ErrNotFound),
+			err:          svcerr.ErrNotFound,
 		},
 		{
 			desc:         "add a config with an invalid ID",
@@ -198,7 +228,8 @@ func TestAdd(t *testing.T) {
 		repoCall1 := sdk.On("CreateThing", mock.Anything, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
 		repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.token).Return(tc.deleteThingErr)
 		repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
-		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+		repoCall4 := sdk.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.page, tc.verifyErr)
+		repoCall5 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := c.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -210,6 +241,7 @@ func TestAdd(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 		repoCall4.Unset()
+		repoCall5.Unset()
 	}
 }
 

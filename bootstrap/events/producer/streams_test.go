@@ -127,6 +127,8 @@ func TestAdd(t *testing.T) {
 		saveErr      error
 		err          error
 		event        map[string]interface{}
+		page         mgsdk.ConnectionsPage
+		verifyErr    errors.SDKError
 	}{
 		{
 			desc:         "create config successfully",
@@ -208,7 +210,8 @@ func TestAdd(t *testing.T) {
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
 		sdkCall := sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
 		repoCall := boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
-		repoCall1 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+		repoCall1 := sdk.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.page, tc.verifyErr)
+		repoCall2 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := svc.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -232,6 +235,7 @@ func TestAdd(t *testing.T) {
 		sdkCall.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
+		repoCall2.Unset()
 	}
 }
 

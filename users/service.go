@@ -547,11 +547,12 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 	if nameQuery != "" {
 		filteredClients := make([]mgclients.Client, 0, len(cp.Clients))
 		for _, c := range cp.Clients {
-			if strings.Contains(c.Name, nameQuery) {
+			if strings.Contains(strings.ToLower(c.Name), strings.ToLower(nameQuery)) {
 				filteredClients = append(filteredClients, c)
 			}
 		}
 		cp.Clients = filteredClients
+		cp.Total = uint64(len(filteredClients))
 	}
 
 	if pm.ListPerms && len(cp.Clients) > 0 {

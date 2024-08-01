@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	allConn      = "all_connected"
+	allConn = "all_connected"
 )
 
 var (

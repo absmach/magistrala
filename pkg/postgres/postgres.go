@@ -22,7 +22,7 @@ type Config struct {
 	Port        string `env:"PORT"           envDefault:"5432"`
 	User        string `env:"USER"           envDefault:"magistrala"`
 	Pass        string `env:"PASS"           envDefault:"magistrala"`
-	Name        string `env:"NAME"           envDefault:"messages"`
+	Name        string `env:"NAME"           envDefault:""`
 	SSLMode     string `env:"SSL_MODE"       envDefault:"disable"`
 	SSLCert     string `env:"SSL_CERT"       envDefault:""`
 	SSLKey      string `env:"SSL_KEY"        envDefault:""`

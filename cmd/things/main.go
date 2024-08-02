@@ -68,7 +68,7 @@ type config struct {
 	LogLevel         string        `env:"MG_THINGS_LOG_LEVEL"           envDefault:"info"`
 	StandaloneID     string        `env:"MG_THINGS_STANDALONE_ID"       envDefault:""`
 	StandaloneToken  string        `env:"MG_THINGS_STANDALONE_TOKEN"    envDefault:""`
-	JaegerURL        url.URL       `env:"MG_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
+	JaegerURL        url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
 	CacheKeyDuration time.Duration `env:"MG_THINGS_CACHE_KEY_DURATION"  envDefault:"10m"`
 	SendTelemetry    bool          `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
 	InstanceID       string        `env:"MG_THINGS_INSTANCE_ID"         envDefault:""`

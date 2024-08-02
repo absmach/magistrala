@@ -57,7 +57,7 @@ const (
 type config struct {
 	LogLevel            string        `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
 	SecretKey           string        `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
-	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:14268/api/traces"`
+	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
 	InstanceID          string        `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
 	AccessDuration      time.Duration `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"1h"`

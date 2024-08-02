@@ -35,35 +35,35 @@ Thing configuration also contains the so-called `external ID` and `external key`
 
 The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
-| Variable                      | Description                                                                      | Default                             |
-| ----------------------------- | -------------------------------------------------------------------------------- | ----------------------------------- |
-| MG_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                               | info                                |
-| MG_BOOTSTRAP_DB_HOST          | Database host address                                                            | localhost                           |
-| MG_BOOTSTRAP_DB_PORT          | Database host port                                                               | 5432                                |
-| MG_BOOTSTRAP_DB_USER          | Database user                                                                    | magistrala                          |
-| MG_BOOTSTRAP_DB_PASS          | Database password                                                                | magistrala                          |
-| MG_BOOTSTRAP_DB_NAME          | Name of the database used by the service                                         | bootstrap                           |
-| MG_BOOTSTRAP_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full)          | disable                             |
-| MG_BOOTSTRAP_DB_SSL_CERT      | Path to the PEM encoded certificate file                                         | ""                                  |
-| MG_BOOTSTRAP_DB_SSL_KEY       | Path to the PEM encoded key file                                                 | ""                                  |
-| MG_BOOTSTRAP_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                                    | ""                                  |
-| MG_BOOTSTRAP_ENCRYPT_KEY      | Secret key for secure bootstrapping encryption                                   | 12345678910111213141516171819202    |
-| MG_BOOTSTRAP_HTTP_HOST        | Bootstrap service HTTP host                                                      | ""                                  |
-| MG_BOOTSTRAP_HTTP_PORT        | Bootstrap service HTTP port                                                      | 9013                                |
-| MG_BOOTSTRAP_HTTP_SERVER_CERT | Path to server certificate in pem format                                         | ""                                  |
-| MG_BOOTSTRAP_HTTP_SERVER_KEY  | Path to server key in pem format                                                 | ""                                  |
-| MG_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                                     | bootstrap                           |
-| MG_ES_URL                     | Event store URL                                                                  | <nats://localhost:4222>             |
-| MG_AUTH_GRPC_URL              | Auth service Auth gRPC URL                                                       | <localhost:8181>                    |
-| MG_AUTH_GRPC_TIMEOUT          | Auth service Auth gRPC request timeout in seconds                                | 1s                                  |
-| MG_AUTH_GRPC_CLIENT_CERT      | Path to the PEM encoded auth service Auth gRPC client certificate file           | ""                                  |
-| MG_AUTH_GRPC_CLIENT_KEY       | Path to the PEM encoded auth service Auth gRPC client key file                   | ""                                  |
-| MG_AUTH_GRPC_SERVER_CERTS     | Path to the PEM encoded auth server Auth gRPC server trusted CA certificate file | ""                                  |
-| MG_THINGS_URL                 | Base url for Magistrala Things                                                   | <http://localhost:9000>             |
-| MG_JAEGER_URL                 | Jaeger server URL                                                                | <http://localhost:14268/api/traces> |
-| MG_JAEGER_TRACE_RATIO         | Jaeger sampling ratio                                                            | 1.0                                 |
-| MG_SEND_TELEMETRY             | Send telemetry to magistrala call home server                                    | true                                |
-| MG_BOOTSTRAP_INSTANCE_ID      | Bootstrap service instance ID                                                    | ""                                  |
+| Variable                      | Description                                                                      | Default                          |
+| ----------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
+| MG_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                               | info                             |
+| MG_BOOTSTRAP_DB_HOST          | Database host address                                                            | localhost                        |
+| MG_BOOTSTRAP_DB_PORT          | Database host port                                                               | 5432                             |
+| MG_BOOTSTRAP_DB_USER          | Database user                                                                    | magistrala                       |
+| MG_BOOTSTRAP_DB_PASS          | Database password                                                                | magistrala                       |
+| MG_BOOTSTRAP_DB_NAME          | Name of the database used by the service                                         | bootstrap                        |
+| MG_BOOTSTRAP_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full)          | disable                          |
+| MG_BOOTSTRAP_DB_SSL_CERT      | Path to the PEM encoded certificate file                                         | ""                               |
+| MG_BOOTSTRAP_DB_SSL_KEY       | Path to the PEM encoded key file                                                 | ""                               |
+| MG_BOOTSTRAP_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                                    | ""                               |
+| MG_BOOTSTRAP_ENCRYPT_KEY      | Secret key for secure bootstrapping encryption                                   | 12345678910111213141516171819202 |
+| MG_BOOTSTRAP_HTTP_HOST        | Bootstrap service HTTP host                                                      | ""                               |
+| MG_BOOTSTRAP_HTTP_PORT        | Bootstrap service HTTP port                                                      | 9013                             |
+| MG_BOOTSTRAP_HTTP_SERVER_CERT | Path to server certificate in pem format                                         | ""                               |
+| MG_BOOTSTRAP_HTTP_SERVER_KEY  | Path to server key in pem format                                                 | ""                               |
+| MG_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                                     | bootstrap                        |
+| MG_ES_URL                     | Event store URL                                                                  | <nats://localhost:4222>          |
+| MG_AUTH_GRPC_URL              | Auth service Auth gRPC URL                                                       | <localhost:8181>                 |
+| MG_AUTH_GRPC_TIMEOUT          | Auth service Auth gRPC request timeout in seconds                                | 1s                               |
+| MG_AUTH_GRPC_CLIENT_CERT      | Path to the PEM encoded auth service Auth gRPC client certificate file           | ""                               |
+| MG_AUTH_GRPC_CLIENT_KEY       | Path to the PEM encoded auth service Auth gRPC client key file                   | ""                               |
+| MG_AUTH_GRPC_SERVER_CERTS     | Path to the PEM encoded auth server Auth gRPC server trusted CA certificate file | ""                               |
+| MG_THINGS_URL                 | Base url for Magistrala Things                                                   | <http://localhost:9000>          |
+| MG_JAEGER_URL                 | Jaeger server URL                                                                | <http://localhost:4318/v1/traces>  |
+| MG_JAEGER_TRACE_RATIO         | Jaeger sampling ratio                                                            | 1.0                              |
+| MG_SEND_TELEMETRY             | Send telemetry to magistrala call home server                                    | true                             |
+| MG_BOOTSTRAP_INSTANCE_ID      | Bootstrap service instance ID                                                    | ""                               |
 
 ## Deployment
 

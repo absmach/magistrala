@@ -8,33 +8,33 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                             | Description                                   | Default                        |
-| ------------------------------------ | --------------------------------------------- | ------------------------------ |
-| MG_TIMESCALE_READER_LOG_LEVEL        | Service log level                             | info                           |
-| MG_TIMESCALE_READER_HTTP_HOST        | Service HTTP host                             | localhost                      |
-| MG_TIMESCALE_READER_HTTP_PORT        | Service HTTP port                             | 8180                           |
-| MG_TIMESCALE_READER_HTTP_SERVER_CERT | Service HTTP server certificate path          | ""                             |
-| MG_TIMESCALE_READER_HTTP_SERVER_KEY  | Service HTTP server key path                  | ""                             |
-| MG_TIMESCALE_HOST                    | Timescale DB host                             | localhost                      |
-| MG_TIMESCALE_PORT                    | Timescale DB port                             | 5432                           |
-| MG_TIMESCALE_USER                    | Timescale user                                | magistrala                     |
-| MG_TIMESCALE_PASS                    | Timescale password                            | magistrala                     |
-| MG_TIMESCALE_NAME                    | Timescale database name                       | messages                       |
-| MG_TIMESCALE_SSL_MODE                | Timescale SSL mode                            | disabled                       |
-| MG_TIMESCALE_SSL_CERT                | Timescale SSL certificate path                | ""                             |
-| MG_TIMESCALE_SSL_KEY                 | Timescale SSL key                             | ""                             |
-| MG_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path           | ""                             |
-| MG_THINGS_AUTH_GRPC_URL              | Things service Auth gRPC URL                  | localhost:7000                 |
-| MG_THINGS_AUTH_GRPC_TIMEOUT          | Things service Auth gRPC timeout in seconds   | 1s                             |
-| MG_THINGS_AUTH_GRPC_CLIENT_TLS       | Things service Auth gRPC TLS enabled flag     | false                          |
-| MG_THINGS_AUTH_GRPC_CA_CERTS         | Things service Auth gRPC CA certificates      | ""                             |
-| MG_AUTH_GRPC_URL                     | Auth service gRPC URL                         | localhost:7001                 |
-| MG_AUTH_GRPC_TIMEOUT                 | Auth service gRPC timeout in seconds          | 1s                             |
-| MG_AUTH_GRPC_CLIENT_TLS              | Auth service gRPC TLS enabled flag            | false                          |
-| MG_AUTH_GRPC_CA_CERT                 | Auth service gRPC CA certificate              | ""                             |
-| MG_JAEGER_URL                        | Jaeger server URL                             | http://jaeger:14268/api/traces |
-| MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server | true                           |
-| MG_TIMESCALE_READER_INSTANCE_ID      | Timescale reader instance ID                  | ""                             |
+| Variable                             | Description                                   | Default                       |
+| ------------------------------------ | --------------------------------------------- | ----------------------------- |
+| MG_TIMESCALE_READER_LOG_LEVEL        | Service log level                             | info                          |
+| MG_TIMESCALE_READER_HTTP_HOST        | Service HTTP host                             | localhost                     |
+| MG_TIMESCALE_READER_HTTP_PORT        | Service HTTP port                             | 8180                          |
+| MG_TIMESCALE_READER_HTTP_SERVER_CERT | Service HTTP server certificate path          | ""                            |
+| MG_TIMESCALE_READER_HTTP_SERVER_KEY  | Service HTTP server key path                  | ""                            |
+| MG_TIMESCALE_HOST                    | Timescale DB host                             | localhost                     |
+| MG_TIMESCALE_PORT                    | Timescale DB port                             | 5432                          |
+| MG_TIMESCALE_USER                    | Timescale user                                | magistrala                    |
+| MG_TIMESCALE_PASS                    | Timescale password                            | magistrala                    |
+| MG_TIMESCALE_NAME                    | Timescale database name                       | messages                      |
+| MG_TIMESCALE_SSL_MODE                | Timescale SSL mode                            | disabled                      |
+| MG_TIMESCALE_SSL_CERT                | Timescale SSL certificate path                | ""                            |
+| MG_TIMESCALE_SSL_KEY                 | Timescale SSL key                             | ""                            |
+| MG_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path           | ""                            |
+| MG_THINGS_AUTH_GRPC_URL              | Things service Auth gRPC URL                  | localhost:7000                |
+| MG_THINGS_AUTH_GRPC_TIMEOUT          | Things service Auth gRPC timeout in seconds   | 1s                            |
+| MG_THINGS_AUTH_GRPC_CLIENT_TLS       | Things service Auth gRPC TLS enabled flag     | false                         |
+| MG_THINGS_AUTH_GRPC_CA_CERTS         | Things service Auth gRPC CA certificates      | ""                            |
+| MG_AUTH_GRPC_URL                     | Auth service gRPC URL                         | localhost:7001                |
+| MG_AUTH_GRPC_TIMEOUT                 | Auth service gRPC timeout in seconds          | 1s                            |
+| MG_AUTH_GRPC_CLIENT_TLS              | Auth service gRPC TLS enabled flag            | false                         |
+| MG_AUTH_GRPC_CA_CERT                 | Auth service gRPC CA certificate              | ""                            |
+| MG_JAEGER_URL                        | Jaeger server URL                             | http://jaeger:4318/v1/traces |
+| MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server | true                          |
+| MG_TIMESCALE_READER_INSTANCE_ID      | Timescale reader instance ID                  | ""                            |
 
 ## Deployment
 

@@ -19,7 +19,7 @@ The service is configured using the environment variables presented in the follo
 | MG_THINGS_AUTH_GRPC_CLIENT_KEY   | Path to the PEM encoded things service Auth gRPC client key file                   | ""                                  |
 | MG_THINGS_AUTH_GRPC_SERVER_CERTS | Path to the PEM encoded things server Auth gRPC server trusted CA certificate file | ""                                  |
 | MG_MESSAGE_BROKER_URL            | Message broker instance URL                                                        | <nats://localhost:4222>             |
-| MG_JAEGER_URL                    | Jaeger server URL                                                                  | <http://localhost:14268/api/traces> |
+| MG_JAEGER_URL                    | Jaeger server URL                                                                  | <http://localhost:4318/v1/traces> |
 | MG_JAEGER_TRACE_RATIO            | Jaeger sampling ratio                                                              | 1.0                                 |
 | MG_SEND_TELEMETRY                | Send telemetry to magistrala call home server                                      | true                                |
 | MG_HTTP_ADAPTER_INSTANCE_ID      | Service instance ID                                                                | ""                                  |

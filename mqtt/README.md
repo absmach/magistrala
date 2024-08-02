@@ -6,31 +6,31 @@ MQTT adapter provides an MQTT API for sending messages through the platform. MQT
 
 The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
-| Variable                                 | Description                                                                        | Default                             |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------- |
-| MG_MQTT_ADAPTER_LOG_LEVEL                | Log level for the MQTT Adapter (debug, info, warn, error)                          | info                                |
-| MG_MQTT_ADAPTER_MQTT_PORT                | mProxy port                                                                        | 1883                                |
-| MG_MQTT_ADAPTER_MQTT_TARGET_HOST         | MQTT broker host                                                                   | localhost                           |
-| MG_MQTT_ADAPTER_MQTT_TARGET_PORT         | MQTT broker port                                                                   | 1883                                |
-| MG_MQTT_ADAPTER_MQTT_QOS                 | MQTT broker QoS                                                                    | 1                                   |
-| MG_MQTT_ADAPTER_FORWARDER_TIMEOUT        | MQTT forwarder for multiprotocol communication timeout                             | 30s                                 |
-| MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK | URL of broker health check                                                         | ""                                  |
-| MG_MQTT_ADAPTER_WS_PORT                  | mProxy MQTT over WS port                                                           | 8080                                |
-| MG_MQTT_ADAPTER_WS_TARGET_HOST           | MQTT broker host for MQTT over WS                                                  | localhost                           |
-| MG_MQTT_ADAPTER_WS_TARGET_PORT           | MQTT broker port for MQTT over WS                                                  | 8080                                |
-| MG_MQTT_ADAPTER_WS_TARGET_PATH           | MQTT broker MQTT over WS path                                                      | /mqtt                               |
-| MG_MQTT_ADAPTER_INSTANCE                 | Instance name for MQTT adapter                                                     | ""                                  |
-| MG_THINGS_AUTH_GRPC_URL                  | Things service Auth gRPC URL                                                       | <localhost:7000>                    |
-| MG_THINGS_AUTH_GRPC_TIMEOUT              | Things service Auth gRPC request timeout in seconds                                | 1s                                  |
-| MG_THINGS_AUTH_GRPC_CLIENT_CERT          | Path to the PEM encoded things service Auth gRPC client certificate file           | ""                                  |
-| MG_THINGS_AUTH_GRPC_CLIENT_KEY           | Path to the PEM encoded things service Auth gRPC client key file                   | ""                                  |
-| MG_THINGS_AUTH_GRPC_SERVER_CERTS         | Path to the PEM encoded things server Auth gRPC server trusted CA certificate file | ""                                  |
-| MG_ES_URL                                | Event sourcing URL                                                                 | <nats://localhost:4222>             |
-| MG_MESSAGE_BROKER_URL                    | Message broker instance URL                                                        | <nats://localhost:4222>             |
-| MG_JAEGER_URL                            | Jaeger server URL                                                                  | <http://localhost:14268/api/traces> |
-| MG_JAEGER_TRACE_RATIO                    | Jaeger sampling ratio                                                              | 1.0                                 |
-| MG_SEND_TELEMETRY                        | Send telemetry to magistrala call home server                                      | true                                |
-| MG_MQTT_ADAPTER_INSTANCE_ID              | Service instance ID                                                                | ""                                  |
+| Variable                                 | Description                                                                        | Default                            |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------- |
+| MG_MQTT_ADAPTER_LOG_LEVEL                | Log level for the MQTT Adapter (debug, info, warn, error)                          | info                               |
+| MG_MQTT_ADAPTER_MQTT_PORT                | mProxy port                                                                        | 1883                               |
+| MG_MQTT_ADAPTER_MQTT_TARGET_HOST         | MQTT broker host                                                                   | localhost                          |
+| MG_MQTT_ADAPTER_MQTT_TARGET_PORT         | MQTT broker port                                                                   | 1883                               |
+| MG_MQTT_ADAPTER_MQTT_QOS                 | MQTT broker QoS                                                                    | 1                                  |
+| MG_MQTT_ADAPTER_FORWARDER_TIMEOUT        | MQTT forwarder for multiprotocol communication timeout                             | 30s                                |
+| MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK | URL of broker health check                                                         | ""                                 |
+| MG_MQTT_ADAPTER_WS_PORT                  | mProxy MQTT over WS port                                                           | 8080                               |
+| MG_MQTT_ADAPTER_WS_TARGET_HOST           | MQTT broker host for MQTT over WS                                                  | localhost                          |
+| MG_MQTT_ADAPTER_WS_TARGET_PORT           | MQTT broker port for MQTT over WS                                                  | 8080                               |
+| MG_MQTT_ADAPTER_WS_TARGET_PATH           | MQTT broker MQTT over WS path                                                      | /mqtt                              |
+| MG_MQTT_ADAPTER_INSTANCE                 | Instance name for MQTT adapter                                                     | ""                                 |
+| MG_THINGS_AUTH_GRPC_URL                  | Things service Auth gRPC URL                                                       | <localhost:7000>                   |
+| MG_THINGS_AUTH_GRPC_TIMEOUT              | Things service Auth gRPC request timeout in seconds                                | 1s                                 |
+| MG_THINGS_AUTH_GRPC_CLIENT_CERT          | Path to the PEM encoded things service Auth gRPC client certificate file           | ""                                 |
+| MG_THINGS_AUTH_GRPC_CLIENT_KEY           | Path to the PEM encoded things service Auth gRPC client key file                   | ""                                 |
+| MG_THINGS_AUTH_GRPC_SERVER_CERTS         | Path to the PEM encoded things server Auth gRPC server trusted CA certificate file | ""                                 |
+| MG_ES_URL                                | Event sourcing URL                                                                 | <nats://localhost:4222>            |
+| MG_MESSAGE_BROKER_URL                    | Message broker instance URL                                                        | <nats://localhost:4222>            |
+| MG_JAEGER_URL                            | Jaeger server URL                                                                  | <http://localhost:4318/v1/traces> |
+| MG_JAEGER_TRACE_RATIO                    | Jaeger sampling ratio                                                              | 1.0                                |
+| MG_SEND_TELEMETRY                        | Send telemetry to magistrala call home server                                      | true                               |
+| MG_MQTT_ADAPTER_INSTANCE_ID              | Service instance ID                                                                | ""                                 |
 
 ## Deployment
 

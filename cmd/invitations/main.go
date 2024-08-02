@@ -48,7 +48,7 @@ type config struct {
 	UsersURL      string  `env:"MG_USERS_URL"                  envDefault:"http://localhost:9002"`
 	DomainsURL    string  `env:"MG_DOMAINS_URL"                envDefault:"http://localhost:8189"`
 	InstanceID    string  `env:"MG_INVITATIONS_INSTANCE_ID"    envDefault:""`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:14268/api/traces"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
 }

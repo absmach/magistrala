@@ -59,40 +59,40 @@ Domain consists of the following fields:
 
 The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
-| Variable                       | Description                                                             | Default                          |
-| ------------------------------ | ----------------------------------------------------------------------- | -------------------------------- |
-| MG_AUTH_LOG_LEVEL              | Log level for the Auth service (debug, info, warn, error)               | info                             |
-| MG_AUTH_DB_HOST                | Database host address                                                   | localhost                        |
-| MG_AUTH_DB_PORT                | Database host port                                                      | 5432                             |
-| MG_AUTH_DB_USER                | Database user                                                           | magistrala                       |
-| MG_AUTH_DB_PASSWORD            | Database password                                                       | magistrala                       |
-| MG_AUTH_DB_NAME                | Name of the database used by the service                                | auth                             |
-| MG_AUTH_DB_SSL_MODE            | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                          |
-| MG_AUTH_DB_SSL_CERT            | Path to the PEM encoded certificate file                                | ""                               |
-| MG_AUTH_DB_SSL_KEY             | Path to the PEM encoded key file                                        | ""                               |
-| MG_AUTH_DB_SSL_ROOT_CERT       | Path to the PEM encoded root certificate file                           | ""                               |
-| MG_AUTH_HTTP_HOST              | Auth service HTTP host                                                  | ""                               |
-| MG_AUTH_HTTP_PORT              | Auth service HTTP port                                                  | 8189                             |
-| MG_AUTH_HTTP_SERVER_CERT       | Path to the PEM encoded HTTP server certificate file                    | ""                               |
-| MG_AUTH_HTTP_SERVER_KEY        | Path to the PEM encoded HTTP server key file                            | ""                               |
-| MG_AUTH_GRPC_HOST              | Auth service gRPC host                                                  | ""                               |
-| MG_AUTH_GRPC_PORT              | Auth service gRPC port                                                  | 8181                             |
-| MG_AUTH_GRPC_SERVER_CERT       | Path to the PEM encoded gRPC server certificate file                    | ""                               |
-| MG_AUTH_GRPC_SERVER_KEY        | Path to the PEM encoded gRPC server key file                            | ""                               |
-| MG_AUTH_GRPC_SERVER_CA_CERTS   | Path to the PEM encoded gRPC server CA certificate file                 | ""                               |
-| MG_AUTH_GRPC_CLIENT_CA_CERTS   | Path to the PEM encoded gRPC client CA certificate file                 | ""                               |
-| MG_AUTH_SECRET_KEY             | String used for signing tokens                                          | secret                           |
-| MG_AUTH_ACCESS_TOKEN_DURATION  | The access token expiration period                                      | 1h                               |
-| MG_AUTH_REFRESH_TOKEN_DURATION | The refresh token expiration period                                     | 24h                              |
-| MG_AUTH_INVITATION_DURATION    | The invitation token expiration period                                  | 168h                             |
-| MG_SPICEDB_HOST                | SpiceDB host address                                                    | localhost                        |
-| MG_SPICEDB_PORT                | SpiceDB host port                                                       | 50051                            |
-| MG_SPICEDB_PRE_SHARED_KEY      | SpiceDB pre-shared key                                                  | 12345678                         |
-| MG_SPICEDB_SCHEMA_FILE         | Path to SpiceDB schema file                                             | ./docker/spicedb/schema.zed      |
-| MG_JAEGER_URL                  | Jaeger server URL                                                       | <http://jaeger:14268/api/traces> |
-| MG_JAEGER_TRACE_RATIO          | Jaeger sampling ratio                                                   | 1.0                              |
-| MG_SEND_TELEMETRY              | Send telemetry to magistrala call home server                           | true                             |
-| MG_AUTH_ADAPTER_INSTANCE_ID    | Adapter instance ID                                                     | ""                               |
+| Variable                       | Description                                                             | Default                         |
+| ------------------------------ | ----------------------------------------------------------------------- | ------------------------------- |
+| MG_AUTH_LOG_LEVEL              | Log level for the Auth service (debug, info, warn, error)               | info                            |
+| MG_AUTH_DB_HOST                | Database host address                                                   | localhost                       |
+| MG_AUTH_DB_PORT                | Database host port                                                      | 5432                            |
+| MG_AUTH_DB_USER                | Database user                                                           | magistrala                      |
+| MG_AUTH_DB_PASSWORD            | Database password                                                       | magistrala                      |
+| MG_AUTH_DB_NAME                | Name of the database used by the service                                | auth                            |
+| MG_AUTH_DB_SSL_MODE            | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                         |
+| MG_AUTH_DB_SSL_CERT            | Path to the PEM encoded certificate file                                | ""                              |
+| MG_AUTH_DB_SSL_KEY             | Path to the PEM encoded key file                                        | ""                              |
+| MG_AUTH_DB_SSL_ROOT_CERT       | Path to the PEM encoded root certificate file                           | ""                              |
+| MG_AUTH_HTTP_HOST              | Auth service HTTP host                                                  | ""                              |
+| MG_AUTH_HTTP_PORT              | Auth service HTTP port                                                  | 8189                            |
+| MG_AUTH_HTTP_SERVER_CERT       | Path to the PEM encoded HTTP server certificate file                    | ""                              |
+| MG_AUTH_HTTP_SERVER_KEY        | Path to the PEM encoded HTTP server key file                            | ""                              |
+| MG_AUTH_GRPC_HOST              | Auth service gRPC host                                                  | ""                              |
+| MG_AUTH_GRPC_PORT              | Auth service gRPC port                                                  | 8181                            |
+| MG_AUTH_GRPC_SERVER_CERT       | Path to the PEM encoded gRPC server certificate file                    | ""                              |
+| MG_AUTH_GRPC_SERVER_KEY        | Path to the PEM encoded gRPC server key file                            | ""                              |
+| MG_AUTH_GRPC_SERVER_CA_CERTS   | Path to the PEM encoded gRPC server CA certificate file                 | ""                              |
+| MG_AUTH_GRPC_CLIENT_CA_CERTS   | Path to the PEM encoded gRPC client CA certificate file                 | ""                              |
+| MG_AUTH_SECRET_KEY             | String used for signing tokens                                          | secret                          |
+| MG_AUTH_ACCESS_TOKEN_DURATION  | The access token expiration period                                      | 1h                              |
+| MG_AUTH_REFRESH_TOKEN_DURATION | The refresh token expiration period                                     | 24h                             |
+| MG_AUTH_INVITATION_DURATION    | The invitation token expiration period                                  | 168h                            |
+| MG_SPICEDB_HOST                | SpiceDB host address                                                    | localhost                       |
+| MG_SPICEDB_PORT                | SpiceDB host port                                                       | 50051                           |
+| MG_SPICEDB_PRE_SHARED_KEY      | SpiceDB pre-shared key                                                  | 12345678                        |
+| MG_SPICEDB_SCHEMA_FILE         | Path to SpiceDB schema file                                             | ./docker/spicedb/schema.zed     |
+| MG_JAEGER_URL                  | Jaeger server URL                                                       | <http://jaeger:4318/v1/traces> |
+| MG_JAEGER_TRACE_RATIO          | Jaeger sampling ratio                                                   | 1.0                             |
+| MG_SEND_TELEMETRY              | Send telemetry to magistrala call home server                           | true                            |
+| MG_AUTH_ADAPTER_INSTANCE_ID    | Adapter instance ID                                                     | ""                              |
 
 ## Deployment
 

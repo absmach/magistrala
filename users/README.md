@@ -12,49 +12,49 @@ For in-depth explanation of the aforementioned scenarios, as well as thorough un
 
 The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
-| Variable                      | Description                                                             | Default                             |
-| ----------------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
-| MG_USERS_LOG_LEVEL            | Log level for users service (debug, info, warn, error)                  | info                                |
-| MG_USERS_ADMIN_EMAIL          | Default user, created on startup                                        | <admin@example.com>                 |
-| MG_USERS_ADMIN_PASSWORD       | Default user password, created on startup                               | 12345678                            |
-| MG_USERS_PASS_REGEX           | Password regex                                                          | ^.{8,}$                             |
-| MG_TOKEN_RESET_ENDPOINT       | Password request reset endpoint, for constructing link                  | /reset-request                      |
-| MG_USERS_HTTP_HOST            | Users service HTTP host                                                 | localhost                           |
-| MG_USERS_HTTP_PORT            | Users service HTTP port                                                 | 9002                                |
-| MG_USERS_HTTP_SERVER_CERT     | Path to the PEM encoded server certificate file                         | ""                                  |
-| MG_USERS_HTTP_SERVER_KEY      | Path to the PEM encoded server key file                                 | ""                                  |
-| MG_USERS_HTTP_SERVER_CA_CERTS | Path to the PEM encoded server CA certificate file                      | ""                                  |
-| MG_USERS_HTTP_CLIENT_CA_CERTS | Path to the PEM encoded client CA certificate file                      | ""                                  |
-| MG_AUTH_GRPC_URL              | Auth service GRPC URL                                                   | localhost:8181                      |
-| MG_AUTH_GRPC_TIMEOUT          | Auth service GRPC timeout                                               | 1s                                  |
-| MG_AUTH_GRPC_CLIENT_CERT      | Path to the PEM encoded client certificate file                         | ""                                  |
-| MG_AUTH_GRPC_CLIENT_KEY       | Path to the PEM encoded client key file                                 | ""                                  |
-| MG_AUTH_GRPC_SERVER_CA_CERTS  | Path to the PEM encoded server CA certificate file                      | ""                                  |
-| MG_USERS_DB_HOST              | Database host address                                                   | localhost                           |
-| MG_USERS_DB_PORT              | Database host port                                                      | 5432                                |
-| MG_USERS_DB_USER              | Database user                                                           | magistrala                          |
-| MG_USERS_DB_PASS              | Database password                                                       | magistrala                          |
-| MG_USERS_DB_NAME              | Name of the database used by the service                                | users                               |
-| MG_USERS_DB_SSL_MODE          | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                             |
-| MG_USERS_DB_SSL_CERT          | Path to the PEM encoded certificate file                                | ""                                  |
-| MG_USERS_DB_SSL_KEY           | Path to the PEM encoded key file                                        | ""                                  |
-| MG_USERS_DB_SSL_ROOT_CERT     | Path to the PEM encoded root certificate file                           | ""                                  |
-| MG_EMAIL_HOST                 | Mail server host                                                        | localhost                           |
-| MG_EMAIL_PORT                 | Mail server port                                                        | 25                                  |
-| MG_EMAIL_USERNAME             | Mail server username                                                    | ""                                  |
-| MG_EMAIL_PASSWORD             | Mail server password                                                    | ""                                  |
-| MG_EMAIL_FROM_ADDRESS         | Email "from" address                                                    | ""                                  |
-| MG_EMAIL_FROM_NAME            | Email "from" name                                                       | ""                                  |
-| MG_EMAIL_TEMPLATE             | Email template for sending emails with password reset link              | email.tmpl                          |
-| MG_USERS_ES_URL               | Event store URL                                                         | <nats://localhost:4222>             |
-| MG_JAEGER_URL                 | Jaeger server URL                                                       | <http://localhost:14268/api/traces> |
-| MG_OAUTH_UI_REDIRECT_URL      | OAuth UI redirect URL                                                   | <http://localhost:9095/domains>     |
-| MG_OAUTH_UI_ERROR_URL         | OAuth UI error URL                                                      | <http://localhost:9095/error>       |
-| MG_USERS_DELETE_INTERVAL      | Interval for deleting users                                             | 24h                                 |
-| MG_USERS_DELETE_AFTER         | Time after which users are deleted                                      | 720h                                |
-| MG_JAEGER_TRACE_RATIO         | Jaeger sampling ratio                                                   | 1.0                                 |
-| MG_SEND_TELEMETRY             | Send telemetry to magistrala call home server.                          | true                                |
-| MG_USERS_INSTANCE_ID          | Magistrala instance ID                                                  | ""                                  |
+| Variable                      | Description                                                             | Default                            |
+| ----------------------------- | ----------------------------------------------------------------------- | ---------------------------------- |
+| MG_USERS_LOG_LEVEL            | Log level for users service (debug, info, warn, error)                  | info                               |
+| MG_USERS_ADMIN_EMAIL          | Default user, created on startup                                        | <admin@example.com>                |
+| MG_USERS_ADMIN_PASSWORD       | Default user password, created on startup                               | 12345678                           |
+| MG_USERS_PASS_REGEX           | Password regex                                                          | ^.{8,}$                            |
+| MG_TOKEN_RESET_ENDPOINT       | Password request reset endpoint, for constructing link                  | /reset-request                     |
+| MG_USERS_HTTP_HOST            | Users service HTTP host                                                 | localhost                          |
+| MG_USERS_HTTP_PORT            | Users service HTTP port                                                 | 9002                               |
+| MG_USERS_HTTP_SERVER_CERT     | Path to the PEM encoded server certificate file                         | ""                                 |
+| MG_USERS_HTTP_SERVER_KEY      | Path to the PEM encoded server key file                                 | ""                                 |
+| MG_USERS_HTTP_SERVER_CA_CERTS | Path to the PEM encoded server CA certificate file                      | ""                                 |
+| MG_USERS_HTTP_CLIENT_CA_CERTS | Path to the PEM encoded client CA certificate file                      | ""                                 |
+| MG_AUTH_GRPC_URL              | Auth service GRPC URL                                                   | localhost:8181                     |
+| MG_AUTH_GRPC_TIMEOUT          | Auth service GRPC timeout                                               | 1s                                 |
+| MG_AUTH_GRPC_CLIENT_CERT      | Path to the PEM encoded client certificate file                         | ""                                 |
+| MG_AUTH_GRPC_CLIENT_KEY       | Path to the PEM encoded client key file                                 | ""                                 |
+| MG_AUTH_GRPC_SERVER_CA_CERTS  | Path to the PEM encoded server CA certificate file                      | ""                                 |
+| MG_USERS_DB_HOST              | Database host address                                                   | localhost                          |
+| MG_USERS_DB_PORT              | Database host port                                                      | 5432                               |
+| MG_USERS_DB_USER              | Database user                                                           | magistrala                         |
+| MG_USERS_DB_PASS              | Database password                                                       | magistrala                         |
+| MG_USERS_DB_NAME              | Name of the database used by the service                                | users                              |
+| MG_USERS_DB_SSL_MODE          | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                            |
+| MG_USERS_DB_SSL_CERT          | Path to the PEM encoded certificate file                                | ""                                 |
+| MG_USERS_DB_SSL_KEY           | Path to the PEM encoded key file                                        | ""                                 |
+| MG_USERS_DB_SSL_ROOT_CERT     | Path to the PEM encoded root certificate file                           | ""                                 |
+| MG_EMAIL_HOST                 | Mail server host                                                        | localhost                          |
+| MG_EMAIL_PORT                 | Mail server port                                                        | 25                                 |
+| MG_EMAIL_USERNAME             | Mail server username                                                    | ""                                 |
+| MG_EMAIL_PASSWORD             | Mail server password                                                    | ""                                 |
+| MG_EMAIL_FROM_ADDRESS         | Email "from" address                                                    | ""                                 |
+| MG_EMAIL_FROM_NAME            | Email "from" name                                                       | ""                                 |
+| MG_EMAIL_TEMPLATE             | Email template for sending emails with password reset link              | email.tmpl                         |
+| MG_USERS_ES_URL               | Event store URL                                                         | <nats://localhost:4222>            |
+| MG_JAEGER_URL                 | Jaeger server URL                                                       | <http://localhost:4318/v1/traces> |
+| MG_OAUTH_UI_REDIRECT_URL      | OAuth UI redirect URL                                                   | <http://localhost:9095/domains>    |
+| MG_OAUTH_UI_ERROR_URL         | OAuth UI error URL                                                      | <http://localhost:9095/error>      |
+| MG_USERS_DELETE_INTERVAL      | Interval for deleting users                                             | 24h                                |
+| MG_USERS_DELETE_AFTER         | Time after which users are deleted                                      | 720h                               |
+| MG_JAEGER_TRACE_RATIO         | Jaeger sampling ratio                                                   | 1.0                                |
+| MG_SEND_TELEMETRY             | Send telemetry to magistrala call home server.                          | true                               |
+| MG_USERS_INSTANCE_ID          | Magistrala instance ID                                                  | ""                                 |
 
 ## Deployment
 

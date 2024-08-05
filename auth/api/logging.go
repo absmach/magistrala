@@ -507,3 +507,21 @@ func (lm *loggingMiddleware) DeleteEntityPolicies(ctx context.Context, entityTyp
 	}(time.Now())
 	return lm.svc.DeleteEntityPolicies(ctx, entityType, id)
 }
+
+func (lm *loggingMiddleware) VerifyConnections(ctx context.Context, thingsId, channelsId []string) (cp auth.ConnectionsPage, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Any("things_id", thingsId),
+			slog.Any("channels_id", channelsId),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Verify connections failed to complete successfully", args...)
+			return
+		}
+		lm.logger.Info("Verify connections failed to complete successfully", args...)
+	}(time.Now())
+	return lm.svc.VerifyConnections(ctx, thingsId, channelsId)
+
+}

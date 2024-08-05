@@ -247,3 +247,11 @@ func (ms *metricsMiddleware) DeleteEntityPolicies(ctx context.Context, entityTyp
 	}(time.Now())
 	return ms.svc.DeleteEntityPolicies(ctx, entityType, id)
 }
+
+func (ms *metricsMiddleware) VerifyConnections(ctx context.Context, thingsId, channelsId []string) (auth.ConnectionsPage, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "verify_connections").Add(1)
+		ms.latency.With("method", "verufy_connections").Observe(float64(time.Since(begin).Seconds()))
+	}(time.Now())
+	return ms.svc.VerifyConnections(ctx, thingsId, channelsId)
+}

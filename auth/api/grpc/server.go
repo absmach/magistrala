@@ -36,6 +36,7 @@ type grpcServer struct {
 	countSubjects        kitgrpc.Handler
 	listPermissions      kitgrpc.Handler
 	deleteEntityPolicies kitgrpc.Handler
+	verifyConnections kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -120,6 +121,11 @@ func NewServer(svc auth.Service) magistrala.AuthServiceServer {
 			(deleteEntityPoliciesEndpoint(svc)),
 			decodeDeleteEntityPoliciesRequest,
 			encodeDeleteEntityPoliciesResponse,
+		),
+		verifyConnections: kitgrpc.NewServer(
+			(verifyConnectionsEndpoint(svc)),
+			decodeVerifyConnectionsRequest,
+			encodeVerifyConnectionsResponse,
 		),
 	}
 }
@@ -250,6 +256,14 @@ func (s *grpcServer) DeleteEntityPolicies(ctx context.Context, req *magistrala.D
 		return nil, encodeError(err)
 	}
 	return res.(*magistrala.DeletePolicyRes), nil
+}
+
+func (s *grpcServer) VerifyConnections(ctx context.Context, req *magistrala.VerifyConnectionsReq) (*magistrala.VerifyConnectionsRes, error) {
+	_, res, err := s.verifyConnections.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*magistrala.VerifyConnectionsRes), nil
 }
 
 func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -504,6 +518,31 @@ func decodeDeleteEntityPoliciesRequest(_ context.Context, grpcReq interface{}) (
 func encodeDeleteEntityPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(deletePolicyRes)
 	return &magistrala.DeletePolicyRes{Deleted: res.deleted}, nil
+}
+
+func decodeVerifyConnectionsRequest(_ context.Context, grpcreq interface{}) (interface{}, error) {
+	req := grpcreq.(*magistrala.VerifyConnectionsReq)
+	return verifyConnectionsReq{
+		ThingsId: req.GetThingsId(),
+		GroupsId: req.GetGroupsId(),
+	}, nil
+}
+
+func encodeVerifyConnectionsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(verifyConnectionsRes)
+	connections := []*magistrala.Connectionstatus{}
+
+	for _, conn := range res.Connections {
+		connections = append(connections, &magistrala.Connectionstatus{
+			ThingId: conn.ThingId,
+			ChannelId: conn.ChannelId,
+			Status: conn.Status,
+		})
+	}
+	return &magistrala.VerifyConnectionsRes{
+		Status: res.Status,
+		Connections: connections,
+	}, nil
 }
 
 func encodeError(err error) error {

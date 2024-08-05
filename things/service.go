@@ -4,6 +4,7 @@ package things
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/absmach/magistrala"
@@ -545,6 +546,12 @@ func (svc service) VerifyConnections(ctx context.Context, token string, thingID,
 	if err != nil {
 		return mgclients.ConnectionsPage{}, err
 	}
+
+	x, y := svc.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingsId: thingID,
+		GroupsId: groupID,
+	})
+	fmt.Printf("The response is %+v and error is %+v\n", x, y)
 
 	connections := make([]mgclients.ConnectionStatus, 0, len(groupID)*len(thingID))
 	totalConnectedCount := 0

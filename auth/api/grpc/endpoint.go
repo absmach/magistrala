@@ -364,3 +364,23 @@ func deleteEntityPoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
 		return deletePolicyRes{deleted: true}, nil
 	}
 }
+
+func verifyConnectionsEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(verifyConnectionsReq)
+
+		conns, err := svc.VerifyConnections(ctx, req.ThingsId, req.GroupsId)
+		if err != nil {
+			return verifyConnectionsRes{}, err
+		}
+		cs := []ConnectionStatus{}
+		for _, c := range conns.Connections {
+			cs = append(cs, ConnectionStatus{
+				ThingId: c.ThingId,
+				ChannelId: c.ChannelId,
+				Status: c.Status,
+			})
+		}
+		return verifyConnectionsRes{Status: conns.Status, Connections: cs}, nil
+	}
+}

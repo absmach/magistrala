@@ -122,7 +122,7 @@ type service struct {
 
 // New instantiates the auth service implementation.
 func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
-	return &service{
+	return &service{	
 		tokenizer:          tokenizer,
 		domains:            domains,
 		keys:               keys,
@@ -1063,4 +1063,30 @@ func (svc service) DeleteEntityPolicies(ctx context.Context, entityType, id stri
 	default:
 		return errInvalidEntityType
 	}
+}
+
+func (svc service) VerifyConnections(ctx context.Context, thingsId, channelsId []string) (ConnectionsPage, error) {
+	// err := svc.agent.CheckPolicy(ctx, PolicyReq{
+	// 	Subject:     thingsId[0],
+	// 	SubjectType: ThingType,
+	// 	Permission:  GroupRelation,
+	// 	Object:      channelsId[0],
+	// 	ObjectType:  GroupType,
+	// })
+
+	// state := "disconnected"
+	// if err == nil {
+	// 	state = "connected"
+	// }
+
+	return ConnectionsPage{
+		Status: "all connected",
+		Connections: []ConnectionStatus{
+			{
+				ThingId: thingsId[0],
+				ChannelId: channelsId[0],
+				Status: "connected",
+			},
+		},
+	}, nil
 }

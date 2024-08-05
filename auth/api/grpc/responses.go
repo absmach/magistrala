@@ -58,3 +58,14 @@ type listPermissionsRes struct {
 	Object          string
 	Permissions     []string
 }
+
+type verifyConnectionsRes struct {
+	Status      string
+	Connections []ConnectionStatus
+}
+
+type ConnectionStatus struct {
+	ThingId   string
+	ChannelId string
+	Status    string
+}

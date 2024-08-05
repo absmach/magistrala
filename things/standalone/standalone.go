@@ -101,3 +101,7 @@ func (repo singleUserRepo) ListPermissions(ctx context.Context, in *magistrala.L
 func (repo singleUserRepo) DeleteEntityPolicies(ctx context.Context, in *magistrala.DeleteEntityPoliciesReq, opts ...grpc.CallOption) (*magistrala.DeletePolicyRes, error) {
 	return nil, nil
 }
+
+func (repo singleUserRepo) VerifyConnections(ctx context.Context, in *magistrala.VerifyConnectionsReq, opts ...grpc.CallOption) (*magistrala.VerifyConnectionsRes, error) {
+	return nil, nil
+}

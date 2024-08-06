@@ -4,7 +4,6 @@ package things
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/absmach/magistrala"
@@ -15,14 +14,6 @@ import (
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/things/postgres"
 	"golang.org/x/sync/errgroup"
-)
-
-const (
-	connected    = "connected"
-	disconnected = "disconnected"
-	allConn      = "all_connected"
-	allDisConn   = "all_disconnected"
-	partConn     = "partially_connected"
 )
 
 type service struct {
@@ -547,61 +538,38 @@ func (svc service) VerifyConnections(ctx context.Context, token string, thingID,
 		return mgclients.ConnectionsPage{}, err
 	}
 
-	x, y := svc.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
-		ThingsId: thingID,
-		GroupsId: groupID,
-	})
-	fmt.Printf("The response is %+v and error is %+v\n", x, y)
-
-	connections := make([]mgclients.ConnectionStatus, 0, len(groupID)*len(thingID))
-	totalConnectedCount := 0
-	totalConnectionsCount := len(groupID) * len(thingID)
+	for _, thID := range thingID {
+		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, thID); err != nil {
+			return mgclients.ConnectionsPage{}, err
+		}
+	}
 
 	for _, grpID := range groupID {
 		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, grpID); err != nil {
 			return mgclients.ConnectionsPage{}, err
 		}
-		tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
-			SubjectType: auth.GroupType,
-			Subject:     grpID,
-			Permission:  auth.GroupRelation,
-			ObjectType:  auth.ThingType,
-		})
-		if err != nil {
-			return mgclients.ConnectionsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-		}
-		thIds := make(map[string]struct{}, len(tids.Policies))
-		for _, id := range tids.Policies {
-			thIds[id] = struct{}{}
-		}
-
-		for _, t := range thingID {
-			status := disconnected
-			if _, ok := thIds[t]; ok {
-				status = connected
-				totalConnectedCount++
-			}
-			connections = append(connections, mgclients.ConnectionStatus{
-				ChannelID: grpID,
-				ThingID:   t,
-				Status:    status,
-			})
-		}
 	}
 
-	var overallStatus string
-	switch {
-	case totalConnectedCount == totalConnectionsCount:
-		overallStatus = allConn
-	case totalConnectedCount == 0:
-		overallStatus = allDisConn
-	default:
-		overallStatus = partConn
+	resp, err := svc.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingsId: thingID,
+		GroupsId: groupID,
+	})
+	if err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+
+	cs := []mgclients.ConnectionStatus{}
+	for _, c := range resp.Connections {
+		cs = append(cs, mgclients.ConnectionStatus{
+			ThingID:   c.ThingId,
+			ChannelID: c.ChannelId,
+			Status:    c.Status,
+		})
 	}
 
 	return mgclients.ConnectionsPage{
-		Status:      overallStatus,
-		Connections: connections,
+		Status:      resp.Status,
+		Connections: cs,
 	}, nil
 }
 

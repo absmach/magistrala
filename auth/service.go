@@ -17,6 +17,11 @@ import (
 const (
 	recoveryDuration = 5 * time.Minute
 	defLimit         = 100
+	connected        = "connected"
+	disconnected     = "disconnected"
+	allConn          = "all_connected"
+	allDisConn       = "all_disconnected"
+	partConn         = "partially_connected"
 )
 
 var (
@@ -122,7 +127,7 @@ type service struct {
 
 // New instantiates the auth service implementation.
 func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
-	return &service{	
+	return &service{
 		tokenizer:          tokenizer,
 		domains:            domains,
 		keys:               keys,
@@ -1066,27 +1071,65 @@ func (svc service) DeleteEntityPolicies(ctx context.Context, entityType, id stri
 }
 
 func (svc service) VerifyConnections(ctx context.Context, thingsId, channelsId []string) (ConnectionsPage, error) {
-	// err := svc.agent.CheckPolicy(ctx, PolicyReq{
-	// 	Subject:     thingsId[0],
-	// 	SubjectType: ThingType,
-	// 	Permission:  GroupRelation,
-	// 	Object:      channelsId[0],
-	// 	ObjectType:  GroupType,
-	// })
+	uniqueThings := getUniqueValues(thingsId)
+	uniqueChannels := getUniqueValues(channelsId)
 
-	// state := "disconnected"
-	// if err == nil {
-	// 	state = "connected"
-	// }
+	cp := ConnectionsPage{}
+	totalConnectionsCount := len(uniqueChannels) * len(uniqueThings)
+	totalConnectedCount := 0
 
-	return ConnectionsPage{
-		Status: "all connected",
-		Connections: []ConnectionStatus{
-			{
-				ThingId: thingsId[0],
-				ChannelId: channelsId[0],
-				Status: "connected",
-			},
-		},
-	}, nil
+	cp.Connections = make([]ConnectionStatus, 0, totalConnectionsCount)
+
+	for _, th := range uniqueThings {
+		for _, ch := range uniqueChannels {
+			err := svc.agent.CheckPolicy(ctx, PolicyReq{
+				Subject:     ch,
+				SubjectType: GroupType,
+				Permission:  GroupRelation,
+				Object:      th,
+				ObjectType:  ThingType,
+			})
+			var status string
+			switch {
+			case err == nil:
+				status = connected
+				totalConnectedCount++
+			case errors.Contains(err, svcerr.ErrAuthorization):
+				status = disconnected
+			default:
+				return ConnectionsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, err)
+			}
+
+			cp.Connections = append(cp.Connections, ConnectionStatus{
+				ThingId:   th,
+				ChannelId: ch,
+				Status:    status,
+			})
+		}
+	}
+
+	switch {
+	case totalConnectedCount == totalConnectionsCount:
+		cp.Status = allConn
+	case totalConnectedCount == 0:
+		cp.Status = allDisConn
+	default:
+		cp.Status = partConn
+	}
+
+	return cp, nil
+}
+
+func getUniqueValues(slice []string) []string {
+	uniqueMap := make(map[string]bool)
+	var result []string
+
+	for _, value := range slice {
+		if _, exists := uniqueMap[value]; !exists {
+			uniqueMap[value] = true
+			result = append(result, value)
+		}
+	}
+
+	return result
 }

@@ -1636,28 +1636,41 @@ func TestVerifyConnections(t *testing.T) {
 	channels := []string{
 		testsutil.GenerateUUID(t),
 	}
+	domainID := testsutil.GenerateUUID(t)
 	cases := []struct {
-		desc                string
-		token               string
-		thingID             []string
-		groupID             []string
-		response            mgclients.ConnectionsPage
-		identifyResponse    *magistrala.IdentityRes
-		authorizeResponse   *magistrala.AuthorizeRes
-		listObjectsResponse *magistrala.ListObjectsRes
-		err                 error
-		identifyErr         error
-		authorizeErr        error
-		listObjectsErr      error
+		desc                      string
+		token                     string
+		thingsID                  []string
+		groupsID                  []string
+		response                  mgclients.ConnectionsPage
+		identifyResponse          *magistrala.IdentityRes
+		authorizeResponse         *magistrala.AuthorizeRes
+		authorizeResponse1        *magistrala.AuthorizeRes
+		verifyConnectionsResponse *magistrala.VerifyConnectionsRes
+		err                       error
+		identifyErr               error
+		authorizeErr              error
+		authorizeErr1             error
+		verifyConnectionsErr      error
 	}{
 		{
-			desc:                "verify connections with connected thing and channel",
-			token:               validToken,
-			thingID:             things,
-			groupID:             channels,
-			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{Policies: things},
+			desc:               "verify connections with connected thing and channel",
+			token:              validToken,
+			thingsID:           things,
+			groupsID:           channels,
+			identifyResponse:   &magistrala.IdentityRes{Id: validID, DomainId: domainID},
+			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			authorizeResponse1: &magistrala.AuthorizeRes{Authorized: true},
+			verifyConnectionsResponse: &magistrala.VerifyConnectionsRes{
+				Status: "all_connected",
+				Connections: []*magistrala.Connectionstatus{
+					{
+						ThingId:   things[0],
+						ChannelId: channels[0],
+						Status:    "connected",
+					},
+				},
+			},
 			response: mgclients.ConnectionsPage{
 				Status: "all_connected",
 				Connections: []mgclients.ConnectionStatus{
@@ -1670,13 +1683,23 @@ func TestVerifyConnections(t *testing.T) {
 			},
 		},
 		{
-			desc:                "verify connections with disconnected thing and channel",
-			token:               validToken,
-			thingID:             things,
-			groupID:             channels,
-			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			desc:               "verify connections with disconnected thing and channel",
+			token:              validToken,
+			thingsID:           things,
+			groupsID:           channels,
+			identifyResponse:   &magistrala.IdentityRes{Id: validID, DomainId: domainID},
+			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			authorizeResponse1: &magistrala.AuthorizeRes{Authorized: true},
+			verifyConnectionsResponse: &magistrala.VerifyConnectionsRes{
+				Status: "all_disconnected",
+				Connections: []*magistrala.Connectionstatus{
+					{
+						ThingId:   things[0],
+						ChannelId: channels[0],
+						Status:    "disconnected",
+					},
+				},
+			},
 			response: mgclients.ConnectionsPage{
 				Status: "all_disconnected",
 				Connections: []mgclients.ConnectionStatus{
@@ -1691,46 +1714,76 @@ func TestVerifyConnections(t *testing.T) {
 		{
 			desc:             "verify connections with unauthorized token",
 			token:            validToken,
-			thingID:          things,
-			groupID:          channels,
+			thingsID:         things,
+			groupsID:         channels,
 			identifyResponse: &magistrala.IdentityRes{},
 			identifyErr:      svcerr.ErrAuthentication,
 			err:              svcerr.ErrAuthentication,
 		},
 		{
-			desc:              "verify connections with unauthorized user",
+			desc:              "verify connections with unauthorized thing",
 			token:             validToken,
-			thingID:           things,
-			groupID:           channels,
-			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			thingsID:          things,
+			groupsID:          channels,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: domainID},
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
 			authorizeErr:      svcerr.ErrAuthorization,
 			err:               svcerr.ErrAuthorization,
 		},
 		{
-			desc:                "verify connections with failed to list objects",
-			token:               validToken,
-			thingID:             things,
-			groupID:             channels,
-			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
-			listObjectsErr:      svcerr.ErrNotFound,
-			err:                 svcerr.ErrNotFound,
+			desc:               "verify connections with unauthorized channel",
+			token:              validToken,
+			thingsID:           things,
+			groupsID:           channels,
+			identifyResponse:   &magistrala.IdentityRes{Id: validID, DomainId: domainID},
+			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			authorizeResponse1: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr1:      svcerr.ErrAuthorization,
+			err:                svcerr.ErrAuthorization,
+		},
+		{
+			desc:                      "verify connections with failed to verify objects",
+			token:                     validToken,
+			thingsID:                  things,
+			groupsID:                  channels,
+			identifyResponse:          &magistrala.IdentityRes{Id: validID, DomainId: domainID},
+			authorizeResponse:         &magistrala.AuthorizeRes{Authorized: true},
+			authorizeResponse1:        &magistrala.AuthorizeRes{Authorized: true},
+			verifyConnectionsResponse: &magistrala.VerifyConnectionsRes{},
+			verifyConnectionsErr:      svcerr.ErrMalformedEntity,
+			err:                       svcerr.ErrMalformedEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
-			repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-			repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-			page, err := svc.VerifyConnections(context.Background(), tc.token, tc.thingID, tc.groupID)
+			repoCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
+				Domain:      domainID,
+				SubjectType: authsvc.UserType,
+				SubjectKind: authsvc.UsersKind,
+				Subject:     validID,
+				Permission:  authsvc.ViewPermission,
+				ObjectType:  authsvc.ThingType,
+				Object:      tc.thingsID[0],
+			}).Return(tc.authorizeResponse, tc.authorizeErr)
+			repoCall2 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
+				Domain:      domainID,
+				SubjectType: authsvc.UserType,
+				SubjectKind: authsvc.UsersKind,
+				Subject:     validID,
+				Permission:  authsvc.ViewPermission,
+				ObjectType:  authsvc.GroupType,
+				Object:      tc.groupsID[0],
+			}).Return(tc.authorizeResponse1, tc.authorizeErr1)
+			repoCall3 := auth.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.verifyConnectionsResponse, tc.verifyConnectionsErr)
+			page, err := svc.VerifyConnections(context.Background(), tc.token, tc.thingsID, tc.groupsID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 			repoCall.Unset()
 			repoCall1.Unset()
 			repoCall2.Unset()
+			repoCall3.Unset()
 		})
 	}
 }

@@ -789,22 +789,34 @@ func (client grpcClient) VerifyConnections(ctx context.Context, in *magistrala.V
 		return &magistrala.VerifyConnectionsRes{}, decodeError(err)
 	}
 
-	return res.(*magistrala.VerifyConnectionsRes), err
+	vc := res.(verifyConnectionsRes)
+	connections := []*magistrala.Connectionstatus{}
+	for _, rq := range vc.Connections {
+		connections = append(connections, &magistrala.Connectionstatus{
+			ThingId:   rq.ThingId,
+			ChannelId: rq.ChannelId,
+			Status:    rq.Status,
+		})
+	}
+	return &magistrala.VerifyConnectionsRes{
+		Status:      vc.Status,
+		Connections: connections,
+	}, nil
 }
 
 func decodeVerifyConnectionsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*magistrala.VerifyConnectionsRes)
 	connections := []ConnectionStatus{}
 
-	for _, req := range res.Connections {
+	for _, req := range res.GetConnections() {
 		connections = append(connections, ConnectionStatus{
-			ThingId:   req.ThingId,
-			ChannelId: req.ChannelId,
-			Status:    req.Status,
+			ThingId:   req.GetThingId(),
+			ChannelId: req.GetChannelId(),
+			Status:    req.GetStatus(),
 		})
 	}
 	return verifyConnectionsRes{
-		Status:      res.Status,
+		Status:      res.GetStatus(),
 		Connections: connections,
 	}, nil
 }

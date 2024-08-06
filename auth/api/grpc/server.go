@@ -36,7 +36,7 @@ type grpcServer struct {
 	countSubjects        kitgrpc.Handler
 	listPermissions      kitgrpc.Handler
 	deleteEntityPolicies kitgrpc.Handler
-	verifyConnections kitgrpc.Handler
+	verifyConnections    kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -534,13 +534,13 @@ func encodeVerifyConnectionsResponse(_ context.Context, grpcRes interface{}) (in
 
 	for _, conn := range res.Connections {
 		connections = append(connections, &magistrala.Connectionstatus{
-			ThingId: conn.ThingId,
+			ThingId:   conn.ThingId,
 			ChannelId: conn.ChannelId,
-			Status: conn.Status,
+			Status:    conn.Status,
 		})
 	}
 	return &magistrala.VerifyConnectionsRes{
-		Status: res.Status,
+		Status:      res.Status,
 		Connections: connections,
 	}, nil
 }

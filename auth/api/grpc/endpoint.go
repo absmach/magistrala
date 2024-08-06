@@ -376,9 +376,9 @@ func verifyConnectionsEndpoint(svc auth.Service) endpoint.Endpoint {
 		cs := []ConnectionStatus{}
 		for _, c := range conns.Connections {
 			cs = append(cs, ConnectionStatus{
-				ThingId: c.ThingId,
+				ThingId:   c.ThingId,
 				ChannelId: c.ChannelId,
-				Status: c.Status,
+				Status:    c.Status,
 			})
 		}
 		return verifyConnectionsRes{Status: conns.Status, Connections: cs}, nil

@@ -520,8 +520,7 @@ func (lm *loggingMiddleware) VerifyConnections(ctx context.Context, thingsId, ch
 			lm.logger.Warn("Verify connections failed to complete successfully", args...)
 			return
 		}
-		lm.logger.Info("Verify connections failed to complete successfully", args...)
+		lm.logger.Info("Verify connections complete successfully", args...)
 	}(time.Now())
 	return lm.svc.VerifyConnections(ctx, thingsId, channelsId)
-
 }

@@ -78,6 +78,9 @@ type ConfigRepository interface {
 	// RetrieveByExternalID returns Config for given external ID.
 	RetrieveByExternalID(ctx context.Context, externalID string) (Config, error)
 
+	// RetrieveChannelsByID return channels linked to a thing.
+	RetrieveChannelsByID(ctx context.Context, id string) ([]Channel, error)
+
 	// Update updates an existing Config. A non-nil error is returned
 	// to indicate operation failure.
 	Update(ctx context.Context, cfg Config) error

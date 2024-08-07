@@ -93,11 +93,13 @@ func TestSave(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		id, err := repo.Save(context.Background(), tc.config, tc.connections)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		if err == nil {
-			assert.Equal(t, id, tc.config.ThingID, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.config.ThingID, id))
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			id, err := repo.Save(context.Background(), tc.config, tc.connections)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, id, tc.config.ThingID, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.config.ThingID, id))
+			}
+		})
 	}
 }
 
@@ -152,8 +154,10 @@ func TestRetrieveByID(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		_, err := repo.RetrieveByID(context.Background(), tc.domainID, tc.id)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			_, err := repo.RetrieveByID(context.Background(), tc.domainID, tc.id)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
 	}
 }
 
@@ -266,9 +270,11 @@ func TestRetrieveAll(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.thingID, tc.filter, tc.offset, tc.limit)
-		size := len(ret.Configs)
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
+		t.Run(tc.desc, func(t *testing.T) {
+			ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.thingID, tc.filter, tc.offset, tc.limit)
+			size := len(ret.Configs)
+			assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
+		})
 	}
 }
 
@@ -305,8 +311,71 @@ func TestRetrieveByExternalID(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		_, err := repo.RetrieveByExternalID(context.Background(), tc.externalID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			_, err := repo.RetrieveByExternalID(context.Background(), tc.externalID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
+	}
+}
+
+func TestRetrieveChannelsByID(t *testing.T) {
+	repo := postgres.NewConfigRepository(db, testLog)
+	err := deleteChannels(context.Background(), repo)
+	require.Nil(t, err, "Channels cleanup expected to succeed.")
+
+	c := config
+	uid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+	c.ThingKey = uid.String()
+	c.ThingID = uid.String()
+	c.ExternalID = uid.String()
+	c.ExternalKey = uid.String()
+	id, err := repo.Save(context.Background(), c, channels)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	nonexistentConfID, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+
+	cases := []struct {
+		desc     string
+		id       string
+		expected int
+		err      error
+	}{
+		{
+			desc:     "retrieve channels with valid id",
+			id:       id,
+			expected: len(channels),
+			err:      nil,
+		},
+		{
+			desc:     "retrieve channels with non-existent id",
+			id:       nonexistentConfID.String(),
+			expected: 0,
+			err:      nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			retrievedChannels, err := repo.RetrieveChannelsByID(context.Background(), tc.id)
+
+			if tc.err != nil {
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			} else {
+				assert.Nil(t, err, fmt.Sprintf("%s: expected no error, got %s\n", tc.desc, err))
+			}
+
+			assert.Equal(t, tc.expected, len(retrievedChannels), fmt.Sprintf("%s: expected %d channels, got %d\n", tc.desc, tc.expected, len(retrievedChannels)))
+
+			if tc.expected > 0 {
+				for i, ch := range retrievedChannels {
+					assert.Equal(t, config.Channels[i].ID, ch.ID, fmt.Sprintf("%s: expected channel ID %s, got %s\n", tc.desc, config.Channels[i].ID, ch.ID))
+					assert.Equal(t, config.Channels[i].Name, ch.Name, fmt.Sprintf("%s: expected channel Name %s, got %s\n", tc.desc, config.Channels[i].Name, ch.Name))
+					assert.Equal(t, config.Channels[i].Metadata, ch.Metadata, fmt.Sprintf("%s: expected channel Metadata %v, got %v\n", tc.desc, config.Channels[i].Metadata, ch.Metadata))
+				}
+			}
+		})
 	}
 }
 
@@ -350,8 +419,10 @@ func TestUpdate(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := repo.Update(context.Background(), tc.config)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.Update(context.Background(), tc.config)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
 	}
 }
 
@@ -415,9 +486,11 @@ func TestUpdateCert(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.thingID, tc.cert, tc.certKey, tc.ca)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
+		t.Run(tc.desc, func(t *testing.T) {
+			cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.thingID, tc.cert, tc.certKey, tc.ca)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
+		})
 	}
 }
 
@@ -489,8 +562,10 @@ func TestUpdateConnections(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := repo.UpdateConnections(context.Background(), tc.domainID, tc.id, tc.channels, tc.connections)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.UpdateConnections(context.Background(), tc.domainID, tc.id, tc.channels, tc.connections)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
 	}
 }
 
@@ -572,8 +647,10 @@ func TestChangeState(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := repo.ChangeState(context.Background(), tc.domainID, tc.id, tc.state)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.ChangeState(context.Background(), tc.domainID, tc.id, tc.state)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
 	}
 }
 
@@ -622,9 +699,11 @@ func TestListExisting(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		existing, err := repo.ListExisting(context.Background(), tc.domainID, tc.connections)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error: %s", tc.desc, err))
-		assert.ElementsMatch(t, tc.existing, existing, fmt.Sprintf("%s: Got non-matching elements.", tc.desc))
+		t.Run(tc.desc, func(t *testing.T) {
+			existing, err := repo.ListExisting(context.Background(), tc.domainID, tc.connections)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error: %s", tc.desc, err))
+			assert.ElementsMatch(t, tc.existing, existing, fmt.Sprintf("%s: Got non-matching elements.", tc.desc))
+		})
 	}
 }
 
@@ -791,21 +870,23 @@ func TestConnectThing(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		for i, ch := range tc.channels {
-			if i == 0 {
-				err = repo.ConnectThing(context.Background(), ch.ID, tc.id)
-				assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
-				cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
-				assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-				assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
-			} else {
-				_ = repo.ConnectThing(context.Background(), ch.ID, tc.id)
+		t.Run(tc.desc, func(t *testing.T) {
+			for i, ch := range tc.channels {
+				if i == 0 {
+					err = repo.ConnectThing(context.Background(), ch.ID, tc.id)
+					assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
+					cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+					assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+					assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
+				} else {
+					_ = repo.ConnectThing(context.Background(), ch.ID, tc.id)
+				}
 			}
-		}
 
-		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
-		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-		assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
+			cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+			assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+			assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
+		})
 	}
 }
 
@@ -891,14 +972,16 @@ func TestDisconnectThing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		for _, ch := range tc.channels {
-			err = repo.DisconnectThing(context.Background(), ch.ID, tc.id)
-			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			for _, ch := range tc.channels {
+				err = repo.DisconnectThing(context.Background(), ch.ID, tc.id)
+				assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
+			}
 
-		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
-		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-		assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
+			cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+			assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+			assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
+		})
 	}
 }
 

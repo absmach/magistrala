@@ -20,6 +20,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -102,8 +103,8 @@ func TestAdd(t *testing.T) {
 		userID          string
 		domainID        string
 		authResponse    *magistrala.AuthorizeRes
-		page            mgsdk.ConnectionsPage
-		verifyErr       errors.SDKError
+		verifyResponse  *magistrala.VerifyConnectionsRes
+		verifyErr       error
 		authorizeErr    error
 		identifyErr     error
 		thingErr        error
@@ -121,7 +122,7 @@ func TestAdd(t *testing.T) {
 			userID:       validID,
 			domainID:     domainID,
 			authResponse: &magistrala.AuthorizeRes{Authorized: true},
-			page: mgsdk.ConnectionsPage{
+			verifyResponse: &magistrala.VerifyConnectionsRes{
 				Status: allConn,
 			},
 			err: nil,
@@ -133,21 +134,21 @@ func TestAdd(t *testing.T) {
 			userID:       validID,
 			domainID:     domainID,
 			authResponse: &magistrala.AuthorizeRes{Authorized: true},
-			page: mgsdk.ConnectionsPage{
+			verifyResponse: &magistrala.VerifyConnectionsRes{
 				Status: allDisConn,
 			},
 			err: nil,
 		},
 		{
-			desc:         "add a new config with failed verify connections",
-			config:       config,
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authResponse: &magistrala.AuthorizeRes{Authorized: true},
-			page:         mgsdk.ConnectionsPage{},
-			verifyErr:    errors.NewSDKError(svcerr.ErrNotFound),
-			err:          svcerr.ErrNotFound,
+			desc:           "add a new config with failed verify connections",
+			config:         config,
+			token:          validToken,
+			userID:         validID,
+			domainID:       domainID,
+			authResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			verifyResponse: &magistrala.VerifyConnectionsRes{},
+			verifyErr:      svcerr.ErrNotFound,
+			err:            svcerr.ErrNotFound,
 		},
 		{
 			desc:         "add a config with an invalid ID",
@@ -184,12 +185,14 @@ func TestAdd(t *testing.T) {
 			err:             svcerr.ErrMalformedEntity,
 		},
 		{
-			desc:         "add empty config",
-			config:       bootstrap.Config{},
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			desc:            "add empty config",
+			config:          bootstrap.Config{},
+			token:           validToken,
+			userID:          validID,
+			domainID:        domainID,
+			authResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			listExistingErr: apiutil.ErrMissingID,
+			err:             apiutil.ErrMissingID,
 		},
 		{
 			desc:         "add a config without authorization",
@@ -228,8 +231,8 @@ func TestAdd(t *testing.T) {
 		repoCall1 := sdk.On("CreateThing", mock.Anything, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
 		repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.token).Return(tc.deleteThingErr)
 		repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
-		repoCall4 := sdk.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.page, tc.verifyErr)
-		repoCall5 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+		authCall2 := auth.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
+		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := c.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -240,8 +243,8 @@ func TestAdd(t *testing.T) {
 		repoCall1.Unset()
 		repoCall2.Unset()
 		repoCall3.Unset()
+		authCall2.Unset()
 		repoCall4.Unset()
-		repoCall5.Unset()
 	}
 }
 

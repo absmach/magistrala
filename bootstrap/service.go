@@ -158,19 +158,6 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
 
-	pm := mgsdk.PageMetadata{
-		ThingsID:   []string{cfg.ThingID},
-		ChannelsID: toConnect,
-	}
-	cp, err := bs.sdk.VerifyConnections(pm, token)
-	if err != nil {
-		return Config{}, err
-	}
-	State := Inactive
-	if cp.Status == allConn {
-		State = Active
-	}
-
 	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)
@@ -186,6 +173,18 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		if channel.DomainID != mgThing.DomainID {
 			return Config{}, errors.Wrap(svcerr.ErrMalformedEntity, errNotInSameDomain)
 		}
+	}
+
+	resp, err := bs.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingsId: []string{cfg.ThingID},
+		GroupsId: bs.toIDList(cfg.Channels),
+	})
+	if err != nil {
+		return Config{}, err
+	}
+	State := Inactive
+	if resp.Status == allConn {
+		State = Active
 	}
 
 	cfg.ThingID = mgThing.ID

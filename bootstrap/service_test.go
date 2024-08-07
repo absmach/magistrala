@@ -38,6 +38,8 @@ const (
 	channelsNum     = 3
 	instanceID      = "5de9b29a-feb9-11ed-be56-0242ac120002"
 	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	allConn         = "all_connected"
+	allDisConn      = "all_disconnected"
 )
 
 var (
@@ -1321,61 +1323,119 @@ func TestRemoveConfigHandler(t *testing.T) {
 }
 
 func TestConnectThingsHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, authmocks, _ := newService()
 	cases := []struct {
-		desc      string
-		thingID   string
-		channelID string
-		err       error
+		desc                string
+		thingID             string
+		channelID           string
+		err                 error
+		verifyResponse      *magistrala.VerifyConnectionsRes
+		verifyErr           error
+		retrieveResponse    []bootstrap.Channel
+		retrieveResponseErr error
 	}{
 		{
-			desc:      "connect",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       nil,
+			desc:             "connect",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allConn},
+			err:              nil,
 		},
 		{
-			desc:      "connect connected",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       svcerr.ErrAddPolicies,
+			desc:                "failed retrieve",
+			channelID:           channel.ID,
+			thingID:             config.ThingID,
+			retrieveResponse:    []bootstrap.Channel{},
+			retrieveResponseErr: svcerr.ErrViewEntity,
+			err:                 svcerr.ErrViewEntity,
+		},
+		{
+			desc:             "failed verify",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{},
+			verifyErr:        svcerr.ErrAuthorization,
+			err:              svcerr.ErrAuthorization,
+		},
+		{
+			desc:             "failed connect connected",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			err:              svcerr.ErrAddPolicies,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allConn},
 		},
 	}
 
 	for _, tc := range cases {
+		authCall := authmocks.On("VerifyConnections", context.Background(), mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
 		repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		repoCall1 := boot.On("RetrieveChannelsByID", context.Background(), mock.Anything).Return(tc.retrieveResponse, tc.retrieveResponseErr)
 		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		authCall.Unset()
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
 func TestDisconnectThingsHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, authmocks, _ := newService()
 	cases := []struct {
-		desc      string
-		thingID   string
-		channelID string
-		err       error
+		desc                string
+		thingID             string
+		channelID           string
+		err                 error
+		verifyResponse      *magistrala.VerifyConnectionsRes
+		verifyErr           error
+		retrieveResponse    []bootstrap.Channel
+		retrieveResponseErr error
 	}{
 		{
-			desc:      "disconnect",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       nil,
+			desc:             "disconnect",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allDisConn},
+			err:              nil,
 		},
 		{
-			desc:      "disconnect disconnected",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       nil,
+			desc:             "failed disconnect",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			err:              svcerr.ErrAddPolicies,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allDisConn},
+		},
+		{
+			desc:                "failed retrieve",
+			channelID:           channel.ID,
+			thingID:             config.ThingID,
+			retrieveResponse:    []bootstrap.Channel{},
+			retrieveResponseErr: svcerr.ErrViewEntity,
+			err:                 svcerr.ErrViewEntity,
+		},
+		{
+			desc:             "failed verify",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{},
+			verifyErr:        svcerr.ErrAuthorization,
+			err:              svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
+		authCall := authmocks.On("VerifyConnections", context.Background(), mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
 		repoCall := boot.On("DisconnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		repoCall1 := boot.On("RetrieveChannelsByID", context.Background(), mock.Anything).Return(tc.retrieveResponse, tc.retrieveResponseErr)
 		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		authCall.Unset()
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }

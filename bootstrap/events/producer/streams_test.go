@@ -113,31 +113,32 @@ func TestAdd(t *testing.T) {
 	invalidConfig.Channels = []bootstrap.Channel{{ID: "empty"}}
 
 	cases := []struct {
-		desc         string
-		config       bootstrap.Config
-		token        string
-		id           string
-		domainID     string
-		authResponse *magistrala.AuthorizeRes
-		authorizeErr error
-		identifyErr  error
-		thingErr     error
-		channel      []bootstrap.Channel
-		listErr      error
-		saveErr      error
-		err          error
-		event        map[string]interface{}
-		page         mgsdk.ConnectionsPage
-		verifyErr    errors.SDKError
+		desc           string
+		config         bootstrap.Config
+		token          string
+		id             string
+		domainID       string
+		authResponse   *magistrala.AuthorizeRes
+		authorizeErr   error
+		identifyErr    error
+		thingErr       error
+		channel        []bootstrap.Channel
+		listErr        error
+		saveErr        error
+		err            error
+		event          map[string]interface{}
+		verifyResponse *magistrala.VerifyConnectionsRes
+		verifyErr      error
 	}{
 		{
-			desc:         "create config successfully",
-			config:       config,
-			token:        validToken,
-			id:           validID,
-			domainID:     domainID,
-			channel:      config.Channels,
-			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			desc:           "create config successfully",
+			config:         config,
+			token:          validToken,
+			id:             validID,
+			domainID:       domainID,
+			channel:        config.Channels,
+			authResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			verifyResponse: &magistrala.VerifyConnectionsRes{Status: "all_connected"},
 			event: map[string]interface{}{
 				"thing_id":    "1",
 				"domain_id":   domainID,
@@ -210,8 +211,8 @@ func TestAdd(t *testing.T) {
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
 		sdkCall := sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
 		repoCall := boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
-		repoCall1 := sdk.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.page, tc.verifyErr)
-		repoCall2 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+		authCall2 := auth.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
+		repoCall1 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := svc.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -234,8 +235,8 @@ func TestAdd(t *testing.T) {
 		authCall1.Unset()
 		sdkCall.Unset()
 		repoCall.Unset()
+		authCall2.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
 	}
 }
 

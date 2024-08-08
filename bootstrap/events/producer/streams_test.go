@@ -60,6 +60,7 @@ const (
 
 	certUpdate = "cert.update"
 	instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
+	allConn    = "all_connected"
 )
 
 var (
@@ -1525,7 +1526,7 @@ func TestConnectThingHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	svc, boot, authmocks, _ := newService(t, redisURL)
 
 	cases := []struct {
 		desc      string
@@ -1572,7 +1573,9 @@ func TestConnectThingHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
+		authCall := authmocks.On("VerifyConnections", context.Background(), mock.Anything, mock.Anything).Return(&magistrala.VerifyConnectionsRes{Status: allConn}, nil)
 		repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		repoCall1 := boot.On("RetrieveChannelsByID", context.Background(), mock.Anything).Return([]bootstrap.Channel{{ID: tc.channelID}}, nil)
 		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -1591,7 +1594,9 @@ func TestConnectThingHandler(t *testing.T) {
 		}
 
 		test(t, tc.event, event, tc.desc)
+		authCall.Unset()
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
@@ -1599,7 +1604,7 @@ func TestDisconnectThingHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	svc, boot, authmocks, _ := newService(t, redisURL)
 
 	cases := []struct {
 		desc      string
@@ -1656,7 +1661,9 @@ func TestDisconnectThingHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
+		authCall := authmocks.On("VerifyConnections", context.Background(), mock.Anything, mock.Anything).Return(&magistrala.VerifyConnectionsRes{Status: allConn}, nil)
 		repoCall := boot.On("DisconnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
+		repoCall1 := boot.On("RetrieveChannelsByID", context.Background(), mock.Anything).Return([]bootstrap.Channel{{ID: tc.channelID}}, nil)
 		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -1675,7 +1682,9 @@ func TestDisconnectThingHandler(t *testing.T) {
 		}
 
 		test(t, tc.event, event, tc.desc)
+		authCall.Unset()
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 

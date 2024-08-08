@@ -67,6 +67,11 @@ type MembersPage struct {
 	Members []Client
 }
 
+type ConnectionsPage struct {
+	Status      string
+	Connections []ConnectionStatus
+}
+
 // Repository specifies an account persistence API.
 type Repository interface {
 	// RetrieveByID retrieves client by its unique ID.

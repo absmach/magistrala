@@ -149,6 +149,39 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 	return cfg, nil
 }
 
+func (cr configRepository) RetrieveChannelsByID(ctx context.Context, id string) ([]bootstrap.Channel, error) {
+	q := `SELECT magistrala_channel, name, metadata FROM channels ch
+		  INNER JOIN connections conn
+		  ON ch.magistrala_channel = conn.channel_id
+		  WHERE conn.config_id = :magistrala_thing`
+	dbcfg := dbConfig{
+		ThingID: id,
+	}
+
+	chans := []bootstrap.Channel{}
+	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
+	if err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
+		return chans, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		dbch := dbChannel{}
+		if err := rows.StructScan(&dbch); err != nil {
+			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
+			return chans, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		ch, err := toChannel(dbch)
+		if err != nil {
+			return chans, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+		chans = append(chans, ch)
+	}
+	return chans, nil
+}
+
 func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, thingIDs []string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
 	search, params := buildRetrieveQueryParams(domainID, thingIDs, filter)
 	n := len(params)

@@ -262,3 +262,7 @@ func (es *eventStore) CountSubjects(ctx context.Context, pr auth.PolicyReq) (uin
 func (es *eventStore) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermission []string) (auth.Permissions, error) {
 	return es.svc.ListPermissions(ctx, pr, filterPermission)
 }
+
+func (es *eventStore) VerifyConnections(ctx context.Context, thingsId, channelsId []string) (auth.ConnectionsPage, error) {
+	return es.svc.VerifyConnections(ctx, thingsId, channelsId)
+}

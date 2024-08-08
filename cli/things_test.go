@@ -1047,6 +1047,111 @@ func TestListConnectionCmd(t *testing.T) {
 	}
 }
 
+func TestVerifyConnectionsCmd(t *testing.T) {
+	sdkMock := new(sdkmocks.SDK)
+	cli.SetSDK(sdkMock)
+	thingsCmd := cli.NewThingsCmd()
+	rootCmd := setFlags(thingsCmd)
+
+	channels := fmt.Sprintf(`["%s"]`, channel.ID)
+	things := fmt.Sprintf(`["%s"]`, thing.ID)
+
+	cp := mgsdk.ConnectionsPage{}
+	cases := []struct {
+		desc          string
+		args          []string
+		logType       outputLog
+		page          mgsdk.ConnectionsPage
+		sdkErr        errors.SDKError
+		errLogMessage string
+	}{
+		{
+			desc: "verify connections successfully",
+			args: []string{
+				things,
+				channels,
+				token,
+			},
+			logType: entityLog,
+			page: mgsdk.ConnectionsPage{
+				Status: "all_connected",
+				Connections: []mgsdk.ConnectionStatus{
+					{
+						ChannelID: channel.ID,
+						ThingID:   thing.ID,
+						Status:    "connected",
+					},
+				},
+			},
+		},
+		{
+			desc: "verify connections with invalid args",
+			args: []string{
+				things,
+				channels,
+				token,
+				extraArg,
+			},
+			logType: usageLog,
+		},
+		{
+			desc: "verify connections with invalid token",
+			args: []string{
+				things,
+				channels,
+				invalidToken,
+			},
+			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized)),
+			logType:       errLog,
+		},
+		{
+			desc: "verify connections with invalid things json",
+			args: []string{
+				fmt.Sprintf(`["%s"`, thing.ID),
+				channels,
+				token,
+			},
+			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.New("unexpected end of JSON input")),
+			logType:       errLog,
+		},
+		{
+			desc: "verify connections with invalid channels json",
+			args: []string{
+				things,
+				fmt.Sprintf(`["%s"`, channel.ID),
+				token,
+			},
+			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.New("unexpected end of JSON input")),
+			logType:       errLog,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("VerifyConnections", mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{verifyCmd}, tc.args...)...)
+
+			switch tc.logType {
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &cp)
+				if err != nil {
+					t.Fatalf("Failed to unmarshal JSON: %v", err)
+				}
+				assert.Equal(t, tc.page, cp, fmt.Sprintf("%v unexpected response, expected: %v, got: %v", tc.desc, tc.page, cp))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			}
+
+			sdkCall.Unset()
+		})
+	}
+}
+
 func TestShareThingCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)

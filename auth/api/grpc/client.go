@@ -40,6 +40,7 @@ type grpcClient struct {
 	countSubjects        endpoint.Endpoint
 	listPermissions      endpoint.Endpoint
 	deleteEntityPolicies endpoint.Endpoint
+	verifyConnections    endpoint.Endpoint
 	timeout              time.Duration
 }
 
@@ -173,6 +174,14 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.AuthServ
 			encodeDeleteEntityPoliciesRequest,
 			decodeDeleteEntityPoliciesResponse,
 			magistrala.DeletePolicyRes{},
+		).Endpoint(),
+		verifyConnections: kitgrpc.NewClient(
+			conn,
+			svcName,
+			"VerifyConnections",
+			encodeVerifyConnectionsRequest,
+			decodeVerifyConnectionsResponse,
+			magistrala.VerifyConnectionsRes{},
 		).Endpoint(),
 
 		timeout: timeout,
@@ -765,6 +774,58 @@ func encodeDeleteEntityPoliciesRequest(_ context.Context, grpcReq interface{}) (
 	return &magistrala.DeleteEntityPoliciesReq{
 		EntityType: req.EntityType,
 		Id:         req.ID,
+	}, nil
+}
+
+func (client grpcClient) VerifyConnections(ctx context.Context, in *magistrala.VerifyConnectionsReq, opts ...grpc.CallOption) (*magistrala.VerifyConnectionsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	res, err := client.verifyConnections(ctx, verifyConnectionsReq{
+		ThingsId: in.GetThingsId(),
+		GroupsId: in.GetGroupsId(),
+	})
+	if err != nil {
+		return &magistrala.VerifyConnectionsRes{}, decodeError(err)
+	}
+
+	vc := res.(verifyConnectionsRes)
+	connections := []*magistrala.Connectionstatus{}
+	for _, rq := range vc.Connections {
+		connections = append(connections, &magistrala.Connectionstatus{
+			ThingId:   rq.ThingId,
+			ChannelId: rq.ChannelId,
+			Status:    rq.Status,
+		})
+	}
+	return &magistrala.VerifyConnectionsRes{
+		Status:      vc.Status,
+		Connections: connections,
+	}, nil
+}
+
+func decodeVerifyConnectionsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(*magistrala.VerifyConnectionsRes)
+	connections := []ConnectionStatus{}
+
+	for _, req := range res.GetConnections() {
+		connections = append(connections, ConnectionStatus{
+			ThingId:   req.GetThingId(),
+			ChannelId: req.GetChannelId(),
+			Status:    req.GetStatus(),
+		})
+	}
+	return verifyConnectionsRes{
+		Status:      res.GetStatus(),
+		Connections: connections,
+	}, nil
+}
+
+func encodeVerifyConnectionsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	reqs := grpcReq.(verifyConnectionsReq)
+	return &magistrala.VerifyConnectionsReq{
+		ThingsId: reqs.ThingsId,
+		GroupsId: reqs.GroupsId,
 	}, nil
 }
 

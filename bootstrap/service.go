@@ -18,6 +18,10 @@ import (
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
+const (
+	allConn = "all_connected"
+)
+
 var (
 	// ErrThings indicates failure to communicate with Magistrala Things service.
 	// It can be due to networking error or invalid/unauthenticated request.
@@ -464,15 +468,45 @@ func (bs bootstrapService) RemoveChannelHandler(ctx context.Context, id string) 
 }
 
 func (bs bootstrapService) ConnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := bs.configs.ConnectThing(ctx, channelID, thingID); err != nil {
-		return errors.Wrap(errConnectThing, err)
+	channels, err := bs.configs.RetrieveChannelsByID(ctx, thingID)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
+	ch := bs.toIDList(channels)
+	resp, err := bs.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingsId: []string{thingID},
+		GroupsId: ch,
+	})
+	if err != nil {
+		return err
+	}
+
+	if resp.Status == allConn {
+		if err := bs.configs.ConnectThing(ctx, channelID, thingID); err != nil {
+			return errors.Wrap(errConnectThing, err)
+		}
+	}
+
 	return nil
 }
 
 func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := bs.configs.DisconnectThing(ctx, channelID, thingID); err != nil {
-		return errors.Wrap(errDisconnectThing, err)
+	channels, err := bs.configs.RetrieveChannelsByID(ctx, thingID)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	ch := bs.toIDList(channels)
+	resp, err := bs.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingsId: []string{thingID},
+		GroupsId: ch,
+	})
+	if err != nil {
+		return err
+	}
+	if resp.Status != allConn {
+		if err := bs.configs.DisconnectThing(ctx, channelID, thingID); err != nil {
+			return errors.Wrap(errDisconnectThing, err)
+		}
 	}
 	return nil
 }

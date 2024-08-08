@@ -312,3 +312,12 @@ func (tm *tracingMiddleware) DeleteEntityPolicies(ctx context.Context, entityTyp
 	defer span.End()
 	return tm.svc.DeleteEntityPolicies(ctx, entityType, id)
 }
+
+func (tm *tracingMiddleware) VerifyConnections(ctx context.Context, thingsId, channelsId []string) (auth.ConnectionsPage, error) {
+	ctx, span := tm.tracer.Start(ctx, "verify_connections", trace.WithAttributes(
+		attribute.StringSlice("things_id", thingsId),
+		attribute.StringSlice("channels_id", channelsId),
+	))
+	defer span.End()
+	return tm.svc.VerifyConnections(ctx, thingsId, channelsId)
+}

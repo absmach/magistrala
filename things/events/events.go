@@ -283,7 +283,7 @@ type verifyConnectionEvent struct {
 
 func (vce verifyConnectionEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation":  verifyConnections,
+		"operation":   verifyConnections,
 		"thing_ids":   vce.thingIDs,
 		"channel_ids": vce.groupIDs,
 	}, nil

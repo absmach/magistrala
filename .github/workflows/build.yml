@@ -57,6 +57,10 @@ jobs:
         run: |
           MG_ES_TYPE=redis make mqtt
 
+      - name: Compile check for kafka
+        run: |
+          MG_MESSAGE_BROKER_TYPE=kafka make mqtt
+
       - name: Build and push Dockers
         run: |
           make latest -j $(nproc)

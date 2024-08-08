@@ -1996,13 +1996,25 @@ func TestListChannelUserGroups(t *testing.T) {
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta: sdk.PageMetadata{
-				Level: 10,
+				Level: 1000,
 			},
-			listGroupsReq: groups.Page{},
-			svcRes:        groups.Page{},
-			svcErr:        nil,
-			response:      sdk.GroupsPage{},
-			err:           errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidLevel), http.StatusBadRequest),
+			listGroupsReq: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset: 0,
+					Limit:  10,
+				},
+				Permission: "view",
+				Direction:  -1,
+				Level:      1000,
+			},
+			svcRes: groups.Page{
+				Groups: []groups.Group{},
+			},
+			svcErr: nil,
+			response: sdk.GroupsPage{
+				Groups: []sdk.Group(nil),
+			},
+			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidLevel), http.StatusBadRequest),
 		},
 		{
 			desc:      "list users with invalid page metadata",
@@ -2502,7 +2514,14 @@ func TestListGroupChannels(t *testing.T) {
 				Offset: 0,
 				Limit:  10,
 			},
-			svcReq:   groups.Page{},
+			svcReq: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset: 0,
+					Limit:  10,
+				},
+				Permission: "view",
+				Direction:  -1,
+			},
 			svcRes:   groups.Page{},
 			svcErr:   nil,
 			response: sdk.ChannelsPage{},

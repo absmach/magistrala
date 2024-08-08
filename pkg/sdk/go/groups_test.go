@@ -435,13 +435,25 @@ func TestListGroups(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: offset,
 				Limit:  100,
-				Level:  6,
+				Level:  1000,
 			},
-			svcReq:   groups.Page{},
-			svcRes:   groups.Page{},
-			svcErr:   nil,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidLevel), http.StatusBadRequest),
+			svcReq: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset: 0,
+					Limit:  10,
+				},
+				Permission: "view",
+				Direction:  -1,
+				Level:      1000,
+			},
+			svcRes: groups.Page{
+				Groups: []groups.Group{},
+			},
+			svcErr: nil,
+			response: sdk.GroupsPage{
+				Groups: []sdk.Group(nil),
+			},
+			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidLevel), http.StatusBadRequest),
 		},
 		{
 			desc:  "list groups with invalid page metadata",

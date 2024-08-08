@@ -11,7 +11,10 @@ import (
 )
 
 // MaxLevel represents the maximum group hierarchy level.
-const MaxLevel = uint64(5)
+const (
+	MaxLevel      = uint64(50)
+	MaxPathLength = 20
+)
 
 // Group represents the group of Clients.
 // Indicates a level in tree hierarchy. Root node is level 1.

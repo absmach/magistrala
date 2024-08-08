@@ -24,9 +24,12 @@ import (
 var (
 	namegen    = namegenerator.NewGenerator()
 	invalidID  = strings.Repeat("a", 37)
+	groupID    = testsutil.GenerateUUID(&testing.T{})
 	validGroup = mggroups.Group{
-		ID:          testsutil.GenerateUUID(&testing.T{}),
+		ID:          groupID,
 		Domain:      testsutil.GenerateUUID(&testing.T{}),
+		Level:       1,
+		Path:        groupID,
 		Name:        namegen.Generate(),
 		Description: strings.Repeat("a", 64),
 		Metadata:    map[string]interface{}{"key": "value"},
@@ -42,6 +45,8 @@ func TestSave(t *testing.T) {
 	})
 
 	repo := postgres.New(database)
+	group1ID := testsutil.GenerateUUID(t)
+	group2ID := testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc  string
@@ -95,7 +100,7 @@ func TestSave(t *testing.T) {
 				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 				Status:      clients.EnabledStatus,
 			},
-			err: repoerr.ErrMalformedEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "add group with invalid name",
@@ -141,9 +146,11 @@ func TestSave(t *testing.T) {
 		{
 			desc: "add group with empty domain",
 			group: mggroups.Group{
-				ID:          testsutil.GenerateUUID(t),
+				ID:          group1ID,
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
+				Level:       1,
+				Path:        group1ID,
 				Metadata:    map[string]interface{}{"key": "value"},
 				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 				Status:      clients.EnabledStatus,
@@ -153,9 +160,11 @@ func TestSave(t *testing.T) {
 		{
 			desc: "add group with empty name",
 			group: mggroups.Group{
-				ID:          testsutil.GenerateUUID(t),
+				ID:          group2ID,
 				Domain:      testsutil.GenerateUUID(t),
 				Description: strings.Repeat("a", 64),
+				Level:       1,
+				Path:        group2ID,
 				Metadata:    map[string]interface{}{"key": "value"},
 				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 				Status:      clients.EnabledStatus,
@@ -386,7 +395,7 @@ func TestRetrieveAll(t *testing.T) {
 	})
 
 	repo := postgres.New(database)
-	num := 200
+	num := 20
 
 	var items []mggroups.Group
 	parentID := ""
@@ -402,17 +411,18 @@ func TestRetrieveAll(t *testing.T) {
 			CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 			Status:      clients.EnabledStatus,
 		}
-		_, err := repo.Save(context.Background(), group)
-		require.Nil(t, err, fmt.Sprintf("create invitation unexpected error: %s", err))
-		items = append(items, group)
+		g, err := repo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("create groups unexpected error: %s", err))
+		items = append(items, g)
 		parentID = group.ID
 	}
 
 	cases := []struct {
-		desc     string
-		page     mggroups.Page
-		response mggroups.Page
-		err      error
+		desc            string
+		page            mggroups.Page
+		response        mggroups.Page
+		err             error
+		retrieveByIDErr error
 	}{
 		{
 			desc: "retrieve groups successfully",
@@ -436,17 +446,17 @@ func TestRetrieveAll(t *testing.T) {
 			desc: "retrieve groups with offset",
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Offset: 10,
+					Offset: 5,
 					Limit:  10,
 				},
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Total:  uint64(num),
-					Offset: 10,
+					Offset: 5,
 					Limit:  10,
 				},
-				Groups: items[10:20],
+				Groups: items[5:15],
 			},
 			err: nil,
 		},
@@ -455,16 +465,16 @@ func TestRetrieveAll(t *testing.T) {
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Offset: 0,
-					Limit:  50,
+					Limit:  10,
 				},
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Total:  uint64(num),
 					Offset: 0,
-					Limit:  50,
+					Limit:  10,
 				},
-				Groups: items[:50],
+				Groups: items[:10],
 			},
 			err: nil,
 		},
@@ -472,17 +482,17 @@ func TestRetrieveAll(t *testing.T) {
 			desc: "retrieve groups with offset and limit",
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Offset: 50,
-					Limit:  50,
+					Offset: 5,
+					Limit:  10,
 				},
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Total:  uint64(num),
-					Offset: 50,
-					Limit:  50,
+					Offset: 5,
+					Limit:  10,
 				},
-				Groups: items[50:100],
+				Groups: items[5:15],
 			},
 			err: nil,
 		},
@@ -491,14 +501,14 @@ func TestRetrieveAll(t *testing.T) {
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Offset: 1000,
-					Limit:  50,
+					Limit:  10,
 				},
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Total:  uint64(num),
 					Offset: 1000,
-					Limit:  50,
+					Limit:  10,
 				},
 				Groups: []mggroups.Group(nil),
 			},
@@ -508,17 +518,17 @@ func TestRetrieveAll(t *testing.T) {
 			desc: "retrieve groups with offset and limit out of range",
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Offset: 170,
-					Limit:  50,
+					Offset: 17,
+					Limit:  5,
 				},
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Total:  uint64(num),
-					Offset: 170,
-					Limit:  50,
+					Offset: 17,
+					Limit:  5,
 				},
-				Groups: items[170:200],
+				Groups: items[17:20],
 			},
 			err: nil,
 		},
@@ -527,14 +537,14 @@ func TestRetrieveAll(t *testing.T) {
 			page: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Offset: 0,
-					Limit:  1000,
+					Limit:  100,
 				},
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
 					Total:  uint64(num),
 					Offset: 0,
-					Limit:  1000,
+					Limit:  100,
 				},
 				Groups: items,
 			},
@@ -640,10 +650,11 @@ func TestRetrieveAll(t *testing.T) {
 				},
 				ParentID:  items[5].ID,
 				Direction: 1,
+				Level:     20,
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Total:  uint64(num),
+					Total:  uint64(6),
 					Offset: 0,
 					Limit:  uint64(num),
 				},
@@ -658,16 +669,17 @@ func TestRetrieveAll(t *testing.T) {
 					Offset: 0,
 					Limit:  uint64(num),
 				},
-				ParentID:  items[150].ID,
+				ParentID:  items[15].ID,
 				Direction: -1,
+				Level:     20,
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Total:  uint64(num),
+					Total:  uint64(5),
 					Offset: 0,
 					Limit:  uint64(num),
 				},
-				Groups: items[150:],
+				Groups: items[15:],
 			},
 			err: nil,
 		},
@@ -680,11 +692,7 @@ func TestRetrieveAll(t *testing.T) {
 			assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))
 			assert.Equal(t, tc.response.Limit, groups.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Limit, groups.Limit))
 			assert.Equal(t, tc.response.Offset, groups.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Offset, groups.Offset))
-			for i := range tc.response.Groups {
-				tc.response.Groups[i].Level = groups.Groups[i].Level
-				tc.response.Groups[i].Path = groups.Groups[i].Path
-			}
-			assert.ElementsMatch(t, groups.Groups, tc.response.Groups, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, tc.response.Groups, groups.Groups))
+			assert.ElementsMatch(t, groups.Groups, tc.response.Groups, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, len(tc.response.Groups), len(groups.Groups)))
 		default:
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		}
@@ -698,7 +706,7 @@ func TestRetrieveByIDs(t *testing.T) {
 	})
 
 	repo := postgres.New(database)
-	num := 200
+	num := 20
 
 	var items []mggroups.Group
 	parentID := ""
@@ -714,9 +722,9 @@ func TestRetrieveByIDs(t *testing.T) {
 			CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 			Status:      clients.EnabledStatus,
 		}
-		_, err := repo.Save(context.Background(), group)
-		require.Nil(t, err, fmt.Sprintf("create invitation unexpected error: %s", err))
-		items = append(items, group)
+		g, err := repo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("create groups unexpected error: %s", err))
+		items = append(items, g)
 		parentID = group.ID
 	}
 
@@ -951,11 +959,12 @@ func TestRetrieveByIDs(t *testing.T) {
 				},
 				ParentID:  items[5].ID,
 				Direction: 1,
+				Level:     20,
 			},
 			ids: getIDs(items[0:20]),
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Total:  20,
+					Total:  6,
 					Offset: 0,
 					Limit:  uint64(num),
 				},
@@ -972,11 +981,12 @@ func TestRetrieveByIDs(t *testing.T) {
 				},
 				ParentID:  items[15].ID,
 				Direction: -1,
+				Level:     20,
 			},
 			ids: getIDs(items[0:20]),
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
-					Total:  20,
+					Total:  5,
 					Offset: 0,
 					Limit:  uint64(num),
 				},
@@ -993,10 +1003,6 @@ func TestRetrieveByIDs(t *testing.T) {
 			assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))
 			assert.Equal(t, tc.response.Limit, groups.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Limit, groups.Limit))
 			assert.Equal(t, tc.response.Offset, groups.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Offset, groups.Offset))
-			for i := range tc.response.Groups {
-				tc.response.Groups[i].Level = groups.Groups[i].Level
-				tc.response.Groups[i].Path = groups.Groups[i].Path
-			}
 			assert.ElementsMatch(t, groups.Groups, tc.response.Groups, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, tc.response.Groups, groups.Groups))
 		default:
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

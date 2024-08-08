@@ -104,6 +104,34 @@ func (pr PolicyReq) String() string {
 	return string(data)
 }
 
+// KV returns the key-value pair for the given PolicyReq.
+func (pr PolicyReq) KV() (string, string) {
+	var key, val string
+	switch pr.Domain {
+	case "":
+		key = pr.SubjectType + ":" + pr.Subject + ":" + pr.ObjectType + ":" + pr.Object
+	default:
+		key = pr.Domain + ":" + pr.SubjectType + ":" + pr.Subject + ":" + pr.ObjectType + ":" + pr.Object
+	}
+	val = pr.Permission
+
+	return key, val
+}
+
+// KeyForRemoval returns the key for the given PolicyReq. It is used
+// to remove a key from the cache.
+func (pr PolicyReq) KeyForRemoval() string {
+	switch {
+	case pr.Subject != "" && pr.Object == "":
+		return "*" + pr.Subject + "*"
+	case pr.Object != "" && pr.Subject == "":
+		return "*" + pr.Object + "*"
+	default:
+		key, _ := pr.KV()
+		return key
+	}
+}
+
 type PolicyRes struct {
 	Namespace       string
 	Subject         string
@@ -220,4 +248,19 @@ type PolicyAgent interface {
 
 	// (ctx context.Context, pr PolicyReq, filterPermissions []string) ([]PolicyReq, error)
 	RetrievePermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)
+}
+
+// Cache represents a cache repository. It exposes functionalities
+// through `auth` to perform caching.
+//
+//go:generate mockery --name Cache --output=./mocks --filename cache.go --quiet --note "Copyright (c) Abstract Machines"
+type Cache interface {
+	// Save saves the key-value pair in the cache.
+	Save(ctx context.Context, key, value string) error
+
+	// Contains checks if the key-value pair exists in the cache.
+	Contains(ctx context.Context, key, value string) bool
+
+	// Remove removes the key from the cache.
+	Remove(ctx context.Context, key string) error
 }

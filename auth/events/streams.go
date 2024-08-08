@@ -203,6 +203,10 @@ func (es *eventStore) Revoke(ctx context.Context, token, id string) error {
 	return es.svc.Revoke(ctx, token, id)
 }
 
+func (es *eventStore) RevokeToken(ctx context.Context, token string) error {
+	return es.svc.RevokeToken(ctx, token)
+}
+
 func (es *eventStore) RetrieveKey(ctx context.Context, token, id string) (auth.Key, error) {
 	return es.svc.RetrieveKey(ctx, token, id)
 }

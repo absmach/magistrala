@@ -613,6 +613,24 @@ func (_m *Service) Revoke(ctx context.Context, token string, id string) error {
 	return r0
 }
 
+// RevokeToken provides a mock function with given fields: ctx, token
+func (_m *Service) RevokeToken(ctx context.Context, token string) error {
+	ret := _m.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeToken")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, token)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UnassignUser provides a mock function with given fields: ctx, token, id, userID
 func (_m *Service) UnassignUser(ctx context.Context, token string, id string, userID string) error {
 	ret := _m.Called(ctx, token, id, userID)

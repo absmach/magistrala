@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/auth/jwt"
 	"github.com/absmach/magistrala/auth/mocks"
+	constraints "github.com/absmach/magistrala/pkg/constraints/config"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -68,6 +69,7 @@ func newService() (auth.Service, string) {
 	prepo = new(mocks.PolicyAgent)
 	drepo = new(mocks.DomainsRepository)
 	idProvider := uuid.NewMock()
+	constrProvider, _ := constraints.New("auth_test")
 
 	t := jwt.New([]byte(secret))
 	key := auth.Key{
@@ -80,7 +82,7 @@ func newService() (auth.Service, string) {
 	}
 	token, _ := t.Issue(key)
 
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), token
+	return auth.New(krepo, drepo, idProvider, constrProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), token
 }
 
 func TestIssue(t *testing.T) {
@@ -1708,6 +1710,7 @@ func TestCreateDomain(t *testing.T) {
 	cases := []struct {
 		desc              string
 		d                 auth.Domain
+		totalDomains      uint64
 		token             string
 		userID            string
 		addPolicyErr      error
@@ -1817,6 +1820,7 @@ func TestCreateDomain(t *testing.T) {
 		repoCall2 := prepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		repoCall3 := drepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deleteDomainErr)
 		repoCall4 := drepo.On("Save", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.saveDomainErr)
+		listDomainsCall := drepo.On("ListDomains", mock.Anything, auth.Page{}).Return(auth.DomainsPage{Total: tc.totalDomains}, nil)
 		_, err := svc.CreateDomain(context.Background(), tc.token, tc.d)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -1824,6 +1828,7 @@ func TestCreateDomain(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 		repoCall4.Unset()
+		listDomainsCall.Unset()
 	}
 }
 

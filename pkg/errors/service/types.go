@@ -63,4 +63,7 @@ var (
 
 	// ErrSearch indicates error in searching clients.
 	ErrSearch = errors.New("failed to search clients")
+
+	// ErrLimitReached indicates that entity creation limit has been reached.
+	ErrLimitReached = errors.New("entity creation limit reached")
 )

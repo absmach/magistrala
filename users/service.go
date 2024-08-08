@@ -25,23 +25,25 @@ var (
 )
 
 type service struct {
-	clients      postgres.Repository
-	idProvider   magistrala.IDProvider
-	auth         magistrala.AuthServiceClient
-	hasher       Hasher
-	email        Emailer
-	selfRegister bool
+	clients             postgres.Repository
+	idProvider          magistrala.IDProvider
+	constraintsProvider magistrala.Constraints
+	auth                magistrala.AuthServiceClient
+	hasher              Hasher
+	email               Emailer
+	selfRegister        bool
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, selfRegister bool) Service {
+func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, constpr magistrala.Constraints, selfRegister bool) Service {
 	return service{
-		clients:      crepo,
-		auth:         authClient,
-		hasher:       hasher,
-		email:        emailer,
-		idProvider:   idp,
-		selfRegister: selfRegister,
+		clients:             crepo,
+		auth:                authClient,
+		hasher:              hasher,
+		email:               emailer,
+		idProvider:          idp,
+		selfRegister:        selfRegister,
+		constraintsProvider: constpr,
 	}
 }
 
@@ -57,6 +59,16 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	}
 
 	clientID, err := svc.idProvider.ID()
+	if err != nil {
+		return mgclients.Client{}, err
+	}
+
+	platformUsers, err := svc.clients.RetrieveAll(ctx, mgclients.Page{})
+	if err != nil {
+		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	err = svc.constraintsProvider.CheckLimits(magistrala.Create, platformUsers.Total)
 	if err != nil {
 		return mgclients.Client{}, err
 	}
@@ -92,6 +104,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mgclien
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
+
 	return client, nil
 }
 

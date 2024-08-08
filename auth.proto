@@ -33,6 +33,7 @@ service AuthService {
   rpc CountSubjects(CountSubjectsReq) returns (CountSubjectsRes) {}
   rpc ListPermissions(ListPermissionsReq) returns (ListPermissionsRes) {}
   rpc DeleteEntityPolicies(DeleteEntityPoliciesReq) returns (DeletePolicyRes) {}
+  rpc VerifyConnections(VerifyConnectionsReq) returns (VerifyConnectionsRes) {}
 }
 
 // If a token is not carrying any information itself, the type
@@ -222,4 +223,20 @@ message ListPermissionsRes {
 message DeleteEntityPoliciesReq{
   string entity_type = 1;
   string id          = 2;
+}
+
+message VerifyConnectionsReq {
+  repeated string things_id = 1;
+  repeated string groups_id = 2;
+}
+
+message VerifyConnectionsRes {
+  string status = 1;
+  repeated Connectionstatus connections = 2;
+}
+
+message Connectionstatus {
+  string thing_id = 1;
+  string channel_id = 2;
+  string status = 3;
 }

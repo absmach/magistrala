@@ -1060,3 +1060,64 @@ func TestDeleteEntityPolicies(t *testing.T) {
 		repoCall.Unset()
 	}
 }
+
+func TestVerifyConnections(t *testing.T) {
+	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
+	client := grpcapi.NewClient(conn, time.Second)
+
+	thingsID := []string{testsutil.GenerateUUID(t)}
+	channelsID := []string{testsutil.GenerateUUID(t)}
+	cases := []struct {
+		desc                 string
+		verifyConnectionsReq *magistrala.VerifyConnectionsReq
+		verifyConnectionsRes *magistrala.VerifyConnectionsRes
+		verifyConn           auth.ConnectionsPage
+		err                  error
+	}{
+		{
+			desc: "verify valid connection",
+			verifyConnectionsReq: &magistrala.VerifyConnectionsReq{
+				ThingsId: thingsID,
+				GroupsId: channelsID,
+			},
+			verifyConnectionsRes: &magistrala.VerifyConnectionsRes{
+				Status: "all_connected",
+				Connections: []*magistrala.Connectionstatus{
+					{
+						ThingId:   thingsID[0],
+						ChannelId: channelsID[0],
+						Status:    "connected",
+					},
+				},
+			},
+			verifyConn: auth.ConnectionsPage{
+				Status: "all_connected",
+				Connections: []auth.ConnectionStatus{
+					{
+						ThingId:   thingsID[0],
+						ChannelId: channelsID[0],
+						Status:    "connected",
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "verify with invalid thing id",
+			verifyConnectionsReq: &magistrala.VerifyConnectionsReq{
+				ThingsId: []string{"invalid"},
+				GroupsId: channelsID,
+			},
+			verifyConnectionsRes: &magistrala.VerifyConnectionsRes{},
+			err:                  svcerr.ErrMalformedEntity,
+		},
+	}
+	for _, tc := range cases {
+		svcCall := svc.On("VerifyConnections", mock.Anything, mock.Anything, mock.Anything).Return(tc.verifyConn, tc.err)
+		vc, err := client.VerifyConnections(context.Background(), tc.verifyConnectionsReq)
+		assert.Equal(t, tc.verifyConnectionsRes.GetConnections(), vc.GetConnections(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.verifyConnectionsRes.GetConnections(), vc.GetConnections()))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		svcCall.Unset()
+	}
+}

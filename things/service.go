@@ -532,6 +532,47 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	}, nil
 }
 
+func (svc service) VerifyConnections(ctx context.Context, token string, thingIDs, groupIDs []string) (mgclients.ConnectionsPage, error) {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+
+	for _, thID := range thingIDs {
+		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, thID); err != nil {
+			return mgclients.ConnectionsPage{}, err
+		}
+	}
+
+	for _, grpID := range groupIDs {
+		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, grpID); err != nil {
+			return mgclients.ConnectionsPage{}, err
+		}
+	}
+
+	resp, err := svc.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingsId: thingIDs,
+		GroupsId: groupIDs,
+	})
+	if err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+
+	cs := []mgclients.ConnectionStatus{}
+	for _, c := range resp.Connections {
+		cs = append(cs, mgclients.ConnectionStatus{
+			ThingID:   c.ThingId,
+			ChannelID: c.ChannelId,
+			Status:    c.Status,
+		})
+	}
+
+	return mgclients.ConnectionsPage{
+		Status:      resp.Status,
+		Connections: cs,
+	}, nil
+}
+
 func (svc service) Identify(ctx context.Context, key string) (string, error) {
 	id, err := svc.clientCache.ID(ctx, key)
 	if err == nil {

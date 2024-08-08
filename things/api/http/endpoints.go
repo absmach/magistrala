@@ -148,6 +148,26 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
+func verifyConnectionsEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(verifyConnectionReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		conn, err := svc.VerifyConnections(ctx, req.token, req.ThingsID, req.ChannelsID)
+		if err != nil {
+			return nil, err
+		}
+
+		res := verifyConnectionRes{
+			Status:      conn.Status,
+			Connections: conn.Connections,
+		}
+
+		return res, nil
+	}
+}
+
 func updateClientEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientReq)

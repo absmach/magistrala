@@ -20,6 +20,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -38,6 +39,8 @@ const (
 	channelsNum     = 3
 	instanceID      = "5de9b29a-feb9-11ed-be56-0242ac120002"
 	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	allConn         = "all_connected"
+	allDisConn      = "all_disconnected"
 )
 
 var (
@@ -100,6 +103,8 @@ func TestAdd(t *testing.T) {
 		userID          string
 		domainID        string
 		authResponse    *magistrala.AuthorizeRes
+		verifyResponse  *magistrala.VerifyConnectionsRes
+		verifyErr       error
 		authorizeErr    error
 		identifyErr     error
 		thingErr        error
@@ -111,13 +116,39 @@ func TestAdd(t *testing.T) {
 		err             error
 	}{
 		{
-			desc:         "add a new config",
+			desc:         "add a new config with active state",
 			config:       config,
 			token:        validToken,
 			userID:       validID,
 			domainID:     domainID,
 			authResponse: &magistrala.AuthorizeRes{Authorized: true},
-			err:          nil,
+			verifyResponse: &magistrala.VerifyConnectionsRes{
+				Status: allConn,
+			},
+			err: nil,
+		},
+		{
+			desc:         "add a new config with inactive state",
+			config:       config,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			verifyResponse: &magistrala.VerifyConnectionsRes{
+				Status: allDisConn,
+			},
+			err: nil,
+		},
+		{
+			desc:           "add a new config with failed verify connections",
+			config:         config,
+			token:          validToken,
+			userID:         validID,
+			domainID:       domainID,
+			authResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			verifyResponse: &magistrala.VerifyConnectionsRes{},
+			verifyErr:      svcerr.ErrNotFound,
+			err:            svcerr.ErrNotFound,
 		},
 		{
 			desc:         "add a config with an invalid ID",
@@ -154,12 +185,14 @@ func TestAdd(t *testing.T) {
 			err:             svcerr.ErrMalformedEntity,
 		},
 		{
-			desc:         "add empty config",
-			config:       bootstrap.Config{},
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			desc:            "add empty config",
+			config:          bootstrap.Config{},
+			token:           validToken,
+			userID:          validID,
+			domainID:        domainID,
+			authResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			listExistingErr: apiutil.ErrMissingID,
+			err:             apiutil.ErrMissingID,
 		},
 		{
 			desc:         "add a config without authorization",
@@ -198,6 +231,7 @@ func TestAdd(t *testing.T) {
 		repoCall1 := sdk.On("CreateThing", mock.Anything, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
 		repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.token).Return(tc.deleteThingErr)
 		repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
+		authCall2 := auth.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
 		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := c.Add(context.Background(), tc.token, tc.config)
@@ -209,6 +243,7 @@ func TestAdd(t *testing.T) {
 		repoCall1.Unset()
 		repoCall2.Unset()
 		repoCall3.Unset()
+		authCall2.Unset()
 		repoCall4.Unset()
 	}
 }

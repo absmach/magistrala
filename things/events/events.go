@@ -22,6 +22,7 @@ const (
 	clientListByGroup  = clientPrefix + "list_by_channel"
 	clientIdentify     = clientPrefix + "identify"
 	clientAuthorize    = clientPrefix + "authorize"
+	verifyConnections  = clientPrefix + "verify"
 )
 
 var (
@@ -273,6 +274,19 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 	}
 
 	return val, nil
+}
+
+type verifyConnectionEvent struct {
+	thingIDs []string
+	groupIDs []string
+}
+
+func (vce verifyConnectionEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation":   verifyConnections,
+		"thing_ids":   vce.thingIDs,
+		"channel_ids": vce.groupIDs,
+	}, nil
 }
 
 type identifyClientEvent struct {

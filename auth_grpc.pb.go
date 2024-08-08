@@ -139,6 +139,7 @@ const (
 	AuthService_CountSubjects_FullMethodName        = "/magistrala.AuthService/CountSubjects"
 	AuthService_ListPermissions_FullMethodName      = "/magistrala.AuthService/ListPermissions"
 	AuthService_DeleteEntityPolicies_FullMethodName = "/magistrala.AuthService/DeleteEntityPolicies"
+	AuthService_VerifyConnections_FullMethodName    = "/magistrala.AuthService/VerifyConnections"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -164,6 +165,7 @@ type AuthServiceClient interface {
 	CountSubjects(ctx context.Context, in *CountSubjectsReq, opts ...grpc.CallOption) (*CountSubjectsRes, error)
 	ListPermissions(ctx context.Context, in *ListPermissionsReq, opts ...grpc.CallOption) (*ListPermissionsRes, error)
 	DeleteEntityPolicies(ctx context.Context, in *DeleteEntityPoliciesReq, opts ...grpc.CallOption) (*DeletePolicyRes, error)
+	VerifyConnections(ctx context.Context, in *VerifyConnectionsReq, opts ...grpc.CallOption) (*VerifyConnectionsRes, error)
 }
 
 type authServiceClient struct {
@@ -334,6 +336,16 @@ func (c *authServiceClient) DeleteEntityPolicies(ctx context.Context, in *Delete
 	return out, nil
 }
 
+func (c *authServiceClient) VerifyConnections(ctx context.Context, in *VerifyConnectionsReq, opts ...grpc.CallOption) (*VerifyConnectionsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VerifyConnectionsRes)
+	err := c.cc.Invoke(ctx, AuthService_VerifyConnections_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -357,6 +369,7 @@ type AuthServiceServer interface {
 	CountSubjects(context.Context, *CountSubjectsReq) (*CountSubjectsRes, error)
 	ListPermissions(context.Context, *ListPermissionsReq) (*ListPermissionsRes, error)
 	DeleteEntityPolicies(context.Context, *DeleteEntityPoliciesReq) (*DeletePolicyRes, error)
+	VerifyConnections(context.Context, *VerifyConnectionsReq) (*VerifyConnectionsRes, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -411,6 +424,9 @@ func (UnimplementedAuthServiceServer) ListPermissions(context.Context, *ListPerm
 }
 func (UnimplementedAuthServiceServer) DeleteEntityPolicies(context.Context, *DeleteEntityPoliciesReq) (*DeletePolicyRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEntityPolicies not implemented")
+}
+func (UnimplementedAuthServiceServer) VerifyConnections(context.Context, *VerifyConnectionsReq) (*VerifyConnectionsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyConnections not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -713,6 +729,24 @@ func _AuthService_DeleteEntityPolicies_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_VerifyConnections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyConnectionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).VerifyConnections(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_VerifyConnections_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).VerifyConnections(ctx, req.(*VerifyConnectionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -783,6 +817,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteEntityPolicies",
 			Handler:    _AuthService_DeleteEntityPolicies_Handler,
+		},
+		{
+			MethodName: "VerifyConnections",
+			Handler:    _AuthService_VerifyConnections_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

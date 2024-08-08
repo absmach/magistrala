@@ -659,6 +659,34 @@ func (_m *Service) UpdateDomain(ctx context.Context, token string, id string, d 
 	return r0, r1
 }
 
+// VerifyConnections provides a mock function with given fields: ctx, thingsId, channelsId
+func (_m *Service) VerifyConnections(ctx context.Context, thingsId []string, channelsId []string) (auth.ConnectionsPage, error) {
+	ret := _m.Called(ctx, thingsId, channelsId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyConnections")
+	}
+
+	var r0 auth.ConnectionsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string, []string) (auth.ConnectionsPage, error)); ok {
+		return rf(ctx, thingsId, channelsId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string, []string) auth.ConnectionsPage); ok {
+		r0 = rf(ctx, thingsId, channelsId)
+	} else {
+		r0 = ret.Get(0).(auth.ConnectionsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string, []string) error); ok {
+		r1 = rf(ctx, thingsId, channelsId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewService creates a new instance of Service. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewService(t interface {

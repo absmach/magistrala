@@ -41,9 +41,12 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(rpm))
 
 	// If aggregation is provided, add time_bucket and aggregation to the query
+	const timeDivisor = 1000000000
+
 	if rpm.Aggregation != "" {
-		q = fmt.Sprintf(`SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/1000000))) *1000000 AS time, publisher, protocol, subtopic, name, unit, %s(value) AS value FROM %s WHERE %s GROUP BY time, publisher, protocol, subtopic, name, unit ORDER BY time DESC LIMIT :limit OFFSET :offset;`, rpm.Interval, rpm.Aggregation, format, fmtCondition(rpm))
-		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/1000000))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY time) AS subquery;`, rpm.Interval, rpm.Aggregation, format, fmtCondition(rpm))
+		q = fmt.Sprintf(`SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) *%d AS time, %s(value) AS value, FIRST(publisher, time) AS publisher, FIRST(protocol, time) AS protocol, FIRST(subtopic, time) AS subtopic, FIRST(name,time) AS name, FIRST(unit, time) AS unit FROM %s WHERE %s GROUP BY 1 ORDER BY time DESC LIMIT :limit OFFSET :offset;`, rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
+
+		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
 	}
 
 	params := map[string]interface{}{

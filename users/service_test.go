@@ -2202,6 +2202,50 @@ func TestListMembers(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc:             "list members with policies successsfully of the groups kind and name query",
+			token:            validToken,
+			groupID:          validID,
+			objectKind:       authsvc.GroupsKind,
+			objectID:         validID,
+			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read", Name: client.Name},
+			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
+			authorizeReq: &magistrala.AuthorizeReq{
+				SubjectType: authsvc.UserType,
+				SubjectKind: authsvc.TokenKind,
+				Subject:     validToken,
+				Permission:  "read",
+				ObjectType:  authsvc.GroupType,
+				Object:      validID,
+			},
+			listAllSubjectsReq: &magistrala.ListSubjectsReq{
+				SubjectType: authsvc.UserType,
+				Permission:  "read",
+				Object:      validID,
+				ObjectType:  authsvc.GroupType,
+			},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: []string{validPolicy},
+			},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total:  1,
+					Offset: 0,
+					Limit:  100,
+				},
+				Clients: []mgclients.Client{client},
+			},
+			response: mgclients.MembersPage{
+				Page: mgclients.Page{
+					Total:  1,
+					Offset: 0,
+					Limit:  100,
+				},
+				Members: []mgclients.Client{basicClient},
+			},
+			err: nil,
+		},
+		{
 			desc:             "list members with invalid token",
 			token:            inValidToken,
 			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},

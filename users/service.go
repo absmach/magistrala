@@ -5,6 +5,7 @@ package users
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/absmach/magistrala"
@@ -523,6 +524,11 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 	}
 	pm.IDs = userIDs
 
+	var nameQuery string
+	if pm.Name != "" && len(pm.IDs) != 0 {
+		nameQuery = pm.Name
+		pm.Name = ""
+	}
 	cp, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
 		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -536,6 +542,17 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 			UpdatedAt: c.UpdatedAt,
 			Status:    c.Status,
 		}
+	}
+
+	if nameQuery != "" {
+		filteredClients := make([]mgclients.Client, 0, len(cp.Clients))
+		for _, c := range cp.Clients {
+			if strings.Contains(strings.ToLower(c.Name), strings.ToLower(nameQuery)) {
+				filteredClients = append(filteredClients, c)
+			}
+		}
+		cp.Clients = filteredClients
+		cp.Total = uint64(len(filteredClients))
 	}
 
 	if pm.ListPerms && len(cp.Clients) > 0 {

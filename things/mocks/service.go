@@ -376,9 +376,9 @@ func (_m *Service) UpdateClientTags(ctx context.Context, token string, client cl
 	return r0, r1
 }
 
-// VerifyConnections provides a mock function with given fields: ctx, token, thingID, groupID
-func (_m *Service) VerifyConnections(ctx context.Context, token string, thingID []string, groupID []string) (clients.ConnectionsPage, error) {
-	ret := _m.Called(ctx, token, thingID, groupID)
+// VerifyConnections provides a mock function with given fields: ctx, token, thingIDs, groupIDs
+func (_m *Service) VerifyConnections(ctx context.Context, token string, thingIDs []string, groupIDs []string) (clients.ConnectionsPage, error) {
+	ret := _m.Called(ctx, token, thingIDs, groupIDs)
 
 	if len(ret) == 0 {
 		panic("no return value specified for VerifyConnections")
@@ -387,16 +387,16 @@ func (_m *Service) VerifyConnections(ctx context.Context, token string, thingID 
 	var r0 clients.ConnectionsPage
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, []string, []string) (clients.ConnectionsPage, error)); ok {
-		return rf(ctx, token, thingID, groupID)
+		return rf(ctx, token, thingIDs, groupIDs)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, []string, []string) clients.ConnectionsPage); ok {
-		r0 = rf(ctx, token, thingID, groupID)
+		r0 = rf(ctx, token, thingIDs, groupIDs)
 	} else {
 		r0 = ret.Get(0).(clients.ConnectionsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, []string, []string) error); ok {
-		r1 = rf(ctx, token, thingID, groupID)
+		r1 = rf(ctx, token, thingIDs, groupIDs)
 	} else {
 		r1 = ret.Error(1)
 	}

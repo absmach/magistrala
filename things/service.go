@@ -532,27 +532,27 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	}, nil
 }
 
-func (svc service) VerifyConnections(ctx context.Context, token string, thingID, groupID []string) (mgclients.ConnectionsPage, error) {
+func (svc service) VerifyConnections(ctx context.Context, token string, thingIDs, groupIDs []string) (mgclients.ConnectionsPage, error) {
 	res, err := svc.identify(ctx, token)
 	if err != nil {
 		return mgclients.ConnectionsPage{}, err
 	}
 
-	for _, thID := range thingID {
+	for _, thID := range thingIDs {
 		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, thID); err != nil {
 			return mgclients.ConnectionsPage{}, err
 		}
 	}
 
-	for _, grpID := range groupID {
+	for _, grpID := range groupIDs {
 		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, grpID); err != nil {
 			return mgclients.ConnectionsPage{}, err
 		}
 	}
 
 	resp, err := svc.auth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
-		ThingsId: thingID,
-		GroupsId: groupID,
+		ThingsId: thingIDs,
+		GroupsId: groupIDs,
 	})
 	if err != nil {
 		return mgclients.ConnectionsPage{}, err

@@ -800,3 +800,157 @@ func TestDeleteInvitation(t *testing.T) {
 		repocall2.Unset()
 	}
 }
+
+func TestRejectInvitation(t *testing.T) {
+	repo := new(mocks.Repository)
+	authsvc := new(authmocks.AuthClient)
+	svc := invitations.NewService(repo, authsvc, nil)
+
+	cases := []struct {
+		desc        string
+		token       string
+		tokenUserID string
+		userID      string
+		domainID    string
+		resp        invitations.Invitation
+		err         error
+		authNErr    error
+		domainErr   error
+		adminErr    error
+		authorised  bool
+		repoErr     error
+	}{
+		{
+			desc:        "reject invitations successful",
+			token:       validToken,
+			tokenUserID: testsutil.GenerateUUID(t),
+			userID:      testsutil.GenerateUUID(t),
+			domainID:    testsutil.GenerateUUID(t),
+			resp:        validInvitation,
+			err:         nil,
+			authNErr:    nil,
+			domainErr:   nil,
+			adminErr:    nil,
+			authorised:  true,
+			repoErr:     nil,
+		},
+		{
+			desc:        "invalid token",
+			token:       "invalid",
+			tokenUserID: "",
+			userID:      testsutil.GenerateUUID(t),
+			domainID:    testsutil.GenerateUUID(t),
+			err:         svcerr.ErrAuthentication,
+			authNErr:    svcerr.ErrAuthentication,
+			domainErr:   nil,
+			adminErr:    nil,
+			authorised:  false,
+			repoErr:     nil,
+		},
+		{
+			desc:        "reject invitations for the same user",
+			token:       validToken,
+			tokenUserID: validInvitation.UserID,
+			userID:      validInvitation.UserID,
+			domainID:    validInvitation.DomainID,
+			resp:        validInvitation,
+			err:         nil,
+			authNErr:    nil,
+			domainErr:   nil,
+			adminErr:    nil,
+			authorised:  true,
+			repoErr:     nil,
+		},
+		{
+			desc:        "reject invitations for the invited user",
+			token:       validToken,
+			tokenUserID: validInvitation.InvitedBy,
+			userID:      validInvitation.UserID,
+			domainID:    validInvitation.DomainID,
+			resp:        validInvitation,
+			err:         nil,
+			authNErr:    nil,
+			domainErr:   nil,
+			adminErr:    nil,
+			authorised:  true,
+			repoErr:     nil,
+		},
+		{
+			desc:        "error retrieving invitation",
+			token:       validToken,
+			tokenUserID: testsutil.GenerateUUID(t),
+			userID:      validInvitation.UserID,
+			domainID:    validInvitation.DomainID,
+			resp:        invitations.Invitation{},
+			err:         svcerr.ErrNotFound,
+			authNErr:    nil,
+			domainErr:   nil,
+			adminErr:    nil,
+			authorised:  true,
+			repoErr:     svcerr.ErrNotFound,
+		},
+		{
+			desc:        "error during domain admin check",
+			token:       validToken,
+			tokenUserID: testsutil.GenerateUUID(t),
+			userID:      testsutil.GenerateUUID(t),
+			domainID:    testsutil.GenerateUUID(t),
+			resp:        invitations.Invitation{},
+			err:         svcerr.ErrAuthorization,
+			authNErr:    nil,
+			domainErr:   svcerr.ErrAuthorization,
+			adminErr:    nil,
+			authorised:  false,
+			repoErr:     nil,
+		},
+		{
+			desc:        "error during platform admin check",
+			token:       validToken,
+			tokenUserID: testsutil.GenerateUUID(t),
+			userID:      testsutil.GenerateUUID(t),
+			domainID:    testsutil.GenerateUUID(t),
+			resp:        invitations.Invitation{},
+			err:         svcerr.ErrAuthorization,
+			authNErr:    nil,
+			domainErr:   svcerr.ErrAuthorization,
+			adminErr:    svcerr.ErrAuthorization,
+			authorised:  false,
+			repoErr:     nil,
+		},
+	}
+
+	for _, tc := range cases {
+		idRes := &magistrala.IdentityRes{
+			UserId: tc.tokenUserID,
+			Id:     tc.domainID + "_" + tc.userID,
+		}
+		repocall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(idRes, tc.authNErr)
+		domainReq := magistrala.AuthorizeReq{
+			SubjectType: auth.UserType,
+			SubjectKind: auth.UsersKind,
+			Subject:     idRes.GetId(),
+			Permission:  auth.AdminPermission,
+			ObjectType:  auth.DomainType,
+			Object:      tc.domainID,
+		}
+		domaincall := authsvc.On("Authorize", context.Background(), &domainReq).Return(&magistrala.AuthorizeRes{Authorized: tc.authorised}, tc.domainErr)
+		platformReq := magistrala.AuthorizeReq{
+			SubjectType: auth.UserType,
+			SubjectKind: auth.UsersKind,
+			Subject:     idRes.GetId(),
+			Permission:  auth.AdminPermission,
+			ObjectType:  auth.PlatformType,
+			Object:      auth.MagistralaObject,
+		}
+		platformcall := authsvc.On("Authorize", context.Background(), &platformReq).Return(&magistrala.AuthorizeRes{Authorized: tc.authorised}, tc.adminErr)
+		repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
+		repocall2 := repo.On("Delete", context.Background(), mock.Anything, mock.Anything).Return(tc.repoErr)
+		err := svc.RejectInvitation(context.Background(), tc.token, tc.domainID)
+		assert.Equal(t, tc.err, err, tc.desc)
+		repocall.Unset()
+		repocall1.Unset()
+		domaincall.Unset()
+		platformcall.Unset()
+		repocall2.Unset()
+	}
+}

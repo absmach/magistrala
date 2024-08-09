@@ -148,6 +148,28 @@ func (svc *service) AcceptInvitation(ctx context.Context, token, domainID string
 	return nil
 }
 
+func (svc *service) RejectInvitation(ctx context.Context, token, domainID string) error {
+	user, err := svc.identify(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	inv, err := svc.repo.Retrieve(ctx, user.GetUserId(), domainID)
+	if err != nil {
+		return err
+	}
+
+	if inv.UserID == user.GetUserId() && inv.ConfirmedAt.IsZero() && inv.RejectedAt.IsZero() {
+		inv.RejectedAt = time.Now()
+		inv.UpdatedAt = time.Now()
+		if err := svc.repo.UpdateRejection(ctx, inv); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (svc *service) DeleteInvitation(ctx context.Context, token, userID, domainID string) error {
 	user, err := svc.identify(ctx, token)
 	if err != nil {

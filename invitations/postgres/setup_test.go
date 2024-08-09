@@ -13,7 +13,6 @@ import (
 
 	ipostgres "github.com/absmach/magistrala/invitations/postgres"
 	"github.com/absmach/magistrala/pkg/postgres"
-	pgClient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jmoiron/sqlx"
 	dockertest "github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -64,7 +63,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	dbConfig := pgClient.Config{
+	dbConfig := postgres.Config{
 		Host:        "localhost",
 		Port:        port,
 		User:        "test",
@@ -76,11 +75,11 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	if db, err = pgClient.Setup(dbConfig, *ipostgres.Migration()); err != nil {
+	if db, err = postgres.Setup(dbConfig, *ipostgres.Migration()); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 
-	if db, err = pgClient.Connect(dbConfig); err != nil {
+	if db, err = postgres.Connect(dbConfig); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 	database = postgres.NewDatabase(db, dbConfig, tracer)

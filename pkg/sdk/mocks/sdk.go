@@ -1880,6 +1880,24 @@ func (_m *SDK) RefreshToken(lt sdk.Login, token string) (sdk.Token, errors.SDKEr
 	return r0, r1
 }
 
+// RejectInvitation provides a mock function with given fields: domainID, token
+func (_m *SDK) RejectInvitation(domainID string, token string) error {
+	ret := _m.Called(domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RejectInvitation")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(domainID, token)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RemoveBootstrap provides a mock function with given fields: id, token
 func (_m *SDK) RemoveBootstrap(id string, token string) errors.SDKError {
 	ret := _m.Called(id, token)

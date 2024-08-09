@@ -69,6 +69,12 @@ func MakeHandler(svc invitations.Service, logger *slog.Logger, instanceID string
 			api.EncodeResponse,
 			opts...,
 		), "accept_invitation").ServeHTTP)
+		r.Post("/reject", otelhttp.NewHandler(kithttp.NewServer(
+			rejectInvitationEndpoint(svc),
+			decodeAcceptInvitationReq,
+			api.EncodeResponse,
+			opts...,
+		), "reject_invitation").ServeHTTP)
 	})
 
 	mux.Get("/health", magistrala.Health("invitations", instanceID))

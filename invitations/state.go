@@ -17,6 +17,7 @@ const (
 	All      State = iota // All is used for querying purposes to list invitations irrespective of their state - both pending and accepted.
 	Pending               // Pending is the state of an invitation that has not been accepted yet.
 	Accepted              // Accepted is the state of an invitation that has been accepted.
+	Rejected              // Rejected is the state of an invitation that has been rejected.
 )
 
 // String representation of the possible state values.
@@ -24,6 +25,7 @@ const (
 	all      = "all"
 	pending  = "pending"
 	accepted = "accepted"
+	rejected = "rejected"
 	unknown  = "unknown"
 )
 
@@ -36,6 +38,8 @@ func (s State) String() string {
 		return pending
 	case Accepted:
 		return accepted
+	case Rejected:
+		return rejected
 	default:
 		return unknown
 	}
@@ -50,6 +54,8 @@ func ToState(status string) (State, error) {
 		return Pending, nil
 	case accepted:
 		return Accepted, nil
+	case rejected:
+		return Rejected, nil
 	}
 
 	return State(0), apiutil.ErrInvitationState

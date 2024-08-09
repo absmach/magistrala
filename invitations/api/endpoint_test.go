@@ -559,7 +559,7 @@ func TestRejectInvitation(t *testing.T) {
 			desc:        "valid request",
 			token:       validToken,
 			data:        fmt.Sprintf(`{"domain_id": "%s"}`, validID),
-			status:      http.StatusOK,
+			status:      http.StatusNoContent,
 			contentType: validContenType,
 			svcErr:      nil,
 		},

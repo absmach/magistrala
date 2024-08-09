@@ -889,34 +889,6 @@ func TestRejectInvitation(t *testing.T) {
 			authorised:  true,
 			repoErr:     svcerr.ErrNotFound,
 		},
-		{
-			desc:        "error during domain admin check",
-			token:       validToken,
-			tokenUserID: testsutil.GenerateUUID(t),
-			userID:      testsutil.GenerateUUID(t),
-			domainID:    testsutil.GenerateUUID(t),
-			resp:        invitations.Invitation{},
-			err:         svcerr.ErrAuthorization,
-			authNErr:    nil,
-			domainErr:   svcerr.ErrAuthorization,
-			adminErr:    nil,
-			authorised:  false,
-			repoErr:     nil,
-		},
-		{
-			desc:        "error during platform admin check",
-			token:       validToken,
-			tokenUserID: testsutil.GenerateUUID(t),
-			userID:      testsutil.GenerateUUID(t),
-			domainID:    testsutil.GenerateUUID(t),
-			resp:        invitations.Invitation{},
-			err:         svcerr.ErrAuthorization,
-			authNErr:    nil,
-			domainErr:   svcerr.ErrAuthorization,
-			adminErr:    svcerr.ErrAuthorization,
-			authorised:  false,
-			repoErr:     nil,
-		},
 	}
 
 	for _, tc := range cases {
@@ -945,6 +917,7 @@ func TestRejectInvitation(t *testing.T) {
 		platformcall := authsvc.On("Authorize", context.Background(), &platformReq).Return(&magistrala.AuthorizeRes{Authorized: tc.authorised}, tc.adminErr)
 		repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
 		repocall2 := repo.On("Delete", context.Background(), mock.Anything, mock.Anything).Return(tc.repoErr)
+		repo.On("UpdateRejection", context.Background(), mock.Anything).Return(nil).Once()
 		err := svc.RejectInvitation(context.Background(), tc.token, tc.domainID)
 		assert.Equal(t, tc.err, err, tc.desc)
 		repocall.Unset()

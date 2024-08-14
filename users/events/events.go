@@ -37,7 +37,6 @@ var (
 	_ events.Event = (*viewClientEvent)(nil)
 	_ events.Event = (*viewProfileEvent)(nil)
 	_ events.Event = (*listClientEvent)(nil)
-	_ events.Event = (*listClientByGroupEvent)(nil)
 	_ events.Event = (*searchClientEvent)(nil)
 	_ events.Event = (*identifyClientEvent)(nil)
 	_ events.Event = (*generateResetTokenEvent)(nil)
@@ -263,25 +262,6 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 	}
 	if lce.EntityType != "" {
 		val["entity_type"] = lce.EntityType
-	}
-
-	if lcge.Metadata != nil {
-		val["metadata"] = lcge.Metadata
-	}
-	if lcge.Domain != "" {
-		val["domain"] = lcge.Domain
-	}
-	if lcge.Tag != "" {
-		val["tag"] = lcge.Tag
-	}
-	if lcge.Permission != "" {
-		val["permission"] = lcge.Permission
-	}
-	if lcge.Status.String() != "" {
-		val["status"] = lcge.Status.String()
-	}
-	if lcge.Identity != "" {
-		val["identity"] = lcge.Identity
 	}
 
 	return val, nil

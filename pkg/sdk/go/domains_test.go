@@ -761,7 +761,7 @@ func TestListUserDomains(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := svc.On("ListUserDomains", mock.Anything, tc.token, tc.userID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ListUserDomains(tc.userID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ListUserDomains(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {

@@ -31,7 +31,6 @@ var (
 	_ events.Event = (*viewClientEvent)(nil)
 	_ events.Event = (*viewClientPermsEvent)(nil)
 	_ events.Event = (*listClientEvent)(nil)
-	_ events.Event = (*listClientByGroupEvent)(nil)
 	_ events.Event = (*identifyClientEvent)(nil)
 	_ events.Event = (*authorizeClientEvent)(nil)
 	_ events.Event = (*shareClientEvent)(nil)
@@ -223,51 +222,6 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 	}
 	if lce.Identity != "" {
 		val["identity"] = lce.Identity
-	}
-
-	return val, nil
-}
-
-type listClientByGroupEvent struct {
-	mgclients.Page
-	channelID string
-}
-
-func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
-		"operation":  clientListByGroup,
-		"total":      lcge.Total,
-		"offset":     lcge.Offset,
-		"limit":      lcge.Limit,
-		"channel_id": lcge.channelID,
-	}
-
-	if lcge.Name != "" {
-		val["name"] = lcge.Name
-	}
-	if lcge.Order != "" {
-		val["order"] = lcge.Order
-	}
-	if lcge.Dir != "" {
-		val["dir"] = lcge.Dir
-	}
-	if lcge.Metadata != nil {
-		val["metadata"] = lcge.Metadata
-	}
-	if lcge.Domain != "" {
-		val["domain"] = lcge.Domain
-	}
-	if lcge.Tag != "" {
-		val["tag"] = lcge.Tag
-	}
-	if lcge.Permission != "" {
-		val["permission"] = lcge.Permission
-	}
-	if lcge.Status.String() != "" {
-		val["status"] = lcge.Status.String()
-	}
-	if lcge.Identity != "" {
-		val["identity"] = lcge.Identity
 	}
 
 	return val, nil

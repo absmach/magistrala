@@ -339,7 +339,7 @@ type SDK interface {
 	//	}
 	//  things, _ := sdk.ListUserThings(pm, "token")
 	//  fmt.Println(things)
-	ListUserThings(userID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError)
+	ListUserThings(pm PageMetadata, token string) (ThingsPage, errors.SDKError)
 
 	// SeachUsers filters users and returns a page result.
 	//
@@ -648,7 +648,7 @@ type SDK interface {
 	//	}
 	//  groups, _ := sdk.ListGroupChannels(pm, "token")
 	//  fmt.Println(groups)
-	ListGroupChannels(groupID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
+	ListGroupChannels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
 
 	// DeleteGroup delete given group id.
 	//

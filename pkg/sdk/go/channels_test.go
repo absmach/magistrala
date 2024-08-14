@@ -1080,7 +1080,7 @@ func TestListChannelsByThing(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.ThingsKind, tc.thingID, tc.listGroupsReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ChannelsByThing(tc.thingID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ChannelsByThing(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -2053,7 +2053,7 @@ func TestListChannelUserGroups(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.ChannelsKind, tc.channelID, tc.listGroupsReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ListChannelUserGroups(tc.channelID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ListChannelUserGroups(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -2581,7 +2581,7 @@ func TestListGroupChannels(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.GroupsKind, tc.groupID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ListGroupChannels(tc.groupID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ListGroupChannels(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {

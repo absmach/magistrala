@@ -71,19 +71,7 @@ func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		pm := mgclients.Page{
-			Status:   req.status,
-			Offset:   req.offset,
-			Limit:    req.limit,
-			Name:     req.name,
-			Tag:      req.tag,
-			Metadata: req.metadata,
-			Identity: req.identity,
-			Order:    req.order,
-			Dir:      req.dir,
-			Id:       req.id,
-		}
-		page, err := svc.ListClients(ctx, req.token, pm)
+		page, err := svc.ListClients(ctx, req.token, req.page)
 		if err != nil {
 			return nil, err
 		}
@@ -137,75 +125,6 @@ func searchClientsEndpoint(svc users.Service) endpoint.Endpoint {
 		}
 
 		return res, nil
-	}
-}
-
-func listMembersByGroupEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersByObjectReq)
-		req.objectKind = "groups"
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildClientsResponse(page), nil
-	}
-}
-
-func listMembersByChannelEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersByObjectReq)
-		// In spiceDB schema, using the same 'group' type for both channels and groups, rather than having a separate type for channels.
-		req.objectKind = "groups"
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildClientsResponse(page), nil
-	}
-}
-
-func listMembersByThingEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersByObjectReq)
-		req.objectKind = "things"
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildClientsResponse(page), nil
-	}
-}
-
-func listMembersByDomainEndpoint(svc users.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersByObjectReq)
-		req.objectKind = "domains"
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildClientsResponse(page), nil
 	}
 }
 

@@ -188,64 +188,15 @@ func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) {
-	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	m, err := apiutil.ReadMetadataQuery(r, api.MetadataKey, nil)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	i, err := apiutil.ReadStringQuery(r, api.IdentityKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	t, err := apiutil.ReadStringQuery(r, api.TagKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	id, err := apiutil.ReadStringQuery(r, api.IDOrder, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	req := listClientsReq{
+		token: apiutil.ExtractBearerToken(r),
 	}
 
-	st, err := mgclients.ToStatus(s)
+	pm, err := queryPageParams(r)
 	if err != nil {
 		return nil, err
 	}
-	req := listClientsReq{
-		token:    apiutil.ExtractBearerToken(r),
-		status:   st,
-		offset:   o,
-		limit:    l,
-		metadata: m,
-		name:     n,
-		identity: i,
-		tag:      t,
-		order:    order,
-		dir:      dir,
-		id:       id,
-	}
+	req.page = pm
 
 	return req, nil
 }

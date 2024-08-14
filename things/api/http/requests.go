@@ -86,17 +86,7 @@ func (req viewClientPermsReq) validate() error {
 
 type listClientsReq struct {
 	token      string
-	status     mgclients.Status
-	offset     uint64
-	limit      uint64
-	name       string
-	tag        string
-	permission string
-	visibility string
-	userID     string
-	listPerms  bool
-	metadata   mgclients.Metadata
-	id         string
+	page       mgclients.Page
 }
 
 func (req listClientsReq) validate() error {

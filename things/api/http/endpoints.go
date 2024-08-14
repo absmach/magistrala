@@ -99,19 +99,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		pm := mgclients.Page{
-			Status:     req.status,
-			Offset:     req.offset,
-			Limit:      req.limit,
-			Name:       req.name,
-			Tag:        req.tag,
-			Permission: req.permission,
-			Metadata:   req.metadata,
-			ListPerms:  req.listPerms,
-			Role:       mgclients.AllRole, // retrieve all things since things don't have roles
-			Id:         req.id,
-		}
-		page, err := svc.ListClients(ctx, req.token, req.userID, pm)
+		page, err := svc.ListClients(ctx, req.token, req.page)
 		if err != nil {
 			return nil, err
 		}

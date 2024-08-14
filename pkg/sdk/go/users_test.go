@@ -543,7 +543,7 @@ func TestListUsers(t *testing.T) {
 }
 
 func TestListChannelUsers(t *testing.T) {
-	ts, crepo, _, auth := setupUsers()
+	ts, svc := setupUsers()
 	defer ts.Close()
 
 	var cls []sdk.User
@@ -2543,7 +2543,7 @@ func TestListUserGroups(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := svc.On("ListGroups", mock.Anything, tc.token, "users", tc.userID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ListUserGroups(tc.userID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ListUserGroups(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {

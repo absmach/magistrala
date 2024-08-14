@@ -1402,7 +1402,6 @@ func (_m *SDK) IssueCert(thingID string, validity string, token string) (sdk.Cer
 	return r0, r1
 }
 
-
 // Journal provides a mock function with given fields: entityType, entityID, pm, token
 func (_m *SDK) Journal(entityType string, entityID string, pm sdk.PageMetadata, token string) (sdk.JournalsPage, error) {
 	ret := _m.Called(entityType, entityID, pm, token)
@@ -1431,9 +1430,9 @@ func (_m *SDK) Journal(entityType string, entityID string, pm sdk.PageMetadata, 
 	return r0, r1
 }
 
-// ListChannelUserGroups provides a mock function with given fields: channelID, pm, token
-func (_m *SDK) ListChannelUserGroups(channelID string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
-	ret := _m.Called(channelID, pm, token)
+// ListChannelUserGroups provides a mock function with given fields: pm, token
+func (_m *SDK) ListChannelUserGroups(pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
+	ret := _m.Called(pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListChannelUserGroups")
@@ -1521,9 +1520,9 @@ func (_m *SDK) ListDomainUsers(pm sdk.PageMetadata, token string) (sdk.UsersPage
 	return r0, r1
 }
 
-// ListGroupChannels provides a mock function with given fields: groupID, pm, token
-func (_m *SDK) ListGroupChannels(groupID string, pm sdk.PageMetadata, token string) (sdk.ChannelsPage, errors.SDKError) {
-	ret := _m.Called(groupID, pm, token)
+// ListGroupChannels provides a mock function with given fields: pm, token
+func (_m *SDK) ListGroupChannels(pm sdk.PageMetadata, token string) (sdk.ChannelsPage, errors.SDKError) {
+	ret := _m.Called(pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListGroupChannels")
@@ -1531,11 +1530,11 @@ func (_m *SDK) ListGroupChannels(groupID string, pm sdk.PageMetadata, token stri
 
 	var r0 sdk.ChannelsPage
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) (sdk.ChannelsPage, errors.SDKError)); ok {
-		return rf(groupID, pm, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) (sdk.ChannelsPage, errors.SDKError)); ok {
+		return rf(pm, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) sdk.ChannelsPage); ok {
-		r0 = rf(groupID, pm, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) sdk.ChannelsPage); ok {
+		r0 = rf(pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ChannelsPage)
 	}
@@ -1752,36 +1751,6 @@ func (_m *SDK) ListUserThings(pm sdk.PageMetadata, token string) (sdk.ThingsPage
 
 	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string) errors.SDKError); ok {
 		r1 = rf(pm, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// Members provides a mock function with given fields: groupID, meta, token
-func (_m *SDK) Members(groupID string, meta sdk.PageMetadata, token string) (sdk.UsersPage, errors.SDKError) {
-	ret := _m.Called(groupID, meta, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Members")
-	}
-
-	var r0 sdk.UsersPage
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) (sdk.UsersPage, errors.SDKError)); ok {
-		return rf(groupID, meta, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) sdk.UsersPage); ok {
-		r0 = rf(groupID, meta, token)
-	} else {
-		r0 = ret.Get(0).(sdk.UsersPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = rf(userID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)

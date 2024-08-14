@@ -62,17 +62,8 @@ func (req viewProfileReq) validate() error {
 }
 
 type listClientsReq struct {
-	token    string
-	status   mgclients.Status
-	offset   uint64
-	limit    uint64
-	name     string
-	tag      string
-	identity string
-	metadata mgclients.Metadata
-	order    string
-	dir      string
-	id       string
+	token string
+	page  mgclients.Page
 }
 
 func (req listClientsReq) validate() error {

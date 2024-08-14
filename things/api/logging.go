@@ -192,28 +192,6 @@ func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string
 	return lm.svc.DisableClient(ctx, token, id)
 }
 
-
-func (lm *loggingMiddleware) ListClientsByGroup(ctx context.Context, token, channelID string, cp mgclients.Page) (mp mgclients.MembersPage, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", channelID),
-			slog.Group("page",
-				slog.Uint64("offset", cp.Offset),
-				slog.Uint64("limit", cp.Limit),
-				slog.Uint64("total", mp.Total),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List things by group failed", args...)
-			return
-		}
-		lm.logger.Info("List things by group completed successfully", args...)
-	}(time.Now())
-	return lm.svc.ListClientsByGroup(ctx, token, channelID, cp)
-}
-
 func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id string, err error) {
 	defer func(begin time.Time) {
 		args := []any{

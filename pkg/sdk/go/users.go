@@ -79,25 +79,6 @@ func (sdk mgSDK) Users(pm PageMetadata, token string) (UsersPage, errors.SDKErro
 	return cp, nil
 }
 
-func (sdk mgSDK) Members(groupID string, meta PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, usersEndpoint), meta)
-	if err != nil {
-		return UsersPage{}, errors.NewSDKError(err)
-	}
-
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
-	if sdkerr != nil {
-		return UsersPage{}, sdkerr
-	}
-
-	var up UsersPage
-	if err := json.Unmarshal(body, &up); err != nil {
-		return UsersPage{}, errors.NewSDKError(err)
-	}
-
-	return up, nil
-}
-
 func (sdk mgSDK) User(id, token string) (User, errors.SDKError) {
 	if id == "" {
 		return User{}, errors.NewSDKError(apiutil.ErrMissingID)

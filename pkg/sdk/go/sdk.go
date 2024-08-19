@@ -174,17 +174,6 @@ type SDK interface {
 	//	fmt.Println(users)
 	Users(pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
-	// Members returns list of users that are members of a group.
-	//
-	// example:
-	//	pm := sdk.PageMetadata{
-	//		Offset: 0,
-	//		Limit:  10,
-	//	}
-	//	members, _ := sdk.Members("groupID", pm, "token")
-	//	fmt.Println(members)
-	Members(groupID string, meta PageMetadata, token string) (UsersPage, errors.SDKError)
-
 	// UserProfile returns user logged in.
 	//
 	// example:
@@ -311,6 +300,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
+	//      User: "user_id",
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "viewer", "guest", "editor", "contributor", "create"
 	//	}
 	//  channels, _ := sdk.ListUserChannels(pm, "token")
@@ -323,6 +313,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
+	//      User: "user_id",
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  groups, _ := sdk.ListUserGroups(pm, "token")
@@ -335,6 +326,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
+	//      User: "user_id",
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  things, _ := sdk.ListUserThings(pm, "token")

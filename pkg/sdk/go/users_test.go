@@ -18,7 +18,6 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/groups"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
 	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -294,10 +293,11 @@ func TestListUsers(t *testing.T) {
 				Limit:  limit,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -321,10 +321,11 @@ func TestListUsers(t *testing.T) {
 				Limit:  limit,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes:   mgclients.ClientsPage{},
 			svcErr:   svcerr.ErrAuthentication,
@@ -352,10 +353,11 @@ func TestListUsers(t *testing.T) {
 				Limit:  0,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  10,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      10,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -393,11 +395,12 @@ func TestListUsers(t *testing.T) {
 				Metadata: sdk.Metadata{"name": "client_99"},
 			},
 			svcReq: mgclients.Page{
-				Offset:   offset,
-				Limit:    limit,
-				Metadata: mgclients.Metadata{"name": "client_99"},
-				Order:    internalapi.DefOrder,
-				Dir:      internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Metadata:   mgclients.Metadata{"name": "client_99"},
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -423,11 +426,12 @@ func TestListUsers(t *testing.T) {
 				Status: mgclients.DisabledStatus.String(),
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Status: mgclients.DisabledStatus,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Status:     mgclients.DisabledStatus,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -453,11 +457,12 @@ func TestListUsers(t *testing.T) {
 				Tag:    "tag1",
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Tag:    "tag1",
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Tag:        "tag1",
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -485,10 +490,11 @@ func TestListUsers(t *testing.T) {
 				},
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes:   mgclients.ClientsPage{},
 			svcErr:   nil,
@@ -503,10 +509,11 @@ func TestListUsers(t *testing.T) {
 				Limit:  limit,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -552,7 +559,7 @@ func TestListChannelUsers(t *testing.T) {
 	}
 	mgsdk := sdk.NewSDK(conf)
 
-	for i := 10; i < 20; i++ {
+	for i := 10; i < 100; i++ {
 		cl := sdk.User{
 			ID:     generateUUID(t),
 			Name:   fmt.Sprintf("client_%d", i),
@@ -575,14 +582,18 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users successfully",
 			token: token,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:  offset,
+				Limit:   limit,
+				Channel: validID,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -602,14 +613,18 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users with invalid token",
 			token: invalidToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:  offset,
+				Limit:   limit,
+				Channel: validID,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Permission: auth.ViewPermission,
 			},
 			svcRes:   mgclients.ClientsPage{},
 			svcErr:   svcerr.ErrAuthentication,
@@ -620,8 +635,9 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users with empty token",
 			token: "",
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:  offset,
+				Limit:   limit,
+				Channel: validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -633,14 +649,18 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users with zero limit",
 			token: token,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  0,
+				Offset:  offset,
+				Limit:   0,
+				Channel: validID,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  10,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      10,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -660,8 +680,9 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users with limit greater than max",
 			token: token,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  101,
+				Offset:  offset,
+				Limit:   101,
+				Channel: validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -676,13 +697,17 @@ func TestListChannelUsers(t *testing.T) {
 				Offset:   offset,
 				Limit:    limit,
 				Metadata: sdk.Metadata{"name": "client_99"},
+				Channel:  validID,
 			},
 			svcReq: mgclients.Page{
-				Offset:   offset,
-				Limit:    limit,
-				Metadata: mgclients.Metadata{"name": "client_99"},
-				Order:    internalapi.DefOrder,
-				Dir:      internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Metadata:   mgclients.Metadata{"name": "client_99"},
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -703,16 +728,20 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users with given status",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
-				Status: mgclients.DisabledStatus.String(),
+				Offset:  offset,
+				Limit:   limit,
+				Status:  mgclients.DisabledStatus.String(),
+				Channel: validID,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Status: mgclients.DisabledStatus,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Status:     mgclients.DisabledStatus,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -733,16 +762,20 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users with given tag",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
-				Tag:    "tag1",
+				Offset:  offset,
+				Limit:   limit,
+				Tag:     "tag1",
+				Channel: validID,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Tag:    "tag1",
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Tag:        "tag1",
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -768,6 +801,7 @@ func TestListChannelUsers(t *testing.T) {
 				Metadata: sdk.Metadata{
 					"test": make(chan int),
 				},
+				Channel: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset: offset,
@@ -784,14 +818,18 @@ func TestListChannelUsers(t *testing.T) {
 			desc:  "list users with response that can't be unmarshalled",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:  offset,
+				Limit:   limit,
+				Channel: validID,
 			},
 			svcReq: mgclients.Page{
-				Offset: offset,
-				Limit:  limit,
-				Order:  internalapi.DefOrder,
-				Dir:    internalapi.DefDir,
+				Offset:     offset,
+				Limit:      limit,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Permission: auth.ViewPermission,
 			},
 			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -2142,176 +2180,6 @@ func TestDisableUser(t *testing.T) {
 	}
 }
 
-func TestListMembers(t *testing.T) {
-	ts, svc := setupUsers()
-	defer ts.Close()
-
-	member := generateTestUser(t)
-	conf := sdk.Config{
-		UsersURL: ts.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
-
-	cases := []struct {
-		desc     string
-		token    string
-		groupID  string
-		pageMeta sdk.PageMetadata
-		svcReq   mgclients.Page
-		svcRes   mgclients.MembersPage
-		svcErr   error
-		response sdk.UsersPage
-		err      errors.SDKError
-	}{
-		{
-			desc:    "list members successfully",
-			token:   validToken,
-			groupID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: mgclients.Page{
-				Offset:     0,
-				Limit:      10,
-				Permission: auth.ViewPermission,
-			},
-			svcRes: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Members: []mgclients.Client{convertClient(member)},
-			},
-			svcErr: nil,
-			response: sdk.UsersPage{
-				PageRes: sdk.PageRes{
-					Total: 1,
-				},
-				Users: []sdk.User{member},
-			},
-		},
-		{
-			desc:    "list members with invalid token",
-			token:   invalidToken,
-			groupID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: mgclients.Page{
-				Offset:     0,
-				Limit:      10,
-				Permission: auth.ViewPermission,
-			},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.UsersPage{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
-		},
-		{
-			desc:    "list members with empty token",
-			token:   "",
-			groupID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq:   mgclients.Page{},
-			svcErr:   nil,
-			response: sdk.UsersPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
-		},
-		{
-			desc:    "list members with invalid group id",
-			token:   validToken,
-			groupID: wrongID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: mgclients.Page{
-				Offset:     0,
-				Limit:      10,
-				Permission: auth.ViewPermission,
-			},
-			svcErr:   svcerr.ErrViewEntity,
-			response: sdk.UsersPage{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
-		},
-		{
-			desc:    "list members with empty group id",
-			token:   validToken,
-			groupID: "",
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq:   mgclients.Page{},
-			svcErr:   nil,
-			response: sdk.UsersPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
-		},
-		{
-			desc:    "list members with page metadata that can't be marshalled",
-			token:   validToken,
-			groupID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-				Metadata: map[string]interface{}{
-					"test": make(chan int),
-				},
-			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.MembersPage{},
-			svcErr:   nil,
-			response: sdk.UsersPage{},
-			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
-		},
-		{
-			desc:    "list members with response that can't be unmarshalled",
-			token:   validToken,
-			groupID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: mgclients.Page{
-				Offset:     0,
-				Limit:      10,
-				Permission: auth.ViewPermission,
-			},
-			svcRes: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Members: []mgclients.Client{{
-					ID:   member.ID,
-					Name: member.Name,
-					Metadata: map[string]interface{}{
-						"key": make(chan int),
-					},
-				}},
-			},
-			svcErr:   nil,
-			response: sdk.UsersPage{},
-			err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ListMembers", mock.Anything, tc.token, "groups", tc.groupID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.Members(tc.groupID, tc.pageMeta, tc.token)
-			assert.Equal(t, tc.err, err)
-			assert.Equal(t, tc.response, resp)
-			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListMembers", mock.Anything, tc.token, "groups", tc.groupID, tc.svcReq)
-				assert.True(t, ok)
-			}
-			svcCall.Unset()
-		})
-	}
-}
-
 func TestDeleteUser(t *testing.T) {
 	ts, svc := setupUsers()
 	defer ts.Close()
@@ -2371,183 +2239,6 @@ func TestDeleteUser(t *testing.T) {
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "DeleteClient", mock.Anything, tc.token, tc.userID)
-				assert.True(t, ok)
-			}
-			svcCall.Unset()
-		})
-	}
-}
-
-func TestListUserGroups(t *testing.T) {
-	ts, svc := setupGroups()
-	defer ts.Close()
-
-	conf := sdk.Config{
-		UsersURL: ts.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
-
-	group := generateTestGroup(t)
-	cases := []struct {
-		desc     string
-		token    string
-		userID   string
-		pageMeta sdk.PageMetadata
-		svcReq   groups.Page
-		svcRes   groups.Page
-		svcErr   error
-		response sdk.GroupsPage
-		err      errors.SDKError
-	}{
-		{
-			desc:   "list user groups successfully",
-			token:  validToken,
-			userID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  10,
-				},
-				Permission: auth.ViewPermission,
-				Direction:  -1,
-			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
-					Total: 1,
-				},
-				Groups: []groups.Group{convertGroup(group)},
-			},
-			svcErr: nil,
-			response: sdk.GroupsPage{
-				PageRes: sdk.PageRes{
-					Total: 1,
-				},
-				Groups: []sdk.Group{group},
-			},
-			err: nil,
-		},
-		{
-			desc:   "list user groups with invalid token",
-			token:  invalidToken,
-			userID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  10,
-				},
-				Permission: auth.ViewPermission,
-				Direction:  -1,
-			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
-					Total: 1,
-				},
-				Groups: []groups.Group{convertGroup(group)},
-			},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
-		},
-		{
-			desc:   "list user groups with empty token",
-			token:  "",
-			userID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq:   groups.Page{},
-			svcErr:   nil,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
-		},
-		{
-			desc:   "list user groups with invalid user id",
-			token:  validToken,
-			userID: wrongID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  10,
-				},
-				Permission: auth.ViewPermission,
-				Direction:  -1,
-			},
-			svcRes:   groups.Page{},
-			svcErr:   svcerr.ErrViewEntity,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
-		},
-		{
-			desc:   "list user groups with page metadata that can't be marshalled",
-			token:  validToken,
-			userID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-				Metadata: map[string]interface{}{
-					"test": make(chan int),
-				},
-			},
-			svcReq:   groups.Page{},
-			svcRes:   groups.Page{},
-			svcErr:   nil,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
-		},
-		{
-			desc:   "list user groups with response that can't be unmarshalled",
-			token:  validToken,
-			userID: validID,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  10,
-				},
-				Permission: auth.ViewPermission,
-				Direction:  -1,
-			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
-					Total: 1,
-				},
-				Groups: []groups.Group{{
-					ID:   group.ID,
-					Name: group.Name,
-					Metadata: map[string]interface{}{
-						"key": make(chan int),
-					},
-				}},
-			},
-			svcErr:   nil,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ListGroups", mock.Anything, tc.token, "users", tc.userID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ListUserGroups(tc.pageMeta, tc.token)
-			assert.Equal(t, tc.err, err)
-			assert.Equal(t, tc.response, resp)
-			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.token, "users", tc.userID, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

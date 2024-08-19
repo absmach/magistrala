@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	queryKeys   = []string{api.ThingKey, api.ChannelKey, api.DomainKey, api.GroupKey}
+	queryKeys   = []string{api.UserKey, api.ChannelKey, api.DomainKey, api.GroupKey}
 	entityTypes = map[string]string{
-		api.ThingKey:   auth.ThingType,
+		api.UserKey:    auth.UserType,
 		api.ChannelKey: auth.GroupType,
 		api.DomainKey:  auth.DomainType,
 		api.GroupKey:   auth.GroupType,
@@ -368,5 +368,6 @@ func queryPageParams(r *http.Request) (mgclients.Page, error) {
 		ListPerms:  lp,
 		Order:      order,
 		Dir:        dir,
+		Role:       mgclients.AllRole,
 	}, nil
 }

@@ -1026,7 +1026,7 @@ func TestListConnectionCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ChannelsByThing", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ChannelsByThing", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{connsCmd}, tc.args...)...)
 
 			switch tc.logType {

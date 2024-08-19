@@ -139,6 +139,7 @@ func (es *eventStore) ListClients(ctx context.Context, token string, pm mgclient
 
 	return cp, nil
 }
+
 func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	cli, err := es.svc.EnableClient(ctx, token, id)
 	if err != nil {

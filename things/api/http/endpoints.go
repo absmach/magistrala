@@ -209,22 +209,6 @@ func disableClientEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func buildClientsResponse(cp mgclients.MembersPage) clientsPageRes {
-	res := clientsPageRes{
-		pageRes: pageRes{
-			Total:  cp.Total,
-			Offset: cp.Offset,
-			Limit:  cp.Limit,
-		},
-		Clients: []viewClientRes{},
-	}
-	for _, c := range cp.Members {
-		res.Clients = append(res.Clients, viewClientRes{Client: c})
-	}
-
-	return res
-}
-
 func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignUsersRequest)

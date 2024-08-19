@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
+	internalapi "github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
@@ -325,6 +326,8 @@ func TestListThings(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
 				Role:       mgclients.AllRole,
 			},
@@ -355,6 +358,8 @@ func TestListThings(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
 				Role:       mgclients.AllRole,
 			},
@@ -402,6 +407,8 @@ func TestListThings(t *testing.T) {
 				Offset:     0,
 				Limit:      100,
 				Permission: auth.ViewPermission,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Role:       mgclients.AllRole,
 				Status:     mgclients.DisabledStatus,
 			},
@@ -434,6 +441,8 @@ func TestListThings(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
 				Role:       mgclients.AllRole,
 				Tag:        "tag1",
@@ -482,6 +491,8 @@ func TestListThings(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
 				Role:       mgclients.AllRole,
 			},
@@ -507,12 +518,12 @@ func TestListThings(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := tsvc.On("ListClients", mock.Anything, tc.token, mock.Anything, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("ListClients", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.Things(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, tc.token, mock.Anything, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, tc.token, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -539,37 +550,40 @@ func TestListThingsByChannel(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc      string
-		token     string
-		channelID string
-		pageMeta  sdk.PageMetadata
-		svcReq    mgclients.Page
-		svcRes    mgclients.MembersPage
-		svcErr    error
-		response  sdk.ThingsPage
-		err       errors.SDKError
+		desc     string
+		token    string
+		pageMeta sdk.PageMetadata
+		svcReq   mgclients.Page
+		svcRes   mgclients.ClientsPage
+		svcErr   error
+		response sdk.ThingsPage
+		err      errors.SDKError
 	}{
 		{
-			desc:      "list things successfully",
-			token:     validToken,
-			channelID: validID,
+			desc:  "list things successfully",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				Group:  validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.MembersPage{
+			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  uint64(len(things)),
 				},
-				Members: convertThings(things...),
+				Clients: convertThings(things...),
 			},
 			svcErr: nil,
 			response: sdk.ThingsPage{
@@ -581,61 +595,69 @@ func TestListThingsByChannel(t *testing.T) {
 			},
 		},
 		{
-			desc:      "list things with an invalid token",
-			token:     invalidToken,
-			channelID: validID,
+			desc:  "list things with an invalid token",
+			token: invalidToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				Group:  validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 			},
-			svcRes:   mgclients.MembersPage{},
+			svcRes:   mgclients.ClientsPage{},
 			svcErr:   svcerr.ErrAuthentication,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:      "list things with empty token",
-			token:     "",
-			channelID: validID,
+			desc:  "list things with empty token",
+			token: "",
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				Group:  validID,
 			},
 			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.MembersPage{},
+			svcRes:   mgclients.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
 		},
 		{
-			desc:      "list things with status",
-			token:     validToken,
-			channelID: validID,
+			desc:  "list things with status",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
 				Status: mgclients.DisabledStatus.String(),
+				Group:  validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 				Status:     mgclients.DisabledStatus,
 			},
-			svcRes: mgclients.MembersPage{
+			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
 				},
-				Members: convertThings(things[50]),
+				Clients: convertThings(things[50]),
 			},
 			svcErr: nil,
 			response: sdk.ThingsPage{
@@ -648,57 +670,70 @@ func TestListThingsByChannel(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:      "list things with empty channel id",
-			token:     validToken,
-			channelID: "",
+			desc:  "list things with empty channel id",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				Group:  validID,
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.MembersPage{},
-			svcErr:   nil,
+			svcReq: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
+				Permission: auth.ViewPermission,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
+				Role:       mgclients.AllRole,
+			},
+			svcRes:   mgclients.ClientsPage{},
+			svcErr:   svcerr.ErrAuthorization,
 			response: sdk.ThingsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
-			desc:      "list things with invalid metadata",
-			token:     validToken,
-			channelID: validID,
+			desc:  "list things with invalid metadata",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
+				Group: validID,
 			},
 			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.MembersPage{},
+			svcRes:   mgclients.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
 		},
 		{
-			desc:      "list things with response that can't be unmarshalled",
-			token:     validToken,
-			channelID: validID,
+			desc:  "list things with response that can't be unmarshalled",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				Group:  validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.GroupType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.MembersPage{
+			svcRes: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
 				},
-				Members: []mgclients.Client{{
+				Clients: []mgclients.Client{{
 					Name:        things[0].Name,
 					Tags:        things[0].Tags,
 					Credentials: mgclients.Credentials(things[0].Credentials),
@@ -714,12 +749,12 @@ func TestListThingsByChannel(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := tsvc.On("ListClientsByGroup", mock.Anything, tc.token, tc.channelID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("ListClients", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.ThingsByChannel(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListClientsByGroup", mock.Anything, tc.token, tc.channelID, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, tc.token, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1768,17 +1803,21 @@ func TestListUserThings(t *testing.T) {
 		err      errors.SDKError
 	}{
 		{
-			desc:   "list user things successfully",
-			token:  validToken,
-			userID: validID,
+			desc:  "list user things successfully",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				User:   validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.UserType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 			},
 			svcRes: mgclients.ClientsPage{
@@ -1805,11 +1844,16 @@ func TestListUserThings(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				User:   validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.UserType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 			},
 			svcRes:   mgclients.ClientsPage{},
@@ -1818,12 +1862,12 @@ func TestListUserThings(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:   "list user things with limit greater than max",
-			token:  validToken,
-			userID: validID,
+			desc:  "list user things with limit greater than max",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  1000,
+				User:   validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -1839,6 +1883,7 @@ func TestListUserThings(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 				Name:   strings.Repeat("a", 1025),
+				User:   validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -1854,11 +1899,16 @@ func TestListUserThings(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 				Status: mgclients.DisabledStatus.String(),
+				User:   validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.UserType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 				Status:     mgclients.DisabledStatus,
 			},
@@ -1888,11 +1938,16 @@ func TestListUserThings(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 				Tag:    "tag1",
+				User:   validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.UserType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 				Tag:        "tag1",
 			},
@@ -1937,11 +1992,16 @@ func TestListUserThings(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
+				User:   validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      100,
+				Order:      internalapi.DefOrder,
+				Dir:        internalapi.DefDir,
 				Permission: auth.ViewPermission,
+				EntityType: auth.UserType,
+				EntityID:   validID,
 				Role:       mgclients.AllRole,
 			},
 			svcRes: mgclients.ClientsPage{
@@ -1966,12 +2026,12 @@ func TestListUserThings(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := tsvc.On("ListClients", mock.Anything, tc.token, tc.userID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("ListClients", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.ListUserThings(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, tc.token, tc.userID, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, tc.token, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

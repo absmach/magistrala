@@ -479,106 +479,208 @@ func TestViewClient(t *testing.T) {
 func TestListClients(t *testing.T) {
 	svc, cRepo, auth, _ := newService(true)
 
+	var clients, strippedClients, permClients []mgclients.Client
+	var policies []string
+	for i := 0; i < 10; i++ {
+		cl := mgclients.Client{
+			ID:   testsutil.GenerateUUID(t),
+			Name: fmt.Sprintf("client%d", i),
+		}
+		strippedClients = append(strippedClients, cl)
+		cl.Domain = validID
+		cl.Tags = []string{"tag1", "tag2"}
+		cl.Credentials = mgclients.Credentials{Identity: fmt.Sprintf("client%d", i), Secret: secret}
+		cl.Metadata = validCMetadata
+		policies = append(policies, authsvc.EncodeDomainUserID(cl.Domain, cl.ID))
+		clients = append(clients, cl)
+		cl.Permissions = []string{"view", "edit"}
+		permClients = append(permClients, cl)
+	}
+
 	cases := []struct {
-		desc                string
-		token               string
-		page                mgclients.Page
-		identifyResponse    *magistrala.IdentityRes
-		authorizeResponse   *magistrala.AuthorizeRes
-		retrieveAllResponse mgclients.ClientsPage
-		response            mgclients.ClientsPage
-		size                uint64
-		identifyErr         error
-		authorizeErr        error
-		retrieveAllErr      error
-		superAdminErr       error
-		err                 error
+		desc                    string
+		token                   string
+		pageMeta                mgclients.Page
+		identifyResponse        *magistrala.IdentityRes
+		platformAuthResponse    *magistrala.AuthorizeRes
+		domainAuthResponse      *magistrala.AuthorizeRes
+		retrieveAllResponse     mgclients.ClientsPage
+		listAllSubjectsResponse *magistrala.ListSubjectsRes
+		listPermissionsResponse *magistrala.ListPermissionsRes
+		response                mgclients.ClientsPage
+		size                    uint64
+		identifyErr             error
+		authorizeErr            error
+		retrieveAllErr          error
+		superAdminErr           error
+		listAllSubjectsErr      error
+		listPermissionsErr      error
+		platformAuthErr         error
+		domainAuthErr           error
+		err                     error
 	}{
 		{
-			desc: "list clients as admin successfully",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:  &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			desc:                 "list clients as super admin successfully",
+			pageMeta:             mgclients.Page{},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
-					Total: 1,
+					Total: uint64(len(clients)),
 				},
-				Clients: []mgclients.Client{client},
+				Clients: clients,
 			},
 			response: mgclients.ClientsPage{
 				Page: mgclients.Page{
-					Total: 1,
+					Total: uint64(len(clients)),
 				},
-				Clients: []mgclients.Client{client},
+				Clients: clients,
 			},
-			token: validToken,
-			err:   nil,
+			err: nil,
 		},
 		{
-			desc: "list clients as admin with invalid token",
-			page: mgclients.Page{
-				Total: 1,
+			desc: "list clients as super admin with entity type and id",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
 			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			err: nil,
+		},
+		{
+			desc: "list clients as super admin with entuty type and id with list perms",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+				ListPerms:  true,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			listPermissionsResponse: &magistrala.ListPermissionsRes{
+				Permissions: []string{"view", "edit"},
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: permClients,
+			},
+			err: nil,
+		},
+		{
+			desc:                 "list clients as super admin with failed to retrieve clients",
+			pageMeta:             mgclients.Page{},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse:  mgclients.ClientsPage{},
+			retrieveAllErr:       repoerr.ErrNotFound,
+			err:                  svcerr.ErrViewEntity,
+		},
+		{
+			desc: "list clients as non super admin with entity type and id",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: strippedClients,
+			},
+			err: nil,
+		},
+		{
+			desc: "list clients as non super admin with entity type and id with failed to list all subjects",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			listAllSubjectsErr:      svcerr.ErrAuthorization,
+			err:                     svcerr.ErrViewEntity,
+		},
+		{
+			desc:             "list clients with invalid token",
+			pageMeta:         mgclients.Page{},
 			identifyResponse: &magistrala.IdentityRes{},
 			identifyErr:      svcerr.ErrAuthentication,
 			err:              svcerr.ErrAuthentication,
-		},
-		{
-			desc: "list clients as admin with invalid ID",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:  &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			token:             validToken,
-			authorizeErr:      svcerr.ErrAuthorization,
-			err:               svcerr.ErrAuthorization,
-		},
-		{
-			desc: "list clients as admin with failed to retrieve clients",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:    &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			retrieveAllResponse: mgclients.ClientsPage{},
-			token:               validToken,
-			retrieveAllErr:      repoerr.ErrNotFound,
-			err:                 svcerr.ErrViewEntity,
-		},
-		{
-			desc: "list clients as admin with failed check on super admin",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:  &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			token:             validToken,
-			superAdminErr:     svcerr.ErrAuthorization,
-			err:               svcerr.ErrAuthorization,
-		},
-		{
-			desc: "list clients as normal user with failed to retrieve clients",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:    &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
-			retrieveAllResponse: mgclients.ClientsPage{},
-			token:               validToken,
-			retrieveAllErr:      repoerr.ErrNotFound,
-			err:                 svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
+		platformCall := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     client.ID,
+			Permission:  authsvc.AdminPermission,
+			ObjectType:  authsvc.PlatformType,
+			Object:      authsvc.MagistralaObject,
+		}).Return(tc.platformAuthResponse, tc.platformAuthErr)
+		domainCall := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			Domain:      validID,
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     tc.identifyResponse.Id,
+			Permission:  "",
+			ObjectType:  authsvc.ThingType,
+			Object:      validID,
+		}).Return(tc.domainAuthResponse, tc.domainAuthErr)
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.superAdminErr)
 		repoCall1 := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
-		page, err := svc.ListClients(context.Background(), tc.token, tc.page)
+		authCall3 := auth.On("ListAllSubjects", context.Background(), mock.Anything).Return(tc.listAllSubjectsResponse, tc.listAllSubjectsErr)
+		authCall4 := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
+		page, err := svc.ListClients(context.Background(), tc.token, tc.pageMeta)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		if tc.err == nil {
@@ -586,7 +688,10 @@ func TestListClients(t *testing.T) {
 			assert.True(t, ok, fmt.Sprintf("RetrieveAll was not called on %s", tc.desc))
 		}
 		authCall.Unset()
-		authCall1.Unset()
+		platformCall.Unset()
+		domainCall.Unset()
+		authCall3.Unset()
+		authCall4.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
 	}

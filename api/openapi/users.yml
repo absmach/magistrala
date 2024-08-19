@@ -95,6 +95,8 @@ paths:
           description: |
             Missing or invalid access token provided.
             This endpoint is available only for administrators.
+        "403":
+          description: Failed to perform authorization over the entity.
         "404":
           description: A non-existent entity request.
         "422":
@@ -402,7 +404,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-    /users/search:
+  /users/search:
     get:
       operationId: searchUsers
       summary: Search users
@@ -482,7 +484,6 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-
 
   /users/tokens/issue:
     post:
@@ -896,6 +897,7 @@ paths:
       summary: Retrieves service health check info.
       tags:
         - health
+      security: []
       responses:
         "200":
           $ref: "#/components/responses/HealthRes"
@@ -1560,10 +1562,25 @@ components:
       in: query
       schema:
         type: string
-        enum: ["admin", "delete", "edit", "view", "share", "publish", "subscribe", "membership", "create", "administrator", "editor", "contributor", "member", "guest"]
+        enum:
+          [
+            "admin",
+            "delete",
+            "edit",
+            "view",
+            "share",
+            "publish",
+            "subscribe",
+            "membership",
+            "create",
+            "administrator",
+            "editor",
+            "contributor",
+            "member",
+            "guest",
+          ]
       required: false
       example: edit
-
 
     ParentID:
       name: parentID

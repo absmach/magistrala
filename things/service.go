@@ -183,7 +183,6 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 
 	// pm.EntityType will be not empty if entity type is user or channel or if request user is not viewer of domain.
 	if pm.EntityType != "" {
-		// Get things list from spiceDB
 		thingIDs, err := svc.listThings(ctx, res.GetDomainId(), pm.EntityType, pm.EntityID, pm.Permission)
 		if err != nil {
 			return mgclients.ClientsPage{}, err
@@ -191,7 +190,10 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		pm.IDs = thingIDs
 	}
 
-	tp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
+	if len(pm.IDs) == 0 && pm.Domain == "" {
+		return mgclients.ClientsPage{}, nil
+	}
+	tp, err := svc.clients.SearchClients(ctx, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -220,7 +222,7 @@ func (svc service) listThings(ctx context.Context, domainID, entityType, entityI
 		SubjectType: entityType,
 		Subject:     entityID,
 		Permission:  permission,
-		Object:      auth.ThingType,
+		ObjectType:  auth.ThingType,
 	})
 	if err != nil {
 		return []string{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -452,6 +454,7 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
+
 	return client, nil
 }
 

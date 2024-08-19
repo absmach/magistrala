@@ -22,7 +22,7 @@ var (
 	queryKeys   = []string{api.ThingKey, api.ChannelKey, api.DomainKey, api.GroupKey, api.UserKey}
 	entityTypes = map[string]string{
 		api.ThingKey:   auth.ThingsKind,
-		api.ChannelKey: auth.GroupsKind,
+		api.ChannelKey: auth.ChannelsKind,
 		api.DomainKey:  auth.DomainsKind,
 		api.GroupKey:   auth.GroupsKind,
 		api.UserKey:    auth.UsersKind,

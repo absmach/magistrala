@@ -85,8 +85,8 @@ func (req viewClientPermsReq) validate() error {
 }
 
 type listClientsReq struct {
-	token      string
-	page       mgclients.Page
+	token string
+	page  mgclients.Page
 }
 
 func (req listClientsReq) validate() error {

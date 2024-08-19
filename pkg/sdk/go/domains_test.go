@@ -633,7 +633,6 @@ func TestListUserDomains(t *testing.T) {
 	cases := []struct {
 		desc     string
 		token    string
-		userID   string
 		pageMeta sdk.PageMetadata
 		svcReq   auth.Page
 		svcRes   auth.DomainsPage
@@ -642,12 +641,12 @@ func TestListUserDomains(t *testing.T) {
 		err      error
 	}{
 		{
-			desc:   "list user domains successfully",
-			token:  validToken,
-			userID: sdkDomain.CreatedBy,
+			desc:  "list user domains successfully",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				User:   sdkDomain.CreatedBy,
 			},
 			svcReq: auth.Page{
 				Offset: 0,
@@ -669,12 +668,12 @@ func TestListUserDomains(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:   "list user domains with invalid token",
-			token:  invalidToken,
-			userID: sdkDomain.CreatedBy,
+			desc:  "list user domains with invalid token",
+			token: invalidToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				User:   sdkDomain.CreatedBy,
 			},
 			svcReq: auth.Page{
 				Offset: 0,
@@ -688,40 +687,26 @@ func TestListUserDomains(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:   "list user domains with empty token",
-			token:  "",
-			userID: sdkDomain.CreatedBy,
+			desc:  "list user domains with empty token",
+			token: "",
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				User:   sdkDomain.CreatedBy,
 			},
 			svcReq:   auth.Page{},
 			svcRes:   auth.DomainsPage{},
 			svcErr:   nil,
 			response: sdk.DomainsPage{},
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
 		},
 		{
-			desc:   "list user domains with empty user id",
-			token:  validToken,
-			userID: "",
+			desc:  "list user domains with request that cannot be marshalled",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
-			},
-			svcReq:   auth.Page{},
-			svcRes:   auth.DomainsPage{},
-			svcErr:   nil,
-			response: sdk.DomainsPage{},
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
-		},
-		{
-			desc:   "list user domains with request that cannot be marshalled",
-			token:  validToken,
-			userID: sdkDomain.CreatedBy,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				User:   sdkDomain.CreatedBy,
 			},
 			svcReq: auth.Page{
 				Offset: 0,
@@ -741,15 +726,15 @@ func TestListUserDomains(t *testing.T) {
 			err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
 		},
 		{
-			desc:   "list user domains with invalid page metadata",
-			token:  validToken,
-			userID: sdkDomain.CreatedBy,
+			desc:  "list user domains with invalid page metadata",
+			token: validToken,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
 				Metadata: sdk.Metadata{
 					"key": make(chan int),
 				},
+				User: sdkDomain.CreatedBy,
 			},
 			svcReq:   auth.Page{},
 			svcRes:   auth.DomainsPage{},
@@ -760,12 +745,12 @@ func TestListUserDomains(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ListUserDomains", mock.Anything, tc.token, tc.userID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("ListUserDomains", mock.Anything, tc.token, tc.pageMeta.User, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.ListUserDomains(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListUserDomains", mock.Anything, tc.token, tc.userID, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListUserDomains", mock.Anything, tc.token, tc.pageMeta.User, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

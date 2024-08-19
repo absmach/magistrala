@@ -1233,7 +1233,7 @@ func TestListUserChannelsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListUserChannels", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
+			sdkCall := sdkMock.On("ListUserChannels", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
 			out := executeCommand(t, rootCmd, append([]string{chansCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -1310,7 +1310,7 @@ func TestListUserThingsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListUserThings", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
+			sdkCall := sdkMock.On("ListUserThings", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
 			out := executeCommand(t, rootCmd, append([]string{thsCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -1385,7 +1385,7 @@ func TestListUserDomainsCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var pg mgsdk.DomainsPage
-			sdkCall := sdkMock.On("ListUserDomains", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
+			sdkCall := sdkMock.On("ListUserDomains", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
 			out := executeCommand(t, rootCmd, append([]string{domsCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -1460,7 +1460,7 @@ func TestListUserGroupsCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var pg mgsdk.GroupsPage
-			sdkCall := sdkMock.On("ListUserGroups", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
+			sdkCall := sdkMock.On("ListUserGroups", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
 			out := executeCommand(t, rootCmd, append([]string{grpCmd}, tc.args...)...)
 
 			switch tc.logType {

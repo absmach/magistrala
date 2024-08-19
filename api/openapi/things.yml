@@ -104,7 +104,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  
+
   /things/members:
     get:
       operationId: listThingMembers
@@ -439,7 +439,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-
   /channels:
     post:
       operationId: createChannel
@@ -462,7 +461,7 @@ paths:
         "403":
           description: Failed to perform authorization over the entity.
         "404":
-          descripttion: A non-existent entity request.
+          description: A non-existent entity request.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -589,7 +588,7 @@ paths:
         "403":
           description: Unauthorized access to thing id.
         "404":
-          descripttion: A non-existent entity request.
+          description: A non-existent entity request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -773,7 +772,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-
   /connect:
     post:
       operationId: connectThingsAndChannels
@@ -893,6 +891,7 @@ paths:
       summary: Retrieves service health check info.
       tags:
         - health
+      security: []
       responses:
         "200":
           $ref: "#/components/responses/HealthRes"

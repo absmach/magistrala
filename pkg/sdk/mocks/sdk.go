@@ -1760,36 +1760,6 @@ func (_m *SDK) ListUserThings(pm sdk.PageMetadata, token string) (sdk.ThingsPage
 	return r0, r1
 }
 
-// Members provides a mock function with given fields: groupID, meta, token
-func (_m *SDK) Members(groupID string, meta sdk.PageMetadata, token string) (sdk.UsersPage, errors.SDKError) {
-	ret := _m.Called(groupID, meta, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Members")
-	}
-
-	var r0 sdk.UsersPage
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) (sdk.UsersPage, errors.SDKError)); ok {
-		return rf(groupID, meta, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) sdk.UsersPage); ok {
-		r0 = rf(groupID, meta, token)
-	} else {
-		r0 = ret.Get(0).(sdk.UsersPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = rf(groupID, meta, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
 // Parents provides a mock function with given fields: id, pm, token
 func (_m *SDK) Parents(id string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
 	ret := _m.Called(id, pm, token)

@@ -2320,16 +2320,11 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/members?group=%s", us.URL, tc.groupID) + tc.query,
+			url:    fmt.Sprintf("%s/users/?group=%s", us.URL, tc.groupID) + tc.query,
 			token:  tc.token,
 		}
 
-		svcCall := svc.On("ListMembers", mock.Anything, tc.token, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
+		svcCall := svc.On("ListClients", mock.Anything, tc.token, mock.Anything).Return(tc.listUsersResponse, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -2615,16 +2610,11 @@ func TestListUsersByChannelID(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/members?channel=%s&", us.URL, validID) + tc.query,
+			url:    fmt.Sprintf("%s/users?channel=%s&", us.URL, validID) + tc.query,
 			token:  tc.token,
 		}
 
-		svcCall := svc.On("ListMembers", mock.Anything, tc.token, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
+		svcCall := svc.On("ListClients", mock.Anything, tc.token, mock.Anything).Return(tc.listUsersResponse, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -2918,16 +2908,10 @@ func TestListUsersByDomainID(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/members?domain=%s&", us.URL, validID) + tc.query,
+			url:    fmt.Sprintf("%s/users?domain=%s&", us.URL, validID) + tc.query,
 			token:  tc.token,
 		}
-
-		svcCall := svc.On("ListMembers", mock.Anything, tc.token, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
+		svcCall := svc.On("ListClients", mock.Anything, tc.token, mock.Anything).Return(tc.listUsersResponse, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -3192,16 +3176,10 @@ func TestListUsersByThingID(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/members?thing=%s&", us.URL, validID) + tc.query,
+			url:    fmt.Sprintf("%s/users?thing=%s&", us.URL, validID) + tc.query,
 			token:  tc.token,
 		}
-
-		svcCall := svc.On("ListMembers", mock.Anything, tc.token, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
+		svcCall := svc.On("ListClients", mock.Anything, tc.token, mock.Anything).Return(tc.listUsersResponse, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))

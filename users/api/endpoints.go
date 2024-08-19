@@ -350,20 +350,3 @@ func deleteClientEndpoint(svc users.Service) endpoint.Endpoint {
 		return deleteClientRes{true}, nil
 	}
 }
-
-func buildClientsResponse(cp mgclients.MembersPage) clientsPageRes {
-	res := clientsPageRes{
-		pageRes: pageRes{
-			Total:  cp.Total,
-			Offset: cp.Offset,
-			Limit:  cp.Limit,
-		},
-		Clients: []viewClientRes{},
-	}
-
-	for _, client := range cp.Members {
-		res.Clients = append(res.Clients, viewClientRes{Client: client})
-	}
-
-	return res
-}

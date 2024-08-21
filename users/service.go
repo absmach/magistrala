@@ -18,10 +18,12 @@ import (
 )
 
 var (
-	errIssueToken            = errors.New("failed to issue token")
-	errFailedPermissionsList = errors.New("failed to list permissions")
-	errRecoveryToken         = errors.New("failed to generate password recovery token")
-	errLoginDisableUser      = errors.New("failed to login in disabled user")
+	errIssueToken             = errors.New("failed to issue token")
+	errFailedPermissionsList  = errors.New("failed to list permissions")
+	errRecoveryToken          = errors.New("failed to generate password recovery token")
+	errLoginDisableUser       = errors.New("failed to login in disabled user")
+	errMissingEntityID        = errors.New("provide entity id")
+	errMissingEntityTypeAndID = errors.New("provide entity type and id")
 )
 
 type service struct {
@@ -181,19 +183,28 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		return mgclients.ClientsPage{}, err
 	}
 
-	if pm.EntityType != "" && pm.EntityID != "" {
-		// Get users list from spiceDB
+	isSuperAdmin := false
+	if err := svc.checkSuperAdmin(ctx, res.GetUserId()); err == nil {
+		isSuperAdmin = true
+	}
+
+	switch pm.EntityType {
+	case auth.ThingType, auth.GroupType, auth.DomainType:
+		if pm.EntityID == "" {
+			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, errMissingEntityID)
+		}
 		userIDs, err := svc.listUsers(ctx, res.GetDomainId(), res.GetId(), pm.EntityType, pm.EntityID, pm.Permission)
 		if err != nil {
 			return mgclients.ClientsPage{}, err
 		}
+		if len(userIDs) == 0 {
+			return mgclients.ClientsPage{}, err
+		}
 		pm.IDs = userIDs
-	}
-
-	isSuperAdmin := svc.checkSuperAdmin(ctx, res.GetUserId()) == nil
-
-	if !isSuperAdmin && len(pm.IDs) == 0 {
-		return mgclients.ClientsPage{}, nil
+	default:
+		if !isSuperAdmin {
+			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, errMissingEntityTypeAndID)
+		}
 	}
 
 	usersPage, err := svc.clients.RetrieveAll(ctx, pm)
@@ -201,6 +212,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
+	// If not super admin, then return restricted details
 	if !isSuperAdmin {
 		for i, c := range usersPage.Clients {
 			usersPage.Clients[i] = mgclients.Client{ID: c.ID, Name: c.Name}
@@ -228,14 +240,13 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 }
 
 func (svc service) listUsers(ctx context.Context, domainID, reqUserSubject, objectType, objectID, permission string) ([]string, error) {
-	authzPerm := auth.SwitchToPermission(permission)
 
 	res, err := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
 		Domain:      domainID,
 		SubjectType: auth.UserType,
 		SubjectKind: auth.UsersKind,
 		Subject:     reqUserSubject,
-		Permission:  authzPerm,
+		Permission:  auth.ViewPermission,
 		ObjectType:  objectType,
 		Object:      objectID,
 	})

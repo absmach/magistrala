@@ -193,20 +193,29 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		if pm.EntityID == "" {
 			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, errMissingEntityID)
 		}
-		userIDs, err := svc.listUsers(ctx, res.GetDomainId(), res.GetId(), pm.EntityType, pm.EntityID, pm.Permission)
-		if err != nil {
-			return mgclients.ClientsPage{}, err
-		}
-		if len(userIDs) == 0 {
-			return mgclients.ClientsPage{}, err
-		}
-		pm.IDs = userIDs
+		return svc.listEntityUsers(ctx, res.GetDomainId(), res.GetId(), isSuperAdmin, pm)
 	default:
 		if !isSuperAdmin {
 			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, errMissingEntityTypeAndID)
 		}
+		return svc.listUsers(ctx, res.GetDomainId(), isSuperAdmin, pm)
 	}
 
+}
+
+func (svc service) listEntityUsers(ctx context.Context, domainID, userID string, isSuperAdmin bool, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	userIDs, err := svc.listUserIDs(ctx, domainID, userID, pm.EntityType, pm.EntityID, pm.Permission)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+	if len(userIDs) == 0 {
+		return mgclients.ClientsPage{Page: pm}, err
+	}
+	pm.IDs = userIDs
+	return svc.listUsers(ctx, domainID, isSuperAdmin, pm)
+}
+
+func (svc service) listUsers(ctx context.Context, domainID string, isSuperAdmin bool, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	usersPage, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -227,7 +236,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 			// Copying loop variable "i" to avoid "loop variable captured by func literal"
 			iter := i
 			g.Go(func() error {
-				return svc.retrieveObjectUsersPermissions(gctx, res.GetDomainId(), pm.EntityType, pm.EntityID, &usersPage.Clients[iter])
+				return svc.retrieveObjectUsersPermissions(gctx, domainID, pm.EntityType, pm.EntityID, &usersPage.Clients[iter])
 			})
 		}
 
@@ -238,8 +247,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	}
 	return usersPage, nil
 }
-
-func (svc service) listUsers(ctx context.Context, domainID, reqUserSubject, objectType, objectID, permission string) ([]string, error) {
+func (svc service) listUserIDs(ctx context.Context, domainID, reqUserSubject, objectType, objectID, permission string) ([]string, error) {
 
 	res, err := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
 		Domain:      domainID,

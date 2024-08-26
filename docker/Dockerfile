@@ -12,8 +12,9 @@ ARG TIME
 WORKDIR /go/src/github.com/absmach/magistrala
 COPY . .
 RUN apk update \
-    && apk add make\
+    && apk add make upx\
     && make $SVC \
+    && upx build/$SVC \
     && mv build/$SVC /exe
 
 FROM scratch

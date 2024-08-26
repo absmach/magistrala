@@ -148,75 +148,46 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 	}
 
 	switch pm.EntityType {
-	// /things?user=<userID>
-	// check request user is viewer of domain in order to list things of particular user.
 	case auth.UserType:
-		if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.DomainType, res.GetDomainId()); err != nil {
-			return mgclients.ClientsPage{}, err
-		}
 		pm.EntityID = auth.EncodeDomainUserID(res.GetDomainId(), pm.EntityID)
-	// /things?channel=<channelID>
-	// check request user have view permission on channel;
+		return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), auth.ViewPermission, auth.DomainType, res.GetDomainId(), pm)
 	case auth.GroupType:
-		if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, pm.EntityID); err != nil {
-			return mgclients.ClientsPage{}, err
-		}
-	// /things
-	// List things of the request user
+		pm.Permission = auth.GroupRelation
+		return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), auth.ViewPermission, auth.GroupType, pm.EntityID, pm)
 	case "":
 		_, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.DomainType, res.GetDomainId())
 		switch {
 		case err == nil:
 			pm.Domain = res.GetDomainId()
 		default:
-			// If domain is disabled , then this authorization will fail for all non-admin domain users
-			if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
-				return mgclients.ClientsPage{}, err
-			}
 			pm.EntityType = auth.UserType
 			pm.EntityID = res.GetId()
+			return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId(), pm)
 		}
-
 	default:
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, fmt.Errorf("invalid entity type %s", pm.EntityType))
 	}
-
-	// pm.EntityType will be not empty if entity type is user or channel or if request user is not viewer of domain.
-	if pm.EntityType != "" {
-		thingIDs, err := svc.listThings(ctx, res.GetDomainId(), pm.EntityType, pm.EntityID, pm.Permission)
-		if err != nil {
-			return mgclients.ClientsPage{}, err
-		}
-		pm.IDs = thingIDs
-	}
-
-	if len(pm.IDs) == 0 && pm.Domain == "" {
-		return mgclients.ClientsPage{}, nil
-	}
-	tp, err := svc.clients.SearchClients(ctx, pm)
-	if err != nil {
-		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-
-	if pm.ListPerms && len(tp.Clients) > 0 {
-		g, ctx := errgroup.WithContext(ctx)
-
-		for i := range tp.Clients {
-			// Copying loop variable "i" to avoid "loop variable captured by func literal"
-			iter := i
-			g.Go(func() error {
-				return svc.retrievePermissions(ctx, res.GetId(), &tp.Clients[iter])
-			})
-		}
-
-		if err := g.Wait(); err != nil {
-			return mgclients.ClientsPage{}, err
-		}
-	}
-	return tp, nil
+	return svc.listThings(ctx, res.GetId(), pm)
 }
 
-func (svc service) listThings(ctx context.Context, domainID, entityType, entityID, permission string) ([]string, error) {
+func (svc service) listEntityThings(ctx context.Context, userID, domainID, permission, objectType, object string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	// If domain is disabled , then this authorization will fail for all non-admin domain users
+	if _, err := svc.authorize(ctx, domainID, auth.UserType, auth.UsersKind, userID, permission, objectType, object); err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+
+	thingIDs, err := svc.listThingIDs(ctx, domainID, pm.EntityType, pm.EntityID, pm.Permission)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+	if len(thingIDs) == 0 {
+		return mgclients.ClientsPage{Page: pm}, err
+	}
+	pm.IDs = thingIDs
+	return svc.listThings(ctx, userID, pm)
+}
+
+func (svc service) listThingIDs(ctx context.Context, domainID, entityType, entityID, permission string) ([]string, error) {
 	dtids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
 		Domain:      domainID,
 		SubjectType: entityType,
@@ -228,6 +199,30 @@ func (svc service) listThings(ctx context.Context, domainID, entityType, entityI
 		return []string{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return dtids.Policies, nil
+}
+
+func (svc service) listThings(ctx context.Context, userID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	tp, err := svc.clients.RetrieveAll(ctx, pm)
+	if err != nil {
+		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	if pm.ListPerms && len(tp.Clients) > 0 {
+		g, ctx := errgroup.WithContext(ctx)
+
+		for i := range tp.Clients {
+			// Copying loop variable "i" to avoid "loop variable captured by func literal"
+			iter := i
+			g.Go(func() error {
+				return svc.retrievePermissions(ctx, userID, &tp.Clients[iter])
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			return mgclients.ClientsPage{}, err
+		}
+	}
+	return tp, nil
 }
 
 // Experimental functions used for async calling of svc.listUserThingPermission. This might be helpful during listing of large number of entities.

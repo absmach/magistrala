@@ -565,7 +565,7 @@ func TestListClients(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "list clients as super admin with entuty type and id with list perms",
+			desc: "list clients as super admin with entity type and id with list perms",
 			pageMeta: mgclients.Page{
 				EntityType: authsvc.ThingType,
 				EntityID:   validID,
@@ -593,6 +593,48 @@ func TestListClients(t *testing.T) {
 				Clients: permClients,
 			},
 			err: nil,
+		},
+		{
+			desc: "list clients as super admin with entity type with empty list all subjects response",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:      &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse:     mgclients.ClientsPage{},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					EntityType: authsvc.ThingType,
+					EntityID:   validID,
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "list clients as super admin with entity type and id with list perms and failed to list permissions",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+				ListPerms:  true,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listPermissionsErr:      svcerr.ErrAuthorization,
+			err:                     svcerr.ErrAuthorization,
 		},
 		{
 			desc:                 "list clients as super admin with failed to retrieve clients",
@@ -630,6 +672,31 @@ func TestListClients(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc: "list clients as non super admin with entity type and id with wrong ID",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			response:             mgclients.ClientsPage{},
+			err:                  svcerr.ErrAuthorization,
+		},
+		{
+			desc: "list clients as non super admin with entity type and id with wrong ID",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			response:             mgclients.ClientsPage{},
+			domainAuthErr:        svcerr.ErrAuthorization,
+			err:                  svcerr.ErrAuthorization,
+		},
+		{
 			desc: "list clients as non super admin with entity type and id with failed to list all subjects",
 			pageMeta: mgclients.Page{
 				EntityType: authsvc.ThingType,
@@ -655,6 +722,23 @@ func TestListClients(t *testing.T) {
 			identifyErr:      svcerr.ErrAuthentication,
 			err:              svcerr.ErrAuthentication,
 		},
+		{
+			desc: "list cleints as a superadmin with entity type and empty enty id",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   "",
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:                  svcerr.ErrMalformedEntity,
+		},
+		{
+			desc:                 "list cleints as non superadmin with empty entity type and id",
+			pageMeta:             mgclients.Page{},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			err:                  svcerr.ErrMalformedEntity,
+		},
 	}
 
 	for _, tc := range cases {
@@ -672,7 +756,7 @@ func TestListClients(t *testing.T) {
 			SubjectType: authsvc.UserType,
 			SubjectKind: authsvc.UsersKind,
 			Subject:     tc.identifyResponse.Id,
-			Permission:  "",
+			Permission:  authsvc.ViewPermission,
 			ObjectType:  authsvc.ThingType,
 			Object:      validID,
 		}).Return(tc.domainAuthResponse, tc.domainAuthErr)
@@ -700,17 +784,15 @@ func TestListClients(t *testing.T) {
 func TestSearchUsers(t *testing.T) {
 	svc, cRepo, auth, _ := newService(true)
 	cases := []struct {
-		desc               string
-		token              string
-		page               mgclients.Page
-		identifyResp       *magistrala.IdentityRes
-		authorizeResponse  *magistrala.AuthorizeRes
-		response           mgclients.ClientsPage
-		responseErr        error
-		identifyErr        error
-		authorizeErr       error
-		checkSuperAdminErr error
-		err                error
+		desc              string
+		token             string
+		page              mgclients.Page
+		identifyResp      *magistrala.IdentityRes
+		authorizeResponse *magistrala.AuthorizeRes
+		response          mgclients.ClientsPage
+		responseErr       error
+		identifyErr       error
+		err               error
 	}{
 		{
 			desc:  "search clients with valid token",
@@ -728,7 +810,7 @@ func TestSearchUsers(t *testing.T) {
 			token:       inValidToken,
 			page:        mgclients.Page{Offset: 0, Name: "clientname", Limit: 100},
 			response:    mgclients.ClientsPage{},
-			responseErr: svcerr.ErrAuthentication,
+			identifyErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
 		{
@@ -754,27 +836,29 @@ func TestSearchUsers(t *testing.T) {
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
 		},
 		{
-			desc:               "search clients as a normal user",
-			token:              validToken,
-			page:               mgclients.Page{Offset: 0, Identity: "clientidentity", Limit: 100},
-			response:           mgclients.ClientsPage{},
-			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: false},
-			checkSuperAdminErr: svcerr.ErrAuthorization,
-			responseErr:        nil,
+			desc:              "search clients as a normal user",
+			token:             validToken,
+			page:              mgclients.Page{Offset: 0, Identity: "clientidentity", Limit: 100},
+			response:          mgclients.ClientsPage{},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
+			responseErr:       nil,
+		},
+		{
+			desc:        "search clients with repo err",
+			token:       validToken,
+			page:        mgclients.Page{Offset: 0, Identity: "clientidentity", Limit: 100},
+			responseErr: svcerr.ErrViewEntity,
+			err:         svcerr.ErrViewEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResp, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
 		repoCall1 := cRepo.On("SearchClients", context.Background(), mock.Anything).Return(tc.response, tc.responseErr)
 		page, err := svc.SearchUsers(context.Background(), tc.token, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		authCall.Unset()
-		authCall1.Unset()
-		repoCall.Unset()
 		repoCall1.Unset()
 	}
 }

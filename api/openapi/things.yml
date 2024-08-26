@@ -72,7 +72,7 @@ paths:
       operationId: listThings
       tags:
         - Things
-      summary: Retrieves things
+      summary: Retrieves a list of things.
       description: |
         Retrieves a list of things. Due to performance concerns, data
         is retrieved in subsets. The API things must ensure that the entire
@@ -1559,7 +1559,7 @@ components:
       schema:
         type: string
         format: uuid
-      required: true
+      required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
     User:
@@ -1569,7 +1569,7 @@ components:
       schema:
         type: string
         format: uuid
-      required: true
+      required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
     Group:
@@ -1579,7 +1579,7 @@ components:
       schema:
         type: string
         format: uuid
-      required: true
+      required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
     Thing:
@@ -1589,7 +1589,7 @@ components:
       schema:
         type: string
         format: uuid
-      required: true
+      required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
     ParentId:

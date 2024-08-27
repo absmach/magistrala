@@ -723,7 +723,7 @@ func TestListClients(t *testing.T) {
 			err:              svcerr.ErrAuthentication,
 		},
 		{
-			desc: "list cleints as a superadmin with entity type and empty enty id",
+			desc: "list clients as a superadmin with entity type and empty enty id",
 			pageMeta: mgclients.Page{
 				EntityType: authsvc.ThingType,
 				EntityID:   "",
@@ -733,7 +733,7 @@ func TestListClients(t *testing.T) {
 			err:                  svcerr.ErrMalformedEntity,
 		},
 		{
-			desc:                 "list cleints as non superadmin with empty entity type and id",
+			desc:                 "list clients as non superadmin with empty entity type and id",
 			pageMeta:             mgclients.Page{},
 			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
 			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},

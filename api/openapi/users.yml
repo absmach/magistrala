@@ -588,6 +588,9 @@ paths:
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/GroupName"
         - $ref: "#/components/parameters/ParentID"
+        - $ref: "#/components/parameters/User"
+        - $ref: "#/components/parameters/Group"
+        - $ref: "#/components/parameters/Thing"
       responses:
         "200":
           $ref: "#/components/responses/GroupPageRes"

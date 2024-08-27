@@ -200,7 +200,6 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 		}
 		return svc.listUsers(ctx, res.GetDomainId(), isSuperAdmin, pm)
 	}
-
 }
 
 func (svc service) listEntityUsers(ctx context.Context, domainID, userID string, isSuperAdmin bool, pm mgclients.Page) (mgclients.ClientsPage, error) {
@@ -221,14 +220,12 @@ func (svc service) listUsers(ctx context.Context, domainID string, isSuperAdmin 
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
-	// If not super admin, then return restricted details
 	if !isSuperAdmin {
 		for i, c := range usersPage.Clients {
 			usersPage.Clients[i] = mgclients.Client{ID: c.ID, Name: c.Name}
 		}
 	}
 
-	// List users permission if the request is for  /users?entity=<id>
 	if pm.ListPerms && len(usersPage.Clients) > 0 && pm.EntityType != "" && pm.EntityID != "" {
 		g, gctx := errgroup.WithContext(ctx)
 
@@ -247,8 +244,8 @@ func (svc service) listUsers(ctx context.Context, domainID string, isSuperAdmin 
 	}
 	return usersPage, nil
 }
-func (svc service) listUserIDs(ctx context.Context, domainID, reqUserSubject, objectType, objectID, permission string) ([]string, error) {
 
+func (svc service) listUserIDs(ctx context.Context, domainID, reqUserSubject, objectType, objectID, permission string) ([]string, error) {
 	res, err := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
 		Domain:      domainID,
 		SubjectType: auth.UserType,

@@ -149,33 +149,42 @@ func (svc service) ListClients(ctx context.Context, token string, pm mgclients.P
 
 	switch pm.EntityType {
 	case auth.UserType:
+		if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.DomainType, res.GetDomainId()); err != nil {
+			return mgclients.ClientsPage{}, err
+		}
 		pm.EntityID = auth.EncodeDomainUserID(res.GetDomainId(), pm.EntityID)
-		return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), auth.ViewPermission, auth.DomainType, res.GetDomainId(), pm)
+		return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), pm)
+
 	case auth.GroupType:
+		if _, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, pm.EntityID); err != nil {
+			return mgclients.ClientsPage{}, err
+		}
 		pm.Permission = auth.GroupRelation
-		return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), auth.ViewPermission, auth.GroupType, pm.EntityID, pm)
+		return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), pm)
+
 	case "":
 		_, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.DomainType, res.GetDomainId())
 		switch {
 		case err == nil:
 			pm.Domain = res.GetDomainId()
 		default:
+			// If domain is disabled , then this authorization will fail for all non-admin domain users
+			if _, err := svc.authorize(ctx, "", auth.UserType, auth.UsersKind, res.GetId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId()); err != nil {
+				return mgclients.ClientsPage{}, err
+			}
 			pm.EntityType = auth.UserType
 			pm.EntityID = res.GetId()
-			return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), auth.MembershipPermission, auth.DomainType, res.GetDomainId(), pm)
+			return svc.listEntityThings(ctx, res.GetId(), res.GetDomainId(), pm)
 		}
+
 	default:
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, fmt.Errorf("invalid entity type %s", pm.EntityType))
 	}
+
 	return svc.listThings(ctx, res.GetId(), pm)
 }
 
-func (svc service) listEntityThings(ctx context.Context, userID, domainID, permission, objectType, object string, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	// If domain is disabled , then this authorization will fail for all non-admin domain users
-	if _, err := svc.authorize(ctx, domainID, auth.UserType, auth.UsersKind, userID, permission, objectType, object); err != nil {
-		return mgclients.ClientsPage{}, err
-	}
-
+func (svc service) listEntityThings(ctx context.Context, userID, domainID string, pm mgclients.Page) (mgclients.ClientsPage, error) {
 	thingIDs, err := svc.listThingIDs(ctx, domainID, pm.EntityType, pm.EntityID, pm.Permission)
 	if err != nil {
 		return mgclients.ClientsPage{}, err

@@ -428,8 +428,6 @@ func TestListClients(t *testing.T) {
 		retrieveAllResponse     mgclients.ClientsPage
 		listPermissionsResponse *magistrala.ListPermissionsRes
 		response                mgclients.ClientsPage
-		id                      string
-		size                    uint64
 		identifyErr             error
 		authorizeErr            error
 		retrieveAllErr          error
@@ -483,7 +481,6 @@ func TestListClients(t *testing.T) {
 		},
 		{
 			desc: "list all clients as non admin with empty domain id",
-			id:   nonAdminID,
 			page: mgclients.Page{
 				Offset:    0,
 				Limit:     100,
@@ -545,14 +542,14 @@ func TestListClients(t *testing.T) {
 			ObjectType:  authsvc.DomainType,
 			Object:      tc.identifyResponse.DomainId,
 		}).Return(tc.authorizeResponse, tc.authorizeErr)
-		searchClientsCall := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
+		retrieveAllCall := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
 		listPermissionsCall := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 		page, err := svc.ListClients(context.Background(), tc.token, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		repoCall.Unset()
 		authorizeCall.Unset()
-		searchClientsCall.Unset()
+		retrieveAllCall.Unset()
 		listPermissionsCall.Unset()
 	}
 
@@ -565,16 +562,13 @@ func TestListClients(t *testing.T) {
 		authorizeResponse       *magistrala.AuthorizeRes
 		domainCallResponse      *magistrala.AuthorizeRes
 		listObjectsResponse     *magistrala.ListObjectsRes
-		listObjectsResponse1    *magistrala.ListObjectsRes
 		retrieveAllResponse     mgclients.ClientsPage
 		listPermissionsResponse *magistrala.ListPermissionsRes
 		response                mgclients.ClientsPage
-		size                    uint64
 		identifyErr             error
 		authorizeErr            error
 		domainCallErr           error
 		listObjectsErr          error
-		listObjectsErr1         error
 		retrieveAllErr          error
 		listPermissionsErr      error
 		err                     error
@@ -589,11 +583,10 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: false},
-			domainCallResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
-			listObjectsResponse1: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			domainCallResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -703,7 +696,6 @@ func TestListClients(t *testing.T) {
 			Object:      tc.identifyResponse.GetDomainId(),
 		}).Return(tc.authorizeResponse, tc.authorizeErr)
 		domainCall := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			Domain:      tc.identifyResponse.GetDomainId(),
 			SubjectType: authsvc.UserType,
 			SubjectKind: authsvc.UsersKind,
 			Subject:     tc.identifyResponse.GetId(),

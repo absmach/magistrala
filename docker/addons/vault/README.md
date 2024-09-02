@@ -45,43 +45,23 @@ When the Vault service is started, some initialization steps need to be done to 
 
 ## Setup
 
-The following scripts are provided, which work on the running Vault service in Docker.
+The following scripts are provided, which work on the running Vault service from within the `docker/addons/vault/scripts` directory.
 
 ### 1. `vault_init.sh`
 
-Calls `vault operator init` to perform the initial vault initialization and generates a `docker/addons/vault/data/secrets` file which contains the Vault unseal keys and root tokens.
-
-Example contents for `data/secrets`:
-
-```bash
-Unseal Key 1: Ay0YZecYJ2HVtNtXfPootXK5LtF+JZoDmBb7IbbYdLBI
-Unseal Key 2: P6hb7x2cglv0p61jdLyNE3+d44cJUOFaDt9jHFDfr8Df
-Unseal Key 3: zSBfDHzUiWoOzXKY1pnnBqKO8UD2MDLuy8DNTxNtEBFy
-Unseal Key 4: 5oJuDDuMI0I8snaw/n4VLNpvndvvKi6JlkgOxuWXqMSz
-Unseal Key 5: ZhsUkk2tXBYEcWgz4WUCHH9rocoW6qZoiARWlkE5Epi5
-
-Initial Root Token: s.V2hdd00P4bHtUQnoWZK2hSaS
-
-Vault initialized with 5 key shares and a key threshold of 3. Please securely
-distribute the key shares printed above. When the Vault is re-sealed,
-restarted, or stopped, you must supply at least 3 of these keys to unseal it
-before it can start servicing requests.
-
-Vault does not store the generated master key. Without at least 3 key to
-reconstruct the master key, Vault will remain permanently sealed!
-
-It is possible to generate new unseal keys, provided you have a quorum of
-existing unseal keys shares. See "vault operator rekey" for more information.
-bash-4.4
-
-Use 3 out of five keys presented and put it into .env file and than start the composition again Vault should be in unsealed state ( take a note that this is not recommended in terms of security, this is deployment for development) A real production deployment can use Vault auto unseal mode where vault gets unseal keys from some 3rd party KMS ( on AWS for example)
-```
+Calls `vault operator init` to perform the initial vault initialization and generates a `docker/addons/vault/scripts/data/secrets` file which contains the Vault unseal keys and root tokens.
 
 ### 2. `vault_copy_env.sh`
 
-After first step, the corresponding Vault environment variables (`MG_VAULT_TOKEN`, `MG_VAULT_UNSEAL_KEY_1`, `MG_VAULT_UNSEAL_KEY_2`, `MG_VAULT_UNSEAL_KEY_3`) should be updated in `.env` file.
+After the initial setup, the Vault-related environment variables (`MG_VAULT_TOKEN`, `MG_VAULT_UNSEAL_KEY_1`, `MG_VAULT_UNSEAL_KEY_2`, `MG_VAULT_UNSEAL_KEY_3`) need to be updated in the `.env` file.
 
-`vault_copy_env.sh` scripts copies values from `docker/addons/vault/data/secrets` file and update environmental variables `MG_VAULT_TOKEN`, `MG_VAULT_UNSEAL_KEY_1`, `MG_VAULT_UNSEAL_KEY_2`, `MG_VAULT_UNSEAL_KEY_3` present in `.env` file.
+The `vault_copy_env.sh` script automatically retrieves these values from the `docker/addons/vault/scripts/data/secrets` file and updates the corresponding environment variables in your `.env` file.
+
+Example:
+
+```sh
+Vault environment variables have been successfully set in ~/magistrala/docker/.env
+```
 
 ### 3. `vault_unseal.sh`
 
@@ -93,29 +73,169 @@ The unseal environment variables need to be set in `.env` for the script to work
 
 This script should not be necessary to run after the initial setup, since the Vault service unseals itself when starting the container.
 
-### 4. `vault_set_pki.sh`
+Example output:
 
-This script is used to generate the root certificate, intermediate certificate and HTTPS server certificate.  
-All generate certificates, keys and CSR by `vault_set_pki.sh` will be present at `docker/addons/vault/data`.  
+```bash
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       5
+Threshold          3
+Unseal Progress    1/3
+Unseal Nonce       4c248cc8-e9f5-055e-319b-00ee06f998a0
+Version            1.15.4
+Build Date         2023-12-04T17:45:28Z
+Storage Type       file
+HA Enabled         false
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       5
+Threshold          3
+Unseal Progress    2/3
+Unseal Nonce       4c248cc8-e9f5-055e-319b-00ee06f998a0
+Version            1.15.4
+Build Date         2023-12-04T17:45:28Z
+Storage Type       file
+HA Enabled         false
+Key             Value
+---             -----
+Seal Type       shamir
+Initialized     true
+Sealed          false
+Total Shares    5
+Threshold       3
+Unseal Progress 3/3
+Unseal Nonce    4c248cc8-e9f5-055e-319b-00ee06f998a0
+Version         1.15.4
+Build Date      2023-12-04T17:45:28Z
+Storage Type    file
+HA Enabled      false
+```
 
-The parameters required for generating certificate are obtained from the environment variables which are loaded from `docker/.env`.  
+### 4. vault_set_pki.sh
 
-Environmental variables starting with `MG_VAULT_PKI` in `docker/.env` file are used by `vault_set_pki.sh` to generate root CA.  
-Environmental variables starting with`MG_VAULT_PKI_INT` in `docker/.env` file are used by `vault_set_pki.sh` to generate intermediate CA.  
+The `vault_set_pki.sh` script is responsible for generating the root certificate, intermediate certificate, and HTTPS server certificate. All generated certificates, keys, and CSR files are stored in the `docker/addons/vault/scripts/data` directory.
 
-Passing command line args `--skip-server-cert` to `vault_set_pki.sh` will skip server certificate role & process of generation of server certificate & key.
+The script pulls necessary parameters for certificate generation from environment variables, which are, by default, loaded from `docker/.env`.
 
-### 5. `vault_create_approle.sh`  
+- Environment variables prefixed with `MG_VAULT_PKI` in the `docker/.env` file are used for generating the root CA.
+- Environment variables prefixed with `MG_VAULT_PKI_INT` are used for generating the intermediate CA.
 
-This script is used to enable app role authorization in Vault. Certs service used the approle credentials to issue, revoke things certificate from vault intermedate CA.  
+To skip generating the server certificate and key, you can pass the `--skip-server-cert` option to the script:
 
-`vault_create_approle.sh` script by default tries to enable auth approle.  
-If approle is already enabled in vault, then use args `--skip-enable-approle` to skip enable auth approle step.  
-To skip enable auth approle step use the following  `vault_create_approle.sh   --skip-enable-approle`
+```sh
+./vault_set_pki.sh --skip-server-cert
+```
+
+#### Troubleshooting:
+
+If you encounter the following error:
+
+```sh
+jq command could not be found, please install it and try again.
+```
+
+Install `jq` using:
+
+```sh
+sudo apt-get update && sudo apt-get install -y jq
+```
+
+After installing `jq`, rerun the script.
+
+### 5. `vault_create_approle.sh`
+
+This script enables AppRole authorization in Vault. The certs service uses these AppRole credentials to issue and revoke certificates from the Vault intermediate CA.
+
+Example output:
+
+```sh
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                <token_value>
+token_accessor       i6YVeKh4wQ4e0Aj0ONiyGw1Z
+token_duration       ∞
+token_renewable      false
+token_policies       ["root"]
+identity_policies    []
+policies             ["root"]
+Creating new policy for AppRole
+Successfully copied 2.56kB to magistrala-vault:/vault/magistrala_things_certs_issue.hcl
+Success! Uploaded policy: magistrala_things_certs_issue
+Enabling AppRole
+Success! Enabled approle auth method at: approle/
+Deleting old AppRole
+Success! Data deleted (if it existed) at: auth/approle/role/magistrala_things_certs_issuer
+Creating new AppRole
+Success! Data written to: auth/approle/role/magistrala_things_certs_issuer
+Writing custom role ID
+Key        Value
+---        -----
+role_id    f23942b3-62b9-7456-784f-220ca3f703b9
+Success! Data written to: auth/approle/role/magistrala_things_certs_issuer/role-id
+Writing custom secret
+Key                   Value
+---                   -----
+secret_id             61d5a30f-634c-6027-f5b6-4934e6fc49b2
+secret_id_accessor    1d744f6e-e0c2-5431-a87a-2b23fde584a7
+secret_id_num_uses    0
+secret_id_ttl         0s
+Testing custom role ID and secret by logging in
+Key                     Value
+---                     -----
+token                   <token_value>
+token_accessor          9cuwS4mrLHKhJQMv0pl9Bbg9
+token_duration          1h
+token_renewable         true
+token_policies          ["default" "magistrala_things_certs_issue"]
+identity_policies       []
+policies                ["default" "magistrala_things_certs_issue"]
+token_meta_role_name    magistrala_things_certs_issuer
+```
+
+By default, the `vault_create_approle.sh` script tries to enable the AppRole authentication method. Certs service uses the approle credentials to issue and revoke things certificate from vault intermedate CA. If AppRole is already enabled, you can skip this step by passing the `--skip-enable-approle` argument:
+
+```sh
+./vault_create_approle.sh --skip-enable-approle
+```
 
 ### 6. `vault_copy_certs.sh`
 
-This scripts copies the necessary certificates and keys from `docker/addons/vault/data` to the `docker/ssl/certs` folder.
+This script copies the required certificates and keys from `docker/addons/vault/scripts/data` to the `docker/ssl/certs` folder.
+
+Example output:
+
+```bash
+Copying certificate files
+'data/localhost.crt' -> '~/Documents/magistrala/docker/ssl/certs/magistrala-server.crt'
+'data/localhost.key' -> '~/Documents/magistrala/docker/ssl/certs/magistrala-server.key'
+'data/mg_int.key' -> '~/Documents/magistrala/docker/ssl/certs/ca.key'
+'data/mg_int_bundle.crt' -> '~/Documents/magistrala/docker/ssl/certs/ca.crt'
+```
+
+## Custom `.env` Path Support
+
+Vault scripts support specifying a custom `.env` file path using the `--env-file` argument. If this argument is not provided, the scripts will use the default `.env` file located at `docker/.env`.
+
+To use a different `.env` file, include the `--env-file` argument followed by the path to your `.env` file when running the Vault scripts. Below are examples of how to execute each script with a custom `.env` file path:
+
+```bash
+./vault_init.sh --env-file /custom/path/.env
+./vault_copy_env.sh --env-file /custom/path/.env
+./vault_unseal.sh --env-file /custom/path/.env
+./vault_set_pki.sh --env-file /custom/path/.env
+./vault_create_approle.sh --env-file /custom/path/.env
+./vault_copy_certs.sh --env-file /custom/path/.env
+```
 
 ## Hashicorp Cloud Platform (HCP) Vault
 
@@ -124,7 +244,7 @@ Requirement: [VAULT CLI](https://developer.hashicorp.com/vault/tutorials/getting
 
 - Replace the environmental variable `MG_VAULT_ADDR` in `docker/.env` with HCP Vault address.
 - Replace the environmental variable `MG_VAULT_TOKEN` in `docker/.env` with HCP Vault Admin token.
-- Run script `vault_set_pki.sh` and   `vault_create_approle.sh`.
+- Run script `vault_set_pki.sh` and `vault_create_approle.sh`.
 - Optional step, run script `vault_copy_certs.sh` to copy certificates to magistrala default path.
 
 ## Vault CLI

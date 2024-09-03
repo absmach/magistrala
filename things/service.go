@@ -532,6 +532,59 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	}, nil
 }
 
+func (svc service) VerifyConnectionsWithAuth(ctx context.Context, token string, thingIDs, groupIDs []string) (mgclients.ConnectionsPage, error) {
+	res, err := svc.identify(ctx, token)
+	if err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+
+	eCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	g, _ := errgroup.WithContext(eCtx)
+
+	for _, thID := range thingIDs {
+		thID := thID
+		g.Go(func() error {
+			_, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, thID)
+			return err
+		})
+	}
+
+	for _, grpID := range groupIDs {
+		grpID := grpID
+		g.Go(func() error {
+			_, err := svc.authorize(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, grpID)
+			return err
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+	resp, err := svc.VerifyConnections(ctx, thingIDs, groupIDs)
+	if err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+
+	cs := make([]mgclients.ConnectionStatus, len(resp.Connections))
+	for i, c := range resp.Connections {
+		st := mgclients.Disconnected
+		if c.Status == mgclients.Connected {
+			st = mgclients.Connected
+		}
+		cs[i] = mgclients.ConnectionStatus{
+			ThingId:   c.ThingId,
+			ChannelId: c.ChannelId,
+			Status:    st,
+		}
+	}
+
+	return mgclients.ConnectionsPage{
+		Status:      resp.Status,
+		Connections: cs,
+	}, nil
+}
+
 func (svc service) Identify(ctx context.Context, key string) (string, error) {
 	id, err := svc.clientCache.ID(ctx, key)
 	if err == nil {
@@ -547,6 +600,74 @@ func (svc service) Identify(ctx context.Context, key string) (string, error) {
 	}
 
 	return client.ID, nil
+}
+
+func (svc service) VerifyConnections(ctx context.Context, thingIds, channelIds []string) (mgclients.ConnectionsPage, error) {
+	totalConnectionsCnt := len(channelIds) * len(thingIds)
+	g, ctx := errgroup.WithContext(ctx)
+
+	connections := make([]mgclients.ConnectionStatus, 0, totalConnectionsCnt)
+
+	for _, th := range thingIds {
+		for _, ch := range channelIds {
+			func(thing, channel string) {
+				g.Go(func() error {
+					authReq := &magistrala.AuthorizeReq{
+						Subject:     channel,
+						SubjectType: auth.GroupType,
+						Permission:  auth.GroupRelation,
+						Object:      thing,
+						ObjectType:  auth.ThingType,
+					}
+
+					_, err := svc.auth.Authorize(ctx, authReq)
+					var status mgclients.State
+					switch {
+					case err == nil:
+						status = mgclients.Connected
+					case errors.Contains(err, svcerr.ErrAuthorization):
+						status = mgclients.Disconnected
+					default:
+						return errors.Wrap(svcerr.ErrMalformedEntity, err)
+					}
+
+					connections = append(connections, mgclients.ConnectionStatus{
+						ThingId:   thing,
+						ChannelId: channel,
+						Status:    status,
+					})
+
+					return nil
+				})
+			}(th, ch)
+		}
+	}
+
+	if err := g.Wait(); err != nil {
+		return mgclients.ConnectionsPage{}, err
+	}
+
+	totalConnectedCnt := 0
+	for _, conn := range connections {
+		if conn.Status == 1 {
+			totalConnectedCnt++
+		}
+	}
+
+	var status mgclients.AllState
+	switch {
+	case totalConnectedCnt == totalConnectionsCnt:
+		status = mgclients.AllConnectedState
+	case totalConnectedCnt == 0:
+		status = mgclients.AllDisconnectedState
+	default:
+		status = mgclients.PartConnectedState
+	}
+
+	return mgclients.ConnectionsPage{
+		Status:      status,
+		Connections: connections,
+	}, nil
 }
 
 func (svc service) identify(ctx context.Context, token string) (*magistrala.IdentityRes, error) {

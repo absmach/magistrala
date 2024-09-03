@@ -50,7 +50,7 @@ var (
 	sum float64 = 42
 )
 
-func newServer(repo *mocks.MessageRepository, ac *authmocks.AuthClient, tc *thmocks.ThingAuthzService) *httptest.Server {
+func newServer(repo *mocks.MessageRepository, ac *authmocks.AuthClient, tc *thmocks.AuthzClient) *httptest.Server {
 	mux := api.MakeHandler(repo, ac, tc, svcName, instanceID)
 	return httptest.NewServer(mux)
 }
@@ -130,7 +130,7 @@ func TestReadAll(t *testing.T) {
 
 	repo := new(mocks.MessageRepository)
 	auth := new(authmocks.AuthClient)
-	tauth := new(thmocks.ThingAuthzService)
+	tauth := new(thmocks.AuthzClient)
 	ts := newServer(repo, auth, tauth)
 	defer ts.Close()
 

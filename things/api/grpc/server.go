@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/things"
+	"github.com/absmach/magistrala/things/api/http"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,7 +22,8 @@ var _ magistrala.AuthzServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
 	magistrala.UnimplementedAuthzServiceServer
-	authorize kitgrpc.Handler
+	authorize         kitgrpc.Handler
+	verifyConnections kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -31,6 +33,11 @@ func NewServer(svc things.Service) magistrala.AuthzServiceServer {
 			(authorizeEndpoint(svc)),
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
+		),
+		verifyConnections: kitgrpc.NewServer(
+			(verifyConnectionsEndpoint(svc)),
+			decodeVerifyConnectionsRequest,
+			encodeVerifyConnectionsResponse,
 		),
 	}
 }
@@ -53,6 +60,39 @@ func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{
 	return &magistrala.AuthorizeRes{Authorized: res.authorized, Id: res.id}, nil
 }
 
+func (s *grpcServer) VerifyConnections(ctx context.Context, req *magistrala.VerifyConnectionsReq) (*magistrala.VerifyConnectionsRes, error) {
+	_, res, err := s.verifyConnections.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*magistrala.VerifyConnectionsRes), nil
+}
+
+func decodeVerifyConnectionsRequest(_ context.Context, grpcreq interface{}) (interface{}, error) {
+	req := grpcreq.(*magistrala.VerifyConnectionsReq)
+	uniqueThings := http.GetUniqueValues(req.ThingIds)
+	uniqueChannels := http.GetUniqueValues(req.ChannelIds)
+	req.ThingIds = uniqueThings
+	req.ChannelIds = uniqueChannels
+	return req, nil
+}
+
+func encodeVerifyConnectionsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(verifyConnectionsRes)
+	connections := []*magistrala.ConnStatus{}
+	for _, conn := range res.Connections {
+		connections = append(connections, &magistrala.ConnStatus{
+			ThingId:   conn.ThingId,
+			ChannelId: conn.ChannelId,
+			Status:    conn.Status,
+		})
+	}
+	return &magistrala.VerifyConnectionsRes{
+		Status:            res.Status,
+		ConnectionsStatus: connections,
+	}, nil
+}
+
 func encodeError(err error) error {
 	switch {
 	case errors.Contains(err, nil):
@@ -63,7 +103,9 @@ func encodeError(err error) error {
 		err == apiutil.ErrMissingMemberType,
 		err == apiutil.ErrMissingPolicySub,
 		err == apiutil.ErrMissingPolicyObj,
-		err == apiutil.ErrMalformedPolicyAct:
+		err == apiutil.ErrMalformedPolicyAct,
+		err == apiutil.ErrMissingThingIDs,
+		err == apiutil.ErrMissingChannelIDs:
 		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, auth.ErrKeyExpired),

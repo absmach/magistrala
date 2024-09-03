@@ -162,7 +162,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidTimeFormat),
 		errors.Contains(err, svcerr.ErrSearch),
 		errors.Contains(err, apiutil.ErrEmptySearchQuery),
-		errors.Contains(err, apiutil.ErrLenSearchQuery):
+		errors.Contains(err, apiutil.ErrLenSearchQuery),
+		errors.Contains(err, apiutil.ErrMissingThingIDs),
+		errors.Contains(err, apiutil.ErrMissingChannelIDs):
 		err = unwrap(err)
 		w.WriteHeader(http.StatusBadRequest)
 

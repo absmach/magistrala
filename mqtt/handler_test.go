@@ -11,13 +11,13 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt"
 	"github.com/absmach/magistrala/mqtt/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -450,12 +450,12 @@ func TestDisconnect(t *testing.T) {
 	}
 }
 
-func newHandler() (session.Handler, *authmocks.AuthClient, *mocks.EventStore) {
+func newHandler() (session.Handler, *thmocks.AuthzClient, *mocks.EventStore) {
 	logger, err := mglog.New(&logBuffer, "debug")
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}
-	auth := new(authmocks.AuthClient)
+	tauth := new(thmocks.AuthzClient)
 	eventStore := new(mocks.EventStore)
-	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, auth), auth, eventStore
+	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, tauth), tauth, eventStore
 }

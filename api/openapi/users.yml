@@ -397,12 +397,13 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-    /users/search:
+  /users/search:
     get:
       operationId: searchUsers
       summary: Search users
       description: |
-        Search users by name and identity.
+        Search users by name and ID when logged in as a normal user.
+        As a superadmin, search by name, identity, and ID.
       tags:
         - Users
       parameters:
@@ -1062,6 +1063,7 @@ paths:
       summary: Retrieves service health check info.
       tags:
         - health
+      security: []
       responses:
         "200":
           $ref: "#/components/responses/HealthRes"

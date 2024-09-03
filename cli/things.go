@@ -318,6 +318,39 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
+		Use:   "connections-verify <JSON_thing_ids> <JSON_channel_ids> <user_auth_token>",
+		Short: "Verifies Thing-Channel Connections",
+		Long: "Check the connection status between specified things and channels\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli verify <JSON_thing_ids> <JSON_channel_ids> <user_auth_token>",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 3 {
+				logUsageCmd(*cmd, cmd.Use)
+				return
+			}
+			conns := mgxsdk.Connections{}
+			if err := json.Unmarshal([]byte(args[0]), &conns.ThingIDs); err != nil {
+				logErrorCmd(*cmd, err)
+				return
+			}
+			if err := json.Unmarshal([]byte(args[1]), &conns.ChannelIDs); err != nil {
+				logErrorCmd(*cmd, err)
+				return
+			}
+			pm := mgxsdk.PageMetadata{
+				ThingIDs:   conns.ThingIDs,
+				ChannelIDs: conns.ChannelIDs,
+			}
+			cp, err := sdk.VerifyConnections(pm, args[2])
+			if err != nil {
+				logErrorCmd(*cmd, err)
+				return
+			}
+
+			logJSONCmd(*cmd, cp)
+		},
+	},
+	{
 		Use:   "users <thing_id> <user_auth_token>",
 		Short: "List users",
 		Long: "List users of a thing\n" +
@@ -346,9 +379,9 @@ var cmdThings = []cobra.Command{
 // NewThingsCmd returns things command.
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "things [create | get | update | delete | share | connect | disconnect | connections | not-connected | users ]",
+		Use:   "things [create | get | update | delete | share | connect | disconnect | connections | not-connected | users | connections-verify]",
 		Short: "Things management",
-		Long:  `Things management: create, get, update, delete or share Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
+		Long:  `Things management: create, get, update, delete or share Thing, connect or disconnect Thing from Channel, get the list of Channels connected to or disconnected from a Thing and verify connections between things and channels`,
 	}
 
 	for i := range cmdThings {

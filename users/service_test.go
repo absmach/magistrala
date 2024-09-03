@@ -479,106 +479,292 @@ func TestViewClient(t *testing.T) {
 func TestListClients(t *testing.T) {
 	svc, cRepo, auth, _ := newService(true)
 
+	var clients, strippedClients, permClients []mgclients.Client
+	var policies []string
+	for i := 0; i < 10; i++ {
+		cl := mgclients.Client{
+			ID:   testsutil.GenerateUUID(t),
+			Name: fmt.Sprintf("client%d", i),
+		}
+		strippedClients = append(strippedClients, cl)
+		cl.Domain = validID
+		cl.Tags = []string{"tag1", "tag2"}
+		cl.Credentials = mgclients.Credentials{Identity: fmt.Sprintf("client%d", i), Secret: secret}
+		cl.Metadata = validCMetadata
+		policies = append(policies, authsvc.EncodeDomainUserID(cl.Domain, cl.ID))
+		clients = append(clients, cl)
+		cl.Permissions = []string{"view", "edit"}
+		permClients = append(permClients, cl)
+	}
+
 	cases := []struct {
-		desc                string
-		token               string
-		page                mgclients.Page
-		identifyResponse    *magistrala.IdentityRes
-		authorizeResponse   *magistrala.AuthorizeRes
-		retrieveAllResponse mgclients.ClientsPage
-		response            mgclients.ClientsPage
-		size                uint64
-		identifyErr         error
-		authorizeErr        error
-		retrieveAllErr      error
-		superAdminErr       error
-		err                 error
+		desc                    string
+		token                   string
+		pageMeta                mgclients.Page
+		identifyResponse        *magistrala.IdentityRes
+		platformAuthResponse    *magistrala.AuthorizeRes
+		domainAuthResponse      *magistrala.AuthorizeRes
+		retrieveAllResponse     mgclients.ClientsPage
+		listAllSubjectsResponse *magistrala.ListSubjectsRes
+		listPermissionsResponse *magistrala.ListPermissionsRes
+		response                mgclients.ClientsPage
+		size                    uint64
+		identifyErr             error
+		authorizeErr            error
+		retrieveAllErr          error
+		superAdminErr           error
+		listAllSubjectsErr      error
+		listPermissionsErr      error
+		platformAuthErr         error
+		domainAuthErr           error
+		err                     error
 	}{
 		{
-			desc: "list clients as admin successfully",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:  &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			desc:                 "list clients as super admin successfully",
+			pageMeta:             mgclients.Page{},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
-					Total: 1,
+					Total: uint64(len(clients)),
 				},
-				Clients: []mgclients.Client{client},
+				Clients: clients,
 			},
 			response: mgclients.ClientsPage{
 				Page: mgclients.Page{
-					Total: 1,
+					Total: uint64(len(clients)),
 				},
-				Clients: []mgclients.Client{client},
+				Clients: clients,
 			},
-			token: validToken,
-			err:   nil,
+			err: nil,
 		},
 		{
-			desc: "list clients as admin with invalid token",
-			page: mgclients.Page{
-				Total: 1,
+			desc: "list clients as super admin with entity type and id",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
 			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			err: nil,
+		},
+		{
+			desc: "list clients as super admin with entity type and id with list perms",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+				ListPerms:  true,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			listPermissionsResponse: &magistrala.ListPermissionsRes{
+				Permissions: []string{"view", "edit"},
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: permClients,
+			},
+			err: nil,
+		},
+		{
+			desc: "list clients as super admin with entity type with empty list all subjects response",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:      &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse:     mgclients.ClientsPage{},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					EntityType: authsvc.ThingType,
+					EntityID:   validID,
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "list clients as super admin with entity type and id with list perms and failed to list permissions",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+				ListPerms:  true,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listPermissionsErr:      svcerr.ErrAuthorization,
+			err:                     svcerr.ErrAuthorization,
+		},
+		{
+			desc:                 "list clients as super admin with failed to retrieve clients",
+			pageMeta:             mgclients.Page{},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse:  mgclients.ClientsPage{},
+			retrieveAllErr:       repoerr.ErrNotFound,
+			err:                  svcerr.ErrViewEntity,
+		},
+		{
+			desc: "list clients as non super admin with entity type and id",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
+				Policies: policies,
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: strippedClients,
+			},
+			err: nil,
+		},
+		{
+			desc: "list clients as non super admin with entity type and id with wrong ID",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			response:             mgclients.ClientsPage{},
+			err:                  svcerr.ErrAuthorization,
+		},
+		{
+			desc: "list clients as non super admin with entity type and id with wrong ID",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			response:             mgclients.ClientsPage{},
+			domainAuthErr:        svcerr.ErrAuthorization,
+			err:                  svcerr.ErrAuthorization,
+		},
+		{
+			desc: "list clients as non super admin with entity type and id with failed to list all subjects",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   validID,
+			},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainAuthResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			retrieveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			listAllSubjectsErr:      svcerr.ErrAuthorization,
+			err:                     svcerr.ErrViewEntity,
+		},
+		{
+			desc:             "list clients with invalid token",
+			pageMeta:         mgclients.Page{},
 			identifyResponse: &magistrala.IdentityRes{},
 			identifyErr:      svcerr.ErrAuthentication,
 			err:              svcerr.ErrAuthentication,
 		},
 		{
-			desc: "list clients as admin with invalid ID",
-			page: mgclients.Page{
-				Total: 1,
+			desc: "list clients as a superadmin with entity type and empty enty id",
+			pageMeta: mgclients.Page{
+				EntityType: authsvc.ThingType,
+				EntityID:   "",
 			},
-			identifyResponse:  &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			token:             validToken,
-			authorizeErr:      svcerr.ErrAuthorization,
-			err:               svcerr.ErrAuthorization,
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:                  svcerr.ErrMalformedEntity,
 		},
 		{
-			desc: "list clients as admin with failed to retrieve clients",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:    &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			retrieveAllResponse: mgclients.ClientsPage{},
-			token:               validToken,
-			retrieveAllErr:      repoerr.ErrNotFound,
-			err:                 svcerr.ErrViewEntity,
-		},
-		{
-			desc: "list clients as admin with failed check on super admin",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:  &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			token:             validToken,
-			superAdminErr:     svcerr.ErrAuthorization,
-			err:               svcerr.ErrAuthorization,
-		},
-		{
-			desc: "list clients as normal user with failed to retrieve clients",
-			page: mgclients.Page{
-				Total: 1,
-			},
-			identifyResponse:    &magistrala.IdentityRes{UserId: client.ID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
-			retrieveAllResponse: mgclients.ClientsPage{},
-			token:               validToken,
-			retrieveAllErr:      repoerr.ErrNotFound,
-			err:                 svcerr.ErrAuthorization,
+			desc:                 "list clients as non superadmin with empty entity type and id",
+			pageMeta:             mgclients.Page{},
+			identifyResponse:     &magistrala.IdentityRes{UserId: client.ID, DomainId: validID, Id: authsvc.EncodeDomainUserID(validID, client.ID)},
+			platformAuthResponse: &magistrala.AuthorizeRes{Authorized: false},
+			err:                  svcerr.ErrMalformedEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
+		platformCall := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     client.ID,
+			Permission:  authsvc.AdminPermission,
+			ObjectType:  authsvc.PlatformType,
+			Object:      authsvc.MagistralaObject,
+		}).Return(tc.platformAuthResponse, tc.platformAuthErr)
+		domainCall := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			Domain:      validID,
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     tc.identifyResponse.Id,
+			Permission:  authsvc.ViewPermission,
+			ObjectType:  authsvc.ThingType,
+			Object:      validID,
+		}).Return(tc.domainAuthResponse, tc.domainAuthErr)
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.superAdminErr)
 		repoCall1 := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
-		page, err := svc.ListClients(context.Background(), tc.token, tc.page)
+		authCall3 := auth.On("ListAllSubjects", context.Background(), mock.Anything).Return(tc.listAllSubjectsResponse, tc.listAllSubjectsErr)
+		authCall4 := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
+		page, err := svc.ListClients(context.Background(), tc.token, tc.pageMeta)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		if tc.err == nil {
@@ -586,7 +772,10 @@ func TestListClients(t *testing.T) {
 			assert.True(t, ok, fmt.Sprintf("RetrieveAll was not called on %s", tc.desc))
 		}
 		authCall.Unset()
-		authCall1.Unset()
+		platformCall.Unset()
+		domainCall.Unset()
+		authCall3.Unset()
+		authCall4.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
 	}
@@ -595,17 +784,15 @@ func TestListClients(t *testing.T) {
 func TestSearchUsers(t *testing.T) {
 	svc, cRepo, auth, _ := newService(true)
 	cases := []struct {
-		desc               string
-		token              string
-		page               mgclients.Page
-		identifyResp       *magistrala.IdentityRes
-		authorizeResponse  *magistrala.AuthorizeRes
-		response           mgclients.ClientsPage
-		responseErr        error
-		identifyErr        error
-		authorizeErr       error
-		checkSuperAdminErr error
-		err                error
+		desc              string
+		token             string
+		page              mgclients.Page
+		identifyResp      *magistrala.IdentityRes
+		authorizeResponse *magistrala.AuthorizeRes
+		response          mgclients.ClientsPage
+		responseErr       error
+		identifyErr       error
+		err               error
 	}{
 		{
 			desc:  "search clients with valid token",
@@ -623,7 +810,7 @@ func TestSearchUsers(t *testing.T) {
 			token:       inValidToken,
 			page:        mgclients.Page{Offset: 0, Name: "clientname", Limit: 100},
 			response:    mgclients.ClientsPage{},
-			responseErr: svcerr.ErrAuthentication,
+			identifyErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
 		{
@@ -649,27 +836,29 @@ func TestSearchUsers(t *testing.T) {
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
 		},
 		{
-			desc:               "search clients as a normal user",
-			token:              validToken,
-			page:               mgclients.Page{Offset: 0, Identity: "clientidentity", Limit: 100},
-			response:           mgclients.ClientsPage{},
-			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: false},
-			checkSuperAdminErr: svcerr.ErrAuthorization,
-			responseErr:        nil,
+			desc:              "search clients as a normal user",
+			token:             validToken,
+			page:              mgclients.Page{Offset: 0, Identity: "clientidentity", Limit: 100},
+			response:          mgclients.ClientsPage{},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
+			responseErr:       nil,
+		},
+		{
+			desc:        "search clients with repo err",
+			token:       validToken,
+			page:        mgclients.Page{Offset: 0, Identity: "clientidentity", Limit: 100},
+			responseErr: svcerr.ErrViewEntity,
+			err:         svcerr.ErrViewEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResp, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
 		repoCall1 := cRepo.On("SearchClients", context.Background(), mock.Anything).Return(tc.response, tc.responseErr)
 		page, err := svc.SearchUsers(context.Background(), tc.token, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		authCall.Unset()
-		authCall1.Unset()
-		repoCall.Unset()
 		repoCall1.Unset()
 	}
 }
@@ -1758,475 +1947,6 @@ func TestDeleteClient(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 		repoCall4.Unset()
-	}
-}
-
-func TestListMembers(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
-
-	validPolicy := fmt.Sprintf("%s_%s", validID, client.ID)
-	permissionsClient := basicClient
-	permissionsClient.Permissions = []string{"read"}
-
-	cases := []struct {
-		desc                    string
-		token                   string
-		groupID                 string
-		objectKind              string
-		objectID                string
-		page                    mgclients.Page
-		identifyResponse        *magistrala.IdentityRes
-		authorizeReq            *magistrala.AuthorizeReq
-		listAllSubjectsReq      *magistrala.ListSubjectsReq
-		authorizeResponse       *magistrala.AuthorizeRes
-		listAllSubjectsResponse *magistrala.ListSubjectsRes
-		retrieveAllResponse     mgclients.ClientsPage
-		listPermissionsResponse *magistrala.ListPermissionsRes
-		response                mgclients.MembersPage
-		authorizeErr            error
-		listAllSubjectsErr      error
-		retrieveAllErr          error
-		identifyErr             error
-		listPermissionErr       error
-		err                     error
-	}{
-		{
-			desc:                    "list members with no policies successfully of the things kind",
-			token:                   validToken,
-			groupID:                 validID,
-			objectKind:              authsvc.ThingsKind,
-			objectID:                validID,
-			page:                    mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.ThingType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.ThingType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  100,
-				},
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with policies successsfully of the things kind",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.ThingsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.ThingType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.ThingType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
-			retrieveAllResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Members: []mgclients.Client{basicClient},
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with policies successsfully of the things kind with permissions",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.ThingsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read", ListPerms: true},
-			identifyResponse: &magistrala.IdentityRes{UserId: basicClient.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.ThingType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.ThingType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
-			retrieveAllResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Clients: []mgclients.Client{basicClient},
-			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{Permissions: []string{"read"}},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Members: []mgclients.Client{permissionsClient},
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with policies of the things kind with permissionswith failed list permissions",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.ThingsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read", ListPerms: true},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.ThingType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.ThingType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
-			retrieveAllResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
-			response:                mgclients.MembersPage{},
-			listPermissionErr:       svcerr.ErrNotFound,
-			err:                     svcerr.ErrNotFound,
-		},
-		{
-			desc:             "list members with of the things kind with failed to authorize",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.ThingsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.ThingType,
-				Object:      validID,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			err:               svcerr.ErrAuthorization,
-		},
-		{
-			desc:             "list members with of the things kind with failed to list all subjects",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.ThingsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.ThingType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.ThingType,
-			},
-			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsErr:      repoerr.ErrNotFound,
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
-			err:                     repoerr.ErrNotFound,
-		},
-		{
-			desc:             "list members with of the things kind with failed to retrieve all",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.ThingsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.ThingType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.ThingType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
-			retrieveAllResponse: mgclients.ClientsPage{},
-			response:            mgclients.MembersPage{},
-			retrieveAllErr:      repoerr.ErrNotFound,
-			err:                 repoerr.ErrNotFound,
-		},
-		{
-			desc:                    "list members with no policies successfully of the domain kind",
-			token:                   validToken,
-			groupID:                 validID,
-			objectKind:              authsvc.DomainsKind,
-			objectID:                validID,
-			page:                    mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.DomainType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.DomainType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  100,
-				},
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with policies successsfully of the domains kind",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.DomainsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.DomainType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.DomainType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
-			retrieveAllResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Clients: []mgclients.Client{basicClient},
-			},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Members: []mgclients.Client{basicClient},
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with of the domains kind with failed to authorize",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.DomainsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.DomainType,
-				Object:      validID,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			err:               svcerr.ErrAuthorization,
-		},
-		{
-			desc:                    "list members with no policies successfully of the groups kind",
-			token:                   validToken,
-			groupID:                 validID,
-			objectKind:              authsvc.GroupsKind,
-			objectID:                validID,
-			page:                    mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.GroupType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.GroupType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  100,
-				},
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with policies successsfully of the groups kind",
-			token:            validToken,
-			groupID:          validID,
-			objectKind:       authsvc.GroupsKind,
-			objectID:         validID,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{UserId: client.ID},
-			authorizeReq: &magistrala.AuthorizeReq{
-				SubjectType: authsvc.UserType,
-				SubjectKind: authsvc.TokenKind,
-				Subject:     validToken,
-				Permission:  "read",
-				ObjectType:  authsvc.GroupType,
-				Object:      validID,
-			},
-			listAllSubjectsReq: &magistrala.ListSubjectsReq{
-				SubjectType: authsvc.UserType,
-				Permission:  "read",
-				Object:      validID,
-				ObjectType:  authsvc.GroupType,
-			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
-			retrieveAllResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Clients: []mgclients.Client{client},
-			},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  100,
-				},
-				Members: []mgclients.Client{basicClient},
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with invalid token",
-			token:            inValidToken,
-			page:             mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
-			identifyResponse: &magistrala.IdentityRes{},
-			identifyErr:      svcerr.ErrAuthentication,
-			err:              svcerr.ErrAuthentication,
-		},
-	}
-
-	for _, tc := range cases {
-		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), tc.authorizeReq).Return(tc.authorizeResponse, tc.authorizeErr)
-		authCall2 := auth.On("ListAllSubjects", context.Background(), tc.listAllSubjectsReq).Return(tc.listAllSubjectsResponse, tc.listAllSubjectsErr)
-		repoCall := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
-		authCall3 := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionErr)
-
-		page, err := svc.ListMembers(context.Background(), tc.token, tc.objectKind, tc.objectID, tc.page)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
-
-		authCall.Unset()
-		authCall1.Unset()
-		authCall2.Unset()
-		repoCall.Unset()
-		authCall3.Unset()
 	}
 }
 

@@ -197,34 +197,6 @@ func (_m *Service) ListClients(ctx context.Context, token string, pm clients.Pag
 	return r0, r1
 }
 
-// ListMembers provides a mock function with given fields: ctx, token, objectKind, objectID, pm
-func (_m *Service) ListMembers(ctx context.Context, token string, objectKind string, objectID string, pm clients.Page) (clients.MembersPage, error) {
-	ret := _m.Called(ctx, token, objectKind, objectID, pm)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListMembers")
-	}
-
-	var r0 clients.MembersPage
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, clients.Page) (clients.MembersPage, error)); ok {
-		return rf(ctx, token, objectKind, objectID, pm)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, clients.Page) clients.MembersPage); ok {
-		r0 = rf(ctx, token, objectKind, objectID, pm)
-	} else {
-		r0 = ret.Get(0).(clients.MembersPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, clients.Page) error); ok {
-		r1 = rf(ctx, token, objectKind, objectID, pm)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // OAuthCallback provides a mock function with given fields: ctx, client
 func (_m *Service) OAuthCallback(ctx context.Context, client clients.Client) (*magistrala.Token, error) {
 	ret := _m.Called(ctx, client)

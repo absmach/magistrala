@@ -62,27 +62,18 @@ func (req viewProfileReq) validate() error {
 }
 
 type listClientsReq struct {
-	token    string
-	status   mgclients.Status
-	offset   uint64
-	limit    uint64
-	name     string
-	tag      string
-	identity string
-	metadata mgclients.Metadata
-	order    string
-	dir      string
-	id       string
+	token string
+	page  mgclients.Page
 }
 
 func (req listClientsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.limit > maxLimitSize || req.limit < 1 {
+	if req.page.Limit > maxLimitSize || req.page.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
-	if req.dir != "" && (req.dir != api.AscDir && req.dir != api.DescDir) {
+	if req.page.Dir != "" && (req.page.Dir != api.AscDir && req.page.Dir != api.DescDir) {
 		return apiutil.ErrInvalidDirection
 	}
 

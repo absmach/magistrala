@@ -186,9 +186,9 @@ func (_m *Service) Identify(ctx context.Context, key string) (string, error) {
 	return r0, r1
 }
 
-// ListClients provides a mock function with given fields: ctx, token, reqUserID, pm
-func (_m *Service) ListClients(ctx context.Context, token string, reqUserID string, pm clients.Page) (clients.ClientsPage, error) {
-	ret := _m.Called(ctx, token, reqUserID, pm)
+// ListClients provides a mock function with given fields: ctx, token, pm
+func (_m *Service) ListClients(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error) {
+	ret := _m.Called(ctx, token, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListClients")
@@ -196,45 +196,17 @@ func (_m *Service) ListClients(ctx context.Context, token string, reqUserID stri
 
 	var r0 clients.ClientsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, clients.Page) (clients.ClientsPage, error)); ok {
-		return rf(ctx, token, reqUserID, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) (clients.ClientsPage, error)); ok {
+		return rf(ctx, token, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, clients.Page) clients.ClientsPage); ok {
-		r0 = rf(ctx, token, reqUserID, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) clients.ClientsPage); ok {
+		r0 = rf(ctx, token, pm)
 	} else {
 		r0 = ret.Get(0).(clients.ClientsPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, clients.Page) error); ok {
-		r1 = rf(ctx, token, reqUserID, pm)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ListClientsByGroup provides a mock function with given fields: ctx, token, groupID, pm
-func (_m *Service) ListClientsByGroup(ctx context.Context, token string, groupID string, pm clients.Page) (clients.MembersPage, error) {
-	ret := _m.Called(ctx, token, groupID, pm)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListClientsByGroup")
-	}
-
-	var r0 clients.MembersPage
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, clients.Page) (clients.MembersPage, error)); ok {
-		return rf(ctx, token, groupID, pm)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, clients.Page) clients.MembersPage); ok {
-		r0 = rf(ctx, token, groupID, pm)
-	} else {
-		r0 = ret.Get(0).(clients.MembersPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, clients.Page) error); ok {
-		r1 = rf(ctx, token, groupID, pm)
+	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Page) error); ok {
+		r1 = rf(ctx, token, pm)
 	} else {
 		r1 = ret.Error(1)
 	}

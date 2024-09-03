@@ -28,9 +28,6 @@ type Service interface {
 	// ListClients retrieves clients list for a valid auth token.
 	ListClients(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error)
 
-	// ListMembers retrieves everything that is assigned to a group/thing identified by objectID.
-	ListMembers(ctx context.Context, token, objectKind, objectID string, pm clients.Page) (clients.MembersPage, error)
-
 	// SearchClients searches for users with provided filters for a valid auth token.
 	SearchUsers(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error)
 

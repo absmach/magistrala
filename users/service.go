@@ -18,10 +18,12 @@ import (
 )
 
 var (
-	errIssueToken            = errors.New("failed to issue token")
-	errFailedPermissionsList = errors.New("failed to list permissions")
-	errRecoveryToken         = errors.New("failed to generate password recovery token")
-	errLoginDisableUser      = errors.New("failed to login in disabled user")
+	errIssueToken             = errors.New("failed to issue token")
+	errFailedPermissionsList  = errors.New("failed to list permissions")
+	errRecoveryToken          = errors.New("failed to generate password recovery token")
+	errLoginDisableUser       = errors.New("failed to login in disabled user")
+	errMissingEntityID        = errors.New("provide entity id")
+	errMissingEntityTypeAndID = errors.New("provide entity type and id")
 )
 
 type service struct {
@@ -176,20 +178,110 @@ func (svc service) ViewProfile(ctx context.Context, token string) (mgclients.Cli
 }
 
 func (svc service) ListClients(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	userID, err := svc.Identify(ctx, token)
+	res, err := svc.identify(ctx, token)
 	if err != nil {
-		return mgclients.ClientsPage{}, err
-	}
-	if err := svc.checkSuperAdmin(ctx, userID); err != nil {
 		return mgclients.ClientsPage{}, err
 	}
 
-	pm.Role = mgclients.AllRole
-	pg, err := svc.clients.RetrieveAll(ctx, pm)
+	isSuperAdmin := false
+	if err := svc.checkSuperAdmin(ctx, res.GetUserId()); err == nil {
+		isSuperAdmin = true
+	}
+
+	switch pm.EntityType {
+	case auth.ThingType, auth.GroupType, auth.DomainType:
+		if pm.EntityID == "" {
+			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, errMissingEntityID)
+		}
+		return svc.listEntityUsers(ctx, res.GetDomainId(), res.GetId(), isSuperAdmin, pm)
+	default:
+		if !isSuperAdmin {
+			return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrMalformedEntity, errMissingEntityTypeAndID)
+		}
+		return svc.listUsers(ctx, res.GetDomainId(), isSuperAdmin, pm)
+	}
+}
+
+func (svc service) listEntityUsers(ctx context.Context, domainID, userID string, isSuperAdmin bool, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	userIDs, err := svc.listUserIDs(ctx, domainID, userID, pm.EntityType, pm.EntityID, pm.Permission)
+	if err != nil {
+		return mgclients.ClientsPage{}, err
+	}
+	if len(userIDs) == 0 {
+		return mgclients.ClientsPage{Page: pm}, err
+	}
+	pm.IDs = userIDs
+	return svc.listUsers(ctx, domainID, isSuperAdmin, pm)
+}
+
+func (svc service) listUsers(ctx context.Context, domainID string, isSuperAdmin bool, pm mgclients.Page) (mgclients.ClientsPage, error) {
+	usersPage, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
 		return mgclients.ClientsPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	return pg, err
+
+	if !isSuperAdmin {
+		for i, c := range usersPage.Clients {
+			usersPage.Clients[i] = mgclients.Client{ID: c.ID, Name: c.Name}
+		}
+	}
+
+	if pm.ListPerms && len(usersPage.Clients) > 0 && pm.EntityType != "" && pm.EntityID != "" {
+		g, gctx := errgroup.WithContext(ctx)
+
+		for i := range usersPage.Clients {
+			// Copying loop variable "i" to avoid "loop variable captured by func literal"
+			iter := i
+			g.Go(func() error {
+				return svc.retrieveObjectUsersPermissions(gctx, domainID, pm.EntityType, pm.EntityID, &usersPage.Clients[iter])
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			gctx.Done()
+			return mgclients.ClientsPage{}, err
+		}
+	}
+	return usersPage, nil
+}
+
+func (svc service) listUserIDs(ctx context.Context, domainID, reqUserSubject, objectType, objectID, permission string) ([]string, error) {
+	res, err := svc.auth.Authorize(ctx, &magistrala.AuthorizeReq{
+		Domain:      domainID,
+		SubjectType: auth.UserType,
+		SubjectKind: auth.UsersKind,
+		Subject:     reqUserSubject,
+		Permission:  auth.ViewPermission,
+		ObjectType:  objectType,
+		Object:      objectID,
+	})
+	if err != nil {
+		return []string{}, errors.Wrap(svcerr.ErrAuthorization, err)
+	}
+	if !res.GetAuthorized() {
+		return []string{}, svcerr.ErrAuthorization
+	}
+
+	duids, err := svc.auth.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
+		SubjectType: auth.UserType,
+		Permission:  permission,
+		Object:      objectID,
+		ObjectType:  objectType,
+	})
+	if err != nil {
+		return []string{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	if len(duids.Policies) == 0 {
+		return []string{}, nil
+	}
+
+	var userIDs []string
+
+	for _, domainUserID := range duids.Policies {
+		_, userID := auth.DecodeDomainUserID(domainUserID)
+		userIDs = append(userIDs, userID)
+	}
+	return userIDs, nil
 }
 
 func (svc service) SearchUsers(ctx context.Context, token string, pm mgclients.Page) (mgclients.ClientsPage, error) {
@@ -474,90 +566,6 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 	}
 
 	return nil
-}
-
-func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
-	res, err := svc.identify(ctx, token)
-	if err != nil {
-		return mgclients.MembersPage{}, err
-	}
-	var objectType string
-	var authzPerm string
-	switch objectKind {
-	case auth.ThingsKind:
-		objectType = auth.ThingType
-		authzPerm = pm.Permission
-	case auth.DomainsKind:
-		objectType = auth.DomainType
-		authzPerm = auth.SwitchToPermission(pm.Permission)
-	case auth.GroupsKind:
-		fallthrough
-	default:
-		objectType = auth.GroupType
-		authzPerm = auth.SwitchToPermission(pm.Permission)
-	}
-
-	if _, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, authzPerm, objectType, objectID); err != nil {
-		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrAuthorization, err)
-	}
-	duids, err := svc.auth.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
-		SubjectType: auth.UserType,
-		Permission:  pm.Permission,
-		Object:      objectID,
-		ObjectType:  objectType,
-	})
-	if err != nil {
-		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-	}
-	if len(duids.Policies) == 0 {
-		return mgclients.MembersPage{
-			Page: mgclients.Page{Total: 0, Offset: pm.Offset, Limit: pm.Limit},
-		}, nil
-	}
-
-	var userIDs []string
-
-	for _, domainUserID := range duids.Policies {
-		_, userID := auth.DecodeDomainUserID(domainUserID)
-		userIDs = append(userIDs, userID)
-	}
-	pm.IDs = userIDs
-
-	cp, err := svc.clients.RetrieveAll(ctx, pm)
-	if err != nil {
-		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-
-	for i, c := range cp.Clients {
-		cp.Clients[i] = mgclients.Client{
-			ID:        c.ID,
-			Name:      c.Name,
-			CreatedAt: c.CreatedAt,
-			UpdatedAt: c.UpdatedAt,
-			Status:    c.Status,
-		}
-	}
-
-	if pm.ListPerms && len(cp.Clients) > 0 {
-		g, ctx := errgroup.WithContext(ctx)
-
-		for i := range cp.Clients {
-			// Copying loop variable "i" to avoid "loop variable captured by func literal"
-			iter := i
-			g.Go(func() error {
-				return svc.retrieveObjectUsersPermissions(ctx, res.GetDomainId(), objectType, objectID, &cp.Clients[iter])
-			})
-		}
-
-		if err := g.Wait(); err != nil {
-			return mgclients.MembersPage{}, err
-		}
-	}
-
-	return mgclients.MembersPage{
-		Page:    cp.Page,
-		Members: cp.Clients,
-	}, nil
 }
 
 func (svc service) retrieveObjectUsersPermissions(ctx context.Context, domainID, objectType, objectID string, client *mgclients.Client) error {

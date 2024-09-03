@@ -46,7 +46,7 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 			desc: "valid request with all parameters",
 			url:  "http://localhost:8080?status=enabled&offset=10&limit=10&name=random&metadata={\"test\":\"test\"}&level=2&parent_id=random&tree=true&dir=-1&member_kind=random&permission=random&list_perms=true",
 			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
+				"Authorization": {"Bearer validToken"},
 			},
 			resp: listGroupsReq{
 				Page: groups.Page{
@@ -65,9 +65,96 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 					Direction:  -1,
 					ListPerms:  true,
 				},
-				token:      "123",
-				tree:       true,
-				memberKind: "random",
+				token: "validToken",
+				tree:  true,
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with user",
+			url:  "http://localhost:8080?user=valid",
+			header: map[string][]string{
+				"Authorization": {"Bearer validToken"},
+			},
+			resp: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Status: clients.EnabledStatus,
+						Offset: 0,
+						Limit:  10,
+					},
+					Permission: api.DefPermission,
+					Direction:  -1,
+				},
+				token:      "validToken",
+				memberKind: "users",
+				memberID:   "valid",
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with group",
+			url:  "http://localhost:8080?group=valid",
+			header: map[string][]string{
+				"Authorization": {"Bearer validToken"},
+			},
+			resp: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Status: clients.EnabledStatus,
+						Offset: 0,
+						Limit:  10,
+					},
+					Permission: api.DefPermission,
+					Direction:  -1,
+				},
+				token:      "validToken",
+				memberKind: "groups",
+				memberID:   "valid",
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with domain",
+			url:  "http://localhost:8080?domain=valid",
+			header: map[string][]string{
+				"Authorization": {"Bearer validToken"},
+			},
+			resp: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Status: clients.EnabledStatus,
+						Offset: 0,
+						Limit:  10,
+					},
+					Permission: api.DefPermission,
+					Direction:  -1,
+				},
+				token:      "validToken",
+				memberKind: "domains",
+				memberID:   "valid",
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with channel",
+			url:  "http://localhost:8080?channel=valid",
+			header: map[string][]string{
+				"Authorization": {"Bearer validToken"},
+			},
+			resp: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Status: clients.EnabledStatus,
+						Offset: 0,
+						Limit:  10,
+					},
+					Permission: api.DefPermission,
+					Direction:  -1,
+				},
+				token:      "validToken",
+				memberKind: "channels",
+				memberID:   "valid",
 			},
 			err: nil,
 		},
@@ -103,9 +190,17 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 		},
 		{
 			desc: "valid request with invalid member kind",
-			url:  "http://localhost:8080?member_kind=random&member_kind=random",
-			resp: nil,
-			err:  apiutil.ErrValidation,
+			url:  "http://localhost:8080?member_kind=random",
+			resp: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Limit: 10,
+					},
+					Permission: api.DefPermission,
+					Direction:  -1,
+				},
+			},
+			err: nil,
 		},
 		{
 			desc: "valid request with invalid permission",
@@ -131,7 +226,7 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 		}
 		resp, err := DecodeListGroupsRequest(context.Background(), req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected error %v to contain %v", tc.desc, err, tc.err))
 	}
 }
 

@@ -1223,12 +1223,6 @@ func TestListDomainsByUserID(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list domains by user id with empty user id",
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
-		},
-		{
 			desc:   "list domains by user id with empty token",
 			token:  "",
 			userID: validID,
@@ -1250,7 +1244,7 @@ func TestListDomainsByUserID(t *testing.T) {
 				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
-			query:  "offset=1",
+			query:  "&offset=1",
 			userID: validID,
 			status: http.StatusOK,
 			err:    nil,
@@ -1258,8 +1252,9 @@ func TestListDomainsByUserID(t *testing.T) {
 		{
 			desc:   "list domains by user id with invalid offset",
 			token:  validToken,
-			query:  "offset=invalid",
+			query:  "&offset=invalid",
 			status: http.StatusBadRequest,
+			userID: validID,
 			err:    apiutil.ErrValidation,
 		},
 		{
@@ -1269,7 +1264,7 @@ func TestListDomainsByUserID(t *testing.T) {
 				Total:   1,
 				Domains: []auth.Domain{domain},
 			},
-			query:  "limit=1",
+			query:  "&limit=1",
 			userID: validID,
 			status: http.StatusOK,
 			err:    nil,
@@ -1277,7 +1272,7 @@ func TestListDomainsByUserID(t *testing.T) {
 		{
 			desc:   "list domains by user id with invalid limit",
 			token:  validToken,
-			query:  "limit=invalid",
+			query:  "&limit=invalid",
 			userID: validID,
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrValidation,
@@ -1287,10 +1282,9 @@ func TestListDomainsByUserID(t *testing.T) {
 		req := testRequest{
 			client: ds.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/%s/domains?", ds.URL, tc.userID) + tc.query,
+			url:    fmt.Sprintf("%s/domains?user=%s", ds.URL, tc.userID) + tc.query,
 			token:  tc.token,
 		}
-
 		svcCall := svc.On("ListUserDomains", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.listDomainsRequest, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))

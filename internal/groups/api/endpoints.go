@@ -116,7 +116,7 @@ func DisableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 func ListGroupsEndpoint(svc groups.Service, groupType, memberKind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
-		if memberKind != "" {
+		if memberKind != "" && req.memberKind == "" {
 			req.memberKind = memberKind
 		}
 		if err := req.validate(); err != nil {

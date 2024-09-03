@@ -99,19 +99,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		pm := mgclients.Page{
-			Status:     req.status,
-			Offset:     req.offset,
-			Limit:      req.limit,
-			Name:       req.name,
-			Tag:        req.tag,
-			Permission: req.permission,
-			Metadata:   req.metadata,
-			ListPerms:  req.listPerms,
-			Role:       mgclients.AllRole, // retrieve all things since things don't have roles
-			Id:         req.id,
-		}
-		page, err := svc.ListClients(ctx, req.token, req.userID, pm)
+		page, err := svc.ListClients(ctx, req.token, req.page)
 		if err != nil {
 			return nil, err
 		}
@@ -129,22 +117,6 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		return res, nil
-	}
-}
-
-func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-		req.Page.Role = mgclients.AllRole // retrieve all things since things don't have roles
-		page, err := svc.ListClientsByGroup(ctx, req.token, req.groupID, req.Page)
-		if err != nil {
-			return nil, err
-		}
-
-		return buildClientsResponse(page), nil
 	}
 }
 
@@ -235,22 +207,6 @@ func disableClientEndpoint(svc things.Service) endpoint.Endpoint {
 
 		return changeClientStatusRes{Client: client}, nil
 	}
-}
-
-func buildClientsResponse(cp mgclients.MembersPage) clientsPageRes {
-	res := clientsPageRes{
-		pageRes: pageRes{
-			Total:  cp.Total,
-			Offset: cp.Offset,
-			Limit:  cp.Limit,
-		},
-		Clients: []viewClientRes{},
-	}
-	for _, c := range cp.Members {
-		res.Clients = append(res.Clients, viewClientRes{Client: c})
-	}
-
-	return res
 }
 
 func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {

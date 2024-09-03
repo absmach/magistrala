@@ -236,7 +236,9 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "valid request",
 			req: listClientsReq{
 				token: valid,
-				limit: 10,
+				page: mgclients.Page{
+					Limit: 10,
+				},
 			},
 			err: nil,
 		},
@@ -244,7 +246,9 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "limit too big",
 			req: listClientsReq{
 				token: valid,
-				limit: api.MaxLimitSize + 1,
+				page: mgclients.Page{
+					Limit: api.MaxLimitSize + 1,
+				},
 			},
 			err: apiutil.ErrLimitSize,
 		},
@@ -252,25 +256,21 @@ func TestListClientsReqValidate(t *testing.T) {
 			desc: "limit too small",
 			req: listClientsReq{
 				token: valid,
-				limit: 0,
+				page: mgclients.Page{
+					Limit: 0,
+				},
 			},
 			err: apiutil.ErrLimitSize,
 		},
-		{
-			desc: "invalid visibility",
-			req: listClientsReq{
-				token:      valid,
-				limit:      10,
-				visibility: "invalid",
-			},
-			err: apiutil.ErrInvalidVisibilityType,
-		},
+
 		{
 			desc: "name too long",
 			req: listClientsReq{
 				token: valid,
-				limit: 10,
-				name:  strings.Repeat("a", api.MaxNameSize+1),
+				page: mgclients.Page{
+					Limit: 10,
+					Name:  strings.Repeat("a", api.MaxNameSize+1),
+				},
 			},
 			err: apiutil.ErrNameSize,
 		},

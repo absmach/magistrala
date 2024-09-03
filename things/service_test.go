@@ -415,50 +415,35 @@ func TestViewClient(t *testing.T) {
 func TestListClients(t *testing.T) {
 	svc, cRepo, auth, _ := newService()
 
-	adminID := testsutil.GenerateUUID(t)
 	domainID := testsutil.GenerateUUID(t)
 	nonAdminID := testsutil.GenerateUUID(t)
 	client.Permissions = []string{"read", "write"}
 
 	cases := []struct {
 		desc                    string
-		userKind                string
 		token                   string
 		page                    mgclients.Page
 		identifyResponse        *magistrala.IdentityRes
 		authorizeResponse       *magistrala.AuthorizeRes
-		authorizeResponse1      *magistrala.AuthorizeRes
-		authorizeResponse2      *magistrala.AuthorizeRes
-		listObjectsResponse     *magistrala.ListObjectsRes
-		listObjectsResponse1    *magistrala.ListObjectsRes
 		retrieveAllResponse     mgclients.ClientsPage
 		listPermissionsResponse *magistrala.ListPermissionsRes
 		response                mgclients.ClientsPage
-		id                      string
-		size                    uint64
 		identifyErr             error
 		authorizeErr            error
-		authorizeErr1           error
-		authorizeErr2           error
-		listObjectsErr          error
 		retrieveAllErr          error
 		listPermissionsErr      error
 		err                     error
 	}{
 		{
-			desc:     "list all clients successfully as non admin",
-			userKind: "non-admin",
-			token:    validToken,
-			id:       nonAdminID,
+			desc:  "list all clients successfully as non admin",
+			token: validToken,
 			page: mgclients.Page{
 				Offset:    0,
 				Limit:     100,
 				ListPerms: true,
 			},
-			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			authorizeResponse2:  &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			identifyResponse:  &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -481,13 +466,13 @@ func TestListClients(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:     "list all clients as non admin with invalid token",
-			userKind: "non-admin",
-			id:       nonAdminID,
+			desc: "list all clients as non admin with invalid token",
 			page: mgclients.Page{
-				Offset:    0,
-				Limit:     100,
-				ListPerms: true,
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				EntityType: authsvc.UserType,
+				EntityID:   nonAdminID,
 			},
 			token:            inValidToken,
 			identifyResponse: &magistrala.IdentityRes{},
@@ -495,9 +480,7 @@ func TestListClients(t *testing.T) {
 			err:              svcerr.ErrAuthentication,
 		},
 		{
-			desc:     "list all clients as non admin with empty domain id",
-			userKind: "non-admin",
-			id:       nonAdminID,
+			desc: "list all clients as non admin with empty domain id",
 			page: mgclients.Page{
 				Offset:    0,
 				Limit:     100,
@@ -508,40 +491,36 @@ func TestListClients(t *testing.T) {
 			err:              svcerr.ErrDomainAuthorization,
 		},
 		{
-			desc:     "list all clients as non admin with failed to retrieve all",
-			userKind: "non-admin",
-			token:    validToken,
-			id:       nonAdminID,
+			desc:  "list all clients as non admin with failed to search clients",
+			token: validToken,
 			page: mgclients.Page{
 				Offset:    0,
 				Limit:     100,
 				ListPerms: true,
 			},
-			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			retrieveAllResponse: mgclients.ClientsPage{},
-			response:            mgclients.ClientsPage{},
-			retrieveAllErr:      repoerr.ErrNotFound,
-			err:                 svcerr.ErrNotFound,
+			identifyResponse:  &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			response:          mgclients.ClientsPage{},
+			retrieveAllErr:    repoerr.ErrNotFound,
+			err:               svcerr.ErrNotFound,
 		},
 		{
-			desc:     "list all clients as non admin with failed to list permissions",
-			userKind: "non-admin",
-			token:    validToken,
-			id:       nonAdminID,
+			desc:  "list all clients as non admin with failed to list permissions",
+			token: validToken,
 			page: mgclients.Page{
 				Offset:    0,
 				Limit:     100,
 				ListPerms: true,
 			},
-			identifyResponse:   &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: true},
-			authorizeResponse2: &magistrala.AuthorizeRes{Authorized: true},
+			identifyResponse:  &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
-					Total:  2,
-					Offset: 0,
-					Limit:  100,
+					Total:      2,
+					Offset:     0,
+					Limit:      100,
+					EntityType: authsvc.UserType,
+					EntityID:   nonAdminID,
 				},
 				Clients: []mgclients.Client{client, client},
 			},
@@ -550,89 +529,26 @@ func TestListClients(t *testing.T) {
 			listPermissionsErr:      svcerr.ErrNotFound,
 			err:                     svcerr.ErrNotFound,
 		},
-		{
-			desc:     "list all clients as non admin with failed super admin",
-			userKind: "non-admin",
-			token:    validToken,
-			id:       nonAdminID,
-			page: mgclients.Page{
-				Offset:    0,
-				Limit:     100,
-				ListPerms: true,
-			},
-			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
-			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: true},
-			response:            mgclients.ClientsPage{},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
-			err:                 nil,
-		},
-		{
-			desc:     " list all clients as non admin with failed super admin and failed authorization",
-			userKind: "non-admin",
-			token:    validToken,
-			id:       nonAdminID,
-			page: mgclients.Page{
-				Offset:    0,
-				Limit:     100,
-				ListPerms: true,
-			},
-			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
-			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: false},
-			response:            mgclients.ClientsPage{},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
-			err:                 svcerr.ErrAuthorization,
-		},
-		{
-			desc:     "list all clients as non admin with failed to list objects",
-			userKind: "non-admin",
-			token:    validToken,
-			id:       nonAdminID,
-			page: mgclients.Page{
-				Offset:    0,
-				Limit:     100,
-				ListPerms: true,
-			},
-			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
-			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: true},
-			response:            mgclients.ClientsPage{},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
-			listObjectsErr:      svcerr.ErrNotFound,
-			err:                 svcerr.ErrNotFound,
-		},
 	}
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		authorizeCall := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
-			SubjectType: authsvc.UserType,
-			Subject:     tc.identifyResponse.UserId,
-			Permission:  authsvc.AdminPermission,
-			ObjectType:  authsvc.PlatformType,
-			Object:      authsvc.MagistralaObject,
-		}).Return(tc.authorizeResponse, tc.authorizeErr)
-		authorizeCall2 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 			Domain:      "",
 			SubjectType: authsvc.UserType,
 			SubjectKind: authsvc.UsersKind,
 			Subject:     tc.identifyResponse.UserId,
-			Permission:  "membership",
-			ObjectType:  "domain",
+			Permission:  authsvc.ViewPermission,
+			ObjectType:  authsvc.DomainType,
 			Object:      tc.identifyResponse.DomainId,
-		}).Return(tc.authorizeResponse1, tc.authorizeErr1)
-		listAllObjectsCall := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		retrieveAllCall := cRepo.On("SearchClients", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
+		}).Return(tc.authorizeResponse, tc.authorizeErr)
+		retrieveAllCall := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
 		listPermissionsCall := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
-
-		page, err := svc.ListClients(context.Background(), tc.token, tc.id, tc.page)
+		page, err := svc.ListClients(context.Background(), tc.token, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		repoCall.Unset()
 		authorizeCall.Unset()
-		authorizeCall2.Unset()
-		listAllObjectsCall.Unset()
 		retrieveAllCall.Unset()
 		listPermissionsCall.Unset()
 	}
@@ -644,17 +560,15 @@ func TestListClients(t *testing.T) {
 		page                    mgclients.Page
 		identifyResponse        *magistrala.IdentityRes
 		authorizeResponse       *magistrala.AuthorizeRes
+		domainCallResponse      *magistrala.AuthorizeRes
 		listObjectsResponse     *magistrala.ListObjectsRes
-		listObjectsResponse1    *magistrala.ListObjectsRes
 		retrieveAllResponse     mgclients.ClientsPage
 		listPermissionsResponse *magistrala.ListPermissionsRes
 		response                mgclients.ClientsPage
-		id                      string
-		size                    uint64
 		identifyErr             error
 		authorizeErr            error
+		domainCallErr           error
 		listObjectsErr          error
-		listObjectsErr1         error
 		retrieveAllErr          error
 		listPermissionsErr      error
 		err                     error
@@ -662,7 +576,6 @@ func TestListClients(t *testing.T) {
 		{
 			desc:     "list all clients as admin successfully",
 			userKind: "admin",
-			id:       adminID,
 			token:    validToken,
 			page: mgclients.Page{
 				Offset:    0,
@@ -670,10 +583,10 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
-			listObjectsResponse1: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			domainCallResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -698,7 +611,6 @@ func TestListClients(t *testing.T) {
 		{
 			desc:     "list all clients as admin with unauthorized user",
 			userKind: "admin",
-			id:       adminID,
 			token:    validToken,
 			page: mgclients.Page{
 				Offset:    0,
@@ -706,14 +618,15 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:  &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			err:               svcerr.ErrAuthorization,
+			identifyResponse:   &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:  &magistrala.AuthorizeRes{Authorized: false},
+			domainCallResponse: &magistrala.AuthorizeRes{Authorized: false},
+			domainCallErr:      svcerr.ErrAuthorization,
+			err:                svcerr.ErrAuthorization,
 		},
 		{
 			desc:     "list all clients as admin with failed to retrieve all",
 			userKind: "admin",
-			id:       adminID,
 			token:    validToken,
 			page: mgclients.Page{
 				Offset:    0,
@@ -721,29 +634,27 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
-			retrieveAllResponse:  mgclients.ClientsPage{},
-			retrieveAllErr:       repoerr.ErrNotFound,
-			err:                  svcerr.ErrNotFound,
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			domainCallResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			retrieveAllResponse: mgclients.ClientsPage{},
+			retrieveAllErr:      repoerr.ErrNotFound,
+			err:                 svcerr.ErrNotFound,
 		},
 		{
-			desc:     "list all clients as admin with failed to list permissions",
-			userKind: "admin",
-			id:       adminID,
-			token:    validToken,
+			desc:  "list all clients as admin with failed to list permissions",
+			token: validToken,
 			page: mgclients.Page{
 				Offset:    0,
 				Limit:     100,
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			domainCallResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -757,70 +668,285 @@ func TestListClients(t *testing.T) {
 			err:                     svcerr.ErrNotFound,
 		},
 		{
-			desc:     "list all clients as admin with failed to list clients",
-			userKind: "admin",
-			id:       adminID,
-			token:    validToken,
+			desc:  "list all clients as admin with failed to list objects",
+			token: validToken,
 			page: mgclients.Page{
 				Offset:    0,
 				Limit:     100,
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
-			listObjectsErr:       svcerr.ErrNotFound,
-			err:                  svcerr.ErrNotFound,
-		},
-		{
-			desc:     "list all clients as admin with failed to list things",
-			userKind: "admin",
-			id:       adminID,
-			token:    validToken,
-			page: mgclients.Page{
-				Offset:    0,
-				Limit:     100,
-				ListPerms: true,
-				Domain:    domainID,
-			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
-			listObjectsErr1:      svcerr.ErrNotFound,
-			err:                  svcerr.ErrNotFound,
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
+			domainCallResponse:  &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsErr:      svcerr.ErrNotFound,
+			err:                 svcerr.ErrNotFound,
 		},
 	}
 
 	for _, tc := range cases2 {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
-		authorizeCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		listAllObjectsCall := auth.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+		authorizeCall := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
 			SubjectType: authsvc.UserType,
-			Subject:     tc.identifyResponse.DomainId + "_" + adminID,
-			Permission:  "",
-			ObjectType:  authsvc.ThingType,
-		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		listAllObjectsCall2 := auth.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+			SubjectKind: authsvc.UsersKind,
+			Subject:     tc.identifyResponse.GetId(),
+			Permission:  authsvc.ViewPermission,
+			ObjectType:  authsvc.DomainType,
+			Object:      tc.identifyResponse.GetDomainId(),
+		}).Return(tc.authorizeResponse, tc.authorizeErr)
+		domainCall := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
+			SubjectType: authsvc.UserType,
+			SubjectKind: authsvc.UsersKind,
+			Subject:     tc.identifyResponse.GetId(),
+			Permission:  authsvc.MembershipPermission,
+			ObjectType:  authsvc.DomainType,
+			Object:      tc.identifyResponse.GetDomainId(),
+		}).Return(tc.domainCallResponse, tc.domainCallErr)
+		listAllObjectsCall := auth.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+			Domain:      tc.identifyResponse.DomainId,
 			SubjectType: authsvc.UserType,
 			Subject:     tc.identifyResponse.Id,
 			Permission:  "",
 			ObjectType:  authsvc.ThingType,
-		}).Return(tc.listObjectsResponse1, tc.listObjectsErr1)
-		retrieveAllCall := cRepo.On("SearchClients", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
+		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
+		searchClientsCall := cRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
 		listPermissionsCall := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
-
-		page, err := svc.ListClients(context.Background(), tc.token, tc.id, tc.page)
+		page, err := svc.ListClients(context.Background(), tc.token, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		repoCall.Unset()
 		authorizeCall.Unset()
+		domainCall.Unset()
 		listAllObjectsCall.Unset()
-		listAllObjectsCall2.Unset()
-		retrieveAllCall.Unset()
+		searchClientsCall.Unset()
 		listPermissionsCall.Unset()
+	}
+}
+
+func TestListClientsByEntity(t *testing.T) {
+	svc, cRepo, auth, _ := newService()
+
+	clients := []mgclients.Client{}
+	clientIDs := []string{}
+	domainID := testsutil.GenerateUUID(t)
+	for i := uint64(0); i < uint64(10); i++ {
+		identity := fmt.Sprintf("member_%d@example.com", i)
+		client := mgclients.Client{
+			ID:     testsutil.GenerateUUID(t),
+			Domain: domainID,
+			Name:   identity,
+			Credentials: mgclients.Credentials{
+				Identity: identity,
+				Secret:   "password",
+			},
+			Tags:     []string{"tag1", "tag2"},
+			Metadata: mgclients.Metadata{"role": "client"},
+		}
+		clients = append(clients, client)
+		clientIDs = append(clientIDs, client.ID)
+	}
+
+	cases := []struct {
+		desc                    string
+		token                   string
+		page                    mgclients.Page
+		identifyResponse        *magistrala.IdentityRes
+		authorizeResponse       *magistrala.AuthorizeRes
+		listObjectsResponse     *magistrala.ListObjectsRes
+		listPermissionsResponse *magistrala.ListPermissionsRes
+		retreiveAllResponse     mgclients.ClientsPage
+		response                mgclients.ClientsPage
+		identifyErr             error
+		authorizeErr            error
+		listObjectsErr          error
+		listPermissionsErr      error
+		retreiveAllErr          error
+		err                     error
+	}{
+		{
+			desc:  "list clients by channel successfully",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				Domain:     domainID,
+				EntityType: authsvc.GroupType,
+				EntityID:   validID,
+			},
+			identifyResponse:        &magistrala.IdentityRes{Id: authsvc.EncodeDomainUserID(validID, validID), DomainId: validID, UserId: validID},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse:     &magistrala.ListObjectsRes{Policies: clientIDs},
+			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			retreiveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			err: nil,
+		},
+		{
+			desc:  "list clients by user successfully",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				Domain:     domainID,
+				EntityType: authsvc.UserType,
+				EntityID:   validID,
+			},
+			identifyResponse:        &magistrala.IdentityRes{Id: authsvc.EncodeDomainUserID(validID, validID), DomainId: validID, UserId: validID},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse:     &magistrala.ListObjectsRes{Policies: clientIDs},
+			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			retreiveAllResponse: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					Total: uint64(len(clients)),
+				},
+				Clients: clients,
+			},
+			err: nil,
+		},
+		{
+			desc:  "list clients with invalid entity type",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				EntityType: authsvc.DomainType,
+			},
+			identifyResponse: &magistrala.IdentityRes{Id: authsvc.EncodeDomainUserID(validID, validID), DomainId: validID, UserId: validID},
+			response:         mgclients.ClientsPage{},
+			err:              svcerr.ErrMalformedEntity,
+		},
+		{
+			desc:  "list clients by entity with invalid token",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				Domain:     domainID,
+				EntityType: authsvc.UserType,
+				EntityID:   validID,
+			},
+			identifyResponse: &magistrala.IdentityRes{},
+			identifyErr:      svcerr.ErrAuthentication,
+			err:              svcerr.ErrAuthentication,
+		},
+		{
+			desc:  "list clients by entity with invalid entity id",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				Domain:     domainID,
+				EntityType: authsvc.UserType,
+				EntityID:   wrongID,
+			},
+			identifyResponse:  &magistrala.IdentityRes{Id: authsvc.EncodeDomainUserID(validID, validID), DomainId: validID, UserId: validID},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
+			authorizeErr:      svcerr.ErrAuthorization,
+			response:          mgclients.ClientsPage{},
+			err:               svcerr.ErrAuthorization,
+		},
+		{
+			desc:  "list clients by entity with failed list all objects",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				Domain:     domainID,
+				EntityType: authsvc.GroupType,
+				EntityID:   validID,
+			},
+			identifyResponse:    &magistrala.IdentityRes{Id: authsvc.EncodeDomainUserID(validID, validID), DomainId: validID, UserId: validID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsErr:      svcerr.ErrNotFound,
+			response:            mgclients.ClientsPage{},
+			err:                 svcerr.ErrNotFound,
+		},
+		{
+			desc:  "list clients by entity eith failed to retrieve all",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				Domain:     domainID,
+				EntityType: authsvc.GroupType,
+				EntityID:   validID,
+			},
+			identifyResponse:        &magistrala.IdentityRes{Id: authsvc.EncodeDomainUserID(validID, validID), DomainId: validID, UserId: validID},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse:     &magistrala.ListObjectsRes{Policies: clientIDs},
+			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			retreiveAllResponse:     mgclients.ClientsPage{},
+			retreiveAllErr:          svcerr.ErrViewEntity,
+			response:                mgclients.ClientsPage{},
+			err:                     svcerr.ErrViewEntity,
+		},
+		{
+			desc:  "list clients by entity with empty list all objects response",
+			token: validToken,
+			page: mgclients.Page{
+				Offset:     0,
+				Limit:      100,
+				ListPerms:  true,
+				Domain:     domainID,
+				EntityType: authsvc.GroupType,
+				EntityID:   validID,
+			},
+			identifyResponse:    &magistrala.IdentityRes{Id: authsvc.EncodeDomainUserID(validID, validID), DomainId: validID, UserId: validID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: &magistrala.ListObjectsRes{},
+			response: mgclients.ClientsPage{
+				Page: mgclients.Page{
+					ListPerms:  true,
+					Domain:     domainID,
+					EntityType: authsvc.GroupType,
+					EntityID:   validID,
+					Permission: authsvc.GroupRelation,
+					Limit:      100,
+				},
+			},
+			err: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
+		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
+		repoCall3 := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.retreiveAllResponse, tc.retreiveAllErr)
+		repoCall4 := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
+		page, err := svc.ListClients(context.Background(), tc.token, tc.page)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
+		repoCall.Unset()
+		repoCall1.Unset()
+		repoCall2.Unset()
+		repoCall3.Unset()
+		repoCall4.Unset()
 	}
 }
 
@@ -1203,8 +1329,8 @@ func TestEnableClient(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
-		repoCall3 := cRepo.On("SearchClients", context.Background(), mock.Anything).Return(tc.response, nil)
-		page, err := svc.ListClients(context.Background(), validToken, "", pm)
+		repoCall3 := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.response, nil)
+		page, err := svc.ListClients(context.Background(), validToken, pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(page.Clients))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
@@ -1373,8 +1499,8 @@ func TestDisableClient(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
-		repoCall3 := cRepo.On("SearchClients", context.Background(), mock.Anything).Return(tc.response, nil)
-		page, err := svc.ListClients(context.Background(), validToken, "", pm)
+		repoCall3 := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.response, nil)
+		page, err := svc.ListClients(context.Background(), validToken, pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(page.Clients))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
@@ -1385,239 +1511,9 @@ func TestDisableClient(t *testing.T) {
 	}
 }
 
-func TestListMembers(t *testing.T) {
-	svc, cRepo, auth, _ := newService()
-
-	nClients := uint64(10)
-	aClients := []mgclients.Client{}
-	domainID := testsutil.GenerateUUID(t)
-	for i := uint64(0); i < nClients; i++ {
-		identity := fmt.Sprintf("member_%d@example.com", i)
-		client := mgclients.Client{
-			ID:     testsutil.GenerateUUID(t),
-			Domain: domainID,
-			Name:   identity,
-			Credentials: mgclients.Credentials{
-				Identity: identity,
-				Secret:   "password",
-			},
-			Tags:     []string{"tag1", "tag2"},
-			Metadata: mgclients.Metadata{"role": "client"},
-		}
-		aClients = append(aClients, client)
-	}
-	aClients[0].Permissions = []string{"admin"}
-
-	cases := []struct {
-		desc                     string
-		token                    string
-		groupID                  string
-		page                     mgclients.Page
-		identifyResponse         *magistrala.IdentityRes
-		authorizeResponse        *magistrala.AuthorizeRes
-		listObjectsResponse      *magistrala.ListObjectsRes
-		listPermissionsResponse  *magistrala.ListPermissionsRes
-		retreiveAllByIDsResponse mgclients.ClientsPage
-		response                 mgclients.MembersPage
-		identifyErr              error
-		authorizeErr             error
-		listObjectsErr           error
-		listPermissionsErr       error
-		retreiveAllByIDsErr      error
-		err                      error
-	}{
-		{
-			desc:                    "list members with authorized token",
-			token:                   validToken,
-			groupID:                 testsutil.GenerateUUID(t),
-			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
-			retreiveAllByIDsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  0,
-				},
-				Clients: []mgclients.Client{},
-			},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  0,
-				},
-				Members: []mgclients.Client{},
-			},
-			err: nil,
-		},
-		{
-			desc:    "list members with offset and limit",
-			token:   validToken,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				Offset: 6,
-				Limit:  nClients,
-				Status: mgclients.AllStatus,
-			},
-			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
-			retreiveAllByIDsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: nClients - 6 - 1,
-				},
-				Clients: aClients[6 : nClients-1],
-			},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total: nClients - 6 - 1,
-				},
-				Members: aClients[6 : nClients-1],
-			},
-			err: nil,
-		},
-		{
-			desc:             "list members with an invalid token",
-			token:            inValidToken,
-			groupID:          testsutil.GenerateUUID(t),
-			identifyResponse: &magistrala.IdentityRes{},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  0,
-				},
-			},
-			identifyErr: svcerr.ErrAuthentication,
-			err:         svcerr.ErrAuthentication,
-		},
-		{
-			desc:                     "list members with an invalid id",
-			token:                    validToken,
-			groupID:                  wrongID,
-			identifyResponse:         &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:        &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:      &magistrala.ListObjectsRes{},
-			listPermissionsResponse:  &magistrala.ListPermissionsRes{},
-			retreiveAllByIDsResponse: mgclients.ClientsPage{},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  0,
-				},
-			},
-			retreiveAllByIDsErr: svcerr.ErrNotFound,
-			err:                 svcerr.ErrNotFound,
-		},
-		{
-			desc:    "list members with permissions",
-			token:   validToken,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				ListPerms: true,
-			},
-			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{Permissions: []string{"admin"}},
-			retreiveAllByIDsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Clients: []mgclients.Client{aClients[0]},
-			},
-			response: mgclients.MembersPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Members: []mgclients.Client{aClients[0]},
-			},
-			err: nil,
-		},
-		{
-			desc:    "list members with unauthorized user",
-			token:   validToken,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				ListPerms: true,
-			},
-			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
-			authorizeErr:      svcerr.ErrAuthorization,
-			err:               svcerr.ErrAuthorization,
-		},
-		{
-			desc:    "list members with failed to list objects",
-			token:   validToken,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				ListPerms: true,
-			},
-			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
-			listObjectsErr:      svcerr.ErrNotFound,
-			err:                 svcerr.ErrNotFound,
-		},
-		{
-			desc:    "list members with failed to list permissions",
-			token:   validToken,
-			groupID: testsutil.GenerateUUID(t),
-			page: mgclients.Page{
-				ListPerms: true,
-			},
-			retreiveAllByIDsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
-					Total: 1,
-				},
-				Clients: []mgclients.Client{aClients[0]},
-			},
-			response:                mgclients.MembersPage{},
-			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
-			listPermissionsErr:      svcerr.ErrNotFound,
-			err:                     svcerr.ErrNotFound,
-		},
-	}
-
-	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
-		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), tc.page).Return(tc.retreiveAllByIDsResponse, tc.retreiveAllByIDsErr)
-		repoCall4 := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
-		page, err := svc.ListClientsByGroup(context.Background(), tc.token, tc.groupID, tc.page)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
-		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
-		repoCall4.Unset()
-	}
-}
-
 func TestDeleteClient(t *testing.T) {
 	svc, cRepo, auth, cache := newService()
 
-	client := mgclients.Client{
-		ID:   testsutil.GenerateUUID(t),
-		Name: "TestClient",
-		Credentials: mgclients.Credentials{
-			Identity: "TestClient@example.com",
-			Secret:   "password",
-		},
-		Tags:     []string{"tag1", "tag2"},
-		Metadata: mgclients.Metadata{"role": "client"},
-	}
-	invalidClientID := "invalidClientID"
-	_ = invalidClientID
 	cases := []struct {
 		desc                 string
 		token                string

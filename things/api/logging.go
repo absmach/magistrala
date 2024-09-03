@@ -75,11 +75,10 @@ func (lm *loggingMiddleware) ViewClientPerms(ctx context.Context, token, id stri
 	return lm.svc.ViewClientPerms(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListClients(ctx context.Context, token, reqUserID string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
+func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, pm mgclients.Page) (cp mgclients.ClientsPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("user_id", reqUserID),
 			slog.Group("page",
 				slog.Uint64("limit", pm.Limit),
 				slog.Uint64("offset", pm.Offset),
@@ -93,7 +92,7 @@ func (lm *loggingMiddleware) ListClients(ctx context.Context, token, reqUserID s
 		}
 		lm.logger.Info("List things completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ListClients(ctx, token, reqUserID, pm)
+	return lm.svc.ListClients(ctx, token, pm)
 }
 
 func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, client mgclients.Client) (c mgclients.Client, err error) {
@@ -191,27 +190,6 @@ func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string
 		lm.logger.Info("Disable thing completed successfully", args...)
 	}(time.Now())
 	return lm.svc.DisableClient(ctx, token, id)
-}
-
-func (lm *loggingMiddleware) ListClientsByGroup(ctx context.Context, token, channelID string, cp mgclients.Page) (mp mgclients.MembersPage, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", channelID),
-			slog.Group("page",
-				slog.Uint64("offset", cp.Offset),
-				slog.Uint64("limit", cp.Limit),
-				slog.Uint64("total", mp.Total),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List things by group failed", args...)
-			return
-		}
-		lm.logger.Info("List things by group completed successfully", args...)
-	}(time.Now())
-	return lm.svc.ListClientsByGroup(ctx, token, channelID, cp)
 }
 
 func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id string, err error) {

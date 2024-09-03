@@ -109,7 +109,17 @@ func listDomainsEndpoint(svc auth.Service) endpoint.Endpoint {
 			Permission: req.permission,
 			Status:     req.status,
 		}
-		dp, err := svc.ListDomains(ctx, req.token, page)
+
+		var dp auth.DomainsPage
+		var err error
+
+		switch {
+		case req.userID != "":
+			dp, err = svc.ListUserDomains(ctx, req.token, req.userID, page)
+		default:
+			dp, err = svc.ListDomains(ctx, req.token, page)
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -196,31 +206,5 @@ func unassignDomainUserEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		return unassignUsersRes{}, nil
-	}
-}
-
-func listUserDomainsEndpoint(svc auth.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listUserDomainsReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-
-		page := auth.Page{
-			Offset:     req.offset,
-			Limit:      req.limit,
-			Name:       req.name,
-			Metadata:   req.metadata,
-			Order:      req.order,
-			Dir:        req.dir,
-			Tag:        req.tag,
-			Permission: req.permission,
-			Status:     req.status,
-		}
-		dp, err := svc.ListUserDomains(ctx, req.token, req.userID, page)
-		if err != nil {
-			return nil, err
-		}
-		return listUserDomainsRes{dp}, nil
 	}
 }

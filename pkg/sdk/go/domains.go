@@ -128,25 +128,8 @@ func (sdk mgSDK) Domains(pm PageMetadata, token string) (DomainsPage, errors.SDK
 	return dp, nil
 }
 
-func (sdk mgSDK) ListDomainUsers(domainID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", domainsEndpoint, domainID, usersEndpoint), pm)
-	if err != nil {
-		return UsersPage{}, errors.NewSDKError(err)
-	}
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
-	if sdkerr != nil {
-		return UsersPage{}, sdkerr
-	}
-	var up UsersPage
-	if err := json.Unmarshal(body, &up); err != nil {
-		return UsersPage{}, errors.NewSDKError(err)
-	}
-
-	return up, nil
-}
-
-func (sdk mgSDK) ListUserDomains(userID string, pm PageMetadata, token string) (DomainsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.domainsURL, fmt.Sprintf("%s/%s/%s", usersEndpoint, userID, domainsEndpoint), pm)
+func (sdk mgSDK) ListUserDomains(pm PageMetadata, token string) (DomainsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.domainsURL, domainsEndpoint, pm)
 	if err != nil {
 		return DomainsPage{}, errors.NewSDKError(err)
 	}

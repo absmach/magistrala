@@ -98,8 +98,25 @@ func (sdk mgSDK) Things(pm PageMetadata, token string) (ThingsPage, errors.SDKEr
 	return cp, nil
 }
 
-func (sdk mgSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("channels/%s/%s", chanID, thingsEndpoint), pm)
+func (sdk mgSDK) ListUserThings(pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, thingsEndpoint, pm)
+	if err != nil {
+		return ThingsPage{}, errors.NewSDKError(err)
+	}
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return ThingsPage{}, sdkerr
+	}
+	tp := ThingsPage{}
+	if err := json.Unmarshal(body, &tp); err != nil {
+		return ThingsPage{}, errors.NewSDKError(err)
+	}
+
+	return tp, nil
+}
+
+func (sdk mgSDK) ThingsByChannel(pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, thingsEndpoint, pm)
 	if err != nil {
 		return ThingsPage{}, errors.NewSDKError(err)
 	}
@@ -266,24 +283,6 @@ func (sdk mgSDK) UnshareThing(thingID string, req UsersRelationRequest, token st
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusNoContent)
 	return sdkerr
-}
-
-func (sdk mgSDK) ListThingUsers(thingID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", thingsEndpoint, thingID, usersEndpoint), pm)
-	if err != nil {
-		return UsersPage{}, errors.NewSDKError(err)
-	}
-
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
-	if sdkerr != nil {
-		return UsersPage{}, sdkerr
-	}
-	up := UsersPage{}
-	if err := json.Unmarshal(body, &up); err != nil {
-		return UsersPage{}, errors.NewSDKError(err)
-	}
-
-	return up, nil
 }
 
 func (sdk mgSDK) DeleteThing(id, token string) errors.SDKError {

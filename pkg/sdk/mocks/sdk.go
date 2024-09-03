@@ -2788,6 +2788,36 @@ func (_m *SDK) Users(pm sdk.PageMetadata, token string) (sdk.UsersPage, errors.S
 	return r0, r1
 }
 
+// VerifyConnections provides a mock function with given fields: pm, token
+func (_m *SDK) VerifyConnections(pm sdk.PageMetadata, token string) (sdk.ConnectionsPage, errors.SDKError) {
+	ret := _m.Called(pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyConnections")
+	}
+
+	var r0 sdk.ConnectionsPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) (sdk.ConnectionsPage, errors.SDKError)); ok {
+		return rf(pm, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) sdk.ConnectionsPage); ok {
+		r0 = rf(pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ConnectionsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = rf(pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
 // ViewBootstrap provides a mock function with given fields: id, token
 func (_m *SDK) ViewBootstrap(id string, token string) (sdk.BootstrapConfig, errors.SDKError) {
 	ret := _m.Called(id, token)

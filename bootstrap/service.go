@@ -12,6 +12,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -120,6 +121,7 @@ type ConfigReader interface {
 
 type bootstrapService struct {
 	auth       magistrala.AuthServiceClient
+	tauth      magistrala.AuthzServiceClient
 	configs    ConfigRepository
 	sdk        mgsdk.SDK
 	encKey     []byte
@@ -127,11 +129,12 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(uauth magistrala.AuthServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
+func New(uauth magistrala.AuthServiceClient, tauth magistrala.AuthzServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
 		sdk:        sdk,
 		auth:       uauth,
+		tauth:      tauth,
 		encKey:     encKey,
 		idProvider: idp,
 	}
@@ -171,9 +174,21 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		}
 	}
 
+	resp, err := bs.tauth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingIds:   []string{cfg.ThingID},
+		ChannelIds: bs.toIDList(cfg.Channels),
+	})
+	if err != nil {
+		return Config{}, err
+	}
+	State := Inactive
+	if resp.Status == clients.AllConnectedState.String() {
+		State = Active
+	}
+
 	cfg.ThingID = mgThing.ID
 	cfg.DomainID = user.GetDomainId()
-	cfg.State = Inactive
+	cfg.State = State
 	cfg.ThingKey = mgThing.Credentials.Secret
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)

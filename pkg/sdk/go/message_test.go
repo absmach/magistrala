@@ -30,10 +30,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupMessages() (*httptest.Server, *authmocks.AuthClient, *pubsub.PubSub) {
-	auth := new(authmocks.AuthClient)
+func setupMessages() (*httptest.Server, *thmocks.AuthzClient, *pubsub.PubSub) {
+	tauth := new(thmocks.AuthzClient)
 	pub := new(pubsub.PubSub)
-	handler := adapter.NewHandler(pub, mglog.NewMock(), auth)
+	handler := adapter.NewHandler(pub, mglog.NewMock(), tauth)
 
 	mux := api.MakeHandler(mglog.NewMock(), "")
 	target := httptest.NewServer(mux)
@@ -47,20 +47,20 @@ func setupMessages() (*httptest.Server, *authmocks.AuthClient, *pubsub.PubSub) {
 		return nil, nil, nil
 	}
 
-	return httptest.NewServer(http.HandlerFunc(mp.ServeHTTP)), auth, pub
+	return httptest.NewServer(http.HandlerFunc(mp.ServeHTTP)), tauth, pub
 }
 
 func setupReader() (*httptest.Server, *authmocks.AuthClient, *readersmocks.MessageRepository) {
 	repo := new(readersmocks.MessageRepository)
 	auth := new(authmocks.AuthClient)
-	tauth := new(thmocks.ThingAuthzService)
+	tauth := new(thmocks.AuthzClient)
 
 	mux := readersapi.MakeHandler(repo, auth, tauth, "test", "")
 	return httptest.NewServer(mux), auth, repo
 }
 
 func TestSendMessage(t *testing.T) {
-	ts, auth, pub := setupMessages()
+	ts, tauth, pub := setupMessages()
 	defer ts.Close()
 
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
@@ -148,7 +148,7 @@ func TestSendMessage(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authRes, tc.authErr)
+			authCall := tauth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authRes, tc.authErr)
 			svcCall := pub.On("Publish", mock.Anything, channelID, mock.Anything).Return(tc.svcErr)
 			err := mgsdk.SendMessage(tc.chanName, tc.msg, tc.thingKey)
 			assert.Equal(t, tc.err, err)
@@ -196,7 +196,7 @@ func TestSetContentType(t *testing.T) {
 }
 
 func TestReadMessages(t *testing.T) {
-	ts, auth, repo := setupReader()
+	ts, tauth, repo := setupReader()
 	defer ts.Close()
 
 	channelID := "channelID"
@@ -379,7 +379,7 @@ func TestReadMessages(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authRes, tc.authErr)
+			authCall := tauth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authRes, tc.authErr)
 			repoCall := repo.On("ReadAll", channelID, mock.Anything).Return(tc.repoRes, tc.repoErr)
 			response, err := mgsdk.ReadMessages(tc.messagePageMeta, tc.chanName, tc.token)
 			assert.Equal(t, tc.err, err)

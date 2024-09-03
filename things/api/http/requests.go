@@ -133,6 +133,25 @@ func (req listMembersReq) validate() error {
 	return nil
 }
 
+type verifyConnectionReq struct {
+	token      string
+	ThingIds   []string `json:"thing_ids"`
+	ChannelIds []string `json:"channel_ids"`
+}
+
+func (req verifyConnectionReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if len(req.ThingIds) == 0 {
+		return apiutil.ErrMissingThingIDs
+	}
+	if len(req.ChannelIds) == 0 {
+		return apiutil.ErrMissingChannelIDs
+	}
+	return nil
+}
+
 type updateClientReq struct {
 	token    string
 	id       string

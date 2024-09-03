@@ -13,3 +13,9 @@ packages:
           dir: "./auth/mocks"
           mockname: "AuthClient"
           filename: "auth_client.go"
+      AuthzServiceClient:
+        config:
+          dir: "./things/mocks"
+          mockname: "AuthzClient"
+          filename: "auth.go"
+

@@ -16,6 +16,12 @@ issues:
     - path: cli/commands_test.go
       linters:
         - godot
+    - path: bootstrap/service_test.go
+      linters:
+        - dogsled
+    - path: bootstrap/events/producer/streams_test.go
+      linters:
+        - dogsled
 
 linters-settings:
   importas:

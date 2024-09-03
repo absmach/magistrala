@@ -5,6 +5,7 @@ package clients
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -22,6 +23,72 @@ const (
 	atSeparator  = "@"
 	dotSeparator = "."
 )
+
+const (
+	connected       = "connected"
+	disconnected    = "disconnected"
+	allConnected    = "all_connected"
+	allDisconnected = "all_disconnected"
+	partConnected   = "partially_connected"
+)
+
+type AllState int
+
+const (
+	AllConnectedState AllState = iota
+	AllDisconnectedState
+	PartConnectedState
+)
+
+func (s AllState) String() string {
+	switch s {
+	case AllConnectedState:
+		return allConnected
+	case AllDisconnectedState:
+		return allDisconnected
+	case PartConnectedState:
+		return partConnected
+	default:
+		return Unknown
+	}
+}
+
+// State represents connection state.
+type State int
+
+const (
+	// Disconnected represents disabled connection.
+	Disconnected State = iota
+	// Connected represents enabled connection.
+	Connected
+)
+
+// String returns string representation of State.
+func (s State) String() string {
+	switch s {
+	case Disconnected:
+		return disconnected
+	case Connected:
+		return connected
+	default:
+		return Unknown
+	}
+}
+
+func (s State) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+type ConnectionStatus struct {
+	ChannelId string `json:"channel_id"`
+	ThingId   string `json:"thing_id"`
+	Status    State  `json:"status"`
+}
+
+type ConnectionsPage struct {
+	Status      AllState           `json:"status"`
+	Connections []ConnectionStatus `json:"connections_status"`
+}
 
 var (
 	userRegexp    = regexp.MustCompile("^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$")

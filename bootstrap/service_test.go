@@ -20,11 +20,13 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
+	tauthmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -38,6 +40,8 @@ const (
 	channelsNum     = 3
 	instanceID      = "5de9b29a-feb9-11ed-be56-0242ac120002"
 	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	allConn         = "all_connected"
+	allDisConn      = "all_disconnected"
 )
 
 var (
@@ -59,13 +63,14 @@ var (
 	}
 )
 
-func newService() (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthClient, *sdkmocks.SDK) {
+func newService() (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthClient, *tauthmocks.AuthzClient, *sdkmocks.SDK) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthClient)
+	tauth := new(tauthmocks.AuthzClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 
-	return bootstrap.New(auth, boot, sdk, encKey, idp), boot, auth, sdk
+	return bootstrap.New(auth, tauth, boot, sdk, encKey, idp), boot, auth, tauth, sdk
 }
 
 func enc(in []byte) ([]byte, error) {
@@ -84,7 +89,7 @@ func enc(in []byte) ([]byte, error) {
 }
 
 func TestAdd(t *testing.T) {
-	c, boot, auth, sdk := newService()
+	c, boot, auth, tAuth, sdk := newService()
 	neID := config
 	neID.ThingID = "non-existent"
 
@@ -100,6 +105,8 @@ func TestAdd(t *testing.T) {
 		userID          string
 		domainID        string
 		authResponse    *magistrala.AuthorizeRes
+		verifyResponse  *magistrala.VerifyConnectionsRes
+		verifyErr       error
 		authorizeErr    error
 		identifyErr     error
 		thingErr        error
@@ -111,13 +118,39 @@ func TestAdd(t *testing.T) {
 		err             error
 	}{
 		{
-			desc:         "add a new config",
+			desc:         "add a new config with active state",
 			config:       config,
 			token:        validToken,
 			userID:       validID,
 			domainID:     domainID,
 			authResponse: &magistrala.AuthorizeRes{Authorized: true},
-			err:          nil,
+			verifyResponse: &magistrala.VerifyConnectionsRes{
+				Status: allConn,
+			},
+			err: nil,
+		},
+		{
+			desc:         "add a new config with inactive state",
+			config:       config,
+			token:        validToken,
+			userID:       validID,
+			domainID:     domainID,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			verifyResponse: &magistrala.VerifyConnectionsRes{
+				Status: allDisConn,
+			},
+			err: nil,
+		},
+		{
+			desc:           "add a new config with failed verify connections",
+			config:         config,
+			token:          validToken,
+			userID:         validID,
+			domainID:       domainID,
+			authResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			verifyResponse: &magistrala.VerifyConnectionsRes{},
+			verifyErr:      svcerr.ErrNotFound,
+			err:            svcerr.ErrNotFound,
 		},
 		{
 			desc:         "add a config with an invalid ID",
@@ -154,12 +187,14 @@ func TestAdd(t *testing.T) {
 			err:             svcerr.ErrMalformedEntity,
 		},
 		{
-			desc:         "add empty config",
-			config:       bootstrap.Config{},
-			token:        validToken,
-			userID:       validID,
-			domainID:     domainID,
-			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			desc:            "add empty config",
+			config:          bootstrap.Config{},
+			token:           validToken,
+			userID:          validID,
+			domainID:        domainID,
+			authResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			listExistingErr: apiutil.ErrMissingID,
+			err:             apiutil.ErrMissingID,
 		},
 		{
 			desc:         "add a config without authorization",
@@ -198,6 +233,7 @@ func TestAdd(t *testing.T) {
 		repoCall1 := sdk.On("CreateThing", mock.Anything, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
 		repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.token).Return(tc.deleteThingErr)
 		repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
+		authCall2 := tAuth.On("VerifyConnections", mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
 		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := c.Add(context.Background(), tc.token, tc.config)
@@ -209,12 +245,13 @@ func TestAdd(t *testing.T) {
 		repoCall1.Unset()
 		repoCall2.Unset()
 		repoCall3.Unset()
+		authCall2.Unset()
 		repoCall4.Unset()
 	}
 }
 
 func TestView(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 
 	cases := []struct {
 		desc         string
@@ -308,7 +345,7 @@ func TestView(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	c := config
 
 	ch := channel
@@ -395,7 +432,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateCert(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	c := config
 
 	ch := channel
@@ -506,7 +543,7 @@ func TestUpdateCert(t *testing.T) {
 }
 
 func TestUpdateConnections(t *testing.T) {
-	svc, boot, auth, sdk := newService()
+	svc, boot, auth, _, sdk := newService()
 	c := config
 	c.State = bootstrap.Inactive
 
@@ -620,7 +657,7 @@ func TestUpdateConnections(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	numThings := 101
 	var saved []bootstrap.Config
 	for i := 0; i < numThings; i++ {
@@ -981,7 +1018,7 @@ func TestList(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	c := config
 	cases := []struct {
 		desc         string
@@ -1064,7 +1101,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestBootstrap(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 	c := config
 	e, err := enc([]byte(c.ExternalKey))
 	assert.Nil(t, err, fmt.Sprintf("Encrypting external key expected to succeed: %s.\n", err))
@@ -1131,7 +1168,7 @@ func TestBootstrap(t *testing.T) {
 }
 
 func TestChangeState(t *testing.T) {
-	svc, boot, auth, sdk := newService()
+	svc, boot, auth, _, sdk := newService()
 
 	c := config
 	cases := []struct {
@@ -1232,7 +1269,7 @@ func TestChangeState(t *testing.T) {
 }
 
 func TestUpdateChannelHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 	ch := bootstrap.Channel{
 		ID:       channel.ID,
 		Name:     "new name",
@@ -1265,7 +1302,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 }
 
 func TestRemoveChannelHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 
 	cases := []struct {
 		desc string
@@ -1293,7 +1330,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 }
 
 func TestRemoveConfigHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 
 	cases := []struct {
 		desc string
@@ -1321,7 +1358,7 @@ func TestRemoveConfigHandler(t *testing.T) {
 }
 
 func TestConnectThingsHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 	cases := []struct {
 		desc      string
 		thingID   string
@@ -1351,7 +1388,7 @@ func TestConnectThingsHandler(t *testing.T) {
 }
 
 func TestDisconnectThingsHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 	cases := []struct {
 		desc      string
 		thingID   string

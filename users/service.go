@@ -9,6 +9,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
+	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
@@ -27,17 +28,19 @@ var (
 type service struct {
 	clients      postgres.Repository
 	idProvider   magistrala.IDProvider
-	auth         magistrala.AuthServiceClient
+	auth         grpcclient.AuthServiceClient
+	policy       magistrala.PolicyServiceClient
 	hasher       Hasher
 	email        Emailer
 	selfRegister bool
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, authClient magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, selfRegister bool) Service {
+func NewService(crepo postgres.Repository, authClient grpcclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, selfRegister bool) Service {
 	return service{
 		clients:      crepo,
 		auth:         authClient,
+		policy:       policyClient,
 		hasher:       hasher,
 		email:        emailer,
 		idProvider:   idp,
@@ -500,7 +503,7 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind, objectID 
 	if _, err := svc.authorize(ctx, auth.UserType, auth.TokenKind, token, authzPerm, objectType, objectID); err != nil {
 		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
-	duids, err := svc.auth.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
+	duids, err := svc.policy.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
 		SubjectType: auth.UserType,
 		Permission:  pm.Permission,
 		Object:      objectID,
@@ -571,7 +574,7 @@ func (svc service) retrieveObjectUsersPermissions(ctx context.Context, domainID,
 }
 
 func (svc service) listObjectUserPermission(ctx context.Context, userID, objectType, objectID string) ([]string, error) {
-	lp, err := svc.auth.ListPermissions(ctx, &magistrala.ListPermissionsReq{
+	lp, err := svc.policy.ListPermissions(ctx, &magistrala.ListPermissionsReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
 		Object:      objectID,
@@ -678,7 +681,7 @@ func (svc service) addClientPolicy(ctx context.Context, userID string, role mgcl
 			Object:      auth.MagistralaObject,
 		})
 	}
-	resp, err := svc.auth.AddPolicies(ctx, &policies)
+	resp, err := svc.policy.AddPolicies(ctx, &policies)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
@@ -708,7 +711,7 @@ func (svc service) addClientPolicyRollback(ctx context.Context, userID string, r
 			Object:      auth.MagistralaObject,
 		})
 	}
-	resp, err := svc.auth.DeletePolicies(ctx, &policies)
+	resp, err := svc.policy.DeletePolicies(ctx, &policies)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
@@ -721,7 +724,7 @@ func (svc service) addClientPolicyRollback(ctx context.Context, userID string, r
 func (svc service) updateClientPolicy(ctx context.Context, userID string, role mgclients.Role) error {
 	switch role {
 	case mgclients.AdminRole:
-		resp, err := svc.auth.AddPolicy(ctx, &magistrala.AddPolicyReq{
+		resp, err := svc.policy.AddPolicy(ctx, &magistrala.AddPolicyReq{
 			SubjectType: auth.UserType,
 			Subject:     userID,
 			Relation:    auth.AdministratorRelation,
@@ -738,7 +741,7 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 	case mgclients.UserRole:
 		fallthrough
 	default:
-		resp, err := svc.auth.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
+		resp, err := svc.policy.DeletePolicyFilter(ctx, &magistrala.DeletePolicyFilterReq{
 			SubjectType: auth.UserType,
 			Subject:     userID,
 			Relation:    auth.AdministratorRelation,

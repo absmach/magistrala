@@ -54,14 +54,14 @@ const (
 var errUserAccess = errors.New("user has no permission")
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, uauth magistrala.AuthServiceClient, taauth magistrala.AuthzServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, auth magistrala.AuthzServiceClient, things magistrala.AuthzServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
 	mux := chi.NewRouter()
 	mux.Get("/channels/{chanID}/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, uauth, taauth),
+		listMessagesEndpoint(svc, auth, things),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -241,10 +241,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, uauth magistrala.AuthServiceClient, taauth magistrala.AuthzServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, auth magistrala.AuthzServiceClient, things magistrala.AuthzServiceClient) (err error) {
 	switch {
 	case req.token != "":
-		if _, err = uauth.Authorize(ctx, &magistrala.AuthorizeReq{
+		if _, err = auth.Authorize(ctx, &magistrala.AuthorizeReq{
 			SubjectType: userType,
 			SubjectKind: tokenKind,
 			Subject:     req.token,
@@ -260,7 +260,7 @@ func authorize(ctx context.Context, req listMessagesReq, uauth magistrala.AuthSe
 		}
 		return nil
 	case req.key != "":
-		if _, err = taauth.Authorize(ctx, &magistrala.AuthorizeReq{
+		if _, err = things.Authorize(ctx, &magistrala.AuthorizeReq{
 			SubjectType: groupType,
 			Subject:     req.key,
 			ObjectType:  thingType,

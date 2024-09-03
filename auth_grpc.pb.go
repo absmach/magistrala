@@ -29,8 +29,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// AuthzService is a service that provides authentication and authorization
-// functionalities for the things service.
+// AuthzService is a service that provides authorization functionalities
+// for magistrala services.
 type AuthzServiceClient interface {
 	// Authorize checks if the subject is authorized to perform
 	// the action on the object.
@@ -59,8 +59,8 @@ func (c *authzServiceClient) Authorize(ctx context.Context, in *AuthorizeReq, op
 // All implementations must embed UnimplementedAuthzServiceServer
 // for forward compatibility
 //
-// AuthzService is a service that provides authentication and authorization
-// functionalities for the things service.
+// AuthzService is a service that provides authorization functionalities
+// for magistrala services.
 type AuthzServiceServer interface {
 	// Authorize checks if the subject is authorized to perform
 	// the action on the object.
@@ -123,35 +123,200 @@ var AuthzService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	AuthService_Issue_FullMethodName                = "/magistrala.AuthService/Issue"
-	AuthService_Refresh_FullMethodName              = "/magistrala.AuthService/Refresh"
-	AuthService_Identify_FullMethodName             = "/magistrala.AuthService/Identify"
-	AuthService_Authorize_FullMethodName            = "/magistrala.AuthService/Authorize"
-	AuthService_AddPolicy_FullMethodName            = "/magistrala.AuthService/AddPolicy"
-	AuthService_AddPolicies_FullMethodName          = "/magistrala.AuthService/AddPolicies"
-	AuthService_DeletePolicyFilter_FullMethodName   = "/magistrala.AuthService/DeletePolicyFilter"
-	AuthService_DeletePolicies_FullMethodName       = "/magistrala.AuthService/DeletePolicies"
-	AuthService_ListObjects_FullMethodName          = "/magistrala.AuthService/ListObjects"
-	AuthService_ListAllObjects_FullMethodName       = "/magistrala.AuthService/ListAllObjects"
-	AuthService_CountObjects_FullMethodName         = "/magistrala.AuthService/CountObjects"
-	AuthService_ListSubjects_FullMethodName         = "/magistrala.AuthService/ListSubjects"
-	AuthService_ListAllSubjects_FullMethodName      = "/magistrala.AuthService/ListAllSubjects"
-	AuthService_CountSubjects_FullMethodName        = "/magistrala.AuthService/CountSubjects"
-	AuthService_ListPermissions_FullMethodName      = "/magistrala.AuthService/ListPermissions"
-	AuthService_DeleteEntityPolicies_FullMethodName = "/magistrala.AuthService/DeleteEntityPolicies"
+	AuthnService_Issue_FullMethodName    = "/magistrala.AuthnService/Issue"
+	AuthnService_Refresh_FullMethodName  = "/magistrala.AuthnService/Refresh"
+	AuthnService_Identify_FullMethodName = "/magistrala.AuthnService/Identify"
 )
 
-// AuthServiceClient is the client API for AuthService service.
+// AuthnServiceClient is the client API for AuthnService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// AuthService is a service that provides authentication and authorization
-// functionalities for the users service.
-type AuthServiceClient interface {
+// AuthnService is a service that provides authentication functionalities
+// for magistrala services.
+type AuthnServiceClient interface {
 	Issue(ctx context.Context, in *IssueReq, opts ...grpc.CallOption) (*Token, error)
 	Refresh(ctx context.Context, in *RefreshReq, opts ...grpc.CallOption) (*Token, error)
 	Identify(ctx context.Context, in *IdentityReq, opts ...grpc.CallOption) (*IdentityRes, error)
-	Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*AuthorizeRes, error)
+}
+
+type authnServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAuthnServiceClient(cc grpc.ClientConnInterface) AuthnServiceClient {
+	return &authnServiceClient{cc}
+}
+
+func (c *authnServiceClient) Issue(ctx context.Context, in *IssueReq, opts ...grpc.CallOption) (*Token, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Token)
+	err := c.cc.Invoke(ctx, AuthnService_Issue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authnServiceClient) Refresh(ctx context.Context, in *RefreshReq, opts ...grpc.CallOption) (*Token, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Token)
+	err := c.cc.Invoke(ctx, AuthnService_Refresh_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authnServiceClient) Identify(ctx context.Context, in *IdentityReq, opts ...grpc.CallOption) (*IdentityRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IdentityRes)
+	err := c.cc.Invoke(ctx, AuthnService_Identify_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AuthnServiceServer is the server API for AuthnService service.
+// All implementations must embed UnimplementedAuthnServiceServer
+// for forward compatibility
+//
+// AuthnService is a service that provides authentication functionalities
+// for magistrala services.
+type AuthnServiceServer interface {
+	Issue(context.Context, *IssueReq) (*Token, error)
+	Refresh(context.Context, *RefreshReq) (*Token, error)
+	Identify(context.Context, *IdentityReq) (*IdentityRes, error)
+	mustEmbedUnimplementedAuthnServiceServer()
+}
+
+// UnimplementedAuthnServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedAuthnServiceServer struct {
+}
+
+func (UnimplementedAuthnServiceServer) Issue(context.Context, *IssueReq) (*Token, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Issue not implemented")
+}
+func (UnimplementedAuthnServiceServer) Refresh(context.Context, *RefreshReq) (*Token, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (UnimplementedAuthnServiceServer) Identify(context.Context, *IdentityReq) (*IdentityRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Identify not implemented")
+}
+func (UnimplementedAuthnServiceServer) mustEmbedUnimplementedAuthnServiceServer() {}
+
+// UnsafeAuthnServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuthnServiceServer will
+// result in compilation errors.
+type UnsafeAuthnServiceServer interface {
+	mustEmbedUnimplementedAuthnServiceServer()
+}
+
+func RegisterAuthnServiceServer(s grpc.ServiceRegistrar, srv AuthnServiceServer) {
+	s.RegisterService(&AuthnService_ServiceDesc, srv)
+}
+
+func _AuthnService_Issue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthnServiceServer).Issue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthnService_Issue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthnServiceServer).Issue(ctx, req.(*IssueReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthnService_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthnServiceServer).Refresh(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthnService_Refresh_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthnServiceServer).Refresh(ctx, req.(*RefreshReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthnService_Identify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdentityReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthnServiceServer).Identify(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthnService_Identify_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthnServiceServer).Identify(ctx, req.(*IdentityReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AuthnService_ServiceDesc is the grpc.ServiceDesc for AuthnService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AuthnService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "magistrala.AuthnService",
+	HandlerType: (*AuthnServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Issue",
+			Handler:    _AuthnService_Issue_Handler,
+		},
+		{
+			MethodName: "Refresh",
+			Handler:    _AuthnService_Refresh_Handler,
+		},
+		{
+			MethodName: "Identify",
+			Handler:    _AuthnService_Identify_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "auth.proto",
+}
+
+const (
+	PolicyService_AddPolicy_FullMethodName            = "/magistrala.PolicyService/AddPolicy"
+	PolicyService_AddPolicies_FullMethodName          = "/magistrala.PolicyService/AddPolicies"
+	PolicyService_DeletePolicyFilter_FullMethodName   = "/magistrala.PolicyService/DeletePolicyFilter"
+	PolicyService_DeletePolicies_FullMethodName       = "/magistrala.PolicyService/DeletePolicies"
+	PolicyService_ListObjects_FullMethodName          = "/magistrala.PolicyService/ListObjects"
+	PolicyService_ListAllObjects_FullMethodName       = "/magistrala.PolicyService/ListAllObjects"
+	PolicyService_CountObjects_FullMethodName         = "/magistrala.PolicyService/CountObjects"
+	PolicyService_ListSubjects_FullMethodName         = "/magistrala.PolicyService/ListSubjects"
+	PolicyService_ListAllSubjects_FullMethodName      = "/magistrala.PolicyService/ListAllSubjects"
+	PolicyService_CountSubjects_FullMethodName        = "/magistrala.PolicyService/CountSubjects"
+	PolicyService_ListPermissions_FullMethodName      = "/magistrala.PolicyService/ListPermissions"
+	PolicyService_DeleteEntityPolicies_FullMethodName = "/magistrala.PolicyService/DeleteEntityPolicies"
+)
+
+// PolicyServiceClient is the client API for PolicyService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// PolicyService is a service that provides policy CRUD
+// functionalities for magistrala services.
+type PolicyServiceClient interface {
 	AddPolicy(ctx context.Context, in *AddPolicyReq, opts ...grpc.CallOption) (*AddPolicyRes, error)
 	AddPolicies(ctx context.Context, in *AddPoliciesReq, opts ...grpc.CallOption) (*AddPoliciesRes, error)
 	DeletePolicyFilter(ctx context.Context, in *DeletePolicyFilterReq, opts ...grpc.CallOption) (*DeletePolicyRes, error)
@@ -166,185 +331,141 @@ type AuthServiceClient interface {
 	DeleteEntityPolicies(ctx context.Context, in *DeleteEntityPoliciesReq, opts ...grpc.CallOption) (*DeletePolicyRes, error)
 }
 
-type authServiceClient struct {
+type policyServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
-	return &authServiceClient{cc}
+func NewPolicyServiceClient(cc grpc.ClientConnInterface) PolicyServiceClient {
+	return &policyServiceClient{cc}
 }
 
-func (c *authServiceClient) Issue(ctx context.Context, in *IssueReq, opts ...grpc.CallOption) (*Token, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Token)
-	err := c.cc.Invoke(ctx, AuthService_Issue_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) Refresh(ctx context.Context, in *RefreshReq, opts ...grpc.CallOption) (*Token, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Token)
-	err := c.cc.Invoke(ctx, AuthService_Refresh_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) Identify(ctx context.Context, in *IdentityReq, opts ...grpc.CallOption) (*IdentityRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(IdentityRes)
-	err := c.cc.Invoke(ctx, AuthService_Identify_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*AuthorizeRes, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AuthorizeRes)
-	err := c.cc.Invoke(ctx, AuthService_Authorize_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) AddPolicy(ctx context.Context, in *AddPolicyReq, opts ...grpc.CallOption) (*AddPolicyRes, error) {
+func (c *policyServiceClient) AddPolicy(ctx context.Context, in *AddPolicyReq, opts ...grpc.CallOption) (*AddPolicyRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddPolicyRes)
-	err := c.cc.Invoke(ctx, AuthService_AddPolicy_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_AddPolicy_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) AddPolicies(ctx context.Context, in *AddPoliciesReq, opts ...grpc.CallOption) (*AddPoliciesRes, error) {
+func (c *policyServiceClient) AddPolicies(ctx context.Context, in *AddPoliciesReq, opts ...grpc.CallOption) (*AddPoliciesRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddPoliciesRes)
-	err := c.cc.Invoke(ctx, AuthService_AddPolicies_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_AddPolicies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) DeletePolicyFilter(ctx context.Context, in *DeletePolicyFilterReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
+func (c *policyServiceClient) DeletePolicyFilter(ctx context.Context, in *DeletePolicyFilterReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeletePolicyRes)
-	err := c.cc.Invoke(ctx, AuthService_DeletePolicyFilter_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_DeletePolicyFilter_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) DeletePolicies(ctx context.Context, in *DeletePoliciesReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
+func (c *policyServiceClient) DeletePolicies(ctx context.Context, in *DeletePoliciesReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeletePolicyRes)
-	err := c.cc.Invoke(ctx, AuthService_DeletePolicies_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_DeletePolicies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) ListObjects(ctx context.Context, in *ListObjectsReq, opts ...grpc.CallOption) (*ListObjectsRes, error) {
+func (c *policyServiceClient) ListObjects(ctx context.Context, in *ListObjectsReq, opts ...grpc.CallOption) (*ListObjectsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListObjectsRes)
-	err := c.cc.Invoke(ctx, AuthService_ListObjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_ListObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) ListAllObjects(ctx context.Context, in *ListObjectsReq, opts ...grpc.CallOption) (*ListObjectsRes, error) {
+func (c *policyServiceClient) ListAllObjects(ctx context.Context, in *ListObjectsReq, opts ...grpc.CallOption) (*ListObjectsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListObjectsRes)
-	err := c.cc.Invoke(ctx, AuthService_ListAllObjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_ListAllObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) CountObjects(ctx context.Context, in *CountObjectsReq, opts ...grpc.CallOption) (*CountObjectsRes, error) {
+func (c *policyServiceClient) CountObjects(ctx context.Context, in *CountObjectsReq, opts ...grpc.CallOption) (*CountObjectsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CountObjectsRes)
-	err := c.cc.Invoke(ctx, AuthService_CountObjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_CountObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) ListSubjects(ctx context.Context, in *ListSubjectsReq, opts ...grpc.CallOption) (*ListSubjectsRes, error) {
+func (c *policyServiceClient) ListSubjects(ctx context.Context, in *ListSubjectsReq, opts ...grpc.CallOption) (*ListSubjectsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListSubjectsRes)
-	err := c.cc.Invoke(ctx, AuthService_ListSubjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_ListSubjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) ListAllSubjects(ctx context.Context, in *ListSubjectsReq, opts ...grpc.CallOption) (*ListSubjectsRes, error) {
+func (c *policyServiceClient) ListAllSubjects(ctx context.Context, in *ListSubjectsReq, opts ...grpc.CallOption) (*ListSubjectsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListSubjectsRes)
-	err := c.cc.Invoke(ctx, AuthService_ListAllSubjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_ListAllSubjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) CountSubjects(ctx context.Context, in *CountSubjectsReq, opts ...grpc.CallOption) (*CountSubjectsRes, error) {
+func (c *policyServiceClient) CountSubjects(ctx context.Context, in *CountSubjectsReq, opts ...grpc.CallOption) (*CountSubjectsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CountSubjectsRes)
-	err := c.cc.Invoke(ctx, AuthService_CountSubjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_CountSubjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) ListPermissions(ctx context.Context, in *ListPermissionsReq, opts ...grpc.CallOption) (*ListPermissionsRes, error) {
+func (c *policyServiceClient) ListPermissions(ctx context.Context, in *ListPermissionsReq, opts ...grpc.CallOption) (*ListPermissionsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListPermissionsRes)
-	err := c.cc.Invoke(ctx, AuthService_ListPermissions_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_ListPermissions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) DeleteEntityPolicies(ctx context.Context, in *DeleteEntityPoliciesReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
+func (c *policyServiceClient) DeleteEntityPolicies(ctx context.Context, in *DeleteEntityPoliciesReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeletePolicyRes)
-	err := c.cc.Invoke(ctx, AuthService_DeleteEntityPolicies_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PolicyService_DeleteEntityPolicies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AuthServiceServer is the server API for AuthService service.
-// All implementations must embed UnimplementedAuthServiceServer
+// PolicyServiceServer is the server API for PolicyService service.
+// All implementations must embed UnimplementedPolicyServiceServer
 // for forward compatibility
 //
-// AuthService is a service that provides authentication and authorization
-// functionalities for the users service.
-type AuthServiceServer interface {
-	Issue(context.Context, *IssueReq) (*Token, error)
-	Refresh(context.Context, *RefreshReq) (*Token, error)
-	Identify(context.Context, *IdentityReq) (*IdentityRes, error)
-	Authorize(context.Context, *AuthorizeReq) (*AuthorizeRes, error)
+// PolicyService is a service that provides policy CRUD
+// functionalities for magistrala services.
+type PolicyServiceServer interface {
 	AddPolicy(context.Context, *AddPolicyReq) (*AddPolicyRes, error)
 	AddPolicies(context.Context, *AddPoliciesReq) (*AddPoliciesRes, error)
 	DeletePolicyFilter(context.Context, *DeletePolicyFilterReq) (*DeletePolicyRes, error)
@@ -357,432 +478,332 @@ type AuthServiceServer interface {
 	CountSubjects(context.Context, *CountSubjectsReq) (*CountSubjectsRes, error)
 	ListPermissions(context.Context, *ListPermissionsReq) (*ListPermissionsRes, error)
 	DeleteEntityPolicies(context.Context, *DeleteEntityPoliciesReq) (*DeletePolicyRes, error)
-	mustEmbedUnimplementedAuthServiceServer()
+	mustEmbedUnimplementedPolicyServiceServer()
 }
 
-// UnimplementedAuthServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedAuthServiceServer struct {
+// UnimplementedPolicyServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedPolicyServiceServer struct {
 }
 
-func (UnimplementedAuthServiceServer) Issue(context.Context, *IssueReq) (*Token, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Issue not implemented")
-}
-func (UnimplementedAuthServiceServer) Refresh(context.Context, *RefreshReq) (*Token, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
-}
-func (UnimplementedAuthServiceServer) Identify(context.Context, *IdentityReq) (*IdentityRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Identify not implemented")
-}
-func (UnimplementedAuthServiceServer) Authorize(context.Context, *AuthorizeReq) (*AuthorizeRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Authorize not implemented")
-}
-func (UnimplementedAuthServiceServer) AddPolicy(context.Context, *AddPolicyReq) (*AddPolicyRes, error) {
+func (UnimplementedPolicyServiceServer) AddPolicy(context.Context, *AddPolicyReq) (*AddPolicyRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPolicy not implemented")
 }
-func (UnimplementedAuthServiceServer) AddPolicies(context.Context, *AddPoliciesReq) (*AddPoliciesRes, error) {
+func (UnimplementedPolicyServiceServer) AddPolicies(context.Context, *AddPoliciesReq) (*AddPoliciesRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPolicies not implemented")
 }
-func (UnimplementedAuthServiceServer) DeletePolicyFilter(context.Context, *DeletePolicyFilterReq) (*DeletePolicyRes, error) {
+func (UnimplementedPolicyServiceServer) DeletePolicyFilter(context.Context, *DeletePolicyFilterReq) (*DeletePolicyRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicyFilter not implemented")
 }
-func (UnimplementedAuthServiceServer) DeletePolicies(context.Context, *DeletePoliciesReq) (*DeletePolicyRes, error) {
+func (UnimplementedPolicyServiceServer) DeletePolicies(context.Context, *DeletePoliciesReq) (*DeletePolicyRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicies not implemented")
 }
-func (UnimplementedAuthServiceServer) ListObjects(context.Context, *ListObjectsReq) (*ListObjectsRes, error) {
+func (UnimplementedPolicyServiceServer) ListObjects(context.Context, *ListObjectsReq) (*ListObjectsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListObjects not implemented")
 }
-func (UnimplementedAuthServiceServer) ListAllObjects(context.Context, *ListObjectsReq) (*ListObjectsRes, error) {
+func (UnimplementedPolicyServiceServer) ListAllObjects(context.Context, *ListObjectsReq) (*ListObjectsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAllObjects not implemented")
 }
-func (UnimplementedAuthServiceServer) CountObjects(context.Context, *CountObjectsReq) (*CountObjectsRes, error) {
+func (UnimplementedPolicyServiceServer) CountObjects(context.Context, *CountObjectsReq) (*CountObjectsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CountObjects not implemented")
 }
-func (UnimplementedAuthServiceServer) ListSubjects(context.Context, *ListSubjectsReq) (*ListSubjectsRes, error) {
+func (UnimplementedPolicyServiceServer) ListSubjects(context.Context, *ListSubjectsReq) (*ListSubjectsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSubjects not implemented")
 }
-func (UnimplementedAuthServiceServer) ListAllSubjects(context.Context, *ListSubjectsReq) (*ListSubjectsRes, error) {
+func (UnimplementedPolicyServiceServer) ListAllSubjects(context.Context, *ListSubjectsReq) (*ListSubjectsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAllSubjects not implemented")
 }
-func (UnimplementedAuthServiceServer) CountSubjects(context.Context, *CountSubjectsReq) (*CountSubjectsRes, error) {
+func (UnimplementedPolicyServiceServer) CountSubjects(context.Context, *CountSubjectsReq) (*CountSubjectsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CountSubjects not implemented")
 }
-func (UnimplementedAuthServiceServer) ListPermissions(context.Context, *ListPermissionsReq) (*ListPermissionsRes, error) {
+func (UnimplementedPolicyServiceServer) ListPermissions(context.Context, *ListPermissionsReq) (*ListPermissionsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPermissions not implemented")
 }
-func (UnimplementedAuthServiceServer) DeleteEntityPolicies(context.Context, *DeleteEntityPoliciesReq) (*DeletePolicyRes, error) {
+func (UnimplementedPolicyServiceServer) DeleteEntityPolicies(context.Context, *DeleteEntityPoliciesReq) (*DeletePolicyRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEntityPolicies not implemented")
 }
-func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
+func (UnimplementedPolicyServiceServer) mustEmbedUnimplementedPolicyServiceServer() {}
 
-// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AuthServiceServer will
+// UnsafePolicyServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PolicyServiceServer will
 // result in compilation errors.
-type UnsafeAuthServiceServer interface {
-	mustEmbedUnimplementedAuthServiceServer()
+type UnsafePolicyServiceServer interface {
+	mustEmbedUnimplementedPolicyServiceServer()
 }
 
-func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
-	s.RegisterService(&AuthService_ServiceDesc, srv)
+func RegisterPolicyServiceServer(s grpc.ServiceRegistrar, srv PolicyServiceServer) {
+	s.RegisterService(&PolicyService_ServiceDesc, srv)
 }
 
-func _AuthService_Issue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IssueReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Issue(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Issue_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Issue(ctx, req.(*IssueReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RefreshReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Refresh(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Refresh_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Refresh(ctx, req.(*RefreshReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_Identify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IdentityReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Identify(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Identify_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Identify(ctx, req.(*IdentityReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_Authorize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthorizeReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Authorize(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Authorize_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Authorize(ctx, req.(*AuthorizeReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_AddPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_AddPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddPolicyReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).AddPolicy(ctx, in)
+		return srv.(PolicyServiceServer).AddPolicy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_AddPolicy_FullMethodName,
+		FullMethod: PolicyService_AddPolicy_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).AddPolicy(ctx, req.(*AddPolicyReq))
+		return srv.(PolicyServiceServer).AddPolicy(ctx, req.(*AddPolicyReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_AddPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_AddPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddPoliciesReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).AddPolicies(ctx, in)
+		return srv.(PolicyServiceServer).AddPolicies(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_AddPolicies_FullMethodName,
+		FullMethod: PolicyService_AddPolicies_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).AddPolicies(ctx, req.(*AddPoliciesReq))
+		return srv.(PolicyServiceServer).AddPolicies(ctx, req.(*AddPoliciesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_DeletePolicyFilter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_DeletePolicyFilter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeletePolicyFilterReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).DeletePolicyFilter(ctx, in)
+		return srv.(PolicyServiceServer).DeletePolicyFilter(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_DeletePolicyFilter_FullMethodName,
+		FullMethod: PolicyService_DeletePolicyFilter_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).DeletePolicyFilter(ctx, req.(*DeletePolicyFilterReq))
+		return srv.(PolicyServiceServer).DeletePolicyFilter(ctx, req.(*DeletePolicyFilterReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_DeletePolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_DeletePolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeletePoliciesReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).DeletePolicies(ctx, in)
+		return srv.(PolicyServiceServer).DeletePolicies(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_DeletePolicies_FullMethodName,
+		FullMethod: PolicyService_DeletePolicies_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).DeletePolicies(ctx, req.(*DeletePoliciesReq))
+		return srv.(PolicyServiceServer).DeletePolicies(ctx, req.(*DeletePoliciesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_ListObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_ListObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListObjectsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).ListObjects(ctx, in)
+		return srv.(PolicyServiceServer).ListObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_ListObjects_FullMethodName,
+		FullMethod: PolicyService_ListObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).ListObjects(ctx, req.(*ListObjectsReq))
+		return srv.(PolicyServiceServer).ListObjects(ctx, req.(*ListObjectsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_ListAllObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_ListAllObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListObjectsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).ListAllObjects(ctx, in)
+		return srv.(PolicyServiceServer).ListAllObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_ListAllObjects_FullMethodName,
+		FullMethod: PolicyService_ListAllObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).ListAllObjects(ctx, req.(*ListObjectsReq))
+		return srv.(PolicyServiceServer).ListAllObjects(ctx, req.(*ListObjectsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_CountObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_CountObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CountObjectsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).CountObjects(ctx, in)
+		return srv.(PolicyServiceServer).CountObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_CountObjects_FullMethodName,
+		FullMethod: PolicyService_CountObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).CountObjects(ctx, req.(*CountObjectsReq))
+		return srv.(PolicyServiceServer).CountObjects(ctx, req.(*CountObjectsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_ListSubjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_ListSubjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListSubjectsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).ListSubjects(ctx, in)
+		return srv.(PolicyServiceServer).ListSubjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_ListSubjects_FullMethodName,
+		FullMethod: PolicyService_ListSubjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).ListSubjects(ctx, req.(*ListSubjectsReq))
+		return srv.(PolicyServiceServer).ListSubjects(ctx, req.(*ListSubjectsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_ListAllSubjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_ListAllSubjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListSubjectsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).ListAllSubjects(ctx, in)
+		return srv.(PolicyServiceServer).ListAllSubjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_ListAllSubjects_FullMethodName,
+		FullMethod: PolicyService_ListAllSubjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).ListAllSubjects(ctx, req.(*ListSubjectsReq))
+		return srv.(PolicyServiceServer).ListAllSubjects(ctx, req.(*ListSubjectsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_CountSubjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_CountSubjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CountSubjectsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).CountSubjects(ctx, in)
+		return srv.(PolicyServiceServer).CountSubjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_CountSubjects_FullMethodName,
+		FullMethod: PolicyService_CountSubjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).CountSubjects(ctx, req.(*CountSubjectsReq))
+		return srv.(PolicyServiceServer).CountSubjects(ctx, req.(*CountSubjectsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_ListPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_ListPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListPermissionsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).ListPermissions(ctx, in)
+		return srv.(PolicyServiceServer).ListPermissions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_ListPermissions_FullMethodName,
+		FullMethod: PolicyService_ListPermissions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).ListPermissions(ctx, req.(*ListPermissionsReq))
+		return srv.(PolicyServiceServer).ListPermissions(ctx, req.(*ListPermissionsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_DeleteEntityPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PolicyService_DeleteEntityPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteEntityPoliciesReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).DeleteEntityPolicies(ctx, in)
+		return srv.(PolicyServiceServer).DeleteEntityPolicies(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_DeleteEntityPolicies_FullMethodName,
+		FullMethod: PolicyService_DeleteEntityPolicies_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).DeleteEntityPolicies(ctx, req.(*DeleteEntityPoliciesReq))
+		return srv.(PolicyServiceServer).DeleteEntityPolicies(ctx, req.(*DeleteEntityPoliciesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
+// PolicyService_ServiceDesc is the grpc.ServiceDesc for PolicyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var AuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "magistrala.AuthService",
-	HandlerType: (*AuthServiceServer)(nil),
+var PolicyService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "magistrala.PolicyService",
+	HandlerType: (*PolicyServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Issue",
-			Handler:    _AuthService_Issue_Handler,
-		},
-		{
-			MethodName: "Refresh",
-			Handler:    _AuthService_Refresh_Handler,
-		},
-		{
-			MethodName: "Identify",
-			Handler:    _AuthService_Identify_Handler,
-		},
-		{
-			MethodName: "Authorize",
-			Handler:    _AuthService_Authorize_Handler,
-		},
-		{
 			MethodName: "AddPolicy",
-			Handler:    _AuthService_AddPolicy_Handler,
+			Handler:    _PolicyService_AddPolicy_Handler,
 		},
 		{
 			MethodName: "AddPolicies",
-			Handler:    _AuthService_AddPolicies_Handler,
+			Handler:    _PolicyService_AddPolicies_Handler,
 		},
 		{
 			MethodName: "DeletePolicyFilter",
-			Handler:    _AuthService_DeletePolicyFilter_Handler,
+			Handler:    _PolicyService_DeletePolicyFilter_Handler,
 		},
 		{
 			MethodName: "DeletePolicies",
-			Handler:    _AuthService_DeletePolicies_Handler,
+			Handler:    _PolicyService_DeletePolicies_Handler,
 		},
 		{
 			MethodName: "ListObjects",
-			Handler:    _AuthService_ListObjects_Handler,
+			Handler:    _PolicyService_ListObjects_Handler,
 		},
 		{
 			MethodName: "ListAllObjects",
-			Handler:    _AuthService_ListAllObjects_Handler,
+			Handler:    _PolicyService_ListAllObjects_Handler,
 		},
 		{
 			MethodName: "CountObjects",
-			Handler:    _AuthService_CountObjects_Handler,
+			Handler:    _PolicyService_CountObjects_Handler,
 		},
 		{
 			MethodName: "ListSubjects",
-			Handler:    _AuthService_ListSubjects_Handler,
+			Handler:    _PolicyService_ListSubjects_Handler,
 		},
 		{
 			MethodName: "ListAllSubjects",
-			Handler:    _AuthService_ListAllSubjects_Handler,
+			Handler:    _PolicyService_ListAllSubjects_Handler,
 		},
 		{
 			MethodName: "CountSubjects",
-			Handler:    _AuthService_CountSubjects_Handler,
+			Handler:    _PolicyService_CountSubjects_Handler,
 		},
 		{
 			MethodName: "ListPermissions",
-			Handler:    _AuthService_ListPermissions_Handler,
+			Handler:    _PolicyService_ListPermissions_Handler,
 		},
 		{
 			MethodName: "DeleteEntityPolicies",
-			Handler:    _AuthService_DeleteEntityPolicies_Handler,
+			Handler:    _PolicyService_DeleteEntityPolicies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

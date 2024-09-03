@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/mocks"
+	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/absmach/magistrala/ws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -37,15 +37,15 @@ var msg = messaging.Message{
 	Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
 }
 
-func newService() (ws.Service, *mocks.PubSub, *authmocks.AuthClient) {
+func newService() (ws.Service, *mocks.PubSub, *thmocks.AuthzServiceClient) {
 	pubsub := new(mocks.PubSub)
-	auth := new(authmocks.AuthClient)
+	things := new(thmocks.AuthzServiceClient)
 
-	return ws.New(auth, pubsub), pubsub, auth
+	return ws.New(things, pubsub), pubsub, things
 }
 
 func TestSubscribe(t *testing.T) {
-	svc, pubsub, auth := newService()
+	svc, pubsub, things := newService()
 
 	c := ws.NewClient(nil)
 
@@ -115,7 +115,7 @@ func TestSubscribe(t *testing.T) {
 			Handler: c,
 		}
 		repocall := pubsub.On("Subscribe", mock.Anything, subConfig).Return(tc.err)
-		repocall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: thingID}, nil)
+		repocall1 := things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: thingID}, nil)
 		err := svc.Subscribe(context.Background(), tc.thingKey, tc.chanID, tc.subtopic, c)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repocall1.Parent.AssertCalled(t, "Authorize", mock.Anything, mock.Anything)

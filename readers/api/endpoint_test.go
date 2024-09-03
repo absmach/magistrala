@@ -50,8 +50,8 @@ var (
 	sum float64 = 42
 )
 
-func newServer(repo *mocks.MessageRepository, ac *authmocks.AuthClient, tc *thmocks.ThingAuthzService) *httptest.Server {
-	mux := api.MakeHandler(repo, ac, tc, svcName, instanceID)
+func newServer(repo *mocks.MessageRepository, authClient *authmocks.AuthServiceClient, thingsAuthzClient *thmocks.AuthzServiceClient) *httptest.Server {
+	mux := api.MakeHandler(repo, authClient, thingsAuthzClient, svcName, instanceID)
 	return httptest.NewServer(mux)
 }
 
@@ -129,9 +129,9 @@ func TestReadAll(t *testing.T) {
 	}
 
 	repo := new(mocks.MessageRepository)
-	auth := new(authmocks.AuthClient)
-	tauth := new(thmocks.ThingAuthzService)
-	ts := newServer(repo, auth, tauth)
+	auth := new(authmocks.AuthServiceClient)
+	things := new(thmocks.AuthzServiceClient)
+	ts := newServer(repo, auth, things)
 	defer ts.Close()
 
 	cases := []struct {
@@ -981,7 +981,7 @@ func TestReadAll(t *testing.T) {
 		authCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: tc.authResponse}, tc.err)
 		repo.On("ReadAll", chanID, tc.res.PageMetadata).Return(readers.MessagesPage{Total: tc.res.Total, Messages: fromSenml(tc.res.Messages)}, nil)
 		if tc.key != "" {
-			repoCall = tauth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: tc.authResponse}, tc.err)
+			repoCall = things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: tc.authResponse}, tc.err)
 		}
 		req := testRequest{
 			client: ts.Client(),

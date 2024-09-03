@@ -29,9 +29,9 @@ const (
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
-func newService() (notifiers.Service, *authmocks.AuthClient, *mocks.SubscriptionsRepository) {
+func newService() (notifiers.Service, *authmocks.AuthServiceClient, *mocks.SubscriptionsRepository) {
 	repo := new(mocks.SubscriptionsRepository)
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
 	notifier := new(mocks.Notifier)
 	idp := uuid.NewMock()
 	from := "exampleFrom"
@@ -276,10 +276,7 @@ func TestListSubscriptions(t *testing.T) {
 func TestRemoveSubscription(t *testing.T) {
 	svc, auth, repo := newService()
 	sub := notifiers.Subscription{
-		Contact: exampleUser1,
-		Topic:   "valid.topic",
-		ID:      testsutil.GenerateUUID(t),
-		OwnerID: validID,
+		ID: testsutil.GenerateUUID(t),
 	}
 
 	cases := []struct {
@@ -327,21 +324,6 @@ func TestRemoveSubscription(t *testing.T) {
 
 func TestConsume(t *testing.T) {
 	svc, _, repo := newService()
-	sub := notifiers.Subscription{
-		Contact: exampleUser1,
-		OwnerID: validID,
-		Topic:   "topic.subtopic",
-	}
-	for i := 0; i < total; i++ {
-		tmp := sub
-		tmp.Contact = fmt.Sprintf("contact%d@example.com", i)
-		if i%2 == 0 {
-			tmp.Topic = fmt.Sprintf("%s-2", sub.Topic)
-		}
-	}
-	sub.Contact = "invalid@example.com"
-	sub.Topic = fmt.Sprintf("%s-2", sub.Topic)
-
 	msg := messaging.Message{
 		Channel:  "topic",
 		Subtopic: "subtopic",

@@ -41,14 +41,14 @@ type Service interface {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	auth   magistrala.AuthzServiceClient
+	things magistrala.AuthzServiceClient
 	pubsub messaging.PubSub
 }
 
 // New instantiates the WS adapter implementation.
-func New(authClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(thingsClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	return &adapterService{
-		auth:   authClient,
+		things: thingsClient,
 		pubsub: pubsub,
 	}
 }
@@ -92,7 +92,7 @@ func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, acti
 		Object:      chanID,
 		ObjectType:  auth.GroupType,
 	}
-	res, err := svc.auth.Authorize(ctx, ar)
+	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
 		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}

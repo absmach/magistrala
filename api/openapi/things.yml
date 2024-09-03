@@ -453,7 +453,7 @@ paths:
         "403":
           description: Failed to perform authorization over the entity.
         "404":
-          descripttion: A non-existent entity request.
+          description: A non-existent entity request.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -577,7 +577,7 @@ paths:
         "403":
           description: Unauthorized access to thing id.
         "404":
-          descripttion: A non-existent entity request.
+          description: A non-existent entity request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -967,6 +967,7 @@ paths:
       summary: Retrieves service health check info.
       tags:
         - health
+      security: []
       responses:
         "200":
           $ref: "#/components/responses/HealthRes"

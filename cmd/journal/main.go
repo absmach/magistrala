@@ -14,14 +14,15 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
+	authclient "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/journal"
 	"github.com/absmach/magistrala/journal/api"
 	"github.com/absmach/magistrala/journal/events"
 	"github.com/absmach/magistrala/journal/middleware"
 	journalpg "github.com/absmach/magistrala/journal/postgres"
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
@@ -47,7 +48,7 @@ const (
 type config struct {
 	LogLevel      string  `env:"MG_JOURNAL_LOG_LEVEL"   envDefault:"info"`
 	ESURL         string  `env:"MG_ES_URL"              envDefault:"nats://localhost:4222"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"          envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"      envDefault:"true"`
 	InstanceID    string  `env:"MG_JOURNAL_INSTANCE_ID" envDefault:""`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"  envDefault:"1.0"`
@@ -92,22 +93,22 @@ func main() {
 	}
 	defer db.Close()
 
-	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
+	authClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&authClientCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
-	ac, acHandler, err := auth.Setup(ctx, authConfig)
+	authClient, authHandler, err := grpcclient.SetupAuthClient(ctx, authClientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer acHandler.Close()
+	defer authHandler.Close()
 
-	logger.Info("Successfully connected to auth grpc server " + acHandler.Secure())
+	logger.Info("AuthService gRPC client successfully connected to auth gRPC server " + authHandler.Secure())
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
@@ -122,7 +123,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	svc := newService(db, dbConfig, ac, logger, tracer)
+	svc := newService(db, dbConfig, authClient, logger, tracer)
 
 	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
 	if err != nil {
@@ -166,7 +167,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, dbConfig pgclient.Config, authClient magistrala.AuthServiceClient, logger *slog.Logger, tracer trace.Tracer) journal.Service {
+func newService(db *sqlx.DB, dbConfig pgclient.Config, authClient authclient.AuthServiceClient, logger *slog.Logger, tracer trace.Tracer) journal.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	repo := journalpg.NewRepository(database)
 	idp := uuid.New()

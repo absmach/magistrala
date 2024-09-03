@@ -23,8 +23,8 @@ import (
 	"github.com/absmach/magistrala/mqtt"
 	"github.com/absmach/magistrala/mqtt/events"
 	mqtttracing "github.com/absmach/magistrala/mqtt/tracing"
-	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
@@ -42,9 +42,9 @@ import (
 )
 
 const (
-	svcName        = "mqtt"
-	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
-	wsPathPrefix   = "/mqtt"
+	svcName         = "mqtt"
+	envPrefixThings = "MG_THINGS_AUTH_GRPC_"
+	wsPathPrefix    = "/mqtt"
 )
 
 type config struct {
@@ -60,7 +60,7 @@ type config struct {
 	HTTPTargetPort        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
 	HTTPTargetPath        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
 	Instance              string        `env:"MG_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
-	JaegerURL             url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
+	JaegerURL             url.URL       `env:"MG_JAEGER_URL"                                envDefault:"http://localhost:4318/v1/traces"`
 	BrokerURL             string        `env:"MG_MESSAGE_BROKER_URL"                        envDefault:"nats://localhost:4222"`
 	SendTelemetry         bool          `env:"MG_SEND_TELEMETRY"                            envDefault:"true"`
 	InstanceID            string        `env:"MG_MQTT_ADAPTER_INSTANCE_ID"                  envDefault:""`
@@ -165,24 +165,24 @@ func main() {
 		return
 	}
 
-	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuthz}); err != nil {
+	thingsClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&thingsClientCfg, env.Options{Prefix: envPrefixThings}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
-	authClient, authHandler, err := auth.SetupAuthz(ctx, authConfig)
+	thingsClient, thingsHandler, err := grpcclient.SetupThingsClient(ctx, thingsClientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer authHandler.Close()
+	defer thingsHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + authHandler.Secure())
+	logger.Info("Things service gRPC client successfully connected to things gRPC server " + thingsHandler.Secure())
 
-	h := mqtt.NewHandler(np, es, logger, authClient)
+	h := mqtt.NewHandler(np, es, logger, thingsClient)
 	h = handler.NewTracing(tracer, h)
 
 	if cfg.SendTelemetry {

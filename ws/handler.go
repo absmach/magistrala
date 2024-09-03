@@ -51,16 +51,16 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 // Event implements events.Event interface.
 type handler struct {
 	pubsub messaging.PubSub
-	auth   magistrala.AuthzServiceClient
+	things magistrala.AuthzServiceClient
 	logger *slog.Logger
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(pubsub messaging.PubSub, logger *slog.Logger, authClient magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(pubsub messaging.PubSub, logger *slog.Logger, thingsClient magistrala.AuthzServiceClient) session.Handler {
 	return &handler{
 		logger: logger,
 		pubsub: pubsub,
-		auth:   authClient,
+		things: thingsClient,
 	}
 }
 
@@ -167,7 +167,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		Object:      chanID,
 		ObjectType:  auth.GroupType,
 	}
-	res, err := h.auth.Authorize(ctx, ar)
+	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 		Object:      chanID,
 		ObjectType:  auth.GroupType,
 	}
-	res, err := h.auth.Authorize(ctx, ar)
+	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}

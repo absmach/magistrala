@@ -50,15 +50,16 @@ var (
 	errHashPassword = errors.New("generate hash from password failed")
 )
 
-func newService(selfRegister bool) (users.Service, *mocks.Repository, *authmocks.AuthClient, *mocks.Emailer) {
+func newService(selfRegister bool) (users.Service, *mocks.Repository, *authmocks.AuthServiceClient, *authmocks.PolicyServiceClient, *mocks.Emailer) {
 	cRepo := new(mocks.Repository)
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
 	e := new(mocks.Emailer)
-	return users.NewService(cRepo, auth, e, phasher, idProvider, selfRegister), cRepo, auth, e
+	return users.NewService(cRepo, auth, policy, e, phasher, idProvider, selfRegister), cRepo, auth, policy, e
 }
 
 func TestRegisterClient(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, _, policy, _ := newService(true)
 
 	cases := []struct {
 		desc                      string
@@ -263,8 +264,8 @@ func TestRegisterClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		authCall := auth.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesResponseErr)
-		authCall1 := auth.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponse, tc.deletePoliciesResponseErr)
+		authCall := policy.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesResponseErr)
+		authCall1 := policy.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponse, tc.deletePoliciesResponseErr)
 		repoCall := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.client, tc.saveErr)
 		expected, err := svc.RegisterClient(context.Background(), tc.token, tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -283,7 +284,7 @@ func TestRegisterClient(t *testing.T) {
 		authCall.Unset()
 	}
 
-	svc, cRepo, auth, _ = newService(false)
+	svc, cRepo, auth, policy, _ := newService(false)
 
 	cases2 := []struct {
 		desc                      string
@@ -340,8 +341,8 @@ func TestRegisterClient(t *testing.T) {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
-		authCall2 := auth.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesResponseErr)
-		authCall3 := auth.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponse, tc.deletePoliciesResponseErr)
+		authCall2 := policy.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesResponseErr)
+		authCall3 := policy.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponse, tc.deletePoliciesResponseErr)
 		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.client, tc.saveErr)
 		expected, err := svc.RegisterClient(context.Background(), tc.token, tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -366,7 +367,7 @@ func TestRegisterClient(t *testing.T) {
 }
 
 func TestViewClient(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	adminID := testsutil.GenerateUUID(t)
 	cases := []struct {
@@ -477,7 +478,7 @@ func TestViewClient(t *testing.T) {
 }
 
 func TestListClients(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	cases := []struct {
 		desc                string
@@ -593,7 +594,7 @@ func TestListClients(t *testing.T) {
 }
 
 func TestSearchUsers(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 	cases := []struct {
 		desc               string
 		token              string
@@ -675,7 +676,7 @@ func TestSearchUsers(t *testing.T) {
 }
 
 func TestUpdateClient(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	client1 := client
 	client2 := client
@@ -805,7 +806,7 @@ func TestUpdateClient(t *testing.T) {
 }
 
 func TestUpdateClientTags(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	client.Tags = []string{"updated"}
 	adminID := testsutil.GenerateUUID(t)
@@ -915,7 +916,7 @@ func TestUpdateClientTags(t *testing.T) {
 }
 
 func TestUpdateClientIdentity(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	client2 := client
 	client2.Credentials.Identity = "updated@example.com"
@@ -1035,7 +1036,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 }
 
 func TestUpdateClientRole(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, policy, _ := newService(true)
 
 	client2 := client
 	client.Role = mgclients.AdminRole
@@ -1239,8 +1240,8 @@ func TestUpdateClientRole(t *testing.T) {
 		authCall1 := auth.On("Authorize", context.Background(), tc.superAdminAuthReq).Return(tc.superAdminAuthRes, tc.authorizeErr)
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
 		authCall2 := auth.On("Authorize", context.Background(), tc.membershipAuthReq).Return(tc.membershipAuthRes, tc.membershipAuthErr)
-		authCall3 := auth.On("AddPolicy", context.Background(), mock.Anything).Return(tc.addPolicyResponse, tc.addPolicyErr)
-		authCall4 := auth.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyFilterResponse, tc.deletePolicyErr)
+		authCall3 := policy.On("AddPolicy", context.Background(), mock.Anything).Return(tc.addPolicyResponse, tc.addPolicyErr)
+		authCall4 := policy.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyFilterResponse, tc.deletePolicyErr)
 		repoCall1 := cRepo.On("UpdateRole", context.Background(), mock.Anything).Return(tc.updateRoleResponse, tc.updateRoleErr)
 
 		updatedClient, err := svc.UpdateClientRole(context.Background(), tc.token, tc.client)
@@ -1261,7 +1262,7 @@ func TestUpdateClientRole(t *testing.T) {
 }
 
 func TestUpdateClientSecret(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	newSecret := "newstrongSecret"
 	rClient := client
@@ -1391,7 +1392,7 @@ func TestUpdateClientSecret(t *testing.T) {
 }
 
 func TestEnableClient(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -1515,7 +1516,7 @@ func TestEnableClient(t *testing.T) {
 }
 
 func TestDisableClient(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -1639,7 +1640,7 @@ func TestDisableClient(t *testing.T) {
 }
 
 func TestDeleteClient(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	deletedClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DeletedStatus}
@@ -1762,7 +1763,7 @@ func TestDeleteClient(t *testing.T) {
 }
 
 func TestListMembers(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, policy, _ := newService(true)
 
 	validPolicy := fmt.Sprintf("%s_%s", validID, client.ID)
 	permissionsClient := basicClient
@@ -2214,9 +2215,9 @@ func TestListMembers(t *testing.T) {
 	for _, tc := range cases {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), tc.authorizeReq).Return(tc.authorizeResponse, tc.authorizeErr)
-		authCall2 := auth.On("ListAllSubjects", context.Background(), tc.listAllSubjectsReq).Return(tc.listAllSubjectsResponse, tc.listAllSubjectsErr)
+		authCall2 := policy.On("ListAllSubjects", context.Background(), tc.listAllSubjectsReq).Return(tc.listAllSubjectsResponse, tc.listAllSubjectsErr)
 		repoCall := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
-		authCall3 := auth.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionErr)
+		authCall3 := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionErr)
 
 		page, err := svc.ListMembers(context.Background(), tc.token, tc.objectKind, tc.objectID, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -2231,7 +2232,7 @@ func TestListMembers(t *testing.T) {
 }
 
 func TestIssueToken(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	rClient := client
 	rClient2 := client
@@ -2315,7 +2316,7 @@ func TestIssueToken(t *testing.T) {
 }
 
 func TestRefreshToken(t *testing.T) {
-	svc, crepo, auth, _ := newService(true)
+	svc, crepo, auth, _, _ := newService(true)
 
 	rClient := client
 	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
@@ -2417,7 +2418,7 @@ func TestRefreshToken(t *testing.T) {
 }
 
 func TestGenerateResetToken(t *testing.T) {
-	svc, cRepo, auth, e := newService(true)
+	svc, cRepo, auth, _, e := newService(true)
 
 	cases := []struct {
 		desc                       string
@@ -2476,7 +2477,7 @@ func TestGenerateResetToken(t *testing.T) {
 }
 
 func TestResetSecret(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	client := mgclients.Client{
 		ID: "clientID",
@@ -2581,7 +2582,7 @@ func TestResetSecret(t *testing.T) {
 }
 
 func TestViewProfile(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, _, _ := newService(true)
 
 	client := mgclients.Client{
 		ID: "clientID",
@@ -2642,7 +2643,7 @@ func TestViewProfile(t *testing.T) {
 }
 
 func TestOAuthCallback(t *testing.T) {
-	svc, cRepo, auth, _ := newService(true)
+	svc, cRepo, auth, policy, _ := newService(true)
 
 	cases := []struct {
 		desc                       string
@@ -2794,7 +2795,7 @@ func TestOAuthCallback(t *testing.T) {
 		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
 		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.saveResponse, tc.saveErr)
 		authCall := auth.On("Issue", mock.Anything, mock.Anything).Return(tc.issueResponse, tc.issueErr)
-		authCall1 := auth.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesErr)
+		authCall1 := policy.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesErr)
 		authCall2 := auth.On("Authorize", mock.Anything, authReq).Return(tc.authorizeResponse, tc.authorizeErr)
 		token, err := svc.OAuthCallback(context.Background(), tc.client)
 		if err == nil {

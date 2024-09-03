@@ -397,7 +397,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-    /users/search:
+  /users/search:
     get:
       operationId: searchUsers
       summary: Search users
@@ -1062,6 +1062,7 @@ paths:
       summary: Retrieves service health check info.
       tags:
         - health
+      security: []
       responses:
         "200":
           $ref: "#/components/responses/HealthRes"

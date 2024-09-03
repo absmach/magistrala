@@ -84,24 +84,38 @@ var (
 	}
 )
 
-func newService(t *testing.T, url string) (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthClient, *sdkmocks.SDK) {
+type testVariable struct {
+	svc    bootstrap.Service
+	boot   *mocks.ConfigRepository
+	auth   *authmocks.AuthServiceClient
+	policy *authmocks.PolicyServiceClient
+	sdk    *sdkmocks.SDK
+}
+
+func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
-	auth := new(authmocks.AuthClient)
+	auth := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
-	svc := bootstrap.New(auth, boot, sdk, encKey, idp)
-	publisher, err := store.NewPublisher(context.Background(), url, streamID)
+	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
+	publisher, err := store.NewPublisher(context.Background(), redisURL, streamID)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
-
-	return svc, boot, auth, sdk
+	return testVariable{
+		svc:    svc,
+		boot:   boot,
+		auth:   auth,
+		policy: policy,
+		sdk:    sdk,
+	}
 }
 
 func TestAdd(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, sdk := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	var channels []string
 	for _, ch := range config.Channels {
@@ -204,13 +218,13 @@ func TestAdd(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
-		sdkCall := sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
-		repoCall := boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
-		repoCall1 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := tv.auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		sdkCall := tv.sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
+		repoCall := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
+		repoCall1 := tv.boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
-		_, err := svc.Add(context.Background(), tc.token, tc.config)
+		_, err := tv.svc.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -239,7 +253,7 @@ func TestView(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	nonExisting := config
 	nonExisting.ThingID = unknownThingID
@@ -310,11 +324,11 @@ func TestView(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
-		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ThingID).Return(config, tc.retrieveErr)
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := tv.auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ThingID).Return(config, tc.retrieveErr)
 
-		_, err := svc.View(context.Background(), tc.token, tc.config.ThingID)
+		_, err := tv.svc.View(context.Background(), tc.token, tc.config.ThingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -342,7 +356,7 @@ func TestUpdate(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	c := config
 
@@ -431,10 +445,10 @@ func TestUpdate(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
-		repoCall := boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
-		err := svc.Update(context.Background(), tc.token, tc.config)
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := tv.auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := tv.boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
+		err := tv.svc.Update(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -462,7 +476,7 @@ func TestUpdateConnections(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, sdk := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc         string
@@ -570,13 +584,13 @@ func TestUpdateConnections(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
-		sdkCall := sdk.On("Channel", mock.Anything, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
-		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.configID).Return(config, tc.retrieveErr)
-		repoCall1 := boot.On("ListExisting", context.Background(), domainID, mock.Anything, mock.Anything).Return(config.Channels, tc.listErr)
-		repoCall2 := boot.On("UpdateConnections", context.Background(), tc.domainID, tc.configID, mock.Anything, tc.connections).Return(tc.updateErr)
-		err := svc.UpdateConnections(context.Background(), tc.token, tc.configID, tc.connections)
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.id, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := tv.auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		sdkCall := tv.sdk.On("Channel", mock.Anything, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.configID).Return(config, tc.retrieveErr)
+		repoCall1 := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything, mock.Anything).Return(config.Channels, tc.listErr)
+		repoCall2 := tv.boot.On("UpdateConnections", context.Background(), tc.domainID, tc.configID, mock.Anything, tc.connections).Return(tc.updateErr)
+		err := tv.svc.UpdateConnections(context.Background(), tc.token, tc.configID, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -605,7 +619,7 @@ func TestUpdateCert(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc         string
@@ -744,10 +758,10 @@ func TestUpdateCert(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
-		repoCall := boot.On("UpdateCert", context.Background(), tc.domainID, tc.configID, tc.clientCert, tc.clientKey, tc.caCert).Return(config, tc.updateErr)
-		_, err := svc.UpdateCert(context.Background(), tc.token, tc.configID, tc.clientCert, tc.clientKey, tc.caCert)
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := tv.auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := tv.boot.On("UpdateCert", context.Background(), tc.domainID, tc.configID, tc.clientCert, tc.clientKey, tc.caCert).Return(config, tc.updateErr)
+		_, err := tv.svc.UpdateCert(context.Background(), tc.token, tc.configID, tc.clientCert, tc.clientKey, tc.caCert)
 
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -772,7 +786,8 @@ func TestUpdateCert(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	svc, boot, auth, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
+
 	numThings := 101
 	var c bootstrap.Config
 	saved := make([]bootstrap.Config, 0)
@@ -997,15 +1012,15 @@ func TestList(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := tv.auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 			SubjectType: authsvc.UserType,
 			Subject:     tc.userID,
 			Permission:  authsvc.AdminPermission,
 			ObjectType:  authsvc.PlatformType,
 			Object:      authsvc.MagistralaObject,
 		}).Return(tc.superAdminAuthRes, tc.superAdmiAuthErr)
-		authCall2 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+		authCall2 := tv.auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 			SubjectType: authsvc.UserType,
 			SubjectKind: authsvc.UsersKind,
 			Subject:     tc.userID,
@@ -1013,15 +1028,15 @@ func TestList(t *testing.T) {
 			ObjectType:  authsvc.DomainType,
 			Object:      tc.domainID,
 		}).Return(tc.domainAdminAuthRes, tc.domainAdmiAuthErr)
-		authCall3 := auth.On("ListAllObjects", mock.Anything, &magistrala.ListObjectsReq{
+		authCall3 := tv.policy.On("ListAllObjects", mock.Anything, &magistrala.ListObjectsReq{
 			SubjectType: authsvc.UserType,
 			Subject:     tc.userID,
 			Permission:  authsvc.ViewPermission,
 			ObjectType:  authsvc.ThingType,
 		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
+		repoCall := tv.boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 
-		_, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
+		_, err := tv.svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1050,7 +1065,7 @@ func TestRemove(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	nonExisting := config
 	nonExisting.ThingID = unknownThingID
@@ -1116,10 +1131,10 @@ func TestRemove(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
-		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
-		repoCall := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
-		err := svc.Remove(context.Background(), tc.token, tc.configID)
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		authCall1 := tv.auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
+		repoCall := tv.boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
+		err := tv.svc.Remove(context.Background(), tc.token, tc.configID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1145,7 +1160,7 @@ func TestBootstrap(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc        string
@@ -1184,8 +1199,8 @@ func TestBootstrap(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(config, tc.retrieveErr)
-		_, err = svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, false)
+		repoCall := tv.boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(config, tc.retrieveErr)
+		_, err = tv.svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, false)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1208,7 +1223,7 @@ func TestChangeState(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, auth, sdk := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc         string
@@ -1288,11 +1303,11 @@ func TestChangeState(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
-		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
-		sdkCall1 := sdk.On("Connect", mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
-		repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
-		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
+		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
+		sdkCall1 := tv.sdk.On("Connect", mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
+		repoCall1 := tv.boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
+		err := tv.svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1319,7 +1334,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc    string
@@ -1375,8 +1390,8 @@ func TestUpdateChannelHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("UpdateChannel", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.UpdateChannelHandler(context.Background(), tc.channel)
+		repoCall := tv.boot.On("UpdateChannel", context.Background(), mock.Anything).Return(tc.err)
+		err := tv.svc.UpdateChannelHandler(context.Background(), tc.channel)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1401,7 +1416,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc      string
@@ -1436,8 +1451,8 @@ func TestRemoveChannelHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("RemoveChannel", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.RemoveChannelHandler(context.Background(), tc.channelID)
+		repoCall := tv.boot.On("RemoveChannel", context.Background(), mock.Anything).Return(tc.err)
+		err := tv.svc.RemoveChannelHandler(context.Background(), tc.channelID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1463,7 +1478,7 @@ func TestRemoveConfigHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc     string
@@ -1498,8 +1513,8 @@ func TestRemoveConfigHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("RemoveThing", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.RemoveConfigHandler(context.Background(), tc.configID)
+		repoCall := tv.boot.On("RemoveThing", context.Background(), mock.Anything).Return(tc.err)
+		err := tv.svc.RemoveConfigHandler(context.Background(), tc.configID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1525,7 +1540,7 @@ func TestConnectThingHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc      string
@@ -1572,8 +1587,8 @@ func TestConnectThingHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
+		repoCall := tv.boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		err := tv.svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -1599,7 +1614,7 @@ func TestDisconnectThingHandler(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	svc, boot, _, _ := newService(t, redisURL)
+	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
 		desc      string
@@ -1656,8 +1671,8 @@ func TestDisconnectThingHandler(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := boot.On("DisconnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
-		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
+		repoCall := tv.boot.On("DisconnectThing", context.Background(), tc.channelID, tc.thingID).Return(tc.err)
+		err := tv.svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{

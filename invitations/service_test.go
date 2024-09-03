@@ -34,7 +34,7 @@ var (
 
 func TestSendInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
+	authsvc := new(authmocks.AuthServiceClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	cases := []struct {
@@ -221,7 +221,7 @@ func TestSendInvitation(t *testing.T) {
 
 func TestViewInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
+	authsvc := new(authmocks.AuthServiceClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	validInvitation := invitations.Invitation{
@@ -398,7 +398,7 @@ func TestViewInvitation(t *testing.T) {
 
 func TestListInvitations(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
+	authsvc := new(authmocks.AuthServiceClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	validPage := invitations.Page{
@@ -576,7 +576,7 @@ func TestListInvitations(t *testing.T) {
 
 func TestAcceptInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
+	authsvc := new(authmocks.AuthServiceClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	userID := testsutil.GenerateUUID(t)
@@ -649,7 +649,7 @@ func TestAcceptInvitation(t *testing.T) {
 
 func TestDeleteInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
+	authsvc := new(authmocks.AuthServiceClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	cases := []struct {

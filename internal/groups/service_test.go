@@ -48,8 +48,9 @@ var (
 
 func TestCreateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc          string
@@ -287,8 +288,8 @@ func TestCreateGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
-			authcall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
+			authCall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.UsersKind,
 				Subject:     tc.idResp.GetId(),
@@ -296,7 +297,7 @@ func TestCreateGroup(t *testing.T) {
 				Object:      tc.idResp.GetDomainId(),
 				ObjectType:  auth.DomainType,
 			}).Return(tc.authzResp, tc.authzErr)
-			authcall2 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall2 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Subject:     tc.token,
@@ -304,9 +305,9 @@ func TestCreateGroup(t *testing.T) {
 				Object:      tc.group.Parent,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzTknResp, tc.authzTknErr)
-			repocall := repo.On("Save", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
-			authcall3 := authsvc.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolResp, tc.addPolErr)
-			authCall4 := authsvc.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolResp, tc.deletePolErr)
+			repoCall := repo.On("Save", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
+			authCall3 := policy.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolResp, tc.addPolErr)
+			authCall4 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolResp, tc.deletePolErr)
 			got, err := svc.CreateGroup(context.Background(), tc.token, tc.kind, tc.group)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -314,14 +315,14 @@ func TestCreateGroup(t *testing.T) {
 				assert.NotEmpty(t, got.CreatedAt)
 				assert.NotEmpty(t, got.Domain)
 				assert.WithinDuration(t, time.Now(), got.CreatedAt, 2*time.Second)
-				ok := repocall.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
+				ok := repoCall.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 				assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 			}
-			authcall.Unset()
-			authcall1.Unset()
-			authcall2.Unset()
-			repocall.Unset()
-			authcall3.Unset()
+			authCall.Unset()
+			authCall1.Unset()
+			authCall2.Unset()
+			repoCall.Unset()
+			authCall3.Unset()
 			authCall4.Unset()
 		})
 	}
@@ -329,8 +330,9 @@ func TestCreateGroup(t *testing.T) {
 
 func TestViewGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc      string
@@ -375,7 +377,7 @@ func TestViewGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Subject:     tc.token,
@@ -383,7 +385,7 @@ func TestViewGroup(t *testing.T) {
 				Object:      tc.id,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzResp, tc.authzErr)
-			repo.On("RetrieveByID", context.Background(), tc.id).Return(tc.repoResp, tc.repoErr)
+			repoCall := repo.On("RetrieveByID", context.Background(), tc.id).Return(tc.repoResp, tc.repoErr)
 			got, err := svc.ViewGroup(context.Background(), tc.token, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -391,14 +393,17 @@ func TestViewGroup(t *testing.T) {
 				ok := repo.AssertCalled(t, "RetrieveByID", context.Background(), tc.id)
 				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
 			}
+			authCall.Unset()
+			repoCall.Unset()
 		})
 	}
 }
 
 func TestViewGroupPerms(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc     string
@@ -461,8 +466,8 @@ func TestViewGroupPerms(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
-			authcall1 := authsvc.On("ListPermissions", context.Background(), &magistrala.ListPermissionsReq{
+			authCall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
+			authCall1 := policy.On("ListPermissions", context.Background(), &magistrala.ListPermissionsReq{
 				SubjectType: auth.UserType,
 				Subject:     tc.idResp.GetId(),
 				Object:      tc.id,
@@ -473,16 +478,17 @@ func TestViewGroupPerms(t *testing.T) {
 			if err == nil {
 				assert.Equal(t, tc.listResp.Permissions, got)
 			}
-			authcall.Unset()
-			authcall1.Unset()
+			authCall.Unset()
+			authCall1.Unset()
 		})
 	}
 }
 
 func TestUpdateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc      string
@@ -536,7 +542,7 @@ func TestUpdateGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Subject:     tc.token,
@@ -544,7 +550,7 @@ func TestUpdateGroup(t *testing.T) {
 				Object:      tc.group.ID,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzResp, tc.authzErr)
-			repo.On("Update", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
+			repoCall := repo.On("Update", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
 			got, err := svc.UpdateGroup(context.Background(), tc.token, tc.group)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -552,14 +558,17 @@ func TestUpdateGroup(t *testing.T) {
 				ok := repo.AssertCalled(t, "Update", context.Background(), mock.Anything)
 				assert.True(t, ok, fmt.Sprintf("Update was not called on %s", tc.desc))
 			}
+			authCall.Unset()
+			repoCall.Unset()
 		})
 	}
 }
 
 func TestEnableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc         string
@@ -632,7 +641,7 @@ func TestEnableGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Subject:     tc.token,
@@ -640,8 +649,8 @@ func TestEnableGroup(t *testing.T) {
 				Object:      tc.id,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzResp, tc.authzErr)
-			repocall := repo.On("RetrieveByID", context.Background(), tc.id).Return(tc.retrieveResp, tc.retrieveErr)
-			repocall1 := repo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.changeResp, tc.changeErr)
+			repoCall := repo.On("RetrieveByID", context.Background(), tc.id).Return(tc.retrieveResp, tc.retrieveErr)
+			repoCall1 := repo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.changeResp, tc.changeErr)
 			got, err := svc.EnableGroup(context.Background(), tc.token, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -649,17 +658,18 @@ func TestEnableGroup(t *testing.T) {
 				ok := repo.AssertCalled(t, "RetrieveByID", context.Background(), tc.id)
 				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
 			}
-			authcall.Unset()
-			repocall.Unset()
-			repocall1.Unset()
+			authCall.Unset()
+			repoCall.Unset()
+			repoCall1.Unset()
 		})
 	}
 }
 
 func TestDisableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc         string
@@ -732,7 +742,7 @@ func TestDisableGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Subject:     tc.token,
@@ -740,8 +750,8 @@ func TestDisableGroup(t *testing.T) {
 				Object:      tc.id,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzResp, tc.authzErr)
-			repocall := repo.On("RetrieveByID", context.Background(), tc.id).Return(tc.retrieveResp, tc.retrieveErr)
-			repocall1 := repo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.changeResp, tc.changeErr)
+			repoCall := repo.On("RetrieveByID", context.Background(), tc.id).Return(tc.retrieveResp, tc.retrieveErr)
+			repoCall1 := repo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.changeResp, tc.changeErr)
 			got, err := svc.DisableGroup(context.Background(), tc.token, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -749,17 +759,18 @@ func TestDisableGroup(t *testing.T) {
 				ok := repo.AssertCalled(t, "RetrieveByID", context.Background(), tc.id)
 				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
 			}
-			authcall.Unset()
-			repocall.Unset()
-			repocall1.Unset()
+			authCall.Unset()
+			repoCall.Unset()
+			repoCall1.Unset()
 		})
 	}
 }
 
 func TestListMembers(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc            string
@@ -860,7 +871,7 @@ func TestListMembers(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				SubjectType: auth.UserType,
 				SubjectKind: auth.TokenKind,
 				Subject:     tc.token,
@@ -868,13 +879,13 @@ func TestListMembers(t *testing.T) {
 				Object:      tc.groupID,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzResp, tc.authzErr)
-			authcall1 := authsvc.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+			authCall1 := policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
 				SubjectType: auth.GroupType,
 				Subject:     tc.groupID,
 				Relation:    auth.GroupRelation,
 				ObjectType:  auth.ThingType,
 			}).Return(tc.listObjectResp, tc.listObjectErr)
-			authcall2 := authsvc.On("ListAllSubjects", context.Background(), &magistrala.ListSubjectsReq{
+			authCall2 := policy.On("ListAllSubjects", context.Background(), &magistrala.ListSubjectsReq{
 				SubjectType: auth.UserType,
 				Permission:  tc.permission,
 				Object:      tc.groupID,
@@ -885,17 +896,18 @@ func TestListMembers(t *testing.T) {
 			if err == nil {
 				assert.NotEmpty(t, got)
 			}
-			authcall.Unset()
-			authcall1.Unset()
-			authcall2.Unset()
+			authCall.Unset()
+			authCall1.Unset()
+			authCall2.Unset()
 		})
 	}
 }
 
 func TestListGroups(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc                 string
@@ -1513,14 +1525,14 @@ func TestListGroups(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
-			authcall1 := &mock.Call{}
-			authcall2 := &mock.Call{}
-			authcall3 := &mock.Call{}
+			authCall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
+			authCall1 := &mock.Call{}
+			authCall2 := &mock.Call{}
+			authCall3 := &mock.Call{}
 			adminCheck := &mock.Call{}
 			switch tc.memberKind {
 			case auth.ThingsKind:
-				authcall1 = authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+				authCall1 = authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 					Domain:      tc.idResp.GetDomainId(),
 					SubjectType: auth.UserType,
 					SubjectKind: auth.UsersKind,
@@ -1529,20 +1541,20 @@ func TestListGroups(t *testing.T) {
 					Object:      tc.memberID,
 					ObjectType:  auth.ThingType,
 				}).Return(tc.authzResp, tc.authzErr)
-				authcall2 = authsvc.On("ListAllSubjects", context.Background(), &magistrala.ListSubjectsReq{
+				authCall2 = policy.On("ListAllSubjects", context.Background(), &magistrala.ListSubjectsReq{
 					SubjectType: auth.GroupType,
 					Permission:  auth.GroupRelation,
 					ObjectType:  auth.ThingType,
 					Object:      tc.memberID,
 				}).Return(tc.listSubjectResp, tc.listSubjectErr)
-				authcall3 = authsvc.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+				authCall3 = policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
 					SubjectType: auth.UserType,
 					Subject:     tc.idResp.GetId(),
 					Permission:  tc.page.Permission,
 					ObjectType:  auth.GroupType,
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			case auth.GroupsKind:
-				authcall1 = authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+				authCall1 = authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 					Domain:      tc.idResp.GetDomainId(),
 					SubjectType: auth.UserType,
 					SubjectKind: auth.UsersKind,
@@ -1551,20 +1563,20 @@ func TestListGroups(t *testing.T) {
 					Object:      tc.memberID,
 					ObjectType:  auth.GroupType,
 				}).Return(tc.authzResp, tc.authzErr)
-				authcall2 = authsvc.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+				authCall2 = policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
 					SubjectType: auth.GroupType,
 					Subject:     tc.memberID,
 					Permission:  auth.ParentGroupRelation,
 					ObjectType:  auth.GroupType,
 				}).Return(tc.listObjectResp, tc.listObjectErr)
-				authcall3 = authsvc.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+				authCall3 = policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
 					SubjectType: auth.UserType,
 					Subject:     tc.idResp.GetId(),
 					Permission:  tc.page.Permission,
 					ObjectType:  auth.GroupType,
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			case auth.ChannelsKind:
-				authcall1 = authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+				authCall1 = authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 					Domain:      tc.idResp.GetDomainId(),
 					SubjectType: auth.UserType,
 					SubjectKind: auth.UsersKind,
@@ -1573,13 +1585,13 @@ func TestListGroups(t *testing.T) {
 					Object:      tc.memberID,
 					ObjectType:  auth.GroupType,
 				}).Return(tc.authzResp, tc.authzErr)
-				authcall2 = authsvc.On("ListAllSubjects", context.Background(), &magistrala.ListSubjectsReq{
+				authCall2 = policy.On("ListAllSubjects", context.Background(), &magistrala.ListSubjectsReq{
 					SubjectType: auth.GroupType,
 					Permission:  auth.ParentGroupRelation,
 					ObjectType:  auth.GroupType,
 					Object:      tc.memberID,
 				}).Return(tc.listSubjectResp, tc.listSubjectErr)
-				authcall3 = authsvc.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+				authCall3 = policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
 					SubjectType: auth.UserType,
 					Subject:     tc.idResp.GetId(),
 					Permission:  tc.page.Permission,
@@ -1607,35 +1619,35 @@ func TestListGroups(t *testing.T) {
 					authReq.Domain = ""
 					authReq.Permission = auth.MembershipPermission
 				}
-				authcall1 = authsvc.On("Authorize", context.Background(), authReq).Return(tc.authzResp, tc.authzErr)
-				authcall2 = authsvc.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+				authCall1 = authsvc.On("Authorize", context.Background(), authReq).Return(tc.authzResp, tc.authzErr)
+				authCall2 = policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
 					SubjectType: auth.UserType,
 					Subject:     auth.EncodeDomainUserID(tc.idResp.GetDomainId(), tc.memberID),
 					Permission:  tc.page.Permission,
 					ObjectType:  auth.GroupType,
 				}).Return(tc.listObjectResp, tc.listObjectErr)
-				authcall3 = authsvc.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
+				authCall3 = policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
 					SubjectType: auth.UserType,
 					Subject:     tc.idResp.GetId(),
 					Permission:  tc.page.Permission,
 					ObjectType:  auth.GroupType,
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			}
-			repocall := repo.On("RetrieveByIDs", context.Background(), mock.Anything, mock.Anything).Return(tc.repoResp, tc.repoErr)
-			authcall4 := authsvc.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermResp, tc.listPermErr)
+			repoCall := repo.On("RetrieveByIDs", context.Background(), mock.Anything, mock.Anything).Return(tc.repoResp, tc.repoErr)
+			authCall4 := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermResp, tc.listPermErr)
 			got, err := svc.ListGroups(context.Background(), tc.token, tc.memberKind, tc.memberID, tc.page)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
 				assert.NotEmpty(t, got)
 			}
-			authcall.Unset()
-			repocall.Unset()
+			authCall.Unset()
+			repoCall.Unset()
 			switch tc.memberKind {
 			case auth.ThingsKind, auth.GroupsKind, auth.ChannelsKind, auth.UsersKind:
-				authcall1.Unset()
-				authcall2.Unset()
-				authcall3.Unset()
-				authcall4.Unset()
+				authCall1.Unset()
+				authCall2.Unset()
+				authCall3.Unset()
+				authCall4.Unset()
 				if tc.memberID == "" {
 					adminCheck.Unset()
 				}
@@ -1646,8 +1658,9 @@ func TestListGroups(t *testing.T) {
 
 func TestAssign(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc                    string
@@ -1965,8 +1978,8 @@ func TestAssign(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
-			authcall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
+			authCall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				Domain:      tc.idResp.GetDomainId(),
 				SubjectType: auth.UserType,
 				SubjectKind: auth.UsersKind,
@@ -2013,7 +2026,7 @@ func TestAssign(t *testing.T) {
 						Object:      group.ID,
 					})
 				}
-				deletePoliciesCall = authsvc.On("DeletePolicies", context.Background(), &deletePolicies).Return(tc.deleteParentPoliciesRes, tc.deleteParentPoliciesErr)
+				deletePoliciesCall = policy.On("DeletePolicies", context.Background(), &deletePolicies).Return(tc.deleteParentPoliciesRes, tc.deleteParentPoliciesErr)
 				assignParentCall = repo.On("AssignParentGroup", context.Background(), tc.groupID, tc.memberIDs).Return(tc.repoParentGroupErr)
 			case auth.ChannelsKind:
 				for _, memberID := range tc.memberIDs {
@@ -2038,12 +2051,12 @@ func TestAssign(t *testing.T) {
 					})
 				}
 			}
-			authcall2 := authsvc.On("AddPolicies", context.Background(), &policies).Return(tc.addPoliciesRes, tc.addPoliciesErr)
+			authCall2 := policy.On("AddPolicies", context.Background(), &policies).Return(tc.addPoliciesRes, tc.addPoliciesErr)
 			err := svc.Assign(context.Background(), tc.token, tc.groupID, tc.relation, tc.memberKind, tc.memberIDs...)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-			authcall.Unset()
-			authcall1.Unset()
-			authcall2.Unset()
+			authCall.Unset()
+			authCall1.Unset()
+			authCall2.Unset()
 			if tc.memberKind == auth.GroupsKind {
 				retrieveByIDsCall.Unset()
 				deletePoliciesCall.Unset()
@@ -2055,8 +2068,9 @@ func TestAssign(t *testing.T) {
 
 func TestUnassign(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc                    string
@@ -2374,8 +2388,8 @@ func TestUnassign(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
-			authcall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
+			authCall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				Domain:      tc.idResp.GetDomainId(),
 				SubjectType: auth.UserType,
 				SubjectKind: auth.UsersKind,
@@ -2422,7 +2436,7 @@ func TestUnassign(t *testing.T) {
 						Object:      group.ID,
 					})
 				}
-				addPoliciesCall = authsvc.On("AddPolicies", context.Background(), &addPolicies).Return(tc.addParentPoliciesRes, tc.addParentPoliciesErr)
+				addPoliciesCall = policy.On("AddPolicies", context.Background(), &addPolicies).Return(tc.addParentPoliciesRes, tc.addParentPoliciesErr)
 				assignParentCall = repo.On("UnassignParentGroup", context.Background(), tc.groupID, tc.memberIDs).Return(tc.repoParentGroupErr)
 			case auth.ChannelsKind:
 				for _, memberID := range tc.memberIDs {
@@ -2447,12 +2461,12 @@ func TestUnassign(t *testing.T) {
 					})
 				}
 			}
-			authcall2 := authsvc.On("DeletePolicies", context.Background(), &policies).Return(tc.deletePoliciesRes, tc.deletePoliciesErr)
+			authCall2 := policy.On("DeletePolicies", context.Background(), &policies).Return(tc.deletePoliciesRes, tc.deletePoliciesErr)
 			err := svc.Unassign(context.Background(), tc.token, tc.groupID, tc.relation, tc.memberKind, tc.memberIDs...)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-			authcall.Unset()
-			authcall1.Unset()
-			authcall2.Unset()
+			authCall.Unset()
+			authCall1.Unset()
+			authCall2.Unset()
 			if tc.memberKind == auth.GroupsKind {
 				retrieveByIDsCall.Unset()
 				addPoliciesCall.Unset()
@@ -2464,8 +2478,9 @@ func TestUnassign(t *testing.T) {
 
 func TestDeleteGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
-	svc := groups.NewService(repo, idProvider, authsvc)
+	authsvc := new(authmocks.AuthServiceClient)
+	policy := new(authmocks.PolicyServiceClient)
+	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
 		desc              string
@@ -2557,8 +2572,8 @@ func TestDeleteGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authcall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
-			authcall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
+			authCall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.idResp, tc.idErr)
+			authCall1 := authsvc.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 				Domain:      tc.idResp.GetDomainId(),
 				SubjectType: auth.UserType,
 				SubjectKind: auth.UsersKind,
@@ -2567,17 +2582,17 @@ func TestDeleteGroup(t *testing.T) {
 				Object:      tc.groupID,
 				ObjectType:  auth.GroupType,
 			}).Return(tc.authzResp, tc.authzErr)
-			authcall2 := authsvc.On("DeleteEntityPolicies", context.Background(), &magistrala.DeleteEntityPoliciesReq{
+			authCall2 := policy.On("DeleteEntityPolicies", context.Background(), &magistrala.DeleteEntityPoliciesReq{
 				EntityType: auth.GroupType,
 				Id:         tc.groupID,
 			}).Return(tc.deletePoliciesRes, tc.deletePoliciesErr)
-			repocall := repo.On("Delete", context.Background(), tc.groupID).Return(tc.repoErr)
+			repoCall := repo.On("Delete", context.Background(), tc.groupID).Return(tc.repoErr)
 			err := svc.DeleteGroup(context.Background(), tc.token, tc.groupID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-			authcall.Unset()
-			authcall1.Unset()
-			authcall2.Unset()
-			repocall.Unset()
+			authCall.Unset()
+			authCall1.Unset()
+			authCall2.Unset()
+			repoCall.Unset()
 		})
 	}
 }

@@ -15,7 +15,7 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/auth"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
@@ -35,18 +35,18 @@ import (
 )
 
 const (
-	svcName        = "ws-adapter"
-	envPrefixHTTP  = "MG_WS_ADAPTER_HTTP_"
-	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
-	defSvcHTTPPort = "8190"
-	targetWSPort   = "8191"
-	targetWSHost   = "localhost"
+	svcName         = "ws-adapter"
+	envPrefixHTTP   = "MG_WS_ADAPTER_HTTP_"
+	envPrefixThings = "MG_THINGS_AUTH_GRPC_"
+	defSvcHTTPPort  = "8190"
+	targetWSPort    = "8191"
+	targetWSHost    = "localhost"
 )
 
 type config struct {
 	LogLevel      string  `env:"MG_WS_ADAPTER_LOG_LEVEL"    envDefault:"info"`
 	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"      envDefault:"nats://localhost:4222"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"              envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"          envDefault:"true"`
 	InstanceID    string  `env:"MG_WS_ADAPTER_INSTANCE_ID"  envDefault:""`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"      envDefault:"1.0"`
@@ -89,22 +89,22 @@ func main() {
 		Host: targetWSHost,
 	}
 
-	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuthz}); err != nil {
+	thingsClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&thingsClientCfg, env.Options{Prefix: envPrefixThings}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
-	authClient, authHandler, err := auth.SetupAuthz(ctx, authConfig)
+	thingsClient, thingsHandler, err := grpcclient.SetupThingsClient(ctx, thingsClientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer authHandler.Close()
+	defer thingsHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + authHandler.Secure())
+	logger.Info("Things service gRPC client successfully connected to things gRPC server " + thingsHandler.Secure())
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
@@ -128,7 +128,7 @@ func main() {
 	defer nps.Close()
 	nps = brokerstracing.NewPubSub(targetServerConfig, tracer, nps)
 
-	svc := newService(authClient, nps, logger, tracer)
+	svc := newService(thingsClient, nps, logger, tracer)
 
 	hs := httpserver.NewServer(ctx, cancel, svcName, targetServerConfig, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
 
@@ -141,7 +141,7 @@ func main() {
 		g.Go(func() error {
 			return hs.Start()
 		})
-		handler := ws.NewHandler(nps, logger, authClient)
+		handler := ws.NewHandler(nps, logger, thingsClient)
 		return proxyWS(ctx, httpServerConfig, targetServerConfig, logger, handler)
 	})
 
@@ -154,8 +154,8 @@ func main() {
 	}
 }
 
-func newService(tc magistrala.AuthzServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
-	svc := ws.New(tc, nps)
+func newService(thingsClient magistrala.AuthzServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
+	svc := ws.New(thingsClient, nps)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("ws_adapter", "api")

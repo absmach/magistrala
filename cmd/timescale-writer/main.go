@@ -44,7 +44,7 @@ type config struct {
 	LogLevel      string  `env:"MG_TIMESCALE_WRITER_LOG_LEVEL"    envDefault:"info"`
 	ConfigPath    string  `env:"MG_TIMESCALE_WRITER_CONFIG_PATH"  envDefault:"/config.toml"`
 	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"                    envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"                envDefault:"true"`
 	InstanceID    string  `env:"MG_TIMESCALE_WRITER_INSTANCE_ID"  envDefault:""`
 	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"            envDefault:"1.0"`

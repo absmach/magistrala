@@ -15,6 +15,7 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
+	authclient "github.com/absmach/magistrala/auth/api/grpc"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	mggroups "github.com/absmach/magistrala/internal/groups"
 	gapi "github.com/absmach/magistrala/internal/groups/api"
@@ -22,8 +23,8 @@ import (
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
@@ -68,7 +69,7 @@ type config struct {
 	LogLevel         string        `env:"MG_THINGS_LOG_LEVEL"           envDefault:"info"`
 	StandaloneID     string        `env:"MG_THINGS_STANDALONE_ID"       envDefault:""`
 	StandaloneToken  string        `env:"MG_THINGS_STANDALONE_TOKEN"    envDefault:""`
-	JaegerURL        url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
+	JaegerURL        url.URL       `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
 	CacheKeyDuration time.Duration `env:"MG_THINGS_CACHE_KEY_DURATION"  envDefault:"10m"`
 	SendTelemetry    bool          `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
 	InstanceID       string        `env:"MG_THINGS_INSTANCE_ID"         envDefault:""`
@@ -144,21 +145,24 @@ func main() {
 	}
 	defer cacheclient.Close()
 
-	var authClient magistrala.AuthServiceClient
-
+	var (
+		authClient   authclient.AuthServiceClient
+		policyClient magistrala.PolicyServiceClient
+	)
 	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
 	case true:
 		authClient = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
+		policyClient = localusers.NewPolicyService(cfg.StandaloneID, cfg.StandaloneToken)
 		logger.Info("Using standalone auth service")
 	default:
-		authConfig := auth.Config{}
-		if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
+		clientConfig := grpcclient.Config{}
+		if err := env.ParseWithOptions(&clientConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
 			logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 			exitCode = 1
 			return
 		}
 
-		authServiceClient, authHandler, err := auth.Setup(ctx, authConfig)
+		authServiceClient, authHandler, err := grpcclient.SetupAuthClient(ctx, clientConfig)
 		if err != nil {
 			logger.Error(err.Error())
 			exitCode = 1
@@ -166,10 +170,20 @@ func main() {
 		}
 		defer authHandler.Close()
 		authClient = authServiceClient
-		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
+		logger.Info("AuthService gRPC client successfully connected to auth gRPC server " + authHandler.Secure())
+
+		policyServiceClient, policyHandler, err := grpcclient.SetupPolicyClient(ctx, clientConfig)
+		if err != nil {
+			logger.Error(err.Error())
+			exitCode = 1
+			return
+		}
+		defer policyHandler.Close()
+		policyClient = policyServiceClient
+		logger.Info("PolicyService gRPC client successfully connected to auth gRPC server " + policyHandler.Secure())
 	}
 
-	csvc, gsvc, err := newService(ctx, db, dbConfig, authClient, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
+	csvc, gsvc, err := newService(ctx, db, dbConfig, authClient, policyClient, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -191,11 +205,11 @@ func main() {
 		exitCode = 1
 		return
 	}
-	regiterAuthzServer := func(srv *grpc.Server) {
+	registerThingsServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
 		magistrala.RegisterAuthzServiceServer(srv, grpcapi.NewServer(csvc))
 	}
-	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, regiterAuthzServer, logger)
+	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerThingsServer, logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -220,7 +234,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authClient magistrala.AuthServiceClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authClient authclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -229,8 +243,8 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 
 	thingCache := thcache.NewCache(cacheClient, keyDuration)
 
-	csvc := things.NewService(authClient, cRepo, gRepo, thingCache, idp)
-	gsvc := mggroups.NewService(gRepo, idp, authClient)
+	csvc := things.NewService(authClient, policyClient, cRepo, gRepo, thingCache, idp)
+	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
 
 	csvc, err := thevents.NewEventStoreMiddleware(ctx, csvc, esURL)
 	if err != nil {

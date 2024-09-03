@@ -14,14 +14,14 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func listMessagesEndpoint(svc readers.MessageRepository, uauth magistrala.AuthServiceClient, taauth magistrala.AuthzServiceClient) endpoint.Endpoint {
+func listMessagesEndpoint(svc readers.MessageRepository, authClient magistrala.AuthzServiceClient, thingsClient magistrala.AuthzServiceClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMessagesReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := authorize(ctx, req, uauth, taauth); err != nil {
+		if err := authorize(ctx, req, authClient, thingsClient); err != nil {
 			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
 

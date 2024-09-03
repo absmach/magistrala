@@ -131,6 +131,7 @@ paths:
       summary: Retrieves service health check info.
       tags:
         - health
+      security: []
       responses:
         "200":
           $ref: "#/components/responses/HealthRes"

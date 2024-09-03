@@ -37,14 +37,14 @@ var _ Service = (*adapterService)(nil)
 
 // Observers is a map of maps,.
 type adapterService struct {
-	auth   magistrala.AuthzServiceClient
+	things magistrala.AuthzServiceClient
 	pubsub messaging.PubSub
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(authClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(thingsClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	as := &adapterService{
-		auth:   authClient,
+		things: thingsClient,
 		pubsub: pubsub,
 	}
 
@@ -59,7 +59,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 		Object:      msg.GetChannel(),
 		ObjectType:  auth.GroupType,
 	}
-	res, err := svc.auth.Authorize(ctx, ar)
+	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -79,7 +79,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 		Object:      chanID,
 		ObjectType:  auth.GroupType,
 	}
-	res, err := svc.auth.Authorize(ctx, ar)
+	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
@@ -107,7 +107,7 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopi
 		Object:      chanID,
 		ObjectType:  auth.GroupType,
 	}
-	res, err := svc.auth.Authorize(ctx, ar)
+	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}

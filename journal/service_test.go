@@ -41,7 +41,7 @@ var (
 
 func TestSave(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
+	authsvc := new(authmocks.AuthServiceClient)
 	svc := journal.NewService(idProvider, repo, authsvc)
 
 	cases := []struct {
@@ -75,7 +75,7 @@ func TestSave(t *testing.T) {
 
 func TestReadAll(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthClient)
+	authsvc := new(authmocks.AuthServiceClient)
 	svc := journal.NewService(idProvider, repo, authsvc)
 
 	validToken := "token"

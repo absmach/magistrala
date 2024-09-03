@@ -14,7 +14,7 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/auth"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/server"
@@ -29,13 +29,13 @@ import (
 )
 
 const (
-	svcName        = "timescaledb-reader"
-	envPrefixDB    = "MG_TIMESCALE_"
-	envPrefixHTTP  = "MG_TIMESCALE_READER_HTTP_"
-	envPrefixAuth  = "MG_AUTH_GRPC_"
-	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
-	defDB          = "messages"
-	defSvcHTTPPort = "9011"
+	svcName         = "timescaledb-reader"
+	envPrefixDB     = "MG_TIMESCALE_"
+	envPrefixHTTP   = "MG_TIMESCALE_READER_HTTP_"
+	envPrefixAuth   = "MG_AUTH_GRPC_"
+	envPrefixThings = "MG_THINGS_AUTH_GRPC_"
+	defDB           = "messages"
+	defSvcHTTPPort  = "9011"
 )
 
 type config struct {
@@ -83,39 +83,39 @@ func main() {
 
 	repo := newService(db, logger)
 
-	authConfig := auth.Config{}
-	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
+	authClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&authClientCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
-	ac, acHandler, err := auth.Setup(ctx, authConfig)
+	authClient, authHandler, err := grpcclient.SetupAuthClient(ctx, authClientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer acHandler.Close()
+	defer authHandler.Close()
 
-	logger.Info("Successfully connected to auth grpc server " + acHandler.Secure())
+	logger.Info("AuthService gRPC client successfully connected to auth gRPC server " + authHandler.Secure())
 
-	authConfig = auth.Config{}
-	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuthz}); err != nil {
+	thingsClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&thingsClientCfg, env.Options{Prefix: envPrefixThings}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
-	tc, tcHandler, err := auth.SetupAuthz(ctx, authConfig)
+	thingsClient, thingsHandler, err := grpcclient.SetupThingsClient(ctx, thingsClientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer tcHandler.Close()
+	defer thingsHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
+	logger.Info("ThingsService gRPC client successfully connected to things gRPC server " + thingsHandler.Secure())
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -123,7 +123,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, ac, tc, svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, authClient, thingsClient, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)

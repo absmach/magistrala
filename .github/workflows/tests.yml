@@ -160,9 +160,6 @@ jobs:
               - "logger/**"
               - "pkg/events/**"
 
-            pkg-auth:
-              - "pkg/auth/**"
-
             pkg-clients:
               - "pkg/clients/**"
 
@@ -172,6 +169,9 @@ jobs:
             pkg-events:
               - "pkg/events/**"
               - "pkg/messaging/**"
+
+            pkg-grpcclient:
+              - "pkg/grpcclient/**"
 
             pkg-messaging:
               - "pkg/messaging/**"
@@ -314,11 +314,6 @@ jobs:
         run: |
           go test --race -v -count=1 -coverprofile=coverage/mqtt.out ./mqtt/...
 
-      - name: Run pkg auth tests
-        if: steps.changes.outputs.pkg-auth == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-auth.out ./pkg/auth/...
-
       - name: Run pkg clients tests
         if: steps.changes.outputs.pkg-clients == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
@@ -333,6 +328,11 @@ jobs:
         if: steps.changes.outputs.pkg-events == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-events.out ./pkg/events/...
+
+      - name: Run pkg grpcclient tests
+        if: steps.changes.outputs.pkg-grpcclient == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-grpcclient.out ./pkg/grpcclient/...
 
       - name: Run pkg messaging tests
         if: steps.changes.outputs.pkg-messaging == 'true' || steps.changes.outputs.workflow == 'true'

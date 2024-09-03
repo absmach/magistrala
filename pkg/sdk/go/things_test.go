@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/clients"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -722,6 +723,90 @@ func TestListThingsByChannel(t *testing.T) {
 				ok := svcCall.Parent.AssertCalled(t, "ListClientsByGroup", mock.Anything, tc.token, tc.channelID, tc.svcReq)
 				assert.True(t, ok)
 			}
+			svcCall.Unset()
+		})
+	}
+}
+
+func TestVerifyConnections(t *testing.T) {
+	ts, tsvc := setupThings()
+	defer ts.Close()
+
+	conf := sdk.Config{
+		ThingsURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+	pm := sdk.PageMetadata{
+		ThingIDs:   []string{testsutil.GenerateUUID(t)},
+		ChannelIDs: []string{testsutil.GenerateUUID(t)},
+	}
+
+	connsSDK := []sdk.ConnectionStatus{
+		{
+			ChannelID: pm.ChannelIDs[0],
+			ThingID:   pm.ThingIDs[0],
+			Status:    clients.Connected.String(),
+		},
+	}
+	connsClients := []mgclients.ConnectionStatus{
+		{
+			ChannelId: pm.ChannelIDs[0],
+			ThingId:   pm.ThingIDs[0],
+			Status:    clients.Connected,
+		},
+	}
+
+	cases := []struct {
+		desc     string
+		token    string
+		pageMeta sdk.PageMetadata
+		svcRes   mgclients.ConnectionsPage
+		response sdk.ConnectionsPage
+		err      errors.SDKError
+		svcErr   error
+	}{
+		{
+			desc:     "verify connections successfully",
+			token:    validToken,
+			pageMeta: pm,
+			svcRes: mgclients.ConnectionsPage{
+				Status:      clients.AllConnectedState,
+				Connections: connsClients,
+			},
+			response: sdk.ConnectionsPage{
+				Status:      clients.AllConnectedState.String(),
+				Connections: connsSDK,
+			},
+		},
+		{
+			desc:     "verify connections with an invalid token",
+			token:    invalidToken,
+			pageMeta: pm,
+			svcErr:   svcerr.ErrAuthentication,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:  "verify connections with empty token",
+			token: "",
+			err:   errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+		},
+		{
+			desc:  "verify connection with that can't be marshalled",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Metadata: sdk.Metadata{
+					"test": make(chan int),
+				},
+			},
+			err: errors.NewSDKError(errors.New("json: unsupported type: chan int")),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := tsvc.On("VerifyConnectionsWithAuth", mock.Anything, tc.token, tc.pageMeta.ThingIDs, tc.pageMeta.ChannelIDs).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.VerifyConnections(tc.pageMeta, tc.token)
+			assert.Equal(t, tc.err, err)
+			assert.Equal(t, tc.response, resp)
 			svcCall.Unset()
 		})
 	}

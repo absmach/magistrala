@@ -229,6 +229,36 @@ func (_m *ConfigRepository) RetrieveByID(ctx context.Context, domainID string, i
 	return r0, r1
 }
 
+// RetrieveChannelsByID provides a mock function with given fields: ctx, id
+func (_m *ConfigRepository) RetrieveChannelsByID(ctx context.Context, id string) ([]bootstrap.Channel, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveChannelsByID")
+	}
+
+	var r0 []bootstrap.Channel
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]bootstrap.Channel, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []bootstrap.Channel); ok {
+		r0 = rf(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]bootstrap.Channel)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Save provides a mock function with given fields: ctx, cfg, chsConnIDs
 func (_m *ConfigRepository) Save(ctx context.Context, cfg bootstrap.Config, chsConnIDs []string) (string, error) {
 	ret := _m.Called(ctx, cfg, chsConnIDs)

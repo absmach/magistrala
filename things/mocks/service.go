@@ -376,6 +376,62 @@ func (_m *Service) UpdateClientTags(ctx context.Context, token string, client cl
 	return r0, r1
 }
 
+// VerifyConnections provides a mock function with given fields: ctx, thingIds, groupIds
+func (_m *Service) VerifyConnections(ctx context.Context, thingIds []string, groupIds []string) (clients.ConnectionsPage, error) {
+	ret := _m.Called(ctx, thingIds, groupIds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyConnections")
+	}
+
+	var r0 clients.ConnectionsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string, []string) (clients.ConnectionsPage, error)); ok {
+		return rf(ctx, thingIds, groupIds)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string, []string) clients.ConnectionsPage); ok {
+		r0 = rf(ctx, thingIds, groupIds)
+	} else {
+		r0 = ret.Get(0).(clients.ConnectionsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string, []string) error); ok {
+		r1 = rf(ctx, thingIds, groupIds)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// VerifyConnectionsWithAuth provides a mock function with given fields: ctx, token, thingIds, groupIds
+func (_m *Service) VerifyConnectionsWithAuth(ctx context.Context, token string, thingIds []string, groupIds []string) (clients.ConnectionsPage, error) {
+	ret := _m.Called(ctx, token, thingIds, groupIds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyConnectionsWithAuth")
+	}
+
+	var r0 clients.ConnectionsPage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, []string, []string) (clients.ConnectionsPage, error)); ok {
+		return rf(ctx, token, thingIds, groupIds)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, []string, []string) clients.ConnectionsPage); ok {
+		r0 = rf(ctx, token, thingIds, groupIds)
+	} else {
+		r0 = ret.Get(0).(clients.ConnectionsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, []string, []string) error); ok {
+		r1 = rf(ctx, token, thingIds, groupIds)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ViewClient provides a mock function with given fields: ctx, token, id
 func (_m *Service) ViewClient(ctx context.Context, token string, id string) (clients.Client, error) {
 	ret := _m.Called(ctx, token, id)

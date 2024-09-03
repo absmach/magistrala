@@ -22,7 +22,8 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AuthzService_Authorize_FullMethodName = "/magistrala.AuthzService/Authorize"
+	AuthzService_Authorize_FullMethodName         = "/magistrala.AuthzService/Authorize"
+	AuthzService_VerifyConnections_FullMethodName = "/magistrala.AuthzService/VerifyConnections"
 )
 
 // AuthzServiceClient is the client API for AuthzService service.
@@ -35,6 +36,7 @@ type AuthzServiceClient interface {
 	// Authorize checks if the subject is authorized to perform
 	// the action on the object.
 	Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*AuthorizeRes, error)
+	VerifyConnections(ctx context.Context, in *VerifyConnectionsReq, opts ...grpc.CallOption) (*VerifyConnectionsRes, error)
 }
 
 type authzServiceClient struct {
@@ -55,6 +57,16 @@ func (c *authzServiceClient) Authorize(ctx context.Context, in *AuthorizeReq, op
 	return out, nil
 }
 
+func (c *authzServiceClient) VerifyConnections(ctx context.Context, in *VerifyConnectionsReq, opts ...grpc.CallOption) (*VerifyConnectionsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VerifyConnectionsRes)
+	err := c.cc.Invoke(ctx, AuthzService_VerifyConnections_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthzServiceServer is the server API for AuthzService service.
 // All implementations must embed UnimplementedAuthzServiceServer
 // for forward compatibility
@@ -65,6 +77,7 @@ type AuthzServiceServer interface {
 	// Authorize checks if the subject is authorized to perform
 	// the action on the object.
 	Authorize(context.Context, *AuthorizeReq) (*AuthorizeRes, error)
+	VerifyConnections(context.Context, *VerifyConnectionsReq) (*VerifyConnectionsRes, error)
 	mustEmbedUnimplementedAuthzServiceServer()
 }
 
@@ -74,6 +87,9 @@ type UnimplementedAuthzServiceServer struct {
 
 func (UnimplementedAuthzServiceServer) Authorize(context.Context, *AuthorizeReq) (*AuthorizeRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authorize not implemented")
+}
+func (UnimplementedAuthzServiceServer) VerifyConnections(context.Context, *VerifyConnectionsReq) (*VerifyConnectionsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyConnections not implemented")
 }
 func (UnimplementedAuthzServiceServer) mustEmbedUnimplementedAuthzServiceServer() {}
 
@@ -106,6 +122,24 @@ func _AuthzService_Authorize_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthzService_VerifyConnections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyConnectionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzServiceServer).VerifyConnections(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzService_VerifyConnections_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzServiceServer).VerifyConnections(ctx, req.(*VerifyConnectionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthzService_ServiceDesc is the grpc.ServiceDesc for AuthzService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +150,10 @@ var AuthzService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Authorize",
 			Handler:    _AuthzService_Authorize_Handler,
+		},
+		{
+			MethodName: "VerifyConnections",
+			Handler:    _AuthzService_VerifyConnections_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

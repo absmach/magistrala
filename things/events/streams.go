@@ -156,6 +156,23 @@ func (es *eventStore) ListClientsByGroup(ctx context.Context, token, chID string
 	return mp, nil
 }
 
+func (es *eventStore) VerifyConnectionsWithAuth(ctx context.Context, token string, thingIds, groupIds []string) (cp mgclients.ConnectionsPage, err error) {
+	mc, err := es.svc.VerifyConnectionsWithAuth(ctx, token, thingIds, groupIds)
+	if err != nil {
+		return mc, err
+	}
+	event := verifyConnectionEvent{
+		page:     cp,
+		thingIDs: thingIds,
+		groupIDs: groupIds,
+	}
+	if err := es.Publish(ctx, event); err != nil {
+		return mc, err
+	}
+
+	return mc, nil
+}
+
 func (es *eventStore) EnableClient(ctx context.Context, token, id string) (mgclients.Client, error) {
 	cli, err := es.svc.EnableClient(ctx, token, id)
 	if err != nil {
@@ -264,4 +281,21 @@ func (es *eventStore) DeleteClient(ctx context.Context, token, id string) error 
 	}
 
 	return nil
+}
+
+func (es *eventStore) VerifyConnections(ctx context.Context, thingIds, groupIds []string) (mgclients.ConnectionsPage, error) {
+	page, err := es.svc.VerifyConnections(ctx, thingIds, groupIds)
+	if err != nil {
+		return page, err
+	}
+
+	event := verifyConnectionEvent{
+		page:     page,
+		thingIDs: thingIds,
+		groupIDs: groupIds,
+	}
+	if err := es.Publish(ctx, event); err != nil {
+		return page, err
+	}
+	return page, nil
 }

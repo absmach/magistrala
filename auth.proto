@@ -12,6 +12,7 @@ service AuthzService {
   // Authorize checks if the subject is authorized to perform
   // the action on the object.
   rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
+  rpc VerifyConnections(VerifyConnectionsReq) returns (VerifyConnectionsRes) {}
 }
 
 // AuthService is a service that provides authentication and authorization
@@ -222,4 +223,20 @@ message ListPermissionsRes {
 message DeleteEntityPoliciesReq{
   string entity_type = 1;
   string id          = 2;
+}
+
+message VerifyConnectionsReq {
+  repeated string thing_ids = 1;
+  repeated string channel_ids = 2;
+}
+
+message VerifyConnectionsRes {
+  string status = 1;
+  repeated Connectionstatus connections_status = 2;
+}
+
+message Connectionstatus {
+  string thing_id   = 1;
+  string channel_id = 2;
+  string status     = 3;
 }

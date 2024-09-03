@@ -12,6 +12,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -120,6 +121,7 @@ type ConfigReader interface {
 
 type bootstrapService struct {
 	auth       magistrala.AuthServiceClient
+	tauth      magistrala.AuthzServiceClient
 	configs    ConfigRepository
 	sdk        mgsdk.SDK
 	encKey     []byte
@@ -127,11 +129,12 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(uauth magistrala.AuthServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
+func New(uauth magistrala.AuthServiceClient, tauth magistrala.AuthzServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
 		sdk:        sdk,
 		auth:       uauth,
+		tauth:      tauth,
 		encKey:     encKey,
 		idProvider: idp,
 	}
@@ -464,15 +467,45 @@ func (bs bootstrapService) RemoveChannelHandler(ctx context.Context, id string) 
 }
 
 func (bs bootstrapService) ConnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := bs.configs.ConnectThing(ctx, channelID, thingID); err != nil {
-		return errors.Wrap(errConnectThing, err)
+	channels, err := bs.configs.RetrieveChannelsByID(ctx, thingID)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
+	ch := bs.toIDList(channels)
+	resp, err := bs.tauth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingIds: []string{thingID},
+		ChannelIds: ch,
+	})
+	if err != nil {
+		return err
+	}
+
+	if resp.Status == clients.AllConnectedState.String() {
+		if err := bs.configs.ConnectThing(ctx, channelID, thingID); err != nil {
+			return errors.Wrap(errConnectThing, err)
+		}
+	}
+
 	return nil
 }
 
 func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := bs.configs.DisconnectThing(ctx, channelID, thingID); err != nil {
-		return errors.Wrap(errDisconnectThing, err)
+	channels, err := bs.configs.RetrieveChannelsByID(ctx, thingID)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	ch := bs.toIDList(channels)
+	resp, err := bs.tauth.VerifyConnections(ctx, &magistrala.VerifyConnectionsReq{
+		ThingIds: []string{thingID},
+		ChannelIds: ch,
+	})
+	if err != nil {
+		return err
+	}
+	if resp.Status != clients.AllConnectedState.String() {
+		if err := bs.configs.DisconnectThing(ctx, channelID, thingID); err != nil {
+			return errors.Wrap(errDisconnectThing, err)
+		}
 	}
 	return nil
 }

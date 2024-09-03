@@ -33,6 +33,9 @@ type Service interface {
 	// the provided key.
 	ListClientsByGroup(ctx context.Context, token, groupID string, pm clients.Page) (clients.MembersPage, error)
 
+	// VerifyConnectionsWithAuth verifies if a list of things is connected to a list of channels.
+	VerifyConnectionsWithAuth(ctx context.Context, token string, thingIds, groupIds []string) (clients.ConnectionsPage, error)
+
 	// UpdateClient updates the client's name and metadata.
 	UpdateClient(ctx context.Context, token string, client clients.Client) (clients.Client, error)
 
@@ -62,6 +65,9 @@ type Service interface {
 
 	// DeleteClient deletes client with given ID.
 	DeleteClient(ctx context.Context, token, id string) error
+
+	// VerifyConnections verifies connections between things and channels.
+	VerifyConnections(ctx context.Context, thingIds, groupIds []string) (clients.ConnectionsPage, error)
 }
 
 // Cache contains thing caching interface.

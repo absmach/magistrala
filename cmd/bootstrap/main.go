@@ -43,6 +43,7 @@ const (
 	envPrefixDB    = "MG_BOOTSTRAP_DB_"
 	envPrefixHTTP  = "MG_BOOTSTRAP_HTTP_"
 	envPrefixAuth  = "MG_AUTH_GRPC_"
+	envPrefixAuthz = "MG_THINGS_AUTH_GRPC_"
 	defDB          = "bootstrap"
 	defSvcHTTPPort = "9013"
 
@@ -116,6 +117,21 @@ func main() {
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
+	tauthConfig := auth.Config{}
+	if err := env.ParseWithOptions(&tauthConfig, env.Options{Prefix: envPrefixAuthz}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+	tauthClient, tauthHandler, err := auth.SetupAuthz(ctx, tauthConfig)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer tauthHandler.Close()
+	logger.Info("Successfully connected to things grpc server " + tauthHandler.Secure())
+
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
@@ -130,7 +146,7 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	// Create new service
-	svc, err := newService(ctx, authClient, db, tracer, logger, cfg, dbConfig)
+	svc, err := newService(ctx, authClient, tauthClient, db, tracer, logger, cfg, dbConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1
@@ -171,7 +187,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
+func newService(ctx context.Context, authClient magistrala.AuthServiceClient, tauthClient magistrala.AuthzServiceClient, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
@@ -183,7 +199,7 @@ func newService(ctx context.Context, authClient magistrala.AuthServiceClient, db
 	sdk := mgsdk.NewSDK(config)
 	idp := uuid.New()
 
-	svc := bootstrap.New(authClient, repoConfig, sdk, []byte(cfg.EncKey), idp)
+	svc := bootstrap.New(authClient, tauthClient, repoConfig, sdk, []byte(cfg.EncKey), idp)
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, streamID)
 	if err != nil {

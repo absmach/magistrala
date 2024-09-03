@@ -25,6 +25,7 @@ import (
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
+	tauthmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -38,6 +39,8 @@ const (
 	channelsNum     = 3
 	instanceID      = "5de9b29a-feb9-11ed-be56-0242ac120002"
 	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
+	allConn         = "all_connected"
+	allDisConn      = "all_disconnected"
 )
 
 var (
@@ -59,13 +62,14 @@ var (
 	}
 )
 
-func newService() (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthClient, *sdkmocks.SDK) {
+func newService() (bootstrap.Service, *mocks.ConfigRepository, *authmocks.AuthClient, *tauthmocks.AuthzClient, *sdkmocks.SDK) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthClient)
+	tauth := new(tauthmocks.AuthzClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 
-	return bootstrap.New(auth, boot, sdk, encKey, idp), boot, auth, sdk
+	return bootstrap.New(auth, tauth, boot, sdk, encKey, idp), boot, auth, tauth, sdk
 }
 
 func enc(in []byte) ([]byte, error) {
@@ -84,7 +88,7 @@ func enc(in []byte) ([]byte, error) {
 }
 
 func TestAdd(t *testing.T) {
-	c, boot, auth, sdk := newService()
+	c, boot, auth, _, sdk := newService()
 	neID := config
 	neID.ThingID = "non-existent"
 
@@ -214,7 +218,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestView(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 
 	cases := []struct {
 		desc         string
@@ -308,7 +312,7 @@ func TestView(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	c := config
 
 	ch := channel
@@ -395,7 +399,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateCert(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	c := config
 
 	ch := channel
@@ -506,7 +510,7 @@ func TestUpdateCert(t *testing.T) {
 }
 
 func TestUpdateConnections(t *testing.T) {
-	svc, boot, auth, sdk := newService()
+	svc, boot, auth, _, sdk := newService()
 	c := config
 	c.State = bootstrap.Inactive
 
@@ -620,7 +624,7 @@ func TestUpdateConnections(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	numThings := 101
 	var saved []bootstrap.Config
 	for i := 0; i < numThings; i++ {
@@ -981,7 +985,7 @@ func TestList(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	svc, boot, auth, _ := newService()
+	svc, boot, auth, _, _ := newService()
 	c := config
 	cases := []struct {
 		desc         string
@@ -1064,7 +1068,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestBootstrap(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 	c := config
 	e, err := enc([]byte(c.ExternalKey))
 	assert.Nil(t, err, fmt.Sprintf("Encrypting external key expected to succeed: %s.\n", err))
@@ -1131,7 +1135,7 @@ func TestBootstrap(t *testing.T) {
 }
 
 func TestChangeState(t *testing.T) {
-	svc, boot, auth, sdk := newService()
+	svc, boot, auth, _, sdk := newService()
 
 	c := config
 	cases := []struct {
@@ -1232,7 +1236,7 @@ func TestChangeState(t *testing.T) {
 }
 
 func TestUpdateChannelHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 	ch := bootstrap.Channel{
 		ID:       channel.ID,
 		Name:     "new name",
@@ -1265,7 +1269,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 }
 
 func TestRemoveChannelHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 
 	cases := []struct {
 		desc string
@@ -1293,7 +1297,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 }
 
 func TestRemoveConfigHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, _, _ := newService()
 
 	cases := []struct {
 		desc string
@@ -1321,61 +1325,119 @@ func TestRemoveConfigHandler(t *testing.T) {
 }
 
 func TestConnectThingsHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, tAuth, _ := newService()
 	cases := []struct {
-		desc      string
-		thingID   string
-		channelID string
-		err       error
+		desc                string
+		thingID             string
+		channelID           string
+		err                 error
+		verifyResponse      *magistrala.VerifyConnectionsRes
+		verifyErr           error
+		retrieveResponse    []bootstrap.Channel
+		retrieveResponseErr error
 	}{
 		{
-			desc:      "connect",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       nil,
+			desc:             "connect",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allConn},
+			err:              nil,
 		},
 		{
-			desc:      "connect connected",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       svcerr.ErrAddPolicies,
+			desc:                "failed retrieve",
+			channelID:           channel.ID,
+			thingID:             config.ThingID,
+			retrieveResponse:    []bootstrap.Channel{},
+			retrieveResponseErr: svcerr.ErrViewEntity,
+			err:                 svcerr.ErrViewEntity,
+		},
+		{
+			desc:             "failed verify",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{},
+			verifyErr:        svcerr.ErrAuthorization,
+			err:              svcerr.ErrAuthorization,
+		},
+		{
+			desc:             "failed connect connected",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			err:              svcerr.ErrAddPolicies,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allConn},
 		},
 	}
 
 	for _, tc := range cases {
+		authCall := tAuth.On("VerifyConnections", context.Background(), mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
 		repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		repoCall1 := boot.On("RetrieveChannelsByID", context.Background(), mock.Anything).Return(tc.retrieveResponse, tc.retrieveResponseErr)
 		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		authCall.Unset()
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
 func TestDisconnectThingsHandler(t *testing.T) {
-	svc, boot, _, _ := newService()
+	svc, boot, _, tAuth, _ := newService()
 	cases := []struct {
-		desc      string
-		thingID   string
-		channelID string
-		err       error
+		desc                string
+		thingID             string
+		channelID           string
+		err                 error
+		verifyResponse      *magistrala.VerifyConnectionsRes
+		verifyErr           error
+		retrieveResponse    []bootstrap.Channel
+		retrieveResponseErr error
 	}{
 		{
-			desc:      "disconnect",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       nil,
+			desc:             "disconnect",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allDisConn},
+			err:              nil,
 		},
 		{
-			desc:      "disconnect disconnected",
-			channelID: channel.ID,
-			thingID:   config.ThingID,
-			err:       nil,
+			desc:             "failed disconnect",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			err:              svcerr.ErrAddPolicies,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{Status: allDisConn},
+		},
+		{
+			desc:                "failed retrieve",
+			channelID:           channel.ID,
+			thingID:             config.ThingID,
+			retrieveResponse:    []bootstrap.Channel{},
+			retrieveResponseErr: svcerr.ErrViewEntity,
+			err:                 svcerr.ErrViewEntity,
+		},
+		{
+			desc:             "failed verify",
+			channelID:        channel.ID,
+			thingID:          config.ThingID,
+			retrieveResponse: config.Channels,
+			verifyResponse:   &magistrala.VerifyConnectionsRes{},
+			verifyErr:        svcerr.ErrAuthorization,
+			err:              svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
+		authCall := tAuth.On("VerifyConnections", context.Background(), mock.Anything, mock.Anything).Return(tc.verifyResponse, tc.verifyErr)
 		repoCall := boot.On("DisconnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+		repoCall1 := boot.On("RetrieveChannelsByID", context.Background(), mock.Anything).Return(tc.retrieveResponse, tc.retrieveResponseErr)
 		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		authCall.Unset()
 		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }

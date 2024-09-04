@@ -129,7 +129,7 @@ require (
 	github.com/onsi/gomega v1.33.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/opencontainers/runc v1.1.13 // indirect
+	github.com/opencontainers/runc v1.1.14 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pion/dtls/v2 v2.2.8-0.20240501061905-2c36d63320a0 // indirect
 	github.com/pion/logging v0.2.2 // indirect

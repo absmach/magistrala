@@ -22,6 +22,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -77,7 +78,7 @@ func enc(in []byte) ([]byte, error) {
 func TestAdd(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -213,7 +214,7 @@ func TestAdd(t *testing.T) {
 func TestView(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -312,7 +313,7 @@ func TestView(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -404,7 +405,7 @@ func TestUpdate(t *testing.T) {
 func TestUpdateCert(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -520,7 +521,7 @@ func TestUpdateCert(t *testing.T) {
 func TestUpdateConnections(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -640,7 +641,7 @@ func TestUpdateConnections(t *testing.T) {
 func TestList(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -670,7 +671,7 @@ func TestList(t *testing.T) {
 		domainAdminAuthRes  *magistrala.AuthorizeRes
 		superAdmiAuthErr    error
 		domainAdmiAuthErr   error
-		listObjectsResponse *magistrala.ListObjectsRes
+		listObjectsResponse []string
 		authorizeErr        error
 		identifyErr         error
 		listObjectsErr      error
@@ -690,7 +691,7 @@ func TestList(t *testing.T) {
 			userID:              validID,
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			offset:              0,
 			limit:               10,
 			err:                 nil,
@@ -703,7 +704,7 @@ func TestList(t *testing.T) {
 			userID:              validID,
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			offset:              0,
 			limit:               10,
 			err:                 nil,
@@ -722,7 +723,7 @@ func TestList(t *testing.T) {
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			offset:              0,
 			limit:               10,
 			err:                 nil,
@@ -736,7 +737,7 @@ func TestList(t *testing.T) {
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			offset:              0,
 			limit:               10,
 			err:                 nil,
@@ -755,7 +756,7 @@ func TestList(t *testing.T) {
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
-			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			listObjectsResponse: []string{"test", "test"},
 			offset:              0,
 			limit:               10,
 			err:                 nil,
@@ -809,7 +810,7 @@ func TestList(t *testing.T) {
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
-			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			listObjectsResponse: []string{"test", "test"},
 			offset:              0,
 			limit:               100,
 			err:                 nil,
@@ -890,7 +891,7 @@ func TestList(t *testing.T) {
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
-			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			listObjectsResponse: []string{"test", "test"},
 			offset:              95,
 			limit:               10,
 			err:                 nil,
@@ -945,7 +946,7 @@ func TestList(t *testing.T) {
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
-			listObjectsResponse: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			listObjectsResponse: []string{"test", "test"},
 			offset:              35,
 			limit:               20,
 			err:                 nil,
@@ -961,7 +962,7 @@ func TestList(t *testing.T) {
 			domainID:            domainID,
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			listObjectsErr:      svcerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
 		},
@@ -1007,7 +1008,7 @@ func TestList(t *testing.T) {
 func TestRemove(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -1096,7 +1097,7 @@ func TestRemove(t *testing.T) {
 func TestBootstrap(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -1169,7 +1170,7 @@ func TestBootstrap(t *testing.T) {
 func TestChangeState(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -1275,7 +1276,7 @@ func TestChangeState(t *testing.T) {
 func TestUpdateChannelHandler(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -1314,7 +1315,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 func TestRemoveChannelHandler(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -1347,7 +1348,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 func TestRemoveConfigHandler(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -1380,7 +1381,7 @@ func TestRemoveConfigHandler(t *testing.T) {
 func TestConnectThingsHandler(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -1416,7 +1417,7 @@ func TestConnectThingsHandler(t *testing.T) {
 func TestDisconnectThingsHandler(t *testing.T) {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)

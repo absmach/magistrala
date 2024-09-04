@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policy"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
@@ -121,7 +122,7 @@ type ConfigReader interface {
 
 type bootstrapService struct {
 	auth       grpcclient.AuthServiceClient
-	policy     magistrala.PolicyServiceClient
+	policy     policy.PolicyService
 	configs    ConfigRepository
 	sdk        mgsdk.SDK
 	encKey     []byte
@@ -129,12 +130,12 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(auth grpcclient.AuthServiceClient, policy magistrala.PolicyServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
+func New(auth grpcclient.AuthServiceClient, policyService policy.PolicyService, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
 		sdk:        sdk,
 		auth:       auth,
-		policy:     policy,
+		policy:     policyService,
 		encKey:     encKey,
 		idProvider: idp,
 	}
@@ -314,7 +315,7 @@ func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrNotFound, err)
 	}
-	return tids.Policies, nil
+	return tids, nil
 }
 
 func (bs bootstrapService) checkSuperAdmin(ctx context.Context, userID string) error {

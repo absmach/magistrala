@@ -22,6 +22,7 @@ import (
 	gevents "github.com/absmach/magistrala/internal/groups/events"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
+	mgpolicy "github.com/absmach/magistrala/internal/policy"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/grpcclient"
@@ -243,8 +244,10 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 
 	thingCache := thcache.NewCache(cacheClient, keyDuration)
 
-	csvc := things.NewService(authClient, policyClient, cRepo, gRepo, thingCache, idp)
-	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
+	policyService := mgpolicy.NewService(policyClient)
+
+	csvc := things.NewService(authClient, policyService, cRepo, gRepo, thingCache, idp)
+	gsvc := mggroups.NewService(gRepo, idp, authClient, policyService)
 
 	csvc, err := thevents.NewEventStoreMiddleware(ctx, csvc, esURL)
 	if err != nil {

@@ -22,6 +22,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
+	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -49,7 +50,7 @@ var (
 func TestCreateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -65,9 +66,9 @@ func TestCreateGroup(t *testing.T) {
 		authzTknErr   error
 		repoResp      mggroups.Group
 		repoErr       error
-		addPolResp    *magistrala.AddPoliciesRes
+		addPolResp    bool
 		addPolErr     error
-		deletePolResp *magistrala.DeletePolicyRes
+		deletePolResp bool
 		deletePolErr  error
 		err           error
 	}{
@@ -91,9 +92,7 @@ func TestCreateGroup(t *testing.T) {
 				CreatedAt: time.Now(),
 				Domain:    testsutil.GenerateUUID(t),
 			},
-			addPolResp: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPolResp: true,
 		},
 		{
 			desc:   "with invalid token",
@@ -186,9 +185,7 @@ func TestCreateGroup(t *testing.T) {
 				Domain:    testsutil.GenerateUUID(t),
 				Parent:    testsutil.GenerateUUID(t),
 			},
-			addPolResp: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPolResp: true,
 		},
 		{
 			desc:  "unsuccessfully with parent due to authorization error",
@@ -213,10 +210,8 @@ func TestCreateGroup(t *testing.T) {
 				ID:     testsutil.GenerateUUID(t),
 				Parent: testsutil.GenerateUUID(t),
 			},
-			addPolResp: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
-			err: svcerr.ErrAuthorization,
+			addPolResp: true,
+			err:        svcerr.ErrAuthorization,
 		},
 		{
 			desc:  "with repo error",
@@ -255,7 +250,7 @@ func TestCreateGroup(t *testing.T) {
 			repoResp: mggroups.Group{
 				ID: testsutil.GenerateUUID(t),
 			},
-			addPolResp: &magistrala.AddPoliciesRes{},
+			addPolResp: false,
 			addPolErr:  svcerr.ErrAuthorization,
 			err:        svcerr.ErrAuthorization,
 		},
@@ -280,7 +275,7 @@ func TestCreateGroup(t *testing.T) {
 				Authorized: true,
 			},
 			repoErr:      errors.ErrMalformedEntity,
-			addPolResp:   &magistrala.AddPoliciesRes{Added: true},
+			addPolResp:   true,
 			deletePolErr: svcerr.ErrAuthorization,
 			err:          errors.ErrMalformedEntity,
 		},
@@ -331,7 +326,7 @@ func TestCreateGroup(t *testing.T) {
 func TestViewGroup(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -402,7 +397,7 @@ func TestViewGroup(t *testing.T) {
 func TestViewGroupPerms(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -411,7 +406,7 @@ func TestViewGroupPerms(t *testing.T) {
 		id       string
 		idResp   *magistrala.IdentityRes
 		idErr    error
-		listResp *magistrala.ListPermissionsRes
+		listResp []string
 		listErr  error
 		err      error
 	}{
@@ -423,11 +418,9 @@ func TestViewGroupPerms(t *testing.T) {
 				Id:       testsutil.GenerateUUID(t),
 				DomainId: testsutil.GenerateUUID(t),
 			},
-			listResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{
-					auth.ViewPermission,
-					auth.EditPermission,
-				},
+			listResp: []string{
+				auth.ViewPermission,
+				auth.EditPermission,
 			},
 		},
 		{
@@ -457,10 +450,8 @@ func TestViewGroupPerms(t *testing.T) {
 				Id:       testsutil.GenerateUUID(t),
 				DomainId: testsutil.GenerateUUID(t),
 			},
-			listResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{},
-			},
-			err: svcerr.ErrAuthorization,
+			listResp: []string{},
+			err:      svcerr.ErrAuthorization,
 		},
 	}
 
@@ -476,7 +467,7 @@ func TestViewGroupPerms(t *testing.T) {
 			got, err := svc.ViewGroupPerms(context.Background(), tc.token, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
-				assert.Equal(t, tc.listResp.Permissions, got)
+				assert.Equal(t, tc.listResp, got)
 			}
 			authCall.Unset()
 			authCall1.Unset()
@@ -487,7 +478,7 @@ func TestViewGroupPerms(t *testing.T) {
 func TestUpdateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -567,7 +558,7 @@ func TestUpdateGroup(t *testing.T) {
 func TestEnableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -668,7 +659,7 @@ func TestEnableGroup(t *testing.T) {
 func TestDisableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -769,7 +760,7 @@ func TestDisableGroup(t *testing.T) {
 func TestListMembers(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -780,9 +771,9 @@ func TestListMembers(t *testing.T) {
 		memberKind      string
 		authzResp       *magistrala.AuthorizeRes
 		authzErr        error
-		listSubjectResp *magistrala.ListSubjectsRes
+		listSubjectResp []string
 		listSubjectErr  error
-		listObjectResp  *magistrala.ListObjectsRes
+		listObjectResp  []string
 		listObjectErr   error
 		err             error
 	}{
@@ -794,12 +785,10 @@ func TestListMembers(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: []string{
-					testsutil.GenerateUUID(t),
-					testsutil.GenerateUUID(t),
-					testsutil.GenerateUUID(t),
-				},
+			listObjectResp: []string{
+				testsutil.GenerateUUID(t),
+				testsutil.GenerateUUID(t),
+				testsutil.GenerateUUID(t),
 			},
 		},
 		{
@@ -811,12 +800,10 @@ func TestListMembers(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: []string{
-					testsutil.GenerateUUID(t),
-					testsutil.GenerateUUID(t),
-					testsutil.GenerateUUID(t),
-				},
+			listSubjectResp: []string{
+				testsutil.GenerateUUID(t),
+				testsutil.GenerateUUID(t),
+				testsutil.GenerateUUID(t),
 			},
 		},
 		{
@@ -846,11 +833,9 @@ func TestListMembers(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: []string{},
-			},
-			listObjectErr: svcerr.ErrAuthorization,
-			err:           svcerr.ErrAuthorization,
+			listObjectResp: []string{},
+			listObjectErr:  svcerr.ErrAuthorization,
+			err:            svcerr.ErrAuthorization,
 		},
 		{
 			desc:       "failed to list subjects with users kind",
@@ -861,11 +846,9 @@ func TestListMembers(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: []string{},
-			},
-			listSubjectErr: svcerr.ErrAuthorization,
-			err:            svcerr.ErrAuthorization,
+			listSubjectResp: []string{},
+			listSubjectErr:  svcerr.ErrAuthorization,
+			err:             svcerr.ErrAuthorization,
 		},
 	}
 
@@ -906,7 +889,7 @@ func TestListMembers(t *testing.T) {
 func TestListGroups(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -919,17 +902,17 @@ func TestListGroups(t *testing.T) {
 		idErr                error
 		authzResp            *magistrala.AuthorizeRes
 		authzErr             error
-		listSubjectResp      *magistrala.ListSubjectsRes
+		listSubjectResp      []string
 		listSubjectErr       error
-		listObjectResp       *magistrala.ListObjectsRes
+		listObjectResp       []string
 		listObjectErr        error
-		listObjectFilterResp *magistrala.ListObjectsRes
+		listObjectFilterResp []string
 		listObjectFilterErr  error
 		authSuperAdminResp   *magistrala.AuthorizeRes
 		authSuperAdminErr    error
 		repoResp             mggroups.Page
 		repoErr              error
-		listPermResp         *magistrala.ListPermissionsRes
+		listPermResp         []string
 		listPermErr          error
 		err                  error
 	}{
@@ -949,12 +932,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
+			listSubjectResp:      allowedIDs,
+			listObjectFilterResp: allowedIDs,
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
 					validGroup,
@@ -962,11 +941,9 @@ func TestListGroups(t *testing.T) {
 					validGroup,
 				},
 			},
-			listPermResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{
-					auth.ViewPermission,
-					auth.EditPermission,
-				},
+			listPermResp: []string{
+				auth.ViewPermission,
+				auth.EditPermission,
 			},
 		},
 		{
@@ -985,12 +962,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
+			listObjectResp:       allowedIDs,
+			listObjectFilterResp: allowedIDs,
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
 					validGroup,
@@ -998,11 +971,9 @@ func TestListGroups(t *testing.T) {
 					validGroup,
 				},
 			},
-			listPermResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{
-					auth.ViewPermission,
-					auth.EditPermission,
-				},
+			listPermResp: []string{
+				auth.ViewPermission,
+				auth.EditPermission,
 			},
 		},
 		{
@@ -1021,12 +992,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
+			listSubjectResp:      allowedIDs,
+			listObjectFilterResp: allowedIDs,
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
 					validGroup,
@@ -1034,11 +1001,9 @@ func TestListGroups(t *testing.T) {
 					validGroup,
 				},
 			},
-			listPermResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{
-					auth.ViewPermission,
-					auth.EditPermission,
-				},
+			listPermResp: []string{
+				auth.ViewPermission,
+				auth.EditPermission,
 			},
 		},
 		{
@@ -1057,12 +1022,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
+			listObjectResp:       allowedIDs,
+			listObjectFilterResp: allowedIDs,
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
 					validGroup,
@@ -1070,11 +1031,9 @@ func TestListGroups(t *testing.T) {
 					validGroup,
 				},
 			},
-			listPermResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{
-					auth.ViewPermission,
-					auth.EditPermission,
-				},
+			listPermResp: []string{
+				auth.ViewPermission,
+				auth.EditPermission,
 			},
 		},
 		{
@@ -1093,12 +1052,9 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
+			listObjectResp: allowedIDs,
+
+			listObjectFilterResp: allowedIDs,
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
 					validGroup,
@@ -1106,11 +1062,9 @@ func TestListGroups(t *testing.T) {
 					validGroup,
 				},
 			},
-			listPermResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{
-					auth.ViewPermission,
-					auth.EditPermission,
-				},
+			listPermResp: []string{
+				auth.ViewPermission,
+				auth.EditPermission,
 			},
 		},
 		{
@@ -1185,7 +1139,7 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{},
+			listSubjectResp: []string{},
 			listSubjectErr:  svcerr.ErrAuthorization,
 			err:             svcerr.ErrAuthorization,
 		},
@@ -1205,10 +1159,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{},
+			listSubjectResp:      allowedIDs,
+			listObjectFilterResp: []string{},
 			listObjectFilterErr:  svcerr.ErrAuthorization,
 			err:                  svcerr.ErrAuthorization,
 		},
@@ -1247,7 +1199,7 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{},
+			listObjectResp: []string{},
 			listObjectErr:  svcerr.ErrAuthorization,
 			err:            svcerr.ErrAuthorization,
 		},
@@ -1267,10 +1219,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{},
+			listObjectResp:       allowedIDs,
+			listObjectFilterResp: []string{},
 			listObjectFilterErr:  svcerr.ErrAuthorization,
 			err:                  svcerr.ErrAuthorization,
 		},
@@ -1309,7 +1259,7 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{},
+			listSubjectResp: []string{},
 			listSubjectErr:  svcerr.ErrAuthorization,
 			err:             svcerr.ErrAuthorization,
 		},
@@ -1329,10 +1279,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{},
+			listSubjectResp:      allowedIDs,
+			listObjectFilterResp: []string{},
 			listObjectFilterErr:  svcerr.ErrAuthorization,
 			err:                  svcerr.ErrAuthorization,
 		},
@@ -1371,7 +1319,7 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{},
+			listObjectResp: []string{},
 			listObjectErr:  svcerr.ErrAuthorization,
 			err:            svcerr.ErrAuthorization,
 		},
@@ -1391,10 +1339,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{},
+			listObjectResp:       allowedIDs,
+			listObjectFilterResp: []string{},
 			listObjectFilterErr:  svcerr.ErrAuthorization,
 			err:                  svcerr.ErrAuthorization,
 		},
@@ -1414,12 +1360,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listObjectResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
+			listObjectResp:       allowedIDs,
+			listObjectFilterResp: allowedIDs,
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
 					validGroup,
@@ -1427,11 +1369,9 @@ func TestListGroups(t *testing.T) {
 					validGroup,
 				},
 			},
-			listPermResp: &magistrala.ListPermissionsRes{
-				Permissions: []string{
-					auth.ViewPermission,
-					auth.EditPermission,
-				},
+			listPermResp: []string{
+				auth.ViewPermission,
+				auth.EditPermission,
 			},
 		},
 		{
@@ -1465,15 +1405,11 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
-			repoResp: mggroups.Page{},
-			repoErr:  repoerr.ErrViewEntity,
-			err:      repoerr.ErrViewEntity,
+			listSubjectResp:      allowedIDs,
+			listObjectFilterResp: allowedIDs,
+			repoResp:             mggroups.Page{},
+			repoErr:              repoerr.ErrViewEntity,
+			err:                  repoerr.ErrViewEntity,
 		},
 		{
 			desc:       "unsuccessfully with things kind due to failed to list permissions",
@@ -1491,12 +1427,8 @@ func TestListGroups(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			listSubjectResp: &magistrala.ListSubjectsRes{
-				Policies: allowedIDs,
-			},
-			listObjectFilterResp: &magistrala.ListObjectsRes{
-				Policies: allowedIDs,
-			},
+			listSubjectResp:      allowedIDs,
+			listObjectFilterResp: allowedIDs,
 			repoResp: mggroups.Page{
 				Groups: []mggroups.Group{
 					validGroup,
@@ -1504,7 +1436,7 @@ func TestListGroups(t *testing.T) {
 					validGroup,
 				},
 			},
-			listPermResp: &magistrala.ListPermissionsRes{},
+			listPermResp: []string{},
 			listPermErr:  svcerr.ErrAuthorization,
 			err:          svcerr.ErrAuthorization,
 		},
@@ -1659,7 +1591,7 @@ func TestListGroups(t *testing.T) {
 func TestAssign(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -1673,13 +1605,13 @@ func TestAssign(t *testing.T) {
 		idErr                   error
 		authzResp               *magistrala.AuthorizeRes
 		authzErr                error
-		addPoliciesRes          *magistrala.AddPoliciesRes
+		addPoliciesRes          bool
 		addPoliciesErr          error
 		repoResp                mggroups.Page
 		repoErr                 error
-		addParentPoliciesRes    *magistrala.AddPoliciesRes
+		addParentPoliciesRes    bool
 		addParentPoliciesErr    error
-		deleteParentPoliciesRes *magistrala.DeletePolicyRes
+		deleteParentPoliciesRes bool
 		deleteParentPoliciesErr error
 		repoParentGroupErr      error
 		err                     error
@@ -1698,9 +1630,7 @@ func TestAssign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPoliciesRes: true,
 		},
 		{
 			desc:       "successfully with channels kind",
@@ -1716,9 +1646,7 @@ func TestAssign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPoliciesRes: true,
 		},
 		{
 			desc:       "successfully with groups kind",
@@ -1741,9 +1669,7 @@ func TestAssign(t *testing.T) {
 					validGroup,
 				},
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPoliciesRes:     true,
 			repoParentGroupErr: nil,
 		},
 		{
@@ -1760,9 +1686,7 @@ func TestAssign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPoliciesRes: true,
 		},
 		{
 			desc:       "unsuccessfully with groups kind due to repo err",
@@ -1846,9 +1770,7 @@ func TestAssign(t *testing.T) {
 					validGroup,
 				},
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: false,
-			},
+			addPoliciesRes: false,
 			addPoliciesErr: svcerr.ErrAuthorization,
 			err:            svcerr.ErrAuthorization,
 		},
@@ -1873,9 +1795,7 @@ func TestAssign(t *testing.T) {
 					validGroup,
 				},
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPoliciesRes:     true,
 			repoParentGroupErr: repoerr.ErrConflict,
 			err:                repoerr.ErrConflict,
 		},
@@ -1900,12 +1820,8 @@ func TestAssign(t *testing.T) {
 					validGroup,
 				},
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
-			deleteParentPoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: false,
-			},
+			addPoliciesRes:          true,
+			deleteParentPoliciesRes: false,
 			deleteParentPoliciesErr: svcerr.ErrAuthorization,
 			repoParentGroupErr:      repoerr.ErrConflict,
 			err:                     apiutil.ErrRollbackTx,
@@ -1968,9 +1884,7 @@ func TestAssign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			addPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: false,
-			},
+			addPoliciesRes: false,
 			addPoliciesErr: svcerr.ErrAuthorization,
 			err:            svcerr.ErrAuthorization,
 		},
@@ -2069,7 +1983,7 @@ func TestAssign(t *testing.T) {
 func TestUnassign(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -2083,13 +1997,13 @@ func TestUnassign(t *testing.T) {
 		idErr                   error
 		authzResp               *magistrala.AuthorizeRes
 		authzErr                error
-		deletePoliciesRes       *magistrala.DeletePolicyRes
+		deletePoliciesRes       bool
 		deletePoliciesErr       error
 		repoResp                mggroups.Page
 		repoErr                 error
-		addParentPoliciesRes    *magistrala.AddPoliciesRes
+		addParentPoliciesRes    bool
 		addParentPoliciesErr    error
-		deleteParentPoliciesRes *magistrala.DeletePolicyRes
+		deleteParentPoliciesRes bool
 		deleteParentPoliciesErr error
 		repoParentGroupErr      error
 		err                     error
@@ -2108,9 +2022,7 @@ func TestUnassign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
+			deletePoliciesRes: true,
 		},
 		{
 			desc:       "successfully with channels kind",
@@ -2126,9 +2038,7 @@ func TestUnassign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
+			deletePoliciesRes: true,
 		},
 		{
 			desc:       "successfully with groups kind",
@@ -2151,9 +2061,7 @@ func TestUnassign(t *testing.T) {
 					validGroup,
 				},
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
+			deletePoliciesRes:  true,
 			repoParentGroupErr: nil,
 		},
 		{
@@ -2170,9 +2078,7 @@ func TestUnassign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
+			deletePoliciesRes: true,
 		},
 		{
 			desc:       "unsuccessfully with groups kind due to repo err",
@@ -2256,9 +2162,7 @@ func TestUnassign(t *testing.T) {
 					validGroup,
 				},
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: false,
-			},
+			deletePoliciesRes: false,
 			deletePoliciesErr: svcerr.ErrAuthorization,
 			err:               svcerr.ErrAuthorization,
 		},
@@ -2283,9 +2187,7 @@ func TestUnassign(t *testing.T) {
 					validGroup,
 				},
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
+			deletePoliciesRes:  true,
 			repoParentGroupErr: repoerr.ErrConflict,
 			err:                repoerr.ErrConflict,
 		},
@@ -2310,13 +2212,9 @@ func TestUnassign(t *testing.T) {
 					validGroup,
 				},
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
-			repoParentGroupErr: repoerr.ErrConflict,
-			addParentPoliciesRes: &magistrala.AddPoliciesRes{
-				Added: false,
-			},
+			deletePoliciesRes:    true,
+			repoParentGroupErr:   repoerr.ErrConflict,
+			addParentPoliciesRes: false,
 			addParentPoliciesErr: svcerr.ErrAuthorization,
 			err:                  repoerr.ErrConflict,
 		},
@@ -2378,9 +2276,7 @@ func TestUnassign(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: false,
-			},
+			deletePoliciesRes: false,
 			deletePoliciesErr: svcerr.ErrAuthorization,
 			err:               svcerr.ErrAuthorization,
 		},
@@ -2479,7 +2375,7 @@ func TestUnassign(t *testing.T) {
 func TestDeleteGroup(t *testing.T) {
 	repo := new(mocks.Repository)
 	authsvc := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	svc := groups.NewService(repo, idProvider, authsvc, policy)
 
 	cases := []struct {
@@ -2490,7 +2386,7 @@ func TestDeleteGroup(t *testing.T) {
 		idErr             error
 		authzResp         *magistrala.AuthorizeRes
 		authzErr          error
-		deletePoliciesRes *magistrala.DeletePolicyRes
+		deletePoliciesRes bool
 		deletePoliciesErr error
 		repoErr           error
 		err               error
@@ -2506,16 +2402,14 @@ func TestDeleteGroup(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
+			deletePoliciesRes: true,
 		},
 		{
 			desc:              "unsuccessfully with invalid token",
 			token:             token,
 			groupID:           testsutil.GenerateUUID(t),
 			idResp:            &magistrala.IdentityRes{},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{},
+			deletePoliciesRes: false,
 			idErr:             svcerr.ErrAuthentication,
 			err:               svcerr.ErrAuthentication,
 		},
@@ -2530,7 +2424,7 @@ func TestDeleteGroup(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: false,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{},
+			deletePoliciesRes: false,
 			authzErr:          svcerr.ErrAuthorization,
 			err:               svcerr.ErrAuthorization,
 		},
@@ -2545,9 +2439,7 @@ func TestDeleteGroup(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: false,
-			},
+			deletePoliciesRes: false,
 			deletePoliciesErr: svcerr.ErrAuthorization,
 			err:               svcerr.ErrAuthorization,
 		},
@@ -2562,11 +2454,9 @@ func TestDeleteGroup(t *testing.T) {
 			authzResp: &magistrala.AuthorizeRes{
 				Authorized: true,
 			},
-			deletePoliciesRes: &magistrala.DeletePolicyRes{
-				Deleted: true,
-			},
-			repoErr: repoerr.ErrNotFound,
-			err:     repoerr.ErrNotFound,
+			deletePoliciesRes: true,
+			repoErr:           repoerr.ErrNotFound,
+			err:               repoerr.ErrNotFound,
 		},
 	}
 

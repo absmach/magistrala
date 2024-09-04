@@ -17,6 +17,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
 	"github.com/absmach/magistrala/users/hasher"
@@ -50,10 +51,10 @@ var (
 	errHashPassword = errors.New("generate hash from password failed")
 )
 
-func newService(selfRegister bool) (users.Service, *mocks.Repository, *authmocks.AuthServiceClient, *authmocks.PolicyServiceClient, *mocks.Emailer) {
+func newService(selfRegister bool) (users.Service, *mocks.Repository, *authmocks.AuthServiceClient, *policymocks.PolicyService, *mocks.Emailer) {
 	cRepo := new(mocks.Repository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(authmocks.PolicyServiceClient)
+	policy := new(policymocks.PolicyService)
 	e := new(mocks.Emailer)
 	return users.NewService(cRepo, auth, policy, e, phasher, idProvider, selfRegister), cRepo, auth, policy, e
 }
@@ -65,8 +66,8 @@ func TestRegisterClient(t *testing.T) {
 		desc                      string
 		client                    mgclients.Client
 		identifyResponse          *magistrala.IdentityRes
-		addPoliciesResponse       *magistrala.AddPoliciesRes
-		deletePoliciesResponse    *magistrala.DeletePolicyRes
+		addPoliciesResponse       bool
+		deletePoliciesResponse    bool
 		token                     string
 		identifyErr               error
 		addPoliciesResponseErr    error
@@ -77,15 +78,15 @@ func TestRegisterClient(t *testing.T) {
 		{
 			desc:                "register new client successfully",
 			client:              client,
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse: true,
 			token:               validToken,
 			err:                 nil,
 		},
 		{
 			desc:                   "register existing client",
 			client:                 client,
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			addPoliciesResponse:    true,
+			deletePoliciesResponse: true,
 			token:                  validToken,
 			saveErr:                repoerr.ErrConflict,
 			err:                    repoerr.ErrConflict,
@@ -100,7 +101,7 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse: true,
 			err:                 nil,
 			token:               validToken,
 		},
@@ -113,7 +114,7 @@ func TestRegisterClient(t *testing.T) {
 					Secret:   secret,
 				},
 			},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse: true,
 			err:                 nil,
 			token:               validToken,
 		},
@@ -131,7 +132,7 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse: true,
 			err:                 nil,
 			token:               validToken,
 		},
@@ -143,8 +144,8 @@ func TestRegisterClient(t *testing.T) {
 					Secret: secret,
 				},
 			},
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			addPoliciesResponse:    true,
+			deletePoliciesResponse: true,
 			saveErr:                errors.ErrMalformedEntity,
 			err:                    errors.ErrMalformedEntity,
 			token:                  validToken,
@@ -158,8 +159,8 @@ func TestRegisterClient(t *testing.T) {
 					Secret:   "",
 				},
 			},
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			addPoliciesResponse:    true,
+			deletePoliciesResponse: true,
 			err:                    nil,
 		},
 		{
@@ -171,8 +172,8 @@ func TestRegisterClient(t *testing.T) {
 					Secret:   strings.Repeat("a", 73),
 				},
 			},
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			addPoliciesResponse:    true,
+			deletePoliciesResponse: true,
 			err:                    repoerr.ErrMalformedEntity,
 		},
 		{
@@ -185,8 +186,8 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			addPoliciesResponse:    true,
+			deletePoliciesResponse: true,
 			err:                    svcerr.ErrInvalidStatus,
 		},
 		{
@@ -199,8 +200,8 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Role: 2,
 			},
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			addPoliciesResponse:    true,
+			deletePoliciesResponse: true,
 			err:                    svcerr.ErrInvalidRole,
 		},
 		{
@@ -213,7 +214,7 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Role: mgclients.AdminRole,
 			},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: false},
+			addPoliciesResponse: false,
 			err:                 svcerr.ErrAuthorization,
 		},
 		{
@@ -226,7 +227,7 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Role: mgclients.AdminRole,
 			},
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse:    true,
 			addPoliciesResponseErr: svcerr.ErrAddPolicies,
 			err:                    svcerr.ErrAddPolicies,
 		},
@@ -240,8 +241,8 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Role: mgclients.AdminRole,
 			},
-			addPoliciesResponse:       &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse:    &magistrala.DeletePolicyRes{Deleted: false},
+			addPoliciesResponse:       true,
+			deletePoliciesResponse:    false,
 			deletePoliciesResponseErr: svcerr.ErrConflict,
 			saveErr:                   repoerr.ErrConflict,
 			err:                       svcerr.ErrConflict,
@@ -256,8 +257,8 @@ func TestRegisterClient(t *testing.T) {
 				},
 				Role: mgclients.AdminRole,
 			},
-			addPoliciesResponse:    &magistrala.AddPoliciesRes{Added: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: false},
+			addPoliciesResponse:    true,
+			deletePoliciesResponse: false,
 			saveErr:                repoerr.ErrConflict,
 			err:                    svcerr.ErrConflict,
 		},
@@ -291,8 +292,8 @@ func TestRegisterClient(t *testing.T) {
 		client                    mgclients.Client
 		identifyResponse          *magistrala.IdentityRes
 		authorizeResponse         *magistrala.AuthorizeRes
-		addPoliciesResponse       *magistrala.AddPoliciesRes
-		deletePoliciesResponse    *magistrala.DeletePolicyRes
+		addPoliciesResponse       bool
+		deletePoliciesResponse    bool
 		token                     string
 		identifyErr               error
 		authorizeErr              error
@@ -307,7 +308,7 @@ func TestRegisterClient(t *testing.T) {
 			client:              client,
 			identifyResponse:    &magistrala.IdentityRes{UserId: validID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse: true,
 			token:               validToken,
 			err:                 nil,
 		},
@@ -1068,8 +1069,8 @@ func TestUpdateClientRole(t *testing.T) {
 		membershipAuthReq          *magistrala.AuthorizeReq
 		superAdminAuthRes          *magistrala.AuthorizeRes
 		membershipAuthRes          *magistrala.AuthorizeRes
-		deletePolicyFilterResponse *magistrala.DeletePolicyRes
-		addPolicyResponse          *magistrala.AddPolicyRes
+		deletePolicyFilterResponse bool
+		addPolicyResponse          bool
 		updateRoleResponse         mgclients.Client
 		token                      string
 		identifyErr                error
@@ -1089,7 +1090,7 @@ func TestUpdateClientRole(t *testing.T) {
 			membershipAuthReq:  membershipAuthReq,
 			membershipAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
 			superAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse:  &magistrala.AddPolicyRes{Added: true},
+			addPolicyResponse:  true,
 			updateRoleResponse: client,
 			token:              validToken,
 			err:                nil,
@@ -1132,7 +1133,7 @@ func TestUpdateClientRole(t *testing.T) {
 			superAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
 			membershipAuthReq: membershipAuthReq,
 			membershipAuthRes: &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPolicyRes{Added: false},
+			addPolicyResponse: false,
 			token:             validToken,
 			authorizeErr:      svcerr.ErrAuthorization,
 			err:               svcerr.ErrAuthorization,
@@ -1145,7 +1146,7 @@ func TestUpdateClientRole(t *testing.T) {
 			superAdminAuthRes: &magistrala.AuthorizeRes{Authorized: true},
 			membershipAuthReq: membershipAuthReq,
 			membershipAuthRes: &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPolicyRes{},
+			addPolicyResponse: false,
 			token:             validToken,
 			addPolicyErr:      errors.ErrMalformedEntity,
 			err:               svcerr.ErrAddPolicies,
@@ -1158,7 +1159,7 @@ func TestUpdateClientRole(t *testing.T) {
 			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
 			membershipAuthReq:          membershipAuthReq,
 			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyFilterResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			deletePolicyFilterResponse: true,
 			updateRoleResponse:         client2,
 			token:                      validToken,
 			err:                        nil,
@@ -1171,7 +1172,7 @@ func TestUpdateClientRole(t *testing.T) {
 			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
 			membershipAuthReq:          membershipAuthReq,
 			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyFilterResponse: &magistrala.DeletePolicyRes{Deleted: false},
+			deletePolicyFilterResponse: false,
 			updateRoleResponse:         mgclients.Client{},
 			token:                      validToken,
 			deletePolicyErr:            svcerr.ErrAuthorization,
@@ -1185,7 +1186,7 @@ func TestUpdateClientRole(t *testing.T) {
 			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
 			membershipAuthReq:          membershipAuthReq,
 			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyFilterResponse: &magistrala.DeletePolicyRes{Deleted: false},
+			deletePolicyFilterResponse: false,
 			updateRoleResponse:         mgclients.Client{},
 			token:                      validToken,
 			deletePolicyErr:            svcerr.ErrMalformedEntity,
@@ -1199,8 +1200,8 @@ func TestUpdateClientRole(t *testing.T) {
 			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
 			membershipAuthReq:          membershipAuthReq,
 			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse:          &magistrala.AddPolicyRes{Added: true},
-			deletePolicyFilterResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			addPolicyResponse:          true,
+			deletePolicyFilterResponse: true,
 			updateRoleResponse:         mgclients.Client{},
 			token:                      validToken,
 			updateRoleErr:              svcerr.ErrAuthentication,
@@ -1214,8 +1215,8 @@ func TestUpdateClientRole(t *testing.T) {
 			superAdminAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
 			membershipAuthReq:          membershipAuthReq,
 			membershipAuthRes:          &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse:          &magistrala.AddPolicyRes{Added: true},
-			deletePolicyFilterResponse: &magistrala.DeletePolicyRes{Deleted: false},
+			addPolicyResponse:          true,
+			deletePolicyFilterResponse: false,
 			updateRoleResponse:         mgclients.Client{},
 			token:                      validToken,
 			updateRoleErr:              svcerr.ErrAuthentication,
@@ -1780,9 +1781,9 @@ func TestListMembers(t *testing.T) {
 		authorizeReq            *magistrala.AuthorizeReq
 		listAllSubjectsReq      *magistrala.ListSubjectsReq
 		authorizeResponse       *magistrala.AuthorizeRes
-		listAllSubjectsResponse *magistrala.ListSubjectsRes
+		listAllSubjectsResponse []string
 		retrieveAllResponse     mgclients.ClientsPage
-		listPermissionsResponse *magistrala.ListPermissionsRes
+		listPermissionsResponse []string
 		response                mgclients.MembersPage
 		authorizeErr            error
 		listAllSubjectsErr      error
@@ -1799,7 +1800,7 @@ func TestListMembers(t *testing.T) {
 			objectID:                validID,
 			page:                    mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
 			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			listAllSubjectsResponse: []string{},
 			authorizeReq: &magistrala.AuthorizeReq{
 				SubjectType: authsvc.UserType,
 				SubjectKind: authsvc.TokenKind,
@@ -1846,10 +1847,8 @@ func TestListMembers(t *testing.T) {
 				Object:      validID,
 				ObjectType:  authsvc.ThingType,
 			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listAllSubjectsResponse: []string{validPolicy},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  1,
@@ -1890,10 +1889,8 @@ func TestListMembers(t *testing.T) {
 				Object:      validID,
 				ObjectType:  authsvc.ThingType,
 			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listAllSubjectsResponse: []string{validPolicy},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  1,
@@ -1902,7 +1899,7 @@ func TestListMembers(t *testing.T) {
 				},
 				Clients: []mgclients.Client{basicClient},
 			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{Permissions: []string{"read"}},
+			listPermissionsResponse: []string{"read"},
 			response: mgclients.MembersPage{
 				Page: mgclients.Page{
 					Total:  1,
@@ -1935,10 +1932,8 @@ func TestListMembers(t *testing.T) {
 				Object:      validID,
 				ObjectType:  authsvc.ThingType,
 			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listAllSubjectsResponse: []string{validPolicy},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  1,
@@ -1947,7 +1942,7 @@ func TestListMembers(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client},
 			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listPermissionsResponse: []string{},
 			response:                mgclients.MembersPage{},
 			listPermissionErr:       svcerr.ErrNotFound,
 			err:                     svcerr.ErrNotFound,
@@ -1995,7 +1990,7 @@ func TestListMembers(t *testing.T) {
 			},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
 			listAllSubjectsErr:      repoerr.ErrNotFound,
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			listAllSubjectsResponse: []string{},
 			err:                     repoerr.ErrNotFound,
 		},
 		{
@@ -2020,14 +2015,12 @@ func TestListMembers(t *testing.T) {
 				Object:      validID,
 				ObjectType:  authsvc.ThingType,
 			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
-			retrieveAllResponse: mgclients.ClientsPage{},
-			response:            mgclients.MembersPage{},
-			retrieveAllErr:      repoerr.ErrNotFound,
-			err:                 repoerr.ErrNotFound,
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listAllSubjectsResponse: []string{validPolicy},
+			retrieveAllResponse:     mgclients.ClientsPage{},
+			response:                mgclients.MembersPage{},
+			retrieveAllErr:          repoerr.ErrNotFound,
+			err:                     repoerr.ErrNotFound,
 		},
 		{
 			desc:                    "list members with no policies successfully of the domain kind",
@@ -2037,7 +2030,7 @@ func TestListMembers(t *testing.T) {
 			objectID:                validID,
 			page:                    mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
 			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			listAllSubjectsResponse: []string{},
 			authorizeReq: &magistrala.AuthorizeReq{
 				SubjectType: authsvc.UserType,
 				SubjectKind: authsvc.TokenKind,
@@ -2084,10 +2077,8 @@ func TestListMembers(t *testing.T) {
 				Object:      validID,
 				ObjectType:  authsvc.DomainType,
 			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listAllSubjectsResponse: []string{validPolicy},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  1,
@@ -2133,7 +2124,7 @@ func TestListMembers(t *testing.T) {
 			objectID:                validID,
 			page:                    mgclients.Page{Offset: 0, Limit: 100, Permission: "read"},
 			identifyResponse:        &magistrala.IdentityRes{UserId: client.ID},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{},
+			listAllSubjectsResponse: []string{},
 			authorizeReq: &magistrala.AuthorizeReq{
 				SubjectType: authsvc.UserType,
 				SubjectKind: authsvc.TokenKind,
@@ -2180,10 +2171,8 @@ func TestListMembers(t *testing.T) {
 				Object:      validID,
 				ObjectType:  authsvc.GroupType,
 			},
-			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listAllSubjectsResponse: &magistrala.ListSubjectsRes{
-				Policies: []string{validPolicy},
-			},
+			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
+			listAllSubjectsResponse: []string{validPolicy},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  1,
@@ -2650,11 +2639,11 @@ func TestOAuthCallback(t *testing.T) {
 		client                     mgclients.Client
 		retrieveByIdentityResponse mgclients.Client
 		retrieveByIdentityErr      error
-		addPoliciesResponse        *magistrala.AddPoliciesRes
+		addPoliciesResponse        bool
 		addPoliciesErr             error
 		saveResponse               mgclients.Client
 		saveErr                    error
-		deletePoliciesResponse     *magistrala.DeletePolicyRes
+		deletePoliciesResponse     bool
 		deletePoliciesErr          error
 		authorizeResponse          *magistrala.AuthorizeRes
 		authorizeErr               error
@@ -2689,9 +2678,7 @@ func TestOAuthCallback(t *testing.T) {
 				},
 			},
 			retrieveByIdentityErr: repoerr.ErrNotFound,
-			addPoliciesResponse: &magistrala.AddPoliciesRes{
-				Added: true,
-			},
+			addPoliciesResponse:   true,
 			saveResponse: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
 				Role: mgclients.UserRole,
@@ -2721,7 +2708,7 @@ func TestOAuthCallback(t *testing.T) {
 				},
 			},
 			retrieveByIdentityErr: repoerr.ErrNotFound,
-			addPoliciesResponse:   &magistrala.AddPoliciesRes{Added: false},
+			addPoliciesResponse:   false,
 			addPoliciesErr:        svcerr.ErrAuthorization,
 			err:                   svcerr.ErrAuthorization,
 		},
@@ -2738,7 +2725,7 @@ func TestOAuthCallback(t *testing.T) {
 			},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeErr:        svcerr.ErrAuthorization,
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse: true,
 			issueResponse: &magistrala.Token{
 				AccessToken:  strings.Repeat("a", 10),
 				RefreshToken: &validToken,
@@ -2759,7 +2746,7 @@ func TestOAuthCallback(t *testing.T) {
 			},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeErr:        svcerr.ErrAuthorization,
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: false},
+			addPoliciesResponse: false,
 			addPoliciesErr:      svcerr.ErrAuthorization,
 			err:                 svcerr.ErrAuthorization,
 		},

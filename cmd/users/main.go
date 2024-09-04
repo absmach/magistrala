@@ -24,6 +24,7 @@ import (
 	gevents "github.com/absmach/magistrala/internal/groups/events"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
+	mgpolicy "github.com/absmach/magistrala/internal/policy"
 	mglog "github.com/absmach/magistrala/logger"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -32,6 +33,7 @@ import (
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/oauth2"
 	googleoauth "github.com/absmach/magistrala/pkg/oauth2/google"
+	"github.com/absmach/magistrala/pkg/policy"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
@@ -231,8 +233,10 @@ func newService(ctx context.Context, authClient authclient.AuthServiceClient, po
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := users.NewService(cRepo, authClient, policyClient, emailerClient, hsr, idp, c.SelfRegister)
-	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
+	policyService := mgpolicy.NewService(policyClient)
+
+	csvc := users.NewService(cRepo, authClient, policyService, emailerClient, hsr, idp, c.SelfRegister)
+	gsvc := mggroups.NewService(gRepo, idp, authClient, policyService)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
 	if err != nil {
@@ -257,11 +261,11 @@ func newService(ctx context.Context, authClient authclient.AuthServiceClient, po
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-	if err := createAdminPolicy(ctx, clientID, authClient, policyClient); err != nil {
+	if err := createAdminPolicy(ctx, clientID, authClient, policyService); err != nil {
 		return nil, nil, err
 	}
 
-	users.NewDeleteHandler(ctx, cRepo, policyClient, c.DeleteInterval, c.DeleteAfter, logger)
+	users.NewDeleteHandler(ctx, cRepo, policyService, c.DeleteInterval, c.DeleteAfter, logger)
 
 	return csvc, gsvc, err
 }
@@ -306,7 +310,7 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 	return client.ID, nil
 }
 
-func createAdminPolicy(ctx context.Context, clientID string, authClient authclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient) error {
+func createAdminPolicy(ctx context.Context, clientID string, authClient authclient.AuthServiceClient, policyService policy.PolicyService) error {
 	res, err := authClient.Authorize(ctx, &magistrala.AuthorizeReq{
 		SubjectType: authSvc.UserType,
 		Subject:     clientID,
@@ -315,7 +319,7 @@ func createAdminPolicy(ctx context.Context, clientID string, authClient authclie
 		ObjectType:  authSvc.PlatformType,
 	})
 	if err != nil || !res.Authorized {
-		addPolicyRes, err := policyClient.AddPolicy(ctx, &magistrala.AddPolicyReq{
+		addPolicyRes, err := policyService.AddPolicy(ctx, &magistrala.AddPolicyReq{
 			SubjectType: authSvc.UserType,
 			Subject:     clientID,
 			Relation:    authSvc.AdministratorRelation,
@@ -325,7 +329,7 @@ func createAdminPolicy(ctx context.Context, clientID string, authClient authclie
 		if err != nil {
 			return err
 		}
-		if !addPolicyRes.Added {
+		if !addPolicyRes {
 			return svcerr.ErrAuthorization
 		}
 	}

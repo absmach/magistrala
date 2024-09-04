@@ -13,13 +13,14 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/policy"
 	"github.com/absmach/magistrala/things/postgres"
 	"golang.org/x/sync/errgroup"
 )
 
 type service struct {
 	auth        grpcclient.AuthServiceClient
-	policy      magistrala.PolicyServiceClient
+	policy      policy.PolicyService
 	clients     postgres.Repository
 	clientCache Cache
 	idProvider  magistrala.IDProvider
@@ -27,10 +28,10 @@ type service struct {
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(auth grpcclient.AuthServiceClient, policy magistrala.PolicyServiceClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
+func NewService(auth grpcclient.AuthServiceClient, policyService policy.PolicyService, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
 	return service{
 		auth:        auth,
-		policy:      policy,
+		policy:      policyService,
 		clients:     c,
 		grepo:       grepo,
 		clientCache: tcache,
@@ -220,7 +221,7 @@ func (svc service) retrievePermissions(ctx context.Context, userID string, clien
 }
 
 func (svc service) listUserThingPermission(ctx context.Context, userID, thingID string) ([]string, error) {
-	lp, err := svc.policy.ListPermissions(ctx, &magistrala.ListPermissionsReq{
+	permissions, err := svc.policy.ListPermissions(ctx, &magistrala.ListPermissionsReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
 		Object:      thingID,
@@ -229,7 +230,7 @@ func (svc service) listUserThingPermission(ctx context.Context, userID, thingID 
 	if err != nil {
 		return []string{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
-	return lp.GetPermissions(), nil
+	return permissions, nil
 }
 
 func (svc service) listClientIDs(ctx context.Context, userID, permission string) ([]string, error) {
@@ -242,7 +243,7 @@ func (svc service) listClientIDs(ctx context.Context, userID, permission string)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrNotFound, err)
 	}
-	return tids.Policies, nil
+	return tids, nil
 }
 
 func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission string, thingIDs []string) ([]string, error) {
@@ -257,7 +258,7 @@ func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission
 		return nil, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 	for _, thingID := range thingIDs {
-		for _, tid := range tids.Policies {
+		for _, tid := range tids {
 			if thingID == tid {
 				ids = append(ids, thingID)
 			}
@@ -395,11 +396,11 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 			Object:      id,
 		})
 	}
-	res, err := svc.policy.AddPolicies(ctx, &policies)
+	added, err := svc.policy.AddPolicies(ctx, &policies)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
-	if !res.Added {
+	if !added {
 		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return nil
@@ -424,11 +425,11 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 			Object:      id,
 		})
 	}
-	res, err := svc.policy.DeletePolicies(ctx, &policies)
+	deleted, err := svc.policy.DeletePolicies(ctx, &policies)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
-	if !res.Deleted {
+	if !deleted {
 		return err
 	}
 	return nil
@@ -447,14 +448,14 @@ func (svc service) DeleteClient(ctx context.Context, token, id string) error {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
-	deleteRes, err := svc.policy.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+	deleted, err := svc.policy.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
 		EntityType: auth.ThingType,
 		Id:         id,
 	})
 	if err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
-	if !deleteRes.Deleted {
+	if !deleted {
 		return svcerr.ErrAuthorization
 	}
 
@@ -506,7 +507,7 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 		return mgclients.MembersPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
-	pm.IDs = tids.Policies
+	pm.IDs = tids
 
 	cp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
 	if err != nil {

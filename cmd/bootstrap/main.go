@@ -21,6 +21,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap/events/producer"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
+	mgpolicy "github.com/absmach/magistrala/internal/policy"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
@@ -193,7 +194,9 @@ func newService(ctx context.Context, authClient authclient.AuthServiceClient, po
 	sdk := mgsdk.NewSDK(config)
 	idp := uuid.New()
 
-	svc := bootstrap.New(authClient, policyClient, repoConfig, sdk, []byte(cfg.EncKey), idp)
+	policyService := mgpolicy.NewService(policyClient)
+
+	svc := bootstrap.New(authClient, policyService, repoConfig, sdk, []byte(cfg.EncKey), idp)
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, streamID)
 	if err != nil {

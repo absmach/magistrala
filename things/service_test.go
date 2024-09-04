@@ -17,6 +17,7 @@ import (
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
+	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
 	"github.com/absmach/magistrala/things/mocks"
@@ -46,9 +47,9 @@ var (
 	errRemovePolicies = errors.New("failed to delete policies")
 )
 
-func newService() (things.Service, *mocks.Repository, *authmocks.AuthServiceClient, *authmocks.PolicyServiceClient, *mocks.Cache) {
+func newService() (things.Service, *mocks.Repository, *authmocks.AuthServiceClient, *policymocks.PolicyService, *mocks.Cache) {
 	auth := new(authmocks.AuthServiceClient)
-	policyClient := new(authmocks.PolicyServiceClient)
+	policyClient := new(policymocks.PolicyService)
 	thingCache := new(mocks.Cache)
 	idProvider := uuid.NewMock()
 	cRepo := new(mocks.Repository)
@@ -65,8 +66,8 @@ func TestCreateThings(t *testing.T) {
 		thing             mgclients.Client
 		token             string
 		authResponse      *magistrala.AuthorizeRes
-		addPolicyResponse *magistrala.AddPoliciesRes
-		deletePolicyRes   *magistrala.DeletePolicyRes
+		addPolicyResponse bool
+		deletePolicyRes   bool
 		authorizeErr      error
 		identifyErr       error
 		addPolicyErr      error
@@ -100,7 +101,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -114,7 +115,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -129,7 +130,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 
@@ -143,7 +144,7 @@ func TestCreateThings(t *testing.T) {
 				},
 			},
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			token:             validToken,
 			err:               nil,
 		},
@@ -158,7 +159,7 @@ func TestCreateThings(t *testing.T) {
 				Status: mgclients.EnabledStatus,
 			},
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			token:             validToken,
 			err:               nil,
 		},
@@ -174,7 +175,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -189,7 +190,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -203,7 +204,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -216,7 +217,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -230,7 +231,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -249,7 +250,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               nil,
 		},
 		{
@@ -263,7 +264,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			err:               svcerr.ErrInvalidStatus,
 		},
 		{
@@ -304,7 +305,7 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: false},
+			addPolicyResponse: false,
 			addPolicyErr:      svcerr.ErrInvalidPolicy,
 			err:               svcerr.ErrInvalidPolicy,
 		},
@@ -319,9 +320,9 @@ func TestCreateThings(t *testing.T) {
 			},
 			token:             validToken,
 			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPolicyResponse: true,
 			saveErr:           repoerr.ErrConflict,
-			deletePolicyRes:   &magistrala.DeletePolicyRes{Deleted: false},
+			deletePolicyRes:   false,
 			deletePolicyErr:   svcerr.ErrInvalidPolicy,
 			err:               repoerr.ErrConflict,
 		},
@@ -430,10 +431,10 @@ func TestListClients(t *testing.T) {
 		authorizeResponse       *magistrala.AuthorizeRes
 		authorizeResponse1      *magistrala.AuthorizeRes
 		authorizeResponse2      *magistrala.AuthorizeRes
-		listObjectsResponse     *magistrala.ListObjectsRes
-		listObjectsResponse1    *magistrala.ListObjectsRes
+		listObjectsResponse     []string
+		listObjectsResponse1    []string
 		retrieveAllResponse     mgclients.ClientsPage
-		listPermissionsResponse *magistrala.ListPermissionsRes
+		listPermissionsResponse []string
 		response                mgclients.ClientsPage
 		id                      string
 		size                    uint64
@@ -459,7 +460,7 @@ func TestListClients(t *testing.T) {
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
 			authorizeResponse2:  &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -468,9 +469,7 @@ func TestListClients(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client, client},
 			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{
-				Permissions: []string{"read", "write"},
-			},
+			listPermissionsResponse: []string{"read", "write"},
 			response: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -546,7 +545,7 @@ func TestListClients(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client, client},
 			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listPermissionsResponse: []string{},
 			response:                mgclients.ClientsPage{},
 			listPermissionsErr:      svcerr.ErrNotFound,
 			err:                     svcerr.ErrNotFound,
@@ -565,7 +564,7 @@ func TestListClients(t *testing.T) {
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: true},
 			response:            mgclients.ClientsPage{},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			err:                 nil,
 		},
 		{
@@ -582,7 +581,7 @@ func TestListClients(t *testing.T) {
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: false},
 			response:            mgclients.ClientsPage{},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			err:                 svcerr.ErrAuthorization,
 		},
 		{
@@ -599,7 +598,7 @@ func TestListClients(t *testing.T) {
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: true},
 			response:            mgclients.ClientsPage{},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			listObjectsErr:      svcerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
 		},
@@ -645,17 +644,15 @@ func TestListClients(t *testing.T) {
 		page                    mgclients.Page
 		identifyResponse        *magistrala.IdentityRes
 		authorizeResponse       *magistrala.AuthorizeRes
-		listObjectsResponse     *magistrala.ListObjectsRes
-		listObjectsResponse1    *magistrala.ListObjectsRes
+		listObjectsResponse     []string
 		retrieveAllResponse     mgclients.ClientsPage
-		listPermissionsResponse *magistrala.ListPermissionsRes
+		listPermissionsResponse []string
 		response                mgclients.ClientsPage
 		id                      string
 		size                    uint64
 		identifyErr             error
 		authorizeErr            error
 		listObjectsErr          error
-		listObjectsErr1         error
 		retrieveAllErr          error
 		listPermissionsErr      error
 		err                     error
@@ -671,10 +668,9 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
-			listObjectsResponse1: &magistrala.ListObjectsRes{Policies: []string{"test", "test"}},
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: []string{"test", "test"},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -683,9 +679,7 @@ func TestListClients(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client, client},
 			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{
-				Permissions: []string{"read", "write"},
-			},
+			listPermissionsResponse: []string{"read", "write"},
 			response: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -722,13 +716,12 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
-			retrieveAllResponse:  mgclients.ClientsPage{},
-			retrieveAllErr:       repoerr.ErrNotFound,
-			err:                  svcerr.ErrNotFound,
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: []string{},
+			retrieveAllResponse: mgclients.ClientsPage{},
+			retrieveAllErr:      repoerr.ErrNotFound,
+			err:                 svcerr.ErrNotFound,
 		},
 		{
 			desc:     "list all clients as admin with failed to list permissions",
@@ -741,10 +734,9 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: []string{},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -753,7 +745,7 @@ func TestListClients(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client, client},
 			},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listPermissionsResponse: []string{},
 			listPermissionsErr:      svcerr.ErrNotFound,
 			err:                     svcerr.ErrNotFound,
 		},
@@ -768,12 +760,11 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
-			listObjectsErr:       svcerr.ErrNotFound,
-			err:                  svcerr.ErrNotFound,
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: []string{},
+			listObjectsErr:      svcerr.ErrNotFound,
+			err:                 svcerr.ErrNotFound,
 		},
 		{
 			desc:     "list all clients as admin with failed to list things",
@@ -786,12 +777,11 @@ func TestListClients(t *testing.T) {
 				ListPerms: true,
 				Domain:    domainID,
 			},
-			identifyResponse:     &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:  &magistrala.ListObjectsRes{},
-			listObjectsResponse1: &magistrala.ListObjectsRes{},
-			listObjectsErr1:      svcerr.ErrNotFound,
-			err:                  svcerr.ErrNotFound,
+			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
+			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
+			listObjectsResponse: []string{},
+			listObjectsErr:      svcerr.ErrNotFound,
+			err:                 svcerr.ErrNotFound,
 		},
 	}
 
@@ -809,7 +799,7 @@ func TestListClients(t *testing.T) {
 			Subject:     tc.identifyResponse.Id,
 			Permission:  "",
 			ObjectType:  authsvc.ThingType,
-		}).Return(tc.listObjectsResponse1, tc.listObjectsErr1)
+		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
 		retrieveAllCall := cRepo.On("SearchClients", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
 		listPermissionsCall := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 
@@ -1416,8 +1406,8 @@ func TestListMembers(t *testing.T) {
 		page                     mgclients.Page
 		identifyResponse         *magistrala.IdentityRes
 		authorizeResponse        *magistrala.AuthorizeRes
-		listObjectsResponse      *magistrala.ListObjectsRes
-		listPermissionsResponse  *magistrala.ListPermissionsRes
+		listObjectsResponse      []string
+		listPermissionsResponse  []string
 		retreiveAllByIDsResponse mgclients.ClientsPage
 		response                 mgclients.MembersPage
 		identifyErr              error
@@ -1433,8 +1423,8 @@ func TestListMembers(t *testing.T) {
 			groupID:                 testsutil.GenerateUUID(t),
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listObjectsResponse:     []string{},
+			listPermissionsResponse: []string{},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  0,
@@ -1464,8 +1454,8 @@ func TestListMembers(t *testing.T) {
 			},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listObjectsResponse:     []string{},
+			listPermissionsResponse: []string{},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total: nClients - 6 - 1,
@@ -1501,8 +1491,8 @@ func TestListMembers(t *testing.T) {
 			groupID:                  wrongID,
 			identifyResponse:         &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:        &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:      &magistrala.ListObjectsRes{},
-			listPermissionsResponse:  &magistrala.ListPermissionsRes{},
+			listObjectsResponse:      []string{},
+			listPermissionsResponse:  []string{},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{},
 			response: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1523,8 +1513,8 @@ func TestListMembers(t *testing.T) {
 			},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{Permissions: []string{"admin"}},
+			listObjectsResponse:     []string{},
+			listPermissionsResponse: []string{"admin"},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total: 1,
@@ -1560,7 +1550,7 @@ func TestListMembers(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: &magistrala.ListObjectsRes{},
+			listObjectsResponse: []string{},
 			listObjectsErr:      svcerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
 		},
@@ -1580,8 +1570,8 @@ func TestListMembers(t *testing.T) {
 			response:                mgclients.MembersPage{},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     &magistrala.ListObjectsRes{},
-			listPermissionsResponse: &magistrala.ListPermissionsRes{},
+			listObjectsResponse:     []string{},
+			listPermissionsResponse: []string{},
 			listPermissionsErr:      svcerr.ErrNotFound,
 			err:                     svcerr.ErrNotFound,
 		},
@@ -1591,7 +1581,7 @@ func TestListMembers(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
 		repoCall2 := policy.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), tc.page).Return(tc.retreiveAllByIDsResponse, tc.retreiveAllByIDsErr)
+		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.retreiveAllByIDsResponse, tc.retreiveAllByIDsErr)
 		repoCall4 := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 		page, err := svc.ListClientsByGroup(context.Background(), tc.token, tc.groupID, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -1616,7 +1606,7 @@ func TestDeleteClient(t *testing.T) {
 		token                string
 		identifyResponse     *magistrala.IdentityRes
 		authorizeResponse    *magistrala.AuthorizeRes
-		deletePolicyResponse *magistrala.DeletePolicyRes
+		deletePolicyResponse bool
 		clientID             string
 		identifyErr          error
 		authorizeErr         error
@@ -1631,7 +1621,7 @@ func TestDeleteClient(t *testing.T) {
 			clientID:             client.ID,
 			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			deletePolicyResponse: true,
 			err:                  nil,
 		},
 		{
@@ -1657,7 +1647,7 @@ func TestDeleteClient(t *testing.T) {
 			clientID:             client.ID,
 			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			deletePolicyResponse: true,
 			deleteErr:            repoerr.ErrRemoveEntity,
 			err:                  repoerr.ErrRemoveEntity,
 		},
@@ -1676,7 +1666,7 @@ func TestDeleteClient(t *testing.T) {
 			clientID:             client.ID,
 			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: &magistrala.DeletePolicyRes{Deleted: false},
+			deletePolicyResponse: false,
 			deletePolicyErr:      errRemovePolicies,
 			err:                  errRemovePolicies,
 		},
@@ -1714,7 +1704,7 @@ func TestShare(t *testing.T) {
 		userID              string
 		identifyResponse    *magistrala.IdentityRes
 		authorizeResponse   *magistrala.AuthorizeRes
-		addPoliciesResponse *magistrala.AddPoliciesRes
+		addPoliciesResponse bool
 		identifyErr         error
 		authorizeErr        error
 		addPoliciesErr      error
@@ -1726,7 +1716,7 @@ func TestShare(t *testing.T) {
 			clientID:            clientID,
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: true},
+			addPoliciesResponse: true,
 			err:                 nil,
 		},
 		{
@@ -1752,7 +1742,7 @@ func TestShare(t *testing.T) {
 			clientID:            clientID,
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{},
+			addPoliciesResponse: false,
 			addPoliciesErr:      svcerr.ErrInvalidPolicy,
 			err:                 svcerr.ErrInvalidPolicy,
 		},
@@ -1762,7 +1752,7 @@ func TestShare(t *testing.T) {
 			clientID:            clientID,
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: &magistrala.AddPoliciesRes{Added: false},
+			addPoliciesResponse: false,
 			err:                 svcerr.ErrUpdateEntity,
 		},
 	}
@@ -1792,7 +1782,7 @@ func TestUnShare(t *testing.T) {
 		userID                 string
 		identifyResponse       *magistrala.IdentityRes
 		authorizeResponse      *magistrala.AuthorizeRes
-		deletePoliciesResponse *magistrala.DeletePolicyRes
+		deletePoliciesResponse bool
 		identifyErr            error
 		authorizeErr           error
 		deletePoliciesErr      error
@@ -1804,7 +1794,7 @@ func TestUnShare(t *testing.T) {
 			clientID:               clientID,
 			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: true},
+			deletePoliciesResponse: true,
 			err:                    nil,
 		},
 		{
@@ -1830,7 +1820,7 @@ func TestUnShare(t *testing.T) {
 			clientID:               clientID,
 			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{},
+			deletePoliciesResponse: false,
 			deletePoliciesErr:      svcerr.ErrInvalidPolicy,
 			err:                    svcerr.ErrInvalidPolicy,
 		},
@@ -1840,7 +1830,7 @@ func TestUnShare(t *testing.T) {
 			clientID:               clientID,
 			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: &magistrala.DeletePolicyRes{Deleted: false},
+			deletePoliciesResponse: false,
 			err:                    nil,
 		},
 	}
@@ -1866,10 +1856,9 @@ func TestViewClientPerms(t *testing.T) {
 		desc              string
 		token             string
 		thingID           string
-		permissions       []string
 		identifyResponse  *magistrala.IdentityRes
 		authorizeResponse *magistrala.AuthorizeRes
-		listPermResponse  *magistrala.ListPermissionsRes
+		listPermResponse  []string
 		identifyErr       error
 		authorizeErr      error
 		listPermErr       error
@@ -1879,17 +1868,15 @@ func TestViewClientPerms(t *testing.T) {
 			desc:              "view client permissions successfully",
 			token:             validToken,
 			thingID:           validID,
-			permissions:       []string{"admin"},
 			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listPermResponse:  &magistrala.ListPermissionsRes{Permissions: []string{"admin"}},
+			listPermResponse:  []string{"admin"},
 			err:               nil,
 		},
 		{
 			desc:             "view client permissions with invalid token",
 			token:            inValidToken,
 			thingID:          validID,
-			permissions:      []string{"admin"},
 			identifyResponse: &magistrala.IdentityRes{},
 			identifyErr:      svcerr.ErrAuthentication,
 			err:              svcerr.ErrAuthentication,
@@ -1897,8 +1884,6 @@ func TestViewClientPerms(t *testing.T) {
 		{
 			desc:              "view client permissions with invalid ID",
 			token:             validToken,
-			thingID:           inValidToken,
-			permissions:       []string{},
 			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: false},
 			authorizeErr:      svcerr.ErrAuthorization,
@@ -1908,10 +1893,9 @@ func TestViewClientPerms(t *testing.T) {
 			desc:              "view permissions with failed retrieve list permissions response",
 			token:             validToken,
 			thingID:           validID,
-			permissions:       []string{},
 			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listPermResponse:  &magistrala.ListPermissionsRes{},
+			listPermResponse:  []string{},
 			listPermErr:       svcerr.ErrAuthorization,
 			err:               svcerr.ErrAuthorization,
 		},
@@ -1921,8 +1905,11 @@ func TestViewClientPerms(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
 		repoCall2 := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermResponse, tc.listPermErr)
-		_, err := svc.ViewClientPerms(context.Background(), tc.token, tc.thingID)
+		res, err := svc.ViewClientPerms(context.Background(), tc.token, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		if tc.err == nil {
+			assert.Equal(t, tc.listPermResponse, res, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.listPermResponse, res))
+		}
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()

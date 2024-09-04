@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/policy"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -28,17 +29,17 @@ var (
 type service struct {
 	groups     groups.Repository
 	auth       grpcclient.AuthServiceClient
-	policy     magistrala.PolicyServiceClient
+	policy     policy.PolicyService
 	idProvider magistrala.IDProvider
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(g groups.Repository, idp magistrala.IDProvider, authClient grpcclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient) groups.Service {
+func NewService(g groups.Repository, idp magistrala.IDProvider, authClient grpcclient.AuthServiceClient, policyService policy.PolicyService) groups.Service {
 	return service{
 		groups:     g,
 		idProvider: idp,
 		auth:       authClient,
-		policy:     policyClient,
+		policy:     policyService,
 	}
 }
 
@@ -131,7 +132,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 		if err != nil {
 			return groups.Page{}, err
 		}
-		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, cids.Policies)
+		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, cids)
 		if err != nil {
 			return groups.Page{}, err
 		}
@@ -149,7 +150,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 		if err != nil {
 			return groups.Page{}, err
 		}
-		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids.Policies)
+		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids)
 		if err != nil {
 			return groups.Page{}, err
 		}
@@ -167,7 +168,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			return groups.Page{}, err
 		}
 
-		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids.Policies)
+		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids)
 		if err != nil {
 			return groups.Page{}, err
 		}
@@ -186,7 +187,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			if err != nil {
 				return groups.Page{}, err
 			}
-			ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids.Policies)
+			ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids)
 			if err != nil {
 				return groups.Page{}, err
 			}
@@ -242,7 +243,7 @@ func (svc service) retrievePermissions(ctx context.Context, userID string, group
 }
 
 func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID string) ([]string, error) {
-	lp, err := svc.policy.ListPermissions(ctx, &magistrala.ListPermissionsReq{
+	permissions, err := svc.policy.ListPermissions(ctx, &magistrala.ListPermissionsReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
 		Object:      groupID,
@@ -251,10 +252,10 @@ func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID 
 	if err != nil {
 		return []string{}, err
 	}
-	if len(lp.GetPermissions()) == 0 {
+	if len(permissions) == 0 {
 		return []string{}, svcerr.ErrAuthorization
 	}
-	return lp.GetPermissions(), nil
+	return permissions, nil
 }
 
 func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
@@ -294,7 +295,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID, permission, 
 
 		members := []groups.Member{}
 
-		for _, id := range tids.Policies {
+		for _, id := range tids {
 			members = append(members, groups.Member{
 				ID:   id,
 				Type: auth.ThingType,
@@ -319,7 +320,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID, permission, 
 
 		members := []groups.Member{}
 
-		for _, id := range uids.Policies {
+		for _, id := range uids {
 			members = append(members, groups.Member{
 				ID:   id,
 				Type: auth.UserType,
@@ -599,7 +600,7 @@ func (svc service) DeleteGroup(ctx context.Context, token, id string) error {
 	if err != nil {
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
-	if !deleteRes.Deleted {
+	if !deleteRes {
 		return svcerr.ErrAuthorization
 	}
 
@@ -637,7 +638,7 @@ func (svc service) listAllGroupsOfUserID(ctx context.Context, userID, permission
 	if err != nil {
 		return []string{}, err
 	}
-	return allowedIDs.Policies, nil
+	return allowedIDs, nil
 }
 
 func (svc service) changeGroupStatus(ctx context.Context, token string, group groups.Group) (groups.Group, error) {

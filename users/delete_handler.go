@@ -18,6 +18,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policy"
 	"github.com/absmach/magistrala/users/postgres"
 )
 
@@ -25,16 +26,16 @@ const defLimit = uint64(100)
 
 type handler struct {
 	clients       postgres.Repository
-	policy        magistrala.PolicyServiceClient
+	policy        policy.PolicyService
 	checkInterval time.Duration
 	deleteAfter   time.Duration
 	logger        *slog.Logger
 }
 
-func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policyClient magistrala.PolicyServiceClient, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
+func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policyService policy.PolicyService, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
 	handler := &handler{
 		clients:       clients,
-		policy:        policyClient,
+		policy:        policyService,
 		checkInterval: defCheckInterval,
 		deleteAfter:   deleteAfter,
 		logger:        logger,
@@ -73,7 +74,7 @@ func (h *handler) handle(ctx context.Context) {
 				continue
 			}
 
-			deleteRes, err := h.policy.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
+			deleted, err := h.policy.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
 				Id:         u.ID,
 				EntityType: auth.UserType,
 			})
@@ -81,7 +82,7 @@ func (h *handler) handle(ctx context.Context) {
 				h.logger.Error("failed to delete user policies", slog.Any("error", err))
 				continue
 			}
-			if !deleteRes.Deleted {
+			if !deleted {
 				h.logger.Error("failed to delete user policies", slog.Any("error", svcerr.ErrAuthorization))
 				continue
 			}

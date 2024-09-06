@@ -27,17 +27,21 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/policy"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/authzed/authzed-go/v1"
+	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -53,15 +57,19 @@ const (
 )
 
 type config struct {
-	LogLevel       string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
-	EncKey         string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
-	ESConsumerName string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	ThingsURL      string  `env:"MG_THINGS_URL"                 envDefault:"http://localhost:9000"`
-	JaegerURL      url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry  bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID     string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL          string  `env:"MG_ES_URL"                     envDefault:"nats://localhost:4222"`
-	TraceRatio     float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	LogLevel            string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
+	EncKey              string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
+	ESConsumerName      string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
+	ThingsURL           string  `env:"MG_THINGS_URL"                 envDefault:"http://localhost:9000"`
+	JaegerURL           url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
+	InstanceID          string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
+	ESURL               string  `env:"MG_ES_URL"                     envDefault:"nats://localhost:4222"`
+	TraceRatio          float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	SpicedbHost         string  `env:"MG_SPICEDB_HOST"               envDefault:"localhost"`
+	SpicedbPort         string  `env:"MG_SPICEDB_PORT"               envDefault:"50051"`
+	SpicedbSchemaFile   string  `env:"MG_SPICEDB_SCHEMA_FILE"        envDefault:"./docker/spicedb/schema.zed"`
+	SpicedbPreSharedKey string  `env:"MG_SPICEDB_PRE_SHARED_KEY"     envDefault:"12345678"`
 }
 
 func main() {
@@ -118,14 +126,13 @@ func main() {
 	defer authHandler.Close()
 	logger.Info("AuthService gRPC client successfully connected to auth gRPC server " + authHandler.Secure())
 
-	policyClient, policyHandler, err := grpcclient.SetupPolicyClient(ctx, clientConfig)
+	policyClient, err := newPolicyClient(cfg, logger)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer policyHandler.Close()
-	logger.Info("PolicyService gRPC client successfully connected to auth gRPC server " + policyHandler.Secure())
+	logger.Info("Policy client successfully connected to spicedb gRPC server")
 
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
@@ -182,8 +189,8 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authClient authclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
-	database := postgres.NewDatabase(db, dbConfig, tracer)
+func newService(ctx context.Context, authClient authclient.AuthServiceClient, policyClient policy.PolicyClient, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
+	database := pgclient.NewDatabase(db, dbConfig, tracer)
 
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 
@@ -194,9 +201,7 @@ func newService(ctx context.Context, authClient authclient.AuthServiceClient, po
 	sdk := mgsdk.NewSDK(config)
 	idp := uuid.New()
 
-	policyService := mgpolicy.NewService(policyClient)
-
-	svc := bootstrap.New(authClient, policyService, repoConfig, sdk, []byte(cfg.EncKey), idp)
+	svc := bootstrap.New(authClient, policyClient, repoConfig, sdk, []byte(cfg.EncKey), idp)
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, streamID)
 	if err != nil {
@@ -224,4 +229,18 @@ func subscribeToThingsES(ctx context.Context, svc bootstrap.Service, cfg config,
 		Handler:  consumer.NewEventHandler(svc),
 	}
 	return subscriber.Subscribe(ctx, subConfig)
+}
+
+func newPolicyClient(cfg config, logger *slog.Logger) (policy.PolicyClient, error) {
+	client, err := authzed.NewClientWithExperimentalAPIs(
+		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	policyClient := mgpolicy.NewPolicyClient(client, logger)
+
+	return policyClient, nil
 }

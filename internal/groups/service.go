@@ -29,17 +29,17 @@ var (
 type service struct {
 	groups     groups.Repository
 	auth       grpcclient.AuthServiceClient
-	policy     policy.PolicyService
+	policy     policy.PolicyClient
 	idProvider magistrala.IDProvider
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(g groups.Repository, idp magistrala.IDProvider, authClient grpcclient.AuthServiceClient, policyService policy.PolicyService) groups.Service {
+func NewService(g groups.Repository, idp magistrala.IDProvider, authClient grpcclient.AuthServiceClient, policyClient policy.PolicyClient) groups.Service {
 	return service{
 		groups:     g,
 		idProvider: idp,
 		auth:       authClient,
-		policy:     policyService,
+		policy:     policyClient,
 	}
 }
 
@@ -70,12 +70,14 @@ func (svc service) CreateGroup(ctx context.Context, token, kind string, g groups
 		}
 	}
 
-	if err := svc.addGroupPolicy(ctx, res.GetId(), res.GetDomainId(), g.ID, g.Parent, kind); err != nil {
+	policies, err := svc.addGroupPolicy(ctx, res.GetId(), res.GetDomainId(), g.ID, g.Parent, kind)
+	if err != nil {
 		return groups.Group{}, err
 	}
+
 	defer func() {
 		if err != nil {
-			if errRollback := svc.addGroupPolicyRollback(ctx, res.GetId(), res.GetDomainId(), g.ID, g.Parent, kind); errRollback != nil {
+			if errRollback := svc.policy.DeletePolicies(ctx, policies); errRollback != nil {
 				err = errors.Wrap(errors.Wrap(errors.ErrRollbackTx, errRollback), err)
 			}
 		}
@@ -123,7 +125,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 		if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.ThingType, memberID); err != nil {
 			return groups.Page{}, err
 		}
-		cids, err := svc.policy.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
+		cids, err := svc.policy.ListAllSubjects(ctx, policy.PolicyReq{
 			SubjectType: auth.GroupType,
 			Permission:  auth.GroupRelation,
 			ObjectType:  auth.ThingType,
@@ -132,7 +134,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 		if err != nil {
 			return groups.Page{}, err
 		}
-		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, cids)
+		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, cids.Policies)
 		if err != nil {
 			return groups.Page{}, err
 		}
@@ -141,7 +143,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			return groups.Page{}, err
 		}
 
-		gids, err := svc.policy.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+		gids, err := svc.policy.ListAllObjects(ctx, policy.PolicyReq{
 			SubjectType: auth.GroupType,
 			Subject:     memberID,
 			Permission:  auth.ParentGroupRelation,
@@ -150,7 +152,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 		if err != nil {
 			return groups.Page{}, err
 		}
-		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids)
+		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids.Policies)
 		if err != nil {
 			return groups.Page{}, err
 		}
@@ -158,7 +160,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 		if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.ViewPermission, auth.GroupType, memberID); err != nil {
 			return groups.Page{}, err
 		}
-		gids, err := svc.policy.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
+		gids, err := svc.policy.ListAllSubjects(ctx, policy.PolicyReq{
 			SubjectType: auth.GroupType,
 			Permission:  auth.ParentGroupRelation,
 			ObjectType:  auth.GroupType,
@@ -168,7 +170,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			return groups.Page{}, err
 		}
 
-		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids)
+		ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids.Policies)
 		if err != nil {
 			return groups.Page{}, err
 		}
@@ -178,7 +180,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			if _, err := svc.authorizeKind(ctx, res.GetDomainId(), auth.UserType, auth.UsersKind, res.GetId(), auth.AdminPermission, auth.DomainType, res.GetDomainId()); err != nil {
 				return groups.Page{}, err
 			}
-			gids, err := svc.policy.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+			gids, err := svc.policy.ListAllObjects(ctx, policy.PolicyReq{
 				SubjectType: auth.UserType,
 				Subject:     auth.EncodeDomainUserID(res.GetDomainId(), memberID),
 				Permission:  gm.Permission,
@@ -187,7 +189,7 @@ func (svc service) ListGroups(ctx context.Context, token, memberKind, memberID s
 			if err != nil {
 				return groups.Page{}, err
 			}
-			ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids)
+			ids, err = svc.filterAllowedGroupIDsOfUserID(ctx, res.GetId(), gm.Permission, gids.Policies)
 			if err != nil {
 				return groups.Page{}, err
 			}
@@ -243,12 +245,12 @@ func (svc service) retrievePermissions(ctx context.Context, userID string, group
 }
 
 func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID string) ([]string, error) {
-	permissions, err := svc.policy.ListPermissions(ctx, &magistrala.ListPermissionsReq{
+	permissions, err := svc.policy.ListPermissions(ctx, policy.PolicyReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
 		Object:      groupID,
 		ObjectType:  auth.GroupType,
-	})
+	}, []string{})
 	if err != nil {
 		return []string{}, err
 	}
@@ -283,7 +285,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID, permission, 
 	}
 	switch memberKind {
 	case auth.ThingsKind:
-		tids, err := svc.policy.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+		tids, err := svc.policy.ListAllObjects(ctx, policy.PolicyReq{
 			SubjectType: auth.GroupType,
 			Subject:     groupID,
 			Relation:    auth.GroupRelation,
@@ -295,7 +297,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID, permission, 
 
 		members := []groups.Member{}
 
-		for _, id := range tids {
+		for _, id := range tids.Policies {
 			members = append(members, groups.Member{
 				ID:   id,
 				Type: auth.ThingType,
@@ -308,7 +310,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID, permission, 
 			Members: members,
 		}, nil
 	case auth.UsersKind:
-		uids, err := svc.policy.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
+		uids, err := svc.policy.ListAllSubjects(ctx, policy.PolicyReq{
 			SubjectType: auth.UserType,
 			Permission:  permission,
 			Object:      groupID,
@@ -320,7 +322,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID, permission, 
 
 		members := []groups.Member{}
 
-		for _, id := range uids {
+		for _, id := range uids.Policies {
 			members = append(members, groups.Member{
 				ID:   id,
 				Type: auth.UserType,
@@ -384,11 +386,11 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 		return err
 	}
 
-	policies := magistrala.AddPoliciesReq{}
+	policies := []policy.PolicyReq{}
 	switch memberKind {
 	case auth.ThingsKind:
 		for _, memberID := range memberIDs {
-			policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			policies = append(policies, policy.PolicyReq{
 				Domain:      res.GetDomainId(),
 				SubjectType: auth.GroupType,
 				SubjectKind: auth.ChannelsKind,
@@ -400,7 +402,7 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 		}
 	case auth.ChannelsKind:
 		for _, memberID := range memberIDs {
-			policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			policies = append(policies, policy.PolicyReq{
 				Domain:      res.GetDomainId(),
 				SubjectType: auth.GroupType,
 				Subject:     memberID,
@@ -414,7 +416,7 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 
 	case auth.UsersKind:
 		for _, memberID := range memberIDs {
-			policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+			policies = append(policies, policy.PolicyReq{
 				Domain:      res.GetDomainId(),
 				SubjectType: auth.UserType,
 				Subject:     auth.EncodeDomainUserID(res.GetDomainId(), memberID),
@@ -427,7 +429,7 @@ func (svc service) Assign(ctx context.Context, token, groupID, relation, memberK
 		return errMemberKind
 	}
 
-	if _, err := svc.policy.AddPolicies(ctx, &policies); err != nil {
+	if err := svc.policy.AddPolicies(ctx, policies); err != nil {
 		return errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 
@@ -442,21 +444,13 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 	if len(groupsPage.Groups) == 0 {
 		return errGroupIDs
 	}
-	var addPolicies magistrala.AddPoliciesReq
-	var deletePolicies magistrala.DeletePoliciesReq
+
+	policies := []policy.PolicyReq{}
 	for _, group := range groupsPage.Groups {
 		if group.Parent != "" {
 			return errors.Wrap(svcerr.ErrConflict, fmt.Errorf("%s group already have parent", group.ID))
 		}
-		addPolicies.AddPoliciesReq = append(addPolicies.AddPoliciesReq, &magistrala.AddPolicyReq{
-			Domain:      domain,
-			SubjectType: auth.GroupType,
-			Subject:     parentGroupID,
-			Relation:    auth.ParentGroupRelation,
-			ObjectType:  auth.GroupType,
-			Object:      group.ID,
-		})
-		deletePolicies.DeletePoliciesReq = append(deletePolicies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+		policies = append(policies, policy.PolicyReq{
 			Domain:      domain,
 			SubjectType: auth.GroupType,
 			Subject:     parentGroupID,
@@ -466,12 +460,12 @@ func (svc service) assignParentGroup(ctx context.Context, domain, parentGroupID 
 		})
 	}
 
-	if _, err := svc.policy.AddPolicies(ctx, &addPolicies); err != nil {
+	if err := svc.policy.AddPolicies(ctx, policies); err != nil {
 		return errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 	defer func() {
 		if err != nil {
-			if _, errRollback := svc.policy.DeletePolicies(ctx, &deletePolicies); errRollback != nil {
+			if errRollback := svc.policy.DeletePolicies(ctx, policies); errRollback != nil {
 				err = errors.Wrap(err, errors.Wrap(apiutil.ErrRollbackTx, errRollback))
 			}
 		}
@@ -488,21 +482,13 @@ func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupI
 	if len(groupsPage.Groups) == 0 {
 		return errGroupIDs
 	}
-	var addPolicies magistrala.AddPoliciesReq
-	var deletePolicies magistrala.DeletePoliciesReq
+
+	policies := []policy.PolicyReq{}
 	for _, group := range groupsPage.Groups {
 		if group.Parent != "" && group.Parent != parentGroupID {
 			return errors.Wrap(svcerr.ErrConflict, fmt.Errorf("%s group doesn't have same parent", group.ID))
 		}
-		addPolicies.AddPoliciesReq = append(addPolicies.AddPoliciesReq, &magistrala.AddPolicyReq{
-			Domain:      domain,
-			SubjectType: auth.GroupType,
-			Subject:     parentGroupID,
-			Relation:    auth.ParentGroupRelation,
-			ObjectType:  auth.GroupType,
-			Object:      group.ID,
-		})
-		deletePolicies.DeletePoliciesReq = append(deletePolicies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+		policies = append(policies, policy.PolicyReq{
 			Domain:      domain,
 			SubjectType: auth.GroupType,
 			Subject:     parentGroupID,
@@ -512,12 +498,12 @@ func (svc service) unassignParentGroup(ctx context.Context, domain, parentGroupI
 		})
 	}
 
-	if _, err := svc.policy.DeletePolicies(ctx, &deletePolicies); err != nil {
+	if err := svc.policy.DeletePolicies(ctx, policies); err != nil {
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
 	defer func() {
 		if err != nil {
-			if _, errRollback := svc.policy.AddPolicies(ctx, &addPolicies); errRollback != nil {
+			if errRollback := svc.policy.AddPolicies(ctx, policies); errRollback != nil {
 				err = errors.Wrap(err, errors.Wrap(apiutil.ErrRollbackTx, errRollback))
 			}
 		}
@@ -535,12 +521,12 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 		return err
 	}
 
-	policies := magistrala.DeletePoliciesReq{}
+	policies := []policy.PolicyReq{}
 
 	switch memberKind {
 	case auth.ThingsKind:
 		for _, memberID := range memberIDs {
-			policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+			policies = append(policies, policy.PolicyReq{
 				Domain:      res.GetDomainId(),
 				SubjectType: auth.GroupType,
 				SubjectKind: auth.ChannelsKind,
@@ -552,7 +538,7 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 		}
 	case auth.ChannelsKind:
 		for _, memberID := range memberIDs {
-			policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+			policies = append(policies, policy.PolicyReq{
 				Domain:      res.GetDomainId(),
 				SubjectType: auth.GroupType,
 				Subject:     memberID,
@@ -565,7 +551,7 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 		return svc.unassignParentGroup(ctx, res.GetDomainId(), groupID, memberIDs)
 	case auth.UsersKind:
 		for _, memberID := range memberIDs {
-			policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
+			policies = append(policies, policy.PolicyReq{
 				Domain:      res.GetDomainId(),
 				SubjectType: auth.UserType,
 				Subject:     auth.EncodeDomainUserID(res.GetDomainId(), memberID),
@@ -578,7 +564,7 @@ func (svc service) Unassign(ctx context.Context, token, groupID, relation, membe
 		return errMemberKind
 	}
 
-	if _, err := svc.policy.DeletePolicies(ctx, &policies); err != nil {
+	if err := svc.policy.DeletePolicies(ctx, policies); err != nil {
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
 	return nil
@@ -593,15 +579,21 @@ func (svc service) DeleteGroup(ctx context.Context, token, id string) error {
 		return err
 	}
 
-	deleteRes, err := svc.policy.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
-		EntityType: auth.GroupType,
-		Id:         id,
-	})
-	if err != nil {
+	req := policy.PolicyReq{
+		SubjectType: policy.GroupType,
+		Subject:     id,
+	}
+	if err := svc.policy.DeletePolicyFilter(ctx, req); err != nil {
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
-	if !deleteRes {
-		return svcerr.ErrAuthorization
+
+	req = policy.PolicyReq{
+		Object:     id,
+		ObjectType: policy.GroupType,
+	}
+
+	if err := svc.policy.DeletePolicyFilter(ctx, req); err != nil {
+		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
 
 	if err := svc.groups.Delete(ctx, id); err != nil {
@@ -629,7 +621,7 @@ func (svc service) filterAllowedGroupIDsOfUserID(ctx context.Context, userID, pe
 }
 
 func (svc service) listAllGroupsOfUserID(ctx context.Context, userID, permission string) ([]string, error) {
-	allowedIDs, err := svc.policy.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+	allowedIDs, err := svc.policy.ListAllObjects(ctx, policy.PolicyReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
 		Permission:  permission,
@@ -638,7 +630,7 @@ func (svc service) listAllGroupsOfUserID(ctx context.Context, userID, permission
 	if err != nil {
 		return []string{}, err
 	}
-	return allowedIDs, nil
+	return allowedIDs.Policies, nil
 }
 
 func (svc service) changeGroupStatus(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
@@ -708,9 +700,9 @@ func (svc service) authorizeKind(ctx context.Context, domainID, subjectType, sub
 	return res.GetId(), nil
 }
 
-func (svc service) addGroupPolicy(ctx context.Context, userID, domainID, id, parentID, kind string) error {
-	policies := magistrala.AddPoliciesReq{}
-	policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+func (svc service) addGroupPolicy(ctx context.Context, userID, domainID, id, parentID, kind string) ([]policy.PolicyReq, error) {
+	policies := []policy.PolicyReq{}
+	policies = append(policies, policy.PolicyReq{
 		Domain:      domainID,
 		SubjectType: auth.UserType,
 		Subject:     userID,
@@ -719,7 +711,7 @@ func (svc service) addGroupPolicy(ctx context.Context, userID, domainID, id, par
 		ObjectType:  auth.GroupType,
 		Object:      id,
 	})
-	policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+	policies = append(policies, policy.PolicyReq{
 		Domain:      domainID,
 		SubjectType: auth.DomainType,
 		Subject:     domainID,
@@ -728,7 +720,7 @@ func (svc service) addGroupPolicy(ctx context.Context, userID, domainID, id, par
 		Object:      id,
 	})
 	if parentID != "" {
-		policies.AddPoliciesReq = append(policies.AddPoliciesReq, &magistrala.AddPolicyReq{
+		policies = append(policies, policy.PolicyReq{
 			Domain:      domainID,
 			SubjectType: auth.GroupType,
 			Subject:     parentID,
@@ -738,46 +730,9 @@ func (svc service) addGroupPolicy(ctx context.Context, userID, domainID, id, par
 			Object:      id,
 		})
 	}
-	if _, err := svc.policy.AddPolicies(ctx, &policies); err != nil {
-		return errors.Wrap(svcerr.ErrAddPolicies, err)
+	if err := svc.policy.AddPolicies(ctx, policies); err != nil {
+		return policies, errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 
-	return nil
-}
-
-func (svc service) addGroupPolicyRollback(ctx context.Context, userID, domainID, id, parentID, kind string) error {
-	policies := magistrala.DeletePoliciesReq{}
-	policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
-		Domain:      domainID,
-		SubjectType: auth.UserType,
-		Subject:     userID,
-		Relation:    auth.AdministratorRelation,
-		ObjectKind:  kind,
-		ObjectType:  auth.GroupType,
-		Object:      id,
-	})
-	policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
-		Domain:      domainID,
-		SubjectType: auth.DomainType,
-		Subject:     domainID,
-		Relation:    auth.DomainRelation,
-		ObjectType:  auth.GroupType,
-		Object:      id,
-	})
-	if parentID != "" {
-		policies.DeletePoliciesReq = append(policies.DeletePoliciesReq, &magistrala.DeletePolicyReq{
-			Domain:      domainID,
-			SubjectType: auth.GroupType,
-			Subject:     parentID,
-			Relation:    auth.ParentGroupRelation,
-			ObjectKind:  kind,
-			ObjectType:  auth.GroupType,
-			Object:      id,
-		})
-	}
-	if _, err := svc.policy.DeletePolicies(ctx, &policies); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
-	}
-
-	return nil
+	return []policy.PolicyReq{}, nil
 }

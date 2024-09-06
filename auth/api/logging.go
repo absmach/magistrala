@@ -7,11 +7,11 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/policy"
 )
 
 var _ auth.Service = (*loggingMiddleware)(nil)
@@ -24,136 +24,6 @@ type loggingMiddleware struct {
 // LoggingMiddleware adds logging facilities to the core service.
 func LoggingMiddleware(svc auth.Service, logger *slog.Logger) auth.Service {
 	return &loggingMiddleware{logger, svc}
-}
-
-func (lm *loggingMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.Int64("limit", int64(limit)),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List objects failed", args...)
-			return
-		}
-		lm.logger.Info("List objects completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.ListObjects(ctx, pr, nextPageToken, limit)
-}
-
-func (lm *loggingMiddleware) ListAllObjects(ctx context.Context, pr auth.PolicyReq) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.Group("policy_request",
-				slog.String("object_type", pr.ObjectType),
-				slog.String("subject_id", pr.Subject),
-				slog.String("subject_type", pr.SubjectType),
-				slog.String("permission", pr.Permission),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List all objects failed", args...)
-			return
-		}
-		lm.logger.Info("List all objects completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.ListAllObjects(ctx, pr)
-}
-
-func (lm *loggingMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq) (count uint64, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Count objects failed", args...)
-			return
-		}
-		lm.logger.Info("Count objects completed successfully", args...)
-	}(time.Now())
-	return lm.svc.CountObjects(ctx, pr)
-}
-
-func (lm *loggingMiddleware) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List subjects failed", args...)
-			return
-		}
-		lm.logger.Info("List subjects completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.ListSubjects(ctx, pr, nextPageToken, limit)
-}
-
-func (lm *loggingMiddleware) ListAllSubjects(ctx context.Context, pr auth.PolicyReq) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.Group("policy_request",
-				slog.String("sybject_type", pr.SubjectType),
-				slog.String("object_id", pr.Object),
-				slog.String("object_type", pr.ObjectType),
-				slog.String("permission", pr.Permission),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List all subjects failed", args...)
-			return
-		}
-		lm.logger.Info("List all subjects completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.ListAllSubjects(ctx, pr)
-}
-
-func (lm *loggingMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyReq) (count uint64, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Count subjects failed", args...)
-			return
-		}
-		lm.logger.Info("Count subjects completed successfully", args...)
-	}(time.Now())
-	return lm.svc.CountSubjects(ctx, pr)
-}
-
-func (lm *loggingMiddleware) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (p auth.Permissions, err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.Any("filter_permissions", filterPermissions),
-			slog.Group("policy_request",
-				slog.String("object_id", pr.Object),
-				slog.String("object_type", pr.ObjectType),
-				slog.String("subject_id", pr.Subject),
-				slog.String("subject_type", pr.SubjectType),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("List permissions failed", args...)
-			return
-		}
-		lm.logger.Info("List permissions completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.ListPermissions(ctx, pr, filterPermissions)
 }
 
 func (lm *loggingMiddleware) Issue(ctx context.Context, token string, key auth.Key) (tkn auth.Token, err error) {
@@ -255,81 +125,6 @@ func (lm *loggingMiddleware) Authorize(ctx context.Context, pr auth.PolicyReq) (
 	return lm.svc.Authorize(ctx, pr)
 }
 
-func (lm *loggingMiddleware) AddPolicy(ctx context.Context, pr auth.PolicyReq) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.Group("policy_request",
-				slog.String("object_id", pr.Object),
-				slog.String("object_type", pr.ObjectType),
-				slog.String("subject_id", pr.Subject),
-				slog.String("subject_type", pr.SubjectType),
-				slog.String("relation", pr.Relation),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Add policy failed", args...)
-			return
-		}
-		lm.logger.Info("Add policy completed successfully", args...)
-	}(time.Now())
-	return lm.svc.AddPolicy(ctx, pr)
-}
-
-func (lm *loggingMiddleware) AddPolicies(ctx context.Context, prs []auth.PolicyReq) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn(fmt.Sprintf("Add %d policies failed", len(prs)), args...)
-			return
-		}
-		lm.logger.Info(fmt.Sprintf("Add %d policies completed successfully", len(prs)), args...)
-	}(time.Now())
-
-	return lm.svc.AddPolicies(ctx, prs)
-}
-
-func (lm *loggingMiddleware) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.Group("policy_request",
-				slog.String("object_id", pr.Object),
-				slog.String("object_type", pr.ObjectType),
-				slog.String("subject_id", pr.Subject),
-				slog.String("subject_type", pr.SubjectType),
-				slog.String("relation", pr.Relation),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Delete policy filter failed", args...)
-			return
-		}
-		lm.logger.Info("Delete policy filter completed successfully", args...)
-	}(time.Now())
-	return lm.svc.DeletePolicyFilter(ctx, pr)
-}
-
-func (lm *loggingMiddleware) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn(fmt.Sprintf("Delete %d policies failed", len(prs)), args...)
-			return
-		}
-		lm.logger.Info(fmt.Sprintf("Delete %d policies completed successfully", len(prs)), args...)
-	}(time.Now())
-	return lm.svc.DeletePolicies(ctx, prs)
-}
-
 func (lm *loggingMiddleware) CreateDomain(ctx context.Context, token string, d auth.Domain) (do auth.Domain, err error) {
 	defer func(begin time.Time) {
 		args := []any{
@@ -365,7 +160,7 @@ func (lm *loggingMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return lm.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (permissions auth.Permissions, err error) {
+func (lm *loggingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (permissions policy.Permissions, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -491,11 +286,10 @@ func (lm *loggingMiddleware) ListUserDomains(ctx context.Context, token, userID 
 	return lm.svc.ListUserDomains(ctx, token, userID, page)
 }
 
-func (lm *loggingMiddleware) DeleteEntityPolicies(ctx context.Context, entityType, id string) (err error) {
+func (lm *loggingMiddleware) DeleteUserPolicies(ctx context.Context, id string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("entity_type", entityType),
 			slog.String("id", id),
 		}
 		if err != nil {
@@ -505,5 +299,5 @@ func (lm *loggingMiddleware) DeleteEntityPolicies(ctx context.Context, entityTyp
 		}
 		lm.logger.Info("Delete entity policies completed successfully", args...)
 	}(time.Now())
-	return lm.svc.DeleteEntityPolicies(ctx, entityType, id)
+	return lm.svc.DeleteUserPolicies(ctx, id)
 }

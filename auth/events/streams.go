@@ -9,6 +9,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/policy"
 )
 
 const streamID = "magistrala.auth"
@@ -68,7 +69,7 @@ func (es *eventStore) RetrieveDomain(ctx context.Context, token, id string) (aut
 	return domain, nil
 }
 
-func (es *eventStore) RetrieveDomainPermissions(ctx context.Context, token, id string) (auth.Permissions, error) {
+func (es *eventStore) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
 	permissions, err := es.svc.RetrieveDomainPermissions(ctx, token, id)
 	if err != nil {
 		return permissions, err
@@ -215,50 +216,6 @@ func (es *eventStore) Authorize(ctx context.Context, pr auth.PolicyReq) error {
 	return es.svc.Authorize(ctx, pr)
 }
 
-func (es *eventStore) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {
-	return es.svc.AddPolicy(ctx, pr)
-}
-
-func (es *eventStore) AddPolicies(ctx context.Context, prs []auth.PolicyReq) error {
-	return es.svc.AddPolicies(ctx, prs)
-}
-
-func (es *eventStore) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) error {
-	return es.svc.DeletePolicyFilter(ctx, pr)
-}
-
-func (es *eventStore) DeleteEntityPolicies(ctx context.Context, entityType, id string) error {
-	return es.svc.DeleteEntityPolicies(ctx, entityType, id)
-}
-
-func (es *eventStore) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
-	return es.svc.DeletePolicies(ctx, prs)
-}
-
-func (es *eventStore) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
-	return es.svc.ListObjects(ctx, pr, nextPageToken, limit)
-}
-
-func (es *eventStore) ListAllObjects(ctx context.Context, pr auth.PolicyReq) (auth.PolicyPage, error) {
-	return es.svc.ListAllObjects(ctx, pr)
-}
-
-func (es *eventStore) CountObjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
-	return es.svc.CountObjects(ctx, pr)
-}
-
-func (es *eventStore) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
-	return es.svc.ListSubjects(ctx, pr, nextPageToken, limit)
-}
-
-func (es *eventStore) ListAllSubjects(ctx context.Context, pr auth.PolicyReq) (auth.PolicyPage, error) {
-	return es.svc.ListAllSubjects(ctx, pr)
-}
-
-func (es *eventStore) CountSubjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
-	return es.svc.CountSubjects(ctx, pr)
-}
-
-func (es *eventStore) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermission []string) (auth.Permissions, error) {
-	return es.svc.ListPermissions(ctx, pr, filterPermission)
+func (es *eventStore) DeleteUserPolicies(ctx context.Context, id string) error {
+	return es.svc.DeleteUserPolicies(ctx, id)
 }

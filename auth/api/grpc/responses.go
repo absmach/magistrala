@@ -20,41 +20,6 @@ type authorizeRes struct {
 	authorized bool
 }
 
-type addPolicyRes struct {
-	added bool
-}
-type addPoliciesRes struct {
-	added bool
-}
-
 type deletePolicyRes struct {
 	deleted bool
-}
-
-type listObjectsRes struct {
-	policies      []string
-	nextPageToken string
-}
-
-type countObjectsRes struct {
-	count uint64
-}
-
-type listSubjectsRes struct {
-	policies      []string
-	nextPageToken string
-}
-
-type countSubjectsRes struct {
-	count uint64
-}
-
-type listPermissionsRes struct {
-	Domain          string
-	SubjectType     string
-	Subject         string
-	SubjectRelation string
-	ObjectType      string
-	Object          string
-	Permissions     []string
 }

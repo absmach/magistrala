@@ -122,7 +122,7 @@ type ConfigReader interface {
 
 type bootstrapService struct {
 	auth       grpcclient.AuthServiceClient
-	policy     policy.PolicyService
+	policy     policy.PolicyClient
 	configs    ConfigRepository
 	sdk        mgsdk.SDK
 	encKey     []byte
@@ -130,12 +130,12 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(auth grpcclient.AuthServiceClient, policyService policy.PolicyService, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
+func New(authClient grpcclient.AuthServiceClient, policyClient policy.PolicyClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
 		sdk:        sdk,
-		auth:       auth,
-		policy:     policyService,
+		auth:       authClient,
+		policy:     policyClient,
 		encKey:     encKey,
 		idProvider: idp,
 	}
@@ -306,7 +306,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 }
 
 func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
-	tids, err := bs.policy.ListAllObjects(ctx, &magistrala.ListObjectsReq{
+	tids, err := bs.policy.ListAllObjects(ctx, policy.PolicyReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
 		Permission:  auth.ViewPermission,
@@ -315,7 +315,7 @@ func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrNotFound, err)
 	}
-	return tids, nil
+	return tids.Policies, nil
 }
 
 func (bs bootstrapService) checkSuperAdmin(ctx context.Context, userID string) error {

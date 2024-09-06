@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policy"
 )
 
 const (
@@ -35,42 +36,6 @@ var (
 	errRollbackPolicy     = errors.New("failed to rollback policy")
 	errRemoveLocalPolicy  = errors.New("failed to remove from local policy copy")
 	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
-	// errInvalidEntityType indicates invalid entity type.
-	errInvalidEntityType = errors.New("invalid entity type")
-)
-
-var (
-	defThingsFilterPermissions = []string{
-		AdminPermission,
-		DeletePermission,
-		EditPermission,
-		ViewPermission,
-		SharePermission,
-		PublishPermission,
-		SubscribePermission,
-	}
-
-	defGroupsFilterPermissions = []string{
-		AdminPermission,
-		DeletePermission,
-		EditPermission,
-		ViewPermission,
-		MembershipPermission,
-		SharePermission,
-	}
-
-	defDomainsFilterPermissions = []string{
-		AdminPermission,
-		EditPermission,
-		ViewPermission,
-		MembershipPermission,
-		SharePermission,
-	}
-
-	defPlatformFilterPermissions = []string{
-		AdminPermission,
-		MembershipPermission,
-	}
 )
 
 // Authn specifies an API that must be fulfilled by the domain service
@@ -114,6 +79,7 @@ type service struct {
 	domains            DomainsRepository
 	idProvider         magistrala.IDProvider
 	agent              PolicyAgent
+	policy             policy.PolicyClient
 	tokenizer          Tokenizer
 	loginDuration      time.Duration
 	refreshDuration    time.Duration
@@ -121,13 +87,14 @@ type service struct {
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
+func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, policyClient policy.PolicyClient, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
 	return &service{
 		tokenizer:          tokenizer,
 		domains:            domains,
 		keys:               keys,
 		idProvider:         idp,
 		agent:              policyAgent,
+		policy:             policyClient,
 		loginDuration:      loginDuration,
 		refreshDuration:    refreshDuration,
 		invitationDuration: invitationDuration,
@@ -287,127 +254,11 @@ func (svc service) checkDomain(ctx context.Context, subjectType, subject, domain
 	return nil
 }
 
-func (svc service) AddPolicy(ctx context.Context, pr PolicyReq) error {
-	if err := svc.PolicyValidation(pr); err != nil {
-		return errors.Wrap(svcerr.ErrInvalidPolicy, err)
-	}
-	return svc.agent.AddPolicy(ctx, pr)
-}
-
 func (svc service) PolicyValidation(pr PolicyReq) error {
 	if pr.ObjectType == PlatformType && pr.Object != MagistralaObject {
 		return errPlatform
 	}
 	return nil
-}
-
-func (svc service) AddPolicies(ctx context.Context, prs []PolicyReq) error {
-	for _, pr := range prs {
-		if err := svc.PolicyValidation(pr); err != nil {
-			return errors.Wrap(svcerr.ErrInvalidPolicy, err)
-		}
-	}
-	return svc.agent.AddPolicies(ctx, prs)
-}
-
-func (svc service) DeletePolicyFilter(ctx context.Context, pr PolicyReq) error {
-	return svc.agent.DeletePolicyFilter(ctx, pr)
-}
-
-func (svc service) DeletePolicies(ctx context.Context, prs []PolicyReq) error {
-	for _, pr := range prs {
-		if err := svc.PolicyValidation(pr); err != nil {
-			return errors.Wrap(svcerr.ErrInvalidPolicy, err)
-		}
-	}
-	return svc.agent.DeletePolicies(ctx, prs)
-}
-
-func (svc service) ListObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error) {
-	if limit <= 0 {
-		limit = 100
-	}
-	res, npt, err := svc.agent.RetrieveObjects(ctx, pr, nextPageToken, limit)
-	if err != nil {
-		return PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-	var page PolicyPage
-	for _, tuple := range res {
-		page.Policies = append(page.Policies, tuple.Object)
-	}
-	page.NextPageToken = npt
-	return page, nil
-}
-
-func (svc service) ListAllObjects(ctx context.Context, pr PolicyReq) (PolicyPage, error) {
-	res, err := svc.agent.RetrieveAllObjects(ctx, pr)
-	if err != nil {
-		return PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-	var page PolicyPage
-	for _, tuple := range res {
-		page.Policies = append(page.Policies, tuple.Object)
-	}
-	return page, nil
-}
-
-func (svc service) CountObjects(ctx context.Context, pr PolicyReq) (uint64, error) {
-	return svc.agent.RetrieveAllObjectsCount(ctx, pr)
-}
-
-func (svc service) ListSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error) {
-	if limit <= 0 {
-		limit = 100
-	}
-	res, npt, err := svc.agent.RetrieveSubjects(ctx, pr, nextPageToken, limit)
-	if err != nil {
-		return PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-	var page PolicyPage
-	for _, tuple := range res {
-		page.Policies = append(page.Policies, tuple.Subject)
-	}
-	page.NextPageToken = npt
-	return page, nil
-}
-
-func (svc service) ListAllSubjects(ctx context.Context, pr PolicyReq) (PolicyPage, error) {
-	res, err := svc.agent.RetrieveAllSubjects(ctx, pr)
-	if err != nil {
-		return PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-	var page PolicyPage
-	for _, tuple := range res {
-		page.Policies = append(page.Policies, tuple.Subject)
-	}
-	return page, nil
-}
-
-func (svc service) CountSubjects(ctx context.Context, pr PolicyReq) (uint64, error) {
-	return svc.agent.RetrieveAllSubjectsCount(ctx, pr)
-}
-
-func (svc service) ListPermissions(ctx context.Context, pr PolicyReq, permissionsFilter []string) (Permissions, error) {
-	if len(permissionsFilter) == 0 {
-		switch pr.ObjectType {
-		case ThingType:
-			permissionsFilter = defThingsFilterPermissions
-		case GroupType:
-			permissionsFilter = defGroupsFilterPermissions
-		case PlatformType:
-			permissionsFilter = defPlatformFilterPermissions
-		case DomainType:
-			permissionsFilter = defDomainsFilterPermissions
-		default:
-			return nil, svcerr.ErrMalformedEntity
-		}
-	}
-	pers, err := svc.agent.RetrievePermissions(ctx, pr, permissionsFilter)
-	if err != nil {
-		return []string{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-
-	return pers, nil
 }
 
 func (svc service) tmpKey(duration time.Duration, key Key) (Token, error) {
@@ -646,7 +497,7 @@ func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain
 	return domain, nil
 }
 
-func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id string) (Permissions, error) {
+func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
 	res, err := svc.Identify(ctx, token)
 	if err != nil {
 		return []string{}, err
@@ -663,7 +514,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 		return []string{}, err
 	}
 
-	lp, err := svc.ListPermissions(ctx, PolicyReq{
+	lp, err := svc.policy.ListPermissions(ctx, policy.PolicyReq{
 		SubjectType: UserType,
 		Subject:     res.Subject,
 		Object:      id,
@@ -810,7 +661,7 @@ func (svc service) UnassignUser(ctx context.Context, token, id, userID string) e
 		}
 	}
 
-	if err := svc.DeletePolicyFilter(ctx, PolicyReq{
+	if err := svc.policy.DeletePolicyFilter(ctx, policy.PolicyReq{
 		Subject:     EncodeDomainUserID(id, userID),
 		SubjectType: UserType,
 	}); err != nil {
@@ -859,11 +710,11 @@ func (svc service) ListUserDomains(ctx context.Context, token, userID string, p 
 }
 
 func (svc service) addDomainPolicies(ctx context.Context, domainID, relation string, userIDs ...string) (err error) {
-	var prs []PolicyReq
+	var prs []policy.PolicyReq
 	var pcs []Policy
 
 	for _, userID := range userIDs {
-		prs = append(prs, PolicyReq{
+		prs = append(prs, policy.PolicyReq{
 			Subject:     EncodeDomainUserID(domainID, userID),
 			SubjectType: UserType,
 			SubjectKind: UsersKind,
@@ -879,12 +730,12 @@ func (svc service) addDomainPolicies(ctx context.Context, domainID, relation str
 			ObjectID:    domainID,
 		})
 	}
-	if err := svc.agent.AddPolicies(ctx, prs); err != nil {
+	if err := svc.policy.AddPolicies(ctx, prs); err != nil {
 		return errors.Wrap(errAddPolicies, err)
 	}
 	defer func() {
 		if err != nil {
-			if errDel := svc.agent.DeletePolicies(ctx, prs); errDel != nil {
+			if errDel := svc.policy.DeletePolicies(ctx, prs); errDel != nil {
 				err = errors.Wrap(err, errors.Wrap(errRollbackPolicy, errDel))
 			}
 		}
@@ -897,7 +748,7 @@ func (svc service) addDomainPolicies(ctx context.Context, domainID, relation str
 }
 
 func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, relation string) (err error) {
-	prs := []PolicyReq{
+	prs := []policy.PolicyReq{
 		{
 			Subject:     EncodeDomainUserID(domainID, userID),
 			SubjectType: UserType,
@@ -914,12 +765,12 @@ func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, rel
 			ObjectType:  DomainType,
 		},
 	}
-	if err := svc.agent.AddPolicies(ctx, prs); err != nil {
+	if err := svc.policy.AddPolicies(ctx, prs); err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
-			if errDel := svc.agent.DeletePolicies(ctx, prs); errDel != nil {
+			if errDel := svc.policy.DeletePolicies(ctx, prs); errDel != nil {
 				err = errors.Wrap(err, errors.Wrap(errRollbackPolicy, errDel))
 			}
 		}
@@ -939,7 +790,7 @@ func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, rel
 
 func (svc service) createDomainPolicyRollback(ctx context.Context, userID, domainID, relation string) error {
 	var err error
-	prs := []PolicyReq{
+	prs := []policy.PolicyReq{
 		{
 			Subject:     EncodeDomainUserID(domainID, userID),
 			SubjectType: UserType,
@@ -956,7 +807,7 @@ func (svc service) createDomainPolicyRollback(ctx context.Context, userID, domai
 			ObjectType:  DomainType,
 		},
 	}
-	if errPolicy := svc.agent.DeletePolicies(ctx, prs); errPolicy != nil {
+	if errPolicy := svc.policy.DeletePolicies(ctx, prs); errPolicy != nil {
 		err = errors.Wrap(errRemovePolicyEngine, errPolicy)
 	}
 	errPolicyCopy := svc.domains.DeletePolicies(ctx, Policy{
@@ -997,70 +848,44 @@ func DecodeDomainUserID(domainUserID string) (string, string) {
 	}
 }
 
-func (svc service) DeleteEntityPolicies(ctx context.Context, entityType, id string) (err error) {
-	switch entityType {
-	case ThingType:
-		req := PolicyReq{
-			Object:     id,
-			ObjectType: ThingType,
-		}
+func (svc service) DeleteUserPolicies(ctx context.Context, id string) (err error) {
+	domainsPage, err := svc.domains.ListDomains(ctx, Page{SubjectID: id, Limit: defLimit})
+	if err != nil {
+		return err
+	}
 
-		return svc.DeletePolicyFilter(ctx, req)
-	case UserType:
-		domainsPage, err := svc.domains.ListDomains(ctx, Page{SubjectID: id, Limit: defLimit})
-		if err != nil {
-			return err
-		}
-
-		if domainsPage.Total > defLimit {
-			for i := defLimit; i < int(domainsPage.Total); i += defLimit {
-				page := Page{SubjectID: id, Offset: uint64(i), Limit: defLimit}
-				dp, err := svc.domains.ListDomains(ctx, page)
-				if err != nil {
-					return err
-				}
-				domainsPage.Domains = append(domainsPage.Domains, dp.Domains...)
-			}
-		}
-
-		for _, domain := range domainsPage.Domains {
-			policy := PolicyReq{
-				Subject:     EncodeDomainUserID(domain.ID, id),
-				SubjectType: UserType,
-			}
-			if err := svc.agent.DeletePolicyFilter(ctx, policy); err != nil {
+	if domainsPage.Total > defLimit {
+		for i := defLimit; i < int(domainsPage.Total); i += defLimit {
+			page := Page{SubjectID: id, Offset: uint64(i), Limit: defLimit}
+			dp, err := svc.domains.ListDomains(ctx, page)
+			if err != nil {
 				return err
 			}
+			domainsPage.Domains = append(domainsPage.Domains, dp.Domains...)
 		}
+	}
 
-		req := PolicyReq{
-			Subject:     id,
+	for _, domain := range domainsPage.Domains {
+		req := policy.PolicyReq{
+			Subject:     EncodeDomainUserID(domain.ID, id),
 			SubjectType: UserType,
 		}
-		if err := svc.agent.DeletePolicyFilter(ctx, req); err != nil {
+		if err := svc.policy.DeletePolicyFilter(ctx, req); err != nil {
 			return err
 		}
-
-		if err := svc.domains.DeleteUserPolicies(ctx, id); err != nil {
-			return err
-		}
-
-		return nil
-	case GroupType:
-		req := PolicyReq{
-			SubjectType: GroupType,
-			Subject:     id,
-		}
-		if err := svc.DeletePolicyFilter(ctx, req); err != nil {
-			return err
-		}
-
-		req = PolicyReq{
-			Object:     id,
-			ObjectType: GroupType,
-		}
-		return svc.DeletePolicyFilter(ctx, req)
-	default:
-		return errInvalidEntityType
 	}
+
+	req := policy.PolicyReq{
+		Subject:     id,
+		SubjectType: UserType,
+	}
+	if err := svc.policy.DeletePolicyFilter(ctx, req); err != nil {
+		return err
+	}
+
+	if err := svc.domains.DeleteUserPolicies(ctx, id); err != nil {
+		return err
+	}
+
+	return nil
 }

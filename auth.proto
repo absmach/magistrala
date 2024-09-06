@@ -25,18 +25,7 @@ service AuthnService {
 // PolicyService is a service that provides policy CRUD
 // functionalities for magistrala services.
 service PolicyService {
-  rpc AddPolicy(AddPolicyReq) returns (AddPolicyRes) {}
-  rpc AddPolicies(AddPoliciesReq) returns (AddPoliciesRes) {}
-  rpc DeletePolicyFilter(DeletePolicyFilterReq) returns (DeletePolicyRes) {}
-  rpc DeletePolicies(DeletePoliciesReq) returns (DeletePolicyRes) {}
-  rpc ListObjects(ListObjectsReq) returns (ListObjectsRes) {}
-  rpc ListAllObjects(ListObjectsReq) returns (ListObjectsRes) {}
-  rpc CountObjects(CountObjectsReq) returns (CountObjectsRes) {}
-  rpc ListSubjects(ListSubjectsReq) returns (ListSubjectsRes) {}
-  rpc ListAllSubjects(ListSubjectsReq) returns (ListSubjectsRes) {}
-  rpc CountSubjects(CountSubjectsReq) returns (CountSubjectsRes) {}
-  rpc ListPermissions(ListPermissionsReq) returns (ListPermissionsRes) {}
-  rpc DeleteEntityPolicies(DeleteEntityPoliciesReq) returns (DeletePolicyRes) {}
+  rpc DeleteUserPolicies(DeleteUserPoliciesReq) returns (DeletePolicyRes) {}
 }
 
 // If a token is not carrying any information itself, the type
@@ -86,144 +75,8 @@ message AuthorizeRes {
   string id = 2;
 }
 
-message AddPolicyReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject_kind = 4;
-  string subject = 5;
-  string relation = 6;
-  string permission = 7;
-  string object = 8;
-  string object_kind = 9;
-  string object_type = 10;
-}
-
-message AddPoliciesReq{
-  repeated AddPolicyReq addPoliciesReq= 1;
-}
-
-message AddPolicyRes { bool added = 1; }
-
-message AddPoliciesRes { bool added = 1; }
-
-message DeletePolicyFilterReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject_kind = 4;
-  string subject = 5;
-  string relation = 6;
-  string permission = 7;
-  string object = 8;
-  string object_kind = 9;
-  string object_type = 10;
-}
-
-message DeletePoliciesReq {
-  repeated DeletePolicyReq deletePoliciesReq = 1;
-}
-
-message DeletePolicyReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject_kind = 4;
-  string subject = 5;
-  string relation = 6;
-  string permission = 7;
-  string object = 8;
-  string object_kind = 9;
-  string object_type = 10;
-}
-
 message DeletePolicyRes { bool deleted = 1; }
 
-message ListObjectsReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject = 4;
-  string relation = 5;
-  string permission = 6;
-  string object = 7;
-  string object_type = 8;
-  string nextPageToken = 9;
-  uint64 limit = 10;
-}
-
-message ListObjectsRes {
-  repeated string policies = 1;
-  string nextPageToken = 2;
-}
-
-message CountObjectsReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject = 4;
-  string relation = 5;
-  string permission = 6;
-  string object = 7;
-  string object_type = 8;
-  string nextPageToken = 9;
-}
-
-message CountObjectsRes { uint64 count = 1; }
-
-message ListSubjectsReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject = 4;
-  string relation = 5;
-  string permission = 6;
-  string object = 7;
-  string object_type = 8;
-  string nextPageToken = 9;
-  uint64 limit = 10;
-}
-
-message ListSubjectsRes {
-  repeated string policies = 1;
-  string nextPageToken = 2;
-}
-
-message CountSubjectsReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject = 4;
-  string relation = 5;
-  string permission = 6;
-  string object = 7;
-  string object_type = 8;
-  string nextPageToken = 9;
-}
-
-message CountSubjectsRes { uint64 count = 1; }
-
-message ListPermissionsReq {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject = 4;
-  string object = 5;
-  string object_type = 6;
-  repeated string filter_permissions = 7;
-}
-
-message ListPermissionsRes {
-  string domain = 1;
-  string subject_type = 2;
-  string subject_relation = 3;
-  string subject = 4;
-  string object = 5;
-  string object_type = 6;
-  repeated string permissions = 7;
-}
-
-message DeleteEntityPoliciesReq{
-  string entity_type = 1;
-  string id          = 2;
+message DeleteUserPoliciesReq{
+  string id          = 1;
 }

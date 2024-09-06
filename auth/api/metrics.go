@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/policy"
 	"github.com/go-kit/kit/metrics"
 )
 
@@ -28,67 +29,6 @@ func MetricsMiddleware(svc auth.Service, counter metrics.Counter, latency metric
 		latency: latency,
 		svc:     svc,
 	}
-}
-
-func (ms *metricsMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "list_objects").Add(1)
-		ms.latency.With("method", "list_objects").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.ListObjects(ctx, pr, nextPageToken, limit)
-}
-
-func (ms *metricsMiddleware) ListAllObjects(ctx context.Context, pr auth.PolicyReq) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "list_all_objects").Add(1)
-		ms.latency.With("method", "list_all_objects").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.ListAllObjects(ctx, pr)
-}
-
-func (ms *metricsMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq) (count uint64, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "count_objects").Add(1)
-		ms.latency.With("method", "count_objects").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.CountObjects(ctx, pr)
-}
-
-func (ms *metricsMiddleware) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "list_subjects").Add(1)
-		ms.latency.With("method", "list_subjects").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.ListSubjects(ctx, pr, nextPageToken, limit)
-}
-
-func (ms *metricsMiddleware) ListAllSubjects(ctx context.Context, pr auth.PolicyReq) (p auth.PolicyPage, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "list_all_subjects").Add(1)
-		ms.latency.With("method", "list_all_subjects").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.ListAllSubjects(ctx, pr)
-}
-
-func (ms *metricsMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyReq) (count uint64, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "count_subjects").Add(1)
-		ms.latency.With("method", "count_subjects").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.CountSubjects(ctx, pr)
-}
-
-func (ms *metricsMiddleware) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (p auth.Permissions, err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "list_permissions").Add(1)
-		ms.latency.With("method", "list_permissions").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.ListPermissions(ctx, pr, filterPermissions)
 }
 
 func (ms *metricsMiddleware) Issue(ctx context.Context, token string, key auth.Key) (auth.Token, error) {
@@ -135,39 +75,6 @@ func (ms *metricsMiddleware) Authorize(ctx context.Context, pr auth.PolicyReq) e
 	return ms.svc.Authorize(ctx, pr)
 }
 
-func (ms *metricsMiddleware) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "add_policy").Add(1)
-		ms.latency.With("method", "add_policy").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.AddPolicy(ctx, pr)
-}
-
-func (ms *metricsMiddleware) AddPolicies(ctx context.Context, prs []auth.PolicyReq) (err error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "create_policy_bulk").Add(1)
-		ms.latency.With("method", "create_policy_bulk").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.AddPolicies(ctx, prs)
-}
-
-func (ms *metricsMiddleware) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) error {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "delete_policy_filter").Add(1)
-		ms.latency.With("method", "delete_policy_filter").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.DeletePolicyFilter(ctx, pr)
-}
-
-func (ms *metricsMiddleware) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "delete_policies").Add(1)
-		ms.latency.With("method", "delete_policies").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.DeletePolicies(ctx, prs)
-}
-
 func (ms *metricsMiddleware) CreateDomain(ctx context.Context, token string, d auth.Domain) (auth.Domain, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_domain").Add(1)
@@ -184,7 +91,7 @@ func (ms *metricsMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return ms.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (auth.Permissions, error) {
+func (ms *metricsMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "retrieve_domain_permissions").Add(1)
 		ms.latency.With("method", "retrieve_domain_permissions").Observe(time.Since(begin).Seconds())
@@ -240,10 +147,10 @@ func (ms *metricsMiddleware) ListUserDomains(ctx context.Context, token, userID 
 	return ms.svc.ListUserDomains(ctx, token, userID, page)
 }
 
-func (ms *metricsMiddleware) DeleteEntityPolicies(ctx context.Context, entityType, id string) error {
+func (ms *metricsMiddleware) DeleteUserPolicies(ctx context.Context, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "delete_entity_policies").Add(1)
 		ms.latency.With("method", "delete_entity_policies").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.DeleteEntityPolicies(ctx, entityType, id)
+	return ms.svc.DeleteUserPolicies(ctx, id)
 }

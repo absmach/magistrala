@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/policy"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -74,163 +75,6 @@ func (tm *tracingMiddleware) Authorize(ctx context.Context, pr auth.PolicyReq) e
 	return tm.svc.Authorize(ctx, pr)
 }
 
-func (tm *tracingMiddleware) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {
-	ctx, span := tm.tracer.Start(ctx, "add_policy", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.AddPolicy(ctx, pr)
-}
-
-func (tm *tracingMiddleware) AddPolicies(ctx context.Context, prs []auth.PolicyReq) error {
-	ctx, span := tm.tracer.Start(ctx, "add_policies", trace.WithAttributes())
-	defer span.End()
-
-	return tm.svc.AddPolicies(ctx, prs)
-}
-
-func (tm *tracingMiddleware) DeletePolicyFilter(ctx context.Context, pr auth.PolicyReq) error {
-	ctx, span := tm.tracer.Start(ctx, "delete_policy", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.DeletePolicyFilter(ctx, pr)
-}
-
-func (tm *tracingMiddleware) DeletePolicies(ctx context.Context, prs []auth.PolicyReq) error {
-	ctx, span := tm.tracer.Start(ctx, "delete_policies", trace.WithAttributes())
-	defer span.End()
-
-	return tm.svc.DeletePolicies(ctx, prs)
-}
-
-func (tm *tracingMiddleware) ListObjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
-	ctx, span := tm.tracer.Start(ctx, "list_objects", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_kind", pr.SubjectKind),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.ListObjects(ctx, pr, nextPageToken, limit)
-}
-
-func (tm *tracingMiddleware) ListAllObjects(ctx context.Context, pr auth.PolicyReq) (auth.PolicyPage, error) {
-	ctx, span := tm.tracer.Start(ctx, "list_all_objects", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_kind", pr.SubjectKind),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.ListAllObjects(ctx, pr)
-}
-
-func (tm *tracingMiddleware) CountObjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
-	ctx, span := tm.tracer.Start(ctx, "count_objects", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_kind", pr.SubjectKind),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.CountObjects(ctx, pr)
-}
-
-func (tm *tracingMiddleware) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageToken string, limit uint64) (auth.PolicyPage, error) {
-	ctx, span := tm.tracer.Start(ctx, "list_subjects", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_kind", pr.SubjectKind),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.ListSubjects(ctx, pr, nextPageToken, limit)
-}
-
-func (tm *tracingMiddleware) ListAllSubjects(ctx context.Context, pr auth.PolicyReq) (auth.PolicyPage, error) {
-	ctx, span := tm.tracer.Start(ctx, "list_all_subjects", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_kind", pr.SubjectKind),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.ListAllSubjects(ctx, pr)
-}
-
-func (tm *tracingMiddleware) CountSubjects(ctx context.Context, pr auth.PolicyReq) (uint64, error) {
-	ctx, span := tm.tracer.Start(ctx, "count_subjects", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_kind", pr.SubjectKind),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-	))
-	defer span.End()
-
-	return tm.svc.CountSubjects(ctx, pr)
-}
-
-func (tm *tracingMiddleware) ListPermissions(ctx context.Context, pr auth.PolicyReq, filterPermissions []string) (auth.Permissions, error) {
-	ctx, span := tm.tracer.Start(ctx, "list_permissions", trace.WithAttributes(
-		attribute.String("subject", pr.Subject),
-		attribute.String("subject_type", pr.SubjectType),
-		attribute.String("subject_kind", pr.SubjectKind),
-		attribute.String("subject_relation", pr.SubjectRelation),
-		attribute.String("object", pr.Object),
-		attribute.String("object_type", pr.ObjectType),
-		attribute.String("relation", pr.Relation),
-		attribute.String("permission", pr.Permission),
-		attribute.StringSlice("filter_permissions", filterPermissions),
-	))
-	defer span.End()
-
-	return tm.svc.ListPermissions(ctx, pr, filterPermissions)
-}
-
 func (tm *tracingMiddleware) CreateDomain(ctx context.Context, token string, d auth.Domain) (auth.Domain, error) {
 	ctx, span := tm.tracer.Start(ctx, "create_domain", trace.WithAttributes(
 		attribute.String("name", d.Name),
@@ -247,7 +91,7 @@ func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return tm.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (tm *tracingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (auth.Permissions, error) {
+func (tm *tracingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
 	ctx, span := tm.tracer.Start(ctx, "view_domain_permissions", trace.WithAttributes(
 		attribute.String("id", id),
 	))
@@ -304,11 +148,10 @@ func (tm *tracingMiddleware) ListUserDomains(ctx context.Context, token, userID 
 	return tm.svc.ListUserDomains(ctx, token, userID, p)
 }
 
-func (tm *tracingMiddleware) DeleteEntityPolicies(ctx context.Context, entityType, id string) error {
+func (tm *tracingMiddleware) DeleteUserPolicies(ctx context.Context, id string) error {
 	ctx, span := tm.tracer.Start(ctx, "delete_entity_policies", trace.WithAttributes(
-		attribute.String("entity_type", entityType),
 		attribute.String("id", id),
 	))
 	defer span.End()
-	return tm.svc.DeleteEntityPolicies(ctx, entityType, id)
+	return tm.svc.DeleteUserPolicies(ctx, id)
 }

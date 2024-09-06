@@ -81,95 +81,13 @@ func (req authReq) validate() error {
 	return nil
 }
 
-type policyReq struct {
-	Domain      string
-	SubjectType string
-	Subject     string
-	SubjectKind string
-	Relation    string
-	Permission  string
-	ObjectType  string
-	ObjectKind  string
-	Object      string
+type deleteUserPoliciesReq struct {
+	ID string
 }
 
-func (req policyReq) validate() error {
-	return nil
-}
-
-type policiesReq []policyReq
-
-func (prs policiesReq) validate() error {
-	return nil
-}
-
-type listObjectsReq struct {
-	Domain        string
-	SubjectType   string
-	Subject       string
-	Relation      string
-	Permission    string
-	ObjectType    string
-	Object        string
-	NextPageToken string
-	Limit         uint64
-}
-
-type countObjectsReq struct {
-	Domain        string
-	SubjectType   string
-	Subject       string
-	Relation      string
-	Permission    string
-	ObjectType    string
-	Object        string
-	NextPageToken string
-}
-
-type listSubjectsReq struct {
-	Domain        string
-	SubjectType   string
-	Subject       string
-	Relation      string
-	Permission    string
-	ObjectType    string
-	Object        string
-	NextPageToken string
-	Limit         uint64
-}
-
-type countSubjectsReq struct {
-	Domain        string
-	SubjectType   string
-	Subject       string
-	Relation      string
-	Permission    string
-	ObjectType    string
-	Object        string
-	NextPageToken string
-}
-
-type listPermissionsReq struct {
-	Domain            string
-	SubjectType       string
-	Subject           string
-	SubjectRelation   string
-	ObjectType        string
-	Object            string
-	FilterPermissions []string
-}
-
-type deleteEntityPoliciesReq struct {
-	EntityType string
-	ID         string
-}
-
-func (req deleteEntityPoliciesReq) validate() error {
+func (req deleteUserPoliciesReq) validate() error {
 	if req.ID == "" {
 		return apiutil.ErrMissingID
-	}
-	if req.EntityType == "" {
-		return apiutil.ErrMissingPolicyEntityType
 	}
 
 	return nil

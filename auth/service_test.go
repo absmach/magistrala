@@ -15,18 +15,19 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	policysvc "github.com/absmach/magistrala/pkg/policy"
+	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 const (
-	secret      = "secret"
-	email       = "test@example.com"
-	id          = "testID"
-	groupName   = "mgx"
-	description = "Description"
-
+	secret          = "secret"
+	email           = "test@example.com"
+	id              = "testID"
+	groupName       = "mgx"
+	description     = "Description"
 	memberRelation  = "member"
 	authoritiesObj  = "authorities"
 	loginDuration   = 30 * time.Minute
@@ -58,15 +59,17 @@ var (
 )
 
 var (
-	krepo *mocks.KeyRepository
-	prepo *mocks.PolicyAgent
-	drepo *mocks.DomainsRepository
+	krepo  *mocks.KeyRepository
+	prepo  *mocks.PolicyAgent
+	drepo  *mocks.DomainsRepository
+	policy *policymocks.PolicyClient
 )
 
 func newService() (auth.Service, string) {
 	krepo = new(mocks.KeyRepository)
 	prepo = new(mocks.PolicyAgent)
 	drepo = new(mocks.DomainsRepository)
+	policy = new(policymocks.PolicyClient)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))
@@ -80,7 +83,7 @@ func newService() (auth.Service, string) {
 	}
 	token, _ := t.Issue(key)
 
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), token
+	return auth.New(krepo, drepo, idProvider, t, prepo, policy, loginDuration, refreshDuration, invalidDuration), token
 }
 
 func TestIssue(t *testing.T) {
@@ -1197,468 +1200,6 @@ func TestAuthorize(t *testing.T) {
 	}
 }
 
-func TestAddPolicy(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "add policy successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: nil,
-		},
-		{
-			desc: "add policy with invalid object",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      inValid,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("AddPolicy", mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.AddPolicy(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestAddPolicies(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   []auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "add policy successfully",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: nil,
-		},
-		{
-			desc: "add policy with invalid object",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      inValid,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.AddPolicies(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestDeletePolicy(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "delete policy successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: nil,
-		},
-		{
-			desc: "delete policy with invalid object",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      inValid,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.DeletePolicyFilter(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestDeletePolicies(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   []auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "delete policy successfully",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: nil,
-		},
-		{
-			desc: "delete policy with invalid object",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      inValid,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.DeletePolicies(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestListObjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         uint64
-		err           error
-	}{
-		{
-			desc: "list objects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list objects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall2 := prepo.On("RetrieveObjects", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(expectedPolicies, mock.Anything, tc.err)
-		page, err := svc.ListObjects(context.Background(), tc.pr, tc.nextPageToken, tc.limit)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall2.Unset()
-	}
-}
-
-func TestListAllObjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         int32
-		err           error
-	}{
-		{
-			desc: "list all objects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list all objects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall2 := prepo.On("RetrieveAllObjects", context.Background(), mock.Anything).Return(expectedPolicies, tc.err)
-		page, err := svc.ListAllObjects(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall2.Unset()
-	}
-}
-
-func TestCountObjects(t *testing.T) {
-	svc, _ := newService()
-
-	pageLen := uint64(15)
-
-	repocall2 := prepo.On("RetrieveAllObjectsCount", context.Background(), mock.Anything, mock.Anything).Return(pageLen, nil)
-	count, err := svc.CountObjects(context.Background(), auth.PolicyReq{Subject: id, SubjectType: auth.UserType, ObjectType: auth.ThingType, Permission: auth.ViewPermission})
-	assert.Nil(t, err, fmt.Sprintf("counting policies expected to succeed: %s", err))
-	assert.Equal(t, pageLen, count, fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, count, err))
-	repocall2.Unset()
-}
-
-func TestListSubjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         uint64
-		err           error
-	}{
-		{
-			desc: "list subjects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list subjects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall := prepo.On("RetrieveSubjects", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(expectedPolicies, mock.Anything, tc.err)
-		page, err := svc.ListSubjects(context.Background(), tc.pr, tc.nextPageToken, tc.limit)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall.Unset()
-	}
-}
-
-func TestListAllSubjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         int32
-		err           error
-	}{
-		{
-			desc: "list all subjects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list all subjects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall := prepo.On("RetrieveAllSubjects", context.Background(), mock.Anything).Return(expectedPolicies, tc.err)
-		page, err := svc.ListAllSubjects(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall.Unset()
-	}
-}
-
-func TestCountSubjects(t *testing.T) {
-	svc, _ := newService()
-	pageLen := uint64(15)
-
-	repocall := prepo.On("RetrieveAllSubjectsCount", mock.Anything, mock.Anything, mock.Anything).Return(pageLen, nil)
-	count, err := svc.CountSubjects(context.Background(), auth.PolicyReq{Object: id, ObjectType: auth.ThingType, Permission: auth.ViewPermission})
-	assert.Nil(t, err, fmt.Sprintf("counting policies expected to succeed: %s", err))
-	assert.Equal(t, pageLen, count, fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, count, err))
-	repocall.Unset()
-}
-
-func TestListPermissions(t *testing.T) {
-	svc, _ := newService()
-
-	pr := auth.PolicyReq{
-		Subject:     id,
-		SubjectType: auth.UserType,
-		Relation:    auth.ContributorRelation,
-		ObjectType:  auth.ThingType,
-		ObjectKind:  auth.ThingsKind,
-		Object:      "",
-	}
-	filterPermisions := []string{auth.ViewPermission, auth.AdminPermission}
-
-	repoCall := prepo.On("RetrievePermissions", context.Background(), pr, filterPermisions).Return(auth.Permissions{}, nil)
-	_, err := svc.ListPermissions(context.Background(), pr, filterPermisions)
-	assert.Nil(t, err, fmt.Sprintf("listing policies expected to succeed: %s", err))
-	repoCall.Unset()
-}
-
 func TestSwitchToPermission(t *testing.T) {
 	cases := []struct {
 		desc     string
@@ -1812,9 +1353,9 @@ func TestCreateDomain(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := prepo.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPolicyErr)
+		repoCall := policy.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPolicyErr)
 		repoCall1 := drepo.On("SavePolicies", mock.Anything, mock.Anything).Return(tc.savePolicyErr)
-		repoCall2 := prepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
+		repoCall2 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		repoCall3 := drepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deleteDomainErr)
 		repoCall4 := drepo.On("Save", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.saveDomainErr)
 		_, err := svc.CreateDomain(context.Background(), tc.token, tc.d)
@@ -1935,7 +1476,7 @@ func TestRetrieveDomainPermissions(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := prepo.On("RetrievePermissions", mock.Anything, mock.Anything, mock.Anything).Return(auth.Permissions{}, tc.retreivePermissionsErr)
+		repoCall := policy.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(policysvc.Permissions{}, tc.retreivePermissionsErr)
 		repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retreiveByIDErr)
 		repoCall2 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
 		_, err := svc.RetrieveDomainPermissions(context.Background(), tc.token, tc.domainID)
@@ -2470,9 +2011,9 @@ func TestAssignUsers(t *testing.T) {
 		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
 		repoCall3 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr2)
 		repoCall4 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq33).Return(tc.checkPolicyErr2)
-		repoCall5 := prepo.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesErr)
+		repoCall5 := policy.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesErr)
 		repoCall6 := drepo.On("SavePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.savePoliciesErr)
-		repoCall7 := prepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
+		repoCall7 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		err := svc.AssignUsers(context.Background(), tc.token, tc.domainID, tc.userIDs, tc.relation)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -2700,7 +2241,7 @@ func TestUnassignUser(t *testing.T) {
 		repoCall1 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkPolicyErr)
 		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
 		repoCall3 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
-		repoCall4 := prepo.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePolicyFilterErr)
+		repoCall4 := policy.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePolicyFilterErr)
 		repoCall5 := drepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		err := svc.UnassignUser(context.Background(), tc.token, tc.domainID, tc.userID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))

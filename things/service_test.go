@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala"
-	authsvc "github.com/absmach/magistrala/auth"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
@@ -17,6 +16,7 @@ import (
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
+	policysvc "github.com/absmach/magistrala/pkg/policy"
 	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
@@ -47,9 +47,9 @@ var (
 	errRemovePolicies = errors.New("failed to delete policies")
 )
 
-func newService() (things.Service, *mocks.Repository, *authmocks.AuthServiceClient, *policymocks.PolicyService, *mocks.Cache) {
+func newService() (things.Service, *mocks.Repository, *authmocks.AuthServiceClient, *policymocks.PolicyClient, *mocks.Cache) {
 	auth := new(authmocks.AuthServiceClient)
-	policyClient := new(policymocks.PolicyService)
+	policyClient := new(policymocks.PolicyClient)
 	thingCache := new(mocks.Cache)
 	idProvider := uuid.NewMock()
 	cRepo := new(mocks.Repository)
@@ -62,18 +62,16 @@ func TestCreateThings(t *testing.T) {
 	svc, cRepo, auth, policy, _ := newService()
 
 	cases := []struct {
-		desc              string
-		thing             mgclients.Client
-		token             string
-		authResponse      *magistrala.AuthorizeRes
-		addPolicyResponse bool
-		deletePolicyRes   bool
-		authorizeErr      error
-		identifyErr       error
-		addPolicyErr      error
-		deletePolicyErr   error
-		saveErr           error
-		err               error
+		desc            string
+		thing           mgclients.Client
+		token           string
+		authResponse    *magistrala.AuthorizeRes
+		authorizeErr    error
+		identifyErr     error
+		addPolicyErr    error
+		deletePolicyErr error
+		saveErr         error
+		err             error
 	}{
 		{
 			desc:         "create a new thing successfully",
@@ -99,10 +97,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new thing without identity",
@@ -113,10 +110,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new enabled thing with name",
@@ -128,10 +124,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 
 		{
@@ -143,10 +138,9 @@ func TestCreateThings(t *testing.T) {
 					Secret:   secret,
 				},
 			},
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			token:             validToken,
-			err:               nil,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			token:        validToken,
+			err:          nil,
 		},
 		{
 			desc: "create a new enabled thing with tags",
@@ -158,10 +152,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			token:             validToken,
-			err:               nil,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			token:        validToken,
+			err:          nil,
 		},
 		{
 			desc: "create a new disabled thing with tags",
@@ -173,10 +166,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.DisabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new enabled thing with metadata",
@@ -188,10 +180,9 @@ func TestCreateThings(t *testing.T) {
 				Metadata: validCMetadata,
 				Status:   mgclients.EnabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new disabled thing with metadata",
@@ -202,10 +193,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Metadata: validCMetadata,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new disabled thing",
@@ -215,10 +205,9 @@ func TestCreateThings(t *testing.T) {
 					Secret:   secret,
 				},
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new thing with valid disabled status",
@@ -229,10 +218,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.DisabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new thing with all fields",
@@ -248,10 +236,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               nil,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          nil,
 		},
 		{
 			desc: "create a new thing with invalid status",
@@ -262,10 +249,9 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			err:               svcerr.ErrInvalidStatus,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:          svcerr.ErrInvalidStatus,
 		},
 		{
 			desc: "create a new thing with invalid token",
@@ -303,11 +289,10 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: false,
-			addPolicyErr:      svcerr.ErrInvalidPolicy,
-			err:               svcerr.ErrInvalidPolicy,
+			token:        validToken,
+			authResponse: &magistrala.AuthorizeRes{Authorized: true},
+			addPolicyErr: svcerr.ErrInvalidPolicy,
+			err:          svcerr.ErrInvalidPolicy,
 		},
 		{
 			desc: "create a new thing with failed delete policy response",
@@ -318,13 +303,11 @@ func TestCreateThings(t *testing.T) {
 				},
 				Status: mgclients.EnabledStatus,
 			},
-			token:             validToken,
-			authResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			addPolicyResponse: true,
-			saveErr:           repoerr.ErrConflict,
-			deletePolicyRes:   false,
-			deletePolicyErr:   svcerr.ErrInvalidPolicy,
-			err:               repoerr.ErrConflict,
+			token:           validToken,
+			authResponse:    &magistrala.AuthorizeRes{Authorized: true},
+			saveErr:         repoerr.ErrConflict,
+			deletePolicyErr: svcerr.ErrInvalidPolicy,
+			err:             repoerr.ErrConflict,
 		},
 	}
 
@@ -332,8 +315,8 @@ func TestCreateThings(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, tc.identifyErr)
 		authcall := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authResponse, tc.authorizeErr)
 		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return([]mgclients.Client{tc.thing}, tc.saveErr)
-		authCall1 := policy.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPolicyResponse, tc.addPolicyErr)
-		authCall2 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolicyRes, tc.deletePolicyErr)
+		authCall1 := policy.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPolicyErr)
+		authCall2 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolicyErr)
 		expected, err := svc.CreateThings(context.Background(), tc.token, tc.thing)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
@@ -431,10 +414,9 @@ func TestListClients(t *testing.T) {
 		authorizeResponse       *magistrala.AuthorizeRes
 		authorizeResponse1      *magistrala.AuthorizeRes
 		authorizeResponse2      *magistrala.AuthorizeRes
-		listObjectsResponse     []string
-		listObjectsResponse1    []string
+		listObjectsResponse     policysvc.PolicyPage
 		retrieveAllResponse     mgclients.ClientsPage
-		listPermissionsResponse []string
+		listPermissionsResponse policysvc.Permissions
 		response                mgclients.ClientsPage
 		id                      string
 		size                    uint64
@@ -460,7 +442,7 @@ func TestListClients(t *testing.T) {
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
 			authorizeResponse2:  &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{Policies: []string{client.ID, client.ID}},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -564,7 +546,7 @@ func TestListClients(t *testing.T) {
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: true},
 			response:            mgclients.ClientsPage{},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
 		},
 		{
@@ -581,7 +563,7 @@ func TestListClients(t *testing.T) {
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: false},
 			response:            mgclients.ClientsPage{},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 svcerr.ErrAuthorization,
 		},
 		{
@@ -598,7 +580,7 @@ func TestListClients(t *testing.T) {
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: false},
 			authorizeResponse1:  &magistrala.AuthorizeRes{Authorized: true},
 			response:            mgclients.ClientsPage{},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			listObjectsErr:      svcerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
 		},
@@ -607,16 +589,16 @@ func TestListClients(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		authorizeCall := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
-			SubjectType: authsvc.UserType,
+			SubjectType: policysvc.UserType,
 			Subject:     tc.identifyResponse.UserId,
-			Permission:  authsvc.AdminPermission,
-			ObjectType:  authsvc.PlatformType,
-			Object:      authsvc.MagistralaObject,
+			Permission:  policysvc.AdminPermission,
+			ObjectType:  policysvc.PlatformType,
+			Object:      policysvc.MagistralaObject,
 		}).Return(tc.authorizeResponse, tc.authorizeErr)
 		authorizeCall2 := auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
 			Domain:      "",
-			SubjectType: authsvc.UserType,
-			SubjectKind: authsvc.UsersKind,
+			SubjectType: policysvc.UserType,
+			SubjectKind: policysvc.UsersKind,
 			Subject:     tc.identifyResponse.UserId,
 			Permission:  "membership",
 			ObjectType:  "domain",
@@ -624,7 +606,7 @@ func TestListClients(t *testing.T) {
 		}).Return(tc.authorizeResponse1, tc.authorizeErr1)
 		listAllObjectsCall := policy.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
 		retrieveAllCall := cRepo.On("SearchClients", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
-		listPermissionsCall := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
+		listPermissionsCall := policy.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 
 		page, err := svc.ListClients(context.Background(), tc.token, tc.id, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -644,9 +626,9 @@ func TestListClients(t *testing.T) {
 		page                    mgclients.Page
 		identifyResponse        *magistrala.IdentityRes
 		authorizeResponse       *magistrala.AuthorizeRes
-		listObjectsResponse     []string
+		listObjectsResponse     policysvc.PolicyPage
 		retrieveAllResponse     mgclients.ClientsPage
-		listPermissionsResponse []string
+		listPermissionsResponse policysvc.Permissions
 		response                mgclients.ClientsPage
 		id                      string
 		size                    uint64
@@ -670,7 +652,7 @@ func TestListClients(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: []string{"test", "test"},
+			listObjectsResponse: policysvc.PolicyPage{Policies: []string{client.ID, client.ID}},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -718,7 +700,7 @@ func TestListClients(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			retrieveAllResponse: mgclients.ClientsPage{},
 			retrieveAllErr:      repoerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
@@ -736,7 +718,7 @@ func TestListClients(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			retrieveAllResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total:  2,
@@ -762,7 +744,7 @@ func TestListClients(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			listObjectsErr:      svcerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
 		},
@@ -779,7 +761,7 @@ func TestListClients(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: nonAdminID, UserId: nonAdminID, DomainId: domainID},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			listObjectsErr:      svcerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
 		},
@@ -788,20 +770,20 @@ func TestListClients(t *testing.T) {
 	for _, tc := range cases2 {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		authorizeCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		listAllObjectsCall := policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
-			SubjectType: authsvc.UserType,
+		listAllObjectsCall := policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+			SubjectType: policysvc.UserType,
 			Subject:     tc.identifyResponse.DomainId + "_" + adminID,
 			Permission:  "",
-			ObjectType:  authsvc.ThingType,
+			ObjectType:  policysvc.ThingType,
 		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		listAllObjectsCall2 := policy.On("ListAllObjects", context.Background(), &magistrala.ListObjectsReq{
-			SubjectType: authsvc.UserType,
+		listAllObjectsCall2 := policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+			SubjectType: policysvc.UserType,
 			Subject:     tc.identifyResponse.Id,
 			Permission:  "",
-			ObjectType:  authsvc.ThingType,
+			ObjectType:  policysvc.ThingType,
 		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
 		retrieveAllCall := cRepo.On("SearchClients", mock.Anything, mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
-		listPermissionsCall := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
+		listPermissionsCall := policy.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 
 		page, err := svc.ListClients(context.Background(), tc.token, tc.id, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -1051,7 +1033,7 @@ func TestUpdateClientSecret(t *testing.T) {
 }
 
 func TestEnableClient(t *testing.T) {
-	svc, cRepo, auth, policy, _ := newService()
+	svc, cRepo, auth, _, _ := newService()
 
 	enabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -1193,7 +1175,6 @@ func TestEnableClient(t *testing.T) {
 		}
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := policy.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		repoCall3 := cRepo.On("SearchClients", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -1201,13 +1182,12 @@ func TestEnableClient(t *testing.T) {
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
 		repoCall.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
 		repoCall3.Unset()
 	}
 }
 
 func TestDisableClient(t *testing.T) {
-	svc, cRepo, auth, policy, cache := newService()
+	svc, cRepo, auth, _, cache := newService()
 
 	enabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: ID, Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -1363,7 +1343,6 @@ func TestDisableClient(t *testing.T) {
 		}
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: validToken}).Return(&magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, nil)
-		repoCall2 := policy.On("ListAllObjects", mock.Anything, mock.Anything).Return(&magistrala.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		repoCall3 := cRepo.On("SearchClients", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -1371,7 +1350,6 @@ func TestDisableClient(t *testing.T) {
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
 		repoCall.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
 		repoCall3.Unset()
 	}
 }
@@ -1406,8 +1384,8 @@ func TestListMembers(t *testing.T) {
 		page                     mgclients.Page
 		identifyResponse         *magistrala.IdentityRes
 		authorizeResponse        *magistrala.AuthorizeRes
-		listObjectsResponse      []string
-		listPermissionsResponse  []string
+		listObjectsResponse      policysvc.PolicyPage
+		listPermissionsResponse  policysvc.Permissions
 		retreiveAllByIDsResponse mgclients.ClientsPage
 		response                 mgclients.MembersPage
 		identifyErr              error
@@ -1423,7 +1401,7 @@ func TestListMembers(t *testing.T) {
 			groupID:                 testsutil.GenerateUUID(t),
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     []string{},
+			listObjectsResponse:     policysvc.PolicyPage{},
 			listPermissionsResponse: []string{},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -1454,7 +1432,7 @@ func TestListMembers(t *testing.T) {
 			},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     []string{},
+			listObjectsResponse:     policysvc.PolicyPage{},
 			listPermissionsResponse: []string{},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -1491,7 +1469,7 @@ func TestListMembers(t *testing.T) {
 			groupID:                  wrongID,
 			identifyResponse:         &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:        &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:      []string{},
+			listObjectsResponse:      policysvc.PolicyPage{},
 			listPermissionsResponse:  []string{},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{},
 			response: mgclients.MembersPage{
@@ -1513,7 +1491,7 @@ func TestListMembers(t *testing.T) {
 			},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     []string{},
+			listObjectsResponse:     policysvc.PolicyPage{},
 			listPermissionsResponse: []string{"admin"},
 			retreiveAllByIDsResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
@@ -1550,7 +1528,7 @@ func TestListMembers(t *testing.T) {
 			},
 			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			listObjectsErr:      svcerr.ErrNotFound,
 			err:                 svcerr.ErrNotFound,
 		},
@@ -1570,7 +1548,7 @@ func TestListMembers(t *testing.T) {
 			response:                mgclients.MembersPage{},
 			identifyResponse:        &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse:       &magistrala.AuthorizeRes{Authorized: true},
-			listObjectsResponse:     []string{},
+			listObjectsResponse:     policysvc.PolicyPage{},
 			listPermissionsResponse: []string{},
 			listPermissionsErr:      svcerr.ErrNotFound,
 			err:                     svcerr.ErrNotFound,
@@ -1582,7 +1560,7 @@ func TestListMembers(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
 		repoCall2 := policy.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
 		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.retreiveAllByIDsResponse, tc.retreiveAllByIDsErr)
-		repoCall4 := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
+		repoCall4 := policy.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionsErr)
 		page, err := svc.ListClientsByGroup(context.Background(), tc.token, tc.groupID, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
@@ -1602,27 +1580,25 @@ func TestDeleteClient(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc                 string
-		token                string
-		identifyResponse     *magistrala.IdentityRes
-		authorizeResponse    *magistrala.AuthorizeRes
-		deletePolicyResponse bool
-		clientID             string
-		identifyErr          error
-		authorizeErr         error
-		removeErr            error
-		deleteErr            error
-		deletePolicyErr      error
-		err                  error
+		desc              string
+		token             string
+		identifyResponse  *magistrala.IdentityRes
+		authorizeResponse *magistrala.AuthorizeRes
+		clientID          string
+		identifyErr       error
+		authorizeErr      error
+		removeErr         error
+		deleteErr         error
+		deletePolicyErr   error
+		err               error
 	}{
 		{
-			desc:                 "Delete client with authorized token",
-			token:                validToken,
-			clientID:             client.ID,
-			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: true,
-			err:                  nil,
+			desc:              "Delete client with authorized token",
+			token:             validToken,
+			clientID:          client.ID,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:               nil,
 		},
 		{
 			desc:             "Delete client with unauthorized token",
@@ -1642,14 +1618,13 @@ func TestDeleteClient(t *testing.T) {
 			err:               svcerr.ErrAuthorization,
 		},
 		{
-			desc:                 "Delete client with repo error ",
-			token:                validToken,
-			clientID:             client.ID,
-			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: true,
-			deleteErr:            repoerr.ErrRemoveEntity,
-			err:                  repoerr.ErrRemoveEntity,
+			desc:              "Delete client with repo error ",
+			token:             validToken,
+			clientID:          client.ID,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			deleteErr:         repoerr.ErrRemoveEntity,
+			err:               repoerr.ErrRemoveEntity,
 		},
 		{
 			desc:              "Delete client with cache error ",
@@ -1661,14 +1636,13 @@ func TestDeleteClient(t *testing.T) {
 			err:               repoerr.ErrRemoveEntity,
 		},
 		{
-			desc:                 "Delete client with failed to delete policy",
-			token:                validToken,
-			clientID:             client.ID,
-			identifyResponse:     &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:    &magistrala.AuthorizeRes{Authorized: true},
-			deletePolicyResponse: false,
-			deletePolicyErr:      errRemovePolicies,
-			err:                  errRemovePolicies,
+			desc:              "Delete client with failed to delete policy",
+			token:             validToken,
+			clientID:          client.ID,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			deletePolicyErr:   errRemovePolicies,
+			err:               errRemovePolicies,
 		},
 	}
 
@@ -1676,10 +1650,7 @@ func TestDeleteClient(t *testing.T) {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
 		repoCall2 := cache.On("Remove", mock.Anything, tc.clientID).Return(tc.removeErr)
-		repoCall3 := policy.On("DeleteEntityPolicies", context.Background(), &magistrala.DeleteEntityPoliciesReq{
-			EntityType: authsvc.ThingType,
-			Id:         tc.clientID,
-		}).Return(tc.deletePolicyResponse, tc.deletePolicyErr)
+		repoCall3 := policy.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyErr)
 		repoCall4 := cRepo.On("Delete", context.Background(), tc.clientID).Return(tc.deleteErr)
 		err := svc.DeleteClient(context.Background(), tc.token, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -1697,27 +1668,25 @@ func TestShare(t *testing.T) {
 	clientID := "clientID"
 
 	cases := []struct {
-		desc                string
-		token               string
-		clientID            string
-		relation            string
-		userID              string
-		identifyResponse    *magistrala.IdentityRes
-		authorizeResponse   *magistrala.AuthorizeRes
-		addPoliciesResponse bool
-		identifyErr         error
-		authorizeErr        error
-		addPoliciesErr      error
-		err                 error
+		desc              string
+		token             string
+		clientID          string
+		relation          string
+		userID            string
+		identifyResponse  *magistrala.IdentityRes
+		authorizeResponse *magistrala.AuthorizeRes
+		identifyErr       error
+		authorizeErr      error
+		addPoliciesErr    error
+		err               error
 	}{
 		{
-			desc:                "share thing successfully",
-			token:               validToken,
-			clientID:            clientID,
-			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: true,
-			err:                 nil,
+			desc:              "share thing successfully",
+			token:             validToken,
+			clientID:          clientID,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:               nil,
 		},
 		{
 			desc:             "share thing with invalid token",
@@ -1737,30 +1706,20 @@ func TestShare(t *testing.T) {
 			err:               svcerr.ErrAuthorization,
 		},
 		{
-			desc:                "share thing with failed to add policies",
-			token:               validToken,
-			clientID:            clientID,
-			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: false,
-			addPoliciesErr:      svcerr.ErrInvalidPolicy,
-			err:                 svcerr.ErrInvalidPolicy,
-		},
-		{
-			desc:                "share thing with failed authorization from add policies",
-			token:               validToken,
-			clientID:            clientID,
-			identifyResponse:    &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:   &magistrala.AuthorizeRes{Authorized: true},
-			addPoliciesResponse: false,
-			err:                 svcerr.ErrUpdateEntity,
+			desc:              "share thing with failed to add policies",
+			token:             validToken,
+			clientID:          clientID,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			addPoliciesErr:    svcerr.ErrInvalidPolicy,
+			err:               svcerr.ErrInvalidPolicy,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		repoCall2 := policy.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesResponse, tc.addPoliciesErr)
+		repoCall2 := policy.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesErr)
 		err := svc.Share(context.Background(), tc.token, tc.clientID, tc.relation, tc.userID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -1775,27 +1734,25 @@ func TestUnShare(t *testing.T) {
 	clientID := "clientID"
 
 	cases := []struct {
-		desc                   string
-		token                  string
-		clientID               string
-		relation               string
-		userID                 string
-		identifyResponse       *magistrala.IdentityRes
-		authorizeResponse      *magistrala.AuthorizeRes
-		deletePoliciesResponse bool
-		identifyErr            error
-		authorizeErr           error
-		deletePoliciesErr      error
-		err                    error
+		desc              string
+		token             string
+		clientID          string
+		relation          string
+		userID            string
+		identifyResponse  *magistrala.IdentityRes
+		authorizeResponse *magistrala.AuthorizeRes
+		identifyErr       error
+		authorizeErr      error
+		deletePoliciesErr error
+		err               error
 	}{
 		{
-			desc:                   "unshare thing successfully",
-			token:                  validToken,
-			clientID:               clientID,
-			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: true,
-			err:                    nil,
+			desc:              "unshare thing successfully",
+			token:             validToken,
+			clientID:          clientID,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			err:               nil,
 		},
 		{
 			desc:             "unshare thing with invalid token",
@@ -1815,30 +1772,20 @@ func TestUnShare(t *testing.T) {
 			err:               svcerr.ErrAuthorization,
 		},
 		{
-			desc:                   "share thing with failed to delete policies",
-			token:                  validToken,
-			clientID:               clientID,
-			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: false,
-			deletePoliciesErr:      svcerr.ErrInvalidPolicy,
-			err:                    svcerr.ErrInvalidPolicy,
-		},
-		{
-			desc:                   "share thing with failed delete from delete policies",
-			token:                  validToken,
-			clientID:               clientID,
-			identifyResponse:       &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
-			authorizeResponse:      &magistrala.AuthorizeRes{Authorized: true},
-			deletePoliciesResponse: false,
-			err:                    nil,
+			desc:              "share thing with failed to delete policies",
+			token:             validToken,
+			clientID:          clientID,
+			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
+			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
+			deletePoliciesErr: svcerr.ErrInvalidPolicy,
+			err:               svcerr.ErrInvalidPolicy,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		repoCall2 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesResponse, tc.deletePoliciesErr)
+		repoCall2 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		err := svc.Unshare(context.Background(), tc.token, tc.clientID, tc.relation, tc.userID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -1858,7 +1805,7 @@ func TestViewClientPerms(t *testing.T) {
 		thingID           string
 		identifyResponse  *magistrala.IdentityRes
 		authorizeResponse *magistrala.AuthorizeRes
-		listPermResponse  []string
+		listPermResponse  policysvc.Permissions
 		identifyErr       error
 		authorizeErr      error
 		listPermErr       error
@@ -1870,7 +1817,7 @@ func TestViewClientPerms(t *testing.T) {
 			thingID:           validID,
 			identifyResponse:  &magistrala.IdentityRes{Id: validID, DomainId: testsutil.GenerateUUID(t)},
 			authorizeResponse: &magistrala.AuthorizeRes{Authorized: true},
-			listPermResponse:  []string{"admin"},
+			listPermResponse:  policysvc.Permissions{"admin"},
 			err:               nil,
 		},
 		{
@@ -1904,11 +1851,11 @@ func TestViewClientPerms(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyResponse, tc.identifyErr)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(tc.authorizeResponse, tc.authorizeErr)
-		repoCall2 := policy.On("ListPermissions", mock.Anything, mock.Anything).Return(tc.listPermResponse, tc.listPermErr)
+		repoCall2 := policy.On("ListPermissions", mock.Anything, mock.Anything, []string{}).Return(tc.listPermResponse, tc.listPermErr)
 		res, err := svc.ViewClientPerms(context.Background(), tc.token, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if tc.err == nil {
-			assert.Equal(t, tc.listPermResponse, res, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.listPermResponse, res))
+			assert.ElementsMatch(t, tc.listPermResponse, res, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.listPermResponse, res))
 		}
 		repoCall.Unset()
 		repoCall1.Unset()
@@ -2072,12 +2019,4 @@ func TestAuthorize(t *testing.T) {
 		repoCall.Unset()
 		authCall.Unset()
 	}
-}
-
-func getIDs(clients []mgclients.Client) []string {
-	ids := []string{}
-	for _, client := range clients {
-		ids = append(ids, client.ID)
-	}
-	return ids
 }

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	authsvc "github.com/absmach/magistrala/auth"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
@@ -21,6 +20,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/events/store"
+	policysvc "github.com/absmach/magistrala/pkg/policy"
 	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
@@ -89,14 +89,14 @@ type testVariable struct {
 	svc    bootstrap.Service
 	boot   *mocks.ConfigRepository
 	auth   *authmocks.AuthServiceClient
-	policy *policymocks.PolicyService
+	policy *policymocks.PolicyClient
 	sdk    *sdkmocks.SDK
 }
 
 func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(policymocks.PolicyService)
+	policy := new(policymocks.PolicyClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
@@ -815,7 +815,7 @@ func TestList(t *testing.T) {
 		identifyErr         error
 		superAdminAuthRes   *magistrala.AuthorizeRes
 		domainAdminAuthRes  *magistrala.AuthorizeRes
-		listObjectsResponse []string
+		listObjectsResponse policysvc.PolicyPage
 		listObjectsErr      error
 		superAdmiAuthErr    error
 		domainAdmiAuthErr   error
@@ -838,7 +838,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
 			event: map[string]interface{}{
 				"thing_id":    c.ThingID,
@@ -867,7 +867,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
 			event: map[string]interface{}{
 				"thing_id":    c.ThingID,
@@ -896,7 +896,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
 			event: map[string]interface{}{
 				"thing_id":    c.ThingID,
@@ -927,7 +927,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			superAdmiAuthErr:    svcerr.ErrAuthorization,
 			err:                 nil,
@@ -941,7 +941,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
 			superAdmiAuthErr:    svcerr.ErrAuthorization,
@@ -957,7 +957,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
 			listObjectsErr:      svcerr.ErrNotFound,
@@ -973,7 +973,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: true},
 			retrieveErr:         nil,
 			err:                 nil,
@@ -987,7 +987,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: true},
 			retrieveErr:         nil,
@@ -1002,7 +1002,7 @@ func TestList(t *testing.T) {
 			filter:              bootstrap.Filter{},
 			offset:              0,
 			limit:               10,
-			listObjectsResponse: []string{},
+			listObjectsResponse: policysvc.PolicyPage{},
 			superAdminAuthRes:   &magistrala.AuthorizeRes{Authorized: false},
 			domainAdminAuthRes:  &magistrala.AuthorizeRes{Authorized: false},
 			retrieveErr:         nil,
@@ -1015,25 +1015,25 @@ func TestList(t *testing.T) {
 	for _, tc := range cases {
 		authCall := tv.auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
 		authCall1 := tv.auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
-			SubjectType: authsvc.UserType,
+			SubjectType: policysvc.UserType,
 			Subject:     tc.userID,
-			Permission:  authsvc.AdminPermission,
-			ObjectType:  authsvc.PlatformType,
-			Object:      authsvc.MagistralaObject,
+			Permission:  policysvc.AdminPermission,
+			ObjectType:  policysvc.PlatformType,
+			Object:      policysvc.MagistralaObject,
 		}).Return(tc.superAdminAuthRes, tc.superAdmiAuthErr)
 		authCall2 := tv.auth.On("Authorize", context.Background(), &magistrala.AuthorizeReq{
-			SubjectType: authsvc.UserType,
-			SubjectKind: authsvc.UsersKind,
+			SubjectType: policysvc.UserType,
+			SubjectKind: policysvc.UsersKind,
 			Subject:     tc.userID,
-			Permission:  authsvc.AdminPermission,
-			ObjectType:  authsvc.DomainType,
+			Permission:  policysvc.AdminPermission,
+			ObjectType:  policysvc.DomainType,
 			Object:      tc.domainID,
 		}).Return(tc.domainAdminAuthRes, tc.domainAdmiAuthErr)
-		authCall3 := tv.policy.On("ListAllObjects", mock.Anything, &magistrala.ListObjectsReq{
-			SubjectType: authsvc.UserType,
+		authCall3 := tv.policy.On("ListAllObjects", mock.Anything, policysvc.PolicyReq{
+			SubjectType: policysvc.UserType,
 			Subject:     tc.userID,
-			Permission:  authsvc.ViewPermission,
-			ObjectType:  authsvc.ThingType,
+			Permission:  policysvc.ViewPermission,
+			ObjectType:  policysvc.ThingType,
 		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
 		repoCall := tv.boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 

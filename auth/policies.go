@@ -134,45 +134,8 @@ type Authz interface {
 	// denied).
 	Authorize(ctx context.Context, pr PolicyReq) error
 
-	// AddPolicy creates a policy for the given subject, so that, after
-	// AddPolicy, `subject` has a `relation` on `object`. Returns a non-nil
-	// error in case of failures.
-	AddPolicy(ctx context.Context, pr PolicyReq) error
-
-	// AddPolicies adds new policies for given subjects. This method is
-	// only allowed to use as an admin.
-	AddPolicies(ctx context.Context, prs []PolicyReq) error
-
-	// DeletePolicyFilter removes policy for given policy filter request.
-	DeletePolicyFilter(ctx context.Context, pr PolicyReq) error
-
-	// DeletePolicies deletes policies for given subjects. This method is
-	// only allowed to use as an admin.
-	DeletePolicies(ctx context.Context, prs []PolicyReq) error
-
-	// ListObjects lists policies based on the given PolicyReq structure.
-	ListObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error)
-
-	// ListAllObjects lists all policies based on the given PolicyReq structure.
-	ListAllObjects(ctx context.Context, pr PolicyReq) (PolicyPage, error)
-
-	// CountPolicies count policies based on the given PolicyReq structure.
-	CountObjects(ctx context.Context, pr PolicyReq) (uint64, error)
-
-	// ListSubjects lists subjects based on the given PolicyReq structure.
-	ListSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) (PolicyPage, error)
-
-	// ListAllSubjects lists all subjects based on the given PolicyReq structure.
-	ListAllSubjects(ctx context.Context, pr PolicyReq) (PolicyPage, error)
-
-	// CountSubjects count policies based on the given PolicyReq structure.
-	CountSubjects(ctx context.Context, pr PolicyReq) (uint64, error)
-
-	// ListPermissions lists permission betweeen given subject and object .
-	ListPermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)
-
-	// DeleteEntityPolicies deletes all policies for the given entity.
-	DeleteEntityPolicies(ctx context.Context, entityType, id string) error
+	// DeleteUserPolicies deletes all policies for the given user.
+	DeleteUserPolicies(ctx context.Context, id string) error
 }
 
 // PolicyAgent facilitates the communication to authorization
@@ -185,39 +148,4 @@ type PolicyAgent interface {
 	// It returns a non-nil error if the subject has no relation on
 	// the object (which simply means the operation is denied).
 	CheckPolicy(ctx context.Context, pr PolicyReq) error
-
-	// AddPolicy creates a policy for the given subject, so that, after
-	// AddPolicy, `subject` has a `relation` on `object`. Returns a non-nil
-	// error in case of failures.
-	AddPolicy(ctx context.Context, pr PolicyReq) error
-
-	// AddPolicies creates a Bulk Policies  for the given request
-	AddPolicies(ctx context.Context, prs []PolicyReq) error
-
-	// DeletePolicyFilter removes policy for given policy filter request.
-	DeletePolicyFilter(ctx context.Context, pr PolicyReq) error
-
-	// DeletePolicies removes a bulk policies for the given request.
-	DeletePolicies(ctx context.Context, pr []PolicyReq) error
-
-	// RetrieveObjects
-	RetrieveObjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) ([]PolicyRes, string, error)
-
-	// RetrieveAllObjects
-	RetrieveAllObjects(ctx context.Context, pr PolicyReq) ([]PolicyRes, error)
-
-	// RetrieveAllObjectsCount
-	RetrieveAllObjectsCount(ctx context.Context, pr PolicyReq) (uint64, error)
-
-	// RetrieveSubjects
-	RetrieveSubjects(ctx context.Context, pr PolicyReq, nextPageToken string, limit uint64) ([]PolicyRes, string, error)
-
-	// RetrieveAllSubjects
-	RetrieveAllSubjects(ctx context.Context, pr PolicyReq) ([]PolicyRes, error)
-
-	// RetrieveAllSubjectsCount
-	RetrieveAllSubjectsCount(ctx context.Context, pr PolicyReq) (uint64, error)
-
-	// (ctx context.Context, pr PolicyReq, filterPermissions []string) ([]PolicyReq, error)
-	RetrievePermissions(ctx context.Context, pr PolicyReq, filterPermission []string) (Permissions, error)
 }

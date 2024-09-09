@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	client "github.com/absmach/magistrala/internal/auth"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -65,7 +66,7 @@ func startGRPCServer(svc auth.Service, port int) {
 func TestIssue(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := grpcapi.NewAuthClient(conn, time.Second)
+	client := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc          string
@@ -134,7 +135,7 @@ func TestIssue(t *testing.T) {
 func TestRefresh(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := grpcapi.NewAuthClient(conn, time.Second)
+	client := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc          string
@@ -180,7 +181,7 @@ func TestRefresh(t *testing.T) {
 func TestIdentify(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := grpcapi.NewAuthClient(conn, time.Second)
+	client := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc   string
@@ -224,7 +225,7 @@ func TestIdentify(t *testing.T) {
 func TestAuthorize(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := grpcapi.NewAuthClient(conn, time.Second)
+	client := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc         string

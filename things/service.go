@@ -8,7 +8,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
+	authclient "github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -19,7 +19,7 @@ import (
 )
 
 type service struct {
-	auth        grpcclient.AuthServiceClient
+	auth        authclient.AuthClient
 	policy      policy.PolicyClient
 	clients     postgres.Repository
 	clientCache Cache
@@ -28,7 +28,7 @@ type service struct {
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(authClient grpcclient.AuthServiceClient, policyClient policy.PolicyClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
+func NewService(authClient authclient.AuthClient, policyClient policy.PolicyClient, c postgres.Repository, grepo mggroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
 	return service{
 		auth:        authClient,
 		policy:      policyClient,

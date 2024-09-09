@@ -8,6 +8,8 @@ import (
 
 	"github.com/absmach/magistrala"
 	authgrpc "github.com/absmach/magistrala/auth/api/grpc"
+	authclient "github.com/absmach/magistrala/internal/auth"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	thingsauth "github.com/absmach/magistrala/things/api/grpc"
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
@@ -20,7 +22,7 @@ var errSvcNotServing = errors.New("service is not serving")
 // For example:
 //
 // authClient, authHandler, err := auth.SetupAuth(ctx, auth.Config{}).
-func SetupAuthClient(ctx context.Context, cfg Config) (authgrpc.AuthServiceClient, Handler, error) {
+func SetupAuthClient(ctx context.Context, cfg Config) (auth.AuthClient, Handler, error) {
 	client, err := newHandler(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -34,7 +36,7 @@ func SetupAuthClient(ctx context.Context, cfg Config) (authgrpc.AuthServiceClien
 		return nil, nil, errSvcNotServing
 	}
 
-	return authgrpc.NewAuthClient(client.Connection(), cfg.Timeout), client, nil
+	return authclient.NewAuthClient(client.Connection(), cfg.Timeout), client, nil
 }
 
 // SetupPolicyClient loads Policy gRPC configuration and creates a new Policy gRPC client.

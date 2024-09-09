@@ -9,7 +9,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
+	authclient "github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -17,14 +17,14 @@ import (
 
 type service struct {
 	repo Repository
-	auth grpcclient.AuthServiceClient
+	auth authclient.AuthClient
 	sdk  mgsdk.SDK
 }
 
 // ErrMemberExist indicates that the user is already a member of the domain.
 var ErrMemberExist = errors.New("user is already a member of the domain")
 
-func NewService(repo Repository, authClient grpcclient.AuthServiceClient, sdk mgsdk.SDK) Service {
+func NewService(repo Repository, authClient authclient.AuthClient, sdk mgsdk.SDK) Service {
 	return &service{
 		repo: repo,
 		auth: authClient,

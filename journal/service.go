@@ -8,18 +8,18 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
+	authclient "github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 type service struct {
 	idProvider magistrala.IDProvider
-	auth       grpcclient.AuthServiceClient
+	auth       authclient.AuthClient
 	repository Repository
 }
 
-func NewService(idp magistrala.IDProvider, repository Repository, authClient grpcclient.AuthServiceClient) Service {
+func NewService(idp magistrala.IDProvider, repository Repository, authClient authclient.AuthClient) Service {
 	return &service{
 		idProvider: idp,
 		auth:       authClient,

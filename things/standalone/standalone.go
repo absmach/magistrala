@@ -7,15 +7,15 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala"
-	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
+	authclient "github.com/absmach/magistrala/pkg/auth"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policy"
 	"google.golang.org/grpc"
 )
 
 var (
-	_ grpcclient.AuthServiceClient = (*singleUserAuth)(nil)
-	_ policy.PolicyClient          = (*singleUserPolicyClient)(nil)
+	_ authclient.AuthClient = (*singleUserAuth)(nil)
+	_ policy.PolicyClient   = (*singleUserPolicyClient)(nil)
 )
 
 type singleUserAuth struct {
@@ -24,7 +24,7 @@ type singleUserAuth struct {
 }
 
 // NewAuthClient creates single user auth client for constrained environments.
-func NewAuthClient(id, token string) grpcclient.AuthServiceClient {
+func NewAuthClient(id, token string) authclient.AuthClient {
 	return singleUserAuth{
 		id:    id,
 		token: token,

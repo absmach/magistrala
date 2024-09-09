@@ -10,8 +10,8 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authclient "github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -28,13 +28,13 @@ var (
 
 type service struct {
 	groups     groups.Repository
-	auth       grpcclient.AuthServiceClient
+	auth       authclient.AuthClient
 	policy     policy.PolicyClient
 	idProvider magistrala.IDProvider
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(g groups.Repository, idp magistrala.IDProvider, authClient grpcclient.AuthServiceClient, policyClient policy.PolicyClient) groups.Service {
+func NewService(g groups.Repository, idp magistrala.IDProvider, authClient authclient.AuthClient, policyClient policy.PolicyClient) groups.Service {
 	return service{
 		groups:     g,
 		idProvider: idp,

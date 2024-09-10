@@ -44,6 +44,7 @@ import (
 	"github.com/absmach/magistrala/users/emailer"
 	uevents "github.com/absmach/magistrala/users/events"
 	"github.com/absmach/magistrala/users/hasher"
+	cmiddleware "github.com/absmach/magistrala/users/middleware"
 	clientspg "github.com/absmach/magistrala/users/postgres"
 	ctracing "github.com/absmach/magistrala/users/tracing"
 	"github.com/authzed/authzed-go/v1"
@@ -215,7 +216,7 @@ func main() {
 	oauthProvider := googleoauth.NewProvider(oauthConfig, cfg.OAuthUIRedirectURL, cfg.OAuthUIErrorURL)
 
 	mux := chi.NewRouter()
-	httpSrv := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID, cfg.PassRegex, oauthProvider), logger)
+	httpSrv := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, authClient, cfg.SelfRegister, gsvc, mux, logger, cfg.InstanceID, cfg.PassRegex, oauthProvider), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -248,7 +249,7 @@ func newService(ctx context.Context, authClient authclient.AuthClient, authPolic
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := users.NewService(cRepo, authClient, policyClient, emailerClient, hsr, idp, c.SelfRegister)
+	csvc := users.NewService(cRepo, policyClient, emailerClient, hsr, idp)
 	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
@@ -261,9 +262,9 @@ func newService(ctx context.Context, authClient authclient.AuthClient, authPolic
 	}
 
 	csvc = ctracing.New(csvc, tracer)
-	csvc = capi.LoggingMiddleware(csvc, logger)
+	csvc = cmiddleware.LoggingMiddleware(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	csvc = capi.MetricsMiddleware(csvc, counter, latency)
+	csvc = cmiddleware.MetricsMiddleware(csvc, counter, latency)
 
 	gsvc = gtracing.New(gsvc, tracer)
 	gsvc = gapi.LoggingMiddleware(gsvc, logger)

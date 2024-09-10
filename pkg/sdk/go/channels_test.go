@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -45,11 +46,12 @@ func setupChannels() (*httptest.Server, *gmocks.Service) {
 	logger := mglog.NewMock()
 	provider := new(oauth2mocks.Provider)
 	provider.On("Name").Return("test")
+	authClient := new(authmocks.AuthClient)
 
 	mux := chi.NewRouter()
 
 	thapi.MakeHandler(tsvc, gsvc, mux, logger, "")
-	usapi.MakeHandler(usvc, gsvc, mux, logger, "", passRegex, provider)
+	usapi.MakeHandler(usvc, authClient, true, gsvc, mux, logger, "", passRegex, provider)
 	return httptest.NewServer(mux), gsvc
 }
 

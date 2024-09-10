@@ -10,17 +10,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala/auth"
 	internalapi "github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/auth"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
 	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
+	"github.com/absmach/magistrala/pkg/policy"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/users/api"
 	umocks "github.com/absmach/magistrala/users/mocks"
@@ -43,7 +45,8 @@ func setupUsers() (*httptest.Server, *umocks.Service) {
 	mux := chi.NewRouter()
 	provider := new(oauth2mocks.Provider)
 	provider.On("Name").Return("test")
-	api.MakeHandler(usvc, gsvc, mux, logger, "", passRegex, provider)
+	authClient := new(authmocks.AuthClient)
+	api.MakeHandler(usvc, authClient, true, gsvc, mux, logger, "", passRegex, provider)
 
 	return httptest.NewServer(mux), usvc
 }
@@ -235,12 +238,12 @@ func TestCreateUser(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("RegisterClient", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("RegisterClient", mock.Anything, auth.Session{UserID: validID, DomainID: validID}, tc.svcReq, true).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.CreateUser(tc.createSdkUserReq, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "RegisterClient", mock.Anything, tc.token, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "RegisterClient", mock.Anything, auth.Session{UserID: validID, DomainID: validID}, tc.svcReq, true)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -529,12 +532,12 @@ func TestListUsers(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ListClients", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("ListClients", mock.Anything, auth.Session{UserID: validID, DomainID: validID}, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.Users(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, tc.token, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListClients", mock.Anything, auth.Session{UserID: validID, DomainID: validID}, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -655,7 +658,7 @@ func TestSearchClients(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("SearchUsers", mock.Anything, mock.Anything, mock.Anything).Return(tc.searchreturn, tc.err)
+		repoCall := svc.On("SearchUsers", mock.Anything, auth.Session{UserID: validID, DomainID: validID}, mock.Anything).Return(tc.searchreturn, tc.err)
 		page, err := mgsdk.SearchUsers(tc.page, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Users, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
@@ -744,12 +747,12 @@ func TestViewUser(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ViewClient", mock.Anything, tc.token, tc.userID).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("ViewClient", mock.Anything, auth.Session{UserID: validID, DomainID: validID}, tc.userID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.User(tc.userID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ViewClient", mock.Anything, tc.token, tc.userID)
+				ok := svcCall.Parent.AssertCalled(t, "ViewClient", mock.Anything, auth.Session{UserID: validID, DomainID: validID}, tc.userID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -815,12 +818,12 @@ func TestUserProfile(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ViewProfile", mock.Anything, tc.token).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("ViewProfile", mock.Anything, auth.Session{UserID: validID, DomainID: validID}).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.UserProfile(tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ViewProfile", mock.Anything, tc.token)
+				ok := svcCall.Parent.AssertCalled(t, "ViewProfile", mock.Anything, auth.Session{UserID: validID, DomainID: validID})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1889,7 +1892,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 			},
 			svcRes: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1916,7 +1919,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 			},
 			svcErr:   svcerr.ErrAuthentication,
 			response: sdk.UsersPage{},
@@ -1946,7 +1949,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 			},
 			svcErr:   svcerr.ErrViewEntity,
 			response: sdk.UsersPage{},
@@ -1993,7 +1996,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 			},
 			svcRes: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -2127,7 +2130,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -2158,7 +2161,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -2197,7 +2200,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes:   groups.Page{},
@@ -2235,7 +2238,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policy.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{

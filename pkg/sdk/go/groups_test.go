@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -44,7 +45,8 @@ func setupGroups() (*httptest.Server, *mocks.Service) {
 	mux := chi.NewRouter()
 	provider := new(oauth2mocks.Provider)
 	provider.On("Name").Return("test")
-	api.MakeHandler(usvc, gsvc, mux, logger, "", passRegex, provider)
+	authClient := new(authmocks.AuthClient)
+	api.MakeHandler(usvc, authClient, true, gsvc, mux, logger, "", passRegex, provider)
 
 	return httptest.NewServer(mux), gsvc
 }

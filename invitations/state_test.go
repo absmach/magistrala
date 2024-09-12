@@ -19,6 +19,7 @@ func TestState_String(t *testing.T) {
 	}{
 		{"Pending", invitations.Pending, "pending"},
 		{"Accepted", invitations.Accepted, "accepted"},
+		{"Rejected", invitations.Rejected, "rejected"},
 		{"All", invitations.All, "all"},
 		{"Unknown", invitations.State(100), "unknown"},
 	}
@@ -38,6 +39,7 @@ func TestToState(t *testing.T) {
 	}{
 		{"Pending", "pending", invitations.Pending, nil},
 		{"Accepted", "accepted", invitations.Accepted, nil},
+		{"Rejected", "rejected", invitations.Rejected, nil},
 		{"All", "all", invitations.All, nil},
 		{"Unknown", "unknown", invitations.State(0), apiutil.ErrInvitationState},
 	}
@@ -58,6 +60,7 @@ func TestState_MarshalJSON(t *testing.T) {
 	}{
 		{"Pending", invitations.Pending, []byte(`"pending"`), nil},
 		{"Accepted", invitations.Accepted, []byte(`"accepted"`), nil},
+		{"Rejected", invitations.Rejected, []byte(`"rejected"`), nil},
 		{"All", invitations.All, []byte(`"all"`), nil},
 		{"Unknown", invitations.State(100), []byte(`"unknown"`), nil},
 	}
@@ -78,6 +81,7 @@ func TestState_UnmarshalJSON(t *testing.T) {
 	}{
 		{"Pending", []byte(`"pending"`), invitations.Pending, nil},
 		{"Accepted", []byte(`"accepted"`), invitations.Accepted, nil},
+		{"Rejected", []byte(`"rejected"`), invitations.Rejected, nil},
 		{"All", []byte(`"all"`), invitations.All, nil},
 		{"Unknown", []byte(`"unknown"`), invitations.State(0), apiutil.ErrInvitationState},
 	}

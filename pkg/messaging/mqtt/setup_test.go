@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 
 	logger, err = mglog.New(os.Stdout, "debug")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	if err := pool.Retry(func() error {
@@ -79,7 +79,7 @@ func TestMain(m *testing.M) {
 	defer func() {
 		err = pubsub.Close()
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err.Error())
 		}
 	}()
 }

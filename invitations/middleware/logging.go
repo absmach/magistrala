@@ -92,6 +92,22 @@ func (lm *logging) AcceptInvitation(ctx context.Context, token, domainID string)
 	return lm.svc.AcceptInvitation(ctx, token, domainID)
 }
 
+func (lm *logging) RejectInvitation(ctx context.Context, token, domainID string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", domainID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Reject invitation failed", args...)
+			return
+		}
+		lm.logger.Info("Reject invitation completed successfully", args...)
+	}(time.Now())
+	return lm.svc.RejectInvitation(ctx, token, domainID)
+}
+
 func (lm *logging) DeleteInvitation(ctx context.Context, token, userID, domainID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{

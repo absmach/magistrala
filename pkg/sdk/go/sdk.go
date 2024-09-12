@@ -1167,6 +1167,13 @@ type SDK interface {
 	//  fmt.Println(err)
 	AcceptInvitation(domainID, token string) (err error)
 
+	// RejectInvitation rejects an invitation.
+	//
+	// For example:
+	//  err := sdk.RejectInvitation("domainID", "token")
+	//  fmt.Println(err)
+	RejectInvitation(domainID, token string) (err error)
+
 	// DeleteInvitation deletes an invitation.
 	//
 	// For example:

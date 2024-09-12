@@ -32,6 +32,17 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS invitations`,
 				},
 			},
+			{
+				Id: "invitations_02_add_rejection",
+				Up: []string{
+					`ALTER TABLE invitations
+					 ADD COLUMN rejected_at TIMESTAMP`,
+				},
+				Down: []string{
+					`ALTER TABLE invitations
+					 DROP COLUMN rejected_at`,
+				},
+			},
 		},
 	}
 }

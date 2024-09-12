@@ -130,23 +130,57 @@ func (svc *service) AcceptInvitation(ctx context.Context, token, domainID string
 		return err
 	}
 
-	if inv.UserID == user.GetUserId() && inv.ConfirmedAt.IsZero() {
-		req := mgsdk.UsersRelationRequest{
-			Relation: inv.Relation,
-			UserIDs:  []string{user.GetUserId()},
-		}
-		if sdkerr := svc.sdk.AddUserToDomain(inv.DomainID, req, inv.Token); sdkerr != nil {
-			return sdkerr
-		}
-
-		inv.ConfirmedAt = time.Now()
-		inv.UpdatedAt = time.Now()
-		if err := svc.repo.UpdateConfirmation(ctx, inv); err != nil {
-			return err
-		}
+	if inv.UserID != user.GetUserId() {
+		return svcerr.ErrAuthorization
 	}
 
-	return nil
+	if !inv.ConfirmedAt.IsZero() {
+		return svcerr.ErrInvitationAlreadyAccepted
+	}
+
+	if !inv.RejectedAt.IsZero() {
+		return svcerr.ErrInvitationAlreadyRejected
+	}
+
+	req := mgsdk.UsersRelationRequest{
+		Relation: inv.Relation,
+		UserIDs:  []string{user.GetUserId()},
+	}
+	if sdkerr := svc.sdk.AddUserToDomain(inv.DomainID, req, inv.Token); sdkerr != nil {
+		return sdkerr
+	}
+
+	inv.ConfirmedAt = time.Now()
+	inv.UpdatedAt = inv.ConfirmedAt
+	return svc.repo.UpdateConfirmation(ctx, inv)
+}
+
+func (svc *service) RejectInvitation(ctx context.Context, token, domainID string) error {
+	user, err := svc.identify(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	inv, err := svc.repo.Retrieve(ctx, user.GetUserId(), domainID)
+	if err != nil {
+		return err
+	}
+
+	if inv.UserID != user.GetUserId() {
+		return svcerr.ErrAuthorization
+	}
+
+	if !inv.ConfirmedAt.IsZero() {
+		return svcerr.ErrInvitationAlreadyAccepted
+	}
+
+	if !inv.RejectedAt.IsZero() {
+		return svcerr.ErrInvitationAlreadyRejected
+	}
+
+	inv.RejectedAt = time.Now()
+	inv.UpdatedAt = inv.RejectedAt
+	return svc.repo.UpdateRejection(ctx, inv)
 }
 
 func (svc *service) DeleteInvitation(ctx context.Context, token, userID, domainID string) error {

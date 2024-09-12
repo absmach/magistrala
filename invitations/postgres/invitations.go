@@ -127,6 +127,21 @@ func (repo *repository) UpdateConfirmation(ctx context.Context, invitation invit
 	return nil
 }
 
+func (repo *repository) UpdateRejection(ctx context.Context, invitation invitations.Invitation) (err error) {
+	q := `UPDATE invitations SET rejected_at = :rejected_at, updated_at = :updated_at WHERE user_id = :user_id AND domain_id = :domain_id`
+
+	dbInv := toDBInvitation(invitation)
+	result, err := repo.db.NamedExecContext(ctx, q, dbInv)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
+	}
+
+	return nil
+}
+
 func (repo *repository) Delete(ctx context.Context, userID, domain string) (err error) {
 	q := `DELETE FROM invitations WHERE user_id = $1 AND domain_id = $2`
 
@@ -165,6 +180,9 @@ func pageQuery(pm invitations.Page) string {
 	if pm.State == invitations.Pending {
 		query = append(query, "confirmed_at IS NULL")
 	}
+	if pm.State == invitations.Rejected {
+		query = append(query, "rejected_at IS NOT NULL")
+	}
 
 	if len(query) > 0 {
 		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
@@ -182,16 +200,19 @@ type dbInvitation struct {
 	CreatedAt   time.Time    `db:"created_at"`
 	UpdatedAt   sql.NullTime `db:"updated_at,omitempty"`
 	ConfirmedAt sql.NullTime `db:"confirmed_at,omitempty"`
+	RejectedAt  sql.NullTime `db:"rejected_at,omitempty"`
 }
 
 func toDBInvitation(inv invitations.Invitation) dbInvitation {
-	var updatedAt sql.NullTime
+	var updatedAt, confirmedAt, rejectedAt sql.NullTime
 	if inv.UpdatedAt != (time.Time{}) {
 		updatedAt = sql.NullTime{Time: inv.UpdatedAt, Valid: true}
 	}
-	var confirmedAt sql.NullTime
 	if inv.ConfirmedAt != (time.Time{}) {
 		confirmedAt = sql.NullTime{Time: inv.ConfirmedAt, Valid: true}
+	}
+	if inv.RejectedAt != (time.Time{}) {
+		rejectedAt = sql.NullTime{Time: inv.RejectedAt, Valid: true}
 	}
 
 	return dbInvitation{
@@ -203,17 +224,20 @@ func toDBInvitation(inv invitations.Invitation) dbInvitation {
 		CreatedAt:   inv.CreatedAt,
 		UpdatedAt:   updatedAt,
 		ConfirmedAt: confirmedAt,
+		RejectedAt:  rejectedAt,
 	}
 }
 
 func toInvitation(dbinv dbInvitation) invitations.Invitation {
-	var updatedAt time.Time
+	var updatedAt, confirmedAt, rejectedAt time.Time
 	if dbinv.UpdatedAt.Valid {
 		updatedAt = dbinv.UpdatedAt.Time
 	}
-	var confirmedAt time.Time
 	if dbinv.ConfirmedAt.Valid {
 		confirmedAt = dbinv.ConfirmedAt.Time
+	}
+	if dbinv.RejectedAt.Valid {
+		rejectedAt = dbinv.RejectedAt.Time
 	}
 
 	return invitations.Invitation{
@@ -225,5 +249,6 @@ func toInvitation(dbinv dbInvitation) invitations.Invitation {
 		CreatedAt:   dbinv.CreatedAt,
 		UpdatedAt:   updatedAt,
 		ConfirmedAt: confirmedAt,
+		RejectedAt:  rejectedAt,
 	}
 }

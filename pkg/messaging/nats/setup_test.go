@@ -49,7 +49,7 @@ func TestMain(m *testing.M) {
 
 	logger, err := mglog.New(os.Stdout, "error")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err.Error())
 	}
 	if err := pool.Retry(func() error {
 		pubsub, err = nats.NewPubSub(context.Background(), address, logger)

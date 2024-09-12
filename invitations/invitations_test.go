@@ -39,7 +39,7 @@ func TestInvitation_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			res: `{"total":1,"offset":0,"limit":0,"invitations":[{"invited_by":"John","user_id":"123","domain_id":"123","created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","confirmed_at":"0001-01-01T00:00:00Z"}]}`,
+			res: `{"total":1,"offset":0,"limit":0,"invitations":[{"invited_by":"John","user_id":"123","domain_id":"123","created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","confirmed_at":"0001-01-01T00:00:00Z","rejected_at":"0001-01-01T00:00:00Z"}]}`,
 		},
 	}
 

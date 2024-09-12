@@ -15,6 +15,7 @@ var (
 	_ magistrala.Response = (*viewInvitationRes)(nil)
 	_ magistrala.Response = (*listInvitationsRes)(nil)
 	_ magistrala.Response = (*acceptInvitationRes)(nil)
+	_ magistrala.Response = (*rejectInvitationRes)(nil)
 	_ magistrala.Response = (*deleteInvitationRes)(nil)
 )
 
@@ -69,7 +70,7 @@ func (res listInvitationsRes) Empty() bool {
 type acceptInvitationRes struct{}
 
 func (res acceptInvitationRes) Code() int {
-	return http.StatusOK
+	return http.StatusNoContent
 }
 
 func (res acceptInvitationRes) Headers() map[string]string {
@@ -91,5 +92,19 @@ func (res deleteInvitationRes) Headers() map[string]string {
 }
 
 func (res deleteInvitationRes) Empty() bool {
+	return true
+}
+
+type rejectInvitationRes struct{}
+
+func (res rejectInvitationRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res rejectInvitationRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res rejectInvitationRes) Empty() bool {
 	return true
 }

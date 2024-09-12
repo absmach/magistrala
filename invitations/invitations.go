@@ -22,6 +22,7 @@ type Invitation struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 	ConfirmedAt time.Time `json:"confirmed_at,omitempty"`
+	RejectedAt  time.Time `json:"rejected_at,omitempty"`
 	Resend      bool      `json:"resend,omitempty"`
 }
 
@@ -93,6 +94,11 @@ type Service interface {
 	// - domain administrators
 	// - platform administrators
 	DeleteInvitation(ctx context.Context, token, userID, domainID string) (err error)
+
+	// RejectInvitation rejects an invitation.
+	// People who can reject invitations are:
+	// - the invited user: they can reject their own invitations
+	RejectInvitation(ctx context.Context, token, domainID string) (err error)
 }
 
 //go:generate mockery --name Repository --output=./mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
@@ -111,6 +117,9 @@ type Repository interface {
 
 	// UpdateConfirmation updates an invitation by setting the confirmation time.
 	UpdateConfirmation(ctx context.Context, invitation Invitation) (err error)
+
+	// UpdateRejection updates an invitation by setting the rejection time.
+	UpdateRejection(ctx context.Context, invitation Invitation) (err error)
 
 	// Delete deletes an invitation.
 	Delete(ctx context.Context, userID, domainID string) (err error)

@@ -14,6 +14,7 @@ import (
 const (
 	invitationsEndpoint = "invitations"
 	acceptEndpoint      = "accept"
+	rejectEndpoint      = "reject"
 )
 
 type Invitation struct {
@@ -95,7 +96,25 @@ func (sdk mgSDK) AcceptInvitation(domainID, token string) (err error) {
 
 	url := sdk.invitationsURL + "/" + invitationsEndpoint + "/" + acceptEndpoint
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusNoContent)
+
+	return sdkerr
+}
+
+func (sdk mgSDK) RejectInvitation(domainID, token string) (err error) {
+	req := struct {
+		DomainID string `json:"domain_id"`
+	}{
+		DomainID: domainID,
+	}
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	url := sdk.invitationsURL + "/" + invitationsEndpoint + "/" + rejectEndpoint
+
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, data, nil, http.StatusNoContent)
 
 	return sdkerr
 }

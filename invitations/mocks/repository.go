@@ -126,6 +126,24 @@ func (_m *Repository) UpdateConfirmation(ctx context.Context, invitation invitat
 	return r0
 }
 
+// UpdateRejection provides a mock function with given fields: ctx, invitation
+func (_m *Repository) UpdateRejection(ctx context.Context, invitation invitations.Invitation) error {
+	ret := _m.Called(ctx, invitation)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRejection")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, invitations.Invitation) error); ok {
+		r0 = rf(ctx, invitation)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateToken provides a mock function with given fields: ctx, invitation
 func (_m *Repository) UpdateToken(ctx context.Context, invitation invitations.Invitation) error {
 	ret := _m.Called(ctx, invitation)

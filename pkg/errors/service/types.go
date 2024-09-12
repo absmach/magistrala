@@ -63,4 +63,10 @@ var (
 
 	// ErrSearch indicates error in searching clients.
 	ErrSearch = errors.New("failed to search clients")
+
+	// ErrInvitationAlreadyRejected indicates that the invitation is already rejected.
+	ErrInvitationAlreadyRejected = errors.New("invitation already rejected")
+
+	// ErrInvitationAlreadyAccepted indicates that the invitation is already accepted.
+	ErrInvitationAlreadyAccepted = errors.New("invitation already accepted")
 )

@@ -45,7 +45,7 @@ func main() {
 
 	cfg, err := loadConfig()
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("failed to load %s configuration : %s", svcName, err))
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
 	logger, err := mglog.New(os.Stdout, cfg.Server.LogLevel)

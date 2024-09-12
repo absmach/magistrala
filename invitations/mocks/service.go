@@ -80,6 +80,24 @@ func (_m *Service) ListInvitations(ctx context.Context, token string, page invit
 	return r0, r1
 }
 
+// RejectInvitation provides a mock function with given fields: ctx, token, domainID
+func (_m *Service) RejectInvitation(ctx context.Context, token string, domainID string) error {
+	ret := _m.Called(ctx, token, domainID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RejectInvitation")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, token, domainID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SendInvitation provides a mock function with given fields: ctx, token, invitation
 func (_m *Service) SendInvitation(ctx context.Context, token string, invitation invitations.Invitation) error {
 	ret := _m.Called(ctx, token, invitation)

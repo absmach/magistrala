@@ -104,8 +104,32 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/AcceptInvitationReq"
       responses:
-        "200":
+        "204":
           description: Invitation accepted.
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /invitations/reject:
+    post:
+      operationId: rejectInvitation
+      summary: Reject invitation
+      description: |
+        Current logged in user rejects invitation to join domain.
+      tags:
+        - Invitations
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/AcceptInvitationReq"
+      responses:
+        "204":
+          description: Invitation rejected.
         "400":
           description: Failed due to malformed query parameters.
         "401":

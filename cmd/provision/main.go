@@ -24,7 +24,7 @@ import (
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/magistrala/provision/api"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
 

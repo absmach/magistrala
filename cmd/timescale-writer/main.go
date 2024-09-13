@@ -27,7 +27,7 @@ import (
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/sync/errgroup"
 )

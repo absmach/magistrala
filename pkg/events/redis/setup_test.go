@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/ory/dockertest/v3"
+	"github.com/redis/go-redis/v9"
 )
 
 var (

@@ -45,7 +45,7 @@ import (
 	"github.com/absmach/magistrala/users/hasher"
 	clientspg "github.com/absmach/magistrala/users/postgres"
 	ctracing "github.com/absmach/magistrala/users/tracing"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"

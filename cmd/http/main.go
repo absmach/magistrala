@@ -32,7 +32,7 @@ import (
 	"github.com/absmach/mproxy"
 	mproxyhttp "github.com/absmach/mproxy/pkg/http"
 	"github.com/absmach/mproxy/pkg/session"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )

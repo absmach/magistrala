@@ -7,7 +7,7 @@ package uuid
 import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 )
 
 // ErrGeneratingID indicates error in generating UUID.

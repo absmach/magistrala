@@ -29,7 +29,7 @@ import (
 	"github.com/absmach/magistrala/ws/tracing"
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/absmach/mproxy/pkg/websockets"
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )

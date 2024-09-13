@@ -6,14 +6,25 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "./.github/workflows"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+      day: "monday"
+    groups:
+      gh-dependency:
+        patterns:
+          - "*"
 
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+      day: "monday"
 
   - package-ecosystem: "docker"
     directory: "./docker"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+      day: "monday"
+    groups:
+      docker-dependency:
+        patterns:
+          - "*"

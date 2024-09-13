@@ -10,9 +10,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/redis/go-redis/v9"
 )
 
 var (

@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -91,7 +91,7 @@ func (tm *tracingMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return tm.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (tm *tracingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
+func (tm *tracingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (policies.Permissions, error) {
 	ctx, span := tm.tracer.Start(ctx, "view_domain_permissions", trace.WithAttributes(
 		attribute.String("id", id),
 	))

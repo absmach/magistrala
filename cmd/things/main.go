@@ -21,13 +21,13 @@ import (
 	gevents "github.com/absmach/magistrala/internal/groups/events"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
-	mgpolicy "github.com/absmach/magistrala/internal/policy"
+	mgpolicies "github.com/absmach/magistrala/internal/policies"
 	mglog "github.com/absmach/magistrala/logger"
 	authclient "github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
@@ -156,7 +156,7 @@ func main() {
 
 	var (
 		authClient   authclient.AuthClient
-		policyClient policy.PolicyClient
+		policyClient policies.PolicyClient
 	)
 	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
 	case true:
@@ -241,7 +241,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, policyClient policy.PolicyClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, policyClient policies.PolicyClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -276,7 +276,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, poli
 	return csvc, gsvc, err
 }
 
-func newPolicyClient(cfg config, logger *slog.Logger) (policy.PolicyClient, error) {
+func newPolicyClient(cfg config, logger *slog.Logger) (policies.PolicyClient, error) {
 	client, err := authzed.NewClientWithExperimentalAPIs(
 		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -285,7 +285,7 @@ func newPolicyClient(cfg config, logger *slog.Logger) (policy.PolicyClient, erro
 	if err != nil {
 		return nil, err
 	}
-	policyClient := mgpolicy.NewPolicyClient(client, logger)
+	policyClient := mgpolicies.NewPolicyClient(client, logger)
 
 	return policyClient, nil
 }

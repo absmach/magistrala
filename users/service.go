@@ -14,7 +14,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/users/postgres"
 	"golang.org/x/sync/errgroup"
 )
@@ -29,17 +29,17 @@ type service struct {
 	clients      postgres.Repository
 	idProvider   magistrala.IDProvider
 	auth         auth.AuthClient
-	policy       policy.PolicyClient
+	policies     policies.PolicyClient
 	hasher       Hasher
 	email        Emailer
 	selfRegister bool
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, policyClient policy.PolicyClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider) Service {
+func NewService(crepo postgres.Repository, policyClient policies.PolicyClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider) Service {
 	return service{
 		clients:    crepo,
-		policy:     policyClient,
+		policies:   policyClient,
 		hasher:     hasher,
 		email:      emailer,
 		idProvider: idp,
@@ -335,7 +335,7 @@ func (svc service) UpdateClientRole(ctx context.Context, session auth.Session, c
 
 	client, err := svc.clients.UpdateRole(ctx, client)
 	if err != nil {
-		// If failed to update role in DB, then revert back to platform admin policy in spicedb
+		// If failed to update role in DB, then revert back to platform admin policies in spicedb
 		if errRollback := svc.updateClientPolicy(ctx, cli.ID, mgclients.UserRole); errRollback != nil {
 			return mgclients.Client{}, errors.Wrap(errRollback, err)
 		}
@@ -411,18 +411,18 @@ func (svc service) DeleteClient(ctx context.Context, session auth.Session, id st
 func (svc service) ListMembers(ctx context.Context, session auth.Session, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
 	var objectType string
 	switch objectKind {
-	case policy.ThingsKind:
-		objectType = policy.ThingType
-	case policy.DomainsKind:
-		objectType = policy.DomainType
-	case policy.GroupsKind:
+	case policies.ThingsKind:
+		objectType = policies.ThingType
+	case policies.DomainsKind:
+		objectType = policies.DomainType
+	case policies.GroupsKind:
 		fallthrough
 	default:
-		objectType = policy.GroupType
+		objectType = policies.GroupType
 	}
 
-	duids, err := svc.policy.ListAllSubjects(ctx, policy.PolicyReq{
-		SubjectType: policy.UserType,
+	duids, err := svc.policies.ListAllSubjects(ctx, policies.PolicyReq{
+		SubjectType: policies.UserType,
 		Permission:  pm.Permission,
 		Object:      objectID,
 		ObjectType:  objectType,
@@ -492,8 +492,8 @@ func (svc service) retrieveObjectUsersPermissions(ctx context.Context, domainID,
 }
 
 func (svc service) listObjectUserPermission(ctx context.Context, userID, objectType, objectID string) ([]string, error) {
-	permissions, err := svc.policy.ListPermissions(ctx, policy.PolicyReq{
-		SubjectType: policy.UserType,
+	permissions, err := svc.policies.ListPermissions(ctx, policies.PolicyReq{
+		SubjectType: policies.UserType,
 		Subject:     userID,
 		Object:      objectID,
 		ObjectType:  objectType,
@@ -543,26 +543,26 @@ func (svc service) Identify(ctx context.Context, session auth.Session) (string, 
 }
 
 func (svc service) addClientPolicy(ctx context.Context, userID string, role mgclients.Role) error {
-	policies := []policy.PolicyReq{}
+	policyList := []policies.PolicyReq{}
 
-	policies = append(policies, policy.PolicyReq{
-		SubjectType: policy.UserType,
+	policyList = append(policyList, policies.PolicyReq{
+		SubjectType: policies.UserType,
 		Subject:     userID,
-		Relation:    policy.MemberRelation,
-		ObjectType:  policy.PlatformType,
-		Object:      policy.MagistralaObject,
+		Relation:    policies.MemberRelation,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.MagistralaObject,
 	})
 
 	if role == mgclients.AdminRole {
-		policies = append(policies, policy.PolicyReq{
-			SubjectType: policy.UserType,
+		policyList = append(policyList, policies.PolicyReq{
+			SubjectType: policies.UserType,
 			Subject:     userID,
-			Relation:    policy.AdministratorRelation,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Relation:    policies.AdministratorRelation,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		})
 	}
-	err := svc.policy.AddPolicies(ctx, policies)
+	err := svc.policies.AddPolicies(ctx, policyList)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
@@ -571,26 +571,26 @@ func (svc service) addClientPolicy(ctx context.Context, userID string, role mgcl
 }
 
 func (svc service) addClientPolicyRollback(ctx context.Context, userID string, role mgclients.Role) error {
-	policies := []policy.PolicyReq{}
+	policyList := []policies.PolicyReq{}
 
-	policies = append(policies, policy.PolicyReq{
-		SubjectType: policy.UserType,
+	policyList = append(policyList, policies.PolicyReq{
+		SubjectType: policies.UserType,
 		Subject:     userID,
-		Relation:    policy.MemberRelation,
-		ObjectType:  policy.PlatformType,
-		Object:      policy.MagistralaObject,
+		Relation:    policies.MemberRelation,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.MagistralaObject,
 	})
 
 	if role == mgclients.AdminRole {
-		policies = append(policies, policy.PolicyReq{
-			SubjectType: policy.UserType,
+		policyList = append(policyList, policies.PolicyReq{
+			SubjectType: policies.UserType,
 			Subject:     userID,
-			Relation:    policy.AdministratorRelation,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Relation:    policies.AdministratorRelation,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		})
 	}
-	err := svc.policy.DeletePolicies(ctx, policies)
+	err := svc.policies.DeletePolicies(ctx, policyList)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
@@ -601,12 +601,12 @@ func (svc service) addClientPolicyRollback(ctx context.Context, userID string, r
 func (svc service) updateClientPolicy(ctx context.Context, userID string, role mgclients.Role) error {
 	switch role {
 	case mgclients.AdminRole:
-		err := svc.policy.AddPolicy(ctx, policy.PolicyReq{
-			SubjectType: policy.UserType,
+		err := svc.policies.AddPolicy(ctx, policies.PolicyReq{
+			SubjectType: policies.UserType,
 			Subject:     userID,
-			Relation:    policy.AdministratorRelation,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Relation:    policies.AdministratorRelation,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		})
 		if err != nil {
 			return errors.Wrap(svcerr.ErrAddPolicies, err)
@@ -616,12 +616,12 @@ func (svc service) updateClientPolicy(ctx context.Context, userID string, role m
 	case mgclients.UserRole:
 		fallthrough
 	default:
-		err := svc.policy.DeletePolicyFilter(ctx, policy.PolicyReq{
-			SubjectType: policy.UserType,
+		err := svc.policies.DeletePolicyFilter(ctx, policies.PolicyReq{
+			SubjectType: policies.UserType,
 			Subject:     userID,
-			Relation:    policy.AdministratorRelation,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Relation:    policies.AdministratorRelation,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		})
 		if err != nil {
 			return errors.Wrap(svcerr.ErrDeletePolicies, err)

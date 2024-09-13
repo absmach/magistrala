@@ -22,7 +22,7 @@ import (
 	"github.com/absmach/magistrala/pkg/groups"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
 	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/users/api"
 	umocks "github.com/absmach/magistrala/users/mocks"
@@ -1892,7 +1892,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 			},
 			svcRes: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -1919,7 +1919,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 			},
 			svcErr:   svcerr.ErrAuthentication,
 			response: sdk.UsersPage{},
@@ -1949,7 +1949,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 			},
 			svcErr:   svcerr.ErrViewEntity,
 			response: sdk.UsersPage{},
@@ -1996,7 +1996,7 @@ func TestListMembers(t *testing.T) {
 			svcReq: mgclients.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 			},
 			svcRes: mgclients.MembersPage{
 				Page: mgclients.Page{
@@ -2130,7 +2130,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -2161,7 +2161,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -2200,7 +2200,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes:   groups.Page{},
@@ -2238,7 +2238,7 @@ func TestListUserGroups(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: policy.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{

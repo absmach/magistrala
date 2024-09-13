@@ -26,7 +26,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
 	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	httpapi "github.com/absmach/magistrala/users/api"
 	"github.com/absmach/magistrala/users/mocks"
 	"github.com/go-chi/chi/v5"
@@ -306,12 +306,12 @@ func TestViewClient(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("ViewClient", mock.Anything, mock.Anything, tc.id).Return(mgclients.Client{}, tc.err)
 		res, err := req.make()
@@ -721,12 +721,12 @@ func TestListClients(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{UserId: validID, DomainId: validID}, nil)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("ListClients", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.listUsersResponse, tc.err)
 		res, err := req.make()
@@ -994,12 +994,12 @@ func TestUpdateClient(t *testing.T) {
 		}
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("UpdateClient", mock.Anything, mock.Anything, mock.Anything).Return(tc.clientResponse, tc.err)
 		res, err := req.make()
@@ -1140,12 +1140,12 @@ func TestUpdateClientTags(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("UpdateClientTags", mock.Anything, mock.Anything, mock.Anything).Return(tc.clientResponse, tc.err)
 		res, err := req.make()
@@ -1310,12 +1310,12 @@ func TestUpdateClientIdentity(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("UpdateClientIdentity", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
 		res, err := req.make()
@@ -1648,20 +1648,20 @@ func TestUpdateClientRole(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.superAdminRes, tc.superAdminErr)
 		authCall2 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     tc.clientID,
-			Permission:  policy.MembershipPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.MembershipPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.memberAuthRes, tc.memberAuthErr)
 		svcCall := svc.On("UpdateClientRole", mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
 		res, err := req.make()
@@ -2093,12 +2093,12 @@ func TestEnableClient(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("EnableClient", mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
 		res, err := req.make()
@@ -2204,12 +2204,12 @@ func TestDisableClient(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("DisableClient", mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
 		res, err := req.make()
@@ -2291,12 +2291,12 @@ func TestDeleteClient(t *testing.T) {
 		}
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.UsersKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
 			Subject:     validID,
-			Permission:  policy.AdminPermission,
-			ObjectType:  policy.PlatformType,
-			Object:      policy.MagistralaObject,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.PlatformType,
+			Object:      policies.MagistralaObject,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		repoCall := svc.On("DeleteClient", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		res, err := req.make()
@@ -2646,11 +2646,11 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		}
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.TokenKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.TokenKind,
 			Subject:     tc.token,
-			Permission:  mgauth.SwitchToPermission(policy.ViewPermission),
-			ObjectType:  policy.GroupType,
+			Permission:  mgauth.SwitchToPermission(policies.ViewPermission),
+			ObjectType:  policies.GroupType,
 			Object:      tc.groupID,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("ListMembers", mock.Anything, pauth.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(
@@ -3020,11 +3020,11 @@ func TestListUsersByChannelID(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.TokenKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.TokenKind,
 			Subject:     tc.token,
-			Permission:  mgauth.SwitchToPermission(policy.ViewPermission),
-			ObjectType:  policy.GroupType,
+			Permission:  mgauth.SwitchToPermission(policies.ViewPermission),
+			ObjectType:  policies.GroupType,
 			Object:      tc.channelID,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("ListMembers", mock.Anything, pauth.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(
@@ -3401,11 +3401,11 @@ func TestListUsersByDomainID(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.TokenKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.TokenKind,
 			Subject:     tc.token,
-			Permission:  mgauth.SwitchToPermission(policy.MembershipPermission),
-			ObjectType:  policy.DomainType,
+			Permission:  mgauth.SwitchToPermission(policies.MembershipPermission),
+			ObjectType:  policies.DomainType,
 			Object:      tc.domainID,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("ListMembers", mock.Anything, pauth.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(
@@ -3751,11 +3751,11 @@ func TestListUsersByThingID(t *testing.T) {
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{
-			SubjectType: policy.UserType,
-			SubjectKind: policy.TokenKind,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.TokenKind,
 			Subject:     tc.token,
-			Permission:  policy.ViewPermission,
-			ObjectType:  policy.ThingType,
+			Permission:  policies.ViewPermission,
+			ObjectType:  policies.ThingType,
 			Object:      tc.thingID,
 		}).Return(tc.authorizeRes, tc.authorizeErr)
 		svcCall := svc.On("ListMembers", mock.Anything, pauth.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(

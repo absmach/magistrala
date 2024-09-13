@@ -23,7 +23,7 @@ import (
 	apostgres "github.com/absmach/magistrala/auth/postgres"
 	"github.com/absmach/magistrala/auth/spicedb"
 	"github.com/absmach/magistrala/auth/tracing"
-	mgpolicy "github.com/absmach/magistrala/internal/policy"
+	mgpolicies "github.com/absmach/magistrala/internal/policies"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/postgres"
@@ -213,7 +213,7 @@ func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg confi
 	pa := spicedb.NewPolicyAgent(spicedbClient, logger)
 	idProvider := uuid.New()
 
-	policyClient := mgpolicy.NewPolicyClient(spicedbClient, logger)
+	policyClient := mgpolicies.NewPolicyClient(spicedbClient, logger)
 
 	t := jwt.New([]byte(cfg.SecretKey))
 

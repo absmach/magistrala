@@ -23,7 +23,7 @@ import (
 	gevents "github.com/absmach/magistrala/internal/groups/events"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
-	mgpolicy "github.com/absmach/magistrala/internal/policy"
+	mgpolicy "github.com/absmach/magistrala/internal/policies"
 	mglog "github.com/absmach/magistrala/logger"
 	authclient "github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
@@ -32,7 +32,7 @@ import (
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/oauth2"
 	googleoauth "github.com/absmach/magistrala/pkg/oauth2/google"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
@@ -236,7 +236,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authClient authclient.AuthClient, authPolicyClient magistrala.PolicyServiceClient, policyClient policy.PolicyClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (users.Service, groups.Service, error) {
+func newService(ctx context.Context, authClient authclient.AuthClient, authPolicyClient magistrala.PolicyServiceClient, policyClient policies.PolicyClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := clientspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -324,7 +324,7 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 	return client.ID, nil
 }
 
-func createAdminPolicy(ctx context.Context, clientID string, authClient authclient.AuthClient, policyService policy.PolicyClient) error {
+func createAdminPolicy(ctx context.Context, clientID string, authClient authclient.AuthClient, policyService policies.PolicyClient) error {
 	res, err := authClient.Authorize(ctx, &magistrala.AuthorizeReq{
 		SubjectType: authSvc.UserType,
 		Subject:     clientID,
@@ -333,7 +333,7 @@ func createAdminPolicy(ctx context.Context, clientID string, authClient authclie
 		ObjectType:  authSvc.PlatformType,
 	})
 	if err != nil || !res.Authorized {
-		err := policyService.AddPolicy(ctx, policy.PolicyReq{
+		err := policyService.AddPolicy(ctx, policies.PolicyReq{
 			SubjectType: authSvc.UserType,
 			Subject:     clientID,
 			Relation:    authSvc.AdministratorRelation,
@@ -347,7 +347,7 @@ func createAdminPolicy(ctx context.Context, clientID string, authClient authclie
 	return nil
 }
 
-func newPolicyClient(cfg config, logger *slog.Logger) (policy.PolicyClient, error) {
+func newPolicyClient(cfg config, logger *slog.Logger) (policies.PolicyClient, error) {
 	client, err := authzed.NewClientWithExperimentalAPIs(
 		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

@@ -15,8 +15,8 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	policysvc "github.com/absmach/magistrala/pkg/policy"
-	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
+	policysvc "github.com/absmach/magistrala/pkg/policies"
+	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/users"
 	"github.com/absmach/magistrala/users/hasher"
@@ -52,13 +52,13 @@ var (
 
 func newService() (users.Service, *mocks.Repository, *policymocks.PolicyClient, *mocks.Emailer) {
 	cRepo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
+	policies := new(policymocks.PolicyClient)
 	e := new(mocks.Emailer)
-	return users.NewService(cRepo, policy, e, phasher, idProvider), cRepo, policy, e
+	return users.NewService(cRepo, policies, e, phasher, idProvider), cRepo, policies, e
 }
 
 func TestRegisterClient(t *testing.T) {
-	svc, cRepo, policy, _ := newService()
+	svc, cRepo, policies, _ := newService()
 
 	cases := []struct {
 		desc                      string
@@ -205,8 +205,8 @@ func TestRegisterClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		policyCall := policy.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponseErr)
-		policyCall1 := policy.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponseErr)
+		policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponseErr)
+		policyCall1 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponseErr)
 		repoCall := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.client, tc.saveErr)
 		expected, err := svc.RegisterClient(context.Background(), auth.Session{}, tc.client, true)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -225,7 +225,7 @@ func TestRegisterClient(t *testing.T) {
 		policyCall1.Unset()
 	}
 
-	svc, cRepo, policy, _ = newService()
+	svc, cRepo, policies, _ = newService()
 
 	cases2 := []struct {
 		desc                      string
@@ -253,8 +253,8 @@ func TestRegisterClient(t *testing.T) {
 	}
 	for _, tc := range cases2 {
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
-		policyCall := policy.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponseErr)
-		policyCall1 := policy.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponseErr)
+		policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponseErr)
+		policyCall1 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponseErr)
 		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.client, tc.saveErr)
 		expected, err := svc.RegisterClient(context.Background(), auth.Session{UserID: validID}, tc.client, false)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -635,7 +635,7 @@ func TestUpdateClientTags(t *testing.T) {
 }
 
 func TestUpdateClientRole(t *testing.T) {
-	svc, cRepo, policy, _ := newService()
+	svc, cRepo, policies, _ := newService()
 
 	client2 := client
 	client.Role = mgclients.AdminRole
@@ -667,7 +667,7 @@ func TestUpdateClientRole(t *testing.T) {
 			err:                svcerr.ErrAuthorization,
 		},
 		{
-			desc:         "update client role with failed to add policy",
+			desc:         "update client role with failed to add policies",
 			client:       client,
 			session:      auth.Session{UserID: validID, SuperAdmin: true},
 			addPolicyErr: errors.ErrMalformedEntity,
@@ -681,14 +681,14 @@ func TestUpdateClientRole(t *testing.T) {
 			err:                nil,
 		},
 		{
-			desc:            "update client role to user role with failed to delete policy",
+			desc:            "update client role to user role with failed to delete policies",
 			client:          client2,
 			session:         auth.Session{UserID: validID, SuperAdmin: true},
 			deletePolicyErr: svcerr.ErrAuthorization,
 			err:             svcerr.ErrAuthorization,
 		},
 		{
-			desc:            "update client role to user role with failed to delete policy with error",
+			desc:            "update client role to user role with failed to delete policies with error",
 			client:          client2,
 			session:         auth.Session{UserID: validID, SuperAdmin: true},
 			deletePolicyErr: svcerr.ErrMalformedEntity,
@@ -714,8 +714,8 @@ func TestUpdateClientRole(t *testing.T) {
 	for _, tc := range cases {
 
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
-		policyCall := policy.On("AddPolicy", context.Background(), mock.Anything).Return(tc.addPolicyErr)
-		policyCall1 := policy.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyErr)
+		policyCall := policies.On("AddPolicy", context.Background(), mock.Anything).Return(tc.addPolicyErr)
+		policyCall1 := policies.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyErr)
 		repoCall1 := cRepo.On("UpdateRole", context.Background(), mock.Anything).Return(tc.updateRoleResponse, tc.updateRoleErr)
 
 		updatedClient, err := svc.UpdateClientRole(context.Background(), tc.session, tc.client)
@@ -1081,7 +1081,7 @@ func TestDeleteClient(t *testing.T) {
 }
 
 func TestListMembers(t *testing.T) {
-	svc, cRepo, policy, _ := newService()
+	svc, cRepo, policies, _ := newService()
 
 	validPolicy := fmt.Sprintf("%s_%s", validID, client.ID)
 	permissionsClient := basicClient
@@ -1359,9 +1359,9 @@ func TestListMembers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		policyCall := policy.On("ListAllSubjects", context.Background(), tc.listAllSubjectsReq).Return(tc.listAllSubjectsResponse, tc.listAllSubjectsErr)
+		policyCall := policies.On("ListAllSubjects", context.Background(), tc.listAllSubjectsReq).Return(tc.listAllSubjectsResponse, tc.listAllSubjectsErr)
 		repoCall := cRepo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.retrieveAllResponse, tc.retrieveAllErr)
-		policyCall1 := policy.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionErr)
+		policyCall1 := policies.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tc.listPermissionsResponse, tc.listPermissionErr)
 		page, err := svc.ListMembers(context.Background(), auth.Session{}, tc.objectKind, tc.objectID, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
@@ -1656,7 +1656,7 @@ func TestViewProfile(t *testing.T) {
 }
 
 func TestOAuthCallback(t *testing.T) {
-	svc, cRepo, policy, _ := newService()
+	svc, cRepo, policies, _ := newService()
 
 	cases := []struct {
 		desc                       string
@@ -1734,7 +1734,7 @@ func TestOAuthCallback(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
 		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.saveResponse, tc.saveErr)
-		policyCall := policy.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
+		policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
 		_, err := svc.OAuthCallback(context.Background(), tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)

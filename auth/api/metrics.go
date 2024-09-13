@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/go-kit/kit/metrics"
 )
 
@@ -91,7 +91,7 @@ func (ms *metricsMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return ms.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
+func (ms *metricsMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (policies.Permissions, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "retrieve_domain_permissions").Add(1)
 		ms.latency.With("method", "retrieve_domain_permissions").Observe(time.Since(begin).Seconds())

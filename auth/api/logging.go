@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 var _ auth.Service = (*loggingMiddleware)(nil)
@@ -160,7 +160,7 @@ func (lm *loggingMiddleware) RetrieveDomain(ctx context.Context, token, id strin
 	return lm.svc.RetrieveDomain(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (permissions policy.Permissions, err error) {
+func (lm *loggingMiddleware) RetrieveDomainPermissions(ctx context.Context, token, id string) (permissions policies.Permissions, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),

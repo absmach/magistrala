@@ -12,7 +12,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 const (
@@ -79,7 +79,7 @@ type service struct {
 	domains            DomainsRepository
 	idProvider         magistrala.IDProvider
 	agent              PolicyAgent
-	policy             policy.PolicyClient
+	policies           policies.PolicyClient
 	tokenizer          Tokenizer
 	loginDuration      time.Duration
 	refreshDuration    time.Duration
@@ -87,14 +87,14 @@ type service struct {
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, policyClient policy.PolicyClient, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
+func New(keys KeyRepository, domains DomainsRepository, idp magistrala.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent, policyClient policies.PolicyClient, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
 	return &service{
 		tokenizer:          tokenizer,
 		domains:            domains,
 		keys:               keys,
 		idProvider:         idp,
 		agent:              policyAgent,
-		policy:             policyClient,
+		policies:           policyClient,
 		loginDuration:      loginDuration,
 		refreshDuration:    refreshDuration,
 		invitationDuration: invitationDuration,
@@ -497,7 +497,7 @@ func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain
 	return domain, nil
 }
 
-func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
+func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id string) (policies.Permissions, error) {
 	res, err := svc.Identify(ctx, token)
 	if err != nil {
 		return []string{}, err
@@ -514,7 +514,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 		return []string{}, err
 	}
 
-	lp, err := svc.policy.ListPermissions(ctx, policy.PolicyReq{
+	lp, err := svc.policies.ListPermissions(ctx, policies.PolicyReq{
 		SubjectType: UserType,
 		Subject:     res.Subject,
 		Object:      id,
@@ -661,7 +661,7 @@ func (svc service) UnassignUser(ctx context.Context, token, id, userID string) e
 		}
 	}
 
-	if err := svc.policy.DeletePolicyFilter(ctx, policy.PolicyReq{
+	if err := svc.policies.DeletePolicyFilter(ctx, policies.PolicyReq{
 		Subject:     EncodeDomainUserID(id, userID),
 		SubjectType: UserType,
 	}); err != nil {
@@ -710,11 +710,11 @@ func (svc service) ListUserDomains(ctx context.Context, token, userID string, p 
 }
 
 func (svc service) addDomainPolicies(ctx context.Context, domainID, relation string, userIDs ...string) (err error) {
-	var prs []policy.PolicyReq
+	var prs []policies.PolicyReq
 	var pcs []Policy
 
 	for _, userID := range userIDs {
-		prs = append(prs, policy.PolicyReq{
+		prs = append(prs, policies.PolicyReq{
 			Subject:     EncodeDomainUserID(domainID, userID),
 			SubjectType: UserType,
 			SubjectKind: UsersKind,
@@ -730,12 +730,12 @@ func (svc service) addDomainPolicies(ctx context.Context, domainID, relation str
 			ObjectID:    domainID,
 		})
 	}
-	if err := svc.policy.AddPolicies(ctx, prs); err != nil {
+	if err := svc.policies.AddPolicies(ctx, prs); err != nil {
 		return errors.Wrap(errAddPolicies, err)
 	}
 	defer func() {
 		if err != nil {
-			if errDel := svc.policy.DeletePolicies(ctx, prs); errDel != nil {
+			if errDel := svc.policies.DeletePolicies(ctx, prs); errDel != nil {
 				err = errors.Wrap(err, errors.Wrap(errRollbackPolicy, errDel))
 			}
 		}
@@ -748,7 +748,7 @@ func (svc service) addDomainPolicies(ctx context.Context, domainID, relation str
 }
 
 func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, relation string) (err error) {
-	prs := []policy.PolicyReq{
+	prs := []policies.PolicyReq{
 		{
 			Subject:     EncodeDomainUserID(domainID, userID),
 			SubjectType: UserType,
@@ -765,12 +765,12 @@ func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, rel
 			ObjectType:  DomainType,
 		},
 	}
-	if err := svc.policy.AddPolicies(ctx, prs); err != nil {
+	if err := svc.policies.AddPolicies(ctx, prs); err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
-			if errDel := svc.policy.DeletePolicies(ctx, prs); errDel != nil {
+			if errDel := svc.policies.DeletePolicies(ctx, prs); errDel != nil {
 				err = errors.Wrap(err, errors.Wrap(errRollbackPolicy, errDel))
 			}
 		}
@@ -790,7 +790,7 @@ func (svc service) createDomainPolicy(ctx context.Context, userID, domainID, rel
 
 func (svc service) createDomainPolicyRollback(ctx context.Context, userID, domainID, relation string) error {
 	var err error
-	prs := []policy.PolicyReq{
+	prs := []policies.PolicyReq{
 		{
 			Subject:     EncodeDomainUserID(domainID, userID),
 			SubjectType: UserType,
@@ -807,7 +807,7 @@ func (svc service) createDomainPolicyRollback(ctx context.Context, userID, domai
 			ObjectType:  DomainType,
 		},
 	}
-	if errPolicy := svc.policy.DeletePolicies(ctx, prs); errPolicy != nil {
+	if errPolicy := svc.policies.DeletePolicies(ctx, prs); errPolicy != nil {
 		err = errors.Wrap(errRemovePolicyEngine, errPolicy)
 	}
 	errPolicyCopy := svc.domains.DeletePolicies(ctx, Policy{
@@ -866,20 +866,20 @@ func (svc service) DeleteUserPolicies(ctx context.Context, id string) (err error
 	}
 
 	for _, domain := range domainsPage.Domains {
-		req := policy.PolicyReq{
+		req := policies.PolicyReq{
 			Subject:     EncodeDomainUserID(domain.ID, id),
 			SubjectType: UserType,
 		}
-		if err := svc.policy.DeletePolicyFilter(ctx, req); err != nil {
+		if err := svc.policies.DeletePolicyFilter(ctx, req); err != nil {
 			return err
 		}
 	}
 
-	req := policy.PolicyReq{
+	req := policies.PolicyReq{
 		Subject:     id,
 		SubjectType: UserType,
 	}
-	if err := svc.policy.DeletePolicyFilter(ctx, req); err != nil {
+	if err := svc.policies.DeletePolicyFilter(ctx, req); err != nil {
 		return err
 	}
 

@@ -7,7 +7,7 @@ package mocks
 import (
 	context "context"
 
-	policy "github.com/absmach/magistrala/pkg/policy"
+	policies "github.com/absmach/magistrala/pkg/policies"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -17,7 +17,7 @@ type PolicyClient struct {
 }
 
 // AddPolicies provides a mock function with given fields: ctx, prs
-func (_m *PolicyClient) AddPolicies(ctx context.Context, prs []policy.PolicyReq) error {
+func (_m *PolicyClient) AddPolicies(ctx context.Context, prs []policies.PolicyReq) error {
 	ret := _m.Called(ctx, prs)
 
 	if len(ret) == 0 {
@@ -25,7 +25,7 @@ func (_m *PolicyClient) AddPolicies(ctx context.Context, prs []policy.PolicyReq)
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []policies.PolicyReq) error); ok {
 		r0 = rf(ctx, prs)
 	} else {
 		r0 = ret.Error(0)
@@ -35,7 +35,7 @@ func (_m *PolicyClient) AddPolicies(ctx context.Context, prs []policy.PolicyReq)
 }
 
 // AddPolicy provides a mock function with given fields: ctx, pr
-func (_m *PolicyClient) AddPolicy(ctx context.Context, pr policy.PolicyReq) error {
+func (_m *PolicyClient) AddPolicy(ctx context.Context, pr policies.PolicyReq) error {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
@@ -43,7 +43,7 @@ func (_m *PolicyClient) AddPolicy(ctx context.Context, pr policy.PolicyReq) erro
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) error); ok {
 		r0 = rf(ctx, pr)
 	} else {
 		r0 = ret.Error(0)
@@ -53,7 +53,7 @@ func (_m *PolicyClient) AddPolicy(ctx context.Context, pr policy.PolicyReq) erro
 }
 
 // CountObjects provides a mock function with given fields: ctx, pr
-func (_m *PolicyClient) CountObjects(ctx context.Context, pr policy.PolicyReq) (uint64, error) {
+func (_m *PolicyClient) CountObjects(ctx context.Context, pr policies.PolicyReq) (uint64, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
@@ -62,16 +62,16 @@ func (_m *PolicyClient) CountObjects(ctx context.Context, pr policy.PolicyReq) (
 
 	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) (uint64, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) (uint64, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) uint64); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) uint64); ok {
 		r0 = rf(ctx, pr)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, policies.PolicyReq) error); ok {
 		r1 = rf(ctx, pr)
 	} else {
 		r1 = ret.Error(1)
@@ -81,7 +81,7 @@ func (_m *PolicyClient) CountObjects(ctx context.Context, pr policy.PolicyReq) (
 }
 
 // CountSubjects provides a mock function with given fields: ctx, pr
-func (_m *PolicyClient) CountSubjects(ctx context.Context, pr policy.PolicyReq) (uint64, error) {
+func (_m *PolicyClient) CountSubjects(ctx context.Context, pr policies.PolicyReq) (uint64, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
@@ -90,16 +90,16 @@ func (_m *PolicyClient) CountSubjects(ctx context.Context, pr policy.PolicyReq) 
 
 	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) (uint64, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) (uint64, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) uint64); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) uint64); ok {
 		r0 = rf(ctx, pr)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, policies.PolicyReq) error); ok {
 		r1 = rf(ctx, pr)
 	} else {
 		r1 = ret.Error(1)
@@ -109,7 +109,7 @@ func (_m *PolicyClient) CountSubjects(ctx context.Context, pr policy.PolicyReq) 
 }
 
 // DeletePolicies provides a mock function with given fields: ctx, prs
-func (_m *PolicyClient) DeletePolicies(ctx context.Context, prs []policy.PolicyReq) error {
+func (_m *PolicyClient) DeletePolicies(ctx context.Context, prs []policies.PolicyReq) error {
 	ret := _m.Called(ctx, prs)
 
 	if len(ret) == 0 {
@@ -117,7 +117,7 @@ func (_m *PolicyClient) DeletePolicies(ctx context.Context, prs []policy.PolicyR
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []policies.PolicyReq) error); ok {
 		r0 = rf(ctx, prs)
 	} else {
 		r0 = ret.Error(0)
@@ -127,7 +127,7 @@ func (_m *PolicyClient) DeletePolicies(ctx context.Context, prs []policy.PolicyR
 }
 
 // DeletePolicyFilter provides a mock function with given fields: ctx, pr
-func (_m *PolicyClient) DeletePolicyFilter(ctx context.Context, pr policy.PolicyReq) error {
+func (_m *PolicyClient) DeletePolicyFilter(ctx context.Context, pr policies.PolicyReq) error {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
@@ -135,7 +135,7 @@ func (_m *PolicyClient) DeletePolicyFilter(ctx context.Context, pr policy.Policy
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) error); ok {
 		r0 = rf(ctx, pr)
 	} else {
 		r0 = ret.Error(0)
@@ -145,25 +145,25 @@ func (_m *PolicyClient) DeletePolicyFilter(ctx context.Context, pr policy.Policy
 }
 
 // ListAllObjects provides a mock function with given fields: ctx, pr
-func (_m *PolicyClient) ListAllObjects(ctx context.Context, pr policy.PolicyReq) (policy.PolicyPage, error) {
+func (_m *PolicyClient) ListAllObjects(ctx context.Context, pr policies.PolicyReq) (policies.PolicyPage, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAllObjects")
 	}
 
-	var r0 policy.PolicyPage
+	var r0 policies.PolicyPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) (policy.PolicyPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) (policies.PolicyPage, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) policy.PolicyPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) policies.PolicyPage); ok {
 		r0 = rf(ctx, pr)
 	} else {
-		r0 = ret.Get(0).(policy.PolicyPage)
+		r0 = ret.Get(0).(policies.PolicyPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, policies.PolicyReq) error); ok {
 		r1 = rf(ctx, pr)
 	} else {
 		r1 = ret.Error(1)
@@ -173,25 +173,25 @@ func (_m *PolicyClient) ListAllObjects(ctx context.Context, pr policy.PolicyReq)
 }
 
 // ListAllSubjects provides a mock function with given fields: ctx, pr
-func (_m *PolicyClient) ListAllSubjects(ctx context.Context, pr policy.PolicyReq) (policy.PolicyPage, error) {
+func (_m *PolicyClient) ListAllSubjects(ctx context.Context, pr policies.PolicyReq) (policies.PolicyPage, error) {
 	ret := _m.Called(ctx, pr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAllSubjects")
 	}
 
-	var r0 policy.PolicyPage
+	var r0 policies.PolicyPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) (policy.PolicyPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) (policies.PolicyPage, error)); ok {
 		return rf(ctx, pr)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq) policy.PolicyPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq) policies.PolicyPage); ok {
 		r0 = rf(ctx, pr)
 	} else {
-		r0 = ret.Get(0).(policy.PolicyPage)
+		r0 = ret.Get(0).(policies.PolicyPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, policy.PolicyReq) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, policies.PolicyReq) error); ok {
 		r1 = rf(ctx, pr)
 	} else {
 		r1 = ret.Error(1)
@@ -201,25 +201,25 @@ func (_m *PolicyClient) ListAllSubjects(ctx context.Context, pr policy.PolicyReq
 }
 
 // ListObjects provides a mock function with given fields: ctx, pr, nextPageToken, limit
-func (_m *PolicyClient) ListObjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) (policy.PolicyPage, error) {
+func (_m *PolicyClient) ListObjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) (policies.PolicyPage, error) {
 	ret := _m.Called(ctx, pr, nextPageToken, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListObjects")
 	}
 
-	var r0 policy.PolicyPage
+	var r0 policies.PolicyPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq, string, uint64) (policy.PolicyPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq, string, uint64) (policies.PolicyPage, error)); ok {
 		return rf(ctx, pr, nextPageToken, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq, string, uint64) policy.PolicyPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq, string, uint64) policies.PolicyPage); ok {
 		r0 = rf(ctx, pr, nextPageToken, limit)
 	} else {
-		r0 = ret.Get(0).(policy.PolicyPage)
+		r0 = ret.Get(0).(policies.PolicyPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, policy.PolicyReq, string, uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, policies.PolicyReq, string, uint64) error); ok {
 		r1 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r1 = ret.Error(1)
@@ -229,27 +229,27 @@ func (_m *PolicyClient) ListObjects(ctx context.Context, pr policy.PolicyReq, ne
 }
 
 // ListPermissions provides a mock function with given fields: ctx, pr, permissionsFilter
-func (_m *PolicyClient) ListPermissions(ctx context.Context, pr policy.PolicyReq, permissionsFilter []string) (policy.Permissions, error) {
+func (_m *PolicyClient) ListPermissions(ctx context.Context, pr policies.PolicyReq, permissionsFilter []string) (policies.Permissions, error) {
 	ret := _m.Called(ctx, pr, permissionsFilter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPermissions")
 	}
 
-	var r0 policy.Permissions
+	var r0 policies.Permissions
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq, []string) (policy.Permissions, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq, []string) (policies.Permissions, error)); ok {
 		return rf(ctx, pr, permissionsFilter)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq, []string) policy.Permissions); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq, []string) policies.Permissions); ok {
 		r0 = rf(ctx, pr, permissionsFilter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(policy.Permissions)
+			r0 = ret.Get(0).(policies.Permissions)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, policy.PolicyReq, []string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, policies.PolicyReq, []string) error); ok {
 		r1 = rf(ctx, pr, permissionsFilter)
 	} else {
 		r1 = ret.Error(1)
@@ -259,25 +259,25 @@ func (_m *PolicyClient) ListPermissions(ctx context.Context, pr policy.PolicyReq
 }
 
 // ListSubjects provides a mock function with given fields: ctx, pr, nextPageToken, limit
-func (_m *PolicyClient) ListSubjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) (policy.PolicyPage, error) {
+func (_m *PolicyClient) ListSubjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) (policies.PolicyPage, error) {
 	ret := _m.Called(ctx, pr, nextPageToken, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListSubjects")
 	}
 
-	var r0 policy.PolicyPage
+	var r0 policies.PolicyPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq, string, uint64) (policy.PolicyPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq, string, uint64) (policies.PolicyPage, error)); ok {
 		return rf(ctx, pr, nextPageToken, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, policy.PolicyReq, string, uint64) policy.PolicyPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, policies.PolicyReq, string, uint64) policies.PolicyPage); ok {
 		r0 = rf(ctx, pr, nextPageToken, limit)
 	} else {
-		r0 = ret.Get(0).(policy.PolicyPage)
+		r0 = ret.Get(0).(policies.PolicyPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, policy.PolicyReq, string, uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, policies.PolicyReq, string, uint64) error); ok {
 		r1 = rf(ctx, pr, nextPageToken, limit)
 	} else {
 		r1 = ret.Error(1)

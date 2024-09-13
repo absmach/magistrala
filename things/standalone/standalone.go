@@ -9,13 +9,13 @@ import (
 	"github.com/absmach/magistrala"
 	authclient "github.com/absmach/magistrala/pkg/auth"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"google.golang.org/grpc"
 )
 
 var (
 	_ authclient.AuthClient = (*singleUserAuth)(nil)
-	_ policy.PolicyClient   = (*singleUserPolicyClient)(nil)
+	_ policies.PolicyClient   = (*singleUserPolicyClient)(nil)
 )
 
 type singleUserAuth struct {
@@ -64,55 +64,55 @@ type singleUserPolicyClient struct {
 	token string
 }
 
-// NewPolicyClient creates single user policy client for constrained environments.
-func NewPolicyClient(id, token string) policy.PolicyClient {
+// NewPolicyClient creates single user policies client for constrained environments.
+func NewPolicyClient(id, token string) policies.PolicyClient {
 	return singleUserPolicyClient{
 		id:    id,
 		token: token,
 	}
 }
 
-func (repo singleUserPolicyClient) AddPolicy(ctx context.Context, pr policy.PolicyReq) error {
+func (repo singleUserPolicyClient) AddPolicy(ctx context.Context, pr policies.PolicyReq) error {
 	return nil
 }
 
-func (repo singleUserPolicyClient) AddPolicies(ctx context.Context, prs []policy.PolicyReq) error {
+func (repo singleUserPolicyClient) AddPolicies(ctx context.Context, prs []policies.PolicyReq) error {
 	return nil
 }
 
-func (repo singleUserPolicyClient) DeletePolicyFilter(ctx context.Context, pr policy.PolicyReq) error {
+func (repo singleUserPolicyClient) DeletePolicyFilter(ctx context.Context, pr policies.PolicyReq) error {
 	return nil
 }
 
-func (repo singleUserPolicyClient) DeletePolicies(ctx context.Context, prs []policy.PolicyReq) error {
+func (repo singleUserPolicyClient) DeletePolicies(ctx context.Context, prs []policies.PolicyReq) error {
 	return nil
 }
 
-func (repo singleUserPolicyClient) ListObjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) (policy.PolicyPage, error) {
-	return policy.PolicyPage{}, nil
+func (repo singleUserPolicyClient) ListObjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) (policies.PolicyPage, error) {
+	return policies.PolicyPage{}, nil
 }
 
-func (repo singleUserPolicyClient) ListAllObjects(ctx context.Context, pr policy.PolicyReq) (policy.PolicyPage, error) {
-	return policy.PolicyPage{}, nil
+func (repo singleUserPolicyClient) ListAllObjects(ctx context.Context, pr policies.PolicyReq) (policies.PolicyPage, error) {
+	return policies.PolicyPage{}, nil
 }
 
-func (repo singleUserPolicyClient) CountObjects(ctx context.Context, pr policy.PolicyReq) (uint64, error) {
+func (repo singleUserPolicyClient) CountObjects(ctx context.Context, pr policies.PolicyReq) (uint64, error) {
 	return 0, nil
 }
 
-func (repo singleUserPolicyClient) ListSubjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) (policy.PolicyPage, error) {
-	return policy.PolicyPage{}, nil
+func (repo singleUserPolicyClient) ListSubjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) (policies.PolicyPage, error) {
+	return policies.PolicyPage{}, nil
 }
 
-func (repo singleUserPolicyClient) ListAllSubjects(ctx context.Context, pr policy.PolicyReq) (policy.PolicyPage, error) {
-	return policy.PolicyPage{}, nil
+func (repo singleUserPolicyClient) ListAllSubjects(ctx context.Context, pr policies.PolicyReq) (policies.PolicyPage, error) {
+	return policies.PolicyPage{}, nil
 }
 
-func (repo singleUserPolicyClient) CountSubjects(ctx context.Context, pr policy.PolicyReq) (uint64, error) {
+func (repo singleUserPolicyClient) CountSubjects(ctx context.Context, pr policies.PolicyReq) (uint64, error) {
 	return 0, nil
 }
 
-func (repo singleUserPolicyClient) ListPermissions(ctx context.Context, pr policy.PolicyReq, permissionsFilter []string) (policy.Permissions, error) {
+func (repo singleUserPolicyClient) ListPermissions(ctx context.Context, pr policies.PolicyReq, permissionsFilter []string) (policies.Permissions, error) {
 	return nil, nil
 }
 

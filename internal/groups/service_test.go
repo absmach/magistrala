@@ -21,8 +21,8 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
-	policysvc "github.com/absmach/magistrala/pkg/policy"
-	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
+	policysvc "github.com/absmach/magistrala/pkg/policies"
+	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -50,8 +50,8 @@ var (
 
 func TestCreateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc         string
@@ -143,8 +143,8 @@ func TestCreateGroup(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("Save", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
-			policyCall := policy.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolErr)
-			policyCall1 := policy.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolErr)
+			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPolErr)
+			policyCall1 := policies.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePolErr)
 			got, err := svc.CreateGroup(context.Background(), tc.session, tc.kind, tc.group)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -164,8 +164,8 @@ func TestCreateGroup(t *testing.T) {
 
 func TestViewGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc     string
@@ -204,8 +204,8 @@ func TestViewGroup(t *testing.T) {
 
 func TestViewGroupPerms(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc     string
@@ -242,7 +242,7 @@ func TestViewGroupPerms(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			policyCall := policy.On("ListPermissions", context.Background(), policysvc.PolicyReq{
+			policyCall := policies.On("ListPermissions", context.Background(), policysvc.PolicyReq{
 				SubjectType: policysvc.UserType,
 				Subject:     validID,
 				Object:      tc.id,
@@ -260,8 +260,8 @@ func TestViewGroupPerms(t *testing.T) {
 
 func TestUpdateGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc     string
@@ -309,8 +309,8 @@ func TestUpdateGroup(t *testing.T) {
 
 func TestEnableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc         string
@@ -369,8 +369,8 @@ func TestEnableGroup(t *testing.T) {
 
 func TestDisableGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc         string
@@ -429,8 +429,8 @@ func TestDisableGroup(t *testing.T) {
 
 func TestListMembers(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc            string
@@ -496,13 +496,13 @@ func TestListMembers(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			policyCall := policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+			policyCall := policies.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
 				SubjectType: policysvc.GroupType,
 				Subject:     tc.groupID,
 				Relation:    policysvc.GroupRelation,
 				ObjectType:  policysvc.ThingType,
 			}).Return(tc.listObjectResp, tc.listObjectErr)
-			policyCall1 := policy.On("ListAllSubjects", context.Background(), policysvc.PolicyReq{
+			policyCall1 := policies.On("ListAllSubjects", context.Background(), policysvc.PolicyReq{
 				SubjectType: policysvc.UserType,
 				Permission:  tc.permission,
 				Object:      tc.groupID,
@@ -521,8 +521,8 @@ func TestListMembers(t *testing.T) {
 
 func TestListGroups(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc                 string
@@ -842,52 +842,52 @@ func TestListGroups(t *testing.T) {
 			policyCall1 := &mock.Call{}
 			switch tc.memberKind {
 			case policysvc.ThingsKind:
-				policyCall = policy.On("ListAllSubjects", context.Background(), policysvc.PolicyReq{
+				policyCall = policies.On("ListAllSubjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.GroupType,
 					Permission:  policysvc.GroupRelation,
 					ObjectType:  policysvc.ThingType,
 					Object:      tc.memberID,
 				}).Return(tc.listSubjectResp, tc.listSubjectErr)
-				policyCall1 = policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+				policyCall1 = policies.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.UserType,
 					Subject:     validID,
 					Permission:  tc.page.Permission,
 					ObjectType:  policysvc.GroupType,
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			case policysvc.GroupsKind:
-				policyCall = policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+				policyCall = policies.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.GroupType,
 					Subject:     tc.memberID,
 					Permission:  policysvc.ParentGroupRelation,
 					ObjectType:  policysvc.GroupType,
 				}).Return(tc.listObjectResp, tc.listObjectErr)
-				policyCall1 = policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+				policyCall1 = policies.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.UserType,
 					Subject:     validID,
 					Permission:  tc.page.Permission,
 					ObjectType:  policysvc.GroupType,
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			case policysvc.ChannelsKind:
-				policyCall = policy.On("ListAllSubjects", context.Background(), policysvc.PolicyReq{
+				policyCall = policies.On("ListAllSubjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.GroupType,
 					Permission:  policysvc.ParentGroupRelation,
 					ObjectType:  policysvc.GroupType,
 					Object:      tc.memberID,
 				}).Return(tc.listSubjectResp, tc.listSubjectErr)
-				policyCall1 = policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+				policyCall1 = policies.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.UserType,
 					Subject:     validID,
 					Permission:  tc.page.Permission,
 					ObjectType:  policysvc.GroupType,
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			case policysvc.UsersKind:
-				policyCall = policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+				policyCall = policies.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.UserType,
 					Subject:     mgauth.EncodeDomainUserID(validID, tc.memberID),
 					Permission:  tc.page.Permission,
 					ObjectType:  policysvc.GroupType,
 				}).Return(tc.listObjectResp, tc.listObjectErr)
-				policyCall1 = policy.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
+				policyCall1 = policies.On("ListAllObjects", context.Background(), policysvc.PolicyReq{
 					SubjectType: policysvc.UserType,
 					Subject:     validID,
 					Permission:  tc.page.Permission,
@@ -895,7 +895,7 @@ func TestListGroups(t *testing.T) {
 				}).Return(tc.listObjectFilterResp, tc.listObjectFilterErr)
 			}
 			repoCall := repo.On("RetrieveByIDs", context.Background(), mock.Anything, mock.Anything).Return(tc.repoResp, tc.repoErr)
-			policyCall2 := policy.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tc.listPermResp, tc.listPermErr)
+			policyCall2 := policies.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tc.listPermResp, tc.listPermErr)
 			got, err := svc.ListGroups(context.Background(), tc.session, tc.memberKind, tc.memberID, tc.page)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
@@ -914,8 +914,8 @@ func TestListGroups(t *testing.T) {
 
 func TestAssign(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc                    string
@@ -1050,7 +1050,7 @@ func TestAssign(t *testing.T) {
 			err:                repoerr.ErrConflict,
 		},
 		{
-			desc:       "unsuccessfully with groups kind due to failed to assign parent and delete policy",
+			desc:       "unsuccessfully with groups kind due to failed to assign parent and delete policies",
 			session:    auth.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
 			groupID:    testsutil.GenerateUUID(t),
 			relation:   policysvc.ContributorRelation,
@@ -1093,11 +1093,11 @@ func TestAssign(t *testing.T) {
 			retrieveByIDsCall := &mock.Call{}
 			deletePoliciesCall := &mock.Call{}
 			assignParentCall := &mock.Call{}
-			policies := []policysvc.PolicyReq{}
+			policyList := []policysvc.PolicyReq{}
 			switch tc.memberKind {
 			case policysvc.ThingsKind:
 				for _, memberID := range tc.memberIDs {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.GroupType,
 						SubjectKind: policysvc.ChannelsKind,
@@ -1110,7 +1110,7 @@ func TestAssign(t *testing.T) {
 			case policysvc.GroupsKind:
 				retrieveByIDsCall = repo.On("RetrieveByIDs", context.Background(), mggroups.Page{PageMeta: mggroups.PageMeta{Limit: 1<<63 - 1}}, mock.Anything).Return(tc.repoResp, tc.repoErr)
 				for _, group := range tc.repoResp.Groups {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.GroupType,
 						Subject:     tc.groupID,
@@ -1119,11 +1119,11 @@ func TestAssign(t *testing.T) {
 						Object:      group.ID,
 					})
 				}
-				deletePoliciesCall = policy.On("DeletePolicies", context.Background(), policies).Return(tc.deleteParentPoliciesErr)
+				deletePoliciesCall = policies.On("DeletePolicies", context.Background(), policyList).Return(tc.deleteParentPoliciesErr)
 				assignParentCall = repo.On("AssignParentGroup", context.Background(), tc.groupID, tc.memberIDs).Return(tc.repoParentGroupErr)
 			case policysvc.ChannelsKind:
 				for _, memberID := range tc.memberIDs {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.GroupType,
 						Subject:     memberID,
@@ -1134,7 +1134,7 @@ func TestAssign(t *testing.T) {
 				}
 			case policysvc.UsersKind:
 				for _, memberID := range tc.memberIDs {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.UserType,
 						Subject:     mgauth.EncodeDomainUserID(validID, memberID),
@@ -1144,7 +1144,7 @@ func TestAssign(t *testing.T) {
 					})
 				}
 			}
-			policyCall := policy.On("AddPolicies", context.Background(), policies).Return(tc.addPoliciesErr)
+			policyCall := policies.On("AddPolicies", context.Background(), policyList).Return(tc.addPoliciesErr)
 			err := svc.Assign(context.Background(), tc.session, tc.groupID, tc.relation, tc.memberKind, tc.memberIDs...)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			policyCall.Unset()
@@ -1159,8 +1159,8 @@ func TestAssign(t *testing.T) {
 
 func TestUnassign(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc                    string
@@ -1295,7 +1295,7 @@ func TestUnassign(t *testing.T) {
 			err:                repoerr.ErrConflict,
 		},
 		{
-			desc:       "unsuccessfully with groups kind due to failed to unassign parent and add policy",
+			desc:       "unsuccessfully with groups kind due to failed to unassign parent and add policies",
 			session:    auth.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
 			groupID:    testsutil.GenerateUUID(t),
 			relation:   policysvc.ContributorRelation,
@@ -1338,11 +1338,11 @@ func TestUnassign(t *testing.T) {
 			retrieveByIDsCall := &mock.Call{}
 			addPoliciesCall := &mock.Call{}
 			assignParentCall := &mock.Call{}
-			policies := []policysvc.PolicyReq{}
+			policyList := []policysvc.PolicyReq{}
 			switch tc.memberKind {
 			case policysvc.ThingsKind:
 				for _, memberID := range tc.memberIDs {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.GroupType,
 						SubjectKind: policysvc.ChannelsKind,
@@ -1355,7 +1355,7 @@ func TestUnassign(t *testing.T) {
 			case policysvc.GroupsKind:
 				retrieveByIDsCall = repo.On("RetrieveByIDs", context.Background(), mggroups.Page{PageMeta: mggroups.PageMeta{Limit: 1<<63 - 1}}, mock.Anything).Return(tc.repoResp, tc.repoErr)
 				for _, group := range tc.repoResp.Groups {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.GroupType,
 						Subject:     tc.groupID,
@@ -1364,11 +1364,11 @@ func TestUnassign(t *testing.T) {
 						Object:      group.ID,
 					})
 				}
-				addPoliciesCall = policy.On("AddPolicies", context.Background(), policies).Return(tc.addParentPoliciesErr)
+				addPoliciesCall = policies.On("AddPolicies", context.Background(), policyList).Return(tc.addParentPoliciesErr)
 				assignParentCall = repo.On("UnassignParentGroup", context.Background(), tc.groupID, tc.memberIDs).Return(tc.repoParentGroupErr)
 			case policysvc.ChannelsKind:
 				for _, memberID := range tc.memberIDs {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.GroupType,
 						Subject:     memberID,
@@ -1379,7 +1379,7 @@ func TestUnassign(t *testing.T) {
 				}
 			case policysvc.UsersKind:
 				for _, memberID := range tc.memberIDs {
-					policies = append(policies, policysvc.PolicyReq{
+					policyList = append(policyList, policysvc.PolicyReq{
 						Domain:      validID,
 						SubjectType: policysvc.UserType,
 						Subject:     mgauth.EncodeDomainUserID(validID, memberID),
@@ -1389,7 +1389,7 @@ func TestUnassign(t *testing.T) {
 					})
 				}
 			}
-			policyCall := policy.On("DeletePolicies", context.Background(), policies).Return(tc.deletePoliciesErr)
+			policyCall := policies.On("DeletePolicies", context.Background(), policyList).Return(tc.deletePoliciesErr)
 			err := svc.Unassign(context.Background(), tc.session, tc.groupID, tc.relation, tc.memberKind, tc.memberIDs...)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			policyCall.Unset()
@@ -1404,8 +1404,8 @@ func TestUnassign(t *testing.T) {
 
 func TestDeleteGroup(t *testing.T) {
 	repo := new(mocks.Repository)
-	policy := new(policymocks.PolicyClient)
-	svc := groups.NewService(repo, idProvider, policy)
+	policies := new(policymocks.PolicyClient)
+	svc := groups.NewService(repo, idProvider, policies)
 
 	cases := []struct {
 		desc                     string
@@ -1442,11 +1442,11 @@ func TestDeleteGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			policyCall := policy.On("DeletePolicyFilter", context.Background(), policysvc.PolicyReq{
+			policyCall := policies.On("DeletePolicyFilter", context.Background(), policysvc.PolicyReq{
 				SubjectType: policysvc.GroupType,
 				Subject:     tc.groupID,
 			}).Return(tc.deleteSubjectPoliciesErr)
-			policyCall2 := policy.On("DeletePolicyFilter", context.Background(), policysvc.PolicyReq{
+			policyCall2 := policies.On("DeletePolicyFilter", context.Background(), policysvc.PolicyReq{
 				ObjectType: policysvc.GroupType,
 				Object:     tc.groupID,
 			}).Return(tc.deleteObjectPoliciesErr)

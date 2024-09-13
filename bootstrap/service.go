@@ -16,7 +16,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
@@ -122,7 +122,7 @@ type ConfigReader interface {
 
 type bootstrapService struct {
 	auth       authclient.AuthClient
-	policy     policy.PolicyClient
+	policies   policies.PolicyClient
 	configs    ConfigRepository
 	sdk        mgsdk.SDK
 	encKey     []byte
@@ -130,12 +130,12 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(authClient authclient.AuthClient, policyClient policy.PolicyClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
+func New(authClient authclient.AuthClient, policyClient policies.PolicyClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
 		sdk:        sdk,
 		auth:       authClient,
-		policy:     policyClient,
+		policies:   policyClient,
 		encKey:     encKey,
 		idProvider: idp,
 	}
@@ -306,7 +306,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 }
 
 func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
-	tids, err := bs.policy.ListAllObjects(ctx, policy.PolicyReq{
+	tids, err := bs.policies.ListAllObjects(ctx, policies.PolicyReq{
 		SubjectType: auth.UserType,
 		Subject:     userID,
 		Permission:  auth.ViewPermission,

@@ -10,7 +10,7 @@ import (
 	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/things"
 	"github.com/go-kit/kit/endpoint"
 )
@@ -24,9 +24,9 @@ func authorizeEndpoint(svc things.Service, authClient auth.AuthClient) endpoint.
 			return authorizeRes{}, err
 		}
 		r := &magistrala.AuthorizeReq{
-			SubjectType: policy.GroupType,
+			SubjectType: policies.GroupType,
 			Subject:     req.GetObject(),
-			ObjectType:  policy.ThingType,
+			ObjectType:  policies.ThingType,
 			Object:      thingID,
 			Permission:  req.GetPermission(),
 		}

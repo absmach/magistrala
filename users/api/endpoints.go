@@ -13,7 +13,7 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/users"
 	"github.com/go-kit/kit/endpoint"
 )
@@ -196,7 +196,7 @@ func listMembersByGroupEndpoint(svc users.Service, authClient auth.AuthClient) e
 		if err != nil {
 			return nil, err
 		}
-		if err = authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.GroupType, req.objectID); err != nil {
+		if err = authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policies.GroupType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -222,7 +222,7 @@ func listMembersByChannelEndpoint(svc users.Service, authClient auth.AuthClient)
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.GroupType, req.objectID); err != nil {
+		if err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policies.GroupType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -247,7 +247,7 @@ func listMembersByThingEndpoint(svc users.Service, authClient auth.AuthClient) e
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, req.Page.Permission, policy.ThingType, req.objectID); err != nil {
+		if err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, req.Page.Permission, policies.ThingType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -272,7 +272,7 @@ func listMembersByDomainEndpoint(svc users.Service, authClient auth.AuthClient) 
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.DomainType, req.objectID); err != nil {
+		if err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policies.DomainType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -467,7 +467,7 @@ func updateClientRoleEndpoint(svc users.Service, authClient auth.AuthClient) end
 		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
 			session.SuperAdmin = true
 		}
-		if err := authorize(ctx, authClient, "", policy.UserType, policy.UsersKind, client.ID, policy.MembershipPermission, policy.PlatformType, policy.MagistralaObject); err != nil {
+		if err := authorize(ctx, authClient, "", policies.UserType, policies.UsersKind, client.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err != nil {
 			return nil, err
 		}
 
@@ -659,12 +659,12 @@ func authorize(ctx context.Context, authClient auth.AuthClient, domainID string,
 
 func checkSuperAdmin(ctx context.Context, authClient auth.AuthClient, adminID string) error {
 	if _, err := authClient.Authorize(ctx, &magistrala.AuthorizeReq{
-		SubjectType: policy.UserType,
-		SubjectKind: policy.UsersKind,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
 		Subject:     adminID,
-		Permission:  policy.AdminPermission,
-		ObjectType:  policy.PlatformType,
-		Object:      policy.MagistralaObject,
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.MagistralaObject,
 	}); err != nil {
 		return err
 	}

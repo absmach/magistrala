@@ -19,7 +19,7 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/oauth2"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/users"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -531,7 +531,7 @@ func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, 
 }
 
 func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{}, error) {
-	page, err := queryPageParams(r, policy.MembershipPermission)
+	page, err := queryPageParams(r, policies.MembershipPermission)
 	if err != nil {
 		return nil, err
 	}
@@ -632,12 +632,12 @@ func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service, authClient 
 			}
 
 			if _, err = authClient.Authorize(r.Context(), &magistrala.AuthorizeReq{
-				SubjectType: policy.UserType,
-				SubjectKind: policy.UsersKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
 				Subject:     client.ID,
-				Permission:  policy.MembershipPermission,
-				ObjectType:  policy.PlatformType,
-				Object:      policy.MagistralaObject,
+				Permission:  policies.MembershipPermission,
+				ObjectType:  policies.PlatformType,
+				Object:      policies.MagistralaObject,
 			}); err != nil {
 				if err := svc.AddClientPolicy(r.Context(), client); err != nil {
 					http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)

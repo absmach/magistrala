@@ -20,8 +20,8 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/events/store"
-	policysvc "github.com/absmach/magistrala/pkg/policy"
-	policymocks "github.com/absmach/magistrala/pkg/policy/mocks"
+	policysvc "github.com/absmach/magistrala/pkg/policies"
+	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -89,17 +89,17 @@ type testVariable struct {
 	svc    bootstrap.Service
 	boot   *mocks.ConfigRepository
 	auth   *authmocks.AuthServiceClient
-	policy *policymocks.PolicyClient
+	policies *policymocks.PolicyClient
 	sdk    *sdkmocks.SDK
 }
 
 func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
 	auth := new(authmocks.AuthServiceClient)
-	policy := new(policymocks.PolicyClient)
+	policies := new(policymocks.PolicyClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
-	svc := bootstrap.New(auth, policy, boot, sdk, encKey, idp)
+	svc := bootstrap.New(auth, policies, boot, sdk, encKey, idp)
 	publisher, err := store.NewPublisher(context.Background(), redisURL, streamID)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
@@ -107,7 +107,7 @@ func newTestVariable(t *testing.T, redisURL string) testVariable {
 		svc:    svc,
 		boot:   boot,
 		auth:   auth,
-		policy: policy,
+		policies: policies,
 		sdk:    sdk,
 	}
 }
@@ -1029,7 +1029,7 @@ func TestList(t *testing.T) {
 			ObjectType:  policysvc.DomainType,
 			Object:      tc.domainID,
 		}).Return(tc.domainAdminAuthRes, tc.domainAdmiAuthErr)
-		authCall3 := tv.policy.On("ListAllObjects", mock.Anything, policysvc.PolicyReq{
+		authCall3 := tv.policies.On("ListAllObjects", mock.Anything, policysvc.PolicyReq{
 			SubjectType: policysvc.UserType,
 			Subject:     tc.userID,
 			Permission:  policysvc.ViewPermission,

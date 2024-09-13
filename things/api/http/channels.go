@@ -16,7 +16,7 @@ import (
 	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -28,7 +28,7 @@ func groupsHandler(svc groups.Service, authClient auth.AuthClient, r *chi.Mux, l
 	}
 	r.Route("/channels", func(r chi.Router) {
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.CreateGroupEndpoint(svc, authClient, policy.NewChannelKind),
+			gapi.CreateGroupEndpoint(svc, authClient, policies.NewChannelKind),
 			gapi.DecodeGroupCreate,
 			api.EncodeResponse,
 			opts...,

@@ -9,7 +9,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 const streamID = "magistrala.auth"
@@ -69,7 +69,7 @@ func (es *eventStore) RetrieveDomain(ctx context.Context, token, id string) (aut
 	return domain, nil
 }
 
-func (es *eventStore) RetrieveDomainPermissions(ctx context.Context, token, id string) (policy.Permissions, error) {
+func (es *eventStore) RetrieveDomainPermissions(ctx context.Context, token, id string) (policies.Permissions, error) {
 	permissions, err := es.svc.RetrieveDomainPermissions(ctx, token, id)
 	if err != nil {
 		return permissions, err

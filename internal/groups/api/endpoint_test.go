@@ -18,7 +18,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -53,7 +53,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 	}{
 		{
 			desc: "successfully with groups kind",
-			kind: policy.NewGroupKind,
+			kind: policies.NewGroupKind,
 			req: createGroupReq{
 				token: valid,
 				Group: groups.Group{
@@ -67,7 +67,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc: "successfully with channels kind",
-			kind: policy.NewChannelKind,
+			kind: policies.NewChannelKind,
 			req: createGroupReq{
 				token: valid,
 				Group: groups.Group{
@@ -81,7 +81,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc: "unsuccessfully with invalid request",
-			kind: policy.NewGroupKind,
+			kind: policies.NewGroupKind,
 			req: createGroupReq{
 				Group: groups.Group{
 					Name: valid,
@@ -92,7 +92,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc: "unsuccessfully with repo error",
-			kind: policy.NewGroupKind,
+			kind: policies.NewGroupKind,
 			req: createGroupReq{
 				token: valid,
 				Group: groups.Group{
@@ -523,7 +523,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -531,7 +531,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					},
 				},
 				token:      valid,
-				memberKind: policy.ThingsKind,
+				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -556,7 +556,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					},
 				},
 				token:      valid,
-				memberKind: policy.ThingsKind,
+				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -574,7 +574,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "successfully with tree",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -583,7 +583,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				tree:       true,
 				token:      valid,
-				memberKind: policy.ThingsKind,
+				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -601,7 +601,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "list children groups successfully without tree",
-			memberKind: policy.UsersKind,
+			memberKind: policies.UsersKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -612,7 +612,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				tree:       false,
 				token:      valid,
-				memberKind: policy.UsersKind,
+				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -630,7 +630,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "list parent group successfully without tree",
-			memberKind: policy.UsersKind,
+			memberKind: policies.UsersKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -641,7 +641,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				tree:       false,
 				token:      valid,
-				memberKind: policy.UsersKind,
+				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -659,14 +659,14 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req:        listGroupsReq{},
 			resp:       groupPageRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -674,7 +674,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					},
 				},
 				token:      valid,
-				memberKind: policy.ThingsKind,
+				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{},
@@ -714,10 +714,10 @@ func TestListMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req: listMembersReq{
 				token:      valid,
-				memberKind: policy.ThingsKind,
+				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.MembersPage{
@@ -743,7 +743,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			desc: "successfully with empty member kind",
 			req: listMembersReq{
 				token:      valid,
-				memberKind: policy.ThingsKind,
+				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.MembersPage{
@@ -767,17 +767,17 @@ func TestListMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req:        listMembersReq{},
 			resp:       listMembersRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req: listMembersReq{
 				token:      valid,
-				memberKind: policy.ThingsKind,
+				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.MembersPage{},
@@ -817,11 +817,11 @@ func TestAssignMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			relation:   policy.ContributorRelation,
-			memberKind: policy.ThingsKind,
+			relation:   policies.ContributorRelation,
+			memberKind: policies.ThingsKind,
 			req: assignReq{
 				token:      valid,
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -834,11 +834,11 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:     "successfully with empty member kind",
-			relation: policy.ContributorRelation,
+			relation: policies.ContributorRelation,
 			req: assignReq{
 				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -850,10 +850,10 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "successfully with empty relation",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req: assignReq{
 				token:      valid,
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -866,19 +866,19 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			relation:   policy.ContributorRelation,
-			memberKind: policy.ThingsKind,
+			relation:   policies.ContributorRelation,
+			memberKind: policies.ThingsKind,
 			req:        assignReq{},
 			resp:       assignRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			relation:   policy.ContributorRelation,
-			memberKind: policy.ThingsKind,
+			relation:   policies.ContributorRelation,
+			memberKind: policies.ThingsKind,
 			req: assignReq{
 				token:      valid,
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -929,11 +929,11 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			relation:   policy.ContributorRelation,
-			memberKind: policy.ThingsKind,
+			relation:   policies.ContributorRelation,
+			memberKind: policies.ThingsKind,
 			req: unassignReq{
 				token:      valid,
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -946,11 +946,11 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:     "successfully with empty member kind",
-			relation: policy.ContributorRelation,
+			relation: policies.ContributorRelation,
 			req: unassignReq{
 				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -962,10 +962,10 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "successfully with empty relation",
-			memberKind: policy.ThingsKind,
+			memberKind: policies.ThingsKind,
 			req: unassignReq{
 				token:      valid,
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -978,19 +978,19 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			relation:   policy.ContributorRelation,
-			memberKind: policy.ThingsKind,
+			relation:   policies.ContributorRelation,
+			memberKind: policies.ThingsKind,
 			req:        unassignReq{},
 			resp:       unassignRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			relation:   policy.ContributorRelation,
-			memberKind: policy.ThingsKind,
+			relation:   policies.ContributorRelation,
+			memberKind: policies.ThingsKind,
 			req: unassignReq{
 				token:      valid,
-				MemberKind: policy.ThingsKind,
+				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),

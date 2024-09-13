@@ -13,7 +13,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/things"
 	"github.com/go-kit/kit/endpoint"
 )
@@ -29,7 +29,7 @@ func createClientEndpoint(svc things.Service, authClient auth.AuthClient) endpoi
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, "", policy.UserType, policy.UsersKind, session.DomainUserID, policy.CreatePermission, policy.DomainType, session.DomainID); err != nil {
+		if _, err := authorize(ctx, authClient, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.CreatePermission, policies.DomainType, session.DomainID); err != nil {
 			return nil, err
 		}
 
@@ -56,7 +56,7 @@ func createClientsEndpoint(svc things.Service, authClient auth.AuthClient) endpo
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, "", policy.UserType, policy.UsersKind, session.DomainUserID, policy.CreatePermission, policy.DomainType, session.DomainID); err != nil {
+		if _, err := authorize(ctx, authClient, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.CreatePermission, policies.DomainType, session.DomainID); err != nil {
 			return nil, err
 		}
 
@@ -86,7 +86,7 @@ func viewClientEndpoint(svc things.Service, authClient auth.AuthClient) endpoint
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if _, err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, policy.ViewPermission, policy.ThingType, req.id); err != nil {
+		if _, err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, policies.ViewPermission, policies.ThingType, req.id); err != nil {
 			return mgclients.Client{}, err
 		}
 		c, err := svc.ViewClient(ctx, req.id)
@@ -132,14 +132,14 @@ func listClientsEndpoint(svc things.Service, authClient auth.AuthClient) endpoin
 		}
 		switch {
 		case (req.userID != "" && req.userID != session.UserID):
-			if _, err := authorize(ctx, authClient, "", policy.UserType, policy.UsersKind, session.DomainUserID, policy.AdminPermission, policy.DomainType, session.DomainID); err != nil {
+			if _, err := authorize(ctx, authClient, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.AdminPermission, policies.DomainType, session.DomainID); err != nil {
 				return nil, err
 			}
 		default:
 			err := checkSuperAdmin(ctx, authClient, session.UserID)
 			switch {
 			case err != nil:
-				if _, err := authorize(ctx, authClient, "", policy.UserType, policy.UsersKind, session.DomainUserID, policy.MembershipPermission, policy.DomainType, session.DomainID); err != nil {
+				if _, err := authorize(ctx, authClient, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID); err != nil {
 					return nil, err
 				}
 			default:
@@ -190,7 +190,7 @@ func listMembersEndpoint(svc things.Service, authClient auth.AuthClient) endpoin
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, req.Page.Permission, policy.GroupType, req.groupID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, req.Page.Permission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
 
@@ -211,7 +211,7 @@ func updateClientEndpoint(svc things.Service, authClient auth.AuthClient) endpoi
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, policy.EditPermission, policy.ThingType, req.id)
+		session, err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, policies.EditPermission, policies.ThingType, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +237,7 @@ func updateClientTagsEndpoint(svc things.Service, authClient auth.AuthClient) en
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, policy.EditPermission, policy.ThingType, req.id)
+		session, err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, policies.EditPermission, policies.ThingType, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -262,7 +262,7 @@ func updateClientSecretEndpoint(svc things.Service, authClient auth.AuthClient) 
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, policy.EditPermission, policy.ThingType, req.id)
+		session, err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, policies.EditPermission, policies.ThingType, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -282,7 +282,7 @@ func enableClientEndpoint(svc things.Service, authClient auth.AuthClient) endpoi
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		session, err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, policy.DeletePermission, policy.ThingType, req.id)
+		session, err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, policies.DeletePermission, policies.ThingType, req.id)
 		if err != nil {
 			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
@@ -301,7 +301,7 @@ func disableClientEndpoint(svc things.Service, authClient auth.AuthClient) endpo
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		session, err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, policy.DeletePermission, policy.ThingType, req.id)
+		session, err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, policies.DeletePermission, policies.ThingType, req.id)
 		if err != nil {
 			return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
@@ -340,10 +340,10 @@ func assignUsersEndpoint(svc groups.Service, authClient auth.AuthClient) endpoin
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
-		if err := svc.Assign(ctx, session, req.groupID, req.Relation, policy.UsersKind, req.UserIDs...); err != nil {
+		if err := svc.Assign(ctx, session, req.groupID, req.Relation, policies.UsersKind, req.UserIDs...); err != nil {
 			return nil, err
 		}
 
@@ -362,10 +362,10 @@ func unassignUsersEndpoint(svc groups.Service, authClient auth.AuthClient) endpo
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
-		if err := svc.Unassign(ctx, session, req.groupID, req.Relation, policy.UsersKind, req.UserIDs...); err != nil {
+		if err := svc.Unassign(ctx, session, req.groupID, req.Relation, policies.UsersKind, req.UserIDs...); err != nil {
 			return nil, err
 		}
 
@@ -383,11 +383,11 @@ func assignUserGroupsEndpoint(svc groups.Service, authClient auth.AuthClient) en
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
 
-		if err := svc.Assign(ctx, session, req.groupID, policy.ParentGroupRelation, policy.ChannelsKind, req.UserGroupIDs...); err != nil {
+		if err := svc.Assign(ctx, session, req.groupID, policies.ParentGroupRelation, policies.ChannelsKind, req.UserGroupIDs...); err != nil {
 			return nil, err
 		}
 
@@ -406,10 +406,10 @@ func unassignUserGroupsEndpoint(svc groups.Service, authClient auth.AuthClient) 
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
-		if err := svc.Unassign(ctx, session, req.groupID, policy.ParentGroupRelation, policy.ChannelsKind, req.UserGroupIDs...); err != nil {
+		if err := svc.Unassign(ctx, session, req.groupID, policies.ParentGroupRelation, policies.ChannelsKind, req.UserGroupIDs...); err != nil {
 			return nil, err
 		}
 
@@ -427,11 +427,11 @@ func connectChannelThingEndpoint(svc groups.Service, authClient auth.AuthClient)
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.ChannelID); err != nil {
 			return nil, err
 		}
 
-		if err := svc.Assign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		if err := svc.Assign(ctx, session, req.ChannelID, policies.GroupRelation, policies.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -450,10 +450,10 @@ func disconnectChannelThingEndpoint(svc groups.Service, authClient auth.AuthClie
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.ChannelID); err != nil {
 			return nil, err
 		}
-		if err := svc.Unassign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		if err := svc.Unassign(ctx, session, req.ChannelID, policies.GroupRelation, policies.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -472,10 +472,10 @@ func connectEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.En
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.ChannelID); err != nil {
 			return nil, err
 		}
-		if err := svc.Assign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		if err := svc.Assign(ctx, session, req.ChannelID, policies.GroupRelation, policies.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -493,10 +493,10 @@ func disconnectEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.ChannelID); err != nil {
 			return nil, err
 		}
-		if err := svc.Unassign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		if err := svc.Unassign(ctx, session, req.ChannelID, policies.GroupRelation, policies.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -515,7 +515,7 @@ func thingShareEndpoint(svc things.Service, authClient auth.AuthClient) endpoint
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.DeletePermission, policy.ThingType, req.thingID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.DeletePermission, policies.ThingType, req.thingID); err != nil {
 			return nil, err
 		}
 		if err := svc.Share(ctx, session, req.thingID, req.Relation, req.UserIDs...); err != nil {
@@ -536,7 +536,7 @@ func thingUnshareEndpoint(svc things.Service, authClient auth.AuthClient) endpoi
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.DeletePermission, policy.ThingType, req.thingID); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.DeletePermission, policies.ThingType, req.thingID); err != nil {
 			return nil, err
 		}
 
@@ -559,7 +559,7 @@ func deleteClientEndpoint(svc things.Service, authClient auth.AuthClient) endpoi
 		if err != nil {
 			return nil, err
 		}
-		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.DeletePermission, policy.ThingType, req.id); err != nil {
+		if _, err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.DeletePermission, policies.ThingType, req.id); err != nil {
 			return nil, err
 		}
 		if err := svc.DeleteClient(ctx, req.id); err != nil {
@@ -587,11 +587,11 @@ func identify(ctx context.Context, authClient auth.AuthClient, token string) (au
 
 func checkSuperAdmin(ctx context.Context, authClient auth.AuthClient, adminID string) error {
 	if _, err := authClient.Authorize(ctx, &magistrala.AuthorizeReq{
-		SubjectType: policy.UserType,
+		SubjectType: policies.UserType,
 		Subject:     adminID,
-		Permission:  policy.AdminPermission,
-		ObjectType:  policy.PlatformType,
-		Object:      policy.MagistralaObject,
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.MagistralaObject,
 	}); err != nil {
 		return err
 	}

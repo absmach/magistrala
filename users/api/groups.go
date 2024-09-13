@@ -15,7 +15,7 @@ import (
 	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -30,7 +30,7 @@ func groupsHandler(svc groups.Service, authClient auth.AuthClient, r *chi.Mux, l
 
 	r.Route("/groups", func(r chi.Router) {
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.CreateGroupEndpoint(svc, authClient, policy.NewGroupKind),
+			gapi.CreateGroupEndpoint(svc, authClient, policies.NewGroupKind),
 			gapi.DecodeGroupCreate,
 			api.EncodeResponse,
 			opts...,
@@ -179,7 +179,7 @@ func assignUsersEndpoint(svc groups.Service, authClient auth.AuthClient) endpoin
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
 		if err := svc.Assign(ctx, session, req.groupID, req.Relation, "users", req.UserIDs...); err != nil {
@@ -201,7 +201,7 @@ func unassignUsersEndpoint(svc groups.Service, authClient auth.AuthClient) endpo
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
 		if err := svc.Unassign(ctx, session, req.groupID, req.Relation, "users", req.UserIDs...); err != nil {
@@ -244,10 +244,10 @@ func assignGroupsEndpoint(svc groups.Service, authClient auth.AuthClient) endpoi
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
-		if err := svc.Assign(ctx, session, req.groupID, policy.ParentGroupRelation, policy.GroupsKind, req.GroupIDs...); err != nil {
+		if err := svc.Assign(ctx, session, req.groupID, policies.ParentGroupRelation, policies.GroupsKind, req.GroupIDs...); err != nil {
 			return nil, err
 		}
 		return assignUsersRes{}, nil
@@ -266,10 +266,10 @@ func unassignGroupsEndpoint(svc groups.Service, authClient auth.AuthClient) endp
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+		if err := authorize(ctx, authClient, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.GroupType, req.groupID); err != nil {
 			return nil, err
 		}
-		if err := svc.Unassign(ctx, session, req.groupID, policy.ParentGroupRelation, policy.GroupsKind, req.GroupIDs...); err != nil {
+		if err := svc.Unassign(ctx, session, req.groupID, policies.ParentGroupRelation, policies.GroupsKind, req.GroupIDs...); err != nil {
 			return nil, err
 		}
 		return unassignUsersRes{}, nil

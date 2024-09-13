@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package policy
+package policies
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policy"
+	"github.com/absmach/magistrala/pkg/policies"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
 	gstatus "google.golang.org/genproto/googleapis/rpc/status"
@@ -34,35 +34,35 @@ var (
 
 var (
 	defThingsFilterPermissions = []string{
-		policy.AdminPermission,
-		policy.DeletePermission,
-		policy.EditPermission,
-		policy.ViewPermission,
-		policy.SharePermission,
-		policy.PublishPermission,
-		policy.SubscribePermission,
+		policies.AdminPermission,
+		policies.DeletePermission,
+		policies.EditPermission,
+		policies.ViewPermission,
+		policies.SharePermission,
+		policies.PublishPermission,
+		policies.SubscribePermission,
 	}
 
 	defGroupsFilterPermissions = []string{
-		policy.AdminPermission,
-		policy.DeletePermission,
-		policy.EditPermission,
-		policy.ViewPermission,
-		policy.MembershipPermission,
-		policy.SharePermission,
+		policies.AdminPermission,
+		policies.DeletePermission,
+		policies.EditPermission,
+		policies.ViewPermission,
+		policies.MembershipPermission,
+		policies.SharePermission,
 	}
 
 	defDomainsFilterPermissions = []string{
-		policy.AdminPermission,
-		policy.EditPermission,
-		policy.ViewPermission,
-		policy.MembershipPermission,
-		policy.SharePermission,
+		policies.AdminPermission,
+		policies.EditPermission,
+		policies.ViewPermission,
+		policies.MembershipPermission,
+		policies.SharePermission,
 	}
 
 	defPlatformFilterPermissions = []string{
-		policy.AdminPermission,
-		policy.MembershipPermission,
+		policies.AdminPermission,
+		policies.MembershipPermission,
 	}
 )
 
@@ -72,7 +72,7 @@ type policyClient struct {
 	logger           *slog.Logger
 }
 
-func NewPolicyClient(client *authzed.ClientWithExperimental, logger *slog.Logger) policy.PolicyClient {
+func NewPolicyClient(client *authzed.ClientWithExperimental, logger *slog.Logger) policies.PolicyClient {
 	return &policyClient{
 		client:           client,
 		permissionClient: client.PermissionsServiceClient,
@@ -80,7 +80,7 @@ func NewPolicyClient(client *authzed.ClientWithExperimental, logger *slog.Logger
 	}
 }
 
-func (pc policyClient) AddPolicy(ctx context.Context, pr policy.PolicyReq) error {
+func (pc policyClient) AddPolicy(ctx context.Context, pr policies.PolicyReq) error {
 	if err := pc.policyValidation(pr); err != nil {
 		return errors.Wrap(svcerr.ErrInvalidPolicy, err)
 	}
@@ -107,7 +107,7 @@ func (pc policyClient) AddPolicy(ctx context.Context, pr policy.PolicyReq) error
 	return nil
 }
 
-func (pc policyClient) AddPolicies(ctx context.Context, prs []policy.PolicyReq) error {
+func (pc policyClient) AddPolicies(ctx context.Context, prs []policies.PolicyReq) error {
 	updates := []*v1.RelationshipUpdate{}
 	var preconds []*v1.Precondition
 	for _, pr := range prs {
@@ -139,7 +139,7 @@ func (pc policyClient) AddPolicies(ctx context.Context, prs []policy.PolicyReq) 
 	return nil
 }
 
-func (pc policyClient) DeletePolicyFilter(ctx context.Context, pr policy.PolicyReq) error {
+func (pc policyClient) DeletePolicyFilter(ctx context.Context, pr policies.PolicyReq) error {
 	req := &v1.DeleteRelationshipsRequest{
 		RelationshipFilter: &v1.RelationshipFilter{
 			ResourceType:       pr.ObjectType,
@@ -172,7 +172,7 @@ func (pc policyClient) DeletePolicyFilter(ctx context.Context, pr policy.PolicyR
 	return nil
 }
 
-func (pc policyClient) DeletePolicies(ctx context.Context, prs []policy.PolicyReq) error {
+func (pc policyClient) DeletePolicies(ctx context.Context, prs []policies.PolicyReq) error {
 	updates := []*v1.RelationshipUpdate{}
 	for _, pr := range prs {
 		if err := pc.policyValidation(pr); err != nil {
@@ -198,15 +198,15 @@ func (pc policyClient) DeletePolicies(ctx context.Context, prs []policy.PolicyRe
 	return nil
 }
 
-func (pc policyClient) ListObjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) (policy.PolicyPage, error) {
+func (pc policyClient) ListObjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) (policies.PolicyPage, error) {
 	if limit <= 0 {
 		limit = 100
 	}
 	res, npt, err := pc.retrieveObjects(ctx, pr, nextPageToken, limit)
 	if err != nil {
-		return policy.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		return policies.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	var page policy.PolicyPage
+	var page policies.PolicyPage
 	for _, tuple := range res {
 		page.Policies = append(page.Policies, tuple.Object)
 	}
@@ -215,12 +215,12 @@ func (pc policyClient) ListObjects(ctx context.Context, pr policy.PolicyReq, nex
 	return page, nil
 }
 
-func (pc policyClient) ListAllObjects(ctx context.Context, pr policy.PolicyReq) (policy.PolicyPage, error) {
+func (pc policyClient) ListAllObjects(ctx context.Context, pr policies.PolicyReq) (policies.PolicyPage, error) {
 	res, err := pc.retrieveAllObjects(ctx, pr)
 	if err != nil {
-		return policy.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		return policies.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	var page policy.PolicyPage
+	var page policies.PolicyPage
 	for _, tuple := range res {
 		page.Policies = append(page.Policies, tuple.Object)
 	}
@@ -228,7 +228,7 @@ func (pc policyClient) ListAllObjects(ctx context.Context, pr policy.PolicyReq) 
 	return page, nil
 }
 
-func (pc policyClient) CountObjects(ctx context.Context, pr policy.PolicyReq) (uint64, error) {
+func (pc policyClient) CountObjects(ctx context.Context, pr policies.PolicyReq) (uint64, error) {
 	var count uint64
 	nextPageToken := ""
 	for {
@@ -246,15 +246,15 @@ func (pc policyClient) CountObjects(ctx context.Context, pr policy.PolicyReq) (u
 	return count, nil
 }
 
-func (pc policyClient) ListSubjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) (policy.PolicyPage, error) {
+func (pc policyClient) ListSubjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) (policies.PolicyPage, error) {
 	if limit <= 0 {
 		limit = 100
 	}
 	res, npt, err := pc.retrieveSubjects(ctx, pr, nextPageToken, limit)
 	if err != nil {
-		return policy.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		return policies.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	var page policy.PolicyPage
+	var page policies.PolicyPage
 	for _, tuple := range res {
 		page.Policies = append(page.Policies, tuple.Subject)
 	}
@@ -263,12 +263,12 @@ func (pc policyClient) ListSubjects(ctx context.Context, pr policy.PolicyReq, ne
 	return page, nil
 }
 
-func (pc policyClient) ListAllSubjects(ctx context.Context, pr policy.PolicyReq) (policy.PolicyPage, error) {
+func (pc policyClient) ListAllSubjects(ctx context.Context, pr policies.PolicyReq) (policies.PolicyPage, error) {
 	res, err := pc.retrieveAllSubjects(ctx, pr)
 	if err != nil {
-		return policy.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		return policies.PolicyPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	var page policy.PolicyPage
+	var page policies.PolicyPage
 	for _, tuple := range res {
 		page.Policies = append(page.Policies, tuple.Subject)
 	}
@@ -276,7 +276,7 @@ func (pc policyClient) ListAllSubjects(ctx context.Context, pr policy.PolicyReq)
 	return page, nil
 }
 
-func (pc policyClient) CountSubjects(ctx context.Context, pr policy.PolicyReq) (uint64, error) {
+func (pc policyClient) CountSubjects(ctx context.Context, pr policies.PolicyReq) (uint64, error) {
 	var count uint64
 	nextPageToken := ""
 	for {
@@ -294,16 +294,16 @@ func (pc policyClient) CountSubjects(ctx context.Context, pr policy.PolicyReq) (
 	return count, nil
 }
 
-func (pc policyClient) ListPermissions(ctx context.Context, pr policy.PolicyReq, permissionsFilter []string) (policy.Permissions, error) {
+func (pc policyClient) ListPermissions(ctx context.Context, pr policies.PolicyReq, permissionsFilter []string) (policies.Permissions, error) {
 	if len(permissionsFilter) == 0 {
 		switch pr.ObjectType {
-		case policy.ThingType:
+		case policies.ThingType:
 			permissionsFilter = defThingsFilterPermissions
-		case policy.GroupType:
+		case policies.GroupType:
 			permissionsFilter = defGroupsFilterPermissions
-		case policy.PlatformType:
+		case policies.PlatformType:
 			permissionsFilter = defPlatformFilterPermissions
-		case policy.DomainType:
+		case policies.DomainType:
 			permissionsFilter = defDomainsFilterPermissions
 		default:
 			return nil, svcerr.ErrMalformedEntity
@@ -317,15 +317,15 @@ func (pc policyClient) ListPermissions(ctx context.Context, pr policy.PolicyReq,
 	return pers, nil
 }
 
-func (pc policyClient) policyValidation(pr policy.PolicyReq) error {
-	if pr.ObjectType == policy.PlatformType && pr.Object != policy.MagistralaObject {
+func (pc policyClient) policyValidation(pr policies.PolicyReq) error {
+	if pr.ObjectType == policies.PlatformType && pr.Object != policies.MagistralaObject {
 		return errPlatform
 	}
 
 	return nil
 }
 
-func (pc policyClient) addPolicyPreCondition(ctx context.Context, pr policy.PolicyReq) ([]*v1.Precondition, error) {
+func (pc policyClient) addPolicyPreCondition(ctx context.Context, pr policies.PolicyReq) ([]*v1.Precondition, error) {
 	// Checks are required for following  ( -> means adding)
 	// 1.) user -> group (both user groups and channels)
 	// 2.) user -> thing
@@ -338,20 +338,20 @@ func (pc policyClient) addPolicyPreCondition(ctx context.Context, pr policy.Poli
 	// Checks :
 	// - USER with ANY RELATION to DOMAIN
 	// - GROUP with DOMAIN RELATION to DOMAIN
-	case pr.SubjectType == policy.UserType && pr.ObjectType == policy.GroupType:
+	case pr.SubjectType == policies.UserType && pr.ObjectType == policies.GroupType:
 		return pc.userGroupPreConditions(ctx, pr)
 
 	// 2.) user -> thing
 	// Checks :
 	// - USER with ANY RELATION to DOMAIN
 	// - THING with DOMAIN RELATION to DOMAIN
-	case pr.SubjectType == policy.UserType && pr.ObjectType == policy.ThingType:
+	case pr.SubjectType == policies.UserType && pr.ObjectType == policies.ThingType:
 		return pc.userThingPreConditions(ctx, pr)
 
 	// 3.) group -> group (both for adding parent_group and channels)
 	// Checks :
 	// - CHILD_GROUP with out PARENT_GROUP RELATION with any GROUP
-	case pr.SubjectType == policy.GroupType && pr.ObjectType == policy.GroupType:
+	case pr.SubjectType == policies.GroupType && pr.ObjectType == policies.GroupType:
 		return groupPreConditions(pr)
 
 	// 4.) group (channel) -> thing
@@ -359,26 +359,26 @@ func (pc policyClient) addPolicyPreCondition(ctx context.Context, pr policy.Poli
 	// - GROUP (channel) with DOMAIN RELATION to DOMAIN
 	// - NO GROUP should not have PARENT_GROUP RELATION with GROUP (channel)
 	// - THING with DOMAIN RELATION to DOMAIN
-	case pr.SubjectType == policy.GroupType && pr.ObjectType == policy.ThingType:
+	case pr.SubjectType == policies.GroupType && pr.ObjectType == policies.ThingType:
 		return channelThingPreCondition(pr)
 
 	// 5.) user -> domain
 	// Checks :
 	// - User doesn't have any relation with domain
-	case pr.SubjectType == policy.UserType && pr.ObjectType == policy.DomainType:
+	case pr.SubjectType == policies.UserType && pr.ObjectType == policies.DomainType:
 		return pc.userDomainPreConditions(ctx, pr)
 
 	// Check thing and group not belongs to other domain before adding to domain
-	case pr.SubjectType == policy.DomainType && pr.Relation == policy.DomainRelation && (pr.ObjectType == policy.ThingType || pr.ObjectType == policy.GroupType):
+	case pr.SubjectType == policies.DomainType && pr.Relation == policies.DomainRelation && (pr.ObjectType == policies.ThingType || pr.ObjectType == policies.GroupType):
 		preconds := []*v1.Precondition{
 			{
 				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 				Filter: &v1.RelationshipFilter{
 					ResourceType:       pr.ObjectType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.DomainRelation,
+					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType: policy.DomainType,
+						SubjectType: policies.DomainType,
 					},
 				},
 			},
@@ -389,28 +389,28 @@ func (pc policyClient) addPolicyPreCondition(ctx context.Context, pr policy.Poli
 	return nil, nil
 }
 
-func (pc policyClient) userGroupPreConditions(ctx context.Context, pr policy.PolicyReq) ([]*v1.Precondition, error) {
+func (pc policyClient) userGroupPreConditions(ctx context.Context, pr policies.PolicyReq) ([]*v1.Precondition, error) {
 	var preconds []*v1.Precondition
 
 	// user should not have any relation with group
 	preconds = append(preconds, &v1.Precondition{
 		Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 		Filter: &v1.RelationshipFilter{
-			ResourceType:       policy.GroupType,
+			ResourceType:       policies.GroupType,
 			OptionalResourceId: pr.Object,
 			OptionalSubjectFilter: &v1.SubjectFilter{
-				SubjectType:       policy.UserType,
+				SubjectType:       policies.UserType,
 				OptionalSubjectId: pr.Subject,
 			},
 		},
 	})
 	isSuperAdmin := false
-	if err := pc.checkPolicy(ctx, policy.PolicyReq{
+	if err := pc.checkPolicy(ctx, policies.PolicyReq{
 		Subject:     pr.Subject,
 		SubjectType: pr.SubjectType,
-		Permission:  policy.AdminPermission,
-		Object:      policy.MagistralaObject,
-		ObjectType:  policy.PlatformType,
+		Permission:  policies.AdminPermission,
+		Object:      policies.MagistralaObject,
+		ObjectType:  policies.PlatformType,
 	}); err == nil {
 		isSuperAdmin = true
 	}
@@ -419,26 +419,26 @@ func (pc policyClient) userGroupPreConditions(ctx context.Context, pr policy.Pol
 		preconds = append(preconds, &v1.Precondition{
 			Operation: v1.Precondition_OPERATION_MUST_MATCH,
 			Filter: &v1.RelationshipFilter{
-				ResourceType:       policy.DomainType,
+				ResourceType:       policies.DomainType,
 				OptionalResourceId: pr.Domain,
 				OptionalSubjectFilter: &v1.SubjectFilter{
-					SubjectType:       policy.UserType,
+					SubjectType:       policies.UserType,
 					OptionalSubjectId: pr.Subject,
 				},
 			},
 		})
 	}
 	switch {
-	case pr.ObjectKind == policy.NewGroupKind || pr.ObjectKind == policy.NewChannelKind:
+	case pr.ObjectKind == policies.NewGroupKind || pr.ObjectKind == policies.NewChannelKind:
 		preconds = append(preconds,
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policy.GroupType,
+					ResourceType:       policies.GroupType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.DomainRelation,
+					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType: policy.DomainType,
+						SubjectType: policies.DomainType,
 					},
 				},
 			},
@@ -448,11 +448,11 @@ func (pc policyClient) userGroupPreConditions(ctx context.Context, pr policy.Pol
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policy.GroupType,
+					ResourceType:       policies.GroupType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.DomainRelation,
+					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType:       policy.DomainType,
+						SubjectType:       policies.DomainType,
 						OptionalSubjectId: pr.Domain,
 					},
 				},
@@ -463,29 +463,29 @@ func (pc policyClient) userGroupPreConditions(ctx context.Context, pr policy.Pol
 	return preconds, nil
 }
 
-func (pc policyClient) userThingPreConditions(ctx context.Context, pr policy.PolicyReq) ([]*v1.Precondition, error) {
+func (pc policyClient) userThingPreConditions(ctx context.Context, pr policies.PolicyReq) ([]*v1.Precondition, error) {
 	var preconds []*v1.Precondition
 
 	// user should not have any relation with thing
 	preconds = append(preconds, &v1.Precondition{
 		Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 		Filter: &v1.RelationshipFilter{
-			ResourceType:       policy.ThingType,
+			ResourceType:       policies.ThingType,
 			OptionalResourceId: pr.Object,
 			OptionalSubjectFilter: &v1.SubjectFilter{
-				SubjectType:       policy.UserType,
+				SubjectType:       policies.UserType,
 				OptionalSubjectId: pr.Subject,
 			},
 		},
 	})
 
 	isSuperAdmin := false
-	if err := pc.checkPolicy(ctx, policy.PolicyReq{
+	if err := pc.checkPolicy(ctx, policies.PolicyReq{
 		Subject:     pr.Subject,
 		SubjectType: pr.SubjectType,
-		Permission:  policy.AdminPermission,
-		Object:      policy.MagistralaObject,
-		ObjectType:  policy.PlatformType,
+		Permission:  policies.AdminPermission,
+		Object:      policies.MagistralaObject,
+		ObjectType:  policies.PlatformType,
 	}); err == nil {
 		isSuperAdmin = true
 	}
@@ -494,10 +494,10 @@ func (pc policyClient) userThingPreConditions(ctx context.Context, pr policy.Pol
 		preconds = append(preconds, &v1.Precondition{
 			Operation: v1.Precondition_OPERATION_MUST_MATCH,
 			Filter: &v1.RelationshipFilter{
-				ResourceType:       policy.DomainType,
+				ResourceType:       policies.DomainType,
 				OptionalResourceId: pr.Domain,
 				OptionalSubjectFilter: &v1.SubjectFilter{
-					SubjectType:       policy.UserType,
+					SubjectType:       policies.UserType,
 					OptionalSubjectId: pr.Subject,
 				},
 			},
@@ -506,16 +506,16 @@ func (pc policyClient) userThingPreConditions(ctx context.Context, pr policy.Pol
 	switch {
 	// For New thing
 	// - THING without DOMAIN RELATION to ANY DOMAIN
-	case pr.ObjectKind == policy.NewThingKind:
+	case pr.ObjectKind == policies.NewThingKind:
 		preconds = append(preconds,
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policy.ThingType,
+					ResourceType:       policies.ThingType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.DomainRelation,
+					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType: policy.DomainType,
+						SubjectType: policies.DomainType,
 					},
 				},
 			},
@@ -527,11 +527,11 @@ func (pc policyClient) userThingPreConditions(ctx context.Context, pr policy.Pol
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policy.ThingType,
+					ResourceType:       policies.ThingType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.DomainRelation,
+					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType:       policy.DomainType,
+						SubjectType:       policies.DomainType,
 						OptionalSubjectId: pr.Domain,
 					},
 				},
@@ -542,15 +542,15 @@ func (pc policyClient) userThingPreConditions(ctx context.Context, pr policy.Pol
 	return preconds, nil
 }
 
-func (pc policyClient) userDomainPreConditions(ctx context.Context, pr policy.PolicyReq) ([]*v1.Precondition, error) {
+func (pc policyClient) userDomainPreConditions(ctx context.Context, pr policies.PolicyReq) ([]*v1.Precondition, error) {
 	var preconds []*v1.Precondition
 
-	if err := pc.checkPolicy(ctx, policy.PolicyReq{
+	if err := pc.checkPolicy(ctx, policies.PolicyReq{
 		Subject:     pr.Subject,
 		SubjectType: pr.SubjectType,
-		Permission:  policy.AdminPermission,
-		Object:      policy.MagistralaObject,
-		ObjectType:  policy.PlatformType,
+		Permission:  policies.AdminPermission,
+		Object:      policies.MagistralaObject,
+		ObjectType:  policies.PlatformType,
 	}); err == nil {
 		return preconds, fmt.Errorf("use already exists in domain")
 	}
@@ -559,10 +559,10 @@ func (pc policyClient) userDomainPreConditions(ctx context.Context, pr policy.Po
 	preconds = append(preconds, &v1.Precondition{
 		Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 		Filter: &v1.RelationshipFilter{
-			ResourceType:       policy.DomainType,
+			ResourceType:       policies.DomainType,
 			OptionalResourceId: pr.Object,
 			OptionalSubjectFilter: &v1.SubjectFilter{
-				SubjectType:       policy.UserType,
+				SubjectType:       policies.UserType,
 				OptionalSubjectId: pr.Subject,
 			},
 		},
@@ -571,7 +571,7 @@ func (pc policyClient) userDomainPreConditions(ctx context.Context, pr policy.Po
 	return preconds, nil
 }
 
-func (pc policyClient) checkPolicy(ctx context.Context, pr policy.PolicyReq) error {
+func (pc policyClient) checkPolicy(ctx context.Context, pr policies.PolicyReq) error {
 	checkReq := v1.CheckPermissionRequest{
 		// FullyConsistent means little caching will be available, which means performance will suffer.
 		// Only use if a ZedToken is not available or absolutely latest information is required.
@@ -606,7 +606,7 @@ func (pc policyClient) checkPolicy(ctx context.Context, pr policy.PolicyReq) err
 	return svcerr.ErrAuthorization
 }
 
-func (pc policyClient) retrieveObjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) ([]policy.PolicyRes, string, error) {
+func (pc policyClient) retrieveObjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) ([]policies.PolicyRes, string, error) {
 	resourceReq := &v1.LookupResourcesRequest{
 		Consistency: &v1.Consistency{
 			Requirement: &v1.Consistency_FullyConsistent{
@@ -641,12 +641,12 @@ func (pc policyClient) retrieveObjects(ctx context.Context, pr policy.PolicyReq,
 			if len(resources) > 0 && resources[len(resources)-1].AfterResultCursor != nil {
 				token = resources[len(resources)-1].AfterResultCursor.Token
 			}
-			return []policy.PolicyRes{}, token, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
+			return []policies.PolicyRes{}, token, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
 		}
 	}
 }
 
-func (pc policyClient) retrieveAllObjects(ctx context.Context, pr policy.PolicyReq) ([]policy.PolicyRes, error) {
+func (pc policyClient) retrieveAllObjects(ctx context.Context, pr policies.PolicyReq) ([]policies.PolicyRes, error) {
 	resourceReq := &v1.LookupResourcesRequest{
 		Consistency: &v1.Consistency{
 			Requirement: &v1.Consistency_FullyConsistent{
@@ -661,7 +661,7 @@ func (pc policyClient) retrieveAllObjects(ctx context.Context, pr policy.PolicyR
 	if err != nil {
 		return nil, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
 	}
-	tuples := []policy.PolicyRes{}
+	tuples := []policies.PolicyRes{}
 	for {
 		resp, err := stream.Recv()
 		switch {
@@ -670,12 +670,12 @@ func (pc policyClient) retrieveAllObjects(ctx context.Context, pr policy.PolicyR
 		case err != nil:
 			return tuples, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
 		default:
-			tuples = append(tuples, policy.PolicyRes{Object: resp.ResourceObjectId})
+			tuples = append(tuples, policies.PolicyRes{Object: resp.ResourceObjectId})
 		}
 	}
 }
 
-func (pc policyClient) retrieveSubjects(ctx context.Context, pr policy.PolicyReq, nextPageToken string, limit uint64) ([]policy.PolicyRes, string, error) {
+func (pc policyClient) retrieveSubjects(ctx context.Context, pr policies.PolicyReq, nextPageToken string, limit uint64) ([]policies.PolicyRes, string, error) {
 	subjectsReq := v1.LookupSubjectsRequest{
 		Consistency: &v1.Consistency{
 			Requirement: &v1.Consistency_FullyConsistent{
@@ -713,13 +713,13 @@ func (pc policyClient) retrieveSubjects(ctx context.Context, pr policy.PolicyReq
 			if len(subjects) > 0 && subjects[len(subjects)-1].AfterResultCursor != nil {
 				token = subjects[len(subjects)-1].AfterResultCursor.Token
 			}
-			return []policy.PolicyRes{}, token, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
+			return []policies.PolicyRes{}, token, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
 		}
 	}
 }
 
-func (pc policyClient) retrieveAllSubjects(ctx context.Context, pr policy.PolicyReq) ([]policy.PolicyRes, error) {
-	var tuples []policy.PolicyRes
+func (pc policyClient) retrieveAllSubjects(ctx context.Context, pr policies.PolicyReq) ([]policies.PolicyRes, error) {
+	var tuples []policies.PolicyRes
 	nextPageToken := ""
 	for i := 0; ; i++ {
 		relationTuples, npt, err := pc.retrieveSubjects(ctx, pr, nextPageToken, defRetrieveAllLimit)
@@ -735,7 +735,7 @@ func (pc policyClient) retrieveAllSubjects(ctx context.Context, pr policy.Policy
 	return tuples, nil
 }
 
-func (pc policyClient) retrievePermissions(ctx context.Context, pr policy.PolicyReq, filterPermission []string) (policy.Permissions, error) {
+func (pc policyClient) retrievePermissions(ctx context.Context, pr policies.PolicyReq, filterPermission []string) (policies.Permissions, error) {
 	var permissionChecks []*v1.CheckBulkPermissionsRequestItem
 	for _, fp := range filterPermission {
 		permissionChecks = append(permissionChecks, &v1.CheckBulkPermissionsRequestItem{
@@ -762,14 +762,14 @@ func (pc policyClient) retrievePermissions(ctx context.Context, pr policy.Policy
 		Items: permissionChecks,
 	})
 	if err != nil {
-		return policy.Permissions{}, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
+		return policies.Permissions{}, errors.Wrap(errRetrievePolicies, handleSpicedbError(err))
 	}
 
 	permissions := []string{}
 	for _, pair := range resp.Pairs {
 		if pair.GetError() != nil {
 			s := pair.GetError()
-			return policy.Permissions{}, errors.Wrap(errRetrievePolicies, convertGRPCStatusToError(convertToGrpcStatus(s)))
+			return policies.Permissions{}, errors.Wrap(errRetrievePolicies, convertGRPCStatusToError(convertToGrpcStatus(s)))
 		}
 		item := pair.GetItem()
 		req := pair.GetRequest()
@@ -780,32 +780,32 @@ func (pc policyClient) retrievePermissions(ctx context.Context, pr policy.Policy
 	return permissions, nil
 }
 
-func groupPreConditions(pr policy.PolicyReq) ([]*v1.Precondition, error) {
+func groupPreConditions(pr policies.PolicyReq) ([]*v1.Precondition, error) {
 	// - PARENT_GROUP (subject) with DOMAIN RELATION to DOMAIN
 	precond := []*v1.Precondition{
 		{
 			Operation: v1.Precondition_OPERATION_MUST_MATCH,
 			Filter: &v1.RelationshipFilter{
-				ResourceType:       policy.GroupType,
+				ResourceType:       policies.GroupType,
 				OptionalResourceId: pr.Subject,
-				OptionalRelation:   policy.DomainRelation,
+				OptionalRelation:   policies.DomainRelation,
 				OptionalSubjectFilter: &v1.SubjectFilter{
-					SubjectType:       policy.DomainType,
+					SubjectType:       policies.DomainType,
 					OptionalSubjectId: pr.Domain,
 				},
 			},
 		},
 	}
-	if pr.ObjectKind != policy.ChannelsKind {
+	if pr.ObjectKind != policies.ChannelsKind {
 		precond = append(precond,
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policy.GroupType,
+					ResourceType:       policies.GroupType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.ParentGroupRelation,
+					OptionalRelation:   policies.ParentGroupRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType: policy.GroupType,
+						SubjectType: policies.GroupType,
 					},
 				},
 			},
@@ -813,16 +813,16 @@ func groupPreConditions(pr policy.PolicyReq) ([]*v1.Precondition, error) {
 	}
 	switch {
 	// - NEW CHILD_GROUP (object) with out DOMAIN RELATION to ANY DOMAIN
-	case pr.ObjectType == policy.GroupType && pr.ObjectKind == policy.NewGroupKind:
+	case pr.ObjectType == policies.GroupType && pr.ObjectKind == policies.NewGroupKind:
 		precond = append(precond,
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policy.GroupType,
+					ResourceType:       policies.GroupType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.DomainRelation,
+					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType: policy.DomainType,
+						SubjectType: policies.DomainType,
 					},
 				},
 			},
@@ -833,11 +833,11 @@ func groupPreConditions(pr policy.PolicyReq) ([]*v1.Precondition, error) {
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policy.GroupType,
+					ResourceType:       policies.GroupType,
 					OptionalResourceId: pr.Object,
-					OptionalRelation:   policy.DomainRelation,
+					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
-						SubjectType:       policy.DomainType,
+						SubjectType:       policies.DomainType,
 						OptionalSubjectId: pr.Domain,
 					},
 				},
@@ -847,19 +847,19 @@ func groupPreConditions(pr policy.PolicyReq) ([]*v1.Precondition, error) {
 	return precond, nil
 }
 
-func channelThingPreCondition(pr policy.PolicyReq) ([]*v1.Precondition, error) {
-	if pr.SubjectKind != policy.ChannelsKind {
+func channelThingPreCondition(pr policies.PolicyReq) ([]*v1.Precondition, error) {
+	if pr.SubjectKind != policies.ChannelsKind {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, errInvalidSubject)
 	}
 	precond := []*v1.Precondition{
 		{
 			Operation: v1.Precondition_OPERATION_MUST_MATCH,
 			Filter: &v1.RelationshipFilter{
-				ResourceType:       policy.GroupType,
+				ResourceType:       policies.GroupType,
 				OptionalResourceId: pr.Subject,
-				OptionalRelation:   policy.DomainRelation,
+				OptionalRelation:   policies.DomainRelation,
 				OptionalSubjectFilter: &v1.SubjectFilter{
-					SubjectType:       policy.DomainType,
+					SubjectType:       policies.DomainType,
 					OptionalSubjectId: pr.Domain,
 				},
 			},
@@ -867,10 +867,10 @@ func channelThingPreCondition(pr policy.PolicyReq) ([]*v1.Precondition, error) {
 		{
 			Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 			Filter: &v1.RelationshipFilter{
-				ResourceType:     policy.GroupType,
-				OptionalRelation: policy.ParentGroupRelation,
+				ResourceType:     policies.GroupType,
+				OptionalRelation: policies.ParentGroupRelation,
 				OptionalSubjectFilter: &v1.SubjectFilter{
-					SubjectType:       policy.GroupType,
+					SubjectType:       policies.GroupType,
 					OptionalSubjectId: pr.Subject,
 				},
 			},
@@ -878,11 +878,11 @@ func channelThingPreCondition(pr policy.PolicyReq) ([]*v1.Precondition, error) {
 		{
 			Operation: v1.Precondition_OPERATION_MUST_MATCH,
 			Filter: &v1.RelationshipFilter{
-				ResourceType:       policy.ThingType,
+				ResourceType:       policies.ThingType,
 				OptionalResourceId: pr.Object,
-				OptionalRelation:   policy.DomainRelation,
+				OptionalRelation:   policies.DomainRelation,
 				OptionalSubjectFilter: &v1.SubjectFilter{
-					SubjectType:       policy.DomainType,
+					SubjectType:       policies.DomainType,
 					OptionalSubjectId: pr.Domain,
 				},
 			},
@@ -891,24 +891,24 @@ func channelThingPreCondition(pr policy.PolicyReq) ([]*v1.Precondition, error) {
 	return precond, nil
 }
 
-func objectsToAuthPolicies(objects []*v1.LookupResourcesResponse) []policy.PolicyRes {
-	var policies []policy.PolicyRes
+func objectsToAuthPolicies(objects []*v1.LookupResourcesResponse) []policies.PolicyRes {
+	var policyList []policies.PolicyRes
 	for _, obj := range objects {
-		policies = append(policies, policy.PolicyRes{
+		policyList = append(policyList, policies.PolicyRes{
 			Object: obj.GetResourceObjectId(),
 		})
 	}
-	return policies
+	return policyList
 }
 
-func subjectsToAuthPolicies(subjects []*v1.LookupSubjectsResponse) []policy.PolicyRes {
-	var policies []policy.PolicyRes
+func subjectsToAuthPolicies(subjects []*v1.LookupSubjectsResponse) []policies.PolicyRes {
+	var policyList []policies.PolicyRes
 	for _, sub := range subjects {
-		policies = append(policies, policy.PolicyRes{
+		policyList = append(policyList, policies.PolicyRes{
 			Subject: sub.Subject.GetSubjectObjectId(),
 		})
 	}
-	return policies
+	return policyList
 }
 
 func handleSpicedbError(err error) error {

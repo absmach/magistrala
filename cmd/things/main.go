@@ -36,11 +36,11 @@ import (
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/things"
-	"github.com/absmach/magistrala/things/api"
 	grpcapi "github.com/absmach/magistrala/things/api/grpc"
 	httpapi "github.com/absmach/magistrala/things/api/http"
 	thcache "github.com/absmach/magistrala/things/cache"
 	thevents "github.com/absmach/magistrala/things/events"
+	tmiddleware "github.com/absmach/magistrala/things/middleware"
 	thingspg "github.com/absmach/magistrala/things/postgres"
 	localusers "github.com/absmach/magistrala/things/standalone"
 	ctracing "github.com/absmach/magistrala/things/tracing"
@@ -204,7 +204,7 @@ func main() {
 		return
 	}
 	mux := chi.NewRouter()
-	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID), logger)
+	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(csvc, gsvc, authClient, mux, logger, cfg.InstanceID), logger)
 
 	grpcServerConfig := server.Config{Port: defSvcAuthGRPCPort}
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGRPC}); err != nil {
@@ -214,7 +214,7 @@ func main() {
 	}
 	registerThingsServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		magistrala.RegisterAuthzServiceServer(srv, grpcapi.NewServer(csvc))
+		magistrala.RegisterAuthzServiceServer(srv, grpcapi.NewServer(csvc, authClient))
 	}
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerThingsServer, logger)
 
@@ -250,7 +250,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 
 	thingCache := thcache.NewCache(cacheClient, keyDuration)
 
-	csvc := things.NewService(authClient, policyClient, cRepo, gRepo, thingCache, idp)
+	csvc := things.NewService(policyClient, cRepo, gRepo, thingCache, idp)
 	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
 
 	csvc, err := thevents.NewEventStoreMiddleware(ctx, csvc, esURL)
@@ -264,9 +264,9 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	}
 
 	csvc = ctracing.New(csvc, tracer)
-	csvc = api.LoggingMiddleware(csvc, logger)
+	csvc = tmiddleware.LoggingMiddleware(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	csvc = api.MetricsMiddleware(csvc, counter, latency)
+	csvc = tmiddleware.MetricsMiddleware(csvc, counter, latency)
 
 	gsvc = gtracing.New(gsvc, tracer)
 	gsvc = gapi.LoggingMiddleware(gsvc, logger)

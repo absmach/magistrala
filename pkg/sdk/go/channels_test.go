@@ -50,7 +50,7 @@ func setupChannels() (*httptest.Server, *gmocks.Service) {
 
 	mux := chi.NewRouter()
 
-	thapi.MakeHandler(tsvc, gsvc, mux, logger, "")
+	thapi.MakeHandler(tsvc, gsvc, authClient, mux, logger, "")
 	usapi.MakeHandler(usvc, authClient, true, gsvc, mux, logger, "", passRegex, provider)
 	return httptest.NewServer(mux), gsvc
 }

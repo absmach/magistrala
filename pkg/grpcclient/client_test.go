@@ -13,6 +13,7 @@ import (
 	authgrpcapi "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/auth/mocks"
 	mglog "github.com/absmach/magistrala/logger"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/server"
@@ -78,8 +79,9 @@ func TestSetupAuth(t *testing.T) {
 func TestSetupThingsClient(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	registerThingsServiceServer := func(srv *grpc.Server) {
-		magistrala.RegisterAuthzServiceServer(srv, thingsgrpcapi.NewServer(new(thmocks.Service)))
+		magistrala.RegisterAuthzServiceServer(srv, thingsgrpcapi.NewServer(new(thmocks.Service), new(authmocks.AuthClient)))
 	}
 	gs := grpcserver.NewServer(ctx, cancel, "things", server.Config{Port: "12345"}, registerThingsServiceServer, mglog.NewMock())
 	go func() {

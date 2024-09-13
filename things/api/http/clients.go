@@ -12,6 +12,7 @@ import (
 
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/things"
@@ -20,97 +21,97 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func clientsHandler(svc things.Service, r *chi.Mux, logger *slog.Logger) http.Handler {
+func clientsHandler(svc things.Service, r *chi.Mux, authClient auth.AuthClient, logger *slog.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 	r.Route("/things", func(r chi.Router) {
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			createClientEndpoint(svc),
+			createClientEndpoint(svc, authClient),
 			decodeCreateClientReq,
 			api.EncodeResponse,
 			opts...,
 		), "create_thing").ServeHTTP)
 
 		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			listClientsEndpoint(svc),
+			listClientsEndpoint(svc, authClient),
 			decodeListClients,
 			api.EncodeResponse,
 			opts...,
 		), "list_things").ServeHTTP)
 
 		r.Post("/bulk", otelhttp.NewHandler(kithttp.NewServer(
-			createClientsEndpoint(svc),
+			createClientsEndpoint(svc, authClient),
 			decodeCreateClientsReq,
 			api.EncodeResponse,
 			opts...,
 		), "create_things").ServeHTTP)
 
 		r.Get("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			viewClientEndpoint(svc),
+			viewClientEndpoint(svc, authClient),
 			decodeViewClient,
 			api.EncodeResponse,
 			opts...,
 		), "view_thing").ServeHTTP)
 
 		r.Get("/{thingID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
-			viewClientPermsEndpoint(svc),
+			viewClientPermsEndpoint(svc, authClient),
 			decodeViewClientPerms,
 			api.EncodeResponse,
 			opts...,
 		), "view_thing_permissions").ServeHTTP)
 
 		r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientEndpoint(svc),
+			updateClientEndpoint(svc, authClient),
 			decodeUpdateClient,
 			api.EncodeResponse,
 			opts...,
 		), "update_thing").ServeHTTP)
 
 		r.Patch("/{thingID}/tags", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientTagsEndpoint(svc),
+			updateClientTagsEndpoint(svc, authClient),
 			decodeUpdateClientTags,
 			api.EncodeResponse,
 			opts...,
 		), "update_thing_tags").ServeHTTP)
 
 		r.Patch("/{thingID}/secret", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientSecretEndpoint(svc),
+			updateClientSecretEndpoint(svc, authClient),
 			decodeUpdateClientCredentials,
 			api.EncodeResponse,
 			opts...,
 		), "update_thing_credentials").ServeHTTP)
 
 		r.Post("/{thingID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-			enableClientEndpoint(svc),
+			enableClientEndpoint(svc, authClient),
 			decodeChangeClientStatus,
 			api.EncodeResponse,
 			opts...,
 		), "enable_thing").ServeHTTP)
 
 		r.Post("/{thingID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-			disableClientEndpoint(svc),
+			disableClientEndpoint(svc, authClient),
 			decodeChangeClientStatus,
 			api.EncodeResponse,
 			opts...,
 		), "disable_thing").ServeHTTP)
 
 		r.Post("/{thingID}/share", otelhttp.NewHandler(kithttp.NewServer(
-			thingShareEndpoint(svc),
+			thingShareEndpoint(svc, authClient),
 			decodeThingShareRequest,
 			api.EncodeResponse,
 			opts...,
 		), "share_thing").ServeHTTP)
 
 		r.Post("/{thingID}/unshare", otelhttp.NewHandler(kithttp.NewServer(
-			thingUnshareEndpoint(svc),
+			thingUnshareEndpoint(svc, authClient),
 			decodeThingUnshareRequest,
 			api.EncodeResponse,
 			opts...,
 		), "unshare_thing").ServeHTTP)
 
 		r.Delete("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			deleteClientEndpoint(svc),
+			deleteClientEndpoint(svc, authClient),
 			decodeDeleteClientReq,
 			api.EncodeResponse,
 			opts...,
@@ -123,14 +124,14 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger *slog.Logger) http.Ha
 	// and things service can access spiceDB and get the list of thing ids present in given channel id.
 	// Request to get list of things present in channelID ({groupID}) .
 	r.Get("/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersEndpoint(svc),
+		listMembersEndpoint(svc, authClient),
 		decodeListMembersRequest,
 		api.EncodeResponse,
 		opts...,
 	), "list_things_by_channel_id").ServeHTTP)
 
 	r.Get("/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
-		listClientsEndpoint(svc),
+		listClientsEndpoint(svc, authClient),
 		decodeListClients,
 		api.EncodeResponse,
 		opts...,

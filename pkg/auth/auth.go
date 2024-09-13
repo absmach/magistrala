@@ -11,9 +11,10 @@ import (
 )
 
 type Session struct {
-	UserID     string
-	DomainID   string
-	SuperAdmin bool
+	DomainUserID string
+	UserID       string
+	DomainID     string
+	SuperAdmin   bool
 }
 
 // AuthClient specifies a gRPC client for  authentication and authorization for magistrala services.

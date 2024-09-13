@@ -7,8 +7,9 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
+	mgauth "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/things"
@@ -25,10 +26,10 @@ type grpcServer struct {
 }
 
 // NewServer returns new AuthServiceServer instance.
-func NewServer(svc things.Service) magistrala.AuthzServiceServer {
+func NewServer(svc things.Service, authClient auth.AuthClient) magistrala.AuthzServiceServer {
 	return &grpcServer{
 		authorize: kitgrpc.NewServer(
-			(authorizeEndpoint(svc)),
+			(authorizeEndpoint(svc, authClient)),
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
 		),
@@ -66,7 +67,7 @@ func encodeError(err error) error {
 		err == apiutil.ErrMalformedPolicyAct:
 		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, auth.ErrKeyExpired),
+		errors.Contains(err, mgauth.ErrKeyExpired),
 		err == apiutil.ErrMissingEmail,
 		err == apiutil.ErrBearerToken:
 		return status.Error(codes.Unauthenticated, err.Error())

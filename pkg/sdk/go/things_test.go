@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -33,7 +34,8 @@ func setupThings() (*httptest.Server, *mocks.Service) {
 
 	logger := mglog.NewMock()
 	mux := chi.NewRouter()
-	api.MakeHandler(tsvc, gsvc, mux, logger, "")
+	authClient := new(authmocks.AuthClient)
+	api.MakeHandler(tsvc, gsvc, authClient, mux, logger, "")
 
 	return httptest.NewServer(mux), tsvc
 }

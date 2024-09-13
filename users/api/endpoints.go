@@ -196,7 +196,7 @@ func listMembersByGroupEndpoint(svc users.Service, authClient auth.AuthClient) e
 		if err != nil {
 			return nil, err
 		}
-		if err = authorize(ctx, authClient, policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.GroupType, req.objectID); err != nil {
+		if err = authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.GroupType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -222,7 +222,7 @@ func listMembersByChannelEndpoint(svc users.Service, authClient auth.AuthClient)
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.GroupType, req.objectID); err != nil {
+		if err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.GroupType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -247,7 +247,7 @@ func listMembersByThingEndpoint(svc users.Service, authClient auth.AuthClient) e
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, policy.UserType, policy.TokenKind, req.token, req.Page.Permission, policy.ThingType, req.objectID); err != nil {
+		if err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, req.Page.Permission, policy.ThingType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -272,7 +272,7 @@ func listMembersByDomainEndpoint(svc users.Service, authClient auth.AuthClient) 
 		if err != nil {
 			return nil, err
 		}
-		if err := authorize(ctx, authClient, policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.DomainType, req.objectID); err != nil {
+		if err := authorize(ctx, authClient, "", policy.UserType, policy.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policy.DomainType, req.objectID); err != nil {
 			return nil, err
 		}
 
@@ -467,7 +467,7 @@ func updateClientRoleEndpoint(svc users.Service, authClient auth.AuthClient) end
 		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
 			session.SuperAdmin = true
 		}
-		if err := authorize(ctx, authClient, policy.UserType, policy.UsersKind, client.ID, policy.MembershipPermission, policy.PlatformType, policy.MagistralaObject); err != nil {
+		if err := authorize(ctx, authClient, "", policy.UserType, policy.UsersKind, client.ID, policy.MembershipPermission, policy.PlatformType, policy.MagistralaObject); err != nil {
 			return nil, err
 		}
 
@@ -632,13 +632,15 @@ func identify(ctx context.Context, authClient auth.AuthClient, token string) (au
 		return auth.Session{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	return auth.Session{
-		UserID:   resp.GetUserId(),
-		DomainID: resp.GetDomainId(),
+		DomainUserID: resp.GetId(),
+		UserID:       resp.GetUserId(),
+		DomainID:     resp.GetDomainId(),
 	}, nil
 }
 
-func authorize(ctx context.Context, authClient auth.AuthClient, subjectType, subjectKind, subject, permission, objectType, objectID string) error {
+func authorize(ctx context.Context, authClient auth.AuthClient, domainID string, subjectType, subjectKind, subject, permission, objectType, objectID string) error {
 	res, err := authClient.Authorize(ctx, &magistrala.AuthorizeReq{
+		Domain:      domainID,
 		SubjectType: subjectType,
 		SubjectKind: subjectKind,
 		Subject:     subject,

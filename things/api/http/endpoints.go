@@ -330,14 +330,20 @@ func buildClientsResponse(cp mgclients.MembersPage) clientsPageRes {
 	return res
 }
 
-func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
+func assignUsersEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignUsersRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-
-		if err := svc.Assign(ctx, req.token, req.groupID, req.Relation, policy.UsersKind, req.UserIDs...); err != nil {
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+			return nil, err
+		}
+		if err := svc.Assign(ctx, session, req.groupID, req.Relation, policy.UsersKind, req.UserIDs...); err != nil {
 			return nil, err
 		}
 
@@ -345,14 +351,21 @@ func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func unassignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
+func unassignUsersEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(unassignUsersRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.groupID, req.Relation, policy.UsersKind, req.UserIDs...); err != nil {
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+			return nil, err
+		}
+		if err := svc.Unassign(ctx, session, req.groupID, req.Relation, policy.UsersKind, req.UserIDs...); err != nil {
 			return nil, err
 		}
 
@@ -360,14 +373,21 @@ func unassignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func assignUserGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+func assignUserGroupsEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignUserGroupsRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+			return nil, err
+		}
 
-		if err := svc.Assign(ctx, req.token, req.groupID, policy.ParentGroupRelation, policy.ChannelsKind, req.UserGroupIDs...); err != nil {
+		if err := svc.Assign(ctx, session, req.groupID, policy.ParentGroupRelation, policy.ChannelsKind, req.UserGroupIDs...); err != nil {
 			return nil, err
 		}
 
@@ -375,14 +395,21 @@ func assignUserGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func unassignUserGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+func unassignUserGroupsEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(unassignUserGroupsRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.groupID, policy.ParentGroupRelation, policy.ChannelsKind, req.UserGroupIDs...); err != nil {
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.groupID); err != nil {
+			return nil, err
+		}
+		if err := svc.Unassign(ctx, session, req.groupID, policy.ParentGroupRelation, policy.ChannelsKind, req.UserGroupIDs...); err != nil {
 			return nil, err
 		}
 
@@ -390,14 +417,21 @@ func unassignUserGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func connectChannelThingEndpoint(svc groups.Service) endpoint.Endpoint {
+func connectChannelThingEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(connectChannelThingRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+			return nil, err
+		}
 
-		if err := svc.Assign(ctx, req.token, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		if err := svc.Assign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -405,14 +439,21 @@ func connectChannelThingEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func disconnectChannelThingEndpoint(svc groups.Service) endpoint.Endpoint {
+func disconnectChannelThingEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(disconnectChannelThingRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+			return nil, err
+		}
+		if err := svc.Unassign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -420,14 +461,21 @@ func disconnectChannelThingEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func connectEndpoint(svc groups.Service) endpoint.Endpoint {
+func connectEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(connectChannelThingRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Assign(ctx, req.token, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+			return nil, err
+		}
+		if err := svc.Assign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 
@@ -435,14 +483,20 @@ func connectEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func disconnectEndpoint(svc groups.Service) endpoint.Endpoint {
+func disconnectEndpoint(svc groups.Service, authClient auth.AuthClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(disconnectChannelThingRequest)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-
-		if err := svc.Unassign(ctx, req.token, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
+		session, err := identify(ctx, authClient, req.token)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := authorize(ctx, authClient, session.DomainID, policy.UserType, policy.UsersKind, session.DomainUserID, policy.EditPermission, policy.GroupType, req.ChannelID); err != nil {
+			return nil, err
+		}
+		if err := svc.Unassign(ctx, session, req.ChannelID, policy.GroupRelation, policy.ThingsKind, req.ThingID); err != nil {
 			return nil, err
 		}
 

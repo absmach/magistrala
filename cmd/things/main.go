@@ -190,7 +190,7 @@ func main() {
 		logger.Info("Policy client successfully connected to spicedb gRPC server")
 	}
 
-	csvc, gsvc, err := newService(ctx, db, dbConfig, authClient, policyClient, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
+	csvc, gsvc, err := newService(ctx, db, dbConfig, policyClient, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -241,7 +241,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authClient authclient.AuthClient, policyClient policy.PolicyClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, policyClient policy.PolicyClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -251,7 +251,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	thingCache := thcache.NewCache(cacheClient, keyDuration)
 
 	csvc := things.NewService(policyClient, cRepo, gRepo, thingCache, idp)
-	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
+	gsvc := mggroups.NewService(gRepo, idp, policyClient)
 
 	csvc, err := thevents.NewEventStoreMiddleware(ctx, csvc, esURL)
 	if err != nil {

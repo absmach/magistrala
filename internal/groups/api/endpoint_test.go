@@ -10,14 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
+	"github.com/absmach/magistrala/pkg/policy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -40,6 +41,7 @@ var validGroupResp = groups.Group{
 
 func TestCreateGroupEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc    string
 		kind    string
@@ -51,7 +53,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 	}{
 		{
 			desc: "successfully with groups kind",
-			kind: auth.NewGroupKind,
+			kind: policy.NewGroupKind,
 			req: createGroupReq{
 				token: valid,
 				Group: groups.Group{
@@ -65,7 +67,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc: "successfully with channels kind",
-			kind: auth.NewChannelKind,
+			kind: policy.NewChannelKind,
 			req: createGroupReq{
 				token: valid,
 				Group: groups.Group{
@@ -79,7 +81,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc: "unsuccessfully with invalid request",
-			kind: auth.NewGroupKind,
+			kind: policy.NewGroupKind,
 			req: createGroupReq{
 				Group: groups.Group{
 					Name: valid,
@@ -90,7 +92,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc: "unsuccessfully with repo error",
-			kind: auth.NewGroupKind,
+			kind: policy.NewGroupKind,
 			req: createGroupReq{
 				token: valid,
 				Group: groups.Group{
@@ -106,7 +108,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := svc.On("CreateGroup", context.Background(), tc.req.token, tc.kind, tc.req.Group).Return(tc.svcResp, tc.svcErr)
-		resp, err := CreateGroupEndpoint(svc, tc.kind)(context.Background(), tc.req)
+		resp, err := CreateGroupEndpoint(svc, auth, tc.kind)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(createGroupRes)
@@ -125,6 +127,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 
 func TestViewGroupEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc    string
 		req     groupReq
@@ -167,7 +170,7 @@ func TestViewGroupEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := svc.On("ViewGroup", context.Background(), tc.req.token, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := ViewGroupEndpoint(svc)(context.Background(), tc.req)
+		resp, err := ViewGroupEndpoint(svc, auth)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(viewGroupRes)
@@ -180,6 +183,7 @@ func TestViewGroupEndpoint(t *testing.T) {
 
 func TestViewGroupPermsEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc    string
 		req     groupPermsReq
@@ -224,7 +228,7 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := svc.On("ViewGroupPerms", context.Background(), tc.req.token, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := ViewGroupPermsEndpoint(svc)(context.Background(), tc.req)
+		resp, err := ViewGroupPermsEndpoint(svc, auth)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(viewGroupPermsRes)
@@ -237,6 +241,7 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 
 func TestEnableGroupEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc    string
 		req     changeGroupStatusReq
@@ -279,7 +284,7 @@ func TestEnableGroupEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := svc.On("EnableGroup", context.Background(), tc.req.token, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := EnableGroupEndpoint(svc)(context.Background(), tc.req)
+		resp, err := EnableGroupEndpoint(svc, auth)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(changeStatusRes)
@@ -292,6 +297,7 @@ func TestEnableGroupEndpoint(t *testing.T) {
 
 func TestDisableGroupEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc    string
 		req     changeGroupStatusReq
@@ -334,7 +340,7 @@ func TestDisableGroupEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := svc.On("DisableGroup", context.Background(), tc.req.token, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := DisableGroupEndpoint(svc)(context.Background(), tc.req)
+		resp, err := DisableGroupEndpoint(svc, auth)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(changeStatusRes)
@@ -347,6 +353,7 @@ func TestDisableGroupEndpoint(t *testing.T) {
 
 func TestDeleteGroupEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc   string
 		req    groupReq
@@ -386,7 +393,7 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := svc.On("DeleteGroup", context.Background(), tc.req.token, tc.req.id).Return(tc.svcErr)
-		resp, err := DeleteGroupEndpoint(svc)(context.Background(), tc.req)
+		resp, err := DeleteGroupEndpoint(svc, auth)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(deleteGroupRes)
@@ -404,6 +411,7 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 
 func TestUpdateGroupEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc    string
 		req     updateGroupReq
@@ -455,7 +463,7 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 			Metadata:    tc.req.Metadata,
 		}
 		repoCall := svc.On("UpdateGroup", context.Background(), tc.req.token, group).Return(tc.svcResp, tc.svcErr)
-		resp, err := UpdateGroupEndpoint(svc)(context.Background(), tc.req)
+		resp, err := UpdateGroupEndpoint(svc, auth)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(updateGroupRes)
@@ -468,6 +476,7 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 
 func TestListGroupsEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	childGroup := groups.Group{
 		ID:          testsutil.GenerateUUID(t),
 		Name:        valid,
@@ -514,7 +523,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -522,7 +531,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					},
 				},
 				token:      valid,
-				memberKind: auth.ThingsKind,
+				memberKind: policy.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -547,7 +556,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					},
 				},
 				token:      valid,
-				memberKind: auth.ThingsKind,
+				memberKind: policy.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -565,7 +574,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "successfully with tree",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -574,7 +583,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				tree:       true,
 				token:      valid,
-				memberKind: auth.ThingsKind,
+				memberKind: policy.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -592,7 +601,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "list children groups successfully without tree",
-			memberKind: auth.UsersKind,
+			memberKind: policy.UsersKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -603,7 +612,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				tree:       false,
 				token:      valid,
-				memberKind: auth.UsersKind,
+				memberKind: policy.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -621,7 +630,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "list parent group successfully without tree",
-			memberKind: auth.UsersKind,
+			memberKind: policy.UsersKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -632,7 +641,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				tree:       false,
 				token:      valid,
-				memberKind: auth.UsersKind,
+				memberKind: policy.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{
@@ -650,14 +659,14 @@ func TestListGroupsEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req:        listGroupsReq{},
 			resp:       groupPageRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req: listGroupsReq{
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -665,7 +674,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 					},
 				},
 				token:      valid,
-				memberKind: auth.ThingsKind,
+				memberKind: policy.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Page{},
@@ -680,7 +689,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 			tc.req.memberKind = tc.memberKind
 		}
 		repoCall := svc.On("ListGroups", context.Background(), tc.req.token, tc.req.memberKind, tc.req.memberID, tc.req.Page).Return(tc.svcResp, tc.svcErr)
-		resp, err := ListGroupsEndpoint(svc, mock.Anything, tc.memberKind)(context.Background(), tc.req)
+		resp, err := ListGroupsEndpoint(svc, auth, mock.Anything, tc.memberKind)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(groupPageRes)
@@ -693,6 +702,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 
 func TestListMembersEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc       string
 		memberKind string
@@ -704,10 +714,10 @@ func TestListMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req: listMembersReq{
 				token:      valid,
-				memberKind: auth.ThingsKind,
+				memberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.MembersPage{
@@ -733,7 +743,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			desc: "successfully with empty member kind",
 			req: listMembersReq{
 				token:      valid,
-				memberKind: auth.ThingsKind,
+				memberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.MembersPage{
@@ -757,17 +767,17 @@ func TestListMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req:        listMembersReq{},
 			resp:       listMembersRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req: listMembersReq{
 				token:      valid,
-				memberKind: auth.ThingsKind,
+				memberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.MembersPage{},
@@ -782,7 +792,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			tc.req.memberKind = tc.memberKind
 		}
 		repoCall := svc.On("ListMembers", context.Background(), tc.req.token, tc.req.groupID, tc.req.permission, tc.req.memberKind).Return(tc.svcResp, tc.svcErr)
-		resp, err := ListMembersEndpoint(svc, tc.memberKind)(context.Background(), tc.req)
+		resp, err := ListMembersEndpoint(svc, auth, tc.memberKind)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(listMembersRes)
@@ -795,6 +805,7 @@ func TestListMembersEndpoint(t *testing.T) {
 
 func TestAssignMembersEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc       string
 		relation   string
@@ -806,11 +817,11 @@ func TestAssignMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			relation:   auth.ContributorRelation,
-			memberKind: auth.ThingsKind,
+			relation:   policy.ContributorRelation,
+			memberKind: policy.ThingsKind,
 			req: assignReq{
 				token:      valid,
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -823,11 +834,11 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:     "successfully with empty member kind",
-			relation: auth.ContributorRelation,
+			relation: policy.ContributorRelation,
 			req: assignReq{
 				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -839,10 +850,10 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "successfully with empty relation",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req: assignReq{
 				token:      valid,
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -855,19 +866,19 @@ func TestAssignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			relation:   auth.ContributorRelation,
-			memberKind: auth.ThingsKind,
+			relation:   policy.ContributorRelation,
+			memberKind: policy.ThingsKind,
 			req:        assignReq{},
 			resp:       assignRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			relation:   auth.ContributorRelation,
-			memberKind: auth.ThingsKind,
+			relation:   policy.ContributorRelation,
+			memberKind: policy.ThingsKind,
 			req: assignReq{
 				token:      valid,
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -888,7 +899,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			tc.req.Relation = tc.relation
 		}
 		repoCall := svc.On("Assign", context.Background(), tc.req.token, tc.req.groupID, tc.req.Relation, tc.req.MemberKind, tc.req.Members).Return(tc.svcErr)
-		resp, err := AssignMembersEndpoint(svc, tc.relation, tc.memberKind)(context.Background(), tc.req)
+		resp, err := AssignMembersEndpoint(svc, auth, tc.relation, tc.memberKind)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(assignRes)
@@ -906,6 +917,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 
 func TestUnassignMembersEndpoint(t *testing.T) {
 	svc := new(mocks.Service)
+	auth := new(authmocks.AuthClient)
 	cases := []struct {
 		desc       string
 		relation   string
@@ -917,11 +929,11 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 	}{
 		{
 			desc:       "successfully",
-			relation:   auth.ContributorRelation,
-			memberKind: auth.ThingsKind,
+			relation:   policy.ContributorRelation,
+			memberKind: policy.ThingsKind,
 			req: unassignReq{
 				token:      valid,
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -934,11 +946,11 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:     "successfully with empty member kind",
-			relation: auth.ContributorRelation,
+			relation: policy.ContributorRelation,
 			req: unassignReq{
 				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -950,10 +962,10 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "successfully with empty relation",
-			memberKind: auth.ThingsKind,
+			memberKind: policy.ThingsKind,
 			req: unassignReq{
 				token:      valid,
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -966,19 +978,19 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 		},
 		{
 			desc:       "unsuccessfully with invalid request",
-			relation:   auth.ContributorRelation,
-			memberKind: auth.ThingsKind,
+			relation:   policy.ContributorRelation,
+			memberKind: policy.ThingsKind,
 			req:        unassignReq{},
 			resp:       unassignRes{},
 			err:        apiutil.ErrValidation,
 		},
 		{
 			desc:       "unsuccessfully with repo error",
-			relation:   auth.ContributorRelation,
-			memberKind: auth.ThingsKind,
+			relation:   policy.ContributorRelation,
+			memberKind: policy.ThingsKind,
 			req: unassignReq{
 				token:      valid,
-				MemberKind: auth.ThingsKind,
+				MemberKind: policy.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -999,7 +1011,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			tc.req.Relation = tc.relation
 		}
 		repoCall := svc.On("Unassign", context.Background(), tc.req.token, tc.req.groupID, tc.req.Relation, tc.req.MemberKind, tc.req.Members).Return(tc.svcErr)
-		resp, err := UnassignMembersEndpoint(svc, tc.relation, tc.memberKind)(context.Background(), tc.req)
+		resp, err := UnassignMembersEndpoint(svc, auth, tc.relation, tc.memberKind)(context.Background(), tc.req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 		response := resp.(unassignRes)

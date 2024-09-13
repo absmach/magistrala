@@ -250,7 +250,7 @@ func newService(ctx context.Context, authClient authclient.AuthClient, authPolic
 	}
 
 	csvc := users.NewService(cRepo, policyClient, emailerClient, hsr, idp)
-	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
+	gsvc := mggroups.NewService(gRepo, idp, policyClient)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
 	if err != nil {

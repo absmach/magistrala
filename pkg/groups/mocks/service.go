@@ -7,7 +7,10 @@ package mocks
 import (
 	context "context"
 
+	auth "github.com/absmach/magistrala/pkg/auth"
+
 	groups "github.com/absmach/magistrala/pkg/groups"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -16,17 +19,17 @@ type Service struct {
 	mock.Mock
 }
 
-// Assign provides a mock function with given fields: ctx, token, groupID, relation, memberKind, memberIDs
-func (_m *Service) Assign(ctx context.Context, token string, groupID string, relation string, memberKind string, memberIDs ...string) error {
-	ret := _m.Called(ctx, token, groupID, relation, memberKind, memberIDs)
+// Assign provides a mock function with given fields: ctx, session, groupID, relation, memberKind, memberIDs
+func (_m *Service) Assign(ctx context.Context, session auth.Session, groupID string, relation string, memberKind string, memberIDs ...string) error {
+	ret := _m.Called(ctx, session, groupID, relation, memberKind, memberIDs)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Assign")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...string) error); ok {
-		r0 = rf(ctx, token, groupID, relation, memberKind, memberIDs...)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, string, string, ...string) error); ok {
+		r0 = rf(ctx, session, groupID, relation, memberKind, memberIDs...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -34,9 +37,9 @@ func (_m *Service) Assign(ctx context.Context, token string, groupID string, rel
 	return r0
 }
 
-// CreateGroup provides a mock function with given fields: ctx, token, kind, g
-func (_m *Service) CreateGroup(ctx context.Context, token string, kind string, g groups.Group) (groups.Group, error) {
-	ret := _m.Called(ctx, token, kind, g)
+// CreateGroup provides a mock function with given fields: ctx, session, kind, g
+func (_m *Service) CreateGroup(ctx context.Context, session auth.Session, kind string, g groups.Group) (groups.Group, error) {
+	ret := _m.Called(ctx, session, kind, g)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateGroup")
@@ -44,17 +47,17 @@ func (_m *Service) CreateGroup(ctx context.Context, token string, kind string, g
 
 	var r0 groups.Group
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, groups.Group) (groups.Group, error)); ok {
-		return rf(ctx, token, kind, g)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, groups.Group) (groups.Group, error)); ok {
+		return rf(ctx, session, kind, g)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, groups.Group) groups.Group); ok {
-		r0 = rf(ctx, token, kind, g)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, groups.Group) groups.Group); ok {
+		r0 = rf(ctx, session, kind, g)
 	} else {
 		r0 = ret.Get(0).(groups.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, groups.Group) error); ok {
-		r1 = rf(ctx, token, kind, g)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string, groups.Group) error); ok {
+		r1 = rf(ctx, session, kind, g)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -62,17 +65,17 @@ func (_m *Service) CreateGroup(ctx context.Context, token string, kind string, g
 	return r0, r1
 }
 
-// DeleteGroup provides a mock function with given fields: ctx, token, id
-func (_m *Service) DeleteGroup(ctx context.Context, token string, id string) error {
-	ret := _m.Called(ctx, token, id)
+// DeleteGroup provides a mock function with given fields: ctx, id
+func (_m *Service) DeleteGroup(ctx context.Context, id string) error {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteGroup")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -80,9 +83,9 @@ func (_m *Service) DeleteGroup(ctx context.Context, token string, id string) err
 	return r0
 }
 
-// DisableGroup provides a mock function with given fields: ctx, token, id
-func (_m *Service) DisableGroup(ctx context.Context, token string, id string) (groups.Group, error) {
-	ret := _m.Called(ctx, token, id)
+// DisableGroup provides a mock function with given fields: ctx, session, id
+func (_m *Service) DisableGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableGroup")
@@ -90,17 +93,17 @@ func (_m *Service) DisableGroup(ctx context.Context, token string, id string) (g
 
 	var r0 groups.Group
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (groups.Group, error)); ok {
-		return rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) (groups.Group, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) groups.Group); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) groups.Group); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Get(0).(groups.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, id)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -108,9 +111,9 @@ func (_m *Service) DisableGroup(ctx context.Context, token string, id string) (g
 	return r0, r1
 }
 
-// EnableGroup provides a mock function with given fields: ctx, token, id
-func (_m *Service) EnableGroup(ctx context.Context, token string, id string) (groups.Group, error) {
-	ret := _m.Called(ctx, token, id)
+// EnableGroup provides a mock function with given fields: ctx, session, id
+func (_m *Service) EnableGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableGroup")
@@ -118,17 +121,17 @@ func (_m *Service) EnableGroup(ctx context.Context, token string, id string) (gr
 
 	var r0 groups.Group
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (groups.Group, error)); ok {
-		return rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) (groups.Group, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) groups.Group); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) groups.Group); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Get(0).(groups.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, id)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -136,9 +139,9 @@ func (_m *Service) EnableGroup(ctx context.Context, token string, id string) (gr
 	return r0, r1
 }
 
-// ListGroups provides a mock function with given fields: ctx, token, memberKind, memberID, gm
-func (_m *Service) ListGroups(ctx context.Context, token string, memberKind string, memberID string, gm groups.Page) (groups.Page, error) {
-	ret := _m.Called(ctx, token, memberKind, memberID, gm)
+// ListGroups provides a mock function with given fields: ctx, session, memberKind, memberID, gm
+func (_m *Service) ListGroups(ctx context.Context, session auth.Session, memberKind string, memberID string, gm groups.Page) (groups.Page, error) {
+	ret := _m.Called(ctx, session, memberKind, memberID, gm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListGroups")
@@ -146,17 +149,17 @@ func (_m *Service) ListGroups(ctx context.Context, token string, memberKind stri
 
 	var r0 groups.Page
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, groups.Page) (groups.Page, error)); ok {
-		return rf(ctx, token, memberKind, memberID, gm)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, string, groups.Page) (groups.Page, error)); ok {
+		return rf(ctx, session, memberKind, memberID, gm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, groups.Page) groups.Page); ok {
-		r0 = rf(ctx, token, memberKind, memberID, gm)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, string, groups.Page) groups.Page); ok {
+		r0 = rf(ctx, session, memberKind, memberID, gm)
 	} else {
 		r0 = ret.Get(0).(groups.Page)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, groups.Page) error); ok {
-		r1 = rf(ctx, token, memberKind, memberID, gm)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string, string, groups.Page) error); ok {
+		r1 = rf(ctx, session, memberKind, memberID, gm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -164,9 +167,9 @@ func (_m *Service) ListGroups(ctx context.Context, token string, memberKind stri
 	return r0, r1
 }
 
-// ListMembers provides a mock function with given fields: ctx, token, groupID, permission, memberKind
-func (_m *Service) ListMembers(ctx context.Context, token string, groupID string, permission string, memberKind string) (groups.MembersPage, error) {
-	ret := _m.Called(ctx, token, groupID, permission, memberKind)
+// ListMembers provides a mock function with given fields: ctx, groupID, permission, memberKind
+func (_m *Service) ListMembers(ctx context.Context, groupID string, permission string, memberKind string) (groups.MembersPage, error) {
+	ret := _m.Called(ctx, groupID, permission, memberKind)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMembers")
@@ -174,17 +177,17 @@ func (_m *Service) ListMembers(ctx context.Context, token string, groupID string
 
 	var r0 groups.MembersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (groups.MembersPage, error)); ok {
-		return rf(ctx, token, groupID, permission, memberKind)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (groups.MembersPage, error)); ok {
+		return rf(ctx, groupID, permission, memberKind)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) groups.MembersPage); ok {
-		r0 = rf(ctx, token, groupID, permission, memberKind)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) groups.MembersPage); ok {
+		r0 = rf(ctx, groupID, permission, memberKind)
 	} else {
 		r0 = ret.Get(0).(groups.MembersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = rf(ctx, token, groupID, permission, memberKind)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, groupID, permission, memberKind)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -192,17 +195,17 @@ func (_m *Service) ListMembers(ctx context.Context, token string, groupID string
 	return r0, r1
 }
 
-// Unassign provides a mock function with given fields: ctx, token, groupID, relation, memberKind, memberIDs
-func (_m *Service) Unassign(ctx context.Context, token string, groupID string, relation string, memberKind string, memberIDs ...string) error {
-	ret := _m.Called(ctx, token, groupID, relation, memberKind, memberIDs)
+// Unassign provides a mock function with given fields: ctx, session, groupID, relation, memberKind, memberIDs
+func (_m *Service) Unassign(ctx context.Context, session auth.Session, groupID string, relation string, memberKind string, memberIDs ...string) error {
+	ret := _m.Called(ctx, session, groupID, relation, memberKind, memberIDs)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Unassign")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...string) error); ok {
-		r0 = rf(ctx, token, groupID, relation, memberKind, memberIDs...)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, string, string, ...string) error); ok {
+		r0 = rf(ctx, session, groupID, relation, memberKind, memberIDs...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -210,9 +213,9 @@ func (_m *Service) Unassign(ctx context.Context, token string, groupID string, r
 	return r0
 }
 
-// UpdateGroup provides a mock function with given fields: ctx, token, g
-func (_m *Service) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
-	ret := _m.Called(ctx, token, g)
+// UpdateGroup provides a mock function with given fields: ctx, session, g
+func (_m *Service) UpdateGroup(ctx context.Context, session auth.Session, g groups.Group) (groups.Group, error) {
+	ret := _m.Called(ctx, session, g)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroup")
@@ -220,17 +223,17 @@ func (_m *Service) UpdateGroup(ctx context.Context, token string, g groups.Group
 
 	var r0 groups.Group
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, groups.Group) (groups.Group, error)); ok {
-		return rf(ctx, token, g)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, groups.Group) (groups.Group, error)); ok {
+		return rf(ctx, session, g)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, groups.Group) groups.Group); ok {
-		r0 = rf(ctx, token, g)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, groups.Group) groups.Group); ok {
+		r0 = rf(ctx, session, g)
 	} else {
 		r0 = ret.Get(0).(groups.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, groups.Group) error); ok {
-		r1 = rf(ctx, token, g)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, groups.Group) error); ok {
+		r1 = rf(ctx, session, g)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -238,9 +241,9 @@ func (_m *Service) UpdateGroup(ctx context.Context, token string, g groups.Group
 	return r0, r1
 }
 
-// ViewGroup provides a mock function with given fields: ctx, token, id
-func (_m *Service) ViewGroup(ctx context.Context, token string, id string) (groups.Group, error) {
-	ret := _m.Called(ctx, token, id)
+// ViewGroup provides a mock function with given fields: ctx, id
+func (_m *Service) ViewGroup(ctx context.Context, id string) (groups.Group, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewGroup")
@@ -248,17 +251,17 @@ func (_m *Service) ViewGroup(ctx context.Context, token string, id string) (grou
 
 	var r0 groups.Group
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (groups.Group, error)); ok {
-		return rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (groups.Group, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) groups.Group); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, string) groups.Group); ok {
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Get(0).(groups.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, id)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -266,9 +269,9 @@ func (_m *Service) ViewGroup(ctx context.Context, token string, id string) (grou
 	return r0, r1
 }
 
-// ViewGroupPerms provides a mock function with given fields: ctx, token, id
-func (_m *Service) ViewGroupPerms(ctx context.Context, token string, id string) ([]string, error) {
-	ret := _m.Called(ctx, token, id)
+// ViewGroupPerms provides a mock function with given fields: ctx, session, id
+func (_m *Service) ViewGroupPerms(ctx context.Context, session auth.Session, id string) ([]string, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewGroupPerms")
@@ -276,19 +279,19 @@ func (_m *Service) ViewGroupPerms(ctx context.Context, token string, id string) 
 
 	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]string, error)); ok {
-		return rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) ([]string, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []string); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) []string); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, id)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}

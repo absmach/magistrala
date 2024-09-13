@@ -6,6 +6,7 @@ package events
 import (
 	"context"
 
+	"github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/groups"
@@ -32,8 +33,8 @@ func NewEventStoreMiddleware(ctx context.Context, svc groups.Service, url, strea
 	}, nil
 }
 
-func (es eventStore) CreateGroup(ctx context.Context, token, kind string, group groups.Group) (groups.Group, error) {
-	group, err := es.svc.CreateGroup(ctx, token, kind, group)
+func (es eventStore) CreateGroup(ctx context.Context, session auth.Session, kind string, group groups.Group) (groups.Group, error) {
+	group, err := es.svc.CreateGroup(ctx, session, kind, group)
 	if err != nil {
 		return group, err
 	}
@@ -49,8 +50,8 @@ func (es eventStore) CreateGroup(ctx context.Context, token, kind string, group 
 	return group, nil
 }
 
-func (es eventStore) UpdateGroup(ctx context.Context, token string, group groups.Group) (groups.Group, error) {
-	group, err := es.svc.UpdateGroup(ctx, token, group)
+func (es eventStore) UpdateGroup(ctx context.Context, session auth.Session, group groups.Group) (groups.Group, error) {
+	group, err := es.svc.UpdateGroup(ctx, session, group)
 	if err != nil {
 		return group, err
 	}
@@ -66,8 +67,8 @@ func (es eventStore) UpdateGroup(ctx context.Context, token string, group groups
 	return group, nil
 }
 
-func (es eventStore) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
-	group, err := es.svc.ViewGroup(ctx, token, id)
+func (es eventStore) ViewGroup(ctx context.Context, id string) (groups.Group, error) {
+	group, err := es.svc.ViewGroup(ctx, id)
 	if err != nil {
 		return group, err
 	}
@@ -82,8 +83,8 @@ func (es eventStore) ViewGroup(ctx context.Context, token, id string) (groups.Gr
 	return group, nil
 }
 
-func (es eventStore) ViewGroupPerms(ctx context.Context, token, id string) ([]string, error) {
-	permissions, err := es.svc.ViewGroupPerms(ctx, token, id)
+func (es eventStore) ViewGroupPerms(ctx context.Context, session auth.Session, id string) ([]string, error) {
+	permissions, err := es.svc.ViewGroupPerms(ctx, session, id)
 	if err != nil {
 		return permissions, err
 	}
@@ -98,8 +99,8 @@ func (es eventStore) ViewGroupPerms(ctx context.Context, token, id string) ([]st
 	return permissions, nil
 }
 
-func (es eventStore) ListGroups(ctx context.Context, token, memberKind, memberID string, pm groups.Page) (groups.Page, error) {
-	gp, err := es.svc.ListGroups(ctx, token, memberKind, memberID, pm)
+func (es eventStore) ListGroups(ctx context.Context, session auth.Session, memberKind, memberID string, pm groups.Page) (groups.Page, error) {
+	gp, err := es.svc.ListGroups(ctx, session, memberKind, memberID, pm)
 	if err != nil {
 		return gp, err
 	}
@@ -114,8 +115,8 @@ func (es eventStore) ListGroups(ctx context.Context, token, memberKind, memberID
 	return gp, nil
 }
 
-func (es eventStore) ListMembers(ctx context.Context, token, groupID, permission, memberKind string) (groups.MembersPage, error) {
-	mp, err := es.svc.ListMembers(ctx, token, groupID, permission, memberKind)
+func (es eventStore) ListMembers(ctx context.Context, groupID, permission, memberKind string) (groups.MembersPage, error) {
+	mp, err := es.svc.ListMembers(ctx, groupID, permission, memberKind)
 	if err != nil {
 		return mp, err
 	}
@@ -130,8 +131,8 @@ func (es eventStore) ListMembers(ctx context.Context, token, groupID, permission
 	return mp, nil
 }
 
-func (es eventStore) EnableGroup(ctx context.Context, token, id string) (groups.Group, error) {
-	group, err := es.svc.EnableGroup(ctx, token, id)
+func (es eventStore) EnableGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
+	group, err := es.svc.EnableGroup(ctx, session, id)
 	if err != nil {
 		return group, err
 	}
@@ -139,8 +140,8 @@ func (es eventStore) EnableGroup(ctx context.Context, token, id string) (groups.
 	return es.changeStatus(ctx, group)
 }
 
-func (es eventStore) Assign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) error {
-	if err := es.svc.Assign(ctx, token, groupID, relation, memberKind, memberIDs...); err != nil {
+func (es eventStore) Assign(ctx context.Context, session auth.Session, groupID, relation, memberKind string, memberIDs ...string) error {
+	if err := es.svc.Assign(ctx, session, groupID, relation, memberKind, memberIDs...); err != nil {
 		return err
 	}
 
@@ -158,8 +159,8 @@ func (es eventStore) Assign(ctx context.Context, token, groupID, relation, membe
 	return nil
 }
 
-func (es eventStore) Unassign(ctx context.Context, token, groupID, relation, memberKind string, memberIDs ...string) error {
-	if err := es.svc.Unassign(ctx, token, groupID, relation, memberKind, memberIDs...); err != nil {
+func (es eventStore) Unassign(ctx context.Context, session auth.Session, groupID, relation, memberKind string, memberIDs ...string) error {
+	if err := es.svc.Unassign(ctx, session, groupID, relation, memberKind, memberIDs...); err != nil {
 		return err
 	}
 
@@ -173,11 +174,11 @@ func (es eventStore) Unassign(ctx context.Context, token, groupID, relation, mem
 	if err := es.Publish(ctx, event); err != nil {
 		return err
 	}
-	return es.svc.Unassign(ctx, token, groupID, relation, memberKind, memberIDs...)
+	return es.svc.Unassign(ctx, session, groupID, relation, memberKind, memberIDs...)
 }
 
-func (es eventStore) DisableGroup(ctx context.Context, token, id string) (groups.Group, error) {
-	group, err := es.svc.DisableGroup(ctx, token, id)
+func (es eventStore) DisableGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
+	group, err := es.svc.DisableGroup(ctx, session, id)
 	if err != nil {
 		return group, err
 	}
@@ -200,8 +201,8 @@ func (es eventStore) changeStatus(ctx context.Context, group groups.Group) (grou
 	return group, nil
 }
 
-func (es eventStore) DeleteGroup(ctx context.Context, token, id string) error {
-	if err := es.svc.DeleteGroup(ctx, token, id); err != nil {
+func (es eventStore) DeleteGroup(ctx context.Context, id string) error {
+	if err := es.svc.DeleteGroup(ctx, id); err != nil {
 		return err
 	}
 	if err := es.Publish(ctx, deleteGroupEvent{id}); err != nil {

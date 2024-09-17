@@ -68,4 +68,5 @@ const (
 // Invitations commands
 const (
 	acceptCmd = "accept"
+	rejectCmd = "reject"
 )

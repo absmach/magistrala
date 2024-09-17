@@ -16,7 +16,6 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/stretchr/testify/assert"
@@ -30,10 +29,10 @@ var (
 	all                = "all"
 )
 
-var thing = mgsdk.Thing{
+var thing = sdk.Thing{
 	ID:   testsutil.GenerateUUID(&testing.T{}),
 	Name: "testthing",
-	Credentials: mgsdk.Credentials{
+	Credentials: sdk.Credentials{
 		Secret: "secret",
 	},
 	DomainID: testsutil.GenerateUUID(&testing.T{}),
@@ -47,14 +46,14 @@ func TestCreateThingsCmd(t *testing.T) {
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
-	var tg mgsdk.Thing
+	var tg sdk.Thing
 
 	cases := []struct {
 		desc          string
 		args          []string
 		sdkErr        errors.SDKError
 		errLogMessage string
-		thing         mgsdk.Thing
+		thing         sdk.Thing
 		logType       outputLog
 	}{
 		{
@@ -142,16 +141,16 @@ func TestGetThingsCmd(t *testing.T) {
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
-	var tg mgsdk.Thing
-	var page mgsdk.ThingsPage
+	var tg sdk.Thing
+	var page sdk.ThingsPage
 
 	cases := []struct {
 		desc          string
 		args          []string
 		sdkErr        errors.SDKError
 		errLogMessage string
-		thing         mgsdk.Thing
-		page          mgsdk.ThingsPage
+		thing         sdk.Thing
+		page          sdk.ThingsPage
 		logType       outputLog
 	}{
 		{
@@ -161,8 +160,8 @@ func TestGetThingsCmd(t *testing.T) {
 				token,
 			},
 			logType: entityLog,
-			page: mgsdk.ThingsPage{
-				Things: []mgsdk.Thing{thing},
+			page: sdk.ThingsPage{
+				Things: []sdk.Thing{thing},
 			},
 		},
 		{
@@ -182,7 +181,7 @@ func TestGetThingsCmd(t *testing.T) {
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
-			page:          mgsdk.ThingsPage{},
+			page:          sdk.ThingsPage{},
 			logType:       errLog,
 		},
 		{
@@ -289,7 +288,7 @@ func TestUpdateThingCmd(t *testing.T) {
 		args          []string
 		sdkErr        errors.SDKError
 		errLogMessage string
-		thing         mgsdk.Thing
+		thing         sdk.Thing
 		logType       outputLog
 	}{
 		{
@@ -299,7 +298,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				newNameandMeta,
 				token,
 			},
-			thing: mgsdk.Thing{
+			thing: sdk.Thing{
 				Name: "thingName",
 				Metadata: map[string]interface{}{
 					"metadata": map[string]interface{}{
@@ -342,7 +341,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				newTagsJson,
 				token,
 			},
-			thing: mgsdk.Thing{
+			thing: sdk.Thing{
 				Name:     thing.Name,
 				ID:       thing.ID,
 				DomainID: thing.DomainID,
@@ -383,7 +382,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				newSecret,
 				token,
 			},
-			thing: mgsdk.Thing{
+			thing: sdk.Thing{
 				Name:     thing.Name,
 				ID:       thing.ID,
 				DomainID: thing.DomainID,
@@ -433,20 +432,20 @@ func TestUpdateThingCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			var tg mgsdk.Thing
+			var tg sdk.Thing
 			sdkCall := sdkMock.On("UpdateThing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 			sdkCall1 := sdkMock.On("UpdateThingTags", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 			sdkCall2 := sdkMock.On("UpdateThingSecret", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 
 			switch {
 			case tc.args[0] == tagUpdateType:
-				var th mgsdk.Thing
+				var th sdk.Thing
 				th.Tags = []string{"tag1", "tag2"}
 				th.ID = tc.args[1]
 
 				sdkCall1 = sdkMock.On("UpdateThingTags", th, tc.args[3]).Return(tc.thing, tc.sdkErr)
 			case tc.args[0] == secretUpdateType:
-				var th mgsdk.Thing
+				var th sdk.Thing
 				th.Credentials.Secret = tc.args[2]
 				th.ID = tc.args[1]
 
@@ -547,14 +546,14 @@ func TestEnableThingCmd(t *testing.T) {
 	cli.SetSDK(sdkMock)
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
-	var tg mgsdk.Thing
+	var tg sdk.Thing
 
 	cases := []struct {
 		desc          string
 		args          []string
 		sdkErr        errors.SDKError
 		errLogMessage string
-		thing         mgsdk.Thing
+		thing         sdk.Thing
 		logType       outputLog
 	}{
 		{
@@ -625,14 +624,14 @@ func TestDisablethingCmd(t *testing.T) {
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
-	var tg mgsdk.Thing
+	var tg sdk.Thing
 
 	cases := []struct {
 		desc          string
 		args          []string
 		sdkErr        errors.SDKError
 		errLogMessage string
-		thing         mgsdk.Thing
+		thing         sdk.Thing
 		logType       outputLog
 	}{
 		{
@@ -704,14 +703,14 @@ func TestUsersThingCmd(t *testing.T) {
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
-	page := mgsdk.UsersPage{}
+	page := sdk.UsersPage{}
 
 	cases := []struct {
 		desc          string
 		args          []string
 		logType       outputLog
 		errLogMessage string
-		page          mgsdk.UsersPage
+		page          sdk.UsersPage
 		sdkErr        errors.SDKError
 	}{
 		{
@@ -720,13 +719,13 @@ func TestUsersThingCmd(t *testing.T) {
 				thing.ID,
 				token,
 			},
-			page: mgsdk.UsersPage{
-				PageRes: mgsdk.PageRes{
+			page: sdk.UsersPage{
+				PageRes: sdk.PageRes{
 					Total:  1,
 					Offset: 0,
 					Limit:  10,
 				},
-				Users: []mgsdk.User{user},
+				Users: []sdk.User{user},
 			},
 			logType: entityLog,
 		},
@@ -969,12 +968,12 @@ func TestListConnectionCmd(t *testing.T) {
 	thingsCmd := cli.NewThingsCmd()
 	rootCmd := setFlags(thingsCmd)
 
-	cp := mgsdk.ChannelsPage{}
+	cp := sdk.ChannelsPage{}
 	cases := []struct {
 		desc          string
 		args          []string
 		logType       outputLog
-		page          mgsdk.ChannelsPage
+		page          sdk.ChannelsPage
 		errLogMessage string
 		sdkErr        errors.SDKError
 	}{
@@ -984,13 +983,13 @@ func TestListConnectionCmd(t *testing.T) {
 				thing.ID,
 				token,
 			},
-			page: mgsdk.ChannelsPage{
-				PageRes: mgsdk.PageRes{
+			page: sdk.ChannelsPage{
+				PageRes: sdk.PageRes{
 					Total:  1,
 					Offset: 0,
 					Limit:  10,
 				},
-				Channels: []mgsdk.Channel{channel},
+				Channels: []sdk.Channel{channel},
 			},
 			logType: entityLog,
 		},

@@ -91,6 +91,26 @@ var cmdInvitations = []cobra.Command{
 		},
 	},
 	{
+		Use:   "reject <domain_id> <user_auth_token>",
+		Short: "Reject invitation",
+		Long: "Reject invitation to domain\n" +
+			"Usage:\n" +
+			"\tmagistrala-cli invitations reject 39f97daf-d6b6-40f4-b229-2697be8006ef $USER_AUTH_TOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsageCmd(*cmd, cmd.Use)
+				return
+			}
+
+			if err := sdk.RejectInvitation(args[0], args[1]); err != nil {
+				logErrorCmd(*cmd, err)
+				return
+			}
+
+			logOKCmd(*cmd)
+		},
+	},
+	{
 		Use:   "delete <user_id> <domain_id> <user_auth_token>",
 		Short: "Delete invitation",
 		Long: "Delete invitation\n" +

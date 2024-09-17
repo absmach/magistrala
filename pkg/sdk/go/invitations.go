@@ -26,6 +26,7 @@ type Invitation struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 	ConfirmedAt time.Time `json:"confirmed_at,omitempty"`
+	RejectedAt  time.Time `json:"rejected_at,omitempty"`
 	Resend      bool      `json:"resend,omitempty"`
 }
 
@@ -114,7 +115,7 @@ func (sdk mgSDK) RejectInvitation(domainID, token string) (err error) {
 
 	url := sdk.invitationsURL + "/" + invitationsEndpoint + "/" + rejectEndpoint
 
-	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, data, nil, http.StatusNoContent)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusNoContent)
 
 	return sdkerr
 }

@@ -36,7 +36,7 @@ func (repo *repository) Create(ctx context.Context, invitation invitations.Invit
 }
 
 func (repo *repository) Retrieve(ctx context.Context, userID, domainID string) (invitations.Invitation, error) {
-	q := `SELECT invited_by, user_id, domain_id, token, relation, created_at, updated_at, confirmed_at FROM invitations WHERE user_id = :user_id AND domain_id = :domain_id;`
+	q := `SELECT invited_by, user_id, domain_id, token, relation, created_at, updated_at, confirmed_at, rejected_at FROM invitations WHERE user_id = :user_id AND domain_id = :domain_id;`
 
 	dbinv := dbInvitation{
 		UserID:   userID,
@@ -63,7 +63,7 @@ func (repo *repository) Retrieve(ctx context.Context, userID, domainID string) (
 func (repo *repository) RetrieveAll(ctx context.Context, page invitations.Page) (invitations.InvitationPage, error) {
 	query := pageQuery(page)
 
-	q := fmt.Sprintf("SELECT invited_by, user_id, domain_id, relation, created_at, updated_at, confirmed_at FROM invitations %s LIMIT :limit OFFSET :offset;", query)
+	q := fmt.Sprintf("SELECT invited_by, user_id, domain_id, relation, created_at, updated_at, confirmed_at, rejected_at FROM invitations %s LIMIT :limit OFFSET :offset;", query)
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, page)
 	if err != nil {

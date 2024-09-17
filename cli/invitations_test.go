@@ -254,6 +254,65 @@ func TestAcceptInvitationCmd(t *testing.T) {
 	}
 }
 
+func TestRejectInvitationCmd(t *testing.T) {
+	sdkMock := new(sdkmocks.SDK)
+	cli.SetSDK(sdkMock)
+	invCmd := cli.NewInvitationsCmd()
+	rootCmd := setFlags(invCmd)
+
+	cases := []struct {
+		desc          string
+		args          []string
+		logType       outputLog
+		errLogMessage string
+		sdkErr        errors.SDKError
+	}{
+		{
+			desc: "reject invitation successfully",
+			args: []string{
+				domain.ID,
+				validToken,
+			},
+			logType: okLog,
+		},
+		{
+			desc: "reject invitation with invalid args",
+			args: []string{
+				domain.ID,
+				validToken,
+				extraArg,
+			},
+			logType: usageLog,
+		},
+		{
+			desc: "reject invitation with invalid token",
+			args: []string{
+				domain.ID,
+				invalidToken,
+			},
+			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
+			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized)),
+			logType:       errLog,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			sdkCall := sdkMock.On("RejectInvitation", mock.Anything, mock.Anything).Return(tc.sdkErr)
+			out := executeCommand(t, rootCmd, append([]string{rejectCmd}, tc.args...)...)
+			switch tc.logType {
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			}
+			sdkCall.Unset()
+		})
+	}
+}
+
 func TestDeleteInvitationCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)

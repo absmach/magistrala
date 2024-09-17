@@ -383,6 +383,65 @@ func TestAcceptInvitation(t *testing.T) {
 	}
 }
 
+func TestRejectInvitation(t *testing.T) {
+	is, svc := setupInvitations()
+	defer is.Close()
+
+	conf := sdk.Config{
+		InvitationsURL: is.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	cases := []struct {
+		desc     string
+		token    string
+		domainID string
+		svcErr   error
+		err      error
+	}{
+		{
+			desc:     "reject invitation successfully",
+			token:    validToken,
+			domainID: invitation.DomainID,
+			svcErr:   nil,
+			err:      nil,
+		},
+		{
+			desc:     "reject invitation with invalid token",
+			token:    invalidToken,
+			domainID: invitation.DomainID,
+			svcErr:   svcerr.ErrAuthentication,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:     "reject invitation with empty token",
+			token:    "",
+			domainID: invitation.DomainID,
+			svcErr:   nil,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+		},
+		{
+			desc:     "reject invitation with invalid domainID",
+			token:    validToken,
+			domainID: wrongID,
+			svcErr:   svcerr.ErrNotFound,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("RejectInvitation", mock.Anything, tc.token, tc.domainID).Return(tc.svcErr)
+			err := mgsdk.RejectInvitation(tc.domainID, tc.token)
+			assert.Equal(t, tc.err, err)
+			if tc.err == nil {
+				ok := svcCall.Parent.AssertCalled(t, "RejectInvitation", mock.Anything, tc.token, tc.domainID)
+				assert.True(t, ok)
+			}
+			svcCall.Unset()
+		})
+	}
+}
+
 func TestDeleteInvitation(t *testing.T) {
 	is, svc := setupInvitations()
 	defer is.Close()

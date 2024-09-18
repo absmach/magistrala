@@ -16,7 +16,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
       day: "monday"
 
   - package-ecosystem: "docker"

@@ -178,7 +178,7 @@ func pageQuery(pm invitations.Page) string {
 		query = append(query, "confirmed_at IS NOT NULL")
 	}
 	if pm.State == invitations.Pending {
-		query = append(query, "confirmed_at IS NULL")
+		query = append(query, "confirmed_at IS NULL AND rejected_at IS NULL")
 	}
 	if pm.State == invitations.Rejected {
 		query = append(query, "rejected_at IS NOT NULL")

@@ -179,6 +179,8 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusNotFound)
 
 	case errors.Contains(err, errors.ErrStatusAlreadyAssigned),
+		errors.Contains(err, svcerr.ErrInvitationAlreadyRejected),
+		errors.Contains(err, svcerr.ErrInvitationAlreadyAccepted),
 		errors.Contains(err, svcerr.ErrConflict):
 		err = unwrap(err)
 		w.WriteHeader(http.StatusConflict)

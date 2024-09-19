@@ -26,164 +26,173 @@ func groupsHandler(svc groups.Service, authClient auth.AuthClient, r *chi.Mux, l
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-	r.Route("/channels", func(r chi.Router) {
-		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.CreateGroupEndpoint(svc, authClient, policies.NewChannelKind),
-			gapi.DecodeGroupCreate,
+
+	r.Group(func(r chi.Router) {
+		r.Use(identifyMiddleware(authClient))
+
+		r.Route("/channels", func(r chi.Router) {
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.CreateGroupEndpoint(svc, authClient, policies.NewChannelKind),
+				gapi.DecodeGroupCreate,
+				api.EncodeResponse,
+				opts...,
+			), "create_channel").ServeHTTP)
+
+			r.Get("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.ViewGroupEndpoint(svc, authClient),
+				gapi.DecodeGroupRequest,
+				api.EncodeResponse,
+				opts...,
+			), "view_channel").ServeHTTP)
+
+			r.Delete("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.DeleteGroupEndpoint(svc, authClient),
+				gapi.DecodeGroupRequest,
+				api.EncodeResponse,
+				opts...,
+			), "delete_channel").ServeHTTP)
+
+			r.Get("/{groupID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.ViewGroupPermsEndpoint(svc, authClient),
+				gapi.DecodeGroupPermsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "view_channel_permissions").ServeHTTP)
+
+			r.Put("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.UpdateGroupEndpoint(svc, authClient),
+				gapi.DecodeGroupUpdate,
+				api.EncodeResponse,
+				opts...,
+			), "update_channel").ServeHTTP)
+
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.ListGroupsEndpoint(svc, authClient, "channels", "users"),
+				gapi.DecodeListGroupsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "list_channels").ServeHTTP)
+
+			r.Post("/{groupID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.EnableGroupEndpoint(svc, authClient),
+				gapi.DecodeChangeGroupStatus,
+				api.EncodeResponse,
+				opts...,
+			), "enable_channel").ServeHTTP)
+
+			r.Post("/{groupID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.DisableGroupEndpoint(svc, authClient),
+				gapi.DecodeChangeGroupStatus,
+				api.EncodeResponse,
+				opts...,
+			), "disable_channel").ServeHTTP)
+
+			// Request to add users to a channel
+			// This endpoint can be used alternative to /channels/{groupID}/members
+			authzMiddleware := authorizeMiddleware(authClient, assignUsersAuthReq)
+			r.Post("/{groupID}/users/assign", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(assignUsersEndpoint(svc)),
+				decodeAssignUsersRequest,
+				api.EncodeResponse,
+				opts...,
+			), "assign_users").ServeHTTP)
+
+			// Request to remove users from a channel
+			// This endpoint can be used alternative to /channels/{groupID}/members
+			r.Post("/{groupID}/users/unassign", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(unassignUsersEndpoint(svc)),
+				decodeUnassignUsersRequest,
+				api.EncodeResponse,
+				opts...,
+			), "unassign_users").ServeHTTP)
+
+			// Request to add user_groups to a channel
+			// This endpoint can be used alternative to /channels/{groupID}/members
+			authzMiddleware = authorizeMiddleware(authClient, assignUserGroupsAuthReq)
+			r.Post("/{groupID}/groups/assign", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(assignUserGroupsEndpoint(svc)),
+				decodeAssignUserGroupsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "assign_groups").ServeHTTP)
+
+			// Request to remove user_groups from a channel
+			// This endpoint can be used alternative to /channels/{groupID}/members
+			r.Post("/{groupID}/groups/unassign", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(unassignUserGroupsEndpoint(svc)),
+				decodeUnassignUserGroupsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "unassign_groups").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, connectAuthReq)
+			r.Post("/{groupID}/things/{thingID}/connect", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(connectChannelThingEndpoint(svc)),
+				decodeConnectChannelThingRequest,
+				api.EncodeResponse,
+				opts...,
+			), "connect_channel_thing").ServeHTTP)
+
+			r.Post("/{groupID}/things/{thingID}/disconnect", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(disconnectChannelThingEndpoint(svc)),
+				decodeDisconnectChannelThingRequest,
+				api.EncodeResponse,
+				opts...,
+			), "disconnect_channel_thing").ServeHTTP)
+		})
+
+		// Ideal location: things service,  things endpoint
+		// Reason for placing here :
+		// SpiceDB provides list of channel ids to which thing id attached
+		// and channel service can access spiceDB and get this channel ids list with given thing id.
+		// Request to get list of channels to which thingID ({memberID}) belongs
+		r.Get("/things/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
+			gapi.ListGroupsEndpoint(svc, authClient, "channels", "things"),
+			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
 			opts...,
-		), "create_channel").ServeHTTP)
+		), "list_channel_by_thing_id").ServeHTTP)
 
-		r.Get("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.ViewGroupEndpoint(svc, authClient),
-			gapi.DecodeGroupRequest,
-			api.EncodeResponse,
-			opts...,
-		), "view_channel").ServeHTTP)
-
-		r.Delete("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.DeleteGroupEndpoint(svc, authClient),
-			gapi.DecodeGroupRequest,
-			api.EncodeResponse,
-			opts...,
-		), "delete_channel").ServeHTTP)
-
-		r.Get("/{groupID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.ViewGroupPermsEndpoint(svc, authClient),
-			gapi.DecodeGroupPermsRequest,
-			api.EncodeResponse,
-			opts...,
-		), "view_channel_permissions").ServeHTTP)
-
-		r.Put("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.UpdateGroupEndpoint(svc, authClient),
-			gapi.DecodeGroupUpdate,
-			api.EncodeResponse,
-			opts...,
-		), "update_channel").ServeHTTP)
-
-		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+		// Ideal location: users service, users endpoint
+		// Reason for placing here :
+		// SpiceDB provides list of channel ids attached to given user id
+		// and channel service can access spiceDB and get this user ids list with given thing id.
+		// Request to get list of channels to which userID ({memberID}) have permission.
+		r.Get("/users/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ListGroupsEndpoint(svc, authClient, "channels", "users"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
 			opts...,
-		), "list_channels").ServeHTTP)
+		), "list_channel_by_user_id").ServeHTTP)
 
-		r.Post("/{groupID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.EnableGroupEndpoint(svc, authClient),
-			gapi.DecodeChangeGroupStatus,
+		// Ideal location: users service, groups endpoint
+		// SpiceDB provides list of channel ids attached to given user_group id
+		// and channel service can access spiceDB and get this user ids list with given user_group id.
+		// Request to get list of channels to which user_group_id ({memberID}) attached.
+		r.Get("/groups/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
+			gapi.ListGroupsEndpoint(svc, authClient, "channels", "groups"),
+			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
 			opts...,
-		), "enable_channel").ServeHTTP)
+		), "list_channel_by_user_group_id").ServeHTTP)
 
-		r.Post("/{groupID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-			gapi.DisableGroupEndpoint(svc, authClient),
-			gapi.DecodeChangeGroupStatus,
+		// Connect channel and thing
+		authzMiddleware := authorizeMiddleware(authClient, connectAuthReq)
+		r.Post("/connect", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(connectEndpoint(svc)),
+			decodeConnectRequest,
 			api.EncodeResponse,
 			opts...,
-		), "disable_channel").ServeHTTP)
+		), "connect").ServeHTTP)
 
-		// Request to add users to a channel
-		// This endpoint can be used alternative to /channels/{groupID}/members
-		r.Post("/{groupID}/users/assign", otelhttp.NewHandler(kithttp.NewServer(
-			assignUsersEndpoint(svc, authClient),
-			decodeAssignUsersRequest,
+		// Disconnect channel and thing
+		r.Post("/disconnect", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(disconnectEndpoint(svc)),
+			decodeDisconnectRequest,
 			api.EncodeResponse,
 			opts...,
-		), "assign_users").ServeHTTP)
-
-		// Request to remove users from a channel
-		// This endpoint can be used alternative to /channels/{groupID}/members
-		r.Post("/{groupID}/users/unassign", otelhttp.NewHandler(kithttp.NewServer(
-			unassignUsersEndpoint(svc, authClient),
-			decodeUnassignUsersRequest,
-			api.EncodeResponse,
-			opts...,
-		), "unassign_users").ServeHTTP)
-
-		// Request to add user_groups to a channel
-		// This endpoint can be used alternative to /channels/{groupID}/members
-		r.Post("/{groupID}/groups/assign", otelhttp.NewHandler(kithttp.NewServer(
-			assignUserGroupsEndpoint(svc, authClient),
-			decodeAssignUserGroupsRequest,
-			api.EncodeResponse,
-			opts...,
-		), "assign_groups").ServeHTTP)
-
-		// Request to remove user_groups from a channel
-		// This endpoint can be used alternative to /channels/{groupID}/members
-		r.Post("/{groupID}/groups/unassign", otelhttp.NewHandler(kithttp.NewServer(
-			unassignUserGroupsEndpoint(svc, authClient),
-			decodeUnassignUserGroupsRequest,
-			api.EncodeResponse,
-			opts...,
-		), "unassign_groups").ServeHTTP)
-
-		r.Post("/{groupID}/things/{thingID}/connect", otelhttp.NewHandler(kithttp.NewServer(
-			connectChannelThingEndpoint(svc, authClient),
-			decodeConnectChannelThingRequest,
-			api.EncodeResponse,
-			opts...,
-		), "connect_channel_thing").ServeHTTP)
-
-		r.Post("/{groupID}/things/{thingID}/disconnect", otelhttp.NewHandler(kithttp.NewServer(
-			disconnectChannelThingEndpoint(svc, authClient),
-			decodeDisconnectChannelThingRequest,
-			api.EncodeResponse,
-			opts...,
-		), "disconnect_channel_thing").ServeHTTP)
+		), "disconnect").ServeHTTP)
 	})
-
-	// Ideal location: things service,  things endpoint
-	// Reason for placing here :
-	// SpiceDB provides list of channel ids to which thing id attached
-	// and channel service can access spiceDB and get this channel ids list with given thing id.
-	// Request to get list of channels to which thingID ({memberID}) belongs
-	r.Get("/things/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, authClient, "channels", "things"),
-		gapi.DecodeListGroupsRequest,
-		api.EncodeResponse,
-		opts...,
-	), "list_channel_by_thing_id").ServeHTTP)
-
-	// Ideal location: users service, users endpoint
-	// Reason for placing here :
-	// SpiceDB provides list of channel ids attached to given user id
-	// and channel service can access spiceDB and get this user ids list with given thing id.
-	// Request to get list of channels to which userID ({memberID}) have permission.
-	r.Get("/users/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, authClient, "channels", "users"),
-		gapi.DecodeListGroupsRequest,
-		api.EncodeResponse,
-		opts...,
-	), "list_channel_by_user_id").ServeHTTP)
-
-	// Ideal location: users service, groups endpoint
-	// SpiceDB provides list of channel ids attached to given user_group id
-	// and channel service can access spiceDB and get this user ids list with given user_group id.
-	// Request to get list of channels to which user_group_id ({memberID}) attached.
-	r.Get("/groups/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
-		gapi.ListGroupsEndpoint(svc, authClient, "channels", "groups"),
-		gapi.DecodeListGroupsRequest,
-		api.EncodeResponse,
-		opts...,
-	), "list_channel_by_user_group_id").ServeHTTP)
-
-	// Connect channel and thing
-	r.Post("/connect", otelhttp.NewHandler(kithttp.NewServer(
-		connectEndpoint(svc, authClient),
-		decodeConnectRequest,
-		api.EncodeResponse,
-		opts...,
-	), "connect").ServeHTTP)
-
-	// Disconnect channel and thing
-	r.Post("/disconnect", otelhttp.NewHandler(kithttp.NewServer(
-		disconnectEndpoint(svc, authClient),
-		decodeDisconnectRequest,
-		api.EncodeResponse,
-		opts...,
-	), "disconnect").ServeHTTP)
 
 	return r
 }
@@ -209,7 +218,7 @@ func decodeUnassignUsersRequest(_ context.Context, r *http.Request) (interface{}
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := unassignUsersRequest{
+	req := assignUsersRequest{
 		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
@@ -241,7 +250,7 @@ func decodeUnassignUserGroupsRequest(_ context.Context, r *http.Request) (interf
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := unassignUserGroupsRequest{
+	req := assignUserGroupsRequest{
 		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
@@ -263,7 +272,7 @@ func decodeConnectChannelThingRequest(_ context.Context, r *http.Request) (inter
 }
 
 func decodeDisconnectChannelThingRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	req := disconnectChannelThingRequest{
+	req := connectChannelThingRequest{
 		token:     apiutil.ExtractBearerToken(r),
 		ThingID:   chi.URLParam(r, "thingID"),
 		ChannelID: chi.URLParam(r, "groupID"),
@@ -292,7 +301,7 @@ func decodeDisconnectRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := disconnectChannelThingRequest{
+	req := connectChannelThingRequest{
 		token: apiutil.ExtractBearerToken(r),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

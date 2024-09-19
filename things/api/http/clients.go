@@ -10,11 +10,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/things"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -25,124 +28,143 @@ func clientsHandler(svc things.Service, r *chi.Mux, authClient auth.AuthClient, 
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-	r.Route("/things", func(r chi.Router) {
-		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			createClientEndpoint(svc, authClient),
-			decodeCreateClientReq,
+
+	checkSuperAdminMiddleware := checkSuperAdminMiddleware(authClient)
+
+	r.Group(func(r chi.Router) {
+		r.Use(identifyMiddleware(authClient))
+
+		r.Route("/things", func(r chi.Router) {
+			authzMiddleware := authorizeMiddleware(authClient, createClientAuthReq)
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(createClientEndpoint(svc)),
+				decodeCreateClientReq,
+				api.EncodeResponse,
+				opts...,
+			), "create_thing").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, listClientsAuthReq)
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(authzMiddleware(listClientsEndpoint(svc))),
+				decodeListClients,
+				api.EncodeResponse,
+				opts...,
+			), "list_things").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, createClientsAuthReq)
+			r.Post("/bulk", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(createClientsEndpoint(svc)),
+				decodeCreateClientsReq,
+				api.EncodeResponse,
+				opts...,
+			), "create_things").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, viewClientAuthReq)
+			r.Get("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(viewClientEndpoint(svc)),
+				decodeViewClient,
+				api.EncodeResponse,
+				opts...,
+			), "view_thing").ServeHTTP)
+
+			r.Get("/{thingID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
+				viewClientPermsEndpoint(svc),
+				decodeViewClientPerms,
+				api.EncodeResponse,
+				opts...,
+			), "view_thing_permissions").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, updateClientAuthReq)
+			r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(updateClientEndpoint(svc)),
+				decodeUpdateClient,
+				api.EncodeResponse,
+				opts...,
+			), "update_thing").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, updateClientTagsAuthReq)
+			r.Patch("/{thingID}/tags", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(updateClientTagsEndpoint(svc)),
+				decodeUpdateClientTags,
+				api.EncodeResponse,
+				opts...,
+			), "update_thing_tags").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, updateClientCredentialsAuthReq)
+			r.Patch("/{thingID}/secret", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(updateClientSecretEndpoint(svc)),
+				decodeUpdateClientCredentials,
+				api.EncodeResponse,
+				opts...,
+			), "update_thing_credentials").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, changeClientStatusAuthReq)
+			r.Post("/{thingID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(enableClientEndpoint(svc)),
+				decodeChangeClientStatus,
+				api.EncodeResponse,
+				opts...,
+			), "enable_thing").ServeHTTP)
+
+			r.Post("/{thingID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(disableClientEndpoint(svc)),
+				decodeChangeClientStatus,
+				api.EncodeResponse,
+				opts...,
+			), "disable_thing").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, thingShareAuthReq)
+			r.Post("/{thingID}/share", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(thingShareEndpoint(svc)),
+				decodeThingShareRequest,
+				api.EncodeResponse,
+				opts...,
+			), "share_thing").ServeHTTP)
+
+			r.Post("/{thingID}/unshare", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(thingUnshareEndpoint(svc)),
+				decodeThingUnshareRequest,
+				api.EncodeResponse,
+				opts...,
+			), "unshare_thing").ServeHTTP)
+
+			authzMiddleware = authorizeMiddleware(authClient, deleteClientAuthReq)
+			r.Delete("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				authzMiddleware(deleteClientEndpoint(svc)),
+				decodeDeleteClientReq,
+				api.EncodeResponse,
+				opts...,
+			), "delete_thing").ServeHTTP)
+		})
+
+		// Ideal location: things service,  channels endpoint
+		// Reason for placing here :
+		// SpiceDB provides list of thing ids present in given channel id
+		// and things service can access spiceDB and get the list of thing ids present in given channel id.
+		// Request to get list of things present in channelID ({groupID}) .
+		authzMiddleware := authorizeMiddleware(authClient, listMembersAuthReq)
+		r.Get("/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(listMembersEndpoint(svc)),
+			decodeListMembersRequest,
 			api.EncodeResponse,
 			opts...,
-		), "create_thing").ServeHTTP)
+		), "list_things_by_channel_id").ServeHTTP)
 
-		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			listClientsEndpoint(svc, authClient),
+		authzMiddleware = authorizeMiddleware(authClient, listClientsAuthReq)
+		r.Get("/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(listClientsEndpoint(svc)),
 			decodeListClients,
 			api.EncodeResponse,
 			opts...,
-		), "list_things").ServeHTTP)
-
-		r.Post("/bulk", otelhttp.NewHandler(kithttp.NewServer(
-			createClientsEndpoint(svc, authClient),
-			decodeCreateClientsReq,
-			api.EncodeResponse,
-			opts...,
-		), "create_things").ServeHTTP)
-
-		r.Get("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			viewClientEndpoint(svc, authClient),
-			decodeViewClient,
-			api.EncodeResponse,
-			opts...,
-		), "view_thing").ServeHTTP)
-
-		r.Get("/{thingID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
-			viewClientPermsEndpoint(svc, authClient),
-			decodeViewClientPerms,
-			api.EncodeResponse,
-			opts...,
-		), "view_thing_permissions").ServeHTTP)
-
-		r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientEndpoint(svc, authClient),
-			decodeUpdateClient,
-			api.EncodeResponse,
-			opts...,
-		), "update_thing").ServeHTTP)
-
-		r.Patch("/{thingID}/tags", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientTagsEndpoint(svc, authClient),
-			decodeUpdateClientTags,
-			api.EncodeResponse,
-			opts...,
-		), "update_thing_tags").ServeHTTP)
-
-		r.Patch("/{thingID}/secret", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientSecretEndpoint(svc, authClient),
-			decodeUpdateClientCredentials,
-			api.EncodeResponse,
-			opts...,
-		), "update_thing_credentials").ServeHTTP)
-
-		r.Post("/{thingID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-			enableClientEndpoint(svc, authClient),
-			decodeChangeClientStatus,
-			api.EncodeResponse,
-			opts...,
-		), "enable_thing").ServeHTTP)
-
-		r.Post("/{thingID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-			disableClientEndpoint(svc, authClient),
-			decodeChangeClientStatus,
-			api.EncodeResponse,
-			opts...,
-		), "disable_thing").ServeHTTP)
-
-		r.Post("/{thingID}/share", otelhttp.NewHandler(kithttp.NewServer(
-			thingShareEndpoint(svc, authClient),
-			decodeThingShareRequest,
-			api.EncodeResponse,
-			opts...,
-		), "share_thing").ServeHTTP)
-
-		r.Post("/{thingID}/unshare", otelhttp.NewHandler(kithttp.NewServer(
-			thingUnshareEndpoint(svc, authClient),
-			decodeThingUnshareRequest,
-			api.EncodeResponse,
-			opts...,
-		), "unshare_thing").ServeHTTP)
-
-		r.Delete("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			deleteClientEndpoint(svc, authClient),
-			decodeDeleteClientReq,
-			api.EncodeResponse,
-			opts...,
-		), "delete_thing").ServeHTTP)
+		), "list_user_things").ServeHTTP)
 	})
 
-	// Ideal location: things service,  channels endpoint
-	// Reason for placing here :
-	// SpiceDB provides list of thing ids present in given channel id
-	// and things service can access spiceDB and get the list of thing ids present in given channel id.
-	// Request to get list of things present in channelID ({groupID}) .
-	r.Get("/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersEndpoint(svc, authClient),
-		decodeListMembersRequest,
-		api.EncodeResponse,
-		opts...,
-	), "list_things_by_channel_id").ServeHTTP)
-
-	r.Get("/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
-		listClientsEndpoint(svc, authClient),
-		decodeListClients,
-		api.EncodeResponse,
-		opts...,
-	), "list_user_things").ServeHTTP)
 	return r
 }
 
 func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewClientReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id: chi.URLParam(r, "thingID"),
 	}
 
 	return req, nil
@@ -150,8 +172,7 @@ func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeViewClientPerms(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewClientPermsReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id: chi.URLParam(r, "thingID"),
 	}
 
 	return req, nil
@@ -200,7 +221,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listClientsReq{
-		token:      apiutil.ExtractBearerToken(r),
 		status:     st,
 		offset:     o,
 		limit:      l,
@@ -274,7 +294,6 @@ func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, err
 	}
 	req := createClientReq{
 		client: c,
-		token:  apiutil.ExtractBearerToken(r),
 	}
 
 	return req, nil
@@ -285,7 +304,7 @@ func decodeCreateClientsReq(_ context.Context, r *http.Request) (interface{}, er
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	c := createClientsReq{token: apiutil.ExtractBearerToken(r)}
+	c := createClientsReq{}
 	if err := json.NewDecoder(r.Body).Decode(&c.Clients); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
@@ -353,7 +372,6 @@ func decodeThingShareRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := thingShareRequest{
-		token:   apiutil.ExtractBearerToken(r),
 		thingID: chi.URLParam(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -368,8 +386,7 @@ func decodeThingUnshareRequest(_ context.Context, r *http.Request) (interface{},
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := thingUnshareRequest{
-		token:   apiutil.ExtractBearerToken(r),
+	req := thingShareRequest{
 		thingID: chi.URLParam(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -381,9 +398,303 @@ func decodeThingUnshareRequest(_ context.Context, r *http.Request) (interface{},
 
 func decodeDeleteClientReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := deleteClientReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id: chi.URLParam(r, "thingID"),
 	}
 
 	return req, nil
+}
+
+func createClientAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(createClientReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  policies.CreatePermission,
+		ObjectType:  policies.DomainType,
+		Object:      session.DomainID,
+	}, nil
+}
+
+func createClientsAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(createClientsReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  policies.CreatePermission,
+		ObjectType:  policies.DomainType,
+		Object:      session.DomainID,
+	}, nil
+}
+
+func viewClientAuthReq(_ context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(viewClientReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  policies.ViewPermission,
+		ObjectType:  policies.ThingType,
+		Object:      req.id,
+	}, nil
+}
+
+func listClientsAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(listClientsReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	if req.userID != "" && req.userID != session.UserID {
+		return &magistrala.AuthorizeReq{
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Subject:     session.DomainUserID,
+			Permission:  policies.AdminPermission,
+			ObjectType:  policies.DomainType,
+			Object:      session.DomainID,
+		}, nil
+	}
+	if !session.SuperAdmin {
+		return &magistrala.AuthorizeReq{
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Subject:     session.DomainUserID,
+			Permission:  policies.MembershipPermission,
+			ObjectType:  policies.DomainType,
+			Object:      session.DomainID,
+		}, nil
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.UserID,
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.MagistralaObject,
+	}, nil
+}
+
+func listMembersAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(listMembersReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  req.Page.Permission,
+		ObjectType:  policies.GroupType,
+		Object:      req.groupID,
+	}, nil
+}
+
+func updateClientAuthReq(_ context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(updateClientReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  policies.EditPermission,
+		ObjectType:  policies.ThingType,
+		Object:      req.id,
+	}, nil
+}
+
+func updateClientTagsAuthReq(_ context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(updateClientTagsReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  policies.EditPermission,
+		ObjectType:  policies.ThingType,
+		Object:      req.id,
+	}, nil
+}
+
+func updateClientCredentialsAuthReq(_ context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(updateClientCredentialsReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  policies.EditPermission,
+		ObjectType:  policies.ThingType,
+		Object:      req.id,
+	}, nil
+}
+
+func changeClientStatusAuthReq(_ context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(changeClientStatusReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  policies.DeletePermission,
+		ObjectType:  policies.ThingType,
+		Object:      req.id,
+	}, nil
+}
+
+func assignUsersAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(assignUsersRequest)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  policies.EditPermission,
+		ObjectType:  policies.GroupType,
+		Object:      req.groupID,
+	}, nil
+}
+
+func assignUserGroupsAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(assignUserGroupsRequest)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  policies.EditPermission,
+		ObjectType:  policies.GroupType,
+		Object:      req.groupID,
+	}, nil
+}
+
+func connectAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(connectChannelThingRequest)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  policies.EditPermission,
+		ObjectType:  policies.GroupType,
+		Object:      req.ChannelID,
+	}, nil
+}
+
+func thingShareAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(thingShareRequest)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  policies.DeletePermission,
+		ObjectType:  policies.ThingType,
+		Object:      req.thingID,
+	}, nil
+}
+
+func deleteClientAuthReq(ctx context.Context, request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(deleteClientReq)
+	if err := req.validate(); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	session, ok := ctx.Value(sessionKey).(auth.Session)
+	if !ok {
+		return nil, svcerr.ErrAuthorization
+	}
+
+	return &magistrala.AuthorizeReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Permission:  policies.DeletePermission,
+		ObjectType:  policies.ThingType,
+		Object:      req.id,
+	}, nil
 }

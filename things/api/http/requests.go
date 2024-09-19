@@ -11,13 +11,9 @@ import (
 
 type createClientReq struct {
 	client mgclients.Client
-	token  string
 }
 
 func (req createClientReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if len(req.client.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
@@ -29,14 +25,10 @@ func (req createClientReq) validate() error {
 }
 
 type createClientsReq struct {
-	token   string
 	Clients []mgclients.Client
 }
 
 func (req createClientsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if len(req.Clients) == 0 {
 		return apiutil.ErrEmptyList
 	}
@@ -70,14 +62,10 @@ func (req viewClientReq) validate() error {
 }
 
 type viewClientPermsReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req viewClientPermsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -85,7 +73,6 @@ func (req viewClientPermsReq) validate() error {
 }
 
 type listClientsReq struct {
-	token      string
 	status     mgclients.Status
 	offset     uint64
 	limit      uint64
@@ -232,28 +219,6 @@ func (req assignUsersRequest) validate() error {
 	return nil
 }
 
-type unassignUsersRequest struct {
-	token    string
-	groupID  string
-	Relation string   `json:"relation"`
-	UserIDs  []string `json:"user_ids"`
-}
-
-func (req unassignUsersRequest) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.groupID == "" {
-		return apiutil.ErrMissingID
-	}
-
-	if len(req.UserIDs) == 0 {
-		return apiutil.ErrEmptyList
-	}
-	return nil
-}
-
 type assignUserGroupsRequest struct {
 	token        string
 	groupID      string
@@ -261,28 +226,6 @@ type assignUserGroupsRequest struct {
 }
 
 func (req assignUserGroupsRequest) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.groupID == "" {
-		return apiutil.ErrMissingID
-	}
-
-	if len(req.UserGroupIDs) == 0 {
-		return apiutil.ErrEmptyList
-	}
-
-	return nil
-}
-
-type unassignUserGroupsRequest struct {
-	token        string
-	groupID      string
-	UserGroupIDs []string `json:"group_ids"`
-}
-
-func (req unassignUserGroupsRequest) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
@@ -311,21 +254,7 @@ func (req *connectChannelThingRequest) validate() error {
 	return nil
 }
 
-type disconnectChannelThingRequest struct {
-	token     string
-	ThingID   string `json:"thing_id,omitempty"`
-	ChannelID string `json:"channel_id,omitempty"`
-}
-
-func (req *disconnectChannelThingRequest) validate() error {
-	if req.ThingID == "" || req.ChannelID == "" {
-		return apiutil.ErrMissingID
-	}
-	return nil
-}
-
 type thingShareRequest struct {
-	token    string
 	thingID  string
 	Relation string   `json:"relation,omitempty"`
 	UserIDs  []string `json:"user_ids,omitempty"`
@@ -341,32 +270,11 @@ func (req *thingShareRequest) validate() error {
 	return nil
 }
 
-type thingUnshareRequest struct {
-	token    string
-	thingID  string
-	Relation string   `json:"relation,omitempty"`
-	UserIDs  []string `json:"user_ids,omitempty"`
-}
-
-func (req *thingUnshareRequest) validate() error {
-	if req.thingID == "" {
-		return apiutil.ErrMissingID
-	}
-	if req.Relation == "" || len(req.UserIDs) == 0 {
-		return apiutil.ErrMalformedPolicy
-	}
-	return nil
-}
-
 type deleteClientReq struct {
-	token string
 	id    string
 }
 
 func (req deleteClientReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}

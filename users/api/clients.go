@@ -35,167 +35,188 @@ func clientsHandler(svc users.Service, authClient auth.AuthClient, selfRegister 
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
+	checkSuperAdminMiddleware := checkSuperAdminMiddleware(authClient)
 
 	r.Route("/users", func(r chi.Router) {
-		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			registrationEndpoint(svc, authClient, selfRegister),
-			decodeCreateClientReq,
-			api.EncodeResponse,
-			opts...,
-		), "register_client").ServeHTTP)
+		switch selfRegister {
+		case true:
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				registrationEndpoint(svc, selfRegister),
+				decodeCreateClientReq,
+				api.EncodeResponse,
+				opts...,
+			), "register_client").ServeHTTP)
+		default:
+			r.With(identifyMiddleware(authClient)).Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(registrationEndpoint(svc, selfRegister)),
+				decodeCreateClientReq,
+				api.EncodeResponse,
+				opts...,
+			), "register_client").ServeHTTP)
+		}
 
-		r.Get("/profile", otelhttp.NewHandler(kithttp.NewServer(
-			viewProfileEndpoint(svc, authClient),
-			decodeViewProfile,
-			api.EncodeResponse,
-			opts...,
-		), "view_profile").ServeHTTP)
+		r.Group(func(r chi.Router) {
+			r.Use(identifyMiddleware(authClient))
 
-		r.Get("/{id}", otelhttp.NewHandler(kithttp.NewServer(
-			viewClientEndpoint(svc, authClient),
-			decodeViewClient,
-			api.EncodeResponse,
-			opts...,
-		), "view_client").ServeHTTP)
+			r.Get("/profile", otelhttp.NewHandler(kithttp.NewServer(
+				viewProfileEndpoint(svc),
+				decodeViewProfile,
+				api.EncodeResponse,
+				opts...,
+			), "view_profile").ServeHTTP)
 
-		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			listClientsEndpoint(svc, authClient),
-			decodeListClients,
-			api.EncodeResponse,
-			opts...,
-		), "list_clients").ServeHTTP)
+			r.Get("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(viewClientEndpoint(svc)),
+				decodeViewClient,
+				api.EncodeResponse,
+				opts...,
+			), "view_client").ServeHTTP)
 
-		r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
-			searchClientsEndpoint(svc, authClient),
-			decodeSearchClients,
-			api.EncodeResponse,
-			opts...,
-		), "search_clients").ServeHTTP)
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(listClientsEndpoint(svc)),
+				decodeListClients,
+				api.EncodeResponse,
+				opts...,
+			), "list_clients").ServeHTTP)
 
-		r.Patch("/secret", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientSecretEndpoint(svc, authClient),
-			decodeUpdateClientSecret,
-			api.EncodeResponse,
-			opts...,
-		), "update_client_secret").ServeHTTP)
+			r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
+				searchClientsEndpoint(svc),
+				decodeSearchClients,
+				api.EncodeResponse,
+				opts...,
+			), "search_clients").ServeHTTP)
 
-		r.Patch("/{id}", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientEndpoint(svc, authClient),
-			decodeUpdateClient,
-			api.EncodeResponse,
-			opts...,
-		), "update_client").ServeHTTP)
+			r.Patch("/secret", otelhttp.NewHandler(kithttp.NewServer(
+				updateClientSecretEndpoint(svc),
+				decodeUpdateClientSecret,
+				api.EncodeResponse,
+				opts...,
+			), "update_client_secret").ServeHTTP)
 
-		r.Patch("/{id}/tags", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientTagsEndpoint(svc, authClient),
-			decodeUpdateClientTags,
-			api.EncodeResponse,
-			opts...,
-		), "update_client_tags").ServeHTTP)
+			r.Patch("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(updateClientEndpoint(svc)),
+				decodeUpdateClient,
+				api.EncodeResponse,
+				opts...,
+			), "update_client").ServeHTTP)
 
-		r.Patch("/{id}/identity", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientIdentityEndpoint(svc, authClient),
-			decodeUpdateClientIdentity,
-			api.EncodeResponse,
-			opts...,
-		), "update_client_identity").ServeHTTP)
+			r.Patch("/{id}/tags", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(updateClientTagsEndpoint(svc)),
+				decodeUpdateClientTags,
+				api.EncodeResponse,
+				opts...,
+			), "update_client_tags").ServeHTTP)
 
-		r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
-			updateClientRoleEndpoint(svc, authClient),
-			decodeUpdateClientRole,
-			api.EncodeResponse,
-			opts...,
-		), "update_client_role").ServeHTTP)
+			r.Patch("/{id}/identity", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(updateClientIdentityEndpoint(svc)),
+				decodeUpdateClientIdentity,
+				api.EncodeResponse,
+				opts...,
+			), "update_client_identity").ServeHTTP)
 
-		r.Post("/tokens/issue", otelhttp.NewHandler(kithttp.NewServer(
-			issueTokenEndpoint(svc, authClient),
-			decodeCredentials,
-			api.EncodeResponse,
-			opts...,
-		), "issue_token").ServeHTTP)
+			authzMiddleware := authorizeMiddleware(authClient, updateClientRoleAuthReq)
+			r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(authzMiddleware(updateClientRoleEndpoint(svc))),
+				decodeUpdateClientRole,
+				api.EncodeResponse,
+				opts...,
+			), "update_client_role").ServeHTTP)
 
-		r.Post("/tokens/refresh", otelhttp.NewHandler(kithttp.NewServer(
-			refreshTokenEndpoint(svc, authClient),
-			decodeRefreshToken,
-			api.EncodeResponse,
-			opts...,
-		), "refresh_token").ServeHTTP)
+			r.Post("/{id}/enable", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(enableClientEndpoint(svc)),
+				decodeChangeClientStatus,
+				api.EncodeResponse,
+				opts...,
+			), "enable_client").ServeHTTP)
 
-		r.Post("/{id}/enable", otelhttp.NewHandler(kithttp.NewServer(
-			enableClientEndpoint(svc, authClient),
-			decodeChangeClientStatus,
-			api.EncodeResponse,
-			opts...,
-		), "enable_client").ServeHTTP)
+			r.Post("/{id}/disable", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(disableClientEndpoint(svc)),
+				decodeChangeClientStatus,
+				api.EncodeResponse,
+				opts...,
+			), "disable_client").ServeHTTP)
 
-		r.Post("/{id}/disable", otelhttp.NewHandler(kithttp.NewServer(
-			disableClientEndpoint(svc, authClient),
-			decodeChangeClientStatus,
-			api.EncodeResponse,
-			opts...,
-		), "disable_client").ServeHTTP)
+			r.Delete("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(deleteClientEndpoint(svc)),
+				decodeChangeClientStatus,
+				api.EncodeResponse,
+				opts...,
+			), "delete_client").ServeHTTP)
 
-		r.Delete("/{id}", otelhttp.NewHandler(kithttp.NewServer(
-			deleteClientEndpoint(svc, authClient),
-			decodeChangeClientStatus,
-			api.EncodeResponse,
-			opts...,
-		), "delete_client").ServeHTTP)
+			r.Post("/tokens/refresh", otelhttp.NewHandler(kithttp.NewServer(
+				refreshTokenEndpoint(svc, authClient),
+				decodeRefreshToken,
+				api.EncodeResponse,
+				opts...,
+			), "refresh_token").ServeHTTP)
+		})
 	})
 
-	r.Route("/password", func(r chi.Router) {
-		r.Post("/reset-request", otelhttp.NewHandler(kithttp.NewServer(
-			passwordResetRequestEndpoint(svc, authClient),
-			decodePasswordResetRequest,
-			api.EncodeResponse,
-			opts...,
-		), "password_reset_req").ServeHTTP)
-
-		r.Put("/reset", otelhttp.NewHandler(kithttp.NewServer(
-			passwordResetEndpoint(svc, authClient),
+	r.Group(func(r chi.Router) {
+		r.Use(identifyMiddleware(authClient))
+		r.Put("/password/reset", otelhttp.NewHandler(kithttp.NewServer(
+			passwordResetEndpoint(svc),
 			decodePasswordReset,
 			api.EncodeResponse,
 			opts...,
 		), "password_reset").ServeHTTP)
+
+		// Ideal location: users service, groups endpoint.
+		// Reason for placing here :
+		// SpiceDB provides list of user ids in given user_group_id
+		// and users service can access spiceDB and get the user list with user_group_id.
+		// Request to get list of users present in the user_group_id {groupID}
+		authzMiddleware := authorizeMiddleware(authClient, listMembersByGroupAuthReq)
+		r.Get("/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(listMembersByGroupEndpoint(svc)),
+			decodeListMembersByGroup,
+			api.EncodeResponse,
+			opts...,
+		), "list_users_by_user_group_id").ServeHTTP)
+
+		// Ideal location: things service, channels endpoint.
+		// Reason for placing here :
+		// SpiceDB provides list of user ids in given channel_id
+		// and users service can access spiceDB and get the user list with channel_id.
+		// Request to get list of users present in the user_group_id {channelID}
+		authzMiddleware = authorizeMiddleware(authClient, listMembersByGroupAuthReq)
+		r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(listMembersByChannelEndpoint(svc)),
+			decodeListMembersByChannel,
+			api.EncodeResponse,
+			opts...,
+		), "list_users_by_channel_id").ServeHTTP)
+
+		authzMiddleware = authorizeMiddleware(authClient, listMembersByThingAuthReq)
+		r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(listMembersByThingEndpoint(svc)),
+			decodeListMembersByThing,
+			api.EncodeResponse,
+			opts...,
+		), "list_users_by_thing_id").ServeHTTP)
+
+		authzMiddleware = authorizeMiddleware(authClient, listMembersByDomianAuthReq)
+		r.Get("/domains/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
+			authzMiddleware(listMembersByDomainEndpoint(svc)),
+			decodeListMembersByDomain,
+			api.EncodeResponse,
+			opts...,
+		), "list_users_by_domain_id").ServeHTTP)
 	})
 
-	// Ideal location: users service, groups endpoint.
-	// Reason for placing here :
-	// SpiceDB provides list of user ids in given user_group_id
-	// and users service can access spiceDB and get the user list with user_group_id.
-	// Request to get list of users present in the user_group_id {groupID}
-	r.Get("/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByGroupEndpoint(svc, authClient),
-		decodeListMembersByGroup,
+	r.Post("/users/tokens/issue", otelhttp.NewHandler(kithttp.NewServer(
+		issueTokenEndpoint(svc, authClient),
+		decodeCredentials,
 		api.EncodeResponse,
 		opts...,
-	), "list_users_by_user_group_id").ServeHTTP)
+	), "issue_token").ServeHTTP)
 
-	// Ideal location: things service, channels endpoint.
-	// Reason for placing here :
-	// SpiceDB provides list of user ids in given channel_id
-	// and users service can access spiceDB and get the user list with channel_id.
-	// Request to get list of users present in the user_group_id {channelID}
-	r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByChannelEndpoint(svc, authClient),
-		decodeListMembersByChannel,
+	r.Post("/password/reset-request", otelhttp.NewHandler(kithttp.NewServer(
+		passwordResetRequestEndpoint(svc, authClient),
+		decodePasswordResetRequest,
 		api.EncodeResponse,
 		opts...,
-	), "list_users_by_channel_id").ServeHTTP)
-
-	r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByThingEndpoint(svc, authClient),
-		decodeListMembersByThing,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_thing_id").ServeHTTP)
-
-	r.Get("/domains/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
-		listMembersByDomainEndpoint(svc, authClient),
-		decodeListMembersByDomain,
-		api.EncodeResponse,
-		opts...,
-	), "list_users_by_domain_id").ServeHTTP)
+	), "password_reset_req").ServeHTTP)
 
 	for _, provider := range providers {
 		r.HandleFunc("/oauth/callback/"+provider.Name(), oauth2CallbackHandler(provider, svc, authClient))
@@ -214,9 +235,7 @@ func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) {
-	req := viewProfileReq{token: apiutil.ExtractBearerToken(r)}
-
-	return req, nil
+	return nil, nil
 }
 
 func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) {
@@ -266,7 +285,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listClientsReq{
-		token:    apiutil.ExtractBearerToken(r),
 		status:   st,
 		offset:   o,
 		limit:    l,
@@ -309,7 +327,6 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := searchClientsReq{
-		token:  apiutil.ExtractBearerToken(r),
 		Offset: o,
 		Limit:  l,
 		Name:   n,
@@ -320,9 +337,7 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 
 	for _, field := range []string{req.Name, req.Id} {
 		if field != "" && len(field) < 3 {
-			req = searchClientsReq{
-				token: apiutil.ExtractBearerToken(r),
-			}
+			req = searchClientsReq{}
 			return req, errors.Wrap(apiutil.ErrLenSearchQuery, apiutil.ErrValidation)
 		}
 	}
@@ -336,8 +351,7 @@ func decodeUpdateClient(_ context.Context, r *http.Request) (interface{}, error)
 	}
 
 	req := updateClientReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "id"),
+		id: chi.URLParam(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -352,8 +366,7 @@ func decodeUpdateClientTags(_ context.Context, r *http.Request) (interface{}, er
 	}
 
 	req := updateClientTagsReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "id"),
+		id: chi.URLParam(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -368,8 +381,7 @@ func decodeUpdateClientIdentity(_ context.Context, r *http.Request) (interface{}
 	}
 
 	req := updateClientIdentityReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "id"),
+		id: chi.URLParam(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -383,9 +395,7 @@ func decodeUpdateClientSecret(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := updateClientSecretReq{
-		token: apiutil.ExtractBearerToken(r),
-	}
+	req := updateClientSecretReq{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -426,8 +436,7 @@ func decodeUpdateClientRole(_ context.Context, r *http.Request) (interface{}, er
 	}
 
 	req := updateClientRoleReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "id"),
+		id: chi.URLParam(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -473,7 +482,6 @@ func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, err
 	}
 	req := createClientReq{
 		client: c,
-		token:  apiutil.ExtractBearerToken(r),
 	}
 
 	return req, nil
@@ -481,8 +489,7 @@ func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, err
 
 func decodeChangeClientStatus(_ context.Context, r *http.Request) (interface{}, error) {
 	req := changeClientStatusReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "id"),
+		id: chi.URLParam(r, "id"),
 	}
 
 	return req, nil
@@ -675,4 +682,71 @@ func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service, authClient 
 
 		http.Redirect(w, r, oauth.ErrorURL()+"?error=empty%20code", http.StatusSeeOther)
 	}
+}
+
+func updateClientRoleAuthReq(request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(updateClientRoleReq)
+	if err := req.validate(); err != nil {
+		return nil, err
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     req.id,
+		Permission:  policies.MembershipPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.MagistralaObject,
+	}, nil
+}
+
+func listMembersByGroupAuthReq(request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(listMembersByObjectReq)
+	req.objectKind = "groups"
+	if err := req.validate(); err != nil {
+		return nil, err
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  mgauth.SwitchToPermission(req.Page.Permission),
+		ObjectType:  policies.GroupType,
+		Object:      req.objectID,
+	}, nil
+}
+
+func listMembersByThingAuthReq(request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(listMembersByObjectReq)
+	req.objectKind = "things"
+	if err := req.validate(); err != nil {
+		return nil, err
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  mgauth.SwitchToPermission(req.Page.Permission),
+		ObjectType:  policies.ThingType,
+		Object:      req.objectID,
+	}, nil
+}
+
+func listMembersByDomianAuthReq(request interface{}) (*magistrala.AuthorizeReq, error) {
+	req := request.(listMembersByObjectReq)
+	req.objectKind = "domains"
+	if err := req.validate(); err != nil {
+		return nil, err
+	}
+
+	return &magistrala.AuthorizeReq{
+		SubjectType: policies.UserType,
+		SubjectKind: policies.TokenKind,
+		Subject:     req.token,
+		Permission:  mgauth.SwitchToPermission(req.Page.Permission),
+		ObjectType:  policies.DomainType,
+		Object:      req.objectID,
+	}, nil
 }

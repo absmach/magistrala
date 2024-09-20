@@ -32,7 +32,6 @@ func TestCreateClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: createClientReq{
-				token: valid,
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
@@ -45,23 +44,8 @@ func TestCreateClientReqValidate(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: createClientReq{
-				token: "",
-				client: mgclients.Client{
-					ID:   validID,
-					Name: valid,
-					Credentials: mgclients.Credentials{
-						Identity: "example@example.com",
-						Secret:   secret,
-					},
-				},
-			},
-		},
-		{
 			desc: "name too long",
 			req: createClientReq{
-				token: valid,
 				client: mgclients.Client{
 					ID:   validID,
 					Name: strings.Repeat("a", api.MaxNameSize+1),
@@ -72,7 +56,6 @@ func TestCreateClientReqValidate(t *testing.T) {
 		{
 			desc: "missing identity in request",
 			req: createClientReq{
-				token: valid,
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
@@ -86,7 +69,6 @@ func TestCreateClientReqValidate(t *testing.T) {
 		{
 			desc: "missing secret in request",
 			req: createClientReq{
-				token: valid,
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
@@ -100,7 +82,6 @@ func TestCreateClientReqValidate(t *testing.T) {
 		{
 			desc: "invalid secret in request",
 			req: createClientReq{
-				token: valid,
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
@@ -156,33 +137,6 @@ func TestViewClientReqValidate(t *testing.T) {
 	}
 }
 
-func TestViewProfileReqValidate(t *testing.T) {
-	cases := []struct {
-		desc string
-		req  viewProfileReq
-		err  error
-	}{
-		{
-			desc: "valid request",
-			req: viewProfileReq{
-				token: valid,
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			req: viewProfileReq{
-				token: "",
-			},
-			err: apiutil.ErrBearerToken,
-		},
-	}
-	for _, c := range cases {
-		err := c.req.validate()
-		assert.Equal(t, c.err, err)
-	}
-}
-
 func TestListClientsReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
@@ -192,23 +146,13 @@ func TestListClientsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listClientsReq{
-				token: valid,
 				limit: 10,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: listClientsReq{
-				token: "",
-				limit: 10,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "limit too big",
 			req: listClientsReq{
-				token: valid,
 				limit: api.MaxLimitSize + 1,
 			},
 			err: apiutil.ErrLimitSize,
@@ -216,7 +160,6 @@ func TestListClientsReqValidate(t *testing.T) {
 		{
 			desc: "limit too small",
 			req: listClientsReq{
-				token: valid,
 				limit: 0,
 			},
 			err: apiutil.ErrLimitSize,
@@ -224,7 +167,6 @@ func TestListClientsReqValidate(t *testing.T) {
 		{
 			desc: "invalid direction",
 			req: listClientsReq{
-				token: valid,
 				limit: 10,
 				dir:   "invalid",
 			},
@@ -246,23 +188,13 @@ func TestSearchClientsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: searchClientsReq{
-				token: valid,
 				Name:  name,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: searchClientsReq{
-				token: "",
-				Name:  name,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty query",
 			req: searchClientsReq{
-				token: valid,
 			},
 			err: apiutil.ErrEmptySearchQuery,
 		},
@@ -331,25 +263,14 @@ func TestUpdateClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientReq{
-				token: valid,
 				id:    validID,
 				Name:  valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientReq{
-				token: "",
-				id:    validID,
-				Name:  valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: updateClientReq{
-				token: valid,
 				id:    "",
 				Name:  valid,
 			},
@@ -371,25 +292,14 @@ func TestUpdateClientTagsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientTagsReq{
-				token: valid,
 				id:    validID,
 				Tags:  []string{"tag1", "tag2"},
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientTagsReq{
-				token: "",
-				id:    validID,
-				Tags:  []string{"tag1", "tag2"},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: updateClientTagsReq{
-				token: valid,
 				id:    "",
 				Tags:  []string{"tag1", "tag2"},
 			},
@@ -411,25 +321,14 @@ func TestUpdateClientRoleReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientRoleReq{
-				token: valid,
 				id:    validID,
 				Role:  "admin",
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientRoleReq{
-				token: "",
-				id:    validID,
-				Role:  "admin",
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: updateClientRoleReq{
-				token: valid,
 				id:    "",
 				Role:  "admin",
 			},
@@ -451,25 +350,14 @@ func TestUpdateClientIdentityReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientIdentityReq{
-				token:    valid,
 				id:       validID,
 				Identity: "example@example.com",
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientIdentityReq{
-				token:    "",
-				id:       validID,
-				Identity: "example@example.com",
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: updateClientIdentityReq{
-				token:    valid,
 				id:       "",
 				Identity: "example@example.com",
 			},
@@ -491,25 +379,14 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientSecretReq{
-				token:     valid,
 				OldSecret: secret,
 				NewSecret: secret,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientSecretReq{
-				token:     "",
-				OldSecret: secret,
-				NewSecret: secret,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "missing old secret",
 			req: updateClientSecretReq{
-				token:     valid,
 				OldSecret: "",
 				NewSecret: secret,
 			},
@@ -518,7 +395,6 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 		{
 			desc: "missing new secret",
 			req: updateClientSecretReq{
-				token:     valid,
 				OldSecret: secret,
 				NewSecret: "",
 			},
@@ -527,7 +403,6 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 		{
 			desc: "invalid new secret",
 			req: updateClientSecretReq{
-				token:     valid,
 				OldSecret: secret,
 				NewSecret: "invalid",
 			},
@@ -549,23 +424,13 @@ func TestChangeClientStatusReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: changeClientStatusReq{
-				token: valid,
 				id:    validID,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: changeClientStatusReq{
-				token: "",
-				id:    validID,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: changeClientStatusReq{
-				token: valid,
 				id:    "",
 			},
 			err: apiutil.ErrMissingID,

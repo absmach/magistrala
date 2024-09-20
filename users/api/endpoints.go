@@ -20,7 +20,7 @@ import (
 
 var errIssueToken = errors.New("failed to issue token")
 
-func registrationEndpoint(svc users.Service, authClient auth.AuthClient, selfRegister bool) endpoint.Endpoint {
+func registrationEndpoint(svc users.Service, selfRegister bool) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createClientReq)
 		if err := req.validate(); err != nil {
@@ -28,13 +28,11 @@ func registrationEndpoint(svc users.Service, authClient auth.AuthClient, selfReg
 		}
 		session := auth.Session{}
 
+		var ok bool
 		if !selfRegister {
-			session, err := identify(ctx, authClient, req.token)
-			if err != nil {
-				return nil, err
-			}
-			if err := checkSuperAdmin(ctx, authClient, session.UserID); err != nil {
-				return nil, err
+			session, ok = ctx.Value(sessionKey).(auth.Session)
+			if !ok {
+				return nil, svcerr.ErrAuthorization
 			}
 		}
 
@@ -50,21 +48,17 @@ func registrationEndpoint(svc users.Service, authClient auth.AuthClient, selfReg
 	}
 }
 
-func viewClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func viewClientEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewClientReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
-		}
-
 		client, err := svc.ViewClient(ctx, session, req.id)
 		if err != nil {
 			return nil, err
@@ -74,16 +68,11 @@ func viewClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.
 	}
 }
 
-func viewProfileEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func viewProfileEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(viewProfileReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 		client, err := svc.ViewProfile(ctx, session)
 		if err != nil {
@@ -94,19 +83,16 @@ func viewProfileEndpoint(svc users.Service, authClient auth.AuthClient) endpoint
 	}
 }
 
-func listClientsEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listClientsReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		pm := mgclients.Page{
@@ -143,16 +129,11 @@ func listClientsEndpoint(svc users.Service, authClient auth.AuthClient) endpoint
 	}
 }
 
-func searchClientsEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func searchClientsEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(searchClientsReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		_, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
 		}
 
 		pm := mgclients.Page{
@@ -184,7 +165,7 @@ func searchClientsEndpoint(svc users.Service, authClient auth.AuthClient) endpoi
 	}
 }
 
-func listMembersByGroupEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func listMembersByGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembersByObjectReq)
 		req.objectKind = "groups"
@@ -192,12 +173,9 @@ func listMembersByGroupEndpoint(svc users.Service, authClient auth.AuthClient) e
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err = authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policies.GroupType, req.objectID); err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		page, err := svc.ListMembers(ctx, session, req.objectKind, req.objectID, req.Page)
@@ -209,7 +187,7 @@ func listMembersByGroupEndpoint(svc users.Service, authClient auth.AuthClient) e
 	}
 }
 
-func listMembersByChannelEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func listMembersByChannelEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembersByObjectReq)
 		// In spiceDB schema, using the same 'group' type for both channels and groups, rather than having a separate type for channels.
@@ -218,12 +196,9 @@ func listMembersByChannelEndpoint(svc users.Service, authClient auth.AuthClient)
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policies.GroupType, req.objectID); err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		page, err := svc.ListMembers(ctx, session, req.objectKind, req.objectID, req.Page)
@@ -235,7 +210,7 @@ func listMembersByChannelEndpoint(svc users.Service, authClient auth.AuthClient)
 	}
 }
 
-func listMembersByThingEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func listMembersByThingEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembersByObjectReq)
 		req.objectKind = "things"
@@ -243,12 +218,9 @@ func listMembersByThingEndpoint(svc users.Service, authClient auth.AuthClient) e
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, req.Page.Permission, policies.ThingType, req.objectID); err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		page, err := svc.ListMembers(ctx, session, req.objectKind, req.objectID, req.Page)
@@ -260,7 +232,7 @@ func listMembersByThingEndpoint(svc users.Service, authClient auth.AuthClient) e
 	}
 }
 
-func listMembersByDomainEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func listMembersByDomainEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembersByObjectReq)
 		req.objectKind = "domains"
@@ -268,12 +240,9 @@ func listMembersByDomainEndpoint(svc users.Service, authClient auth.AuthClient) 
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := authorize(ctx, authClient, "", policies.UserType, policies.TokenKind, req.token, mgauth.SwitchToPermission(req.Page.Permission), policies.DomainType, req.objectID); err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		page, err := svc.ListMembers(ctx, session, req.objectKind, req.objectID, req.Page)
@@ -285,19 +254,16 @@ func listMembersByDomainEndpoint(svc users.Service, authClient auth.AuthClient) 
 	}
 }
 
-func updateClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func updateClientEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		client := mgclients.Client{
@@ -306,7 +272,7 @@ func updateClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoin
 			Metadata: req.Metadata,
 		}
 
-		client, err = svc.UpdateClient(ctx, session, client)
+		client, err := svc.UpdateClient(ctx, session, client)
 		if err != nil {
 			return nil, err
 		}
@@ -315,19 +281,16 @@ func updateClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoin
 	}
 }
 
-func updateClientTagsEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func updateClientTagsEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientTagsReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		client := mgclients.Client{
@@ -335,7 +298,7 @@ func updateClientTagsEndpoint(svc users.Service, authClient auth.AuthClient) end
 			Tags: req.Tags,
 		}
 
-		client, err = svc.UpdateClientTags(ctx, session, client)
+		client, err := svc.UpdateClientTags(ctx, session, client)
 		if err != nil {
 			return nil, err
 		}
@@ -344,19 +307,16 @@ func updateClientTagsEndpoint(svc users.Service, authClient auth.AuthClient) end
 	}
 }
 
-func updateClientIdentityEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func updateClientIdentityEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientIdentityReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		client, err := svc.UpdateClientIdentity(ctx, session, req.id, req.Identity)
@@ -408,16 +368,16 @@ func passwordResetRequestEndpoint(svc users.Service, authClient auth.AuthClient)
 // This is endpoint that actually sets new password in password reset flow.
 // When user clicks on a link in email finally ends on this endpoint as explained in
 // the comment above.
-func passwordResetEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func passwordResetEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(resetTokenReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.Token)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 		if err := svc.ResetSecret(ctx, session, req.Password); err != nil {
 			return nil, err
@@ -427,18 +387,17 @@ func passwordResetEndpoint(svc users.Service, authClient auth.AuthClient) endpoi
 	}
 }
 
-func updateClientSecretEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func updateClientSecretEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientSecretReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
-
 		client, err := svc.UpdateClientSecret(ctx, session, req.OldSecret, req.NewSecret)
 		if err != nil {
 			return nil, err
@@ -448,7 +407,7 @@ func updateClientSecretEndpoint(svc users.Service, authClient auth.AuthClient) e
 	}
 }
 
-func updateClientRoleEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func updateClientRoleEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientRoleReq)
 		if err := req.validate(); err != nil {
@@ -460,18 +419,12 @@ func updateClientRoleEndpoint(svc users.Service, authClient auth.AuthClient) end
 			Role: req.role,
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
-		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
-		}
-		if err := authorize(ctx, authClient, "", policies.UserType, policies.UsersKind, client.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
-		client, err = svc.UpdateClientRole(ctx, session, client)
+		client, err := svc.UpdateClientRole(ctx, session, client)
 		if err != nil {
 			return nil, err
 		}
@@ -516,9 +469,9 @@ func refreshTokenEndpoint(svc users.Service, authClient auth.AuthClient) endpoin
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.RefreshToken)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 		client, err := svc.RefreshToken(ctx, session, req.DomainID)
 		if err != nil {
@@ -541,20 +494,18 @@ func refreshTokenEndpoint(svc users.Service, authClient auth.AuthClient) endpoin
 	}
 }
 
-func enableClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func enableClientEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeClientStatusReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
-		}
+
 		client, err := svc.EnableClient(ctx, session, req.id)
 		if err != nil {
 			return nil, err
@@ -564,20 +515,18 @@ func enableClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoin
 	}
 }
 
-func disableClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func disableClientEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeClientStatusReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
-		}
+
 		client, err := svc.DisableClient(ctx, session, req.id)
 		if err != nil {
 			return nil, err
@@ -587,20 +536,18 @@ func disableClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoi
 	}
 }
 
-func deleteClientEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func deleteClientEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeClientStatusReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, err := identify(ctx, authClient, req.token)
-		if err != nil {
-			return nil, err
+		session, ok := ctx.Value(sessionKey).(auth.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
-		if err := checkSuperAdmin(ctx, authClient, session.UserID); err == nil {
-			session.SuperAdmin = true
-		}
+
 		if err := svc.DeleteClient(ctx, session, req.id); err != nil {
 			return nil, err
 		}

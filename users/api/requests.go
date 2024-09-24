@@ -45,6 +45,7 @@ func (req viewClientReq) validate() error {
 }
 
 type listClientsReq struct {
+	domainID string
 	status   mgclients.Status
 	offset   uint64
 	limit    uint64
@@ -58,6 +59,9 @@ type listClientsReq struct {
 }
 
 func (req listClientsReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
 	if req.limit > maxLimitSize || req.limit < 1 {
 		return apiutil.ErrLimitSize
 	}
@@ -69,17 +73,22 @@ func (req listClientsReq) validate() error {
 }
 
 type searchClientsReq struct {
-	Offset uint64
-	Limit  uint64
-	Name   string
-	Id     string
-	Order  string
-	Dir    string
+	domainID string
+	Offset   uint64
+	Limit    uint64
+	Name     string
+	Id       string
+	Order    string
+	Dir      string
 }
 
 func (req searchClientsReq) validate() error {
 	if req.Name == "" && req.Id == "" {
 		return apiutil.ErrEmptySearchQuery
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	return nil
@@ -89,9 +98,13 @@ type listMembersByObjectReq struct {
 	mgclients.Page
 	objectKind string
 	objectID   string
+	domainID   string
 }
 
 func (req listMembersByObjectReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
 	if req.objectID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -130,14 +143,18 @@ func (req updateClientTagsReq) validate() error {
 }
 
 type updateClientRoleReq struct {
-	id   string
-	role mgclients.Role
-	Role string `json:"role,omitempty"`
+	domainID string
+	id       string
+	role     mgclients.Role
+	Role     string `json:"role,omitempty"`
 }
 
 func (req updateClientRoleReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
+	}
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	return nil
@@ -258,11 +275,16 @@ func (req resetTokenReq) validate() error {
 
 type assignUsersReq struct {
 	groupID  string
+	domainID string
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`
 }
 
 func (req assignUsersReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.Relation == "" {
 		return apiutil.ErrMissingRelation
 	}
@@ -280,11 +302,16 @@ func (req assignUsersReq) validate() error {
 
 type unassignUsersReq struct {
 	groupID  string
+	domainID string
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`
 }
 
 func (req unassignUsersReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -298,10 +325,17 @@ func (req unassignUsersReq) validate() error {
 
 type assignGroupsReq struct {
 	groupID  string
+	domainID string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req assignGroupsReq) validate() error {
+
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -315,10 +349,17 @@ func (req assignGroupsReq) validate() error {
 
 type unassignGroupsReq struct {
 	groupID  string
+	domainID string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req unassignGroupsReq) validate() error {
+
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}

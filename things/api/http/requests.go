@@ -173,11 +173,16 @@ func (req changeClientStatusReq) validate() error {
 
 type assignUsersRequest struct {
 	groupID  string
+	domainID string
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`
 }
 
 func (req assignUsersRequest) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.Relation == "" {
 		return apiutil.ErrMissingRelation
 	}
@@ -195,12 +200,17 @@ func (req assignUsersRequest) validate() error {
 
 type assignUserGroupsRequest struct {
 	groupID      string
+	domainID     string
 	UserGroupIDs []string `json:"group_ids"`
 }
 
 func (req assignUserGroupsRequest) validate() error {
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	if len(req.UserGroupIDs) == 0 {
@@ -211,11 +221,15 @@ func (req assignUserGroupsRequest) validate() error {
 }
 
 type connectChannelThingRequest struct {
+	domainID  string
 	ThingID   string `json:"thing_id,omitempty"`
 	ChannelID string `json:"channel_id,omitempty"`
 }
 
 func (req *connectChannelThingRequest) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
 	if req.ThingID == "" || req.ChannelID == "" {
 		return apiutil.ErrMissingID
 	}

@@ -60,6 +60,7 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 		tree:       tree,
 		memberKind: memberKind,
 		memberID:   chi.URLParam(r, "memberID"),
+		domainID:   chi.URLParam(r, "domainID"),
 		Page: mggroups.Page{
 			Level:      level,
 			ParentID:   parentID,
@@ -97,7 +98,8 @@ func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listGroupsReq{
-		tree: tree,
+		tree:     tree,
+		domainID: chi.URLParam(r, "domainID"),
 		Page: mggroups.Page{
 			Level:      level,
 			ParentID:   chi.URLParam(r, "groupID"),
@@ -135,7 +137,8 @@ func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{},
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listGroupsReq{
-		tree: tree,
+		tree:     tree,
+		domainID: chi.URLParam(r, "domainID"),
 		Page: mggroups.Page{
 			Level:      level,
 			ParentID:   chi.URLParam(r, "groupID"),
@@ -157,7 +160,8 @@ func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 	req := createGroupReq{
-		Group: g,
+		Group:    g,
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -168,7 +172,8 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateGroupReq{
-		id: chi.URLParam(r, "groupID"),
+		id:       chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -178,21 +183,24 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 
 func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupReq{
-		id: chi.URLParam(r, "groupID"),
+		id:       chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	return req, nil
 }
 
 func DecodeGroupPermsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupPermsReq{
-		id: chi.URLParam(r, "groupID"),
+		id:       chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	return req, nil
 }
 
 func DecodeChangeGroupStatus(_ context.Context, r *http.Request) (interface{}, error) {
 	req := changeGroupStatusReq{
-		id: chi.URLParam(r, "groupID"),
+		id:       chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	return req, nil
 }
@@ -202,7 +210,8 @@ func DecodeAssignMembersRequest(_ context.Context, r *http.Request) (interface{}
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := assignReq{
-		groupID: chi.URLParam(r, "groupID"),
+		groupID:  chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -215,7 +224,8 @@ func DecodeUnassignMembersRequest(_ context.Context, r *http.Request) (interface
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := unassignReq{
-		groupID: chi.URLParam(r, "groupID"),
+		groupID:  chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -234,6 +244,7 @@ func DecodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 	}
 	req := listMembersReq{
 		groupID:    chi.URLParam(r, "groupID"),
+		domainID:   chi.URLParam(r, "domainID"),
 		permission: permission,
 		memberKind: memberKind,
 	}

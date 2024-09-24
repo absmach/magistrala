@@ -147,8 +147,6 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 				api.EncodeResponse,
 				opts...,
 			), "refresh_token").ServeHTTP)
-		})
-	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn))
@@ -171,31 +169,32 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 			opts...,
 		), "list_users_by_user_group_id").ServeHTTP)
 
-		// Ideal location: things service, channels endpoint.
-		// Reason for placing here :
-		// SpiceDB provides list of user ids in given channel_id
-		// and users service can access spiceDB and get the user list with channel_id.
-		// Request to get list of users present in the user_group_id {channelID}
-		r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
-			listMembersByChannelEndpoint(svc),
-			decodeListMembersByChannel,
-			api.EncodeResponse,
-			opts...,
-		), "list_users_by_channel_id").ServeHTTP)
+			// Ideal location: things service, channels endpoint.
+			// Reason for placing here :
+			// SpiceDB provides list of user ids in given channel_id
+			// and users service can access spiceDB and get the user list with channel_id.
+			// Request to get list of users present in the user_group_id {channelID}
+				r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
+				listMembersByChannelEndpoint(svc),
+				decodeListMembersByChannel,
+				api.EncodeResponse,
+				opts...,
+			), "list_users_by_channel_id").ServeHTTP)
 
-		r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
-			listMembersByThingEndpoint(svc),
-			decodeListMembersByThing,
-			api.EncodeResponse,
-			opts...,
-		), "list_users_by_thing_id").ServeHTTP)
+				r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
+				listMembersByThingEndpoint(svc),
+				decodeListMembersByThing,
+				api.EncodeResponse,
+				opts...,
+			), "list_users_by_thing_id").ServeHTTP)
 
-		r.Get("/domains/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
-			listMembersByDomainEndpoint(svc),
-			decodeListMembersByDomain,
-			api.EncodeResponse,
-			opts...,
-		), "list_users_by_domain_id").ServeHTTP)
+				r.Get("/users", otelhttp.NewHandler(kithttp.NewServer(
+				listMembersByDomainEndpoint(svc),
+				decodeListMembersByDomain,
+				api.EncodeResponse,
+				opts...,
+			), "list_users_by_domain_id").ServeHTTP)
+		})
 	})
 
 	r.Post("/users/tokens/issue", otelhttp.NewHandler(kithttp.NewServer(
@@ -278,6 +277,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listClientsReq{
+		domainID: chi.URLParam(r, "domainID"),
 		status:   st,
 		offset:   o,
 		limit:    l,
@@ -320,12 +320,13 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := searchClientsReq{
-		Offset: o,
-		Limit:  l,
-		Name:   n,
-		Id:     id,
-		Order:  order,
-		Dir:    dir,
+		domainID: chi.URLParam(r, "domainID"),
+		Offset:   o,
+		Limit:    l,
+		Name:     n,
+		Id:       id,
+		Order:    order,
+		Dir:      dir,
 	}
 
 	for _, field := range []string{req.Name, req.Id} {
@@ -429,7 +430,8 @@ func decodeUpdateClientRole(_ context.Context, r *http.Request) (interface{}, er
 	}
 
 	req := updateClientRoleReq{
-		id: chi.URLParam(r, "id"),
+		id:       chi.URLParam(r, "id"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -496,6 +498,7 @@ func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, 
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -509,6 +512,7 @@ func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "channelID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -522,6 +526,7 @@ func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, 
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -536,6 +541,7 @@ func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{},
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "domainID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil

@@ -185,4 +185,7 @@ var (
 
 	// ErrLenSearchQuery indicates search query length.
 	ErrLenSearchQuery = errors.New("search query must be at least 3 characters")
+
+	// ErrMissingDomainID indicates missing domainID.
+	ErrMissingDomainID = errors.New("missing domainID")
 )

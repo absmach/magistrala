@@ -94,7 +94,6 @@ func decodeSendInvitationReq(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	var req sendInvitationReq
-	req.DomainID = chi.URLParam(r, "domainID")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -138,8 +137,7 @@ func decodeListInvitationsReq(_ context.Context, r *http.Request) (interface{}, 
 	}
 
 	req := listInvitationsReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
+		token: apiutil.ExtractBearerToken(r),
 		Page: invitations.Page{
 			Offset:    offset,
 			Limit:     limit,
@@ -172,7 +170,6 @@ func decodeInvitationReq(_ context.Context, r *http.Request) (interface{}, error
 	req := invitationReq{
 		token:    apiutil.ExtractBearerToken(r),
 		userID:   chi.URLParam(r, "user_id"),
-		domainID: chi.URLParam(r, "domain_id"),
 	}
 
 	return req, nil

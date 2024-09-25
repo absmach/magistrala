@@ -27,7 +27,7 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /things/configs:
+  /domains/{domainID}/things/configs:
     post:
       operationId: createConfig
       summary: Adds new config
@@ -70,6 +70,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/State"
@@ -85,7 +86,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/configs/{configId}:
+  /domains/{domainID}/things/configs/{configId}:
     get:
       operationId: getConfig
       summary: Retrieves config info (with channels).
@@ -118,6 +119,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigUpdateReq"
@@ -147,6 +149,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       responses:
         "204":
@@ -161,7 +164,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/configs/certs/{configId}:
+  /domains/{domainID}/things/configs/certs/{configId}:
     patch:
       operationId: updateConfigCerts
       summary: Updates certs
@@ -171,6 +174,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCertUpdateReq"
@@ -192,7 +196,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/configs/connections/{configId}:
+  /domains/{domainID}/things/configs/connections/{configId}:
     put:
       operationId: updateConfigConnections
       summary: Updates channels the thing is connected to
@@ -202,6 +206,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigConnUpdateReq"
@@ -222,7 +227,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/bootstrap/{externalId}:
+  /domains/{domainID}/things/bootstrap/{externalId}:
     get:
       operationId: getBootstrapConfig
       summary: Retrieves configuration.
@@ -233,6 +238,7 @@ paths:
       security:
         - bootstrapAuth: []
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ExternalId"
       responses:
         "200":
@@ -247,7 +253,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/bootstrap/secure/{externalId}:
+  /domains/{domainID}/things/bootstrap/secure/{externalId}:
     get:
       operationId: getSecureBootstrapConfig
       summary: Retrieves configuration.
@@ -258,6 +264,7 @@ paths:
       security:
         - bootstrapEncAuth: []
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ExternalId"
       responses:
         "200":
@@ -273,7 +280,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/state/{configId}:
+  /domains/{domainID}/things/state/{configId}:
     put:
       operationId: updateConfigState
       summary: Updates Config state.
@@ -283,6 +290,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigStateUpdateReq"

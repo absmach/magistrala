@@ -37,7 +37,6 @@ func (req *sendInvitationReq) validate() error {
 
 type listInvitationsReq struct {
 	token    string
-	domainID string
 	invitations.Page
 }
 

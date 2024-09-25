@@ -6,18 +6,14 @@ package api
 import "github.com/absmach/magistrala/pkg/apiutil"
 
 type createSubReq struct {
-	token    string
-	domainID string
-	Topic    string `json:"topic,omitempty"`
-	Contact  string `json:"contact,omitempty"`
+	token   string
+	Topic   string `json:"topic,omitempty"`
+	Contact string `json:"contact,omitempty"`
 }
 
 func (req createSubReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
-	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 	if req.Topic == "" {
 		return apiutil.ErrInvalidTopic
@@ -29,17 +25,13 @@ func (req createSubReq) validate() error {
 }
 
 type subReq struct {
-	token    string
-	id       string
-	domainID string
+	token string
+	id    string
 }
 
 func (req subReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
-	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
@@ -48,20 +40,17 @@ func (req subReq) validate() error {
 }
 
 type listSubsReq struct {
-	token    string
-	topic    string
-	contact  string
-	domainID string
-	offset   uint
-	limit    uint
+	token   string
+	topic   string
+	contact string
+	offset  uint
+	limit   uint
 }
 
 func (req listSubsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
-	}
+
 	return nil
 }

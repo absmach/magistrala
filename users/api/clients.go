@@ -72,6 +72,20 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 			), "view_client").ServeHTTP)
 
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(listClientsEndpoint(svc)),
+				decodeListClients,
+				api.EncodeResponse,
+				opts...,
+			), "list_clients").ServeHTTP)
+
+			r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
+				searchClientsEndpoint(svc),
+				decodeSearchClients,
+				api.EncodeResponse,
+				opts...,
+			), "search_clients").ServeHTTP)
+
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				listClientsEndpoint(svc),
 				decodeListClients,
 				api.EncodeResponse,
@@ -113,6 +127,14 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 				opts...,
 			), "update_client_identity").ServeHTTP)
 
+			authzMiddleware := authorizeMiddleware(authClient, updateClientRoleAuthReq)
+			r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
+				checkSuperAdminMiddleware(authzMiddleware(updateClientRoleEndpoint(svc))),
+				decodeUpdateClientRole,
+				api.EncodeResponse,
+				opts...,
+			), "update_client_role").ServeHTTP)
+
 			r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
 				updateClientRoleEndpoint(svc),
 				decodeUpdateClientRole,
@@ -147,6 +169,8 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 				api.EncodeResponse,
 				opts...,
 			), "refresh_token").ServeHTTP)
+		})
+	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn))
@@ -277,7 +301,6 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listClientsReq{
-		domainID: chi.URLParam(r, "domainID"),
 		status:   st,
 		offset:   o,
 		limit:    l,
@@ -320,13 +343,12 @@ func decodeSearchClients(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := searchClientsReq{
-		domainID: chi.URLParam(r, "domainID"),
-		Offset:   o,
-		Limit:    l,
-		Name:     n,
-		Id:       id,
-		Order:    order,
-		Dir:      dir,
+		Offset: o,
+		Limit:  l,
+		Name:   n,
+		Id:     id,
+		Order:  order,
+		Dir:    dir,
 	}
 
 	for _, field := range []string{req.Name, req.Id} {
@@ -430,8 +452,7 @@ func decodeUpdateClientRole(_ context.Context, r *http.Request) (interface{}, er
 	}
 
 	req := updateClientRoleReq{
-		id:       chi.URLParam(r, "id"),
-		domainID: chi.URLParam(r, "domainID"),
+		id: chi.URLParam(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -498,7 +519,6 @@ func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, 
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "groupID"),
-		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -512,7 +532,6 @@ func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "channelID"),
-		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -526,7 +545,6 @@ func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, 
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "thingID"),
-		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -541,7 +559,6 @@ func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{},
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "domainID"),
-		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil

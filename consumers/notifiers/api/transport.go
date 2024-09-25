@@ -38,44 +38,41 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 	}
 
 	mux := chi.NewRouter()
-	mux.Route("/domains/{domainID}", func(r chi.Router) {
+	mux.Route("/subscriptions", func(r chi.Router) {
+		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+			createSubscriptionEndpoint(svc),
+			decodeCreate,
+			api.EncodeResponse,
+			opts...,
+		), "create").ServeHTTP)
 
-		mux.Route("/subscriptions", func(r chi.Router) {
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				createSubscriptionEndpoint(svc),
-				decodeCreate,
-				api.EncodeResponse,
-				opts...,
-			), "create").ServeHTTP)
+		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+			listSubscriptionsEndpoint(svc),
+			decodeList,
+			api.EncodeResponse,
+			opts...,
+		), "list").ServeHTTP)
 
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				listSubscriptionsEndpoint(svc),
-				decodeList,
-				api.EncodeResponse,
-				opts...,
-			), "list").ServeHTTP)
+		r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+			deleteSubscriptionEndpint(svc),
+			decodeSubscription,
+			api.EncodeResponse,
+			opts...,
+		), "delete").ServeHTTP)
 
-			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
-				deleteSubscriptionEndpint(svc),
-				decodeSubscription,
-				api.EncodeResponse,
-				opts...,
-			), "delete").ServeHTTP)
+		r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
+			viewSubscriptionEndpint(svc),
+			decodeSubscription,
+			api.EncodeResponse,
+			opts...,
+		), "view").ServeHTTP)
 
-			r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
-				viewSubscriptionEndpint(svc),
-				decodeSubscription,
-				api.EncodeResponse,
-				opts...,
-			), "view").ServeHTTP)
-
-			r.Delete("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
-				deleteSubscriptionEndpint(svc),
-				decodeSubscription,
-				api.EncodeResponse,
-				opts...,
-			), "delete").ServeHTTP)
-		})
+		r.Delete("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
+			deleteSubscriptionEndpint(svc),
+			decodeSubscription,
+			api.EncodeResponse,
+			opts...,
+		), "delete").ServeHTTP)
 	})
 	mux.Get("/health", magistrala.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
@@ -88,10 +85,7 @@ func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := createSubReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
-	}
+	req := createSubReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -101,19 +95,15 @@ func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error) {
 	req := subReq{
-		id:       chi.URLParam(r, "subID"),
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
+		id:    chi.URLParam(r, "subID"),
+		token: apiutil.ExtractBearerToken(r),
 	}
 
 	return req, nil
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	req := listSubsReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
-	}
+	req := listSubsReq{token: apiutil.ExtractBearerToken(r)}
 	vals := r.URL.Query()[topicKey]
 	if len(vals) > 0 {
 		req.topic = vals[0]

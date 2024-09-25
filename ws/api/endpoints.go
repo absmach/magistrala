@@ -54,12 +54,10 @@ func decodeRequest(r *http.Request) (connReq, error) {
 	}
 
 	chanID := chi.URLParam(r, "chanID")
-	domainID := chi.URLParam(r, "domainID")
 
 	req := connReq{
 		thingKey: authKey,
 		chanID:   chanID,
-		domainID: domainID,
 	}
 
 	channelParts := channelPartRegExp.FindStringSubmatch(r.RequestURI)

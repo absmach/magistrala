@@ -35,47 +35,45 @@ func MakeHandler(svc invitations.Service, logger *slog.Logger, instanceID string
 	}
 
 	mux := chi.NewRouter()
-	mux.Route("/domains/{domainID}", func(r chi.Router) {
-		mux.Route("/invitations", func(r chi.Router) {
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				sendInvitationEndpoint(svc),
-				decodeSendInvitationReq,
-				api.EncodeResponse,
-				opts...,
-			), "send_invitation").ServeHTTP)
+	mux.Route("/invitations", func(r chi.Router) {
+		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+			sendInvitationEndpoint(svc),
+			decodeSendInvitationReq,
+			api.EncodeResponse,
+			opts...,
+		), "send_invitation").ServeHTTP)
+		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+			listInvitationsEndpoint(svc),
+			decodeListInvitationsReq,
+			api.EncodeResponse,
+			opts...,
+		), "list_invitations").ServeHTTP)
+		r.Route("/{user_id}/{domain_id}", func(r chi.Router) {
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				listInvitationsEndpoint(svc),
-				decodeListInvitationsReq,
+				viewInvitationEndpoint(svc),
+				decodeInvitationReq,
 				api.EncodeResponse,
 				opts...,
-			), "list_invitations").ServeHTTP)
-			r.Route("/{user_id}/{domain_id}", func(r chi.Router) {
-				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-					viewInvitationEndpoint(svc),
-					decodeInvitationReq,
-					api.EncodeResponse,
-					opts...,
-				), "view_invitations").ServeHTTP)
-				r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
-					deleteInvitationEndpoint(svc),
-					decodeInvitationReq,
-					api.EncodeResponse,
-					opts...,
-				), "delete_invitation").ServeHTTP)
-			})
-			r.Post("/accept", otelhttp.NewHandler(kithttp.NewServer(
-				acceptInvitationEndpoint(svc),
-				decodeAcceptInvitationReq,
+			), "view_invitations").ServeHTTP)
+			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+				deleteInvitationEndpoint(svc),
+				decodeInvitationReq,
 				api.EncodeResponse,
 				opts...,
-			), "accept_invitation").ServeHTTP)
-			r.Post("/reject", otelhttp.NewHandler(kithttp.NewServer(
-				rejectInvitationEndpoint(svc),
-				decodeAcceptInvitationReq,
-				api.EncodeResponse,
-				opts...,
-			), "reject_invitation").ServeHTTP)
+			), "delete_invitation").ServeHTTP)
 		})
+		r.Post("/accept", otelhttp.NewHandler(kithttp.NewServer(
+			acceptInvitationEndpoint(svc),
+			decodeAcceptInvitationReq,
+			api.EncodeResponse,
+			opts...,
+		), "accept_invitation").ServeHTTP)
+		r.Post("/reject", otelhttp.NewHandler(kithttp.NewServer(
+			rejectInvitationEndpoint(svc),
+			decodeAcceptInvitationReq,
+			api.EncodeResponse,
+			opts...,
+		), "reject_invitation").ServeHTTP)
 	})
 	mux.Get("/health", magistrala.Health("invitations", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
@@ -89,7 +87,6 @@ func decodeSendInvitationReq(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	var req sendInvitationReq
-	req.DomainID = chi.URLParam(r, "domainID")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -133,8 +130,7 @@ func decodeListInvitationsReq(_ context.Context, r *http.Request) (interface{}, 
 	}
 
 	req := listInvitationsReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
+		token: apiutil.ExtractBearerToken(r),
 		Page: invitations.Page{
 			Offset:    offset,
 			Limit:     limit,
@@ -167,7 +163,6 @@ func decodeInvitationReq(_ context.Context, r *http.Request) (interface{}, error
 	req := invitationReq{
 		token:    apiutil.ExtractBearerToken(r),
 		userID:   chi.URLParam(r, "user_id"),
-		domainID: chi.URLParam(r, "domain_id"),
 	}
 
 	return req, nil

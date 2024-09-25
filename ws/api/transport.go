@@ -40,8 +40,8 @@ func MakeHandler(ctx context.Context, svc ws.Service, l *slog.Logger, instanceID
 	logger = l
 
 	mux := chi.NewRouter()
-	mux.Get("/domains/{domainID}/channels/{chanID}/messages", handshake(ctx, svc))
-	mux.Get("/domains/{domainID}/channels/{chanID}/messages/*", handshake(ctx, svc))
+	mux.Get("/channels/{chanID}/messages", handshake(ctx, svc))
+	mux.Get("/channels/{chanID}/messages/*", handshake(ctx, svc))
 
 	mux.Get("/health", magistrala.Health(service, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())

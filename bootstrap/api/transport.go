@@ -46,17 +46,17 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 	}
 
 	r := chi.NewRouter()
-
-	r.Route("/things", func(r chi.Router) {
-		r.Group(func(r chi.Router) {
+	r.Route("/domains/{domainID}", func(r chi.Router) {
+		r.Route("/things", func(r chi.Router) {
+			r.Group(func(r chi.Router) {
 			r.Use(api.AuthenticateMiddleware(authn))
 
 			r.Route("/configs", func(r chi.Router) {
-				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-					addEndpoint(svc),
-					decodeAddRequest,
-					api.EncodeResponse,
-					opts...), "add").ServeHTTP)
+					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+						addEndpoint(svc),
+						decodeAddRequest,
+						api.EncodeResponse,
+						opts...), "add").ServeHTTP)
 
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					listEndpoint(svc),
@@ -88,37 +88,38 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 					api.EncodeResponse,
 					opts...), "update_cert").ServeHTTP)
 
-				r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
-					updateConnEndpoint(svc),
-					decodeUpdateConnRequest,
+					r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
+						updateConnEndpoint(svc),
+						decodeUpdateConnRequest,
+						api.EncodeResponse,
+						opts...), "update_connections").ServeHTTP)
+				})
+		})
+
+			r.Route("/bootstrap", func(r chi.Router) {
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					bootstrapEndpoint(svc, reader, false),
+					decodeBootstrapRequest,
 					api.EncodeResponse,
-					opts...), "update_connections").ServeHTTP)
+					opts...), "bootstrap").ServeHTTP)
+				r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+					bootstrapEndpoint(svc, reader, false),
+					decodeBootstrapRequest,
+					api.EncodeResponse,
+					opts...), "bootstrap").ServeHTTP)
+				r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+					bootstrapEndpoint(svc, reader, true),
+					decodeBootstrapRequest,
+					encodeSecureRes,
+					opts...), "bootstrap_secure").ServeHTTP)
 			})
-		})
 
-		r.Route("/bootstrap", func(r chi.Router) {
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
+			r.With(api.AuthenticateMiddleware(authn)).Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				stateEndpoint(svc),
+				decodeStateRequest,
 				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
-				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, true),
-				decodeBootstrapRequest,
-				encodeSecureRes,
-				opts...), "bootstrap_secure").ServeHTTP)
+				opts...), "update_state").ServeHTTP)
 		})
-
-		r.With(api.AuthenticateMiddleware(authn)).Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			stateEndpoint(svc),
-			decodeStateRequest,
-			api.EncodeResponse,
-			opts...), "update_state").ServeHTTP)
 	})
 	r.Get("/health", magistrala.Health("bootstrap", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
@@ -131,7 +132,10 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := addReq{token: apiutil.ExtractBearerToken(r)}
+	req := addReq{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -145,7 +149,8 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := updateReq{
-		id: chi.URLParam(r, "configID"),
+		id:       chi.URLParam(r, "configID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -160,7 +165,8 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := updateCertReq{
-		thingID: chi.URLParam(r, "certID"),
+		thingID:  chi.URLParam(r, "certID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -175,8 +181,9 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := updateConnReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "connID"),
+		token:    apiutil.ExtractBearerToken(r),
+		id:       chi.URLParam(r, "connID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -202,9 +209,10 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 
 	req := listReq{
-		filter: parseFilter(q),
-		offset: o,
-		limit:  l,
+		domainID: chi.URLParam(r, "domainID"),
+		filter:   parseFilter(q),
+		offset:   o,
+		limit:    l,
 	}
 
 	return req, nil
@@ -212,8 +220,9 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := bootstrapReq{
-		id:  chi.URLParam(r, "externalID"),
-		key: apiutil.ExtractThingKey(r),
+		id:       chi.URLParam(r, "externalID"),
+		key:      apiutil.ExtractThingKey(r),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -225,8 +234,9 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 	}
 
 	req := changeStateReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		token:    apiutil.ExtractBearerToken(r),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -237,7 +247,8 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := entityReq{
-		id: chi.URLParam(r, "configID"),
+		id:       chi.URLParam(r, "configID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil

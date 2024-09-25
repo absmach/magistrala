@@ -4,15 +4,11 @@
 package api
 
 import (
-	"errors"
-
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/pkg/apiutil"
 )
 
 const maxLimitSize = 100
-
-var errMissingDomain = errors.New("missing domain")
 
 type sendInvitationReq struct {
 	token    string
@@ -30,7 +26,7 @@ func (req *sendInvitationReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 	if req.DomainID == "" {
-		return errMissingDomain
+		return apiutil.ErrMissingDomainID
 	}
 	if err := invitations.CheckRelation(req.Relation); err != nil {
 		return err
@@ -40,7 +36,8 @@ func (req *sendInvitationReq) validate() error {
 }
 
 type listInvitationsReq struct {
-	token string
+	token    string
+	domainID string
 	invitations.Page
 }
 
@@ -65,7 +62,7 @@ func (req *acceptInvitationReq) validate() error {
 		return apiutil.ErrBearerToken
 	}
 	if req.DomainID == "" {
-		return errMissingDomain
+		return apiutil.ErrMissingDomainID
 	}
 
 	return nil
@@ -85,7 +82,7 @@ func (req *invitationReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 	if req.domainID == "" {
-		return errMissingDomain
+		return apiutil.ErrMissingDomainID
 	}
 
 	return nil

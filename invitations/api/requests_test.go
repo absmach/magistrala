@@ -63,7 +63,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
-			err: errMissingDomain,
+			err: apiutil.ErrMissingDomainID,
 		},
 		{
 			desc: "missing relation",
@@ -160,7 +160,7 @@ func TestAcceptInvitationReq(t *testing.T) {
 				token:    valid,
 				DomainID: "",
 			},
-			err: errMissingDomain,
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 
@@ -210,7 +210,7 @@ func TestInvitationReqValidation(t *testing.T) {
 				userID:   valid,
 				domainID: "",
 			},
-			err: errMissingDomain,
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 

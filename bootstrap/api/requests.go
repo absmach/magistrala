@@ -12,6 +12,7 @@ const maxLimitSize = 100
 
 type addReq struct {
 	token       string
+	domainID    string
 	ThingID     string   `json:"thing_id"`
 	ExternalID  string   `json:"external_id"`
 	ExternalKey string   `json:"external_key"`
@@ -26,6 +27,10 @@ type addReq struct {
 func (req addReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.ExternalID == "" {
@@ -50,10 +55,15 @@ func (req addReq) validate() error {
 }
 
 type entityReq struct {
-	id string
+	id       string
+	domainID string
 }
 
 func (req entityReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -62,12 +72,17 @@ func (req entityReq) validate() error {
 }
 
 type updateReq struct {
-	id      string
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	id       string
+	domainID string
+	Name     string `json:"name"`
+	Content  string `json:"content"`
 }
 
 func (req updateReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -77,12 +92,16 @@ func (req updateReq) validate() error {
 
 type updateCertReq struct {
 	thingID    string
+	domainID   string
 	ClientCert string `json:"client_cert"`
 	ClientKey  string `json:"client_key"`
 	CACert     string `json:"ca_cert"`
 }
 
 func (req updateCertReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
 	if req.thingID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -93,12 +112,17 @@ func (req updateCertReq) validate() error {
 type updateConnReq struct {
 	token    string
 	id       string
+	domainID string
 	Channels []string `json:"channels"`
 }
 
 func (req updateConnReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.id == "" {
@@ -109,12 +133,17 @@ func (req updateConnReq) validate() error {
 }
 
 type listReq struct {
-	filter bootstrap.Filter
-	offset uint64
-	limit  uint64
+	domainID string
+	filter   bootstrap.Filter
+	offset   uint64
+	limit    uint64
 }
 
 func (req listReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.limit > maxLimitSize {
 		return apiutil.ErrLimitSize
 	}
@@ -123,13 +152,18 @@ func (req listReq) validate() error {
 }
 
 type bootstrapReq struct {
-	key string
-	id  string
+	key      string
+	id       string
+	domainID string
 }
 
 func (req bootstrapReq) validate() error {
 	if req.key == "" {
 		return apiutil.ErrBearerKey
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.id == "" {
@@ -140,14 +174,19 @@ func (req bootstrapReq) validate() error {
 }
 
 type changeStateReq struct {
-	token string
-	id    string
-	State bootstrap.State `json:"state"`
+	token    string
+	id       string
+	domainID string
+	State    bootstrap.State `json:"state"`
 }
 
 func (req changeStateReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.id == "" {

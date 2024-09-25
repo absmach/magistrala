@@ -40,7 +40,7 @@ func MakeHandler(svc journal.Service, logger *slog.Logger, svcName, instanceID s
 
 	mux := chi.NewRouter()
 
-	mux.Get("/journal/{entityType}/{entityID}", otelhttp.NewHandler(kithttp.NewServer(
+	mux.Get("/domains/{domainID}/journal/{entityType}/{entityID}", otelhttp.NewHandler(kithttp.NewServer(
 		retrieveJournalsEndpoint(svc),
 		decodeRetrieveJournalReq,
 		api.EncodeResponse,
@@ -110,7 +110,8 @@ func decodeRetrieveJournalReq(_ context.Context, r *http.Request) (interface{}, 
 	}
 
 	req := retrieveJournalsReq{
-		token: apiutil.ExtractBearerToken(r),
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
 		page: journal.Page{
 			Offset:         offset,
 			Limit:          limit,

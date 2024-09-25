@@ -41,35 +41,35 @@ func MakeHandler(svc certs.Service, authn mgauthn.Authentication, logger *slog.L
 
 	r.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn))
-
-		r.Route("/certs", func(r chi.Router) {
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				issueCert(svc),
-				decodeCerts,
+	r.Route("/domains/{domainID}", func(r chi.Router) {
+			r.Route("/certs", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					issueCert(svc),
+					decodeCerts,
+					api.EncodeResponse,
+					opts...,
+				), "issue").ServeHTTP)
+				r.Get("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+					viewCert(svc),
+					decodeViewCert,
+					api.EncodeResponse,
+					opts...,
+				), "view").ServeHTTP)
+				r.Delete("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+					revokeCert(svc),
+					decodeRevokeCerts,
+					api.EncodeResponse,
+					opts...,
+				), "revoke").ServeHTTP)
+			})
+			r.Get("/serials/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				listSerials(svc),
+				decodeListCerts,
 				api.EncodeResponse,
 				opts...,
-			), "issue").ServeHTTP)
-			r.Get("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
-				viewCert(svc),
-				decodeViewCert,
-				api.EncodeResponse,
-				opts...,
-			), "view").ServeHTTP)
-			r.Delete("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
-				revokeCert(svc),
-				decodeRevokeCerts,
-				api.EncodeResponse,
-				opts...,
-			), "revoke").ServeHTTP)
-		})
-		r.Get("/serials/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			listSerials(svc),
-			decodeListCerts,
-			api.EncodeResponse,
-			opts...,
-		), "list_serials").ServeHTTP)
+			), "list_serials").ServeHTTP)
 	})
-
+	})
 	r.Handle("/metrics", promhttp.Handler())
 	r.Get("/health", magistrala.Health("certs", instanceID))
 
@@ -91,7 +91,8 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := listReq{
-		thingID: chi.URLParam(r, "thingID"),
+		thingID:  chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 		pm: certs.PageMetadata{
 			Offset:  o,
 			Limit:   l,
@@ -104,6 +105,7 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeViewCert(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewReq{
 		serialID: chi.URLParam(r, "certID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -114,7 +116,10 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := addCertsReq{token: apiutil.ExtractBearerToken(r)}
+	req := addCertsReq{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -124,8 +129,9 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	req := revokeReq{
-		token:  apiutil.ExtractBearerToken(r),
-		certID: chi.URLParam(r, "certID"),
+		token:    apiutil.ExtractBearerToken(r),
+		certID:   chi.URLParam(r, "certID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil

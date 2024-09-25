@@ -60,7 +60,7 @@ func MakeHandler(svc readers.MessageRepository, auth, things magistrala.AuthzSer
 	}
 
 	mux := chi.NewRouter()
-	mux.Get("/channels/{chanID}/messages", kithttp.NewServer(
+	mux.Get("/domains/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
 		listMessagesEndpoint(svc, auth, things),
 		decodeList,
 		encodeResponse,
@@ -159,6 +159,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := listMessagesReq{
 		chanID: chi.URLParam(r, "chanID"),
+		domainID: chi.URLParam(r, "domainID"),
 		token:  apiutil.ExtractBearerToken(r),
 		key:    apiutil.ExtractThingKey(r),
 		pageMeta: readers.PageMetadata{

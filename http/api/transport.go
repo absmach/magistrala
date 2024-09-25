@@ -33,20 +33,21 @@ func MakeHandler(logger *slog.Logger, instanceID string) http.Handler {
 	}
 
 	r := chi.NewRouter()
-	r.Post("/channels/{chanID}/messages", otelhttp.NewHandler(kithttp.NewServer(
-		sendMessageEndpoint(),
-		decodeRequest,
-		api.EncodeResponse,
-		opts...,
-	), "publish").ServeHTTP)
+	r.Route("/domains/{domainID}", func(r chi.Router) {
+		r.Post("/channels/{chanID}/messages", otelhttp.NewHandler(kithttp.NewServer(
+			sendMessageEndpoint(),
+			decodeRequest,
+			api.EncodeResponse,
+			opts...,
+		), "publish").ServeHTTP)
 
-	r.Post("/channels/{chanID}/messages/*", otelhttp.NewHandler(kithttp.NewServer(
-		sendMessageEndpoint(),
-		decodeRequest,
-		api.EncodeResponse,
-		opts...,
-	), "publish").ServeHTTP)
-
+		r.Post("/channels/{chanID}/messages/*", otelhttp.NewHandler(kithttp.NewServer(
+			sendMessageEndpoint(),
+			decodeRequest,
+			api.EncodeResponse,
+			opts...,
+		), "publish").ServeHTTP)
+	})
 	r.Get("/health", magistrala.Health("http", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
@@ -60,7 +61,7 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	var req publishReq
-
+	req.domainID = chi.URLParam(r, "domainID")
 	_, pass, ok := r.BasicAuth()
 	switch {
 	case ok:

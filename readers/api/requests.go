@@ -20,12 +20,17 @@ type listMessagesReq struct {
 	chanID   string
 	token    string
 	key      string
+	domainID string
 	pageMeta readers.PageMetadata
 }
 
 func (req listMessagesReq) validate() error {
 	if req.token == "" && req.key == "" {
 		return apiutil.ErrBearerToken
+	}
+
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.chanID == "" {

@@ -45,75 +45,76 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger *s
 	}
 
 	r := chi.NewRouter()
+	r.Route("/domains/{domainID}", func(r chi.Router) {
+		r.Route("/things", func(r chi.Router) {
+			r.Route("/configs", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					addEndpoint(svc),
+					decodeAddRequest,
+					api.EncodeResponse,
+					opts...), "add").ServeHTTP)
 
-	r.Route("/things", func(r chi.Router) {
-		r.Route("/configs", func(r chi.Router) {
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				addEndpoint(svc),
-				decodeAddRequest,
-				api.EncodeResponse,
-				opts...), "add").ServeHTTP)
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					listEndpoint(svc),
+					decodeListRequest,
+					api.EncodeResponse,
+					opts...), "list").ServeHTTP)
 
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				listEndpoint(svc),
-				decodeListRequest,
-				api.EncodeResponse,
-				opts...), "list").ServeHTTP)
+				r.Get("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+					viewEndpoint(svc),
+					decodeEntityRequest,
+					api.EncodeResponse,
+					opts...), "view").ServeHTTP)
 
-			r.Get("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
-				viewEndpoint(svc),
-				decodeEntityRequest,
-				api.EncodeResponse,
-				opts...), "view").ServeHTTP)
+				r.Put("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+					updateEndpoint(svc),
+					decodeUpdateRequest,
+					api.EncodeResponse,
+					opts...), "update").ServeHTTP)
 
-			r.Put("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
-				updateEndpoint(svc),
-				decodeUpdateRequest,
-				api.EncodeResponse,
-				opts...), "update").ServeHTTP)
+				r.Delete("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+					removeEndpoint(svc),
+					decodeEntityRequest,
+					api.EncodeResponse,
+					opts...), "remove").ServeHTTP)
 
-			r.Delete("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
-				removeEndpoint(svc),
-				decodeEntityRequest,
-				api.EncodeResponse,
-				opts...), "remove").ServeHTTP)
+				r.Patch("/certs/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+					updateCertEndpoint(svc),
+					decodeUpdateCertRequest,
+					api.EncodeResponse,
+					opts...), "update_cert").ServeHTTP)
 
-			r.Patch("/certs/{certID}", otelhttp.NewHandler(kithttp.NewServer(
-				updateCertEndpoint(svc),
-				decodeUpdateCertRequest,
-				api.EncodeResponse,
-				opts...), "update_cert").ServeHTTP)
+				r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
+					updateConnEndpoint(svc),
+					decodeUpdateConnRequest,
+					api.EncodeResponse,
+					opts...), "update_connections").ServeHTTP)
+			})
 
-			r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
-				updateConnEndpoint(svc),
-				decodeUpdateConnRequest,
+			r.Route("/bootstrap", func(r chi.Router) {
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					bootstrapEndpoint(svc, reader, false),
+					decodeBootstrapRequest,
+					api.EncodeResponse,
+					opts...), "bootstrap").ServeHTTP)
+				r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+					bootstrapEndpoint(svc, reader, false),
+					decodeBootstrapRequest,
+					api.EncodeResponse,
+					opts...), "bootstrap").ServeHTTP)
+				r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+					bootstrapEndpoint(svc, reader, true),
+					decodeBootstrapRequest,
+					encodeSecureRes,
+					opts...), "bootstrap_secure").ServeHTTP)
+			})
+
+			r.Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				stateEndpoint(svc),
+				decodeStateRequest,
 				api.EncodeResponse,
-				opts...), "update_connections").ServeHTTP)
+				opts...), "update_state").ServeHTTP)
 		})
-
-		r.Route("/bootstrap", func(r chi.Router) {
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
-				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
-				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, true),
-				decodeBootstrapRequest,
-				encodeSecureRes,
-				opts...), "bootstrap_secure").ServeHTTP)
-		})
-
-		r.Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-			stateEndpoint(svc),
-			decodeStateRequest,
-			api.EncodeResponse,
-			opts...), "update_state").ServeHTTP)
 	})
 	r.Get("/health", magistrala.Health("bootstrap", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
@@ -126,7 +127,10 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := addReq{token: apiutil.ExtractBearerToken(r)}
+	req := addReq{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -140,8 +144,9 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := updateReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "configID"),
+		token:    apiutil.ExtractBearerToken(r),
+		id:       chi.URLParam(r, "configID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -156,8 +161,9 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := updateCertReq{
-		token:   apiutil.ExtractBearerToken(r),
-		thingID: chi.URLParam(r, "certID"),
+		token:    apiutil.ExtractBearerToken(r),
+		thingID:  chi.URLParam(r, "certID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -172,8 +178,9 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := updateConnReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "connID"),
+		token:    apiutil.ExtractBearerToken(r),
+		id:       chi.URLParam(r, "connID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -199,10 +206,11 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 
 	req := listReq{
-		token:  apiutil.ExtractBearerToken(r),
-		filter: parseFilter(q),
-		offset: o,
-		limit:  l,
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+		filter:   parseFilter(q),
+		offset:   o,
+		limit:    l,
 	}
 
 	return req, nil
@@ -210,8 +218,9 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := bootstrapReq{
-		id:  chi.URLParam(r, "externalID"),
-		key: apiutil.ExtractThingKey(r),
+		id:       chi.URLParam(r, "externalID"),
+		key:      apiutil.ExtractThingKey(r),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -223,8 +232,9 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 	}
 
 	req := changeStateReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		token:    apiutil.ExtractBearerToken(r),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -235,8 +245,9 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := entityReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "configID"),
+		token:    apiutil.ExtractBearerToken(r),
+		id:       chi.URLParam(r, "configID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil

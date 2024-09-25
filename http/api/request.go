@@ -9,13 +9,17 @@ import (
 )
 
 type publishReq struct {
-	msg   *messaging.Message
-	token string
+	msg      *messaging.Message
+	token    string
+	domainID string
 }
 
 func (req publishReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerKey
+	}
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 	if len(req.msg.Payload) == 0 {
 		return apiutil.ErrEmptyMessage

@@ -10,13 +10,17 @@ import (
 )
 
 type retrieveJournalsReq struct {
-	token string
-	page  journal.Page
+	token    string
+	domainID string
+	page     journal.Page
 }
 
 func (req retrieveJournalsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
+	}
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 	if req.page.Limit > api.DefLimit {
 		return apiutil.ErrLimitSize

@@ -43,7 +43,7 @@ func (es *eventStore) RegisterClient(ctx context.Context, session authn.Session,
 		return user, err
 	}
 
-	event := createClientEvent{
+	event := createUserEvent{
 		user,
 	}
 
@@ -99,8 +99,8 @@ func (es *eventStore) UpdateClientIdentity(ctx context.Context, session authn.Se
 	return es.update(ctx, "identity", user)
 }
 
-func (es *eventStore) update(ctx context.Context, operation string, user mgclients.Client) (mgclients.Client, error) {
-	event := updateClientEvent{
+func (es *eventStore) update(ctx context.Context, operation string, user users.User) (users.User, error) {
+	event := updateUserEvent{
 		user, operation,
 	}
 
@@ -117,7 +117,7 @@ func (es *eventStore) ViewClient(ctx context.Context, session authn.Session, id 
 		return user, err
 	}
 
-	event := viewClientEvent{
+	event := viewUserEvent{
 		user,
 	}
 
@@ -150,7 +150,7 @@ func (es *eventStore) ListClients(ctx context.Context, session authn.Session, pm
 	if err != nil {
 		return cp, err
 	}
-	event := listClientEvent{
+	event := listUserEvent{
 		pm,
 	}
 
@@ -166,7 +166,7 @@ func (es *eventStore) SearchUsers(ctx context.Context, pm mgclients.Page) (mgcli
 	if err != nil {
 		return cp, err
 	}
-	event := searchClientEvent{
+	event := searchUserEvent{
 		pm,
 	}
 
@@ -182,7 +182,7 @@ func (es *eventStore) ListMembers(ctx context.Context, session authn.Session, ob
 	if err != nil {
 		return mp, err
 	}
-	event := listClientByGroupEvent{
+	event := listUserByGroupEvent{
 		pm, objectKind, objectID,
 	}
 
@@ -211,8 +211,8 @@ func (es *eventStore) DisableClient(ctx context.Context, session authn.Session, 
 	return es.delete(ctx, user)
 }
 
-func (es *eventStore) delete(ctx context.Context, user mgclients.Client) (mgclients.Client, error) {
-	event := removeClientEvent{
+func (es *eventStore) delete(ctx context.Context, user users.User) (users.User, error) {
+	event := removeUserEvent{
 		id:        user.ID,
 		updatedAt: user.UpdatedAt,
 		updatedBy: user.UpdatedBy,
@@ -232,7 +232,7 @@ func (es *eventStore) Identify(ctx context.Context, session authn.Session) (stri
 		return userID, err
 	}
 
-	event := identifyClientEvent{
+	event := identifyUserEvent{
 		userID: userID,
 	}
 
@@ -321,7 +321,7 @@ func (es *eventStore) OAuthCallback(ctx context.Context, client mgclients.Client
 	}
 
 	event := oauthCallbackEvent{
-		clientID: client.ID,
+		userID: user.ID,
 	}
 
 	if err := es.Publish(ctx, event); err != nil {
@@ -336,7 +336,7 @@ func (es *eventStore) DeleteClient(ctx context.Context, session authn.Session, i
 		return err
 	}
 
-	event := deleteClientEvent{
+	event := deleteUserEvent{
 		id: id,
 	}
 

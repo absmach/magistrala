@@ -6,7 +6,7 @@ package oauth2
 import (
 	"context"
 
-	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/users"
 	"golang.org/x/oauth2"
 )
 
@@ -42,5 +42,5 @@ type Provider interface {
 	Exchange(ctx context.Context, code string) (oauth2.Token, error)
 
 	// UserInfo retrieves the user's information using the access token.
-	UserInfo(accessToken string) (mfclients.Client, error)
+	UserInfo(accessToken string) (users.User, error)
 }

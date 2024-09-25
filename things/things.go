@@ -5,7 +5,6 @@ package things
 
 import (
 	"context"
-	"time"
 
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/clients"
@@ -73,7 +72,7 @@ type Service interface {
 }
 
 // Cache contains thing caching interface.
-//
+
 //go:generate mockery --name Cache --filename cache.go --quiet --note "Copyright (c) Abstract Machines"
 type Cache interface {
 	// Save stores pair thing secret, thing id.
@@ -85,26 +84,3 @@ type Cache interface {
 	// Removes thing from cache.
 	Remove(ctx context.Context, thingID string) error
 }
-
-// Things Service separate from Client Struct
-type Things struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Domain      string         `json:"domain_id,omitempty"`
-	Credentials Credentials    `json:"credentials,omitempty"`
-	Metadata    Metadata       `json:"metadata,omitempty"`
-	CreatedAt   time.Time      `json:"created_at,omitempty"`
-	UpdatedAt   time.Time      `json:"updated_at,omitempty"`
-	UpdatedBy   string         `json:"updated_by,omitempty"`
-	Status      clients.Status `json:"status,omitempty"` // 1 for enabled, 0 for disabled
-	Permissions []string       `json:"permissions,omitempty"`
-}
-
-type Credentials struct {
-	Identity string `json:"identity,omitempty"` // username or generated login ID
-	Secret   string `json:"secret,omitempty"`   // password or token
-}
-
-// Metadata represents arbitrary JSON.
-type Metadata map[string]interface{}

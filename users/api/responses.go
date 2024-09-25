@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/absmach/magistrala"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/users"
 )
 
 // MailSent message response when link is sent.
@@ -16,19 +16,21 @@ const MailSent = "Email with reset link is sent"
 
 var (
 	_ magistrala.Response = (*tokenRes)(nil)
-	_ magistrala.Response = (*viewClientRes)(nil)
-	_ magistrala.Response = (*createClientRes)(nil)
-	_ magistrala.Response = (*changeClientStatusClientRes)(nil)
-	_ magistrala.Response = (*clientsPageRes)(nil)
+	_ magistrala.Response = (*viewUserRes)(nil)
+	_ magistrala.Response = (*createUserRes)(nil)
+	_ magistrala.Response = (*changeUserStatusClientRes)(nil)
+	_ magistrala.Response = (*usersPageRes)(nil)
 	_ magistrala.Response = (*viewMembersRes)(nil)
 	_ magistrala.Response = (*passwResetReqRes)(nil)
 	_ magistrala.Response = (*passwChangeRes)(nil)
 	_ magistrala.Response = (*assignUsersRes)(nil)
 	_ magistrala.Response = (*unassignUsersRes)(nil)
-	_ magistrala.Response = (*updateClientRes)(nil)
+	_ magistrala.Response = (*updateUserRes)(nil)
 	_ magistrala.Response = (*tokenRes)(nil)
-	_ magistrala.Response = (*deleteClientRes)(nil)
+	_ magistrala.Response = (*deleteUserRes)(nil)
 )
+
+// handle the responses structs to match the client name as User now
 
 type pageRes struct {
 	Limit  uint64 `json:"limit,omitempty"`
@@ -36,12 +38,12 @@ type pageRes struct {
 	Total  uint64 `json:"total"`
 }
 
-type createClientRes struct {
-	mgclients.Client `json:",inline"`
-	created          bool
+type createUserRes struct {
+	users.User `json:",inline"`
+	created    bool
 }
 
-func (res createClientRes) Code() int {
+func (res createUserRes) Code() int {
 	if res.created {
 		return http.StatusCreated
 	}
@@ -49,7 +51,7 @@ func (res createClientRes) Code() int {
 	return http.StatusOK
 }
 
-func (res createClientRes) Headers() map[string]string {
+func (res createUserRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
 			"Location": fmt.Sprintf("/users/%s", res.ID),
@@ -59,7 +61,7 @@ func (res createClientRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res createClientRes) Empty() bool {
+func (res createUserRes) Empty() bool {
 	return false
 }
 
@@ -81,57 +83,57 @@ func (res tokenRes) Empty() bool {
 	return res.AccessToken == "" || res.RefreshToken == ""
 }
 
-type updateClientRes struct {
-	mgclients.Client `json:",inline"`
+type updateUserRes struct {
+	users.User `json:",inline"`
 }
 
-func (res updateClientRes) Code() int {
+func (res updateUserRes) Code() int {
 	return http.StatusOK
 }
 
-func (res updateClientRes) Headers() map[string]string {
+func (res updateUserRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res updateClientRes) Empty() bool {
+func (res updateUserRes) Empty() bool {
 	return false
 }
 
-type viewClientRes struct {
-	mgclients.Client `json:",inline"`
+type viewUserRes struct {
+	users.User `json:",inline"`
 }
 
-func (res viewClientRes) Code() int {
+func (res viewUserRes) Code() int {
 	return http.StatusOK
 }
 
-func (res viewClientRes) Headers() map[string]string {
+func (res viewUserRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res viewClientRes) Empty() bool {
+func (res viewUserRes) Empty() bool {
 	return false
 }
 
-type clientsPageRes struct {
+type usersPageRes struct {
 	pageRes
-	Clients []viewClientRes `json:"users"`
+	Users []viewUserRes `json:"users"`
 }
 
-func (res clientsPageRes) Code() int {
+func (res usersPageRes) Code() int {
 	return http.StatusOK
 }
 
-func (res clientsPageRes) Headers() map[string]string {
+func (res usersPageRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res clientsPageRes) Empty() bool {
+func (res usersPageRes) Empty() bool {
 	return false
 }
 
 type viewMembersRes struct {
-	mgclients.Client `json:",inline"`
+	users.User `json:",inline"`
 }
 
 func (res viewMembersRes) Code() int {
@@ -146,19 +148,19 @@ func (res viewMembersRes) Empty() bool {
 	return false
 }
 
-type changeClientStatusClientRes struct {
-	mgclients.Client `json:",inline"`
+type changeUserStatusClientRes struct {
+	users.User `json:",inline"`
 }
 
-func (res changeClientStatusClientRes) Code() int {
+func (res changeUserStatusClientRes) Code() int {
 	return http.StatusOK
 }
 
-func (res changeClientStatusClientRes) Headers() map[string]string {
+func (res changeUserStatusClientRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res changeClientStatusClientRes) Empty() bool {
+func (res changeUserStatusClientRes) Empty() bool {
 	return false
 }
 
@@ -220,11 +222,11 @@ func (res unassignUsersRes) Empty() bool {
 	return true
 }
 
-type deleteClientRes struct {
+type deleteUserRes struct {
 	deleted bool
 }
 
-func (res deleteClientRes) Code() int {
+func (res deleteUserRes) Code() int {
 	if res.deleted {
 		return http.StatusNoContent
 	}
@@ -232,10 +234,10 @@ func (res deleteClientRes) Code() int {
 	return http.StatusOK
 }
 
-func (res deleteClientRes) Headers() map[string]string {
+func (res deleteUserRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res deleteClientRes) Empty() bool {
+func (res deleteUserRes) Empty() bool {
 	return true
 }

@@ -16,6 +16,8 @@ import (
 
 var _ users.Service = (*tracingMiddleware)(nil)
 
+// tracing has the service functions
+
 type tracingMiddleware struct {
 	tracer trace.Tracer
 	svc    users.Service
@@ -88,8 +90,8 @@ func (tm *tracingMiddleware) SearchUsers(ctx context.Context, pm mgclients.Page)
 // UpdateClient traces the "UpdateClient" operation of the wrapped clients.Service.
 func (tm *tracingMiddleware) UpdateClient(ctx context.Context, session authn.Session, cli mgclients.Client) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_client_name_and_metadata", trace.WithAttributes(
-		attribute.String("id", cli.ID),
-		attribute.String("name", cli.Name),
+		attribute.String("id", usr.ID),
+		attribute.String("name", usr.Name),
 	))
 	defer span.End()
 
@@ -99,8 +101,8 @@ func (tm *tracingMiddleware) UpdateClient(ctx context.Context, session authn.Ses
 // UpdateClientTags traces the "UpdateClientTags" operation of the wrapped clients.Service.
 func (tm *tracingMiddleware) UpdateClientTags(ctx context.Context, session authn.Session, cli mgclients.Client) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_client_tags", trace.WithAttributes(
-		attribute.String("id", cli.ID),
-		attribute.StringSlice("tags", cli.Tags),
+		attribute.String("id", usr.ID),
+		attribute.StringSlice("tags", usr.Tags),
 	))
 	defer span.End()
 
@@ -167,8 +169,8 @@ func (tm *tracingMiddleware) ViewProfile(ctx context.Context, session authn.Sess
 // UpdateClientRole traces the "UpdateClientRole" operation of the wrapped clients.Service.
 func (tm *tracingMiddleware) UpdateClientRole(ctx context.Context, session authn.Session, cli mgclients.Client) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_client_role", trace.WithAttributes(
-		attribute.String("id", cli.ID),
-		attribute.StringSlice("tags", cli.Tags),
+		attribute.String("id", usr.ID),
+		attribute.StringSlice("tags", usr.Tags),
 	))
 	defer span.End()
 
@@ -210,11 +212,11 @@ func (tm *tracingMiddleware) Identify(ctx context.Context, session authn.Session
 // OAuthCallback traces the "OAuthCallback" operation of the wrapped clients.Service.
 func (tm *tracingMiddleware) OAuthCallback(ctx context.Context, client mgclients.Client) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_oauth_callback", trace.WithAttributes(
-		attribute.String("client_id", client.ID),
+		attribute.String("client_id", user.ID),
 	))
 	defer span.End()
 
-	return tm.svc.OAuthCallback(ctx, client)
+	return tm.svc.OAuthCallback(ctx, user)
 }
 
 // DeleteClient traces the "DeleteClient" operation of the wrapped clients.Service.

@@ -16,7 +16,7 @@ import (
 //
 //go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
-	// RegisterClient creates new client. In case of the failed registration, a
+	// RegisterUser creates new user. In case of the failed registration, a
 	// non-nil error value is returned.
 	RegisterClient(ctx context.Context, session authn.Session, client clients.Client, selfRegister bool) (clients.Client, error)
 

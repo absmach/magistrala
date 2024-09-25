@@ -7,6 +7,7 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/users"
 )
 
 const maxLimitSize = 100
@@ -15,21 +16,30 @@ type createClientReq struct {
 	client mgclients.Client
 }
 
-func (req createClientReq) validate() error {
-	if len(req.client.Name) > api.MaxNameSize {
+func (req createUserReq) validate() error {
+	if len(req.user.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
-	if req.client.Credentials.Identity == "" {
+	if len(req.user.UserName) > api.MaxNameSize {
+		return apiutil.ErrNameSize
+	}
+	if len(req.user.FirstName) > api.MaxNameSize {
+		return apiutil.ErrNameSize
+	}
+	if len(req.user.LastName) > api.MaxNameSize {
+		return apiutil.ErrNameSize
+	}
+	if req.user.Credentials.Identity == "" {
 		return apiutil.ErrMissingIdentity
 	}
-	if req.client.Credentials.Secret == "" {
+	if req.user.Credentials.Secret == "" {
 		return apiutil.ErrMissingPass
 	}
-	if !passRegex.MatchString(req.client.Credentials.Secret) {
+	if !passRegex.MatchString(req.user.Credentials.Secret) {
 		return apiutil.ErrPasswordFormat
 	}
 
-	return req.client.Validate()
+	return req.user.Validate()
 }
 
 type viewClientReq struct {
@@ -51,7 +61,7 @@ type listClientsReq struct {
 	name     string
 	tag      string
 	identity string
-	metadata mgclients.Metadata
+	metadata mgclients.Metadata // this is a hanging fix for now. using mgclients.page instead of users.page
 	order    string
 	dir      string
 	id       string
@@ -104,8 +114,8 @@ func (req listMembersByObjectReq) validate() error {
 
 type updateClientReq struct {
 	id       string
-	Name     string             `json:"name,omitempty"`
-	Metadata mgclients.Metadata `json:"metadata,omitempty"`
+	Name     string         `json:"name,omitempty"`
+	Metadata users.Metadata `json:"metadata,omitempty"`
 }
 
 func (req updateClientReq) validate() error {
@@ -184,13 +194,13 @@ func (req changeClientStatusReq) validate() error {
 	return nil
 }
 
-type loginClientReq struct {
+type loginUserReq struct {
 	Identity string `json:"identity,omitempty"`
 	Secret   string `json:"secret,omitempty"`
 	DomainID string `json:"domain_id,omitempty"`
 }
 
-func (req loginClientReq) validate() error {
+func (req loginUserReq) validate() error {
 	if req.Identity == "" {
 		return apiutil.ErrMissingIdentity
 	}

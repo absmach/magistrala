@@ -4,12 +4,33 @@
 package users
 
 import (
+	"context"
+	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	"golang.org/x/net/idna"
 )
 
-type Users struct {
+const (
+	maxLocalLen  = 64
+	maxDomainLen = 255
+	maxTLDLen    = 24 // longest TLD currently in existence
+
+	atSeparator  = "@"
+	dotSeparator = "."
+)
+
+var (
+	userRegexp    = regexp.MustCompile("^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$")
+	hostRegexp    = regexp.MustCompile(`^[^\s]+\.[^\s]+$`)
+	userDotRegexp = regexp.MustCompile("(^[.]{1})|([.]{1}$)|([.]{2,})")
+)
+
+type User struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name,omitempty"`
 	UserName    string         `json:"user_name,omitempty"`
@@ -31,5 +52,130 @@ type Credentials struct {
 	Secret   string `json:"secret,omitempty"`   // password or token
 }
 
+type UsersPage struct {
+	clients.Page
+	Users []User
+}
+
 // Metadata represents arbitrary JSON.
 type Metadata map[string]interface{}
+
+// MembersPage contains page related metadata as well as list of members that
+// belong to this page.
+type MembersPage struct {
+	clients.Page
+	Members []User
+}
+
+type Repository interface {
+	// RetrieveByID retrieves user by their unique ID.
+	RetrieveByID(ctx context.Context, id string) (User, error)
+
+	// RetrieveByIdentity retrieves user by its unique credentials
+	RetrieveByIdentity(ctx context.Context, identity string) (User, error)
+
+	// RetrieveAll retrieves all clients.
+	RetrieveAll(ctx context.Context, pm clients.Page) (UsersPage, error)
+
+	// Update updates the user name and metadata.
+	Update(ctx context.Context, user User) (User, error)
+
+	// UpdateTags updates the user tags.
+	UpdateTags(ctx context.Context, user User) (User, error)
+
+	// UpdateIdentity updates identity for user with given id.
+	UpdateIdentity(ctx context.Context, user User) (User, error)
+
+	// UpdateSecret updates secret for user with given identity.
+	UpdateSecret(ctx context.Context, user User) (User, error)
+
+	// UpdateRole updates role for user with given id.
+	UpdateRole(ctx context.Context, user User) (User, error)
+
+	// ChangeStatus changes user status to enabled or disabled
+	ChangeStatus(ctx context.Context, user User) (User, error)
+
+	// Delete deletes user with given id
+	Delete(ctx context.Context, id string) error
+
+	// Searchusers retrieves users based on search criteria.
+	SearchUsers(ctx context.Context, pm clients.Page) (UsersPage, error)
+
+	// RetrieveAllByIDs retrieves for given user IDs .
+	RetrieveAllByIDs(ctx context.Context, pm clients.Page) (UsersPage, error)
+
+	CheckSuperAdmin(ctx context.Context, adminID string) error
+
+	// Save persists the user account. A non-nil error is returned to indicate
+	// operation failure.
+	Save(ctx context.Context, user User) (User, error)
+}
+
+// Validate returns an error if user representation is invalid.
+func (u User) Validate() error {
+	if !isEmail(u.Credentials.Identity) {
+		return errors.ErrMalformedEntity
+	}
+	return nil
+}
+
+func isEmail(email string) bool {
+	if email == "" {
+		return false
+	}
+
+	es := strings.Split(email, atSeparator)
+	if len(es) != 2 {
+		return false
+	}
+	local, host := es[0], es[1]
+
+	if local == "" || len(local) > maxLocalLen {
+		return false
+	}
+
+	hs := strings.Split(host, dotSeparator)
+	if len(hs) < 2 {
+		return false
+	}
+	domain, ext := hs[0], hs[1]
+
+	// Check subdomain and validate
+	if len(hs) > 2 {
+		if domain == "" {
+			return false
+		}
+
+		for i := 1; i < len(hs)-1; i++ {
+			sub := hs[i]
+			if sub == "" {
+				return false
+			}
+			domain = fmt.Sprintf("%s.%s", domain, sub)
+		}
+
+		ext = hs[len(hs)-1]
+	}
+
+	if domain == "" || len(domain) > maxDomainLen {
+		return false
+	}
+	if ext == "" || len(ext) > maxTLDLen {
+		return false
+	}
+
+	punyLocal, err := idna.ToASCII(local)
+	if err != nil {
+		return false
+	}
+	punyHost, err := idna.ToASCII(host)
+	if err != nil {
+		return false
+	}
+
+	if userDotRegexp.MatchString(punyLocal) || !userRegexp.MatchString(punyLocal) || !hostRegexp.MatchString(punyHost) {
+		return false
+	}
+
+	return true
+}

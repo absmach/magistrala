@@ -32,19 +32,19 @@ var (
 	idProvider     = uuid.New()
 	phasher        = hasher.New()
 	secret         = "strongsecret"
-	validCMetadata = mgclients.Metadata{"role": "client"}
-	clientID       = "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f"
-	client         = mgclients.Client{
-		ID:          clientID,
-		Name:        "clientname",
+	validCMetadata = users.Metadata{"role": "client"}
+	userID         = "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f"
+	user           = users.User{
+		ID:          userID,
+		Name:        "usersname",
 		Tags:        []string{"tag1", "tag2"},
-		Credentials: mgclients.Credentials{Identity: "clientidentity", Secret: secret},
+		Credentials: users.Credentials{Identity: "useridentity", Secret: secret},
 		Metadata:    validCMetadata,
 		Status:      mgclients.EnabledStatus,
 	}
-	basicClient = mgclients.Client{
-		Name: "clientname",
-		ID:   clientID,
+	basicUser = users.User{
+		Name: "usertname",
+		ID:   userID,
 	}
 	validToken      = "token"
 	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
@@ -91,11 +91,11 @@ func TestRegisterClient(t *testing.T) {
 			err:     repoerr.ErrConflict,
 		},
 		{
-			desc: "register a new enabled client with name",
-			client: mgclients.Client{
-				Name: "clientWithName",
-				Credentials: mgclients.Credentials{
-					Identity: "newclientwithname@example.com",
+			desc: "register a new enabled user with name",
+			user: users.User{
+				Name: "userWithName",
+				Credentials: users.Credentials{
+					Identity: "newuserwithname@example.com",
 					Secret:   secret,
 				},
 				Status: mgclients.EnabledStatus,
@@ -103,37 +103,37 @@ func TestRegisterClient(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "register a new disabled client with name",
-			client: mgclients.Client{
-				Name: "clientWithName",
-				Credentials: mgclients.Credentials{
-					Identity: "newclientwithname@example.com",
+			desc: "register a new disabled user with name",
+			user: users.User{
+				Name: "userWithName",
+				Credentials: users.Credentials{
+					Identity: "newuserwithname@example.com",
 					Secret:   secret,
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: "register a new client with all fields",
-			client: mgclients.Client{
-				Name: "newclientwithallfields",
+			desc: "register a new user with all fields",
+			user: users.User{
+				Name: "newusertwithallfields",
 				Tags: []string{"tag1", "tag2"},
-				Credentials: mgclients.Credentials{
-					Identity: "newclientwithallfields@example.com",
+				Credentials: users.Credentials{
+					Identity: "newuserwithallfields@example.com",
 					Secret:   secret,
 				},
-				Metadata: mgclients.Metadata{
-					"name": "newclientwithallfields",
+				Metadata: users.Metadata{
+					"name": "newuserwithallfields",
 				},
 				Status: mgclients.EnabledStatus,
 			},
 			err: nil,
 		},
 		{
-			desc: "register a new client with missing identity",
-			client: mgclients.Client{
-				Name: "clientWithMissingIdentity",
-				Credentials: mgclients.Credentials{
+			desc: "register a new user with missing identity",
+			user: users.User{
+				Name: "userWithMissingIdentity",
+				Credentials: users.Credentials{
 					Secret: secret,
 				},
 			},
@@ -141,33 +141,33 @@ func TestRegisterClient(t *testing.T) {
 			err:     errors.ErrMalformedEntity,
 		},
 		{
-			desc: "register a new client with missing secret",
-			client: mgclients.Client{
-				Name: "clientWithMissingSecret",
-				Credentials: mgclients.Credentials{
-					Identity: "clientwithmissingsecret@example.com",
+			desc: "register a new user with missing secret",
+			user: users.User{
+				Name: "userWithMissingSecret",
+				Credentials: users.Credentials{
+					Identity: "userwithmissingsecret@example.com",
 					Secret:   "",
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: " register a client with a secret that is too long",
-			client: mgclients.Client{
-				Name: "clientWithLongSecret",
-				Credentials: mgclients.Credentials{
-					Identity: "clientwithlongsecret@example.com",
+			desc: " register a user with a secret that is too long",
+			user: users.User{
+				Name: "userWithLongSecret",
+				Credentials: users.Credentials{
+					Identity: "userwithlongsecret@example.com",
 					Secret:   strings.Repeat("a", 73),
 				},
 			},
 			err: repoerr.ErrMalformedEntity,
 		},
 		{
-			desc: "register a new client with invalid status",
-			client: mgclients.Client{
-				Name: "clientWithInvalidStatus",
-				Credentials: mgclients.Credentials{
-					Identity: "client with invalid status",
+			desc: "register a new user with invalid status",
+			user: users.User{
+				Name: "userWithInvalidStatus",
+				Credentials: users.Credentials{
+					Identity: "user with invalid status",
 					Secret:   secret,
 				},
 				Status: mgclients.AllStatus,
@@ -175,11 +175,11 @@ func TestRegisterClient(t *testing.T) {
 			err: svcerr.ErrInvalidStatus,
 		},
 		{
-			desc: "register a new client with invalid role",
-			client: mgclients.Client{
-				Name: "clientWithInvalidRole",
-				Credentials: mgclients.Credentials{
-					Identity: "clientwithinvalidrole@example.com",
+			desc: "register a new user with invalid role",
+			user: users.User{
+				Name: "userWithInvalidRole",
+				Credentials: users.Credentials{
+					Identity: "userwithinvalidrole@example.com",
 					Secret:   secret,
 				},
 				Role: 2,
@@ -187,11 +187,11 @@ func TestRegisterClient(t *testing.T) {
 			err: svcerr.ErrInvalidRole,
 		},
 		{
-			desc: "register a new client with failed to add policies with err",
-			client: mgclients.Client{
-				Name: "clientWithFailedToAddPolicies",
-				Credentials: mgclients.Credentials{
-					Identity: "clientwithfailedpolicies@example.com",
+			desc: "register a new user with failed to add policies with err",
+			user: users.User{
+				Name: "userWithFailedToAddPolicies",
+				Credentials: users.Credentials{
+					Identity: "userwithfailedpolicies@example.com",
 					Secret:   secret,
 				},
 				Role: mgclients.AdminRole,
@@ -200,11 +200,11 @@ func TestRegisterClient(t *testing.T) {
 			err:                    svcerr.ErrAddPolicies,
 		},
 		{
-			desc: "register a new client with failed to delete policies with err",
-			client: mgclients.Client{
-				Name: "clientWithFailedToDeletePolicies",
-				Credentials: mgclients.Credentials{
-					Identity: "clientwithfailedtodelete@example.com",
+			desc: "register a new userient with failed to delete policies with err",
+			user: users.User{
+				Name: "userWithFailedToDeletePolicies",
+				Credentials: users.Credentials{
+					Identity: "userwithfailedtodelete@example.com",
 					Secret:   secret,
 				},
 				Role: mgclients.AdminRole,
@@ -222,12 +222,12 @@ func TestRegisterClient(t *testing.T) {
 		expected, err := svc.RegisterClient(context.Background(), authn.Session{}, tc.client, true)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			tc.client.ID = expected.ID
-			tc.client.CreatedAt = expected.CreatedAt
-			tc.client.UpdatedAt = expected.UpdatedAt
-			tc.client.Credentials.Secret = expected.Credentials.Secret
-			tc.client.UpdatedBy = expected.UpdatedBy
-			assert.Equal(t, tc.client, expected, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.client, expected))
+			tc.user.ID = expected.ID
+			tc.user.CreatedAt = expected.CreatedAt
+			tc.user.UpdatedAt = expected.UpdatedAt
+			tc.user.Credentials.Secret = expected.Credentials.Secret
+			tc.user.UpdatedBy = expected.UpdatedBy
+			assert.Equal(t, tc.user, expected, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.user, expected))
 			ok := repoCall.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 		}
@@ -270,12 +270,12 @@ func TestRegisterClient(t *testing.T) {
 		expected, err := svc.RegisterClient(context.Background(), authn.Session{UserID: validID}, tc.client, false)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			tc.client.ID = expected.ID
-			tc.client.CreatedAt = expected.CreatedAt
-			tc.client.UpdatedAt = expected.UpdatedAt
-			tc.client.Credentials.Secret = expected.Credentials.Secret
-			tc.client.UpdatedBy = expected.UpdatedBy
-			assert.Equal(t, tc.client, expected, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.client, expected))
+			tc.user.ID = expected.ID
+			tc.user.CreatedAt = expected.CreatedAt
+			tc.user.UpdatedAt = expected.UpdatedAt
+			tc.user.Credentials.Secret = expected.Credentials.Secret
+			tc.user.UpdatedBy = expected.UpdatedBy
+			assert.Equal(t, tc.user, expected, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.user, expected))
 			ok := repoCall1.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
 		}
@@ -349,9 +349,9 @@ func TestViewClient(t *testing.T) {
 		rClient, err := svc.ViewClient(context.Background(), authn.Session{UserID: tc.reqClientID}, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		tc.response.Credentials.Secret = ""
-		assert.Equal(t, tc.response, rClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rClient))
+		assert.Equal(t, tc.response, rUser, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rUser))
 		if tc.err == nil {
-			ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.clientID)
+			ok := repoCall1.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.userID)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
 		}
 		repoCall1.Unset()
@@ -374,7 +374,7 @@ func TestListClients(t *testing.T) {
 		err                 error
 	}{
 		{
-			desc: "list clients as admin successfully",
+			desc: "list users as admin successfully",
 			page: mgclients.Page{
 				Total: 1,
 			},
@@ -382,19 +382,19 @@ func TestListClients(t *testing.T) {
 				Page: mgclients.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Users: []users.User{user},
 			},
-			response: mgclients.ClientsPage{
+			response: users.UsersPage{
 				Page: mgclients.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Users: []users.User{user},
 			},
 			token: validToken,
 			err:   nil,
 		},
 		{
-			desc: "list clients as admin with failed to retrieve clients",
+			desc: "list users as admin with failed to retrieve users",
 			page: mgclients.Page{
 				Total: 1,
 			},
@@ -404,7 +404,7 @@ func TestListClients(t *testing.T) {
 			err:                 svcerr.ErrViewEntity,
 		},
 		{
-			desc: "list clients as admin with failed check on super admin",
+			desc: "list users as admin with failed check on super admin",
 			page: mgclients.Page{
 				Total: 1,
 			},
@@ -413,7 +413,7 @@ func TestListClients(t *testing.T) {
 			err:           svcerr.ErrAuthorization,
 		},
 		{
-			desc: "list clients as normal user with failed to retrieve clients",
+			desc: "list users as normal user with failed to retrieve users",
 			page: mgclients.Page{
 				Total: 1,
 			},
@@ -450,30 +450,30 @@ func TestSearchUsers(t *testing.T) {
 		err         error
 	}{
 		{
-			desc:  "search clients with valid token",
+			desc:  "search users with valid token",
 			token: validToken,
-			page:  mgclients.Page{Offset: 0, Name: "clientname", Limit: 100},
-			response: mgclients.ClientsPage{
-				Page:    mgclients.Page{Total: 1, Offset: 0, Limit: 100},
-				Clients: []mgclients.Client{client},
+			page:  mgclients.Page{Offset: 0, Name: "username", Limit: 100},
+			response: users.UsersPage{
+				Page:  mgclients.Page{Total: 1, Offset: 0, Limit: 100},
+				Users: []users.User{user},
 			},
 		},
 		{
-			desc:  "search clients with id",
+			desc:  "search users with id",
 			token: validToken,
-			page:  mgclients.Page{Offset: 0, Id: "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f", Limit: 100},
-			response: mgclients.ClientsPage{
-				Page:    mgclients.Page{Total: 1, Offset: 0, Limit: 100},
-				Clients: []mgclients.Client{client},
+			page:  mgclients.Page{Offset: 0, Id: "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f", Limit: 100}, // another mgclients.Page
+			response: users.UsersPage{
+				Page:  mgclients.Page{Total: 1, Offset: 0, Limit: 100}, // another mgclients.Page
+				Users: []users.User{user},
 			},
 		},
 		{
-			desc:  "search clients with random name",
+			desc:  "search users with random name",
 			token: validToken,
 			page:  mgclients.Page{Offset: 0, Name: "randomname", Limit: 100},
-			response: mgclients.ClientsPage{
-				Page:    mgclients.Page{Total: 0, Offset: 0, Limit: 100},
-				Clients: []mgclients.Client{},
+			response: users.UsersPage{
+				Page:  mgclients.Page{Total: 0, Offset: 0, Limit: 100},
+				Users: []users.User{},
 			},
 		},
 		{
@@ -500,10 +500,10 @@ func TestSearchUsers(t *testing.T) {
 func TestUpdateClient(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	client1 := client
-	client2 := client
-	client1.Name = "Updated client"
-	client2.Metadata = mgclients.Metadata{"role": "test"}
+	user1 := user
+	user2 := user
+	user1.Name = "Updated user"
+	user2.Metadata = users.Metadata{"role": "test"}
 	adminID := testsutil.GenerateUUID(t)
 
 	cases := []struct {
@@ -594,7 +594,7 @@ func TestUpdateClient(t *testing.T) {
 func TestUpdateClientTags(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	client.Tags = []string{"updated"}
+	user.Tags = []string{"updated"}
 	adminID := testsutil.GenerateUUID(t)
 
 	cases := []struct {
@@ -649,7 +649,7 @@ func TestUpdateClientTags(t *testing.T) {
 		repoCall1 := cRepo.On("UpdateTags", context.Background(), mock.Anything).Return(tc.updateClientTagsResponse, tc.updateClientTagsErr)
 		updatedClient, err := svc.UpdateClientTags(context.Background(), tc.session, tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.updateClientTagsResponse, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.updateClientTagsResponse, updatedClient))
+		assert.Equal(t, tc.updateUserTagsResponse, updatedUser, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.updateUserTagsResponse, updatedUser))
 		if tc.err == nil {
 			ok := repoCall1.Parent.AssertCalled(t, "UpdateTags", context.Background(), mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("UpdateTags was not called on %s", tc.desc))
@@ -744,7 +744,7 @@ func TestUpdateClientRole(t *testing.T) {
 
 		updatedClient, err := svc.UpdateClientRole(context.Background(), tc.session, tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.updateRoleResponse, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.updateRoleResponse, updatedClient))
+		assert.Equal(t, tc.updateRoleResponse, updatedUser, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.updateRoleResponse, updatedUser))
 		if tc.err == nil {
 			ok := repoCall1.Parent.AssertCalled(t, "UpdateRole", context.Background(), mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("UpdateRole was not called on %s", tc.desc))
@@ -760,10 +760,10 @@ func TestUpdateClientSecret(t *testing.T) {
 	svc, authClient, cRepo, _, _ := newService()
 
 	newSecret := "newstrongSecret"
-	rClient := client
-	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
-	responseClient := client
-	responseClient.Credentials.Secret = newSecret
+	rUser := user
+	rUser.Credentials.Secret, _ = phasher.Hash(user.Credentials.Secret)
+	responseUser := user
+	responseUser.Credentials.Secret = newSecret
 
 	cases := []struct {
 		desc                       string
@@ -782,20 +782,20 @@ func TestUpdateClientSecret(t *testing.T) {
 		err                        error
 	}{
 		{
-			desc:                       "update client secret with valid token",
-			oldSecret:                  client.Credentials.Secret,
+			desc:                       "update user secret with valid token",
+			oldSecret:                  user.Credentials.Secret,
 			newSecret:                  newSecret,
 			session:                    authn.Session{UserID: client.ID},
 			retrieveByIdentityResponse: rClient,
 			retrieveByIDResponse:       client,
 			updateSecretResponse:       responseClient,
 			issueResponse:              &magistrala.Token{AccessToken: validToken},
-			response:                   responseClient,
+			response:                   responseUser,
 			err:                        nil,
 		},
 		{
-			desc:                 "update client secret with failed to retrieve client by ID",
-			oldSecret:            client.Credentials.Secret,
+			desc:                 "update user secret with failed to retrieve user by ID",
+			oldSecret:            user.Credentials.Secret,
 			newSecret:            newSecret,
 			session:              authn.Session{UserID: client.ID},
 			retrieveByIDResponse: mgclients.Client{},
@@ -803,8 +803,8 @@ func TestUpdateClientSecret(t *testing.T) {
 			err:                  repoerr.ErrNotFound,
 		},
 		{
-			desc:                       "update client secret with failed to retrieve client by identity",
-			oldSecret:                  client.Credentials.Secret,
+			desc:                       "update user secret with failed to retrieve user by identity",
+			oldSecret:                  user.Credentials.Secret,
 			newSecret:                  newSecret,
 			session:                    authn.Session{UserID: client.ID},
 			retrieveByIDResponse:       client,
@@ -813,7 +813,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			err:                        repoerr.ErrNotFound,
 		},
 		{
-			desc:                       "update client secret with invalod old secret",
+			desc:                       "update user secret with invalid old secret",
 			oldSecret:                  "invalid",
 			newSecret:                  newSecret,
 			session:                    authn.Session{UserID: client.ID},
@@ -822,8 +822,8 @@ func TestUpdateClientSecret(t *testing.T) {
 			err:                        svcerr.ErrLogin,
 		},
 		{
-			desc:                       "update client secret with too long new secret",
-			oldSecret:                  client.Credentials.Secret,
+			desc:                       "update user secret with too long new secret",
+			oldSecret:                  user.Credentials.Secret,
 			newSecret:                  strings.Repeat("a", 73),
 			session:                    authn.Session{UserID: client.ID},
 			retrieveByIDResponse:       client,
@@ -831,8 +831,8 @@ func TestUpdateClientSecret(t *testing.T) {
 			err:                        repoerr.ErrMalformedEntity,
 		},
 		{
-			desc:                       "update client secret with failed to update secret",
-			oldSecret:                  client.Credentials.Secret,
+			desc:                       "update user secret with failed to update secret",
+			oldSecret:                  user.Credentials.Secret,
 			newSecret:                  newSecret,
 			session:                    authn.Session{UserID: client.ID},
 			retrieveByIDResponse:       client,
@@ -850,7 +850,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		authCall := authClient.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
 		updatedClient, err := svc.UpdateClientSecret(context.Background(), tc.session, tc.oldSecret, tc.newSecret)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.response, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, updatedClient))
+		assert.Equal(t, tc.response, updatedUser, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, updatedUser))
 		if tc.err == nil {
 			ok := repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.response.ID)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
@@ -950,10 +950,10 @@ func TestUpdateClientIdentity(t *testing.T) {
 func TestEnableClient(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
-	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
-	endisabledClient1 := disabledClient1
-	endisabledClient1.Status = mgclients.EnabledStatus
+	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "uaer1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
+	disabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "uaer3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
+	endisabledUser1 := disabledUser1
+	endisabledUser1.Status = mgclients.EnabledStatus
 
 	cases := []struct {
 		desc                 string
@@ -1031,10 +1031,10 @@ func TestEnableClient(t *testing.T) {
 func TestDisableClient(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
-	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
-	disenabledClient1 := enabledClient1
-	disenabledClient1.Status = mgclients.DisabledStatus
+	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
+	disabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
+	disenabledUser1 := enabledUser1
+	disenabledUser1.Status = mgclients.DisabledStatus
 
 	cases := []struct {
 		desc                 string
@@ -1111,10 +1111,10 @@ func TestDisableClient(t *testing.T) {
 func TestDeleteClient(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
-	deletedClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DeletedStatus}
-	disenabledClient1 := enabledClient1
-	disenabledClient1.Status = mgclients.DeletedStatus
+	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
+	deletedUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user3@example.com", Secret: "password"}, Status: mgclients.DeletedStatus}
+	disenabledUser1 := enabledUser1
+	disenabledUser1.Status = mgclients.DeletedStatus
 
 	cases := []struct {
 		desc                 string
@@ -1189,9 +1189,9 @@ func TestDeleteClient(t *testing.T) {
 func TestListMembers(t *testing.T) {
 	svc, _, cRepo, policies, _ := newService()
 
-	validPolicy := fmt.Sprintf("%s_%s", validID, client.ID)
-	permissionsClient := basicClient
-	permissionsClient.Permissions = []string{"read"}
+	validPolicy := fmt.Sprintf("%s_%s", validID, user.ID)
+	permissionsUser := basicUser
+	permissionsUser.Permissions = []string{"read"}
 
 	cases := []struct {
 		desc                    string
@@ -1251,15 +1251,15 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Clients: []mgclients.Client{client},
+				Users: []users.User{user},
 			},
-			response: mgclients.MembersPage{
+			response: users.MembersPage{
 				Page: mgclients.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  100,
 				},
-				Members: []mgclients.Client{basicClient},
+				Members: []users.User{basicUser},
 			},
 			err: nil,
 		},
@@ -1282,7 +1282,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Clients: []mgclients.Client{basicClient},
+				Users: []users.User{basicUser},
 			},
 			listPermissionsResponse: []string{"read"},
 			response: mgclients.MembersPage{
@@ -1291,7 +1291,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Members: []mgclients.Client{permissionsClient},
+				Members: []users.User{permissionsUser},
 			},
 			err: nil,
 		},
@@ -1314,7 +1314,7 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Clients: []mgclients.Client{client},
+				Users: []users.User{user},
 			},
 			listPermissionsResponse: []string{},
 			response:                mgclients.MembersPage{},
@@ -1396,15 +1396,15 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Clients: []mgclients.Client{basicClient},
+				Users: []users.User{basicUser},
 			},
-			response: mgclients.MembersPage{
+			response: users.MembersPage{
 				Page: mgclients.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  100,
 				},
-				Members: []mgclients.Client{basicClient},
+				Members: []users.User{basicUser},
 			},
 			err: nil,
 		},
@@ -1450,15 +1450,15 @@ func TestListMembers(t *testing.T) {
 					Offset: 0,
 					Limit:  100,
 				},
-				Clients: []mgclients.Client{client},
+				Users: []users.User{user},
 			},
-			response: mgclients.MembersPage{
+			response: users.MembersPage{
 				Page: mgclients.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  100,
 				},
-				Members: []mgclients.Client{basicClient},
+				Members: []users.User{basicUser},
 			},
 			err: nil,
 		},
@@ -1480,63 +1480,63 @@ func TestListMembers(t *testing.T) {
 func TestIssueToken(t *testing.T) {
 	svc, auth, cRepo, _, _ := newService()
 
-	rClient := client
-	rClient2 := client
-	rClient3 := client
-	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
-	rClient2.Credentials.Secret = "wrongsecret"
-	rClient3.Credentials.Secret, _ = phasher.Hash("wrongsecret")
+	rUser := user
+	rUser2 := user
+	rUser3 := user
+	rUser.Credentials.Secret, _ = phasher.Hash(user.Credentials.Secret)
+	rUser2.Credentials.Secret = "wrongsecret"
+	rUser3.Credentials.Secret, _ = phasher.Hash("wrongsecret")
 
 	cases := []struct {
 		desc                       string
 		domainID                   string
-		client                     mgclients.Client
-		retrieveByIdentityResponse mgclients.Client
+		user                       users.User
+		retrieveByIdentityResponse users.User
 		issueResponse              *magistrala.Token
 		retrieveByIdentityErr      error
 		issueErr                   error
 		err                        error
 	}{
 		{
-			desc:                       "issue token for an existing client",
-			client:                     client,
-			retrieveByIdentityResponse: rClient,
+			desc:                       "issue token for an existing user",
+			user:                       user,
+			retrieveByIdentityResponse: rUser,
 			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                        nil,
 		},
 		{
 			desc:                       "issue token for non-empty domain id",
 			domainID:                   validID,
-			client:                     client,
-			retrieveByIdentityResponse: rClient,
+			user:                       user,
+			retrieveByIdentityResponse: rUser,
 			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                        nil,
 		},
 		{
-			desc:                       "issue token for a non-existing client",
-			client:                     client,
-			retrieveByIdentityResponse: mgclients.Client{},
+			desc:                       "issue token for a non-existing user",
+			user:                       user,
+			retrieveByIdentityResponse: users.User{},
 			retrieveByIdentityErr:      repoerr.ErrNotFound,
 			err:                        repoerr.ErrNotFound,
 		},
 		{
-			desc:                       "issue token for a client with wrong secret",
-			client:                     client,
-			retrieveByIdentityResponse: rClient3,
+			desc:                       "issue token for a user with wrong secret",
+			user:                       user,
+			retrieveByIdentityResponse: rUser3,
 			err:                        svcerr.ErrLogin,
 		},
 		{
 			desc:                       "issue token with empty domain id",
-			client:                     client,
-			retrieveByIdentityResponse: rClient,
+			user:                       user,
+			retrieveByIdentityResponse: rUser,
 			issueResponse:              &magistrala.Token{},
 			issueErr:                   svcerr.ErrAuthentication,
 			err:                        svcerr.ErrAuthentication,
 		},
 		{
 			desc:                       "issue token with grpc error",
-			client:                     client,
-			retrieveByIdentityResponse: rClient,
+			user:                       user,
+			retrieveByIdentityResponse: rUser,
 			issueResponse:              &magistrala.Token{},
 			issueErr:                   svcerr.ErrAuthentication,
 			err:                        svcerr.ErrAuthentication,
@@ -1551,7 +1551,7 @@ func TestIssueToken(t *testing.T) {
 		if err == nil {
 			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
 			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
-			ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
+			ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.user.Credentials.Identity)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByIdentity was not called on %s", tc.desc))
 			ok = authCall.Parent.AssertCalled(t, "Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, DomainId: &tc.domainID, Type: uint32(mgauth.AccessKey)})
 			assert.True(t, ok, fmt.Sprintf("Issue was not called on %s", tc.desc))
@@ -1564,8 +1564,8 @@ func TestIssueToken(t *testing.T) {
 func TestRefreshToken(t *testing.T) {
 	svc, authsvc, crepo, _, _ := newService()
 
-	rClient := client
-	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
+	rUser := user
+	rUser.Credentials.Secret, _ = phasher.Hash(user.Credentials.Secret)
 
 	cases := []struct {
 		desc        string
@@ -1650,27 +1650,27 @@ func TestGenerateResetToken(t *testing.T) {
 		desc                       string
 		email                      string
 		host                       string
-		retrieveByIdentityResponse mgclients.Client
+		retrieveByIdentityResponse users.User
 		issueResponse              *magistrala.Token
 		retrieveByIdentityErr      error
 		issueErr                   error
 		err                        error
 	}{
 		{
-			desc:                       "generate reset token for existing client",
+			desc:                       "generate reset token for existing user",
 			email:                      "existingemail@example.com",
 			host:                       "examplehost",
-			retrieveByIdentityResponse: client,
+			retrieveByIdentityResponse: user,
 			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                        nil,
 		},
 		{
-			desc:  "generate reset token for client with non-existing client",
+			desc:  "generate reset token for user with non-existing user",
 			email: "example@example.com",
 			host:  "examplehost",
-			retrieveByIdentityResponse: mgclients.Client{
+			retrieveByIdentityResponse: users.User{
 				ID: testsutil.GenerateUUID(t),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: "",
 				},
 			},
@@ -1681,7 +1681,7 @@ func TestGenerateResetToken(t *testing.T) {
 			desc:                       "generate reset token with failed to issue token",
 			email:                      "existingemail@example.com",
 			host:                       "examplehost",
-			retrieveByIdentityResponse: client,
+			retrieveByIdentityResponse: user,
 			issueResponse:              &magistrala.Token{},
 			issueErr:                   svcerr.ErrAuthorization,
 			err:                        svcerr.ErrAuthorization,
@@ -1704,9 +1704,9 @@ func TestGenerateResetToken(t *testing.T) {
 func TestResetSecret(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	client := mgclients.Client{
+	user := users.User{
 		ID: "clientID",
-		Credentials: mgclients.Credentials{
+		Credentials: users.Credentials{
 			Identity: "test@example.com",
 			Secret:   "Strongsecret",
 		},
@@ -1729,7 +1729,7 @@ func TestResetSecret(t *testing.T) {
 			retrieveByIDResponse: client,
 			updateSecretResponse: mgclients.Client{
 				ID: "clientID",
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: "test@example.com",
 					Secret:   "newStrongSecret",
 				},
@@ -1750,7 +1750,7 @@ func TestResetSecret(t *testing.T) {
 			newSecret: "newStrongSecret",
 			retrieveByIDResponse: mgclients.Client{
 				ID: "clientID",
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: "",
 				},
 			},
@@ -1791,9 +1791,9 @@ func TestResetSecret(t *testing.T) {
 func TestViewProfile(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	client := mgclients.Client{
+	client := users.User{
 		ID: "clientID",
-		Credentials: mgclients.Credentials{
+		Credentials: users.Credentials{
 			Identity: "existingIdentity",
 			Secret:   "Strongsecret",
 		},
@@ -1837,8 +1837,8 @@ func TestOAuthCallback(t *testing.T) {
 
 	cases := []struct {
 		desc                       string
-		client                     mgclients.Client
-		retrieveByIdentityResponse mgclients.Client
+		user                       users.User
+		retrieveByIdentityResponse users.User
 		retrieveByIdentityErr      error
 		saveResponse               mgclients.Client
 		saveErr                    error
@@ -1848,12 +1848,12 @@ func TestOAuthCallback(t *testing.T) {
 	}{
 		{
 			desc: "oauth signin callback with successfully",
-			client: mgclients.Client{
-				Credentials: mgclients.Credentials{
+			user: users.User{
+				Credentials: users.Credentials{
 					Identity: "test@example.com",
 				},
 			},
-			retrieveByIdentityResponse: mgclients.Client{
+			retrieveByIdentityResponse: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Role: mgclients.UserRole,
 			},
@@ -1861,8 +1861,8 @@ func TestOAuthCallback(t *testing.T) {
 		},
 		{
 			desc: "oauth signup callback with successfully",
-			client: mgclients.Client{
-				Credentials: mgclients.Credentials{
+			user: users.User{
+				Credentials: users.Credentials{
 					Identity: "test@example.com",
 				},
 			},
@@ -1875,8 +1875,8 @@ func TestOAuthCallback(t *testing.T) {
 		},
 		{
 			desc: "oauth signup callback with unknown error",
-			client: mgclients.Client{
-				Credentials: mgclients.Credentials{
+			user: users.User{
+				Credentials: users.Credentials{
 					Identity: "test@example.com",
 				},
 			},
@@ -1885,8 +1885,8 @@ func TestOAuthCallback(t *testing.T) {
 		},
 		{
 			desc: "oauth signup callback with failed to register user",
-			client: mgclients.Client{
-				Credentials: mgclients.Credentials{
+			user: users.User{
+				Credentials: users.Credentials{
 					Identity: "test@example.com",
 				},
 			},
@@ -1896,12 +1896,12 @@ func TestOAuthCallback(t *testing.T) {
 		},
 		{
 			desc: "oauth signin callback with user not in the platform",
-			client: mgclients.Client{
-				Credentials: mgclients.Credentials{
+			user: users.User{
+				Credentials: users.Credentials{
 					Identity: "test@example.com",
 				},
 			},
-			retrieveByIdentityResponse: mgclients.Client{
+			retrieveByIdentityResponse: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Role: mgclients.UserRole,
 			},
@@ -1914,7 +1914,7 @@ func TestOAuthCallback(t *testing.T) {
 		policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
 		_, err := svc.OAuthCallback(context.Background(), tc.client)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
+		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.user.Credentials.Identity)
 		repoCall.Unset()
 		repoCall1.Unset()
 		policyCall.Unset()

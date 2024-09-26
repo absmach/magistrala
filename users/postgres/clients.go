@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/pkg/clients"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -23,40 +22,9 @@ import (
 	"github.com/jackc/pgtype"
 )
 
-// var _ mgclients.Repository = (*clientRepo)(nil)
-
-// type clientRepo struct {
-// 	pgclients.Repository
-// }
-
 type userRepo struct {
 	DB postgres.Database
 }
-
-// Repository defines the required dependencies for Client repository.
-//
-//go:generate mockery --name Repository --output=../mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
-// type Repository interface {
-// 	mgclients.Repository
-
-// 	// Save persists the client account. A non-nil error is returned to indicate
-// 	// operation failure.
-// 	Save(ctx context.Context, client mgclients.Client) (mgclients.Client, error)
-
-// 	RetrieveByID(ctx context.Context, id string) (mgclients.Client, error)
-
-// 	UpdateRole(ctx context.Context, client mgclients.Client) (mgclients.Client, error)
-
-// 	CheckSuperAdmin(ctx context.Context, adminID string) error
-// }
-
-// NewRepository instantiates a PostgreSQL
-// implementation of Clients repository.
-// func NewRepository(db postgres.Database) Repository {
-// 	return &clientRepo{
-// 		Repository: pgclients.Repository{DB: db},
-// 	}
-// }
 
 func NewRepository(db postgres.Database) users.Repository {
 	return &userRepo{DB: db}
@@ -141,7 +109,7 @@ func (repo *userRepo) RetrieveByID(ctx context.Context, id string) (users.User, 
 	return users.User{}, repoerr.ErrNotFound
 }
 
-func (repo *userRepo) RetrieveAll(ctx context.Context, pm clients.Page) (users.UsersPage, error) {
+func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
 	query, err := pgclients.PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -185,11 +153,12 @@ func (repo *userRepo) RetrieveAll(ctx context.Context, pm clients.Page) (users.U
 	}
 
 	page := users.UsersPage{
-		Page: clients.Page{
+		Page: mgclients.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
 		},
+		Users: usersList,
 	}
 
 	return page, nil
@@ -247,7 +216,7 @@ func (repo *userRepo) Update(ctx context.Context, user users.User) (users.User, 
 	q := fmt.Sprintf(`UPDATE clients SET %s updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, secret,  metadata, status, created_at, updated_at, updated_by, last_name, first_name, user_name`, upq)
-	user.Status = clients.EnabledStatus
+	user.Status = mgclients.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -279,7 +248,7 @@ func (repo *userRepo) UpdateIdentity(ctx context.Context, user users.User) (user
 	q := `UPDATE clients SET identity = :identity, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
-	user.Status = clients.EnabledStatus
+	user.Status = mgclients.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -287,7 +256,7 @@ func (repo *userRepo) UpdateSecret(ctx context.Context, user users.User) (users.
 	q := `UPDATE clients SET secret = :secret, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
-	user.Status = clients.EnabledStatus
+	user.Status = mgclients.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -303,7 +272,7 @@ func (repo *userRepo) UpdateTags(ctx context.Context, user users.User) (users.Us
 	q := `UPDATE clients SET tags = :tags, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
-	user.Status = clients.EnabledStatus
+	user.Status = mgclients.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -321,7 +290,7 @@ func (repo *userRepo) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (repo *userRepo) SearchUsers(ctx context.Context, pm clients.Page) (users.UsersPage, error) {
+func (repo *userRepo) SearchUsers(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
 	query, err := pgclients.PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -366,7 +335,7 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm clients.Page) (users.U
 
 	page := users.UsersPage{
 		Users: items,
-		Page: clients.Page{
+		Page: mgclients.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
@@ -376,10 +345,10 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm clients.Page) (users.U
 	return page, nil
 }
 
-func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (users.UsersPage, error) {
+func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
 	if (len(pm.IDs) == 0) && (pm.Domain == "") {
 		return users.UsersPage{
-			Page: clients.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
+			Page: mgclients.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
 		}, nil
 	}
 	query, err := pgclients.PageQuery(pm)
@@ -424,7 +393,7 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (us
 
 	page := users.UsersPage{
 		Users: items,
-		Page: clients.Page{
+		Page: mgclients.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
@@ -440,7 +409,7 @@ func (repo *userRepo) RetrieveByIdentity(ctx context.Context, identity string) (
 
 	dbc := DBUser{
 		Identity: identity,
-		Status:   clients.EnabledStatus,
+		Status:   mgclients.EnabledStatus,
 	}
 
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
@@ -473,8 +442,8 @@ type DBUser struct {
 	UpdatedAt sql.NullTime     `db:"updated_at,omitempty"`
 	UpdatedBy *string          `db:"updated_by,omitempty"`
 	Groups    []groups.Group   `db:"groups,omitempty"`
-	Status    clients.Status   `db:"status,omitempty"`
-	Role      *clients.Role    `db:"role,omitempty"`
+	Status    mgclients.Status `db:"status,omitempty"`
+	Role      *mgclients.Role  `db:"role,omitempty"`
 	UserName  string           `db:"user_name, omitempty"`
 	FirstName string           `db:"first_name, omitempty"`
 	LastName  string           `db:"last_name, omitempty"`
@@ -563,20 +532,20 @@ func ToUser(dbu DBUser) (users.User, error) {
 }
 
 type DBUsersPage struct {
-	Total    uint64         `db:"total"`
-	Limit    uint64         `db:"limit"`
-	Offset   uint64         `db:"offset"`
-	Name     string         `db:"name"`
-	Id       string         `db:"id"`
-	Identity string         `db:"identity"`
-	Metadata []byte         `db:"metadata"`
-	Tag      string         `db:"tag"`
-	GroupID  string         `db:"group_id"`
-	Role     clients.Role   `db:"role"`
-	Status   clients.Status `db:"status"`
+	Total    uint64           `db:"total"`
+	Limit    uint64           `db:"limit"`
+	Offset   uint64           `db:"offset"`
+	Name     string           `db:"name"`
+	Id       string           `db:"id"`
+	Identity string           `db:"identity"`
+	Metadata []byte           `db:"metadata"`
+	Tag      string           `db:"tag"`
+	GroupID  string           `db:"group_id"`
+	Role     mgclients.Role   `db:"role"`
+	Status   mgclients.Status `db:"status"`
 }
 
-func ToDBUsersPage(pm clients.Page) (DBUsersPage, error) {
+func ToDBUsersPage(pm mgclients.Page) (DBUsersPage, error) {
 	_, data, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
 		return DBUsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -596,7 +565,7 @@ func ToDBUsersPage(pm clients.Page) (DBUsersPage, error) {
 	}, nil
 }
 
-func applyOrdering(emq string, pm clients.Page) string {
+func applyOrdering(emq string, pm mgclients.Page) string {
 	switch pm.Order {
 	case "name", "identity", "created_at", "updated_at":
 		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)

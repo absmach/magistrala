@@ -61,7 +61,7 @@ func (h *handler) handle(ctx context.Context) {
 	pm := mgclients.Page{Limit: defLimit, Offset: 0, Status: mgclients.DeletedStatus}
 
 	for {
-		dbUsers, err := h.clients.RetrieveAll(ctx, pm)
+		dbUsers, err := h.users.RetrieveAll(ctx, pm)
 		if err != nil {
 			h.logger.Error("failed to retrieve users", slog.Any("error", err))
 			break
@@ -70,7 +70,7 @@ func (h *handler) handle(ctx context.Context) {
 			break
 		}
 
-		for _, u := range dbUsers.Clients {
+		for _, u := range dbUsers.Users {
 			if time.Since(u.UpdatedAt) < h.deleteAfter {
 				continue
 			}

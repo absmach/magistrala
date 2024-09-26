@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/users"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,15 +19,15 @@ const (
 	valid   = "valid"
 	invalid = "invalid"
 	secret  = "QJg58*aMan7j"
-	name    = "client"
+	name    = "user"
 )
 
 var validID = testsutil.GenerateUUID(&testing.T{})
 
-func TestCreateClientReqValidate(t *testing.T) {
+func TestCreateUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  createClientReq
+		req  createUserReq
 		err  error
 	}{
 		{
@@ -35,7 +36,7 @@ func TestCreateClientReqValidate(t *testing.T) {
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
-					Credentials: mgclients.Credentials{
+					Credentials: users.Credentials{
 						Identity: "example@example.com",
 						Secret:   secret,
 					},
@@ -59,7 +60,7 @@ func TestCreateClientReqValidate(t *testing.T) {
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
-					Credentials: mgclients.Credentials{
+					Credentials: users.Credentials{
 						Secret: valid,
 					},
 				},
@@ -72,7 +73,7 @@ func TestCreateClientReqValidate(t *testing.T) {
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
-					Credentials: mgclients.Credentials{
+					Credentials: users.Credentials{
 						Identity: "example@example.com",
 					},
 				},
@@ -85,7 +86,7 @@ func TestCreateClientReqValidate(t *testing.T) {
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
-					Credentials: mgclients.Credentials{
+					Credentials: users.Credentials{
 						Identity: "example@example.com",
 						Secret:   "invalid",
 					},
@@ -100,10 +101,10 @@ func TestCreateClientReqValidate(t *testing.T) {
 	}
 }
 
-func TestViewClientReqValidate(t *testing.T) {
+func TestViewUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  viewClientReq
+		req  viewUserReq
 		err  error
 	}{
 		{
@@ -169,10 +170,10 @@ func TestListClientsReqValidate(t *testing.T) {
 	}
 }
 
-func TestSearchClientsReqValidate(t *testing.T) {
+func TestSearchUsersReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  searchClientsReq
+		req  searchUsersReq
 		err  error
 	}{
 		{
@@ -231,10 +232,10 @@ func TestListMembersByObjectReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientReqValidate(t *testing.T) {
+func TestUpdateUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientReq
+		req  updateUserReq
 		err  error
 	}{
 		{
@@ -260,10 +261,10 @@ func TestUpdateClientReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientTagsReqValidate(t *testing.T) {
+func TestUpdateUserTagsReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientTagsReq
+		req  updateUserTagsReq
 		err  error
 	}{
 		{
@@ -289,10 +290,10 @@ func TestUpdateClientTagsReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientRoleReqValidate(t *testing.T) {
+func TestUpdateUserRoleReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientRoleReq
+		req  updateUserRoleReq
 		err  error
 	}{
 		{
@@ -318,10 +319,10 @@ func TestUpdateClientRoleReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientIdentityReqValidate(t *testing.T) {
+func TestUpdateUserIdentityReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientIdentityReq
+		req  updateUserIdentityReq
 		err  error
 	}{
 		{
@@ -347,10 +348,10 @@ func TestUpdateClientIdentityReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientSecretReqValidate(t *testing.T) {
+func TestUpdateUserSecretReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientSecretReq
+		req  updateUserSecretReq
 		err  error
 	}{
 		{
@@ -392,10 +393,10 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 	}
 }
 
-func TestChangeClientStatusReqValidate(t *testing.T) {
+func TestChangeUserStatusReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  changeClientStatusReq
+		req  changeUserStatusReq
 		err  error
 	}{
 		{
@@ -419,15 +420,15 @@ func TestChangeClientStatusReqValidate(t *testing.T) {
 	}
 }
 
-func TestLoginClientReqValidate(t *testing.T) {
+func TestLoginUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  loginClientReq
+		req  loginUserReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: loginClientReq{
+			req: loginUserReq{
 				Identity: "eaxmple,example.com",
 				Secret:   secret,
 			},
@@ -435,7 +436,7 @@ func TestLoginClientReqValidate(t *testing.T) {
 		},
 		{
 			desc: "empty identity",
-			req: loginClientReq{
+			req: loginUserReq{
 				Identity: "",
 				Secret:   secret,
 			},
@@ -443,7 +444,7 @@ func TestLoginClientReqValidate(t *testing.T) {
 		},
 		{
 			desc: "empty secret",
-			req: loginClientReq{
+			req: loginUserReq{
 				Identity: "eaxmple,example.com",
 				Secret:   "",
 			},

@@ -14,6 +14,7 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/users"
 	cpostgres "github.com/absmach/magistrala/users/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,7 @@ var (
 	namesgen    = namegenerator.NewGenerator()
 )
 
-func TestClientsSave(t *testing.T) {
+func TestUsersSave(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
@@ -41,135 +42,135 @@ func TestClientsSave(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		client mgclients.Client
+		client users.User
 		err    error
 	}{
 		{
 			desc: "add new client successfully",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   uid,
 				Name: name,
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
 			err: nil,
 		},
 		{
 			desc: "add client with duplicate client identity",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
 			err: repoerr.ErrConflict,
 		},
 		{
 			desc: "add client with duplicate client name",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: name,
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
 			err: repoerr.ErrConflict,
 		},
 		{
 			desc: "add client with invalid client id",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   invalidName,
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "add client with invalid client name",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: invalidName,
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "add client with invalid client identity",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: invalidName,
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 			},
 			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "add client with a missing client name",
-			client: mgclients.Client{
+			client: users.User{
 				ID: testsutil.GenerateUUID(t),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 			},
 			err: nil,
 		},
 		{
 			desc: "add client with a missing client identity",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Secret: password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 			},
 			err: nil,
 		},
 		{
 			desc: "add client with a missing client secret",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 			},
 			err: nil,
 		},
 		{
 			desc: "add a client with invalid metadata",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
@@ -200,19 +201,19 @@ func TestIsPlatformAdmin(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		client mgclients.Client
+		client users.User
 		err    error
 	}{
 		{
 			desc: "authorize check for super user",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 				Role:     mgclients.AdminRole,
 			},
@@ -220,14 +221,14 @@ func TestIsPlatformAdmin(t *testing.T) {
 		},
 		{
 			desc: "unauthorize user",
-			client: mgclients.Client{
+			client: users.User{
 				ID:   testsutil.GenerateUUID(t),
 				Name: namesgen.Generate(),
-				Credentials: mgclients.Credentials{
+				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: mgclients.Metadata{},
+				Metadata: users.Metadata{},
 				Status:   mgclients.EnabledStatus,
 				Role:     mgclients.UserRole,
 			},
@@ -250,14 +251,14 @@ func TestRetrieveByID(t *testing.T) {
 	})
 	repo := cpostgres.NewRepository(database)
 
-	client := mgclients.Client{
+	client := users.User{
 		ID:   testsutil.GenerateUUID(t),
 		Name: namesgen.Generate(),
-		Credentials: mgclients.Credentials{
+		Credentials: users.Credentials{
 			Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 			Secret:   password,
 		},
-		Metadata: mgclients.Metadata{},
+		Metadata: users.Metadata{},
 		Status:   mgclients.EnabledStatus,
 	}
 
@@ -301,16 +302,16 @@ func TestRetrieveAll(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	num := 200
-	var items, enabledClients []mgclients.Client
+	var items, enabledClients []users.User
 	for i := 0; i < num; i++ {
-		client := mgclients.Client{
+		client := users.User{
 			ID:   testsutil.GenerateUUID(t),
 			Name: namesgen.Generate(),
-			Credentials: mgclients.Credentials{
+			Credentials: users.Credentials{
 				Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 				Secret:   "",
 			},
-			Metadata: mgclients.Metadata{},
+			Metadata: users.Metadata{},
 			Status:   mgclients.EnabledStatus,
 			Tags:     []string{"tag1"},
 		}
@@ -332,7 +333,7 @@ func TestRetrieveAll(t *testing.T) {
 	cases := []struct {
 		desc     string
 		pageMeta mgclients.Page
-		page     mgclients.ClientsPage
+		page     users.UsersPage
 		err      error
 	}{
 		{
@@ -343,13 +344,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  200,
 					Offset: 0,
 					Limit:  50,
 				},
-				Clients: items[0:50],
+				Users: items[0:50],
 			},
 			err: nil,
 		},
@@ -361,13 +362,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  200,
 					Offset: 50,
 					Limit:  200,
 				},
-				Clients: items[50:200],
+				Users: items[50:200],
 			},
 			err: nil,
 		},
@@ -379,13 +380,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  uint64(num),
 					Offset: 0,
 					Limit:  50,
 				},
-				Clients: items[:50],
+				Users: items[:50],
 			},
 		},
 		{
@@ -396,13 +397,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  200,
 					Offset: 1000,
 					Limit:  200,
 				},
-				Clients: []mgclients.Client{},
+				Users: []users.User{},
 			},
 			err: nil,
 		},
@@ -414,26 +415,26 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  200,
 					Offset: 0,
 					Limit:  1000,
 				},
-				Clients: items,
+				Users: items,
 			},
 			err: nil,
 		},
 		{
 			desc:     "retrieve with empty page",
 			pageMeta: mgclients.Page{},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  196, // No of enabled clients.
 					Offset: 0,
 					Limit:  0,
 				},
-				Clients: []mgclients.Client{},
+				Users: []users.User{},
 			},
 			err: nil,
 		},
@@ -446,13 +447,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  3,
 				},
-				Clients: []mgclients.Client{items[0]},
+				Users: []users.User{items[0]},
 			},
 			err: nil,
 		},
@@ -465,13 +466,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  0,
 					Offset: 0,
 					Limit:  3,
 				},
-				Clients: []mgclients.Client{},
+				Users: []users.User{},
 			},
 			err: nil,
 		},
@@ -484,13 +485,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  3,
 				},
-				Clients: []mgclients.Client{items[0]},
+				Users: []users.User{items[0]},
 			},
 			err: nil,
 		},
@@ -502,13 +503,13 @@ func TestRetrieveAll(t *testing.T) {
 				Limit:  200,
 				Role:   mgclients.AllRole,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  196,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: enabledClients,
+				Users: enabledClients,
 			},
 			err: nil,
 		},
@@ -520,13 +521,13 @@ func TestRetrieveAll(t *testing.T) {
 				Limit:  200,
 				Role:   mgclients.AllRole,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  4,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: []mgclients.Client{items[0], items[50], items[100], items[150]},
+				Users: []users.User{items[0], items[50], items[100], items[150]},
 			},
 		},
 		{
@@ -537,13 +538,13 @@ func TestRetrieveAll(t *testing.T) {
 				Limit:  200,
 				Role:   mgclients.AllRole,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  200,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: items,
+				Users: items,
 			},
 		},
 		{
@@ -555,13 +556,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  200,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: items,
+				Users: items,
 			},
 			err: nil,
 		},
@@ -574,13 +575,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  0,
 					Offset: 0,
 					Limit:  3,
 				},
-				Clients: []mgclients.Client{},
+				Users: []users.User{},
 			},
 		},
 		{
@@ -594,13 +595,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  4,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: []mgclients.Client{items[0], items[50], items[100], items[150]},
+				Users: []users.User{items[0], items[50], items[100], items[150]},
 			},
 			err: nil,
 		},
@@ -615,13 +616,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:   mgclients.AllRole,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  0,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: []mgclients.Client{},
+				Users: []users.User{},
 			},
 			err: nil,
 		},
@@ -633,13 +634,13 @@ func TestRetrieveAll(t *testing.T) {
 				Limit:  200,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  4,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: []mgclients.Client{items[0], items[50], items[100], items[150]},
+				Users: []users.User{items[0], items[50], items[100], items[150]},
 			},
 			err: nil,
 		},
@@ -651,13 +652,13 @@ func TestRetrieveAll(t *testing.T) {
 				Limit:  200,
 				Status: mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  0,
 					Offset: 0,
 					Limit:  200,
 				},
-				Clients: []mgclients.Client{},
+				Users: []users.User{},
 			},
 			err: nil,
 		},
@@ -670,13 +671,13 @@ func TestRetrieveAll(t *testing.T) {
 				Role:     mgclients.AllRole,
 				Status:   mgclients.AllStatus,
 			},
-			page: mgclients.ClientsPage{
+			page: users.UsersPage{
 				Page: mgclients.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  3,
 				},
-				Clients: []mgclients.Client{items[0]},
+				Users: []users.User{items[0]},
 			},
 			err: nil,
 		},
@@ -688,7 +689,7 @@ func TestRetrieveAll(t *testing.T) {
 		assert.Equal(t, tc.page.Offset, page.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.page.Offset, page.Offset))
 		assert.Equal(t, tc.page.Limit, page.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.page.Limit, page.Limit))
 		assert.Equal(t, tc.page.Page, page.Page, fmt.Sprintf("%s: expected  %v, got %v", tc.desc, tc.page, page))
-		assert.ElementsMatch(t, tc.page.Clients, page.Clients, fmt.Sprintf("%s: expected  %v, got %v", tc.desc, tc.page.Clients, page.Clients))
+		assert.ElementsMatch(t, tc.page.Users, page.Users, fmt.Sprintf("%s: expected  %v, got %v", tc.desc, tc.page.Users, page.Users))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -701,14 +702,14 @@ func TestUpdateRole(t *testing.T) {
 
 	repo := cpostgres.NewRepository(database)
 
-	client := mgclients.Client{
+	client := users.User{
 		ID:   testsutil.GenerateUUID(t),
 		Name: namesgen.Generate(),
-		Credentials: mgclients.Credentials{
+		Credentials: users.Credentials{
 			Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 			Secret:   password,
 		},
-		Metadata: mgclients.Metadata{},
+		Metadata: users.Metadata{},
 		Status:   mgclients.EnabledStatus,
 		Role:     mgclients.UserRole,
 	}
@@ -718,7 +719,7 @@ func TestUpdateRole(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		client  mgclients.Client
+		client  users.User
 		newRole mgclients.Role
 		err     error
 	}{
@@ -736,7 +737,7 @@ func TestUpdateRole(t *testing.T) {
 		},
 		{
 			desc:    "update role with invalid client id",
-			client:  mgclients.Client{ID: invalidName},
+			client:  users.User{ID: invalidName},
 			newRole: mgclients.AdminRole,
 			err:     repoerr.ErrNotFound,
 		},

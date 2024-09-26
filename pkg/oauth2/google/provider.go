@@ -14,6 +14,7 @@ import (
 	mfclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
+	uclient "github.com/absmach/magistrala/users"
 	"golang.org/x/oauth2"
 	googleoauth2 "golang.org/x/oauth2/google"
 )
@@ -84,20 +85,20 @@ func (cfg *config) Exchange(ctx context.Context, code string) (oauth2.Token, err
 	return *token, nil
 }
 
-func (cfg *config) UserInfo(accessToken string) (mfclients.Client, error) {
+func (cfg *config) UserInfo(accessToken string) (uclient.User, error) {
 	resp, err := http.Get(userInfoURL + url.QueryEscape(accessToken))
 	if err != nil {
-		return mfclients.Client{}, err
+		return uclient.User{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return mfclients.Client{}, svcerr.ErrAuthentication
+		return uclient.User{}, svcerr.ErrAuthentication
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return mfclients.Client{}, err
+		return uclient.User{}, err
 	}
 
 	var user struct {
@@ -107,17 +108,17 @@ func (cfg *config) UserInfo(accessToken string) (mfclients.Client, error) {
 		Picture string `json:"picture"`
 	}
 	if err := json.Unmarshal(data, &user); err != nil {
-		return mfclients.Client{}, err
+		return uclient.User{}, err
 	}
 
 	if user.ID == "" || user.Name == "" || user.Email == "" {
-		return mfclients.Client{}, svcerr.ErrAuthentication
+		return uclient.User{}, svcerr.ErrAuthentication
 	}
 
-	client := mfclients.Client{
+	client := uclient.User{
 		ID:   user.ID,
 		Name: user.Name,
-		Credentials: mfclients.Credentials{
+		Credentials: uclient.Credentials{
 			Identity: user.Email,
 		},
 		Metadata: map[string]interface{}{

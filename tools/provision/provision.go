@@ -17,6 +17,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/0x6flab/namegenerator"
@@ -97,6 +98,28 @@ func Provision(conf Config) error {
 		return fmt.Errorf("unable to login user: %s", err.Error())
 	}
 
+	// Create new domain
+	dname := fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate())
+	domain := sdk.Domain{
+		Name:       dname,
+		Alias:      strings.ToLower(dname),
+		Permission: "admin",
+	}
+
+	domain, err = s.CreateDomain(domain, token.AccessToken)
+	if err != nil {
+		return fmt.Errorf("unable to create domain: %w", err)
+	}
+	// Login to domain
+	token, err = s.CreateToken(sdk.Login{
+		Identity: user.Credentials.Identity,
+		Secret:   user.Credentials.Secret,
+		DomainID: domain.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to login user: %w", err)
+	}
+
 	var tlsCert tls.Certificate
 	var caCert *x509.Certificate
 
@@ -135,7 +158,7 @@ func Provision(conf Config) error {
 		channels[i] = sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
-	things, err = s.CreateThings(things, token.AccessToken)
+	things, err = s.CreateThings(things, domain.ID, token.AccessToken)
 	if err != nil {
 		return fmt.Errorf("failed to create the things: %s", err.Error())
 	}

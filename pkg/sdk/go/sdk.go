@@ -353,13 +353,13 @@ type SDK interface {
 	// example:
 	//  thing := sdk.Thing{
 	//    Name: "My Thing",
-	//    Metadata: sdk.Metadata{
+	//    Metadata: sdk.Metadata{"domain_1"
 	//      "key": "value",
 	//    },
 	//  }
-	//  thing, _ := sdk.CreateThing(thing, "token")
+	//  thing, _ := sdk.CreateThing(thing, "domainID", "token")
 	//  fmt.Println(thing)
-	CreateThing(thing Thing, token string) (Thing, errors.SDKError)
+	CreateThing(thing Thing, domainID, token string) (Thing, errors.SDKError)
 
 	// CreateThings registers new things and returns their ids.
 	//
@@ -378,9 +378,9 @@ type SDK interface {
 	//      },
 	//    },
 	//  }
-	//  things, _ := sdk.CreateThings(things, "token")
+	//  things, _ := sdk.CreateThings(things, "domainID", "token")
 	//  fmt.Println(things)
-	CreateThings(things []Thing, token string) ([]Thing, errors.SDKError)
+	CreateThings(things []Thing, domainID, token string) ([]Thing, errors.SDKError)
 
 	// Filters things and returns a page result.
 	//
@@ -409,16 +409,16 @@ type SDK interface {
 	// Thing returns thing object by id.
 	//
 	// example:
-	//  thing, _ := sdk.Thing("thingID", "token")
+	//  thing, _ := sdk.Thing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	Thing(id, token string) (Thing, errors.SDKError)
+	Thing(id, domainID, token string) (Thing, errors.SDKError)
 
 	// ThingPermissions returns user permissions on the thing id.
 	//
 	// example:
-	//  thing, _ := sdk.Thing("thingID", "token")
+	//  thing, _ := sdk.Thing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	ThingPermissions(id, token string) (Thing, errors.SDKError)
+	ThingPermissions(id, domainID, token string) (Thing, errors.SDKError)
 
 	// UpdateThing updates existing thing.
 	//
@@ -430,9 +430,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  thing, _ := sdk.UpdateThing(thing, "token")
+	//  thing, _ := sdk.UpdateThing(thing, "domainID", "token")
 	//  fmt.Println(thing)
-	UpdateThing(thing Thing, token string) (Thing, errors.SDKError)
+	UpdateThing(thing Thing, domainID, token string) (Thing, errors.SDKError)
 
 	// UpdateThingTags updates the client's tags.
 	//
@@ -441,30 +441,30 @@ type SDK interface {
 	//    ID:   "thingID",
 	//    Tags: []string{"tag1", "tag2"},
 	//  }
-	//  thing, _ := sdk.UpdateThingTags(thing, "token")
+	//  thing, _ := sdk.UpdateThingTags(thing, "domainID", "token")
 	//  fmt.Println(thing)
-	UpdateThingTags(thing Thing, token string) (Thing, errors.SDKError)
+	UpdateThingTags(thing Thing, domainID, token string) (Thing, errors.SDKError)
 
 	// UpdateThingSecret updates the client's secret
 	//
 	// example:
-	//  thing, err := sdk.UpdateThingSecret("thingID", "newSecret", "token")
+	//  thing, err := sdk.UpdateThingSecret("thingID", "newSecret", "domainID," "token")
 	//  fmt.Println(thing)
-	UpdateThingSecret(id, secret, token string) (Thing, errors.SDKError)
+	UpdateThingSecret(id, secret, domainID, token string) (Thing, errors.SDKError)
 
 	// EnableThing changes client status to enabled.
 	//
 	// example:
-	//  thing, _ := sdk.EnableThing("thingID", "token")
+	//  thing, _ := sdk.EnableThing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	EnableThing(id, token string) (Thing, errors.SDKError)
+	EnableThing(id, domainID, token string) (Thing, errors.SDKError)
 
 	// DisableThing changes client status to disabled - soft delete.
 	//
 	// example:
-	//  thing, _ := sdk.DisableThing("thingID", "token")
+	//  thing, _ := sdk.DisableThing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	DisableThing(id, token string) (Thing, errors.SDKError)
+	DisableThing(id, domainID, token string) (Thing, errors.SDKError)
 
 	// ShareThing shares thing with other users.
 	//
@@ -473,9 +473,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	//  err := sdk.ShareThing("thing_id", req, "token")
+	//  err := sdk.ShareThing("thing_id", req, "domainID","token")
 	//  fmt.Println(err)
-	ShareThing(thingID string, req UsersRelationRequest, token string) errors.SDKError
+	ShareThing(thingID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// UnshareThing unshare a thing with other users.
 	//
@@ -484,9 +484,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	//  err := sdk.UnshareThing("thing_id", req, "token")
+	//  err := sdk.UnshareThing("thing_id", req, "domainID", "token")
 	//  fmt.Println(err)
-	UnshareThing(thingID string, req UsersRelationRequest, token string) errors.SDKError
+	UnshareThing(thingID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// ListThingUsers all users in a thing.
 	//
@@ -503,9 +503,9 @@ type SDK interface {
 	// DeleteThing deletes a thing with the given id.
 	//
 	// example:
-	//  err := sdk.DeleteThing("thingID", "token")
+	//  err := sdk.DeleteThing("thingID", "domainID", "token")
 	//  fmt.Println(err)
-	DeleteThing(id, token string) errors.SDKError
+	DeleteThing(id, domainID, token string) errors.SDKError
 
 	// CreateGroup creates new group and returns its id.
 	//

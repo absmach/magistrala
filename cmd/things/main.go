@@ -231,7 +231,6 @@ func main() {
 	g.Go(func() error {
 		return server.StopSignalHandler(ctx, cancel, logger, svcName, httpSvc)
 	})
-
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("%s service terminated: %s", svcName, err))
 	}

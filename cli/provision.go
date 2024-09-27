@@ -31,11 +31,11 @@ var (
 
 var cmdProvision = []cobra.Command{
 	{
-		Use:   "things <things_file> <user_token>",
+		Use:   "things <things_file> <domain_id> <user_token>",
 		Short: "Provision things",
 		Long:  `Bulk create things`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -51,7 +51,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			things, err = sdk.CreateThings(things, args[1])
+			things, err = sdk.CreateThings(things, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -182,7 +182,7 @@ var cmdProvision = []cobra.Command{
 
 				things = append(things, t)
 			}
-			things, err = sdk.CreateThings(things, ut.AccessToken)
+			things, err = sdk.CreateThings(things, domain.ID, ut.AccessToken)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

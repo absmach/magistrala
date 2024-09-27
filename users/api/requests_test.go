@@ -188,15 +188,14 @@ func TestSearchClientsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: searchClientsReq{
-				Name:  name,
+				Name: name,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty query",
-			req: searchClientsReq{
-			},
-			err: apiutil.ErrEmptySearchQuery,
+			req:  searchClientsReq{},
+			err:  apiutil.ErrEmptySearchQuery,
 		},
 	}
 	for _, c := range cases {
@@ -263,16 +262,16 @@ func TestUpdateClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientReq{
-				id:    validID,
-				Name:  valid,
+				id:   validID,
+				Name: valid,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
 			req: updateClientReq{
-				id:    "",
-				Name:  valid,
+				id:   "",
+				Name: valid,
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -292,16 +291,16 @@ func TestUpdateClientTagsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientTagsReq{
-				id:    validID,
-				Tags:  []string{"tag1", "tag2"},
+				id:   validID,
+				Tags: []string{"tag1", "tag2"},
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
 			req: updateClientTagsReq{
-				id:    "",
-				Tags:  []string{"tag1", "tag2"},
+				id:   "",
+				Tags: []string{"tag1", "tag2"},
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -321,16 +320,16 @@ func TestUpdateClientRoleReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientRoleReq{
-				id:    validID,
-				Role:  "admin",
+				id:   validID,
+				Role: "admin",
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
 			req: updateClientRoleReq{
-				id:    "",
-				Role:  "admin",
+				id:   "",
+				Role: "admin",
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -424,14 +423,14 @@ func TestChangeClientStatusReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: changeClientStatusReq{
-				id:    validID,
+				id: validID,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
 			req: changeClientStatusReq{
-				id:    "",
+				id: "",
 			},
 			err: apiutil.ErrMissingID,
 		},

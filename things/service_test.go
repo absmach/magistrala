@@ -37,7 +37,6 @@ var (
 		Status:      mgclients.EnabledStatus,
 	}
 	validToken        = "token"
-	inValidToken      = invalid
 	valid             = "valid"
 	invalid           = "invalid"
 	validID           = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
@@ -322,7 +321,7 @@ func TestViewClient(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall1 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.response, tc.err)
-		rClient, err := svc.ViewClient(context.Background(), tc.clientID)
+		rClient, err := svc.ViewClient(context.Background(), pauth.Session{}, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, rClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rClient))
 		repoCall1.Unset()
@@ -1104,7 +1103,7 @@ func TestDeleteClient(t *testing.T) {
 		repoCall := cache.On("Remove", mock.Anything, tc.clientID).Return(tc.removeErr)
 		policyCall := policies.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyErr)
 		repoCall1 := cRepo.On("Delete", context.Background(), tc.clientID).Return(tc.deleteErr)
-		err := svc.DeleteClient(context.Background(), tc.clientID)
+		err := svc.DeleteClient(context.Background(), pauth.Session{}, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 		policyCall.Unset()

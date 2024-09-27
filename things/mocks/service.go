@@ -55,17 +55,17 @@ func (_m *Service) CreateThings(ctx context.Context, session auth.Session, clien
 	return r0, r1
 }
 
-// DeleteClient provides a mock function with given fields: ctx, id
-func (_m *Service) DeleteClient(ctx context.Context, id string) error {
-	ret := _m.Called(ctx, id)
+// DeleteClient provides a mock function with given fields: ctx, session, id
+func (_m *Service) DeleteClient(ctx context.Context, session auth.Session, id string) error {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteClient")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) error); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -347,9 +347,9 @@ func (_m *Service) UpdateClientTags(ctx context.Context, session auth.Session, c
 	return r0, r1
 }
 
-// ViewClient provides a mock function with given fields: ctx, id
-func (_m *Service) ViewClient(ctx context.Context, id string) (clients.Client, error) {
-	ret := _m.Called(ctx, id)
+// ViewClient provides a mock function with given fields: ctx, session, id
+func (_m *Service) ViewClient(ctx context.Context, session auth.Session, id string) (clients.Client, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewClient")
@@ -357,17 +357,17 @@ func (_m *Service) ViewClient(ctx context.Context, id string) (clients.Client, e
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (clients.Client, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) (clients.Client, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) clients.Client); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) clients.Client); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}

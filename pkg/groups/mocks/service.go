@@ -65,17 +65,17 @@ func (_m *Service) CreateGroup(ctx context.Context, session auth.Session, kind s
 	return r0, r1
 }
 
-// DeleteGroup provides a mock function with given fields: ctx, id
-func (_m *Service) DeleteGroup(ctx context.Context, id string) error {
-	ret := _m.Called(ctx, id)
+// DeleteGroup provides a mock function with given fields: ctx, session, id
+func (_m *Service) DeleteGroup(ctx context.Context, session auth.Session, id string) error {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteGroup")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) error); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -167,9 +167,9 @@ func (_m *Service) ListGroups(ctx context.Context, session auth.Session, memberK
 	return r0, r1
 }
 
-// ListMembers provides a mock function with given fields: ctx, groupID, permission, memberKind
-func (_m *Service) ListMembers(ctx context.Context, groupID string, permission string, memberKind string) (groups.MembersPage, error) {
-	ret := _m.Called(ctx, groupID, permission, memberKind)
+// ListMembers provides a mock function with given fields: ctx, session, groupID, permission, memberKind
+func (_m *Service) ListMembers(ctx context.Context, session auth.Session, groupID string, permission string, memberKind string) (groups.MembersPage, error) {
+	ret := _m.Called(ctx, session, groupID, permission, memberKind)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMembers")
@@ -177,17 +177,17 @@ func (_m *Service) ListMembers(ctx context.Context, groupID string, permission s
 
 	var r0 groups.MembersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (groups.MembersPage, error)); ok {
-		return rf(ctx, groupID, permission, memberKind)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, string, string) (groups.MembersPage, error)); ok {
+		return rf(ctx, session, groupID, permission, memberKind)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) groups.MembersPage); ok {
-		r0 = rf(ctx, groupID, permission, memberKind)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string, string, string) groups.MembersPage); ok {
+		r0 = rf(ctx, session, groupID, permission, memberKind)
 	} else {
 		r0 = ret.Get(0).(groups.MembersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, groupID, permission, memberKind)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string, string, string) error); ok {
+		r1 = rf(ctx, session, groupID, permission, memberKind)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -241,9 +241,9 @@ func (_m *Service) UpdateGroup(ctx context.Context, session auth.Session, g grou
 	return r0, r1
 }
 
-// ViewGroup provides a mock function with given fields: ctx, id
-func (_m *Service) ViewGroup(ctx context.Context, id string) (groups.Group, error) {
-	ret := _m.Called(ctx, id)
+// ViewGroup provides a mock function with given fields: ctx, session, id
+func (_m *Service) ViewGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewGroup")
@@ -251,17 +251,17 @@ func (_m *Service) ViewGroup(ctx context.Context, id string) (groups.Group, erro
 
 	var r0 groups.Group
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (groups.Group, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) (groups.Group, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) groups.Group); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, auth.Session, string) groups.Group); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Get(0).(groups.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(context.Context, auth.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -15,7 +15,7 @@ import (
 
 var (
 	_ authclient.AuthClient = (*singleUserAuth)(nil)
-	_ policies.PolicyClient   = (*singleUserPolicyClient)(nil)
+	_ policies.PolicyClient = (*singleUserPolicyClient)(nil)
 )
 
 type singleUserAuth struct {

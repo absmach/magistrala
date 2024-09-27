@@ -21,18 +21,15 @@ import (
 
 var (
 	errFailedPermissionsList = errors.New("failed to list permissions")
-	errRecoveryToken         = errors.New("failed to generate password recovery token")
 	errLoginDisableUser      = errors.New("failed to login in disabled user")
 )
 
 type service struct {
-	clients      postgres.Repository
-	idProvider   magistrala.IDProvider
-	auth         auth.AuthClient
-	policies     policies.PolicyClient
-	hasher       Hasher
-	email        Emailer
-	selfRegister bool
+	clients    postgres.Repository
+	idProvider magistrala.IDProvider
+	policies   policies.PolicyClient
+	hasher     Hasher
+	email      Emailer
 }
 
 // NewService returns a new Users service implementation.

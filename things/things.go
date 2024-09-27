@@ -20,7 +20,7 @@ type Service interface {
 	CreateThings(ctx context.Context, session auth.Session, client ...clients.Client) ([]clients.Client, error)
 
 	// ViewClient retrieves client info for a given client ID and an authorized token.
-	ViewClient(ctx context.Context, id string) (clients.Client, error)
+	ViewClient(ctx context.Context, session auth.Session, id string) (clients.Client, error)
 
 	// ViewClientPerms retrieves permissions on the client id for the given authorized token.
 	ViewClientPerms(ctx context.Context, session auth.Session, id string) ([]string, error)
@@ -58,7 +58,7 @@ type Service interface {
 	Identify(ctx context.Context, key string) (string, error)
 
 	// DeleteClient deletes client with given ID.
-	DeleteClient(ctx context.Context, id string) error
+	DeleteClient(ctx context.Context, session auth.Session, id string) error
 }
 
 // Cache contains thing caching interface.

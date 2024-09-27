@@ -271,7 +271,7 @@ func (req *thingShareRequest) validate() error {
 }
 
 type deleteClientReq struct {
-	id    string
+	id string
 }
 
 func (req deleteClientReq) validate() error {

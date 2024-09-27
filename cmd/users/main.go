@@ -19,8 +19,8 @@ import (
 	authSvc "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/email"
 	mggroups "github.com/absmach/magistrala/internal/groups"
-	gapi "github.com/absmach/magistrala/internal/groups/api"
 	gevents "github.com/absmach/magistrala/internal/groups/events"
+	gmiddleware "github.com/absmach/magistrala/internal/groups/middleware"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
 	mgpolicy "github.com/absmach/magistrala/internal/policies"
@@ -261,15 +261,18 @@ func newService(ctx context.Context, authClient authclient.AuthClient, authPolic
 		return nil, nil, err
 	}
 
+	csvc = cmiddleware.AuthorizationMiddleware(csvc, authClient)
+	gsvc = gmiddleware.AuthorizationMiddleware(gsvc, authClient)
+
 	csvc = ctracing.New(csvc, tracer)
 	csvc = cmiddleware.LoggingMiddleware(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
 	csvc = cmiddleware.MetricsMiddleware(csvc, counter, latency)
 
 	gsvc = gtracing.New(gsvc, tracer)
-	gsvc = gapi.LoggingMiddleware(gsvc, logger)
+	gsvc = gmiddleware.LoggingMiddleware(gsvc, logger)
 	counter, latency = prometheus.MakeMetrics("groups", "api")
-	gsvc = gapi.MetricsMiddleware(gsvc, counter, latency)
+	gsvc = gmiddleware.MetricsMiddleware(gsvc, counter, latency)
 
 	clientID, err := createAdmin(ctx, c, cRepo, hsr, csvc)
 	if err != nil {

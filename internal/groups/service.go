@@ -21,9 +21,8 @@ import (
 )
 
 var (
-	errParentUnAuthz = errors.New("failed to authorize parent group")
-	errMemberKind    = errors.New("invalid member kind")
-	errGroupIDs      = errors.New("invalid group ids")
+	errMemberKind = errors.New("invalid member kind")
+	errGroupIDs   = errors.New("invalid group ids")
 )
 
 type service struct {
@@ -54,14 +53,14 @@ func (svc service) CreateGroup(ctx context.Context, session auth.Session, kind s
 	g.CreatedAt = time.Now()
 	g.Domain = session.DomainID
 
-	policies, err := svc.addGroupPolicy(ctx, session.DomainUserID, session.DomainID, g.ID, g.Parent, kind)
+	policyList, err := svc.addGroupPolicy(ctx, session.DomainUserID, session.DomainID, g.ID, g.Parent, kind)
 	if err != nil {
 		return groups.Group{}, err
 	}
 
 	defer func() {
 		if err != nil {
-			if errRollback := svc.policies.DeletePolicies(ctx, policies); errRollback != nil {
+			if errRollback := svc.policies.DeletePolicies(ctx, policyList); errRollback != nil {
 				err = errors.Wrap(errors.Wrap(errors.ErrRollbackTx, errRollback), err)
 			}
 		}
@@ -75,7 +74,7 @@ func (svc service) CreateGroup(ctx context.Context, session auth.Session, kind s
 	return saved, nil
 }
 
-func (svc service) ViewGroup(ctx context.Context, id string) (groups.Group, error) {
+func (svc service) ViewGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
 	group, err := svc.groups.RetrieveByID(ctx, id)
 	if err != nil {
 		return groups.Group{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -216,7 +215,7 @@ func (svc service) listUserGroupPermission(ctx context.Context, userID, groupID 
 }
 
 // IMPROVEMENT NOTE: remove this function and all its related auxiliary function, ListMembers are moved to respective service.
-func (svc service) ListMembers(ctx context.Context, groupID, permission, memberKind string) (groups.MembersPage, error) {
+func (svc service) ListMembers(ctx context.Context, session auth.Session, groupID, permission, memberKind string) (groups.MembersPage, error) {
 	switch memberKind {
 	case policies.ThingsKind:
 		tids, err := svc.policies.ListAllObjects(ctx, policies.PolicyReq{
@@ -482,7 +481,7 @@ func (svc service) Unassign(ctx context.Context, session auth.Session, groupID, 
 	return nil
 }
 
-func (svc service) DeleteGroup(ctx context.Context, id string) error {
+func (svc service) DeleteGroup(ctx context.Context, session auth.Session, id string) error {
 	req := policies.PolicyReq{
 		SubjectType: policies.GroupType,
 		Subject:     id,

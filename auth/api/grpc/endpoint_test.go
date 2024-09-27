@@ -66,7 +66,7 @@ func startGRPCServer(svc auth.Service, port int) {
 func TestIssue(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := client.NewAuthClient(conn, time.Second)
+	grpcClient := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc          string
@@ -126,7 +126,7 @@ func TestIssue(t *testing.T) {
 
 	for _, tc := range cases {
 		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
-		_, err := client.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.userId, DomainId: &tc.domainID, Type: uint32(tc.kind)})
+		_, err := grpcClient.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.userId, DomainId: &tc.domainID, Type: uint32(tc.kind)})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		svcCall.Unset()
 	}
@@ -135,7 +135,7 @@ func TestIssue(t *testing.T) {
 func TestRefresh(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := client.NewAuthClient(conn, time.Second)
+	grpcClient := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc          string
@@ -172,7 +172,7 @@ func TestRefresh(t *testing.T) {
 
 	for _, tc := range cases {
 		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
-		_, err := client.Refresh(context.Background(), &magistrala.RefreshReq{DomainId: &tc.domainID, RefreshToken: tc.token})
+		_, err := grpcClient.Refresh(context.Background(), &magistrala.RefreshReq{DomainId: &tc.domainID, RefreshToken: tc.token})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		svcCall.Unset()
 	}
@@ -181,7 +181,7 @@ func TestRefresh(t *testing.T) {
 func TestIdentify(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := client.NewAuthClient(conn, time.Second)
+	grpcClient := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc   string
@@ -213,7 +213,7 @@ func TestIdentify(t *testing.T) {
 
 	for _, tc := range cases {
 		svcCall := svc.On("Identify", mock.Anything, mock.Anything, mock.Anything).Return(auth.Key{Subject: id, User: email, Domain: domainID}, tc.svcErr)
-		idt, err := client.Identify(context.Background(), &magistrala.IdentityReq{Token: tc.token})
+		idt, err := grpcClient.Identify(context.Background(), &magistrala.IdentityReq{Token: tc.token})
 		if idt != nil {
 			assert.Equal(t, tc.idt, idt, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.idt, idt))
 		}
@@ -225,7 +225,7 @@ func TestIdentify(t *testing.T) {
 func TestAuthorize(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := client.NewAuthClient(conn, time.Second)
+	grpcClient := client.NewAuthClient(conn, time.Second)
 
 	cases := []struct {
 		desc         string
@@ -335,7 +335,7 @@ func TestAuthorize(t *testing.T) {
 	}
 	for _, tc := range cases {
 		svccall := svc.On("Authorize", mock.Anything, mock.Anything).Return(tc.err)
-		ar, err := client.Authorize(context.Background(), tc.authRequest)
+		ar, err := grpcClient.Authorize(context.Background(), tc.authRequest)
 		if ar != nil {
 			assert.Equal(t, tc.authResponse, ar, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.authResponse, ar))
 		}
@@ -347,14 +347,14 @@ func TestAuthorize(t *testing.T) {
 func TestDeleteUserPolicies(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
-	client := grpcapi.NewPolicyClient(conn, time.Second)
+	grpcClient := grpcapi.NewPolicyClient(conn, time.Second)
 
 	cases := []struct {
-		desc                    string
-		token                   string
+		desc                  string
+		token                 string
 		deleteUserPoliciesReq *magistrala.DeleteUserPoliciesReq
-		deletePolicyRes         *magistrala.DeletePolicyRes
-		err                     error
+		deletePolicyRes       *magistrala.DeletePolicyRes
+		err                   error
 	}{
 		{
 			desc:  "delete valid req",
@@ -366,11 +366,11 @@ func TestDeleteUserPolicies(t *testing.T) {
 			err:             nil,
 		},
 		{
-			desc:                    "delete invalid req with invalid token",
-			token:                   inValidToken,
+			desc:                  "delete invalid req with invalid token",
+			token:                 inValidToken,
 			deleteUserPoliciesReq: &magistrala.DeleteUserPoliciesReq{},
-			deletePolicyRes:         &magistrala.DeletePolicyRes{Deleted: false},
-			err:                     apiutil.ErrMissingID,
+			deletePolicyRes:       &magistrala.DeletePolicyRes{Deleted: false},
+			err:                   apiutil.ErrMissingID,
 		},
 		{
 			desc:  "delete invalid req with invalid token",
@@ -384,7 +384,7 @@ func TestDeleteUserPolicies(t *testing.T) {
 	}
 	for _, tc := range cases {
 		repoCall := svc.On("DeleteUserPolicies", mock.Anything, tc.deleteUserPoliciesReq.Id).Return(tc.err)
-		dpr, err := client.DeleteUserPolicies(context.Background(), tc.deleteUserPoliciesReq)
+		dpr, err := grpcClient.DeleteUserPolicies(context.Background(), tc.deleteUserPoliciesReq)
 		assert.Equal(t, tc.deletePolicyRes.GetDeleted(), dpr.GetDeleted(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.deletePolicyRes.GetDeleted(), dpr.GetDeleted()))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()

@@ -17,12 +17,13 @@ import (
 	"github.com/absmach/magistrala"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	mggroups "github.com/absmach/magistrala/internal/groups"
-	gapi "github.com/absmach/magistrala/internal/groups/api"
 	gevents "github.com/absmach/magistrala/internal/groups/events"
+	gmiddleware "github.com/absmach/magistrala/internal/groups/middleware"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
 	mgpolicies "github.com/absmach/magistrala/internal/policies"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/auth"
 	authclient "github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/grpcclient"
@@ -190,7 +191,7 @@ func main() {
 		logger.Info("Policy client successfully connected to spicedb gRPC server")
 	}
 
-	csvc, gsvc, err := newService(ctx, db, dbConfig, policyClient, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
+	csvc, gsvc, err := newService(ctx, db, dbConfig, authClient, policyClient, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -241,7 +242,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, policyClient policies.PolicyClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authClient auth.AuthClient, policyClient policies.PolicyClient, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -263,15 +264,18 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, poli
 		return nil, nil, err
 	}
 
+	csvc = tmiddleware.AuthorizationMiddleware(csvc, authClient)
+	gsvc = gmiddleware.AuthorizationMiddleware(gsvc, authClient)
+
 	csvc = ctracing.New(csvc, tracer)
 	csvc = tmiddleware.LoggingMiddleware(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
 	csvc = tmiddleware.MetricsMiddleware(csvc, counter, latency)
 
 	gsvc = gtracing.New(gsvc, tracer)
-	gsvc = gapi.LoggingMiddleware(gsvc, logger)
+	gsvc = gmiddleware.LoggingMiddleware(gsvc, logger)
 	counter, latency = prometheus.MakeMetrics(fmt.Sprintf("%s_groups", svcName), "api")
-	gsvc = gapi.MetricsMiddleware(gsvc, counter, latency)
+	gsvc = gmiddleware.MetricsMiddleware(gsvc, counter, latency)
 
 	return csvc, gsvc, err
 }

@@ -33,11 +33,11 @@ func (tm *tracingMiddleware) CreateGroup(ctx context.Context, session auth.Sessi
 }
 
 // ViewGroup traces the "ViewGroup" operation of the wrapped groups.Service.
-func (tm *tracingMiddleware) ViewGroup(ctx context.Context, id string) (groups.Group, error) {
+func (tm *tracingMiddleware) ViewGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_view_group", trace.WithAttributes(attribute.String("id", id)))
 	defer span.End()
 
-	return tm.gsvc.ViewGroup(ctx, id)
+	return tm.gsvc.ViewGroup(ctx, session, id)
 }
 
 // ViewGroupPerms traces the "ViewGroupPerms" operation of the wrapped groups.Service.
@@ -57,11 +57,11 @@ func (tm *tracingMiddleware) ListGroups(ctx context.Context, session auth.Sessio
 }
 
 // ListMembers traces the "ListMembers" operation of the wrapped groups.Service.
-func (tm *tracingMiddleware) ListMembers(ctx context.Context, groupID, permission, memberKind string) (groups.MembersPage, error) {
+func (tm *tracingMiddleware) ListMembers(ctx context.Context, session auth.Session, groupID, permission, memberKind string) (groups.MembersPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_members", trace.WithAttributes(attribute.String("groupID", groupID)))
 	defer span.End()
 
-	return tm.gsvc.ListMembers(ctx, groupID, permission, memberKind)
+	return tm.gsvc.ListMembers(ctx, session, groupID, permission, memberKind)
 }
 
 // UpdateGroup traces the "UpdateGroup" operation of the wrapped groups.Service.
@@ -105,9 +105,9 @@ func (tm *tracingMiddleware) Unassign(ctx context.Context, session auth.Session,
 }
 
 // DeleteGroup traces the "DeleteGroup" operation of the wrapped groups.Service.
-func (tm *tracingMiddleware) DeleteGroup(ctx context.Context, id string) error {
+func (tm *tracingMiddleware) DeleteGroup(ctx context.Context, session auth.Session, id string) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_delete_group", trace.WithAttributes(attribute.String("id", id)))
 	defer span.End()
 
-	return tm.gsvc.DeleteGroup(ctx, id)
+	return tm.gsvc.DeleteGroup(ctx, session, id)
 }

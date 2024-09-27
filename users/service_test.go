@@ -44,7 +44,6 @@ var (
 		ID:   clientID,
 	}
 	validToken      = "token"
-	inValidToken    = "invalid"
 	validID         = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 	wrongID         = testsutil.GenerateUUID(&testing.T{})
 	errHashPassword = errors.New("generate hash from password failed")
@@ -272,7 +271,6 @@ func TestRegisterClient(t *testing.T) {
 		policyCall.Unset()
 		policyCall1.Unset()
 		repoCall.Unset()
-
 	}
 }
 
@@ -712,7 +710,6 @@ func TestUpdateClientRole(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-
 		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
 		policyCall := policies.On("AddPolicy", context.Background(), mock.Anything).Return(tc.addPolicyErr)
 		policyCall1 := policies.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.deletePolicyErr)
@@ -818,7 +815,6 @@ func TestUpdateClientSecret(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-
 		repoCall := cRepo.On("RetrieveByID", context.Background(), client.ID).Return(tc.retrieveByIDResponse, tc.retrieveByIDErr)
 		repoCall1 := cRepo.On("RetrieveByIdentity", context.Background(), client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
 		repoCall2 := cRepo.On("UpdateSecret", context.Background(), mock.Anything).Return(tc.updateSecretResponse, tc.updateSecretErr)
@@ -837,7 +833,6 @@ func TestUpdateClientSecret(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
-
 	}
 }
 
@@ -1741,6 +1736,5 @@ func TestOAuthCallback(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 		policyCall.Unset()
-
 	}
 }

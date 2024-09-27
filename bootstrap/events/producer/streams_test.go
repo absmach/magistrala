@@ -86,11 +86,11 @@ var (
 )
 
 type testVariable struct {
-	svc    bootstrap.Service
-	boot   *mocks.ConfigRepository
-	auth   *authmocks.AuthServiceClient
+	svc      bootstrap.Service
+	boot     *mocks.ConfigRepository
+	auth     *authmocks.AuthServiceClient
 	policies *policymocks.PolicyClient
-	sdk    *sdkmocks.SDK
+	sdk      *sdkmocks.SDK
 }
 
 func newTestVariable(t *testing.T, redisURL string) testVariable {
@@ -104,11 +104,11 @@ func newTestVariable(t *testing.T, redisURL string) testVariable {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
 	return testVariable{
-		svc:    svc,
-		boot:   boot,
-		auth:   auth,
+		svc:      svc,
+		boot:     boot,
+		auth:     auth,
 		policies: policies,
-		sdk:    sdk,
+		sdk:      sdk,
 	}
 }
 

@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package api
+package middleware
 
 import (
 	"context"
@@ -48,12 +48,12 @@ func (ms *metricsMiddleware) UpdateGroup(ctx context.Context, session auth.Sessi
 }
 
 // ViewGroup instruments ViewGroup method with metrics.
-func (ms *metricsMiddleware) ViewGroup(ctx context.Context, id string) (g groups.Group, err error) {
+func (ms *metricsMiddleware) ViewGroup(ctx context.Context, session auth.Session, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "view_group").Add(1)
 		ms.latency.With("method", "view_group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.ViewGroup(ctx, id)
+	return ms.svc.ViewGroup(ctx, session, id)
 }
 
 // ViewGroupPerms instruments ViewGroup method with metrics.
@@ -93,12 +93,12 @@ func (ms *metricsMiddleware) DisableGroup(ctx context.Context, session auth.Sess
 }
 
 // ListMembers instruments ListMembers method with metrics.
-func (ms *metricsMiddleware) ListMembers(ctx context.Context, groupID, permission, memberKind string) (mp groups.MembersPage, err error) {
+func (ms *metricsMiddleware) ListMembers(ctx context.Context, session auth.Session, groupID, permission, memberKind string) (mp groups.MembersPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_memberships").Add(1)
 		ms.latency.With("method", "list_memberships").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.ListMembers(ctx, groupID, permission, memberKind)
+	return ms.svc.ListMembers(ctx, session, groupID, permission, memberKind)
 }
 
 // Assign instruments Assign method with metrics.
@@ -121,10 +121,10 @@ func (ms *metricsMiddleware) Unassign(ctx context.Context, session auth.Session,
 	return ms.svc.Unassign(ctx, session, groupID, relation, memberKind, memberIDs...)
 }
 
-func (ms *metricsMiddleware) DeleteGroup(ctx context.Context, id string) (err error) {
+func (ms *metricsMiddleware) DeleteGroup(ctx context.Context, session auth.Session, id string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "delete_group").Add(1)
 		ms.latency.With("method", "delete_group").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.DeleteGroup(ctx, id)
+	return ms.svc.DeleteGroup(ctx, session, id)
 }

@@ -82,7 +82,7 @@ func (svc service) CreateThings(ctx context.Context, session auth.Session, cls .
 	return saved, nil
 }
 
-func (svc service) ViewClient(ctx context.Context, id string) (mgclients.Client, error) {
+func (svc service) ViewClient(ctx context.Context, session auth.Session, id string) (mgclients.Client, error) {
 	client, err := svc.clients.RetrieveByID(ctx, id)
 	if err != nil {
 		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -324,7 +324,7 @@ func (svc service) Unshare(ctx context.Context, session auth.Session, id, relati
 	return nil
 }
 
-func (svc service) DeleteClient(ctx context.Context, id string) error {
+func (svc service) DeleteClient(ctx context.Context, session auth.Session, id string) error {
 	if err := svc.clientCache.Remove(ctx, id); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}

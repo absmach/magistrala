@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package api
+package middleware
 
 import (
 	"context"
@@ -69,7 +69,7 @@ func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, session auth.Sessi
 
 // ViewGroup logs the view_group request. It logs the group name, id and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ViewGroup(ctx context.Context, id string) (g groups.Group, err error) {
+func (lm *loggingMiddleware) ViewGroup(ctx context.Context, session auth.Session, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -85,7 +85,7 @@ func (lm *loggingMiddleware) ViewGroup(ctx context.Context, id string) (g groups
 		}
 		lm.logger.Info("View group completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ViewGroup(ctx, id)
+	return lm.svc.ViewGroup(ctx, session, id)
 }
 
 // ViewGroupPerms logs the view_group request. It logs the group id and the time it took to complete the request.
@@ -176,7 +176,7 @@ func (lm *loggingMiddleware) DisableGroup(ctx context.Context, session auth.Sess
 
 // ListMembers logs the list_members request. It logs the groupID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ListMembers(ctx context.Context, groupID, permission, memberKind string) (mp groups.MembersPage, err error) {
+func (lm *loggingMiddleware) ListMembers(ctx context.Context, session auth.Session, groupID, permission, memberKind string) (mp groups.MembersPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -191,7 +191,7 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, groupID, permissio
 		}
 		lm.logger.Info("List members completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ListMembers(ctx, groupID, permission, memberKind)
+	return lm.svc.ListMembers(ctx, session, groupID, permission, memberKind)
 }
 
 func (lm *loggingMiddleware) Assign(ctx context.Context, session auth.Session, groupID, relation, memberKind string, memberIDs ...string) (err error) {
@@ -234,7 +234,7 @@ func (lm *loggingMiddleware) Unassign(ctx context.Context, session auth.Session,
 	return lm.svc.Unassign(ctx, session, groupID, relation, memberKind, memberIDs...)
 }
 
-func (lm *loggingMiddleware) DeleteGroup(ctx context.Context, id string) (err error) {
+func (lm *loggingMiddleware) DeleteGroup(ctx context.Context, session auth.Session, id string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -247,5 +247,5 @@ func (lm *loggingMiddleware) DeleteGroup(ctx context.Context, id string) (err er
 		}
 		lm.logger.Info("Delete group completed successfully", args...)
 	}(time.Now())
-	return lm.svc.DeleteGroup(ctx, id)
+	return lm.svc.DeleteGroup(ctx, session, id)
 }

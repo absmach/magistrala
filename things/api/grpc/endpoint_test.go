@@ -31,7 +31,6 @@ var (
 	thingKey  = "testKey"
 	channelID = "testID"
 	invalid   = "invalid"
-	valid     = "valid"
 )
 
 func startGRPCServer(svc *mocks.Service, auth *authmocks.AuthClient, port int) {

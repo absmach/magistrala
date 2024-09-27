@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package api
+package middleware
 
 import (
 	"context"
@@ -38,12 +38,12 @@ func (ms *metricsMiddleware) CreateThings(ctx context.Context, session auth.Sess
 	return ms.svc.CreateThings(ctx, session, clients...)
 }
 
-func (ms *metricsMiddleware) ViewClient(ctx context.Context, id string) (mgclients.Client, error) {
+func (ms *metricsMiddleware) ViewClient(ctx context.Context, session auth.Session, id string) (mgclients.Client, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "view_thing").Add(1)
 		ms.latency.With("method", "view_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.ViewClient(ctx, id)
+	return ms.svc.ViewClient(ctx, session, id)
 }
 
 func (ms *metricsMiddleware) ViewClientPerms(ctx context.Context, session auth.Session, id string) ([]string, error) {
@@ -134,10 +134,10 @@ func (ms *metricsMiddleware) Unshare(ctx context.Context, session auth.Session, 
 	return ms.svc.Unshare(ctx, session, id, relation, userids...)
 }
 
-func (ms *metricsMiddleware) DeleteClient(ctx context.Context, id string) error {
+func (ms *metricsMiddleware) DeleteClient(ctx context.Context, session auth.Session, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "delete_client").Add(1)
 		ms.latency.With("method", "delete_client").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.DeleteClient(ctx, id)
+	return ms.svc.DeleteClient(ctx, session, id)
 }

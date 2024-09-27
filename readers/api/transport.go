@@ -54,7 +54,7 @@ const (
 var errUserAccess = errors.New("user has no permission")
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, auth magistrala.AuthzServiceClient, things magistrala.AuthzServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, auth, things magistrala.AuthzServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -241,7 +241,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, auth magistrala.AuthzServiceClient, things magistrala.AuthzServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, auth, things magistrala.AuthzServiceClient) (err error) {
 	switch {
 	case req.token != "":
 		if _, err = auth.Authorize(ctx, &magistrala.AuthorizeReq{

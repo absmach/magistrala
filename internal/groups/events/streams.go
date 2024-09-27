@@ -67,8 +67,8 @@ func (es eventStore) UpdateGroup(ctx context.Context, session auth.Session, grou
 	return group, nil
 }
 
-func (es eventStore) ViewGroup(ctx context.Context, id string) (groups.Group, error) {
-	group, err := es.svc.ViewGroup(ctx, id)
+func (es eventStore) ViewGroup(ctx context.Context, session auth.Session, id string) (groups.Group, error) {
+	group, err := es.svc.ViewGroup(ctx, session, id)
 	if err != nil {
 		return group, err
 	}
@@ -115,8 +115,8 @@ func (es eventStore) ListGroups(ctx context.Context, session auth.Session, membe
 	return gp, nil
 }
 
-func (es eventStore) ListMembers(ctx context.Context, groupID, permission, memberKind string) (groups.MembersPage, error) {
-	mp, err := es.svc.ListMembers(ctx, groupID, permission, memberKind)
+func (es eventStore) ListMembers(ctx context.Context, session auth.Session, groupID, permission, memberKind string) (groups.MembersPage, error) {
+	mp, err := es.svc.ListMembers(ctx, session, groupID, permission, memberKind)
 	if err != nil {
 		return mp, err
 	}
@@ -201,8 +201,8 @@ func (es eventStore) changeStatus(ctx context.Context, group groups.Group) (grou
 	return group, nil
 }
 
-func (es eventStore) DeleteGroup(ctx context.Context, id string) error {
-	if err := es.svc.DeleteGroup(ctx, id); err != nil {
+func (es eventStore) DeleteGroup(ctx context.Context, session auth.Session, id string) error {
+	if err := es.svc.DeleteGroup(ctx, session, id); err != nil {
 		return err
 	}
 	if err := es.Publish(ctx, deleteGroupEvent{id}); err != nil {

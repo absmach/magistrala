@@ -103,7 +103,7 @@ type Service interface {
 	UpdateGroup(ctx context.Context, session auth.Session, g Group) (Group, error)
 
 	// ViewGroup retrieves data about the group identified by ID.
-	ViewGroup(ctx context.Context, id string) (Group, error)
+	ViewGroup(ctx context.Context, session auth.Session, id string) (Group, error)
 
 	// ViewGroupPerms retrieves permissions on the group id for the given authorized token.
 	ViewGroupPerms(ctx context.Context, session auth.Session, id string) ([]string, error)
@@ -112,7 +112,7 @@ type Service interface {
 	ListGroups(ctx context.Context, session auth.Session, memberKind, memberID string, gm Page) (Page, error)
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, groupID, permission, memberKind string) (MembersPage, error)
+	ListMembers(ctx context.Context, session auth.Session, groupID, permission, memberKind string) (MembersPage, error)
 
 	// EnableGroup logically enables the group identified with the provided ID.
 	EnableGroup(ctx context.Context, session auth.Session, id string) (Group, error)
@@ -121,7 +121,7 @@ type Service interface {
 	DisableGroup(ctx context.Context, session auth.Session, id string) (Group, error)
 
 	// DeleteGroup delete the given group id
-	DeleteGroup(ctx context.Context, id string) error
+	DeleteGroup(ctx context.Context, session auth.Session, id string) error
 
 	// Assign member to group
 	Assign(ctx context.Context, session auth.Session, groupID, relation, memberKind string, memberIDs ...string) (err error)

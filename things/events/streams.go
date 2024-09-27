@@ -93,8 +93,8 @@ func (es *eventStore) update(ctx context.Context, operation string, thing mgclie
 	return thing, nil
 }
 
-func (es *eventStore) ViewClient(ctx context.Context, id string) (mgclients.Client, error) {
-	cli, err := es.svc.ViewClient(ctx, id)
+func (es *eventStore) ViewClient(ctx context.Context, session auth.Session, id string) (mgclients.Client, error) {
+	cli, err := es.svc.ViewClient(ctx, session, id)
 	if err != nil {
 		return cli, err
 	}
@@ -233,8 +233,8 @@ func (es *eventStore) Unshare(ctx context.Context, session auth.Session, id, rel
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) DeleteClient(ctx context.Context, id string) error {
-	if err := es.svc.DeleteClient(ctx, id); err != nil {
+func (es *eventStore) DeleteClient(ctx context.Context, session auth.Session, id string) error {
+	if err := es.svc.DeleteClient(ctx, session, id); err != nil {
 		return err
 	}
 

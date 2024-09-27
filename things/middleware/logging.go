@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package api
+package middleware
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func (lm *loggingMiddleware) CreateThings(ctx context.Context, session auth.Sess
 	return lm.svc.CreateThings(ctx, session, clients...)
 }
 
-func (lm *loggingMiddleware) ViewClient(ctx context.Context, id string) (c mgclients.Client, err error) {
+func (lm *loggingMiddleware) ViewClient(ctx context.Context, session auth.Session, id string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -56,7 +56,7 @@ func (lm *loggingMiddleware) ViewClient(ctx context.Context, id string) (c mgcli
 		}
 		lm.logger.Info("View thing completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ViewClient(ctx, id)
+	return lm.svc.ViewClient(ctx, session, id)
 }
 
 func (lm *loggingMiddleware) ViewClientPerms(ctx context.Context, session auth.Session, id string) (p []string, err error) {
@@ -266,7 +266,7 @@ func (lm *loggingMiddleware) Unshare(ctx context.Context, session auth.Session, 
 	return lm.svc.Unshare(ctx, session, id, relation, userids...)
 }
 
-func (lm *loggingMiddleware) DeleteClient(ctx context.Context, id string) (err error) {
+func (lm *loggingMiddleware) DeleteClient(ctx context.Context, session auth.Session, id string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -279,5 +279,5 @@ func (lm *loggingMiddleware) DeleteClient(ctx context.Context, id string) (err e
 		}
 		lm.logger.Info("Delete thing completed successfully", args...)
 	}(time.Now())
-	return lm.svc.DeleteClient(ctx, id)
+	return lm.svc.DeleteClient(ctx, session, id)
 }

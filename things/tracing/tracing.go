@@ -34,10 +34,10 @@ func (tm *tracingMiddleware) CreateThings(ctx context.Context, session auth.Sess
 }
 
 // ViewClient traces the "ViewClient" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) ViewClient(ctx context.Context, id string) (mgclients.Client, error) {
+func (tm *tracingMiddleware) ViewClient(ctx context.Context, session auth.Session, id string) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_view_client", trace.WithAttributes(attribute.String("id", id)))
 	defer span.End()
-	return tm.svc.ViewClient(ctx, id)
+	return tm.svc.ViewClient(ctx, session, id)
 }
 
 // ViewClientPerms traces the "ViewClientPerms" operation of the wrapped policies.Service.
@@ -128,8 +128,8 @@ func (tm *tracingMiddleware) Unshare(ctx context.Context, session auth.Session, 
 }
 
 // DeleteClient traces the "DeleteClient" operation of the wrapped things.Service.
-func (tm *tracingMiddleware) DeleteClient(ctx context.Context, id string) error {
+func (tm *tracingMiddleware) DeleteClient(ctx context.Context, session auth.Session, id string) error {
 	ctx, span := tm.tracer.Start(ctx, "delete_client", trace.WithAttributes(attribute.String("id", id)))
 	defer span.End()
-	return tm.svc.DeleteClient(ctx, id)
+	return tm.svc.DeleteClient(ctx, session, id)
 }

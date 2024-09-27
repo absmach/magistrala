@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/auth"
+	pauth "github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
@@ -30,7 +31,6 @@ import (
 
 var (
 	idProvider = uuid.New()
-	token      = "token"
 	namegen    = namegenerator.NewGenerator()
 	validGroup = mggroups.Group{
 		Name:        namegen.Generate(),
@@ -190,7 +190,7 @@ func TestViewGroup(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("RetrieveByID", context.Background(), tc.id).Return(tc.repoResp, tc.repoErr)
-			got, err := svc.ViewGroup(context.Background(), tc.id)
+			got, err := svc.ViewGroup(context.Background(), pauth.Session{}, tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
 				assert.Equal(t, tc.repoResp, got)
@@ -508,7 +508,7 @@ func TestListMembers(t *testing.T) {
 				Object:      tc.groupID,
 				ObjectType:  policysvc.GroupType,
 			}).Return(tc.listSubjectResp, tc.listSubjectErr)
-			got, err := svc.ListMembers(context.Background(), tc.groupID, tc.permission, tc.memberKind)
+			got, err := svc.ListMembers(context.Background(), pauth.Session{}, tc.groupID, tc.permission, tc.memberKind)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			if err == nil {
 				assert.NotEmpty(t, got)
@@ -1451,7 +1451,7 @@ func TestDeleteGroup(t *testing.T) {
 				Object:     tc.groupID,
 			}).Return(tc.deleteObjectPoliciesErr)
 			repoCall := repo.On("Delete", context.Background(), tc.groupID).Return(tc.repoErr)
-			err := svc.DeleteGroup(context.Background(), tc.groupID)
+			err := svc.DeleteGroup(context.Background(), pauth.Session{}, tc.groupID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 			policyCall.Unset()
 			policyCall2.Unset()

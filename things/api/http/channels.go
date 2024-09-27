@@ -27,7 +27,6 @@ func groupsHandler(svc groups.Service, authClient auth.AuthClient, r *chi.Mux, l
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 	r.Route("/domains/{domainID}", func(r chi.Router) {
-
 		r.Group(func(r chi.Router) {
 			r.Use(api.AuthenticateMiddleware(authClient))
 

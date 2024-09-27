@@ -19,7 +19,7 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		res, err := svc.Provision(req.token, req.Name, req.ExternalID, req.ExternalKey)
+		res, err := svc.Provision(req.domainID, req.token, req.Name, req.ExternalID, req.ExternalKey)
 		if err != nil {
 			return nil, err
 		}

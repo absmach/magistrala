@@ -34,7 +34,7 @@ var _ Service = (*certsService)(nil)
 //go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// IssueCert issues certificate for given thing id if access is granted with token
-	IssueCert(ctx context.Context, token, thingID, ttl string) (Cert, error)
+	IssueCert(ctx context.Context, domainID, token, thingID, ttl string) (Cert, error)
 
 	// ListCerts lists certificates issued for a given thing ID
 	ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error)
@@ -46,7 +46,7 @@ type Service interface {
 	ViewCert(ctx context.Context, token, serialID string) (Cert, error)
 
 	// RevokeCert revokes a certificate for a given serial ID
-	RevokeCert(ctx context.Context, token, serialID string) (Revoke, error)
+	RevokeCert(ctx context.Context, domainID, token, serialID string) (Revoke, error)
 }
 
 type certsService struct {
@@ -84,13 +84,13 @@ type Cert struct {
 	Expire         time.Time `json:"expire" mapstructure:"-"`
 }
 
-func (cs *certsService) IssueCert(ctx context.Context, token, thingID, ttl string) (Cert, error) {
+func (cs *certsService) IssueCert(ctx context.Context, domainID, token, thingID, ttl string) (Cert, error) {
 	owner, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return Cert{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	thing, err := cs.sdk.Thing(thingID, token)
+	thing, err := cs.sdk.Thing(thingID, domainID, token)
 	if err != nil {
 		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
 	}
@@ -116,13 +116,13 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID, ttl strin
 	return c, err
 }
 
-func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (Revoke, error) {
+func (cs *certsService) RevokeCert(ctx context.Context, domainID, token, thingID string) (Revoke, error) {
 	var revoke Revoke
 	u, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return revoke, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	thing, err := cs.sdk.Thing(thingID, token)
+	thing, err := cs.sdk.Thing(thingID, domainID, token)
 	if err != nil {
 		return revoke, errors.Wrap(ErrFailedCertRevocation, err)
 	}

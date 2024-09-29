@@ -146,7 +146,7 @@ func (bs bootstrapService) Add(ctx context.Context, session mgauthn.Session, tok
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
 
-	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
+	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), cfg.DomainID, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)
 	}
@@ -225,7 +225,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session mgauth
 		return errors.Wrap(errUpdateConnections, err)
 	}
 
-	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), token)
+	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), domainID, token)
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -239,7 +239,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session mgauth
 	}
 
 	for _, c := range disconnect {
-		if err := bs.sdk.DisconnectThing(id, c, token); err != nil {
+		if err := bs.sdk.DisconnectThing(id, c, domainID, token); err != nil {
 			if errors.Contains(err, repoerr.ErrNotFound) {
 				continue
 			}
@@ -252,7 +252,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session mgauth
 			ChannelID: c,
 			ThingID:   id,
 		}
-		if err := bs.sdk.Connect(conIDs, token); err != nil {
+		if err := bs.sdk.Connect(conIDs, domainID, token); err != nil {
 			return ErrThings
 		}
 	}
@@ -341,7 +341,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session mgauthn.Sess
 				ChannelID: c.ID,
 				ThingID:   cfg.ThingID,
 			}
-			if err := bs.sdk.Connect(conIDs, token); err != nil {
+			if err := bs.sdk.Connect(conIDs, domainID, token); err != nil {
 				// Ignore conflict errors as they indicate the connection already exists.
 				if errors.Contains(err, svcerr.ErrConflict) {
 					continue
@@ -351,7 +351,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session mgauthn.Sess
 		}
 	case Inactive:
 		for _, c := range cfg.Channels {
-			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, token); err != nil {
+			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, domainID, token); err != nil {
 				if errors.Contains(err, repoerr.ErrNotFound) {
 					continue
 				}
@@ -423,7 +423,7 @@ func (bs bootstrapService) thing(domainID, id, token string) (mgsdk.Thing, error
 	return thing, nil
 }
 
-func (bs bootstrapService) connectionChannels(channels, existing []string, token string) ([]Channel, error) {
+func (bs bootstrapService) connectionChannels(channels, existing []string, domainID, token string) ([]Channel, error) {
 	add := make(map[string]bool, len(channels))
 	for _, ch := range channels {
 		add[ch] = true
@@ -437,7 +437,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 
 	var ret []Channel
 	for id := range add {
-		ch, err := bs.sdk.Channel(id, token)
+		ch, err := bs.sdk.Channel(id, domainID, token)
 		if err != nil {
 			return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 		}

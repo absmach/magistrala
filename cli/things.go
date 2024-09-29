@@ -246,13 +246,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "connect <thing_id> <channel_id> <user_auth_token>",
+		Use:   "connect <thing_id> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Connect thing",
 		Long: "Connect thing to the channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things connect <thing_id> <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli things connect <thing_id> <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -261,7 +261,7 @@ var cmdThings = []cobra.Command{
 				ChannelID: args[1],
 				ThingID:   args[0],
 			}
-			if err := sdk.Connect(connIDs, args[2]); err != nil {
+			if err := sdk.Connect(connIDs, args[2], args[3]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -270,13 +270,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "disconnect <thing_id> <channel_id> <user_auth_token>",
+		Use:   "disconnect <thing_id> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Disconnect thing",
 		Long: "Disconnect thing to the channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things disconnect <thing_id> <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli things disconnect <thing_id> <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -285,7 +285,7 @@ var cmdThings = []cobra.Command{
 				ThingID:   args[0],
 				ChannelID: args[1],
 			}
-			if err := sdk.Disconnect(connIDs, args[2]); err != nil {
+			if err := sdk.Disconnect(connIDs, args[2], args[3]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -294,13 +294,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "connections <thing_id> <user_auth_token>",
+		Use:   "connections <thing_id> <domain_id> <user_auth_token>",
 		Short: "Connected list",
 		Long: "List of Channels connected to Thing\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli connections <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli connections <thing_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -308,7 +308,7 @@ var cmdThings = []cobra.Command{
 				Offset: Offset,
 				Limit:  Limit,
 			}
-			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
+			cl, err := sdk.ChannelsByThing(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

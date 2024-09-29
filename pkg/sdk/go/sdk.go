@@ -660,9 +660,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  channel, _ := sdk.CreateChannel(channel, "token")
+	//  channel, _ := sdk.CreateChannel(channel, "domainID", "token")
 	//  fmt.Println(channel)
-	CreateChannel(channel Channel, token string) (Channel, errors.SDKError)
+	CreateChannel(channel Channel, domainID, token string) (Channel, errors.SDKError)
 
 	// Channels returns page of channels.
 	//
@@ -672,9 +672,9 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Channel",
 	//  }
-	//  channels, _ := sdk.Channels(pm, "token")
+	//  channels, _ := sdk.Channels(pm, "domainID,", "token")
 	//  fmt.Println(channels)
-	Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
+	Channels(pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError)
 
 	// ChannelsByThing returns page of channels that are connected to specified thing.
 	//
@@ -684,23 +684,23 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Channel",
 	//  }
-	//  channels, _ := sdk.ChannelsByThing("thingID", pm, "token")
+	//  channels, _ := sdk.ChannelsByThing("thingID", pm, "domainID" "token")
 	//  fmt.Println(channels)
-	ChannelsByThing(thingID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
+	ChannelsByThing(thingID string, pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError)
 
 	// Channel returns channel data by id.
 	//
 	// example:
-	//  channel, _ := sdk.Channel("channelID", "token")
+	//  channel, _ := sdk.Channel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	Channel(id, token string) (Channel, errors.SDKError)
+	Channel(id, domainID, token string) (Channel, errors.SDKError)
 
 	// ChannelPermissions returns user permissions on the channel ID.
 	//
 	// example:
-	//  channel, _ := sdk.Channel("channelID", "token")
+	//  channel, _ := sdk.Channel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	ChannelPermissions(id, token string) (Channel, errors.SDKError)
+	ChannelPermissions(id, domainID, token string) (Channel, errors.SDKError)
 
 	// UpdateChannel updates existing channel.
 	//
@@ -712,23 +712,23 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  channel, _ := sdk.UpdateChannel(channel, "token")
+	//  channel, _ := sdk.UpdateChannel(channel, "domainID", "token")
 	//  fmt.Println(channel)
-	UpdateChannel(channel Channel, token string) (Channel, errors.SDKError)
+	UpdateChannel(channel Channel, domainID, token string) (Channel, errors.SDKError)
 
 	// EnableChannel changes channel status to enabled.
 	//
 	// example:
-	//  channel, _ := sdk.EnableChannel("channelID", "token")
+	//  channel, _ := sdk.EnableChannel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	EnableChannel(id, token string) (Channel, errors.SDKError)
+	EnableChannel(id, domainID, token string) (Channel, errors.SDKError)
 
 	// DisableChannel changes channel status to disabled - soft delete.
 	//
 	// example:
-	//  channel, _ := sdk.DisableChannel("channelID", "token")
+	//  channel, _ := sdk.DisableChannel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	DisableChannel(id, token string) (Channel, errors.SDKError)
+	DisableChannel(id, domainID, token string) (Channel, errors.SDKError)
 
 	// AddUserToChannel add user to a channel.
 	//
@@ -737,9 +737,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	// 		UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.AddUserToChannel("channel_id", req, "token")
+	// err := sdk.AddUserToChannel("channel_id", req, "domainID", "token")
 	// fmt.Println(err)
-	AddUserToChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError
+	AddUserToChannel(channelID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// RemoveUserFromChannel remove user from a group.
 	//
@@ -748,9 +748,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.RemoveUserFromChannel("channel_id", req, "token")
+	// err := sdk.RemoveUserFromChannel("channel_id", req, "domainID", "token")
 	// fmt.Println(err)
-	RemoveUserFromChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError
+	RemoveUserFromChannel(channelID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// ListChannelUsers list all users in a channel .
 	//
@@ -770,9 +770,9 @@ type SDK interface {
 	// req := sdk.UserGroupsRequest{
 	//  	GroupsIDs: ["group_id_1", "group_id_2", "group_id_3"]
 	// }
-	// err := sdk.AddUserGroupToChannel("channel_id",req, "token")
+	// err := sdk.AddUserGroupToChannel("channel_id",req, "domainID", "token")
 	// fmt.Println(err)
-	AddUserGroupToChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError
+	AddUserGroupToChannel(channelID string, req UserGroupsRequest, domainID, token string) errors.SDKError
 
 	// RemoveUserGroupFromChannel remove user group from a channel.
 	//
@@ -780,9 +780,9 @@ type SDK interface {
 	// req := sdk.UserGroupsRequest{
 	//  	GroupsIDs: ["group_id_1", "group_id_2", "group_id_3"]
 	// }
-	// err := sdk.RemoveUserGroupFromChannel("channel_id",req, "token")
+	// err := sdk.RemoveUserGroupFromChannel("channel_id",req, "domainID", "token")
 	// fmt.Println(err)
-	RemoveUserGroupFromChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError
+	RemoveUserGroupFromChannel(channelID string, req UserGroupsRequest, domainID, token string) errors.SDKError
 
 	// ListChannelUserGroups list all user groups in a channel.
 	//
@@ -799,9 +799,9 @@ type SDK interface {
 	// DeleteChannel delete given group id.
 	//
 	// example:
-	//  err := sdk.DeleteChannel("channelID", "token")
+	//  err := sdk.DeleteChannel("channelID", "domainID", "token")
 	//  fmt.Println(err)
-	DeleteChannel(id, token string) errors.SDKError
+	DeleteChannel(id, domainID, token string) errors.SDKError
 
 	// Connect bulk connects things to channels specified by id.
 	//
@@ -810,9 +810,9 @@ type SDK interface {
 	//    ChannelID: "channel_id_1",
 	//    ThingID:   "thing_id_1",
 	//  }
-	//  err := sdk.Connect(conns, "token")
+	//  err := sdk.Connect(conns, "domainID", "token")
 	//  fmt.Println(err)
-	Connect(conns Connection, token string) errors.SDKError
+	Connect(conns Connection, domainID, token string) errors.SDKError
 
 	// Disconnect
 	//
@@ -821,9 +821,9 @@ type SDK interface {
 	//    ChannelID: "channel_id_1",
 	//    ThingID:   "thing_id_1",
 	//  }
-	//  err := sdk.Disconnect(conns, "token")
+	//  err := sdk.Disconnect(conns, "domainID", "token")
 	//  fmt.Println(err)
-	Disconnect(connIDs Connection, token string) errors.SDKError
+	Disconnect(connIDs Connection, domainID, token string) errors.SDKError
 
 	// ConnectThing connects thing to specified channel by id.
 	//
@@ -832,7 +832,7 @@ type SDK interface {
 	// example:
 	//  err := sdk.ConnectThing("thingID", "channelID", "token")
 	//  fmt.Println(err)
-	ConnectThing(thingID, chanID, token string) errors.SDKError
+	ConnectThing(thingID, chanID, domainID, token string) errors.SDKError
 
 	// DisconnectThing disconnect thing from specified channel by id.
 	//
@@ -841,7 +841,7 @@ type SDK interface {
 	// example:
 	//  err := sdk.DisconnectThing("thingID", "channelID", "token")
 	//  fmt.Println(err)
-	DisconnectThing(thingID, chanID, token string) errors.SDKError
+	DisconnectThing(thingID, chanID, domainID, token string) errors.SDKError
 
 	// SendMessage send message to specified channel.
 	//

@@ -64,6 +64,7 @@ func TestCert(t *testing.T) {
 	cases := []struct {
 		desc        string
 		config      provision.Config
+		domainID    string
 		token       string
 		thingID     string
 		ttl         string
@@ -215,7 +216,7 @@ func TestCert(t *testing.T) {
 				DomainID: c.config.Server.MgDomainID,
 			}
 			mgsdk.On("CreateToken", login).Return(sdk.Token{AccessToken: validToken}, c.sdkTokenErr)
-			cert, key, err := svc.Cert(c.token, c.thingID, c.ttl)
+			cert, key, err := svc.Cert(c.domainID, c.token, c.thingID, c.ttl)
 			assert.Equal(t, c.cert, cert)
 			assert.Equal(t, c.key, key)
 			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected error %v, got %v", c.err, err))

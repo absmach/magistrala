@@ -162,11 +162,11 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			Name:     name + "_" + channel.Name,
 			Metadata: sdk.Metadata(channel.Metadata),
 		}
-		ch, err := ps.sdk.CreateChannel(ch, token)
+		ch, err := ps.sdk.CreateChannel(ch, domainID, token)
 		if err != nil {
 			return res, errors.Wrap(ErrFailedChannelCreation, err)
 		}
-		ch, err = ps.sdk.Channel(ch.ID, token)
+		ch, err = ps.sdk.Channel(ch.ID, domainID, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("channel id: %s", ch.ID))
 			return res, errors.Wrap(ErrFailedChannelRetrieval, e)
@@ -352,7 +352,7 @@ func clean(ps *provisionService, things []sdk.Thing, channels []sdk.Channel, dom
 		ps.errLog(err)
 	}
 	for _, c := range channels {
-		err := ps.sdk.DeleteChannel(c.ID, token)
+		err := ps.sdk.DeleteChannel(c.ID, domainID, token)
 		ps.errLog(err)
 	}
 }

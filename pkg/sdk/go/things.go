@@ -270,7 +270,7 @@ func (sdk mgSDK) UnshareThing(thingID string, req UsersRelationRequest, domainID
 }
 
 func (sdk mgSDK) ListThingUsers(thingID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", thingsEndpoint, thingID, usersEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s/%s", domainsEndpoint, pm.DomainID, thingsEndpoint, thingID, usersEndpoint), pm)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}

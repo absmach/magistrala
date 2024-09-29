@@ -106,7 +106,7 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, token, thingID, cli
 
 // UpdateConnections logs the update_connections request. It logs bootstrap ID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, token, id string, connections []string) (err error) {
+func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, domainID, token, id string, connections []string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -121,7 +121,7 @@ func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, token, id st
 		lm.logger.Info("Update config connections completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.UpdateConnections(ctx, token, id, connections)
+	return lm.svc.UpdateConnections(ctx, domainID, token, id, connections)
 }
 
 // List logs the list request. It logs offset, limit and the time it took to complete the request.
@@ -184,7 +184,7 @@ func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 	return lm.svc.Bootstrap(ctx, externalKey, externalID, secure)
 }
 
-func (lm *loggingMiddleware) ChangeState(ctx context.Context, token, id string, state bootstrap.State) (err error) {
+func (lm *loggingMiddleware) ChangeState(ctx context.Context, domainID, token, id string, state bootstrap.State) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -199,7 +199,7 @@ func (lm *loggingMiddleware) ChangeState(ctx context.Context, token, id string, 
 		lm.logger.Info("Change thing state completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ChangeState(ctx, token, id, state)
+	return lm.svc.ChangeState(ctx, domainID, token, id, state)
 }
 
 func (lm *loggingMiddleware) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) (err error) {

@@ -72,14 +72,14 @@ func (tm *tracingMiddleware) UpdateCert(ctx context.Context, token, thingID, cli
 }
 
 // UpdateConnections traces the "UpdateConnections" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
+func (tm *tracingMiddleware) UpdateConnections(ctx context.Context, domainID, token, id string, connections []string) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_connections", trace.WithAttributes(
 		attribute.String("id", id),
 		attribute.StringSlice("connections", connections),
 	))
 	defer span.End()
 
-	return tm.svc.UpdateConnections(ctx, token, id, connections)
+	return tm.svc.UpdateConnections(ctx, domainID, token, id, connections)
 }
 
 // List traces the "List" operation of the wrapped bootstrap.Service.
@@ -116,14 +116,14 @@ func (tm *tracingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 }
 
 // ChangeState traces the "ChangeState" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) ChangeState(ctx context.Context, token, id string, state bootstrap.State) error {
+func (tm *tracingMiddleware) ChangeState(ctx context.Context, domainID, token, id string, state bootstrap.State) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_change_state", trace.WithAttributes(
 		attribute.String("id", id),
 		attribute.String("state", state.String()),
 	))
 	defer span.End()
 
-	return tm.svc.ChangeState(ctx, token, id, state)
+	return tm.svc.ChangeState(ctx, domainID, token, id, state)
 }
 
 // UpdateChannelHandler traces the "UpdateChannelHandler" operation of the wrapped bootstrap.Service.

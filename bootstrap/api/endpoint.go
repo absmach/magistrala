@@ -145,7 +145,7 @@ func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.UpdateConnections(ctx, req.token, req.id, req.Channels); err != nil {
+		if err := svc.UpdateConnections(ctx, req.domainID, req.token, req.id, req.Channels); err != nil {
 			return nil, err
 		}
 
@@ -244,7 +244,7 @@ func stateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.ChangeState(ctx, req.token, req.id, req.State); err != nil {
+		if err := svc.ChangeState(ctx, req.domainID, req.token, req.id, req.State); err != nil {
 			return nil, err
 		}
 

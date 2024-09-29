@@ -73,17 +73,17 @@ func (_m *Service) Bootstrap(ctx context.Context, externalKey string, externalID
 	return r0, r1
 }
 
-// ChangeState provides a mock function with given fields: ctx, token, id, state
-func (_m *Service) ChangeState(ctx context.Context, token string, id string, state bootstrap.State) error {
-	ret := _m.Called(ctx, token, id, state)
+// ChangeState provides a mock function with given fields: ctx, domainID, token, id, state
+func (_m *Service) ChangeState(ctx context.Context, domainID string, token string, id string, state bootstrap.State) error {
+	ret := _m.Called(ctx, domainID, token, id, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ChangeState")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, bootstrap.State) error); ok {
-		r0 = rf(ctx, token, id, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, bootstrap.State) error); ok {
+		r0 = rf(ctx, domainID, token, id, state)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -273,17 +273,17 @@ func (_m *Service) UpdateChannelHandler(ctx context.Context, channel bootstrap.C
 	return r0
 }
 
-// UpdateConnections provides a mock function with given fields: ctx, token, id, connections
-func (_m *Service) UpdateConnections(ctx context.Context, token string, id string, connections []string) error {
-	ret := _m.Called(ctx, token, id, connections)
+// UpdateConnections provides a mock function with given fields: ctx, domainID, token, id, connections
+func (_m *Service) UpdateConnections(ctx context.Context, domainID string, token string, id string, connections []string) error {
+	ret := _m.Called(ctx, domainID, token, id, connections)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateConnections")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []string) error); ok {
-		r0 = rf(ctx, token, id, connections)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, []string) error); ok {
+		r0 = rf(ctx, domainID, token, id, connections)
 	} else {
 		r0 = ret.Error(0)
 	}

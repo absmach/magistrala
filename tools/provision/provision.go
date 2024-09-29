@@ -165,7 +165,7 @@ func Provision(conf Config) error {
 
 	var chs []sdk.Channel
 	for _, c := range channels {
-		c, err = s.CreateChannel(c, token.AccessToken)
+		c, err = s.CreateChannel(c, domain.ID, token.AccessToken)
 		if err != nil {
 			return fmt.Errorf("failed to create the chennels: %s", err.Error())
 		}
@@ -260,7 +260,7 @@ func Provision(conf Config) error {
 				ThingID:   tID,
 				ChannelID: cID,
 			}
-			if err := s.Connect(conIDs, token.AccessToken); err != nil {
+			if err := s.Connect(conIDs, domain.ID, token.AccessToken); err != nil {
 				log.Fatalf("Failed to connect things %s to channels %s: %s", tID, cID, err)
 			}
 		}

@@ -91,8 +91,8 @@ func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert
 	return cfg, nil
 }
 
-func (es *eventStore) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
-	if err := es.svc.UpdateConnections(ctx, token, id, connections); err != nil {
+func (es *eventStore) UpdateConnections(ctx context.Context, domainID, token, id string, connections []string) error {
+	if err := es.svc.UpdateConnections(ctx, domainID, token, id, connections); err != nil {
 		return err
 	}
 
@@ -156,8 +156,8 @@ func (es *eventStore) Bootstrap(ctx context.Context, externalKey, externalID str
 	return cfg, err
 }
 
-func (es *eventStore) ChangeState(ctx context.Context, token, id string, state bootstrap.State) error {
-	if err := es.svc.ChangeState(ctx, token, id, state); err != nil {
+func (es *eventStore) ChangeState(ctx context.Context, domainID, token, id string, state bootstrap.State) error {
+	if err := es.svc.ChangeState(ctx, domainID, token, id, state); err != nil {
 		return err
 	}
 

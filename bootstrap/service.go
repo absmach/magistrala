@@ -76,7 +76,7 @@ type Service interface {
 	UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) (Config, error)
 
 	// UpdateConnections updates list of Channels related to given Config.
-	UpdateConnections(ctx context.Context, token, id string, connections []string) error
+	UpdateConnections(ctx context.Context, domainID, token, id string, connections []string) error
 
 	// List returns subset of Configs with given search params that belong to the
 	// user identified by the given token.
@@ -89,7 +89,7 @@ type Service interface {
 	Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error)
 
 	// ChangeState changes state of the Thing with given thing ID and domain ID.
-	ChangeState(ctx context.Context, token, id string, state State) error
+	ChangeState(ctx context.Context, domainID, token, id string, state State) error
 
 	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as
 	// handlers for events. That's why these methods surpass ownership check.
@@ -158,7 +158,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
 
-	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
+	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), cfg.DomainID, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)
 	}
@@ -246,7 +246,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 	return cfg, nil
 }
 
-func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
+func (bs bootstrapService) UpdateConnections(ctx context.Context, domainID, token, id string, connections []string) error {
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
@@ -269,7 +269,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 		return errors.Wrap(errUpdateConnections, err)
 	}
 
-	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), token)
+	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), domainID, token)
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -283,7 +283,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	}
 
 	for _, c := range disconnect {
-		if err := bs.sdk.DisconnectThing(id, c, token); err != nil {
+		if err := bs.sdk.DisconnectThing(id, c, domainID, token); err != nil {
 			if errors.Contains(err, repoerr.ErrNotFound) {
 				continue
 			}
@@ -296,7 +296,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 			ChannelID: c,
 			ThingID:   id,
 		}
-		if err := bs.sdk.Connect(conIDs, token); err != nil {
+		if err := bs.sdk.Connect(conIDs, domainID, token); err != nil {
 			return ErrThings
 		}
 	}
@@ -401,7 +401,7 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 	return cfg, nil
 }
 
-func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, state State) error {
+func (bs bootstrapService) ChangeState(ctx context.Context, domainID, token, id string, state State) error {
 	user, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
@@ -423,7 +423,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 				ChannelID: c.ID,
 				ThingID:   cfg.ThingID,
 			}
-			if err := bs.sdk.Connect(conIDs, token); err != nil {
+			if err := bs.sdk.Connect(conIDs, domainID, token); err != nil {
 				// Ignore conflict errors as they indicate the connection already exists.
 				if errors.Contains(err, svcerr.ErrConflict) {
 					continue
@@ -433,7 +433,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 		}
 	case Inactive:
 		for _, c := range cfg.Channels {
-			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, token); err != nil {
+			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, domainID, token); err != nil {
 				if errors.Contains(err, repoerr.ErrNotFound) {
 					continue
 				}
@@ -540,7 +540,7 @@ func (bs bootstrapService) thing(domainID, id, token string) (mgsdk.Thing, error
 	return thing, nil
 }
 
-func (bs bootstrapService) connectionChannels(channels, existing []string, token string) ([]Channel, error) {
+func (bs bootstrapService) connectionChannels(channels, existing []string, domainID, token string) ([]Channel, error) {
 	add := make(map[string]bool, len(channels))
 	for _, ch := range channels {
 		add[ch] = true
@@ -554,7 +554,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 
 	var ret []Channel
 	for id := range add {
-		ch, err := bs.sdk.Channel(id, token)
+		ch, err := bs.sdk.Channel(id, domainID, token)
 		if err != nil {
 			return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 		}

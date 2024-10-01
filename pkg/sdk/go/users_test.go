@@ -33,7 +33,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var id = generateUUID(&testing.T{})
+var (
+	id       = generateUUID(&testing.T{})
+	domainID = "c717fa97-ffd9-40cb-8cf9-7c2859059395"
+)
 
 func setupUsers() (*httptest.Server, *umocks.Service, *authnmocks.Authentication) {
 	usvc := new(umocks.Service)

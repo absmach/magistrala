@@ -42,114 +42,114 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 					opts...,
 				), "create_group").ServeHTTP)
 
-				r.Get("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.ViewGroupEndpoint(svc),
-					gapi.DecodeGroupRequest,
-					api.EncodeResponse,
-					opts...,
-				), "view_group").ServeHTTP)
-
-				r.Delete("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.DeleteGroupEndpoint(svc),
-					gapi.DecodeGroupRequest,
-					api.EncodeResponse,
-					opts...,
-				), "delete_group").ServeHTTP)
-
-				r.Get("/{groupID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.ViewGroupPermsEndpoint(svc),
-					gapi.DecodeGroupPermsRequest,
-					api.EncodeResponse,
-					opts...,
-				), "view_group_permissions").ServeHTTP)
-
-				r.Put("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.UpdateGroupEndpoint(svc),
-					gapi.DecodeGroupUpdate,
-					api.EncodeResponse,
-					opts...,
-				), "update_group").ServeHTTP)
-
-				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.ListGroupsEndpoint(svc, "groups", "users"),
-					gapi.DecodeListGroupsRequest,
-					api.EncodeResponse,
-					opts...,
-				), "list_groups").ServeHTTP)
-
-				r.Get("/{groupID}/children", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.ListGroupsEndpoint(svc, "groups", "users"),
-					gapi.DecodeListChildrenRequest,
-					api.EncodeResponse,
-					opts...,
-				), "list_children").ServeHTTP)
-
-				r.Get("/{groupID}/parents", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.ListGroupsEndpoint(svc, "groups", "users"),
-					gapi.DecodeListParentsRequest,
-					api.EncodeResponse,
-					opts...,
-				), "list_parents").ServeHTTP)
-
-				r.Post("/{groupID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.EnableGroupEndpoint(svc),
-					gapi.DecodeChangeGroupStatus,
-					api.EncodeResponse,
-					opts...,
-				), "enable_group").ServeHTTP)
-
-				r.Post("/{groupID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.DisableGroupEndpoint(svc),
-					gapi.DecodeChangeGroupStatus,
-					api.EncodeResponse,
-					opts...,
-				), "disable_group").ServeHTTP)
-
-				r.Post("/{groupID}/users/assign", otelhttp.NewHandler(kithttp.NewServer(
-					assignUsersEndpoint(svc),
-					decodeAssignUsersRequest,
-					api.EncodeResponse,
-					opts...,
-				), "assign_users").ServeHTTP)
-
-				r.Post("/{groupID}/users/unassign", otelhttp.NewHandler(kithttp.NewServer(
-					unassignUsersEndpoint(svc),
-					decodeUnassignUsersRequest,
-					api.EncodeResponse,
-					opts...,
-				), "unassign_users").ServeHTTP)
-
-				r.Post("/{groupID}/groups/assign", otelhttp.NewHandler(kithttp.NewServer(
-					assignGroupsEndpoint(svc),
-					decodeAssignGroupsRequest,
-					api.EncodeResponse,
-					opts...,
-				), "assign_groups").ServeHTTP)
-
-				r.Post("/{groupID}/groups/unassign", otelhttp.NewHandler(kithttp.NewServer(
-					unassignGroupsEndpoint(svc),
-					decodeUnassignGroupsRequest,
-					api.EncodeResponse,
-					opts...,
-				), "unassign_groups").ServeHTTP)
-			})
-
-			// The ideal placeholder name should be {channelID}, but gapi.DecodeListGroupsRequest uses {memberID} as a placeholder for the ID.
-			// So here, we are using {memberID} as the placeholder.
-			r.Get("/channels/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
-				gapi.ListGroupsEndpoint(svc, "groups", "channels"),
-				gapi.DecodeListGroupsRequest,
+			r.Get("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.ViewGroupEndpoint(svc),
+				gapi.DecodeGroupRequest,
 				api.EncodeResponse,
 				opts...,
-			), "list_groups_by_channel_id").ServeHTTP)
+			), "view_group").ServeHTTP)
 
-			r.Get("/users/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
+			r.Delete("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.DeleteGroupEndpoint(svc),
+				gapi.DecodeGroupRequest,
+				api.EncodeResponse,
+				opts...,
+			), "delete_group").ServeHTTP)
+
+			r.Get("/{groupID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.ViewGroupPermsEndpoint(svc),
+				gapi.DecodeGroupPermsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "view_group_permissions").ServeHTTP)
+
+			r.Put("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.UpdateGroupEndpoint(svc),
+				gapi.DecodeGroupUpdate,
+				api.EncodeResponse,
+				opts...,
+			), "update_group").ServeHTTP)
+
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				gapi.ListGroupsEndpoint(svc, "groups", "users"),
 				gapi.DecodeListGroupsRequest,
 				api.EncodeResponse,
 				opts...,
-			), "list_groups_by_user_id").ServeHTTP)
-	})
+			), "list_groups").ServeHTTP)
+
+			r.Get("/{groupID}/children", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.ListGroupsEndpoint(svc, "groups", "users"),
+				gapi.DecodeListChildrenRequest,
+				api.EncodeResponse,
+				opts...,
+			), "list_children").ServeHTTP)
+
+			r.Get("/{groupID}/parents", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.ListGroupsEndpoint(svc, "groups", "users"),
+				gapi.DecodeListParentsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "list_parents").ServeHTTP)
+
+			r.Post("/{groupID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.EnableGroupEndpoint(svc),
+				gapi.DecodeChangeGroupStatus,
+				api.EncodeResponse,
+				opts...,
+			), "enable_group").ServeHTTP)
+
+			r.Post("/{groupID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.DisableGroupEndpoint(svc),
+				gapi.DecodeChangeGroupStatus,
+				api.EncodeResponse,
+				opts...,
+			), "disable_group").ServeHTTP)
+
+			r.Post("/{groupID}/users/assign", otelhttp.NewHandler(kithttp.NewServer(
+				assignUsersEndpoint(svc),
+				decodeAssignUsersRequest,
+				api.EncodeResponse,
+				opts...,
+			), "assign_users").ServeHTTP)
+
+			r.Post("/{groupID}/users/unassign", otelhttp.NewHandler(kithttp.NewServer(
+				unassignUsersEndpoint(svc),
+				decodeUnassignUsersRequest,
+				api.EncodeResponse,
+				opts...,
+			), "unassign_users").ServeHTTP)
+
+			r.Post("/{groupID}/groups/assign", otelhttp.NewHandler(kithttp.NewServer(
+				assignGroupsEndpoint(svc),
+				decodeAssignGroupsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "assign_groups").ServeHTTP)
+
+			r.Post("/{groupID}/groups/unassign", otelhttp.NewHandler(kithttp.NewServer(
+				unassignGroupsEndpoint(svc),
+				decodeUnassignGroupsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "unassign_groups").ServeHTTP)
+		})
+
+		// The ideal placeholder name should be {channelID}, but gapi.DecodeListGroupsRequest uses {memberID} as a placeholder for the ID.
+		// So here, we are using {memberID} as the placeholder.
+		r.Get("/domains/{domainID}/channels/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
+			gapi.ListGroupsEndpoint(svc, "groups", "channels"),
+			gapi.DecodeListGroupsRequest,
+			api.EncodeResponse,
+			opts...,
+		), "list_groups_by_channel_id").ServeHTTP)
+
+		r.Get("/domains/{domainID}/users/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
+			gapi.ListGroupsEndpoint(svc, "groups", "users"),
+			gapi.DecodeListGroupsRequest,
+			api.EncodeResponse,
+			opts...,
+		), "list_groups_by_user_id").ServeHTTP)
+
 	})
 
 	return r

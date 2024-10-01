@@ -23,6 +23,7 @@ import (
 const (
 	invalid   = "invalid"
 	email     = "user@example.com"
+	domain    = "domain"
 	token     = "token"
 	thingsNum = 1
 	thingKey  = "thingKey"
@@ -49,6 +50,7 @@ var cert = mgcrt.Cert{
 func TestIssueCert(t *testing.T) {
 	svc, agent, sdk := newService(t)
 	cases := []struct {
+		domainID     string
 		token        string
 		desc         string
 		thingID      string

@@ -46,47 +46,46 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 	}
 
 	r := chi.NewRouter()
-	r.Route("/domains/{domainID}", func(r chi.Router) {
-		r.Route("/things", func(r chi.Router) {
+	r.Route("/domains/{domainID}/things", func(r chi.Router) {
 			r.Group(func(r chi.Router) {
 			r.Use(api.AuthenticateMiddleware(authn))
 
-			r.Route("/configs", func(r chi.Router) {
-					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-						addEndpoint(svc),
-						decodeAddRequest,
-						api.EncodeResponse,
-						opts...), "add").ServeHTTP)
-
-				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-					listEndpoint(svc),
-					decodeListRequest,
+		r.Route("/configs", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					addEndpoint(svc),
+					decodeAddRequest,
 					api.EncodeResponse,
-					opts...), "list").ServeHTTP)
+					opts...), "add").ServeHTTP)
 
-				r.Get("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
-					viewEndpoint(svc),
-					decodeEntityRequest,
-					api.EncodeResponse,
-					opts...), "view").ServeHTTP)
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				listEndpoint(svc),
+				decodeListRequest,
+				api.EncodeResponse,
+				opts...), "list").ServeHTTP)
 
-				r.Put("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
-					updateEndpoint(svc),
-					decodeUpdateRequest,
-					api.EncodeResponse,
-					opts...), "update").ServeHTTP)
+			r.Get("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+				viewEndpoint(svc),
+				decodeEntityRequest,
+				api.EncodeResponse,
+				opts...), "view").ServeHTTP)
 
-				r.Delete("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
-					removeEndpoint(svc),
-					decodeEntityRequest,
-					api.EncodeResponse,
-					opts...), "remove").ServeHTTP)
+			r.Put("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+				updateEndpoint(svc),
+				decodeUpdateRequest,
+				api.EncodeResponse,
+				opts...), "update").ServeHTTP)
 
-				r.Patch("/certs/{certID}", otelhttp.NewHandler(kithttp.NewServer(
-					updateCertEndpoint(svc),
-					decodeUpdateCertRequest,
-					api.EncodeResponse,
-					opts...), "update_cert").ServeHTTP)
+			r.Delete("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+				removeEndpoint(svc),
+				decodeEntityRequest,
+				api.EncodeResponse,
+				opts...), "remove").ServeHTTP)
+
+			r.Patch("/certs/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+				updateCertEndpoint(svc),
+				decodeUpdateCertRequest,
+				api.EncodeResponse,
+				opts...), "update_cert").ServeHTTP)
 
 					r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
 						updateConnEndpoint(svc),
@@ -96,23 +95,23 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 				})
 		})
 
-			r.Route("/bootstrap", func(r chi.Router) {
-				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-					bootstrapEndpoint(svc, reader, false),
-					decodeBootstrapRequest,
-					api.EncodeResponse,
-					opts...), "bootstrap").ServeHTTP)
-				r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-					bootstrapEndpoint(svc, reader, false),
-					decodeBootstrapRequest,
-					api.EncodeResponse,
-					opts...), "bootstrap").ServeHTTP)
-				r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-					bootstrapEndpoint(svc, reader, true),
-					decodeBootstrapRequest,
-					encodeSecureRes,
-					opts...), "bootstrap_secure").ServeHTTP)
-			})
+		r.Route("/bootstrap", func(r chi.Router) {
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				bootstrapEndpoint(svc, reader, false),
+				decodeBootstrapRequest,
+				api.EncodeResponse,
+				opts...), "bootstrap").ServeHTTP)
+			r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+				bootstrapEndpoint(svc, reader, false),
+				decodeBootstrapRequest,
+				api.EncodeResponse,
+				opts...), "bootstrap").ServeHTTP)
+			r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+				bootstrapEndpoint(svc, reader, true),
+				decodeBootstrapRequest,
+				encodeSecureRes,
+				opts...), "bootstrap_secure").ServeHTTP)
+		})
 
 			r.With(api.AuthenticateMiddleware(authn)).Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 				stateEndpoint(svc),

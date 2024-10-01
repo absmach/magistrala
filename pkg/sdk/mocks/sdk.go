@@ -126,17 +126,17 @@ func (_m *SDK) AddUserToDomain(domainID string, req sdk.UsersRelationRequest, to
 	return r0
 }
 
-// AddUserToGroup provides a mock function with given fields: groupID, req, token
-func (_m *SDK) AddUserToGroup(groupID string, req sdk.UsersRelationRequest, token string) errors.SDKError {
-	ret := _m.Called(groupID, req, token)
+// AddUserToGroup provides a mock function with given fields: groupID, req, domainID, token
+func (_m *SDK) AddUserToGroup(groupID string, req sdk.UsersRelationRequest, domainID string, token string) errors.SDKError {
+	ret := _m.Called(groupID, req, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddUserToGroup")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.UsersRelationRequest, string) errors.SDKError); ok {
-		r0 = rf(groupID, req, token)
+	if rf, ok := ret.Get(0).(func(string, sdk.UsersRelationRequest, string, string) errors.SDKError); ok {
+		r0 = rf(groupID, req, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -486,9 +486,9 @@ func (_m *SDK) CreateDomain(d sdk.Domain, token string) (sdk.Domain, errors.SDKE
 	return r0, r1
 }
 
-// CreateGroup provides a mock function with given fields: group, token
-func (_m *SDK) CreateGroup(group sdk.Group, token string) (sdk.Group, errors.SDKError) {
-	ret := _m.Called(group, token)
+// CreateGroup provides a mock function with given fields: group, domainID, token
+func (_m *SDK) CreateGroup(group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _m.Called(group, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateGroup")
@@ -496,17 +496,17 @@ func (_m *SDK) CreateGroup(group sdk.Group, token string) (sdk.Group, errors.SDK
 
 	var r0 sdk.Group
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.Group, string) (sdk.Group, errors.SDKError)); ok {
-		return rf(group, token)
+	if rf, ok := ret.Get(0).(func(sdk.Group, string, string) (sdk.Group, errors.SDKError)); ok {
+		return rf(group, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(sdk.Group, string) sdk.Group); ok {
-		r0 = rf(group, token)
+	if rf, ok := ret.Get(0).(func(sdk.Group, string, string) sdk.Group); ok {
+		r0 = rf(group, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(sdk.Group, string) errors.SDKError); ok {
-		r1 = rf(group, token)
+	if rf, ok := ret.Get(1).(func(sdk.Group, string, string) errors.SDKError); ok {
+		r1 = rf(group, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -688,17 +688,17 @@ func (_m *SDK) DeleteChannel(id string, domainID string, token string) errors.SD
 	return r0
 }
 
-// DeleteGroup provides a mock function with given fields: id, token
-func (_m *SDK) DeleteGroup(id string, token string) errors.SDKError {
-	ret := _m.Called(id, token)
+// DeleteGroup provides a mock function with given fields: id, domainID, token
+func (_m *SDK) DeleteGroup(id string, domainID string, token string) errors.SDKError {
+	ret := _m.Called(id, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteGroup")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) errors.SDKError); ok {
-		r0 = rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) errors.SDKError); ok {
+		r0 = rf(id, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -836,9 +836,9 @@ func (_m *SDK) DisableDomain(domainID string, token string) errors.SDKError {
 	return r0
 }
 
-// DisableGroup provides a mock function with given fields: id, token
-func (_m *SDK) DisableGroup(id string, token string) (sdk.Group, errors.SDKError) {
-	ret := _m.Called(id, token)
+// DisableGroup provides a mock function with given fields: id, domainID, token
+func (_m *SDK) DisableGroup(id string, domainID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableGroup")
@@ -846,17 +846,17 @@ func (_m *SDK) DisableGroup(id string, token string) (sdk.Group, errors.SDKError
 
 	var r0 sdk.Group
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.Group, errors.SDKError)); ok {
-		return rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Group, errors.SDKError)); ok {
+		return rf(id, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.Group); ok {
-		r0 = rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Group); ok {
+		r0 = rf(id, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(id, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1106,9 +1106,9 @@ func (_m *SDK) EnableDomain(domainID string, token string) errors.SDKError {
 	return r0
 }
 
-// EnableGroup provides a mock function with given fields: id, token
-func (_m *SDK) EnableGroup(id string, token string) (sdk.Group, errors.SDKError) {
-	ret := _m.Called(id, token)
+// EnableGroup provides a mock function with given fields: id, domainID, token
+func (_m *SDK) EnableGroup(id string, domainID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableGroup")
@@ -1116,17 +1116,17 @@ func (_m *SDK) EnableGroup(id string, token string) (sdk.Group, errors.SDKError)
 
 	var r0 sdk.Group
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.Group, errors.SDKError)); ok {
-		return rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Group, errors.SDKError)); ok {
+		return rf(id, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.Group); ok {
-		r0 = rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Group); ok {
+		r0 = rf(id, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(id, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1196,9 +1196,9 @@ func (_m *SDK) EnableUser(id string, token string) (sdk.User, errors.SDKError) {
 	return r0, r1
 }
 
-// Group provides a mock function with given fields: id, token
-func (_m *SDK) Group(id string, token string) (sdk.Group, errors.SDKError) {
-	ret := _m.Called(id, token)
+// Group provides a mock function with given fields: id, domainID, token
+func (_m *SDK) Group(id string, domainID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Group")
@@ -1206,17 +1206,17 @@ func (_m *SDK) Group(id string, token string) (sdk.Group, errors.SDKError) {
 
 	var r0 sdk.Group
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.Group, errors.SDKError)); ok {
-		return rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Group, errors.SDKError)); ok {
+		return rf(id, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.Group); ok {
-		r0 = rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Group); ok {
+		r0 = rf(id, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(id, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1226,9 +1226,9 @@ func (_m *SDK) Group(id string, token string) (sdk.Group, errors.SDKError) {
 	return r0, r1
 }
 
-// GroupPermissions provides a mock function with given fields: id, token
-func (_m *SDK) GroupPermissions(id string, token string) (sdk.Group, errors.SDKError) {
-	ret := _m.Called(id, token)
+// GroupPermissions provides a mock function with given fields: id, domainID, token
+func (_m *SDK) GroupPermissions(id string, domainID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GroupPermissions")
@@ -1236,17 +1236,17 @@ func (_m *SDK) GroupPermissions(id string, token string) (sdk.Group, errors.SDKE
 
 	var r0 sdk.Group
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.Group, errors.SDKError)); ok {
-		return rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Group, errors.SDKError)); ok {
+		return rf(id, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.Group); ok {
-		r0 = rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Group); ok {
+		r0 = rf(id, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(id, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1958,17 +1958,17 @@ func (_m *SDK) RemoveUserFromDomain(domainID string, userID string, token string
 	return r0
 }
 
-// RemoveUserFromGroup provides a mock function with given fields: groupID, req, token
-func (_m *SDK) RemoveUserFromGroup(groupID string, req sdk.UsersRelationRequest, token string) errors.SDKError {
-	ret := _m.Called(groupID, req, token)
+// RemoveUserFromGroup provides a mock function with given fields: groupID, req, domainID, token
+func (_m *SDK) RemoveUserFromGroup(groupID string, req sdk.UsersRelationRequest, domainID string, token string) errors.SDKError {
+	ret := _m.Called(groupID, req, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveUserFromGroup")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.UsersRelationRequest, string) errors.SDKError); ok {
-		r0 = rf(groupID, req, token)
+	if rf, ok := ret.Get(0).(func(string, sdk.UsersRelationRequest, string, string) errors.SDKError); ok {
+		r0 = rf(groupID, req, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2446,9 +2446,9 @@ func (_m *SDK) UpdateDomain(d sdk.Domain, token string) (sdk.Domain, errors.SDKE
 	return r0, r1
 }
 
-// UpdateGroup provides a mock function with given fields: group, token
-func (_m *SDK) UpdateGroup(group sdk.Group, token string) (sdk.Group, errors.SDKError) {
-	ret := _m.Called(group, token)
+// UpdateGroup provides a mock function with given fields: group, domainID, token
+func (_m *SDK) UpdateGroup(group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _m.Called(group, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroup")
@@ -2456,17 +2456,17 @@ func (_m *SDK) UpdateGroup(group sdk.Group, token string) (sdk.Group, errors.SDK
 
 	var r0 sdk.Group
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.Group, string) (sdk.Group, errors.SDKError)); ok {
-		return rf(group, token)
+	if rf, ok := ret.Get(0).(func(sdk.Group, string, string) (sdk.Group, errors.SDKError)); ok {
+		return rf(group, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(sdk.Group, string) sdk.Group); ok {
-		r0 = rf(group, token)
+	if rf, ok := ret.Get(0).(func(sdk.Group, string, string) sdk.Group); ok {
+		r0 = rf(group, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 
-	if rf, ok := ret.Get(1).(func(sdk.Group, string) errors.SDKError); ok {
-		r1 = rf(group, token)
+	if rf, ok := ret.Get(1).(func(sdk.Group, string, string) errors.SDKError); ok {
+		r1 = rf(group, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)

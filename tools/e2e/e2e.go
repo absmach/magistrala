@@ -89,7 +89,7 @@ func Test(conf Config) {
 	}
 	color.Success.Printf("created users of ids:\n%s\n", magenta(getIDS(users)))
 
-	groups, err := createGroups(s, conf, token)
+	groups, err := createGroups(s, conf, domainID, token)
 	if err != nil {
 		errExit(fmt.Errorf("unable to create groups: %w", err))
 	}
@@ -204,7 +204,7 @@ func createUsers(s sdk.SDK, conf Config, token string) ([]sdk.User, error) {
 	return users, nil
 }
 
-func createGroups(s sdk.SDK, conf Config, token string) ([]sdk.Group, error) {
+func createGroups(s sdk.SDK, conf Config, domainID, token string) ([]sdk.Group, error) {
 	var err error
 	groups := []sdk.Group{}
 
@@ -214,7 +214,7 @@ func createGroups(s sdk.SDK, conf Config, token string) ([]sdk.Group, error) {
 			Status: sdk.EnabledStatus,
 		}
 
-		group, err = s.CreateGroup(group, token)
+		group, err = s.CreateGroup(group, domainID, token)
 		if err != nil {
 			return []sdk.Group{}, fmt.Errorf("failed to create the group: %w", err)
 		}
@@ -329,7 +329,7 @@ func read(s sdk.SDK, conf Config, domainID, token string, users []sdk.User, grou
 		return fmt.Errorf("returned users %d less than created users %d", up.Total, conf.Num)
 	}
 	for _, group := range groups {
-		if _, err := s.Group(group.ID, token); err != nil {
+		if _, err := s.Group(group.ID, domainID, token); err != nil {
 			return fmt.Errorf("failed to get group %w", err)
 		}
 	}
@@ -420,7 +420,7 @@ func update(s sdk.SDK, domainID, token string, users []sdk.User, groups []sdk.Gr
 	for _, group := range groups {
 		group.Name = namesgenerator.Generate()
 		group.Metadata = sdk.Metadata{"Update": namesgenerator.Generate()}
-		rGroup, err := s.UpdateGroup(group, token)
+		rGroup, err := s.UpdateGroup(group, domainID, token)
 		if err != nil {
 			return fmt.Errorf("failed to update group %w", err)
 		}
@@ -431,7 +431,7 @@ func update(s sdk.SDK, domainID, token string, users []sdk.User, groups []sdk.Gr
 			return fmt.Errorf("failed to update group metadata before %s after %s", group.Metadata["Update"], rGroup.Metadata["Update"])
 		}
 		group = rGroup
-		rGroup, err = s.DisableGroup(group.ID, token)
+		rGroup, err = s.DisableGroup(group.ID, domainID, token)
 		if err != nil {
 			return fmt.Errorf("failed to disable group %w", err)
 		}
@@ -439,7 +439,7 @@ func update(s sdk.SDK, domainID, token string, users []sdk.User, groups []sdk.Gr
 			return fmt.Errorf("failed to disable group before %s after %s", group.Status, rGroup.Status)
 		}
 		group = rGroup
-		rGroup, err = s.EnableGroup(group.ID, token)
+		rGroup, err = s.EnableGroup(group.ID, domainID, token)
 		if err != nil {
 			return fmt.Errorf("failed to enable group %w", err)
 		}

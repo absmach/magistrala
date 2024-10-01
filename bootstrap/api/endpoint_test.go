@@ -32,6 +32,7 @@ import (
 
 const (
 	validToken   = "validToken"
+	domainID     = "b4d7d79e-fd99-4c2b-ac09-524e43df6888"
 	invalidToken = "invalid"
 	email        = "test@example.com"
 	unknown      = "unknown"
@@ -308,12 +309,13 @@ func TestAdd(t *testing.T) {
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/configs", bs.URL),
+			url:         fmt.Sprintf("/%s/domains/%s/things/configs", bs.URL, domainID),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
+		fmt.Printf("Error is %+v\n", err)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
 		location := res.Header.Get("Location")
@@ -769,7 +771,7 @@ func TestList(t *testing.T) {
 		}
 		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		err := svc.ChangeState(context.Background(), validToken, list[i].ThingID, state)
+		err := svc.ChangeState(context.Background(), domainID, validToken, list[i].ThingID, state)
 		assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
 
 		svcCall.Unset()

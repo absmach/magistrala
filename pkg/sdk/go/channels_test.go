@@ -93,6 +93,7 @@ func TestCreateChannel(t *testing.T) {
 	cases := []struct {
 		desc           string
 		channelReq     sdk.Channel
+		domainID string
 		token          string
 		session        pauth.Session
 		createGroupReq groups.Group
@@ -106,6 +107,7 @@ func TestCreateChannel(t *testing.T) {
 		{
 			desc:           "create channel successfully",
 			channelReq:     channelReq,
+			domainID: domainID,
 			token:          validToken,
 			createGroupReq: createGroupReq,
 			svcRes:         group,
@@ -116,6 +118,7 @@ func TestCreateChannel(t *testing.T) {
 		{
 			desc:           "create channel with existing name",
 			channelReq:     channelReq,
+			domainID: domainID,
 			token:          validToken,
 			createGroupReq: createGroupReq,
 			svcRes:         groups.Group{},
@@ -233,7 +236,7 @@ func TestCreateChannel(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("CreateGroup", mock.Anything, tc.session, channelKind, tc.createGroupReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.CreateChannel(tc.channelReq, tc.token)
+			resp, err := mgsdk.CreateChannel(tc.channelReq,domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -268,6 +271,7 @@ func TestListChannels(t *testing.T) {
 
 	cases := []struct {
 		desc           string
+		domainID string
 		token          string
 		session        pauth.Session
 		status         mgclients.Status
@@ -499,7 +503,7 @@ func TestListChannels(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.groupsPageMeta).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.Channels(pm, tc.token)
+			resp, err := mgsdk.Channels(pm,tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -524,6 +528,7 @@ func TestViewChannel(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID string
 		token       string
 		session     pauth.Session
 		channelID   string
@@ -536,6 +541,7 @@ func TestViewChannel(t *testing.T) {
 	}{
 		{
 			desc:      "view channel successfully",
+			domainID: domainID,
 			token:     validToken,
 			channelID: groupRes.ID,
 			svcRes:    groupRes,
@@ -545,6 +551,7 @@ func TestViewChannel(t *testing.T) {
 		},
 		{
 			desc:        "view channel with invalid token",
+			domainID: domainID,
 			token:       invalidToken,
 			channelID:   groupRes.ID,
 			svcRes:      groups.Group{},
@@ -554,6 +561,7 @@ func TestViewChannel(t *testing.T) {
 		},
 		{
 			desc:      "view channel with empty token",
+			domainID: domainID,
 			token:     "",
 			channelID: groupRes.ID,
 			svcRes:    groups.Group{},
@@ -563,6 +571,7 @@ func TestViewChannel(t *testing.T) {
 		},
 		{
 			desc:      "view channel for wrong id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: wrongID,
 			svcRes:    groups.Group{},
@@ -572,6 +581,7 @@ func TestViewChannel(t *testing.T) {
 		},
 		{
 			desc:      "view channel with empty channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: "",
 			svcRes:    groups.Group{},
@@ -581,6 +591,7 @@ func TestViewChannel(t *testing.T) {
 		},
 		{
 			desc:      "view channel with service response that can't be unmarshalled",
+			domainID: domainID,
 			token:     validToken,
 			channelID: groupRes.ID,
 			svcRes: groups.Group{
@@ -603,7 +614,7 @@ func TestViewChannel(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("ViewGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.Channel(tc.channelID, tc.token)
+			resp, err := mgsdk.Channel(tc.channelID,tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -656,6 +667,7 @@ func TestUpdateChannel(t *testing.T) {
 
 	cases := []struct {
 		desc           string
+		domainID string
 		token          string
 		session        pauth.Session
 		channelReq     sdk.Channel
@@ -669,6 +681,7 @@ func TestUpdateChannel(t *testing.T) {
 	}{
 		{
 			desc:  "update channel name",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:   channel.ID,
@@ -685,6 +698,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel description",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:          channel.ID,
@@ -701,6 +715,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel metadata",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID: channel.ID,
@@ -719,6 +734,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel with every field defined",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:          channel.ID,
@@ -739,6 +755,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel name with invalid channel id",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:   wrongID,
@@ -755,6 +772,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel description with invalid channel id",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:          wrongID,
@@ -771,6 +789,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel metadata with invalid channel id",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID: wrongID,
@@ -789,6 +808,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel with invalid token",
+			domainID: domainID,
 			token: invalidToken,
 			channelReq: sdk.Channel{
 				ID:   channel.ID,
@@ -805,6 +825,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel with empty token",
+			domainID: domainID,
 			token: "",
 			channelReq: sdk.Channel{
 				ID:   channel.ID,
@@ -821,6 +842,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel with name that is too long",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:   channel.ID,
@@ -834,6 +856,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel that can't be marshalled",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:   channel.ID,
@@ -850,6 +873,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel with service response that can't be unmarshalled",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				ID:   channel.ID,
@@ -871,6 +895,7 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:  "update channel with empty channel id",
+			domainID: domainID,
 			token: validToken,
 			channelReq: sdk.Channel{
 				Name: newName,
@@ -890,7 +915,7 @@ func TestUpdateChannel(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("UpdateGroup", mock.Anything, tc.session, tc.updateGroupReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.UpdateChannel(tc.channelReq, tc.token)
+			resp, err := mgsdk.UpdateChannel(tc.channelReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -927,6 +952,7 @@ func TestListChannelsByThing(t *testing.T) {
 
 	cases := []struct {
 		desc          string
+		domainID string
 		token         string
 		session       pauth.Session
 		thingID       string
@@ -941,6 +967,7 @@ func TestListChannelsByThing(t *testing.T) {
 	}{
 		{
 			desc:     "list channels successfully",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{},
@@ -969,6 +996,7 @@ func TestListChannelsByThing(t *testing.T) {
 		},
 		{
 			desc:    "list channel with offset and limit",
+			domainID: domainID,
 			token:   validToken,
 			thingID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
@@ -1000,6 +1028,7 @@ func TestListChannelsByThing(t *testing.T) {
 		},
 		{
 			desc:    "list channel with given name",
+			domainID: domainID,
 			token:   validToken,
 			thingID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
@@ -1033,6 +1062,7 @@ func TestListChannelsByThing(t *testing.T) {
 		},
 		{
 			desc:     "list channels with invalid token",
+			domainID: domainID,
 			token:    invalidToken,
 			thingID:  testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{},
@@ -1051,6 +1081,7 @@ func TestListChannelsByThing(t *testing.T) {
 		},
 		{
 			desc:          "list channels with empty token",
+			domainID: domainID,
 			token:         "",
 			thingID:       testsutil.GenerateUUID(t),
 			pageMeta:      sdk.PageMetadata{},
@@ -1062,6 +1093,7 @@ func TestListChannelsByThing(t *testing.T) {
 		},
 		{
 			desc:    "list channels with limit greater than max",
+			domainID: domainID,
 			token:   validToken,
 			thingID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
@@ -1075,6 +1107,7 @@ func TestListChannelsByThing(t *testing.T) {
 		},
 		{
 			desc:    "list channels with invalid metadata",
+			domainID: domainID,
 			token:   validToken,
 			thingID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
@@ -1090,6 +1123,7 @@ func TestListChannelsByThing(t *testing.T) {
 		},
 		{
 			desc:    "list channels with service response that can't be unmarshalled",
+			domainID: domainID,
 			token:   validToken,
 			thingID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
@@ -1128,7 +1162,7 @@ func TestListChannelsByThing(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.ThingsKind, tc.thingID, tc.listGroupsReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ChannelsByThing(tc.thingID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ChannelsByThing(tc.thingID, tc.pageMeta,tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1153,6 +1187,7 @@ func TestEnableChannel(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID string
 		token       string
 		session     pauth.Session
 		channelID   string
@@ -1165,6 +1200,7 @@ func TestEnableChannel(t *testing.T) {
 	}{
 		{
 			desc:      "enable channel successfully",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			svcRes:    group,
@@ -1174,6 +1210,7 @@ func TestEnableChannel(t *testing.T) {
 		},
 		{
 			desc:        "enable channel with invalid token",
+			domainID: domainID,
 			token:       invalidToken,
 			channelID:   channel.ID,
 			svcRes:      groups.Group{},
@@ -1183,6 +1220,7 @@ func TestEnableChannel(t *testing.T) {
 		},
 		{
 			desc:      "enable channel with empty token",
+			domainID: domainID,
 			token:     "",
 			channelID: channel.ID,
 			svcRes:    groups.Group{},
@@ -1192,6 +1230,7 @@ func TestEnableChannel(t *testing.T) {
 		},
 		{
 			desc:      "enable channel with invalid channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: wrongID,
 			svcRes:    groups.Group{},
@@ -1201,6 +1240,7 @@ func TestEnableChannel(t *testing.T) {
 		},
 		{
 			desc:      "enable channel with empty channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: "",
 			svcRes:    groups.Group{},
@@ -1210,6 +1250,7 @@ func TestEnableChannel(t *testing.T) {
 		},
 		{
 			desc:      "enable channel with service response that can't be unmarshalled",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			svcRes: groups.Group{
@@ -1231,7 +1272,7 @@ func TestEnableChannel(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("EnableGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.EnableChannel(tc.channelID, tc.token)
+			resp, err := mgsdk.EnableChannel(tc.channelID, tc.domainID ,tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1261,6 +1302,7 @@ func TestDisableChannel(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID string
 		token       string
 		session     pauth.Session
 		channelID   string
@@ -1273,6 +1315,7 @@ func TestDisableChannel(t *testing.T) {
 	}{
 		{
 			desc:      "disable channel successfully",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			svcRes:    dGroup,
@@ -1282,6 +1325,7 @@ func TestDisableChannel(t *testing.T) {
 		},
 		{
 			desc:        "disable channel with invalid token",
+			domainID: domainID,
 			token:       invalidToken,
 			channelID:   channel.ID,
 			svcRes:      groups.Group{},
@@ -1291,6 +1335,7 @@ func TestDisableChannel(t *testing.T) {
 		},
 		{
 			desc:      "disable channel with empty token",
+			domainID: domainID,
 			token:     "",
 			channelID: channel.ID,
 			svcRes:    groups.Group{},
@@ -1300,6 +1345,7 @@ func TestDisableChannel(t *testing.T) {
 		},
 		{
 			desc:      "disable channel with invalid channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: wrongID,
 			svcRes:    groups.Group{},
@@ -1309,6 +1355,7 @@ func TestDisableChannel(t *testing.T) {
 		},
 		{
 			desc:      "disable channel with empty channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: "",
 			svcRes:    groups.Group{},
@@ -1318,6 +1365,7 @@ func TestDisableChannel(t *testing.T) {
 		},
 		{
 			desc:      "disable channel with service response that can't be unmarshalled",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			svcRes: groups.Group{
@@ -1339,7 +1387,7 @@ func TestDisableChannel(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("DisableGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.DisableChannel(tc.channelID, tc.token)
+			resp, err := mgsdk.DisableChannel(tc.channelID,tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1363,6 +1411,7 @@ func TestDeleteChannel(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID string
 		token       string
 		session     pauth.Session
 		channelID   string
@@ -1373,6 +1422,7 @@ func TestDeleteChannel(t *testing.T) {
 	}{
 		{
 			desc:      "delete channel successfully",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			svcErr:    nil,
@@ -1380,6 +1430,7 @@ func TestDeleteChannel(t *testing.T) {
 		},
 		{
 			desc:        "delete channel with invalid token",
+			domainID: domainID,
 			token:       invalidToken,
 			channelID:   channel.ID,
 			identifyErr: svcerr.ErrAuthentication,
@@ -1387,6 +1438,7 @@ func TestDeleteChannel(t *testing.T) {
 		},
 		{
 			desc:      "delete channel with empty token",
+			domainID: domainID,
 			token:     "",
 			channelID: channel.ID,
 			svcErr:    nil,
@@ -1394,6 +1446,7 @@ func TestDeleteChannel(t *testing.T) {
 		},
 		{
 			desc:      "delete channel with invalid channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: wrongID,
 			svcErr:    svcerr.ErrRemoveEntity,
@@ -1401,6 +1454,7 @@ func TestDeleteChannel(t *testing.T) {
 		},
 		{
 			desc:      "delete channel with empty channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: "",
 			svcErr:    svcerr.ErrRemoveEntity,
@@ -1415,7 +1469,7 @@ func TestDeleteChannel(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("DeleteGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcErr)
-			err := mgsdk.DeleteChannel(tc.channelID, tc.token)
+			err := mgsdk.DeleteChannel(tc.channelID, tc.domainID,tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "DeleteGroup", mock.Anything, tc.session, tc.channelID)
@@ -1438,6 +1492,7 @@ func TestChannelPermissions(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID string
 		token       string
 		session     pauth.Session
 		channelID   string
@@ -1450,6 +1505,7 @@ func TestChannelPermissions(t *testing.T) {
 	}{
 		{
 			desc:      "view channel permissions successfully",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			svcRes:    []string{"view"},
@@ -1461,6 +1517,7 @@ func TestChannelPermissions(t *testing.T) {
 		},
 		{
 			desc:        "view channel permissions with invalid token",
+			domainID: domainID,
 			token:       invalidToken,
 			channelID:   channel.ID,
 			svcRes:      []string{},
@@ -1470,6 +1527,7 @@ func TestChannelPermissions(t *testing.T) {
 		},
 		{
 			desc:      "view channel permissions with empty token",
+			domainID: domainID,
 			token:     "",
 			channelID: channel.ID,
 			svcRes:    []string{},
@@ -1479,6 +1537,7 @@ func TestChannelPermissions(t *testing.T) {
 		},
 		{
 			desc:      "view channel permissions with invalid channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: wrongID,
 			svcRes:    []string{},
@@ -1488,6 +1547,7 @@ func TestChannelPermissions(t *testing.T) {
 		},
 		{
 			desc:      "view channel permissions with empty channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: "",
 			svcRes:    []string{},
@@ -1505,7 +1565,7 @@ func TestChannelPermissions(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("ViewGroupPerms", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ChannelPermissions(tc.channelID, tc.token)
+			resp, err := mgsdk.ChannelPermissions(tc.channelID,tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1529,6 +1589,7 @@ func TestAddUserToChannel(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID string
 		token       string
 		session     pauth.Session
 		channelID   string
@@ -1540,6 +1601,7 @@ func TestAddUserToChannel(t *testing.T) {
 	}{
 		{
 			desc:      "add user to channel successfully",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			addUserReq: sdk.UsersRelationRequest{
@@ -1551,6 +1613,7 @@ func TestAddUserToChannel(t *testing.T) {
 		},
 		{
 			desc:      "add user to channel with invalid token",
+			domainID: domainID,
 			token:     invalidToken,
 			channelID: channel.ID,
 			addUserReq: sdk.UsersRelationRequest{
@@ -1562,6 +1625,7 @@ func TestAddUserToChannel(t *testing.T) {
 		},
 		{
 			desc:      "add user to channel with empty token",
+			domainID: domainID,
 			token:     "",
 			channelID: channel.ID,
 			addUserReq: sdk.UsersRelationRequest{
@@ -1573,6 +1637,7 @@ func TestAddUserToChannel(t *testing.T) {
 		},
 		{
 			desc:      "add user to channel with invalid channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: wrongID,
 			addUserReq: sdk.UsersRelationRequest{
@@ -1584,6 +1649,7 @@ func TestAddUserToChannel(t *testing.T) {
 		},
 		{
 			desc:      "add user to channel with empty channel id",
+			domainID: domainID,
 			token:     validToken,
 			channelID: "",
 			addUserReq: sdk.UsersRelationRequest{
@@ -1595,6 +1661,7 @@ func TestAddUserToChannel(t *testing.T) {
 		},
 		{
 			desc:      "add users to channel with empty relation",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			addUserReq: sdk.UsersRelationRequest{
@@ -1606,6 +1673,7 @@ func TestAddUserToChannel(t *testing.T) {
 		},
 		{
 			desc:      "add users to channel with empty user ids",
+			domainID: domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			addUserReq: sdk.UsersRelationRequest{
@@ -1624,7 +1692,7 @@ func TestAddUserToChannel(t *testing.T) {
 			}
 			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.channelID, tc.addUserReq.Relation, policies.UsersKind, tc.addUserReq.UserIDs).Return(tc.svcErr)
-			err := mgsdk.AddUserToChannel(tc.channelID, tc.addUserReq, tc.token)
+			err := mgsdk.AddUserToChannel(tc.channelID, tc.addUserReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Assign", mock.Anything, tc.session, tc.channelID, tc.addUserReq.Relation, policies.UsersKind, tc.addUserReq.UserIDs)

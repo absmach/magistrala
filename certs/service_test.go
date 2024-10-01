@@ -28,6 +28,7 @@ import (
 const (
 	invalid   = "invalid"
 	email     = "user@example.com"
+	domain    = "domain"
 	token     = "token"
 	thingsNum = 1
 	thingKey  = "thingKey"
@@ -56,6 +57,7 @@ var cert = certs.Cert{
 func TestIssueCert(t *testing.T) {
 	svc, repo, agent, auth, sdk := newService(t)
 	cases := []struct {
+		domainID     string
 		token        string
 		desc         string
 		thingID      string
@@ -70,10 +72,11 @@ func TestIssueCert(t *testing.T) {
 		err          error
 	}{
 		{
-			desc:    "issue new cert",
-			token:   token,
-			thingID: thingID,
-			ttl:     ttl,
+			desc:     "issue new cert",
+			domainID: domain,
+			token:    token,
+			thingID:  thingID,
+			ttl:      ttl,
 			pki: pki.Cert{
 				ClientCert:     "",
 				IssuingCA:      "",
@@ -86,10 +89,11 @@ func TestIssueCert(t *testing.T) {
 			identifyRes: &magistrala.IdentityRes{Id: validID},
 		},
 		{
-			desc:    "issue new cert for non existing thing id",
-			token:   token,
-			thingID: "2",
-			ttl:     ttl,
+			desc:     "issue new cert for non existing thing id",
+			domainID: domain,
+			token:    token,
+			thingID:  "2",
+			ttl:      ttl,
 			pki: pki.Cert{
 				ClientCert:     "",
 				IssuingCA:      "",
@@ -104,10 +108,11 @@ func TestIssueCert(t *testing.T) {
 			err:         certs.ErrFailedCertCreation,
 		},
 		{
-			desc:    "issue new cert for invalid token",
-			token:   invalid,
-			thingID: thingID,
-			ttl:     ttl,
+			desc:     "issue new cert for invalid token",
+			domainID: domain,
+			token:    invalid,
+			thingID:  thingID,
+			ttl:      ttl,
 			pki: pki.Cert{
 				ClientCert:     "",
 				IssuingCA:      "",
@@ -125,11 +130,11 @@ func TestIssueCert(t *testing.T) {
 
 	for _, tc := range cases {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
-		sdkCall := sdk.On("Thing", tc.thingID, tc.token).Return(mgsdk.Thing{ID: tc.thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, tc.thingErr)
+		sdkCall := sdk.On("Thing", tc.thingID, tc.domainID, tc.token).Return(mgsdk.Thing{ID: tc.thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, tc.thingErr)
 		agentCall := agent.On("IssueCert", thingKey, tc.ttl).Return(tc.pki, tc.issueCertErr)
 		repoCall := repo.On("Save", context.Background(), mock.Anything).Return("", tc.repoErr)
 
-		c, err := svc.IssueCert(context.Background(), tc.token, tc.thingID, tc.ttl)
+		c, err := svc.IssueCert(context.Background(), tc.domainID, tc.token, tc.thingID, tc.ttl)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		cert, _ := certs.ReadCert([]byte(c.ClientCert))
 		if cert != nil {
@@ -145,6 +150,7 @@ func TestIssueCert(t *testing.T) {
 func TestRevokeCert(t *testing.T) {
 	svc, repo, _, auth, sdk := newService(t)
 	cases := []struct {
+		domainID    string
 		token       string
 		desc        string
 		thingID     string
@@ -158,6 +164,7 @@ func TestRevokeCert(t *testing.T) {
 	}{
 		{
 			desc:        "revoke cert",
+			domainID:    domain,
 			token:       token,
 			thingID:     thingID,
 			page:        certs.Page{Limit: 10000, Offset: 0, Total: 1, Certs: []certs.Cert{cert}},
@@ -165,6 +172,7 @@ func TestRevokeCert(t *testing.T) {
 		},
 		{
 			desc:        "revoke cert for invalid token",
+			domainID:    domain,
 			token:       invalid,
 			thingID:     thingID,
 			page:        certs.Page{},
@@ -174,6 +182,7 @@ func TestRevokeCert(t *testing.T) {
 		},
 		{
 			desc:        "revoke cert for invalid thing id",
+			domainID:    domain,
 			token:       token,
 			thingID:     "2",
 			page:        certs.Page{},
@@ -186,10 +195,10 @@ func TestRevokeCert(t *testing.T) {
 	for _, tc := range cases {
 		authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true}, tc.authErr)
-		sdkCall := sdk.On("Thing", tc.thingID, tc.token).Return(mgsdk.Thing{ID: tc.thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, tc.thingErr)
+		sdkCall := sdk.On("Thing", tc.thingID, tc.domainID, tc.token).Return(mgsdk.Thing{ID: tc.thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, tc.thingErr)
 		repoCall := repo.On("RetrieveByThing", context.Background(), validID, tc.thingID, tc.page.Offset, tc.page.Limit).Return(certs.Page{}, tc.repoErr)
 
-		_, err := svc.RevokeCert(context.Background(), tc.token, tc.thingID)
+		_, err := svc.RevokeCert(context.Background(), tc.domainID, tc.token, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		authCall.Unset()
 		authCall1.Unset()
@@ -377,11 +386,11 @@ func TestViewCert(t *testing.T) {
 	svc, repo, agent, auth, sdk := newService(t)
 
 	authCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: token}).Return(&magistrala.IdentityRes{Id: validID}, nil)
-	sdkCall := sdk.On("Thing", thingID, token).Return(mgsdk.Thing{ID: thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, nil)
+	sdkCall := sdk.On("Thing", thingID, domain, token).Return(mgsdk.Thing{ID: thingID, Credentials: mgsdk.Credentials{Secret: thingKey}}, nil)
 	agentCall := agent.On("IssueCert", thingKey, ttl).Return(pki.Cert{}, nil)
 	repoCall := repo.On("Save", context.Background(), mock.Anything).Return("", nil)
 
-	ic, err := svc.IssueCert(context.Background(), token, thingID, ttl)
+	ic, err := svc.IssueCert(context.Background(), domain, token, thingID, ttl)
 	require.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 	authCall.Unset()
 	sdkCall.Unset()

@@ -516,9 +516,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  group, _ := sdk.CreateGroup(group, "token")
+	//  group, _ := sdk.CreateGroup(group, "domainID", "token")
 	//  fmt.Println(group)
-	CreateGroup(group Group, token string) (Group, errors.SDKError)
+	CreateGroup(group Group, domainID, token string) (Group, errors.SDKError)
 
 	// Groups returns page of groups.
 	//
@@ -559,16 +559,16 @@ type SDK interface {
 	// Group returns users group object by id.
 	//
 	// example:
-	//  group, _ := sdk.Group("groupID", "token")
+	//  group, _ := sdk.Group("groupID", "domainID", "token")
 	//  fmt.Println(group)
-	Group(id, token string) (Group, errors.SDKError)
+	Group(id, domainID, token string) (Group, errors.SDKError)
 
 	// GroupPermissions returns user permissions by group ID.
 	//
 	// example:
-	//  group, _ := sdk.Group("groupID", "token")
+	//  group, _ := sdk.Group("groupID", "domainID" "token")
 	//  fmt.Println(group)
-	GroupPermissions(id, token string) (Group, errors.SDKError)
+	GroupPermissions(id, domainID, token string) (Group, errors.SDKError)
 
 	// UpdateGroup updates existing group.
 	//
@@ -580,23 +580,23 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  group, _ := sdk.UpdateGroup(group, "token")
+	//  group, _ := sdk.UpdateGroup(group, "domainID", "token")
 	//  fmt.Println(group)
-	UpdateGroup(group Group, token string) (Group, errors.SDKError)
+	UpdateGroup(group Group, domainID, token string) (Group, errors.SDKError)
 
 	// EnableGroup changes group status to enabled.
 	//
 	// example:
-	//  group, _ := sdk.EnableGroup("groupID", "token")
+	//  group, _ := sdk.EnableGroup("groupID", "domainID", "token")
 	//  fmt.Println(group)
-	EnableGroup(id, token string) (Group, errors.SDKError)
+	EnableGroup(id, domainID, token string) (Group, errors.SDKError)
 
 	// DisableGroup changes group status to disabled - soft delete.
 	//
 	// example:
-	//  group, _ := sdk.DisableGroup("groupID", "token")
+	//  group, _ := sdk.DisableGroup("groupID", "domainID", "token")
 	//  fmt.Println(group)
-	DisableGroup(id, token string) (Group, errors.SDKError)
+	DisableGroup(id, domainID, token string) (Group, errors.SDKError)
 
 	// AddUserToGroup add user to a group.
 	//
@@ -605,9 +605,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.AddUserToGroup("groupID",req, "token")
+	// err := sdk.AddUserToGroup("groupID",req, "domainID", "token")
 	// fmt.Println(err)
-	AddUserToGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
+	AddUserToGroup(groupID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// RemoveUserFromGroup remove user from a group.
 	//
@@ -616,9 +616,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.RemoveUserFromGroup("groupID",req, "token")
+	// err := sdk.RemoveUserFromGroup("groupID",req, "domainID", "token")
 	// fmt.Println(err)
-	RemoveUserFromGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
+	RemoveUserFromGroup(groupID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// ListGroupUsers list all users in the group id .
 	//
@@ -638,6 +638,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
+	//		DomainID: "domain"
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  groups, _ := sdk.ListGroupChannels("groupID", pm, "token")
@@ -647,9 +648,9 @@ type SDK interface {
 	// DeleteGroup delete given group id.
 	//
 	// example:
-	//  err := sdk.DeleteGroup("groupID", "token")
+	//  err := sdk.DeleteGroup("groupID", "domainID", "token")
 	//  fmt.Println(err)
-	DeleteGroup(id, token string) errors.SDKError
+	DeleteGroup(id, domainID, token string) errors.SDKError
 
 	// CreateChannel creates new channel and returns its id.
 	//

@@ -45,7 +45,6 @@ func (req viewClientReq) validate() error {
 }
 
 type listClientsReq struct {
-	domainID string
 	status   mgclients.Status
 	offset   uint64
 	limit    uint64
@@ -59,9 +58,6 @@ type listClientsReq struct {
 }
 
 func (req listClientsReq) validate() error {
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
-	}
 	if req.limit > maxLimitSize || req.limit < 1 {
 		return apiutil.ErrLimitSize
 	}
@@ -73,22 +69,17 @@ func (req listClientsReq) validate() error {
 }
 
 type searchClientsReq struct {
-	domainID string
-	Offset   uint64
-	Limit    uint64
-	Name     string
-	Id       string
-	Order    string
-	Dir      string
+	Offset uint64
+	Limit  uint64
+	Name   string
+	Id     string
+	Order  string
+	Dir    string
 }
 
 func (req searchClientsReq) validate() error {
 	if req.Name == "" && req.Id == "" {
 		return apiutil.ErrEmptySearchQuery
-	}
-
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	return nil
@@ -143,18 +134,14 @@ func (req updateClientTagsReq) validate() error {
 }
 
 type updateClientRoleReq struct {
-	domainID string
-	id       string
-	role     mgclients.Role
-	Role     string `json:"role,omitempty"`
+	id   string
+	role mgclients.Role
+	Role string `json:"role,omitempty"`
 }
 
 func (req updateClientRoleReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
-	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	return nil

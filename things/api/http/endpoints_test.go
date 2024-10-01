@@ -46,6 +46,7 @@ var (
 	inValidToken = "invalid"
 	inValid      = "invalid"
 	validID      = testsutil.GenerateUUID(&testing.T{})
+	domainID      = testsutil.GenerateUUID(&testing.T{})
 	namesgen     = namegenerator.NewGenerator()
 )
 
@@ -106,6 +107,7 @@ func TestCreateThing(t *testing.T) {
 	cases := []struct {
 		desc        string
 		client      mgclients.Client
+		domainID string
 		token       string
 		contentType string
 		status      int
@@ -116,6 +118,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register  a new thing with a valid token",
 			client:      client,
+			domainID: domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -125,6 +128,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register an existing thing",
 			client:      client,
+			domainID: domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -134,6 +138,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register a new thing with an empty token",
 			client:      client,
+			domainID: domainID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -149,6 +154,7 @@ func TestCreateThing(t *testing.T) {
 					Secret:   "12345678",
 				},
 			},
+			domainID: domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -166,6 +172,7 @@ func TestCreateThing(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
+			domainID: domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -182,6 +189,7 @@ func TestCreateThing(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
+			domainID: domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -197,6 +205,7 @@ func TestCreateThing(t *testing.T) {
 					Secret:   secret,
 				},
 			},
+			domainID: domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: "application/xml",
@@ -210,7 +219,7 @@ func TestCreateThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/", ts.URL),
+			url:         fmt.Sprintf("%s/domains/%s/things/", ts.URL,tc.domainID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(data),

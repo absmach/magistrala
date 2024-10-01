@@ -347,6 +347,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 			ListPerms:  lp,
 		},
 		groupID: chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	return req, nil
 }

@@ -2146,6 +2146,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		desc              string
 		token             string
 		groupID           string
+		domainID          string
 		page              mgclients.Page
 		status            int
 		query             string
@@ -2155,10 +2156,11 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		err               error
 	}{
 		{
-			desc:    "list users with valid token",
-			token:   validToken,
-			groupID: validID,
-			status:  http.StatusOK,
+			desc:     "list users with valid token",
+			token:    validToken,
+			groupID:  validID,
+			domainID: validID,
+			status:   http.StatusOK,
 			listUsersResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total: 1,
@@ -2454,6 +2456,9 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			tc.err)
 		res, err := req.make()
+		fmt.Printf("Request is %+v\n", req)
+		fmt.Printf("Response is %+v\n", res)
+
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
@@ -2467,6 +2472,7 @@ func TestListUsersByChannelID(t *testing.T) {
 
 	cases := []struct {
 		desc              string
+		domainID          string
 		token             string
 		channelID         string
 		page              mgclients.Page
@@ -2479,6 +2485,7 @@ func TestListUsersByChannelID(t *testing.T) {
 	}{
 		{
 			desc:      "list users with valid token",
+			domainID:  validID,
 			token:     validToken,
 			status:    http.StatusOK,
 			channelID: validID,
@@ -2778,7 +2785,7 @@ func TestListUsersByChannelID(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/channels/%s/users?", us.URL, validID) + tc.query,
+			url:    fmt.Sprintf("%s/domains/%s/channels/%s/users?", us.URL,tc.domainID, validID) + tc.query,
 			token:  tc.token,
 		}
 

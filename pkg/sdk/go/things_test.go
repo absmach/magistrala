@@ -74,6 +74,7 @@ func TestCreateThing(t *testing.T) {
 	}{
 		{
 			desc:           "create new thing successfully",
+			domainID:       domainID,
 			token:          validToken,
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
@@ -94,6 +95,7 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc:           "create new thing with empty token",
+			domainID:       domainID,
 			token:          "",
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
@@ -104,6 +106,7 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc:           "create an existing thing",
+			domainID:       domainID,
 			token:          validToken,
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
@@ -113,8 +116,9 @@ func TestCreateThing(t *testing.T) {
 			err:            errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:  "create a thing with name too long",
-			token: validToken,
+			desc:     "create a thing with name too long",
+			domainID: domainID,
+			token:    validToken,
 			createThingReq: sdk.Thing{
 				Name:        strings.Repeat("a", 1025),
 				Tags:        thing.Tags,
@@ -129,8 +133,9 @@ func TestCreateThing(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
 		},
 		{
-			desc:  "create a thing with invalid id",
-			token: validToken,
+			desc:     "create a thing with invalid id",
+			domainID: domainID,
+			token:    validToken,
 			createThingReq: sdk.Thing{
 				ID:          "123456789",
 				Name:        thing.Name,
@@ -146,8 +151,9 @@ func TestCreateThing(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidIDFormat), http.StatusBadRequest),
 		},
 		{
-			desc:  "create a thing with a request that can't be marshalled",
-			token: validToken,
+			desc:     "create a thing with a request that can't be marshalled",
+			domainID: domainID,
+			token:    validToken,
 			createThingReq: sdk.Thing{
 				Name: "test",
 				Metadata: map[string]interface{}{
@@ -162,6 +168,7 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc:           "create a thing with a response that can't be unmarshalled",
+			domainID:       domainID,
 			token:          validToken,
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
@@ -185,7 +192,7 @@ func TestCreateThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("CreateThings", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.CreateThing(tc.createThingReq, tc.token)
+			resp, err := mgsdk.CreateThing(tc.createThingReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -215,6 +222,7 @@ func TestCreateThings(t *testing.T) {
 
 	cases := []struct {
 		desc                string
+		domainID            string
 		token               string
 		session             mgauthn.Session
 		createThingsRequest []sdk.Thing
@@ -227,6 +235,7 @@ func TestCreateThings(t *testing.T) {
 	}{
 		{
 			desc:                "create new things successfully",
+			domainID:            domainID,
 			token:               validToken,
 			createThingsRequest: things,
 			svcReq:              convertThings(things...),
@@ -237,6 +246,7 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc:                "create new things with invalid token",
+			domainID:            domainID,
 			token:               invalidToken,
 			createThingsRequest: things,
 			svcReq:              convertThings(things...),
@@ -247,6 +257,7 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc:                "create new things with empty token",
+			domainID:            domainID,
 			token:               "",
 			createThingsRequest: things,
 			svcReq:              convertThings(things...),
@@ -257,6 +268,7 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc:                "create new things with a request that can't be marshalled",
+			domainID:            domainID,
 			token:               validToken,
 			createThingsRequest: []sdk.Thing{{Name: "test", Metadata: map[string]interface{}{"test": make(chan int)}}},
 			svcReq:              convertThings(things...),
@@ -267,6 +279,7 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc:                "create new things with a response that can't be unmarshalled",
+			domainID:            domainID,
 			token:               validToken,
 			createThingsRequest: things,
 			svcReq:              convertThings(things...),
@@ -290,7 +303,7 @@ func TestCreateThings(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("CreateThings", mock.Anything, tc.session, tc.svcReq[0], tc.svcReq[1], tc.svcReq[2]).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.CreateThings(tc.createThingsRequest, tc.token)
+			resp, err := mgsdk.CreateThings(tc.createThingsRequest, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -781,6 +794,7 @@ func TestViewThing(t *testing.T) {
 	}{
 		{
 			desc:     "view thing successfully",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  thing.ID,
 			svcRes:   convertThing(thing),
@@ -799,6 +813,7 @@ func TestViewThing(t *testing.T) {
 		},
 		{
 			desc:     "view thing with empty token",
+			domainID: domainID,
 			token:    "",
 			thingID:  thing.ID,
 			svcRes:   mgclients.Client{},
@@ -808,6 +823,7 @@ func TestViewThing(t *testing.T) {
 		},
 		{
 			desc:     "view thing with an invalid thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  wrongID,
 			svcRes:   mgclients.Client{},
@@ -817,6 +833,7 @@ func TestViewThing(t *testing.T) {
 		},
 		{
 			desc:     "view thing with empty thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  "",
 			svcRes:   mgclients.Client{},
@@ -825,9 +842,10 @@ func TestViewThing(t *testing.T) {
 			err:      errors.NewSDKError(apiutil.ErrMissingID),
 		},
 		{
-			desc:    "view thing with response that can't be unmarshalled",
-			token:   validToken,
-			thingID: thing.ID,
+			desc:     "view thing with response that can't be unmarshalled",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thing.ID,
 			svcRes: mgclients.Client{
 				Name:        thing.Name,
 				Tags:        thing.Tags,
@@ -848,7 +866,7 @@ func TestViewThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("ViewClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.Thing(tc.thingID, tc.token)
+			resp, err := mgsdk.Thing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -886,6 +904,7 @@ func TestViewThingPermissions(t *testing.T) {
 	}{
 		{
 			desc:     "view thing permissions successfully",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  validID,
 			svcRes:   []string{policies.ViewPermission},
@@ -904,6 +923,7 @@ func TestViewThingPermissions(t *testing.T) {
 		},
 		{
 			desc:     "view thing permissions with empty token",
+			domainID: domainID,
 			token:    "",
 			thingID:  thing.ID,
 			svcRes:   []string{},
@@ -913,6 +933,7 @@ func TestViewThingPermissions(t *testing.T) {
 		},
 		{
 			desc:     "view thing permissions with an invalid thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  wrongID,
 			svcRes:   []string{},
@@ -922,6 +943,7 @@ func TestViewThingPermissions(t *testing.T) {
 		},
 		{
 			desc:     "view thing permissions with empty thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  "",
 			svcRes:   []string{},
@@ -937,7 +959,7 @@ func TestViewThingPermissions(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("ViewClientPerms", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ThingPermissions(tc.thingID, tc.token)
+			resp, err := mgsdk.ThingPermissions(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -985,6 +1007,7 @@ func TestUpdateThing(t *testing.T) {
 	}{
 		{
 			desc:           "update thing successfully",
+			domainID:       domainID,
 			token:          validToken,
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
@@ -1005,6 +1028,7 @@ func TestUpdateThing(t *testing.T) {
 		},
 		{
 			desc:           "update thing with empty token",
+			domainID:       domainID,
 			token:          "",
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
@@ -1014,8 +1038,9 @@ func TestUpdateThing(t *testing.T) {
 			err:            errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update thing with an invalid thing id",
-			token: validToken,
+			desc:     "update thing with an invalid thing id",
+			domainID: domainID,
+			token:    validToken,
 			updateThingReq: sdk.Thing{
 				ID:   wrongID,
 				Name: updatedThing.Name,
@@ -1030,8 +1055,9 @@ func TestUpdateThing(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:  "update thing with empty thing id",
-			token: validToken,
+			desc:     "update thing with empty thing id",
+			domainID: domainID,
+			token:    validToken,
 
 			updateThingReq: sdk.Thing{
 				ID:   "",
@@ -1047,8 +1073,9 @@ func TestUpdateThing(t *testing.T) {
 			err:      errors.NewSDKError(apiutil.ErrMissingID),
 		},
 		{
-			desc:  "update thing with a request that can't be marshalled",
-			token: validToken,
+			desc:     "update thing with a request that can't be marshalled",
+			domainID: domainID,
+			token:    validToken,
 
 			updateThingReq: sdk.Thing{
 				ID: "test",
@@ -1064,6 +1091,7 @@ func TestUpdateThing(t *testing.T) {
 		},
 		{
 			desc:           "update thing with a response that can't be unmarshalled",
+			domainID:       domainID,
 			token:          validToken,
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
@@ -1087,7 +1115,7 @@ func TestUpdateThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("UpdateClient", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.UpdateThing(tc.updateThingReq, tc.token)
+			resp, err := mgsdk.UpdateThing(tc.updateThingReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1131,6 +1159,7 @@ func TestUpdateThingTags(t *testing.T) {
 	}{
 		{
 			desc:           "update thing tags successfully",
+			domainID:       domainID,
 			token:          validToken,
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
@@ -1151,6 +1180,7 @@ func TestUpdateThingTags(t *testing.T) {
 		},
 		{
 			desc:           "update thing tags with empty token",
+			domainID:       domainID,
 			token:          "",
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
@@ -1160,8 +1190,9 @@ func TestUpdateThingTags(t *testing.T) {
 			err:            errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update thing tags with an invalid thing id",
-			token: validToken,
+			desc:     "update thing tags with an invalid thing id",
+			domainID: domainID,
+			token:    validToken,
 			updateThingReq: sdk.Thing{
 				ID:   wrongID,
 				Tags: updatedThing.Tags,
@@ -1176,8 +1207,9 @@ func TestUpdateThingTags(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:  "update thing tags with empty thing id",
-			token: validToken,
+			desc:     "update thing tags with empty thing id",
+			domainID: domainID,
+			token:    validToken,
 			updateThingReq: sdk.Thing{
 				ID:   "",
 				Tags: updatedThing.Tags,
@@ -1192,8 +1224,9 @@ func TestUpdateThingTags(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:  "update thing tags with a request that can't be marshalled",
-			token: validToken,
+			desc:     "update thing tags with a request that can't be marshalled",
+			domainID: domainID,
+			token:    validToken,
 			updateThingReq: sdk.Thing{
 				ID: "test",
 				Metadata: map[string]interface{}{
@@ -1208,6 +1241,7 @@ func TestUpdateThingTags(t *testing.T) {
 		},
 		{
 			desc:           "update thing tags with a response that can't be unmarshalled",
+			domainID:       domainID,
 			token:          validToken,
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
@@ -1231,7 +1265,7 @@ func TestUpdateThingTags(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("UpdateClientTags", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.UpdateThingTags(tc.updateThingReq, tc.token)
+			resp, err := mgsdk.UpdateThingTags(tc.updateThingReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1272,6 +1306,7 @@ func TestUpdateThingSecret(t *testing.T) {
 	}{
 		{
 			desc:      "update thing secret successfully",
+			domainID:  domainID,
 			token:     validToken,
 			thingID:   thing.ID,
 			newSecret: newSecret,
@@ -1292,6 +1327,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		},
 		{
 			desc:      "update thing secret with empty token",
+			domainID:  domainID,
 			token:     "",
 			thingID:   thing.ID,
 			newSecret: newSecret,
@@ -1302,6 +1338,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		},
 		{
 			desc:      "update thing secret with an invalid thing id",
+			domainID:  domainID,
 			token:     validToken,
 			thingID:   wrongID,
 			newSecret: newSecret,
@@ -1312,6 +1349,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		},
 		{
 			desc:      "update thing secret with empty thing id",
+			domainID:  domainID,
 			token:     validToken,
 			thingID:   "",
 			newSecret: newSecret,
@@ -1322,6 +1360,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		},
 		{
 			desc:      "update thing with empty new secret",
+			domainID:  domainID,
 			token:     validToken,
 			thingID:   thing.ID,
 			newSecret: "",
@@ -1332,6 +1371,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		},
 		{
 			desc:      "update thing secret with a response that can't be unmarshalled",
+			domainID:  domainID,
 			token:     validToken,
 			thingID:   thing.ID,
 			newSecret: newSecret,
@@ -1355,7 +1395,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("UpdateClientSecret", mock.Anything, tc.session, tc.thingID, tc.newSecret).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.UpdateThingSecret(tc.thingID, tc.newSecret, tc.token)
+			resp, err := mgsdk.UpdateThingSecret(tc.thingID, tc.newSecret, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1394,6 +1434,7 @@ func TestEnableThing(t *testing.T) {
 	}{
 		{
 			desc:     "enable thing successfully",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  thing.ID,
 			svcRes:   convertThing(enabledThing),
@@ -1412,6 +1453,7 @@ func TestEnableThing(t *testing.T) {
 		},
 		{
 			desc:     "enable thing with an invalid thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  wrongID,
 			svcRes:   mgclients.Client{},
@@ -1421,6 +1463,7 @@ func TestEnableThing(t *testing.T) {
 		},
 		{
 			desc:     "enable thing with empty thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  "",
 			svcRes:   mgclients.Client{},
@@ -1429,9 +1472,10 @@ func TestEnableThing(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:    "enable thing with a response that can't be unmarshalled",
-			token:   validToken,
-			thingID: thing.ID,
+			desc:     "enable thing with a response that can't be unmarshalled",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thing.ID,
 			svcRes: mgclients.Client{
 				Name:        enabledThing.Name,
 				Tags:        enabledThing.Tags,
@@ -1452,7 +1496,7 @@ func TestEnableThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("EnableClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.EnableThing(tc.thingID, tc.token)
+			resp, err := mgsdk.EnableThing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1491,6 +1535,7 @@ func TestDisableThing(t *testing.T) {
 	}{
 		{
 			desc:     "disable thing successfully",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  thing.ID,
 			svcRes:   convertThing(disabledThing),
@@ -1509,6 +1554,7 @@ func TestDisableThing(t *testing.T) {
 		},
 		{
 			desc:     "disable thing with an invalid thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  wrongID,
 			svcRes:   mgclients.Client{},
@@ -1518,6 +1564,7 @@ func TestDisableThing(t *testing.T) {
 		},
 		{
 			desc:     "disable thing with empty thing id",
+			domainID: domainID,
 			token:    validToken,
 			thingID:  "",
 			svcRes:   mgclients.Client{},
@@ -1526,9 +1573,10 @@ func TestDisableThing(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:    "disable thing with a response that can't be unmarshalled",
-			token:   validToken,
-			thingID: thing.ID,
+			desc:     "disable thing with a response that can't be unmarshalled",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thing.ID,
 			svcRes: mgclients.Client{
 				Name:        disabledThing.Name,
 				Tags:        disabledThing.Tags,
@@ -1549,7 +1597,7 @@ func TestDisableThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("DisableClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.DisableThing(tc.thingID, tc.token)
+			resp, err := mgsdk.DisableThing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -1584,9 +1632,10 @@ func TestShareThing(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:    "share thing successfully",
-			token:   validToken,
-			thingID: thing.ID,
+			desc:     "share thing successfully",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thing.ID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1595,9 +1644,10 @@ func TestShareThing(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "share thing with an invalid token",
-			token:   invalidToken,
-			thingID: thing.ID,
+			desc:     "share thing with an invalid token",
+			domainID: domainID,
+			token:    invalidToken,
+			thingID:  thing.ID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1606,9 +1656,10 @@ func TestShareThing(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
-			desc:    "share thing with empty token",
-			token:   "",
-			thingID: thing.ID,
+			desc:     "share thing with empty token",
+			domainID: domainID,
+			token:    "",
+			thingID:  thing.ID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1617,9 +1668,10 @@ func TestShareThing(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:    "share thing with an invalid thing id",
-			token:   validToken,
-			thingID: wrongID,
+			desc:     "share thing with an invalid thing id",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  wrongID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1628,9 +1680,10 @@ func TestShareThing(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:    "share thing with empty thing id",
-			token:   validToken,
-			thingID: "",
+			desc:     "share thing with empty thing id",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  "",
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1639,9 +1692,10 @@ func TestShareThing(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:    "share thing with empty relation",
-			token:   validToken,
-			thingID: thing.ID,
+			desc:     "share thing with empty relation",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thing.ID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: "",
@@ -1657,7 +1711,7 @@ func TestShareThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("Share", mock.Anything, tc.session, tc.thingID, tc.shareReq.Relation, tc.shareReq.UserIDs[0]).Return(tc.svcErr)
-			err := mgsdk.ShareThing(tc.thingID, tc.shareReq, tc.token)
+			err := mgsdk.ShareThing(tc.thingID, tc.shareReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Share", mock.Anything, tc.session, tc.thingID, tc.shareReq.Relation, tc.shareReq.UserIDs[0])
@@ -1691,9 +1745,10 @@ func TestUnshareThing(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:    "unshare thing successfully",
-			token:   validToken,
-			thingID: thing.ID,
+			desc:     "unshare thing successfully",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thing.ID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1702,9 +1757,10 @@ func TestUnshareThing(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "unshare thing with an invalid token",
-			token:   invalidToken,
-			thingID: thing.ID,
+			desc:     "unshare thing with an invalid token",
+			domainID: domainID,
+			token:    invalidToken,
+			thingID:  thing.ID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1713,9 +1769,10 @@ func TestUnshareThing(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
-			desc:    "unshare thing with empty token",
-			token:   "",
-			thingID: thing.ID,
+			desc:     "unshare thing with empty token",
+			domainID: domainID,
+			token:    "",
+			thingID:  thing.ID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1723,9 +1780,10 @@ func TestUnshareThing(t *testing.T) {
 			err: errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:    "unshare thing with an invalid thing id",
-			token:   validToken,
-			thingID: wrongID,
+			desc:     "unshare thing with an invalid thing id",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  wrongID,
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1734,9 +1792,10 @@ func TestUnshareThing(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:    "unshare thing with empty thing id",
-			token:   validToken,
-			thingID: "",
+			desc:     "unshare thing with empty thing id",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  "",
 			shareReq: sdk.UsersRelationRequest{
 				UserIDs:  []string{validID},
 				Relation: policies.EditorRelation,
@@ -1752,7 +1811,7 @@ func TestUnshareThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("Unshare", mock.Anything, tc.session, tc.thingID, tc.shareReq.Relation, tc.shareReq.UserIDs[0]).Return(tc.svcErr)
-			err := mgsdk.UnshareThing(tc.thingID, tc.shareReq, tc.token)
+			err := mgsdk.UnshareThing(tc.thingID, tc.shareReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Unshare", mock.Anything, tc.session, tc.thingID, tc.shareReq.Relation, tc.shareReq.UserIDs[0])
@@ -1785,11 +1844,12 @@ func TestDeleteThing(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:    "delete thing successfully",
-			token:   validToken,
-			thingID: thing.ID,
-			svcErr:  nil,
-			err:     nil,
+			desc:     "delete thing successfully",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thing.ID,
+			svcErr:   nil,
+			err:      nil,
 		},
 		{
 			desc:            "delete thing with an invalid token",
@@ -1799,25 +1859,28 @@ func TestDeleteThing(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
-			desc:    "delete thing with empty token",
-			token:   "",
-			thingID: thing.ID,
-			svcErr:  svcerr.ErrAuthentication,
-			err:     errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			desc:     "delete thing with empty token",
+			domainID: domainID,
+			token:    "",
+			thingID:  thing.ID,
+			svcErr:   svcerr.ErrAuthentication,
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:    "delete thing with an invalid thing id",
-			token:   validToken,
-			thingID: wrongID,
-			svcErr:  svcerr.ErrRemoveEntity,
-			err:     errors.NewSDKErrorWithStatus(svcerr.ErrRemoveEntity, http.StatusUnprocessableEntity),
+			desc:     "delete thing with an invalid thing id",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  wrongID,
+			svcErr:   svcerr.ErrRemoveEntity,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrRemoveEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:    "delete thing with empty thing id",
-			token:   validToken,
-			thingID: "",
-			svcErr:  nil,
-			err:     errors.NewSDKError(apiutil.ErrMissingID),
+			desc:     "delete thing with empty thing id",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  "",
+			svcErr:   nil,
+			err:      errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
 	for _, tc := range cases {
@@ -1827,7 +1890,7 @@ func TestDeleteThing(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("DeleteClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcErr)
-			err := mgsdk.DeleteThing(tc.thingID, tc.token)
+			err := mgsdk.DeleteThing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "DeleteClient", mock.Anything, tc.session, tc.thingID)

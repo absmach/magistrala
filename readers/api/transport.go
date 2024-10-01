@@ -160,10 +160,10 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := listMessagesReq{
-		chanID: chi.URLParam(r, "chanID"),
+		chanID:   chi.URLParam(r, "chanID"),
 		domainID: chi.URLParam(r, "domainID"),
-		token:  apiutil.ExtractBearerToken(r),
-		key:    apiutil.ExtractThingKey(r),
+		token:    apiutil.ExtractBearerToken(r),
+		key:      apiutil.ExtractThingKey(r),
 		pageMeta: readers.PageMetadata{
 			Offset:      offset,
 			Limit:       limit,

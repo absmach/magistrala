@@ -15,14 +15,15 @@ type createClientReq struct {
 }
 
 func (req createClientReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if len(req.client.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
 	if req.client.ID != "" {
 		return api.ValidateUUID(req.client.ID)
-	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	return nil
@@ -34,6 +35,9 @@ type createClientsReq struct {
 }
 
 func (req createClientsReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
 	if len(req.Clients) == 0 {
 		return apiutil.ErrEmptyList
 	}
@@ -46,9 +50,6 @@ func (req createClientsReq) validate() error {
 		if len(client.Name) > api.MaxNameSize {
 			return apiutil.ErrNameSize
 		}
-	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	return nil
@@ -121,12 +122,16 @@ func (req listClientsReq) validate() error {
 
 type listMembersReq struct {
 	mgclients.Page
-	groupID string
+	groupID  string
+	domainID string
 }
 
 func (req listMembersReq) validate() error {
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
+	}
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	return nil

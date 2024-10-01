@@ -47,6 +47,7 @@ var (
 	inValidToken = "invalid"
 	inValid      = "invalid"
 	validID      = testsutil.GenerateUUID(&testing.T{})
+	domainID      = testsutil.GenerateUUID(&testing.T{})
 	namesgen     = namegenerator.NewGenerator()
 )
 
@@ -107,6 +108,7 @@ func TestCreateThing(t *testing.T) {
 	cases := []struct {
 		desc        string
 		client      mgclients.Client
+		domainID string
 		token       string
 		session     pauth.Session
 		contentType string
@@ -118,6 +120,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register  a new thing with a valid token",
 			client:      client,
+			domainID: domainID,
 			token:       validToken,
 			session:     pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -128,6 +131,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register an existing thing",
 			client:      client,
+			domainID: domainID,
 			token:       validToken,
 			session:     pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -138,6 +142,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register a new thing with an empty token",
 			client:      client,
+			domainID: domainID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -153,6 +158,7 @@ func TestCreateThing(t *testing.T) {
 					Secret:   "12345678",
 				},
 			},
+			domainID: domainID,
 			token:       validToken,
 			session:     pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -171,6 +177,7 @@ func TestCreateThing(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
+			domainID: domainID,
 			token:       validToken,
 			session:     pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -188,6 +195,7 @@ func TestCreateThing(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
+			domainID: domainID,
 			token:       validToken,
 			session:     pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -204,6 +212,7 @@ func TestCreateThing(t *testing.T) {
 					Secret:   secret,
 				},
 			},
+			domainID: domainID,
 			token:       validToken,
 			session:     pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: "application/xml",
@@ -218,14 +227,14 @@ func TestCreateThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/", ts.URL),
+			url:         fmt.Sprintf("%s/domains/%s/things/", ts.URL,tc.domainID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(data),
 		}
 
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
-		svcCall := svc.On("CreateThings", mock.Anything, tc.session, tc.client).Return([]mgclients.Client{tc.client}, tc.err)
+		svcCall := svc.On("CreateThings", mock.Anything, tc.domainID,tc.session, tc.client).Return([]mgclients.Client{tc.client}, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		var errRes respBody

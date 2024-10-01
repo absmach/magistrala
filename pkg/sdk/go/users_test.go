@@ -36,7 +36,7 @@ import (
 var (
 	id         = generateUUID(&testing.T{})
 	validToken = "token"
-	domainID = "c717fa97-ffd9-40cb-8cf9-7c2859059395"
+	domainID   = "c717fa97-ffd9-40cb-8cf9-7c2859059395"
 	validID    = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 	wrongID    = testsutil.GenerateUUID(&testing.T{})
 )

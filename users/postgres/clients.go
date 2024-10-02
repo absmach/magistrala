@@ -31,9 +31,9 @@ func NewRepository(db postgres.Database) users.Repository {
 }
 
 func (repo *userRepo) Save(ctx context.Context, c users.User) (users.User, error) {
-	q := `INSERT INTO clients (id, name, tags, identity, secret, metadata, created_at, status, role, first_name, last_name, user_name)
-        VALUES (:id, :name, :tags, :identity, :secret, :metadata, :created_at, :status, :role, :first_name, :last_name, :user_name)
-        RETURNING id, name, tags, identity, metadata, status, created_at, first_name, last_name, user_name`
+	q := `INSERT INTO clients (id, name, tags, identity, secret, metadata, created_at, status, role, first_name, last_name, user_name, profile_picture)
+        VALUES (:id, :name, :tags, :identity, :secret, :metadata, :created_at, :status, :role, :first_name, :last_name, :user_name, :profile_picture)
+        RETURNING id, name, tags, identity, metadata, status, created_at, first_name, last_name, user_name, profile_picture`
 
 	dbc, err := toDBUser(c)
 	if err != nil {
@@ -109,17 +109,52 @@ func (repo *userRepo) RetrieveByID(ctx context.Context, id string) (users.User, 
 	return users.User{}, repoerr.ErrNotFound
 }
 
+func (repo *userRepo) RetrieveByUserName(ctx context.Context, userName string) (users.User, error) {
+	q := `SELECT id, name, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role, first_name, last_name, user_name
+        FROM clients WHERE user_name = :user_name`
+
+	dbc := DBUser{
+		UserName: userName,
+	}
+
+	rows, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	if err != nil {
+		return users.User{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	dbc = DBUser{}
+	if rows.Next() {
+		if err = rows.StructScan(&dbc); err != nil {
+			return users.User{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+		}
+
+		user, err := ToUser(dbc)
+		if err != nil {
+			return users.User{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		}
+
+		return user, nil
+	}
+
+	return users.User{}, repoerr.ErrNotFound
+}
+
 func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
+	// fails test
 	query, err := pgclients.PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, c.status, c.role, c.first_name, c.last_name, c.user_name,
-		c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by 
-		FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+    c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by 
+    FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+
+	fmt.Println("query alone", query)
 
 	dbPage, err := ToDBUsersPage(pm)
+	fmt.Println("dbPage", dbPage)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
@@ -189,6 +224,41 @@ func (repo *userRepo) UpdateRole(ctx context.Context, user users.User) (users.Us
 	}
 
 	return ToUser(dbc)
+}
+
+func (repo *userRepo) UpdateUserName(ctx context.Context, id, fullName string) (users.User, error) {
+	nameParts := strings.SplitN(fullName, " ", 2)
+	if len(nameParts) < 2 {
+		return users.User{}, errors.Wrap(repoerr.ErrMalformedEntity, fmt.Errorf("invalid full name"))
+	}
+	firstName, lastName := nameParts[0], nameParts[1]
+
+	q := `UPDATE clients SET first_name = :first_name, last_name = :last_name, updated_at = :updated_at
+        WHERE id = :id RETURNING id, name, tags, identity, secret, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
+
+	dbc := DBUser{
+		ID:        id,
+		FirstName: firstName,
+		LastName:  lastName,
+		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	if err != nil {
+		return users.User{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	dbc = DBUser{}
+	if row.Next() {
+		if err := row.StructScan(&dbc); err != nil {
+			return users.User{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+
+		return ToUser(dbc)
+	}
+
+	return users.User{}, repoerr.ErrNotFound
 }
 
 func (repo *userRepo) Update(ctx context.Context, user users.User) (users.User, error) {
@@ -431,22 +501,23 @@ func (repo *userRepo) RetrieveByIdentity(ctx context.Context, identity string) (
 }
 
 type DBUser struct {
-	ID        string           `db:"id"`
-	Name      string           `db:"name,omitempty"`
-	Identity  string           `db:"identity"`
-	Domain    string           `db:"domain_id"`
-	Secret    string           `db:"secret"`
-	Metadata  []byte           `db:"metadata,omitempty"`
-	Tags      pgtype.TextArray `db:"tags,omitempty"`
-	CreatedAt time.Time        `db:"created_at,omitempty"`
-	UpdatedAt sql.NullTime     `db:"updated_at,omitempty"`
-	UpdatedBy *string          `db:"updated_by,omitempty"`
-	Groups    []groups.Group   `db:"groups,omitempty"`
-	Status    mgclients.Status `db:"status,omitempty"`
-	Role      *mgclients.Role  `db:"role,omitempty"`
-	UserName  string           `db:"user_name, omitempty"`
-	FirstName string           `db:"first_name, omitempty"`
-	LastName  string           `db:"last_name, omitempty"`
+	ID             string           `db:"id"`
+	Name           string           `db:"name,omitempty"`
+	Identity       string           `db:"identity"`
+	Domain         string           `db:"domain_id"`
+	Secret         string           `db:"secret"`
+	Metadata       []byte           `db:"metadata,omitempty"`
+	Tags           pgtype.TextArray `db:"tags,omitempty"` // Tags
+	CreatedAt      time.Time        `db:"created_at,omitempty"`
+	UpdatedAt      sql.NullTime     `db:"updated_at,omitempty"`
+	UpdatedBy      *string          `db:"updated_by,omitempty"`
+	Groups         []groups.Group   `db:"groups,omitempty"`
+	Status         mgclients.Status `db:"status,omitempty"`
+	Role           *mgclients.Role  `db:"role,omitempty"`
+	UserName       string           `db:"user_name, omitempty"`
+	FirstName      string           `db:"first_name, omitempty"`
+	LastName       string           `db:"last_name, omitempty"`
+	ProfilePicture string           `db:"profile_picture, omitempty"`
 }
 
 func toDBUser(c users.User) (DBUser, error) {
@@ -472,19 +543,21 @@ func toDBUser(c users.User) (DBUser, error) {
 	}
 
 	return DBUser{
-		ID:        c.ID,
-		Name:      c.Name,
-		Identity:  c.Credentials.Identity,
-		Secret:    c.Credentials.Secret,
-		Metadata:  data,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: updatedAt,
-		UpdatedBy: updatedBy,
-		Status:    c.Status,
-		Role:      &c.Role,
-		LastName:  c.LastName,
-		FirstName: c.FirstName,
-		UserName:  c.UserName,
+		ID:             c.ID,
+		Name:           c.Name,
+		Tags:           tags,
+		Identity:       c.Credentials.Identity,
+		Secret:         c.Credentials.Secret,
+		Metadata:       data,
+		CreatedAt:      c.CreatedAt,
+		UpdatedAt:      updatedAt,
+		UpdatedBy:      updatedBy,
+		Status:         c.Status,
+		Role:           &c.Role,
+		LastName:       c.LastName,
+		FirstName:      c.FirstName,
+		UserName:       c.UserName,
+		ProfilePicture: c.ProfilePicture,
 	}, nil
 }
 
@@ -518,12 +591,13 @@ func ToUser(dbu DBUser) (users.User, error) {
 			Identity: dbu.Identity,
 			Secret:   dbu.Secret,
 		},
-		Metadata:  metadata,
-		CreatedAt: dbu.CreatedAt,
-		UpdatedAt: updatedAt,
-		UpdatedBy: updatedBy,
-		Status:    dbu.Status,
-		Tags:      tags,
+		Metadata:       metadata,
+		CreatedAt:      dbu.CreatedAt,
+		UpdatedAt:      updatedAt,
+		UpdatedBy:      updatedBy,
+		Status:         dbu.Status,
+		Tags:           tags,
+		ProfilePicture: dbu.ProfilePicture,
 	}
 	if dbu.Role != nil {
 		user.Role = *dbu.Role

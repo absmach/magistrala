@@ -190,6 +190,21 @@ func (req changeClientStatusReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
+	if req.FullName == "" {
+		return apiutil.ErrMissingFullName
+	}
+
+	return nil
+}
+
+type changeClientStatusReq struct {
+	id string
+}
+
+func (req changeClientStatusReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
 
 	return nil
 }

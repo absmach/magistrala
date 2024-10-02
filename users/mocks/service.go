@@ -429,7 +429,7 @@ func (_m *Service) UpdateClientIdentity(ctx context.Context, session authn.Sessi
 	ret := _m.Called(ctx, session, id, identity)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateUserIdentity")
+		panic("no return value specified for UpdateUserFullName")
 	}
 
 	var r0 users.User

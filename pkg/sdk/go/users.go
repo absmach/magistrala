@@ -27,6 +27,7 @@ const (
 
 // User represents magistrala user its credentials.
 type User struct {
+	// add the fields that are required for the user
 	ID          string      `json:"id"`
 	Name        string      `json:"name,omitempty"`
 	Credentials Credentials `json:"credentials"`

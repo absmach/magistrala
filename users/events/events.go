@@ -221,6 +221,27 @@ func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
+type viewUserByUserNameEvent struct {
+	users.User
+}
+
+func (vue viewUserByUserNameEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation": clientView,
+		"name":      vue.Name,
+	}
+
+	if vue.ID != "" {
+		val["id"] = vue.ID
+	}
+
+	if vue.UserName != "" {
+		val["user_name"] = vue.UserName
+	}
+
+	return val, nil
+}
+
 type listUserEvent struct {
 	mgclients.Page
 }

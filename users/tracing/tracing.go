@@ -36,7 +36,7 @@ func (tm *tracingMiddleware) RegisterClient(ctx context.Context, session authn.S
 	return tm.svc.RegisterClient(ctx, session, client, selfRegister)
 }
 
-// IssueToken traces the "IssueToken" operation of the wrapped clients.Service.
+// IssueToken traces the "IssueToken" operation of the wrapped users.Service.
 func (tm *tracingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_issue_token", trace.WithAttributes(attribute.String("identity", identity)))
 	defer span.End()
@@ -147,7 +147,7 @@ func (tm *tracingMiddleware) ResetSecret(ctx context.Context, session authn.Sess
 	return tm.svc.ResetSecret(ctx, session, secret)
 }
 
-// SendPasswordReset traces the "SendPasswordReset" operation of the wrapped clients.Service.
+// SendPasswordReset traces the "SendPasswordReset" operation of the wrapped users.Service.
 func (tm *tracingMiddleware) SendPasswordReset(ctx context.Context, host, email, user, token string) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_send_password_reset", trace.WithAttributes(
 		attribute.String("email", email),

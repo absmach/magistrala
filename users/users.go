@@ -31,20 +31,22 @@ var (
 )
 
 type User struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name,omitempty"`
-	UserName    string         `json:"user_name,omitempty"`
-	FirstName   string         `json:"first_name,omitempty"`
-	LastName    string         `json:"last_name,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Credentials Credentials    `json:"credentials,omitempty"`
-	Metadata    Metadata       `json:"metadata,omitempty"`
-	CreatedAt   time.Time      `json:"created_at,omitempty"`
-	UpdatedAt   time.Time      `json:"updated_at,omitempty"`
-	UpdatedBy   string         `json:"updated_by,omitempty"`
-	Status      clients.Status `json:"status,omitempty"` // 1 for enabled, 0 for disabled
-	Role        clients.Role   `json:"role,omitempty"`   // 1 for admin, 0 for normal user
-	Permissions []string       `json:"permissions,omitempty"`
+	ID             string         `json:"id"`
+	Name           string         `json:"name,omitempty"`
+	UserName       string         `json:"user_name,omitempty"`
+	FirstName      string         `json:"first_name,omitempty"`
+	LastName       string         `json:"last_name,omitempty"`
+	Tags           []string       `json:"tags,omitempty"`
+	Credentials    Credentials    `json:"credentials,omitempty"`
+	Metadata       Metadata       `json:"metadata,omitempty"`
+	CreatedAt      time.Time      `json:"created_at,omitempty"`
+	UpdatedAt      time.Time      `json:"updated_at,omitempty"`
+	UpdatedBy      string         `json:"updated_by,omitempty"`
+	Status         clients.Status `json:"status,omitempty"` // 1 for enabled, 0 for disabled
+	Role           clients.Role   `json:"role,omitempty"`   // 1 for admin, 0 for normal user
+	Permissions    []string       `json:"permissions,omitempty"`
+	ProfilePicture string         `json:"profile_picture,omitempty"`
+	DomainID       string         `json:"domain_id,omitempty"`
 }
 
 type Credentials struct {
@@ -72,8 +74,11 @@ type Repository interface {
 	// RetrieveByID retrieves user by their unique ID.
 	RetrieveByID(ctx context.Context, id string) (User, error)
 
-	// RetrieveByIdentity retrieves user by its unique credentials
+	// RetrieveByIdentity retrieves user by its unique credentials.
 	RetrieveByIdentity(ctx context.Context, identity string) (User, error)
+
+	// RetrieveByUserName retrieves user by their user name
+	RetrieveByUserName(ctx context.Context, userName string) (User, error)
 
 	// RetrieveAll retrieves all clients.
 	RetrieveAll(ctx context.Context, pm clients.Page) (UsersPage, error)
@@ -86,6 +91,9 @@ type Repository interface {
 
 	// UpdateIdentity updates identity for user with given id.
 	UpdateIdentity(ctx context.Context, user User) (User, error)
+
+	// UpdateUserName updates user name for user with given id and full Name.
+	UpdateUserName(ctx context.Context, id, fullName string) (User, error)
 
 	// UpdateSecret updates secret for user with given identity.
 	UpdateSecret(ctx context.Context, user User) (User, error)

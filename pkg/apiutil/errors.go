@@ -185,4 +185,10 @@ var (
 
 	// ErrLenSearchQuery indicates search query length.
 	ErrLenSearchQuery = errors.New("search query must be at least 3 characters")
+
+	// ErrMissingFullName indicates missing full name.
+	ErrMissingFullName = errors.New("Missing full name. Add two names separated by a space")
+
+	// ErrMissingUserName indicates missing user name.
+	ErrMissingUserName = errors.New("Missing user name")
 )

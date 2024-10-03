@@ -60,7 +60,6 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			kind:    policies.NewGroupKind,
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -75,7 +74,6 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			kind:    policies.NewChannelKind,
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -98,11 +96,20 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			err:  svcerr.ErrAuthorization,
 		},
 		{
+			desc:    "unsuccessfully with invalid request",
+			kind:    policies.NewGroupKind,
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			req: createGroupReq{
+				Group: groups.Group{},
+			},
+			resp: createGroupRes{created: false},
+			err:  apiutil.ErrValidation,
+		},
+		{
 			desc:    "unsuccessfully with repo error",
 			kind:    policies.NewGroupKind,
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -149,8 +156,7 @@ func TestViewGroupEndpoint(t *testing.T) {
 			desc:    "successfully",
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: groupReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			svcResp: validGroupResp,
 			svcErr:  nil,
@@ -160,20 +166,27 @@ func TestViewGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: groupReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
-			svcResp: validGroupResp,
+			svcResp: groups.Group{},
 			svcErr:  nil,
 			resp:    viewGroupRes{},
 			err:     svcerr.ErrAuthorization,
 		},
 		{
+			desc:    "unsuccessfully with invalid request",
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			req:     groupReq{},
+			svcResp: groups.Group{},
+			svcErr:  nil,
+			resp:    viewGroupRes{},
+			err:     apiutil.ErrValidation,
+		},
+		{
 			desc:    "unsuccessfully with repo error",
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: groupReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Group{},
 			svcErr:  svcerr.ErrAuthorization,
@@ -210,8 +223,7 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: groupPermsReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: []string{
@@ -224,26 +236,23 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: groupPermsReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			resp: viewGroupPermsRes{},
 			err:  svcerr.ErrAuthorization,
 		},
 		{
-			desc: "unsuccessfully with invalid request",
-			req: groupPermsReq{
-				id: testsutil.GenerateUUID(t),
-			},
-			resp: viewGroupPermsRes{},
-			err:  apiutil.ErrValidation,
+			desc:    "unsuccessfully with invalid request",
+			req:     groupPermsReq{},
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			resp:    viewGroupPermsRes{},
+			err:     apiutil.ErrValidation,
 		},
 		{
 			desc:    "unsuccessfully with repo error",
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: groupPermsReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			svcResp: []string{},
 			svcErr:  svcerr.ErrAuthorization,
@@ -280,8 +289,7 @@ func TestEnableGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: changeGroupStatusReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
@@ -298,10 +306,16 @@ func TestEnableGroupEndpoint(t *testing.T) {
 			err:  svcerr.ErrAuthorization,
 		},
 		{
+			desc:    "unsuccessfully with invalid request",
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			req:     changeGroupStatusReq{},
+			resp:    changeStatusRes{},
+			err:     apiutil.ErrValidation,
+		},
+		{
 			desc: "unsuccessfully with repo error",
 			req: changeGroupStatusReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
@@ -339,8 +353,7 @@ func TestDisableGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: changeGroupStatusReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
@@ -351,17 +364,22 @@ func TestDisableGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: changeGroupStatusReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			resp: changeStatusRes{},
 			err:  svcerr.ErrAuthorization,
 		},
 		{
+			desc:    "unsuccessfully with invalid request",
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			req:     changeGroupStatusReq{},
+			resp:    changeStatusRes{},
+			err:     apiutil.ErrValidation,
+		},
+		{
 			desc: "unsuccessfully with repo error",
 			req: changeGroupStatusReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
@@ -398,8 +416,7 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: groupReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
@@ -407,10 +424,24 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 			err:     nil,
 		},
 		{
+			desc: "unsuccessfully with invalid session",
+			req: groupReq{
+				id: testsutil.GenerateUUID(t),
+			},
+			resp: deleteGroupRes{},
+			err:  svcerr.ErrAuthorization,
+		},
+		{
+			desc:    "unsuccessfully with invalid request",
+			req:     groupReq{},
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			resp:    deleteGroupRes{},
+			err:     apiutil.ErrValidation,
+		},
+		{
 			desc: "unsuccessfully with repo error",
 			req: groupReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
+				id: testsutil.GenerateUUID(t),
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcErr:  svcerr.ErrAuthorization,
@@ -452,9 +483,8 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: updateGroupReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
-				Name:  valid,
+				id:   testsutil.GenerateUUID(t),
+				Name: valid,
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
@@ -472,11 +502,17 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 			err:  svcerr.ErrAuthorization,
 		},
 		{
+			desc:    "unsuccessfully with invalid request",
+			req:     updateGroupReq{},
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			resp:    updateGroupRes{},
+			err:     apiutil.ErrValidation,
+		},
+		{
 			desc: "unsuccessfully with repo error",
 			req: updateGroupReq{
-				token: valid,
-				id:    testsutil.GenerateUUID(t),
-				Name:  valid,
+				id:   testsutil.GenerateUUID(t),
+				Name: valid,
 			},
 			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
@@ -562,7 +598,6 @@ func TestListGroupsEndpoint(t *testing.T) {
 						Limit: 10,
 					},
 				},
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
@@ -588,7 +623,6 @@ func TestListGroupsEndpoint(t *testing.T) {
 						Limit: 10,
 					},
 				},
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
@@ -616,7 +650,6 @@ func TestListGroupsEndpoint(t *testing.T) {
 					},
 				},
 				tree:       true,
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
@@ -646,7 +679,6 @@ func TestListGroupsEndpoint(t *testing.T) {
 					Direction: -1,
 				},
 				tree:       false,
-				token:      valid,
 				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
@@ -676,7 +708,6 @@ func TestListGroupsEndpoint(t *testing.T) {
 					Direction: 1,
 				},
 				tree:       false,
-				token:      valid,
 				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
@@ -711,7 +742,6 @@ func TestListGroupsEndpoint(t *testing.T) {
 						Limit: 10,
 					},
 				},
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
@@ -730,12 +760,26 @@ func TestListGroupsEndpoint(t *testing.T) {
 						Limit: 10,
 					},
 				},
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
 			resp: groupPageRes{},
 			err:  svcerr.ErrAuthorization,
+		},
+		{
+			desc: "unsuccessfully with empty member kind",
+			req: listGroupsReq{
+				Page: groups.Page{
+					PageMeta: groups.PageMeta{
+						Limit: 10,
+					},
+				},
+				memberKind: "",
+				memberID:   testsutil.GenerateUUID(t),
+			},
+			session: pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			resp:    groupPageRes{},
+			err:     apiutil.ErrValidation,
 		},
 	}
 
@@ -772,7 +816,6 @@ func TestListMembersEndpoint(t *testing.T) {
 			desc:       "successfully",
 			memberKind: policies.ThingsKind,
 			req: listMembersReq{
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
@@ -799,7 +842,6 @@ func TestListMembersEndpoint(t *testing.T) {
 		{
 			desc: "successfully with empty member kind",
 			req: listMembersReq{
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
@@ -835,7 +877,6 @@ func TestListMembersEndpoint(t *testing.T) {
 			desc:       "unsuccessfully with repo error",
 			memberKind: policies.ThingsKind,
 			req: listMembersReq{
-				token:      valid,
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
@@ -844,6 +885,16 @@ func TestListMembersEndpoint(t *testing.T) {
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    listMembersRes{},
 			err:     svcerr.ErrAuthorization,
+		},
+		{
+			desc:       "unsuccessfully with invalid session",
+			memberKind: policies.ThingsKind,
+			req: listMembersReq{
+				memberKind: policies.ThingsKind,
+				groupID:    testsutil.GenerateUUID(t),
+			},
+			resp: listMembersRes{},
+			err:  svcerr.ErrAuthorization,
 		},
 	}
 
@@ -881,7 +932,6 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req: assignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
@@ -898,7 +948,6 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			desc:     "successfully with empty member kind",
 			relation: policies.ContributorRelation,
 			req: assignReq{
-				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
 				MemberKind: policies.ThingsKind,
 				Members: []string{
@@ -915,7 +964,6 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			desc:       "successfully with empty relation",
 			memberKind: policies.ThingsKind,
 			req: assignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
@@ -942,7 +990,6 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req: assignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
@@ -960,7 +1007,6 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req: assignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
@@ -1015,7 +1061,6 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req: unassignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
@@ -1032,7 +1077,6 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			desc:     "successfully with empty member kind",
 			relation: policies.ContributorRelation,
 			req: unassignReq{
-				token:      valid,
 				groupID:    testsutil.GenerateUUID(t),
 				MemberKind: policies.ThingsKind,
 				Members: []string{
@@ -1049,7 +1093,6 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			desc:       "successfully with empty relation",
 			memberKind: policies.ThingsKind,
 			req: unassignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
@@ -1076,7 +1119,6 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req: unassignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{
@@ -1094,7 +1136,6 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req: unassignReq{
-				token:      valid,
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 				Members: []string{

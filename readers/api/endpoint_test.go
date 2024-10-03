@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/absmach/magistrala/readers"
@@ -50,7 +50,7 @@ var (
 	sum float64 = 42
 )
 
-func newServer(repo *mocks.MessageRepository, authClient *authmocks.AuthServiceClient, thingsAuthzClient *thmocks.AuthzServiceClient) *httptest.Server {
+func newServer(repo *mocks.MessageRepository, authClient *authmocks.AuthClient, thingsAuthzClient *thmocks.AuthzServiceClient) *httptest.Server {
 	mux := api.MakeHandler(repo, authClient, thingsAuthzClient, svcName, instanceID)
 	return httptest.NewServer(mux)
 }
@@ -129,7 +129,7 @@ func TestReadAll(t *testing.T) {
 	}
 
 	repo := new(mocks.MessageRepository)
-	auth := new(authmocks.AuthServiceClient)
+	auth := new(authmocks.AuthClient)
 	things := new(thmocks.AuthzServiceClient)
 	ts := newServer(repo, auth, things)
 	defer ts.Close()

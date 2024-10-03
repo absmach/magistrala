@@ -6,6 +6,7 @@ package events
 import (
 	"context"
 
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/events"
@@ -242,10 +243,10 @@ func (es *eventStore) Identify(ctx context.Context, session auth.Session) (strin
 	return userID, nil
 }
 
-func (es *eventStore) GenerateResetToken(ctx context.Context, email, host string) (mgclients.Client, error) {
-	token, err := es.svc.GenerateResetToken(ctx, email, host)
+func (es *eventStore) GenerateResetToken(ctx context.Context, email, host string) error {
+	err := es.svc.GenerateResetToken(ctx, email, host)
 	if err != nil {
-		return mgclients.Client{}, err
+		return err
 	}
 
 	event := generateResetTokenEvent{
@@ -253,10 +254,10 @@ func (es *eventStore) GenerateResetToken(ctx context.Context, email, host string
 		host:  host,
 	}
 
-	return token, es.Publish(ctx, event)
+	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) IssueToken(ctx context.Context, identity, secret, domainID string) (mgclients.Client, error) {
+func (es *eventStore) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	token, err := es.svc.IssueToken(ctx, identity, secret, domainID)
 	if err != nil {
 		return token, err
@@ -274,8 +275,8 @@ func (es *eventStore) IssueToken(ctx context.Context, identity, secret, domainID
 	return token, nil
 }
 
-func (es *eventStore) RefreshToken(ctx context.Context, session auth.Session, domainID string) (mgclients.Client, error) {
-	token, err := es.svc.RefreshToken(ctx, session, domainID)
+func (es *eventStore) RefreshToken(ctx context.Context, session auth.Session, refreshToken, domainID string) (*magistrala.Token, error) {
+	token, err := es.svc.RefreshToken(ctx, session, refreshToken, domainID)
 	if err != nil {
 		return token, err
 	}
@@ -342,8 +343,8 @@ func (es *eventStore) DeleteClient(ctx context.Context, session auth.Session, id
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) AddClientPolicy(ctx context.Context, client mgclients.Client) error {
-	if err := es.svc.AddClientPolicy(ctx, client); err != nil {
+func (es *eventStore) OAuthAddClientPolicy(ctx context.Context, client mgclients.Client) error {
+	if err := es.svc.OAuthAddClientPolicy(ctx, client); err != nil {
 		return err
 	}
 

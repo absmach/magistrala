@@ -1328,7 +1328,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 }
 
 func TestPasswordResetRequest(t *testing.T) {
-	us, svc, _, auth := newUsersServer()
+	us, svc, _, _ := newUsersServer()
 	defer us.Close()
 
 	testemail := "test@example.com"
@@ -1341,7 +1341,6 @@ func TestPasswordResetRequest(t *testing.T) {
 		referer     string
 		status      int
 		generateErr error
-		issueErr    error
 		sendErr     error
 		err         error
 	}{
@@ -1400,7 +1399,7 @@ func TestPasswordResetRequest(t *testing.T) {
 			contentType: contentType,
 			referer:     testReferer,
 			status:      http.StatusUnauthorized,
-			issueErr:    svcerr.ErrAuthentication,
+			generateErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
 	}
@@ -1414,14 +1413,12 @@ func TestPasswordResetRequest(t *testing.T) {
 			referer:     tc.referer,
 			body:        strings.NewReader(tc.data),
 		}
-		authCall := auth.On("Issue", mock.Anything, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, nil)
-		svcCall := svc.On("GenerateResetToken", mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.generateErr)
+		svcCall := svc.On("GenerateResetToken", mock.Anything, mock.Anything, mock.Anything).Return(tc.generateErr)
 		svcCall1 := svc.On("SendPasswordReset", mock.Anything, mock.Anything, mock.Anything, mock.Anything, validToken).Return(tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
-		authCall.Unset()
 		svcCall1.Unset()
 	}
 }
@@ -1784,7 +1781,7 @@ func TestUpdateClientSecret(t *testing.T) {
 }
 
 func TestIssueToken(t *testing.T) {
-	us, svc, _, auth := newUsersServer()
+	us, svc, _, _ := newUsersServer()
 	defer us.Close()
 
 	validIdentity := "valid"
@@ -1856,8 +1853,7 @@ func TestIssueToken(t *testing.T) {
 			body:        strings.NewReader(tc.data),
 		}
 
-		authCall := auth.On("Issue", mock.Anything, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, tc.err)
-		svcCall := svc.On("IssueToken", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
+		svcCall := svc.On("IssueToken", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		if tc.err != nil {
@@ -1871,7 +1867,6 @@ func TestIssueToken(t *testing.T) {
 		}
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
-		authCall.Unset()
 	}
 }
 
@@ -1959,8 +1954,7 @@ func TestRefreshToken(t *testing.T) {
 			token:       tc.token,
 		}
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
-		authCall1 := auth.On("Refresh", mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.Token{}, tc.refreshErr)
-		svcCall := svc.On("RefreshToken", mock.Anything, tc.session, mock.Anything).Return(mgclients.Client{}, tc.err)
+		svcCall := svc.On("RefreshToken", mock.Anything, tc.session, tc.token, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, tc.err)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		if tc.err != nil {
@@ -1975,7 +1969,6 @@ func TestRefreshToken(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
 		authCall.Unset()
-		authCall1.Unset()
 	}
 }
 

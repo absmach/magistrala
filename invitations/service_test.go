@@ -10,11 +10,11 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/invitations/mocks"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
@@ -34,7 +34,7 @@ var (
 
 func TestSendInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	cases := []struct {
@@ -221,7 +221,7 @@ func TestSendInvitation(t *testing.T) {
 
 func TestViewInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	validInvitation := invitations.Invitation{
@@ -398,7 +398,7 @@ func TestViewInvitation(t *testing.T) {
 
 func TestListInvitations(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	validPage := invitations.Page{
@@ -576,7 +576,7 @@ func TestListInvitations(t *testing.T) {
 
 func TestAcceptInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	sdksvc := new(sdkmocks.SDK)
 	svc := invitations.NewService(repo, authsvc, sdksvc)
 	userID := testsutil.GenerateUUID(t)
@@ -692,7 +692,7 @@ func TestAcceptInvitation(t *testing.T) {
 
 func TestDeleteInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	cases := []struct {
@@ -846,7 +846,7 @@ func TestDeleteInvitation(t *testing.T) {
 
 func TestRejectInvitation(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	svc := invitations.NewService(repo, authsvc, nil)
 
 	cases := []struct {

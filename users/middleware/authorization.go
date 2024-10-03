@@ -113,7 +113,7 @@ func (am *authorizationMiddleware) UpdateClientIdentity(ctx context.Context, ses
 	return am.svc.UpdateClientIdentity(ctx, session, id, identity)
 }
 
-func (am *authorizationMiddleware) GenerateResetToken(ctx context.Context, email, host string) (clients.Client, error) {
+func (am *authorizationMiddleware) GenerateResetToken(ctx context.Context, email, host string) error {
 	return am.svc.GenerateResetToken(ctx, email, host)
 }
 
@@ -168,20 +168,23 @@ func (am *authorizationMiddleware) Identify(ctx context.Context, session auth.Se
 	return am.svc.Identify(ctx, session)
 }
 
-func (am *authorizationMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (clients.Client, error) {
+func (am *authorizationMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	return am.svc.IssueToken(ctx, identity, secret, domainID)
 }
 
-func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session auth.Session, domainID string) (clients.Client, error) {
-	return am.svc.RefreshToken(ctx, session, domainID)
+func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session auth.Session, refreshToken, domainID string) (*magistrala.Token, error) {
+	return am.svc.RefreshToken(ctx, session, refreshToken, domainID)
 }
 
 func (am *authorizationMiddleware) OAuthCallback(ctx context.Context, client clients.Client) (clients.Client, error) {
 	return am.svc.OAuthCallback(ctx, client)
 }
 
-func (am *authorizationMiddleware) AddClientPolicy(ctx context.Context, client clients.Client) error {
-	return am.svc.AddClientPolicy(ctx, client)
+func (am *authorizationMiddleware) OAuthAddClientPolicy(ctx context.Context, client clients.Client) error {
+	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, client.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err == nil {
+		return nil
+	}
+	return am.svc.OAuthAddClientPolicy(ctx, client)
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, adminID string) error {

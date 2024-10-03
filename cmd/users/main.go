@@ -249,7 +249,7 @@ func newService(ctx context.Context, authClient authclient.AuthClient, authPolic
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := users.NewService(cRepo, policyClient, emailerClient, hsr, idp)
+	csvc := users.NewService(authClient, cRepo, policyClient, emailerClient, hsr, idp)
 	gsvc := mggroups.NewService(gRepo, idp, policyClient)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)

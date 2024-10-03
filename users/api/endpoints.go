@@ -6,8 +6,6 @@ package api
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
-	mgauth "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/auth"
@@ -17,8 +15,6 @@ import (
 	"github.com/absmach/magistrala/users"
 	"github.com/go-kit/kit/endpoint"
 )
-
-var errIssueToken = errors.New("failed to issue token")
 
 func registrationEndpoint(svc users.Service, selfRegister bool) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -338,26 +334,14 @@ func updateClientIdentityEndpoint(svc users.Service) endpoint.Endpoint {
 // When user clicks on a link it should get the ui with form to
 // enter new password, when form is submitted token and new password
 // must be sent as PUT request to 'password/reset' passwordResetEndpoint.
-func passwordResetRequestEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func passwordResetRequestEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(passwResetReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		client, err := svc.GenerateResetToken(ctx, req.Email, req.Host)
-		if err != nil {
-			return nil, err
-		}
-		token, err := authClient.Issue(ctx, &magistrala.IssueReq{
-			UserId: client.ID,
-			Type:   uint32(mgauth.RecoveryKey),
-		})
-		if err != nil {
-			return nil, errors.Wrap(errIssueToken, err)
-		}
-		err = svc.SendPasswordReset(ctx, req.Host, req.Email, client.Name, token.AccessToken)
-		if err != nil {
+		if err := svc.GenerateResetToken(ctx, req.Email, req.Host); err != nil {
 			return nil, err
 		}
 
@@ -433,25 +417,16 @@ func updateClientRoleEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-func issueTokenEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func issueTokenEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(loginClientReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		client, err := svc.IssueToken(ctx, req.Identity, req.Secret, req.DomainID)
+		token, err := svc.IssueToken(ctx, req.Identity, req.Secret, req.DomainID)
 		if err != nil {
 			return nil, err
-		}
-
-		token, err := authClient.Issue(ctx, &magistrala.IssueReq{
-			UserId:   client.ID,
-			DomainId: &client.Domain,
-			Type:     uint32(mgauth.AccessKey),
-		})
-		if err != nil {
-			return nil, errors.Wrap(errIssueToken, err)
 		}
 
 		return tokenRes{
@@ -462,7 +437,7 @@ func issueTokenEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.
 	}
 }
 
-func refreshTokenEndpoint(svc users.Service, authClient auth.AuthClient) endpoint.Endpoint {
+func refreshTokenEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(tokenReq)
 		if err := req.validate(); err != nil {
@@ -473,17 +448,10 @@ func refreshTokenEndpoint(svc users.Service, authClient auth.AuthClient) endpoin
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
-		client, err := svc.RefreshToken(ctx, session, req.DomainID)
+
+		token, err := svc.RefreshToken(ctx, session, req.RefreshToken, req.DomainID)
 		if err != nil {
 			return nil, err
-		}
-
-		token, err := authClient.Refresh(ctx, &magistrala.RefreshReq{
-			RefreshToken: req.RefreshToken,
-			DomainId:     &client.Domain,
-		})
-		if err != nil {
-			return nil, errors.Wrap(errIssueToken, err)
 		}
 
 		return tokenRes{

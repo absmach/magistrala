@@ -12,10 +12,10 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/journal"
 	"github.com/absmach/magistrala/journal/mocks"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -41,7 +41,7 @@ var (
 
 func TestSave(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	svc := journal.NewService(idProvider, repo, authsvc)
 
 	cases := []struct {
@@ -75,7 +75,7 @@ func TestSave(t *testing.T) {
 
 func TestReadAll(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
+	authsvc := new(authmocks.AuthClient)
 	svc := journal.NewService(idProvider, repo, authsvc)
 
 	validToken := "token"

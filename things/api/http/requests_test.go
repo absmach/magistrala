@@ -130,24 +130,14 @@ func TestViewClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: viewClientReq{
-				token: valid,
-				id:    validID,
+				id: validID,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: viewClientReq{
-				token: "",
-				id:    validID,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: viewClientReq{
-				token: valid,
-				id:    "",
+				id: "",
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -244,23 +234,13 @@ func TestListMembersReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listMembersReq{
-				token:   valid,
 				groupID: validID,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: listMembersReq{
-				token:   "",
-				groupID: validID,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: listMembersReq{
-				token:   valid,
 				groupID: "",
 			},
 			err: apiutil.ErrMissingID,
@@ -281,36 +261,24 @@ func TestUpdateClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientReq{
-				token: valid,
-				id:    validID,
-				Name:  valid,
+				id:   validID,
+				Name: valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientReq{
-				token: "",
-				id:    validID,
-				Name:  valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: updateClientReq{
-				token: valid,
-				id:    "",
-				Name:  valid,
+				id:   "",
+				Name: valid,
 			},
 			err: apiutil.ErrMissingID,
 		},
 		{
 			desc: "name too long",
 			req: updateClientReq{
-				token: valid,
-				id:    validID,
-				Name:  strings.Repeat("a", api.MaxNameSize+1),
+				id:   validID,
+				Name: strings.Repeat("a", api.MaxNameSize+1),
 			},
 			err: apiutil.ErrNameSize,
 		},
@@ -330,27 +298,16 @@ func TestUpdateClientTagsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientTagsReq{
-				token: valid,
-				id:    validID,
-				Tags:  []string{"tag1", "tag2"},
+				id:   validID,
+				Tags: []string{"tag1", "tag2"},
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientTagsReq{
-				token: "",
-				id:    validID,
-				Tags:  []string{"tag1", "tag2"},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: updateClientTagsReq{
-				token: valid,
-				id:    "",
-				Tags:  []string{"tag1", "tag2"},
+				id:   "",
+				Tags: []string{"tag1", "tag2"},
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -370,25 +327,14 @@ func TestUpdateClientCredentialsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientCredentialsReq{
-				token:  valid,
 				id:     validID,
 				Secret: valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateClientCredentialsReq{
-				token:  "",
-				id:     validID,
-				Secret: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: updateClientCredentialsReq{
-				token:  valid,
 				id:     "",
 				Secret: valid,
 			},
@@ -397,7 +343,6 @@ func TestUpdateClientCredentialsReqValidate(t *testing.T) {
 		{
 			desc: "empty secret",
 			req: updateClientCredentialsReq{
-				token:  valid,
 				id:     validID,
 				Secret: "",
 			},
@@ -419,16 +364,14 @@ func TestChangeClientStatusReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: changeClientStatusReq{
-				token: valid,
-				id:    validID,
+				id: validID,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
 			req: changeClientStatusReq{
-				token: valid,
-				id:    "",
+				id: "",
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -448,7 +391,6 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: assignUsersRequest{
-				token:    valid,
 				groupID:  validID,
 				UserIDs:  []string{validID},
 				Relation: valid,
@@ -456,19 +398,8 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: assignUsersRequest{
-				token:    "",
-				groupID:  validID,
-				UserIDs:  []string{validID},
-				Relation: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
 			req: assignUsersRequest{
-				token:    valid,
 				groupID:  "",
 				UserIDs:  []string{validID},
 				Relation: valid,
@@ -478,7 +409,6 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 		{
 			desc: "empty users",
 			req: assignUsersRequest{
-				token:    valid,
 				groupID:  validID,
 				UserIDs:  []string{},
 				Relation: valid,
@@ -488,7 +418,6 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 		{
 			desc: "empty relation",
 			req: assignUsersRequest{
-				token:    valid,
 				groupID:  validID,
 				UserIDs:  []string{validID},
 				Relation: "",
@@ -511,25 +440,14 @@ func TestAssignUserGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: assignUserGroupsRequest{
-				token:        valid,
 				groupID:      validID,
 				UserGroupIDs: []string{validID},
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: assignUserGroupsRequest{
-				token:        "",
-				groupID:      validID,
-				UserGroupIDs: []string{validID},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty group id",
 			req: assignUserGroupsRequest{
-				token:        valid,
 				groupID:      "",
 				UserGroupIDs: []string{validID},
 			},
@@ -538,7 +456,6 @@ func TestAssignUserGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "empty user group ids",
 			req: assignUserGroupsRequest{
-				token:        valid,
 				groupID:      validID,
 				UserGroupIDs: []string{},
 			},
@@ -560,7 +477,6 @@ func TestConnectChannelThingRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: connectChannelThingRequest{
-				token:     valid,
 				ChannelID: validID,
 				ThingID:   validID,
 			},
@@ -569,7 +485,6 @@ func TestConnectChannelThingRequestValidate(t *testing.T) {
 		{
 			desc: "empty channel id",
 			req: connectChannelThingRequest{
-				token:     valid,
 				ChannelID: "",
 				ThingID:   validID,
 			},
@@ -578,7 +493,6 @@ func TestConnectChannelThingRequestValidate(t *testing.T) {
 		{
 			desc: "empty thing id",
 			req: connectChannelThingRequest{
-				token:     valid,
 				ChannelID: validID,
 				ThingID:   "",
 			},

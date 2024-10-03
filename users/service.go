@@ -20,11 +20,14 @@ import (
 )
 
 var (
+	errIssueToken            = errors.New("failed to issue token")
 	errFailedPermissionsList = errors.New("failed to list permissions")
+	errRecoveryToken         = errors.New("failed to generate password recovery token")
 	errLoginDisableUser      = errors.New("failed to login in disabled user")
 )
 
 type service struct {
+	auth       auth.AuthClient
 	clients    postgres.Repository
 	idProvider magistrala.IDProvider
 	policies   policies.PolicyClient
@@ -33,8 +36,9 @@ type service struct {
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, policyClient policies.PolicyClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider) Service {
+func NewService(authClient auth.AuthClient, crepo postgres.Repository, policyClient policies.PolicyClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider) Service {
 	return service{
+		auth:       authClient,
 		clients:    crepo,
 		policies:   policyClient,
 		hasher:     hasher,
@@ -89,26 +93,29 @@ func (svc service) RegisterClient(ctx context.Context, session auth.Session, cli
 	return client, nil
 }
 
-func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (mgclients.Client, error) {
+func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	dbUser, err := svc.clients.RetrieveByIdentity(ctx, identity)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrLogin, err)
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrLogin, err)
 	}
 
 	var d string
 	if domainID != "" {
 		d = domainID
 	}
-	return mgclients.Client{
-		ID:     dbUser.ID,
-		Domain: d,
-	}, nil
+
+	token, err := svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: dbUser.ID, DomainId: &d, Type: uint32(mgauth.AccessKey)})
+	if err != nil {
+		return &magistrala.Token{}, errors.Wrap(errIssueToken, err)
+	}
+
+	return token, err
 }
 
-func (svc service) RefreshToken(ctx context.Context, session auth.Session, domainID string) (mgclients.Client, error) {
+func (svc service) RefreshToken(ctx context.Context, session auth.Session, refreshToken, domainID string) (*magistrala.Token, error) {
 	var d string
 	if domainID != "" {
 		d = domainID
@@ -116,15 +123,13 @@ func (svc service) RefreshToken(ctx context.Context, session auth.Session, domai
 
 	dbUser, err := svc.clients.RetrieveByID(ctx, session.UserID)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if dbUser.Status == mgclients.DisabledStatus {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
+		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
 	}
 
-	return mgclients.Client{
-		Domain: d,
-	}, nil
+	return svc.auth.Refresh(ctx, &magistrala.RefreshReq{RefreshToken: refreshToken, DomainId: &d})
 }
 
 func (svc service) ViewClient(ctx context.Context, session auth.Session, id string) (mgclients.Client, error) {
@@ -249,16 +254,21 @@ func (svc service) UpdateClientIdentity(ctx context.Context, session auth.Sessio
 	return cli, nil
 }
 
-func (svc service) GenerateResetToken(ctx context.Context, email, host string) (mgclients.Client, error) {
+func (svc service) GenerateResetToken(ctx context.Context, email, host string) error {
 	client, err := svc.clients.RetrieveByIdentity(ctx, email)
 	if err != nil {
-		return mgclients.Client{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		return errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	issueReq := &magistrala.IssueReq{
+		UserId: client.ID,
+		Type:   uint32(mgauth.RecoveryKey),
+	}
+	token, err := svc.auth.Issue(ctx, issueReq)
+	if err != nil {
+		return errors.Wrap(errRecoveryToken, err)
 	}
 
-	return mgclients.Client{
-		ID:   client.ID,
-		Name: client.Name,
-	}, nil
+	return svc.SendPasswordReset(ctx, host, email, client.Name, token.AccessToken)
 }
 
 func (svc service) ResetSecret(ctx context.Context, session auth.Session, secret string) error {
@@ -531,7 +541,7 @@ func (svc service) OAuthCallback(ctx context.Context, client mgclients.Client) (
 	}, nil
 }
 
-func (svc service) AddClientPolicy(ctx context.Context, client mgclients.Client) error {
+func (svc service) OAuthAddClientPolicy(ctx context.Context, client mgclients.Client) error {
 	return svc.addClientPolicy(ctx, client.ID, client.Role)
 }
 

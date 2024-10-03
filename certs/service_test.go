@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/certs/mocks"
 	"github.com/absmach/magistrala/certs/pki"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -37,10 +37,10 @@ const (
 	validID   = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
-func newService(_ *testing.T) (certs.Service, *mocks.Repository, *mocks.Agent, *authmocks.AuthServiceClient, *sdkmocks.SDK) {
+func newService(_ *testing.T) (certs.Service, *mocks.Repository, *mocks.Agent, *authmocks.AuthClient, *sdkmocks.SDK) {
 	repo := new(mocks.Repository)
 	agent := new(mocks.Agent)
-	auth := new(authmocks.AuthServiceClient)
+	auth := new(authmocks.AuthClient)
 	sdk := new(sdkmocks.SDK)
 
 	return certs.New(auth, repo, sdk, agent), repo, agent, auth, sdk

@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/events/store"
@@ -88,14 +88,14 @@ var (
 type testVariable struct {
 	svc      bootstrap.Service
 	boot     *mocks.ConfigRepository
-	auth     *authmocks.AuthServiceClient
+	auth     *authmocks.AuthClient
 	policies *policymocks.PolicyClient
 	sdk      *sdkmocks.SDK
 }
 
 func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
-	auth := new(authmocks.AuthServiceClient)
+	auth := new(authmocks.AuthClient)
 	policies := new(policymocks.PolicyClient)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()

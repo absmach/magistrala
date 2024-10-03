@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala"
+	mgauth "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	pauth "github.com/absmach/magistrala/pkg/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -17,7 +19,7 @@ import (
 )
 
 func TestIssueToken(t *testing.T) {
-	ts, svc := setupUsers()
+	ts, svc, _ := setupUsers()
 	defer ts.Close()
 
 	client := generateTestUser(t)
@@ -46,7 +48,7 @@ func TestIssueToken(t *testing.T) {
 			svcRes: &magistrala.Token{
 				AccessToken:  token.AccessToken,
 				RefreshToken: &token.RefreshToken,
-				AccessType:   token.AccessType,
+				AccessType:   mgauth.AccessKey.String(),
 			},
 			svcErr:   nil,
 			response: token,
@@ -59,7 +61,7 @@ func TestIssueToken(t *testing.T) {
 				Secret:   client.Credentials.Secret,
 				DomainID: validID,
 			},
-			svcRes:   nil,
+			svcRes:   &magistrala.Token{},
 			svcErr:   svcerr.ErrAuthentication,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -71,7 +73,7 @@ func TestIssueToken(t *testing.T) {
 				Secret:   "invalid",
 				DomainID: validID,
 			},
-			svcRes:   nil,
+			svcRes:   &magistrala.Token{},
 			svcErr:   svcerr.ErrLogin,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrLogin, http.StatusUnauthorized),
@@ -83,7 +85,7 @@ func TestIssueToken(t *testing.T) {
 				Secret:   client.Credentials.Secret,
 				DomainID: validID,
 			},
-			svcRes:   nil,
+			svcRes:   &magistrala.Token{},
 			svcErr:   nil,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
@@ -95,7 +97,7 @@ func TestIssueToken(t *testing.T) {
 				Secret:   "",
 				DomainID: validID,
 			},
-			svcRes:   nil,
+			svcRes:   &magistrala.Token{},
 			svcErr:   nil,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingPass), http.StatusBadRequest),
@@ -117,7 +119,7 @@ func TestIssueToken(t *testing.T) {
 }
 
 func TestRefreshToken(t *testing.T) {
-	ts, svc := setupUsers()
+	ts, svc, auth := setupUsers()
 	defer ts.Close()
 
 	token := generateTestToken()
@@ -128,13 +130,15 @@ func TestRefreshToken(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc     string
-		token    string
-		login    sdk.Login
-		svcRes   *magistrala.Token
-		svcErr   error
-		response sdk.Token
-		err      errors.SDKError
+		desc        string
+		token       string
+		login       sdk.Login
+		svcRes      *magistrala.Token
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.Token
+		err         errors.SDKError
 	}{
 		{
 			desc:  "refresh token successfully",
@@ -147,7 +151,6 @@ func TestRefreshToken(t *testing.T) {
 				RefreshToken: &token.RefreshToken,
 				AccessType:   token.AccessType,
 			},
-			svcErr:   nil,
 			response: token,
 			err:      nil,
 		},
@@ -157,10 +160,10 @@ func TestRefreshToken(t *testing.T) {
 			login: sdk.Login{
 				DomainID: validID,
 			},
-			svcRes:   nil,
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.Token{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			svcRes:      nil,
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.Token{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:  "refresh token with empty token",
@@ -168,23 +171,23 @@ func TestRefreshToken(t *testing.T) {
 			login: sdk.Login{
 				DomainID: validID,
 			},
-			svcRes:   nil,
-			svcErr:   nil,
 			response: sdk.Token{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("RefreshToken", mock.Anything, tc.token, tc.login.DomainID).Return(tc.svcRes, tc.svcErr)
+			authCall := auth.On("Identify", mock.Anything, mock.Anything).Return(&magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}, tc.identifyErr)
+			svcCall := svc.On("RefreshToken", mock.Anything, pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.token, tc.login.DomainID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.RefreshToken(tc.login, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "RefreshToken", mock.Anything, tc.token, tc.login.DomainID)
+				ok := svcCall.Parent.AssertCalled(t, "RefreshToken", mock.Anything, pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.token, tc.login.DomainID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
@@ -193,6 +196,6 @@ func generateTestToken() sdk.Token {
 	return sdk.Token{
 		AccessToken:  "access_token",
 		RefreshToken: "refresh_token",
-		AccessType:   "Bearer",
+		AccessType:   mgauth.AccessKey.String(),
 	}
 }

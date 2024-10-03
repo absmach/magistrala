@@ -12,13 +12,9 @@ import (
 
 type createGroupReq struct {
 	mggroups.Group
-	token string
 }
 
 func (req createGroupReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if len(req.Name) > api.MaxNameSize || req.Name == "" {
 		return apiutil.ErrNameSize
 	}
@@ -27,7 +23,6 @@ func (req createGroupReq) validate() error {
 }
 
 type updateGroupReq struct {
-	token       string
 	id          string
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
@@ -35,9 +30,6 @@ type updateGroupReq struct {
 }
 
 func (req updateGroupReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -49,7 +41,6 @@ func (req updateGroupReq) validate() error {
 
 type listGroupsReq struct {
 	mggroups.Page
-	token      string
 	memberKind string
 	memberID   string
 	// - `true`  - result is JSON tree representing groups hierarchy,
@@ -58,9 +49,6 @@ type listGroupsReq struct {
 }
 
 func (req listGroupsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.memberKind == "" {
 		return apiutil.ErrMissingMemberKind
 	}
@@ -78,14 +66,10 @@ func (req listGroupsReq) validate() error {
 }
 
 type groupReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req groupReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -94,14 +78,10 @@ func (req groupReq) validate() error {
 }
 
 type groupPermsReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req groupPermsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -110,14 +90,10 @@ func (req groupPermsReq) validate() error {
 }
 
 type changeGroupStatusReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req changeGroupStatusReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -125,7 +101,6 @@ func (req changeGroupStatusReq) validate() error {
 }
 
 type assignReq struct {
-	token      string
 	groupID    string
 	Relation   string   `json:"relation,omitempty"`
 	MemberKind string   `json:"member_kind,omitempty"`
@@ -133,10 +108,6 @@ type assignReq struct {
 }
 
 func (req assignReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.MemberKind == "" {
 		return apiutil.ErrMissingMemberKind
 	}
@@ -153,7 +124,6 @@ func (req assignReq) validate() error {
 }
 
 type unassignReq struct {
-	token      string
 	groupID    string
 	Relation   string   `json:"relation,omitempty"`
 	MemberKind string   `json:"member_kind,omitempty"`
@@ -161,10 +131,6 @@ type unassignReq struct {
 }
 
 func (req unassignReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.MemberKind == "" {
 		return apiutil.ErrMissingMemberKind
 	}
@@ -181,17 +147,12 @@ func (req unassignReq) validate() error {
 }
 
 type listMembersReq struct {
-	token      string
 	groupID    string
 	permission string
 	memberKind string
 }
 
 func (req listMembersReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.memberKind == "" {
 		return apiutil.ErrMissingMemberKind
 	}

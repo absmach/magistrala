@@ -9,8 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/absmach/magistrala"
+	mgauth "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/auth"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
@@ -49,15 +52,24 @@ var (
 	errHashPassword = errors.New("generate hash from password failed")
 )
 
-func newService() (users.Service, *mocks.Repository, *policymocks.PolicyClient, *mocks.Emailer) {
+func newService() (users.Service, *authmocks.AuthClient, *mocks.Repository, *policymocks.PolicyClient, *mocks.Emailer) {
 	cRepo := new(mocks.Repository)
 	policies := new(policymocks.PolicyClient)
 	e := new(mocks.Emailer)
-	return users.NewService(cRepo, policies, e, phasher, idProvider), cRepo, policies, e
+	authClient := new(authmocks.AuthClient)
+	return users.NewService(authClient, cRepo, policies, e, phasher, idProvider), authClient, cRepo, policies, e
+}
+
+func newServiceMinimal() (users.Service, *mocks.Repository) {
+	cRepo := new(mocks.Repository)
+	policies := new(policymocks.PolicyClient)
+	e := new(mocks.Emailer)
+	authClient := new(authmocks.AuthClient)
+	return users.NewService(authClient, cRepo, policies, e, phasher, idProvider), cRepo
 }
 
 func TestRegisterClient(t *testing.T) {
-	svc, cRepo, policies, _ := newService()
+	svc, _, cRepo, policies, _ := newService()
 
 	cases := []struct {
 		desc                      string
@@ -224,7 +236,7 @@ func TestRegisterClient(t *testing.T) {
 		policyCall1.Unset()
 	}
 
-	svc, cRepo, policies, _ = newService()
+	svc, _, cRepo, policies, _ = newService()
 
 	cases2 := []struct {
 		desc                      string
@@ -275,7 +287,7 @@ func TestRegisterClient(t *testing.T) {
 }
 
 func TestViewClient(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	cases := []struct {
 		desc                 string
@@ -343,7 +355,7 @@ func TestViewClient(t *testing.T) {
 }
 
 func TestListClients(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	cases := []struct {
 		desc                string
@@ -423,7 +435,7 @@ func TestListClients(t *testing.T) {
 }
 
 func TestSearchUsers(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 	cases := []struct {
 		desc        string
 		token       string
@@ -471,7 +483,7 @@ func TestSearchUsers(t *testing.T) {
 }
 
 func TestUpdateClient(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	client1 := client
 	client2 := client
@@ -565,7 +577,7 @@ func TestUpdateClient(t *testing.T) {
 }
 
 func TestUpdateClientTags(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	client.Tags = []string{"updated"}
 	adminID := testsutil.GenerateUUID(t)
@@ -633,7 +645,7 @@ func TestUpdateClientTags(t *testing.T) {
 }
 
 func TestUpdateClientRole(t *testing.T) {
-	svc, cRepo, policies, _ := newService()
+	svc, _, cRepo, policies, _ := newService()
 
 	client2 := client
 	client.Role = mgclients.AdminRole
@@ -730,7 +742,7 @@ func TestUpdateClientRole(t *testing.T) {
 }
 
 func TestUpdateClientSecret(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, authClient, cRepo, _, _ := newService()
 
 	newSecret := "newstrongSecret"
 	rClient := client
@@ -746,6 +758,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		retrieveByIDResponse       mgclients.Client
 		retrieveByIdentityResponse mgclients.Client
 		updateSecretResponse       mgclients.Client
+		issueResponse              *magistrala.Token
 		response                   mgclients.Client
 		retrieveByIDErr            error
 		retrieveByIdentityErr      error
@@ -761,6 +774,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			retrieveByIdentityResponse: rClient,
 			retrieveByIDResponse:       client,
 			updateSecretResponse:       responseClient,
+			issueResponse:              &magistrala.Token{AccessToken: validToken},
 			response:                   responseClient,
 			err:                        nil,
 		},
@@ -818,7 +832,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		repoCall := cRepo.On("RetrieveByID", context.Background(), client.ID).Return(tc.retrieveByIDResponse, tc.retrieveByIDErr)
 		repoCall1 := cRepo.On("RetrieveByIdentity", context.Background(), client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
 		repoCall2 := cRepo.On("UpdateSecret", context.Background(), mock.Anything).Return(tc.updateSecretResponse, tc.updateSecretErr)
-
+		authCall := authClient.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
 		updatedClient, err := svc.UpdateClientSecret(context.Background(), tc.session, tc.oldSecret, tc.newSecret)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, updatedClient))
@@ -833,11 +847,78 @@ func TestUpdateClientSecret(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		authCall.Unset()
+	}
+}
+
+func TestUpdateClientIdentity(t *testing.T) {
+	svc, cRepo := newServiceMinimal()
+
+	client2 := client
+	client2.Credentials.Identity = "updated@example.com"
+
+	cases := []struct {
+		desc                         string
+		identity                     string
+		token                        string
+		id                           string
+		updateClientIdentityResponse mgclients.Client
+		updateClientIdentityErr      error
+		checkSuperAdminErr           error
+		err                          error
+	}{
+		{
+			desc:                         "update client as normal user successfully",
+			identity:                     "updated@example.com",
+			token:                        validToken,
+			id:                           client.ID,
+			updateClientIdentityResponse: client2,
+			err:                          nil,
+		},
+		{
+			desc:                         "update client identity as normal user with repo error on update",
+			identity:                     "updated@example.com",
+			token:                        validToken,
+			id:                           client.ID,
+			updateClientIdentityResponse: mgclients.Client{},
+			updateClientIdentityErr:      errors.ErrMalformedEntity,
+			err:                          svcerr.ErrUpdateEntity,
+		},
+		{
+			desc:     "update client identity as admin successfully",
+			identity: "updated@example.com",
+			token:    validToken,
+			id:       client.ID,
+			err:      nil,
+		},
+		{
+			desc:                         "update client identity as admin with repo error on update",
+			identity:                     "updated@exmaple.com",
+			token:                        validToken,
+			id:                           client.ID,
+			updateClientIdentityResponse: mgclients.Client{},
+			updateClientIdentityErr:      errors.ErrMalformedEntity,
+			err:                          svcerr.ErrUpdateEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
+		repoCall1 := cRepo.On("UpdateIdentity", context.Background(), mock.Anything).Return(tc.updateClientIdentityResponse, tc.updateClientIdentityErr)
+		updatedClient, err := svc.UpdateClientIdentity(context.Background(), auth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.id, tc.identity)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, tc.updateClientIdentityResponse, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.updateClientIdentityResponse, updatedClient))
+		if tc.err == nil {
+			ok := repoCall1.Parent.AssertCalled(t, "UpdateIdentity", context.Background(), mock.Anything)
+			assert.True(t, ok, fmt.Sprintf("UpdateIdentity was not called on %s", tc.desc))
+		}
+		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 
 func TestEnableClient(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -918,7 +999,7 @@ func TestEnableClient(t *testing.T) {
 }
 
 func TestDisableClient(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
@@ -998,7 +1079,7 @@ func TestDisableClient(t *testing.T) {
 }
 
 func TestDeleteClient(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	enabledClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	deletedClient1 := mgclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mgclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mgclients.DeletedStatus}
@@ -1076,7 +1157,7 @@ func TestDeleteClient(t *testing.T) {
 }
 
 func TestListMembers(t *testing.T) {
-	svc, cRepo, policies, _ := newService()
+	svc, _, cRepo, policies, _ := newService()
 
 	validPolicy := fmt.Sprintf("%s_%s", validID, client.ID)
 	permissionsClient := basicClient
@@ -1367,7 +1448,7 @@ func TestListMembers(t *testing.T) {
 }
 
 func TestIssueToken(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, auth, cRepo, _, _ := newService()
 
 	rClient := client
 	rClient2 := client
@@ -1381,7 +1462,7 @@ func TestIssueToken(t *testing.T) {
 		domainID                   string
 		client                     mgclients.Client
 		retrieveByIdentityResponse mgclients.Client
-		issueResponse              mgclients.Client
+		issueResponse              *magistrala.Token
 		retrieveByIdentityErr      error
 		issueErr                   error
 		err                        error
@@ -1390,7 +1471,15 @@ func TestIssueToken(t *testing.T) {
 			desc:                       "issue token for an existing client",
 			client:                     client,
 			retrieveByIdentityResponse: rClient,
-			issueResponse:              mgclients.Client{ID: client.ID, Domain: validID},
+			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			err:                        nil,
+		},
+		{
+			desc:                       "issue token for non-empty domain id",
+			domainID:                   validID,
+			client:                     client,
+			retrieveByIdentityResponse: rClient,
+			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                        nil,
 		},
 		{
@@ -1406,31 +1495,53 @@ func TestIssueToken(t *testing.T) {
 			retrieveByIdentityResponse: rClient3,
 			err:                        svcerr.ErrLogin,
 		},
+		{
+			desc:                       "issue token with empty domain id",
+			client:                     client,
+			retrieveByIdentityResponse: rClient,
+			issueResponse:              &magistrala.Token{},
+			issueErr:                   svcerr.ErrAuthentication,
+			err:                        svcerr.ErrAuthentication,
+		},
+		{
+			desc:                       "issue token with grpc error",
+			client:                     client,
+			retrieveByIdentityResponse: rClient,
+			issueResponse:              &magistrala.Token{},
+			issueErr:                   svcerr.ErrAuthentication,
+			err:                        svcerr.ErrAuthentication,
+		},
 	}
 
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
-		_, err := svc.IssueToken(context.Background(), tc.client.Credentials.Identity, tc.client.Credentials.Secret, tc.domainID)
+		authCall := auth.On("Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, DomainId: &tc.domainID, Type: uint32(mgauth.AccessKey)}).Return(tc.issueResponse, tc.issueErr)
+		token, err := svc.IssueToken(context.Background(), tc.client.Credentials.Identity, tc.client.Credentials.Secret, tc.domainID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
+			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
+			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
 			ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByIdentity was not called on %s", tc.desc))
+			ok = authCall.Parent.AssertCalled(t, "Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, DomainId: &tc.domainID, Type: uint32(mgauth.AccessKey)})
+			assert.True(t, ok, fmt.Sprintf("Issue was not called on %s", tc.desc))
 		}
-
+		authCall.Unset()
 		repoCall.Unset()
 	}
 }
 
 func TestRefreshToken(t *testing.T) {
-	svc, crepo, _, _ := newService()
+	svc, authsvc, crepo, _, _ := newService()
 
 	rClient := client
 	rClient.Credentials.Secret, _ = phasher.Hash(client.Credentials.Secret)
 
 	cases := []struct {
 		desc        string
+		session     auth.Session
 		domainID    string
-		refreshResp mgclients.Client
+		refreshResp *magistrala.Token
 		refresErr   error
 		repoResp    mgclients.Client
 		repoErr     error
@@ -1438,52 +1549,81 @@ func TestRefreshToken(t *testing.T) {
 	}{
 		{
 			desc:        "refresh token with refresh token for an existing client",
+			session:     auth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			domainID:    validID,
-			refreshResp: mgclients.Client{Domain: validID},
+			refreshResp: &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			repoResp:    rClient,
 			err:         nil,
 		},
 		{
 			desc:        "refresh token with refresh token for empty domain id",
-			refreshResp: mgclients.Client{},
+			session:     auth.Session{UserID: validID},
+			refreshResp: &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			repoResp:    rClient,
 			err:         nil,
 		},
 		{
+			desc:        "refresh token with access token for an existing client",
+			session:     auth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			domainID:    validID,
+			refreshResp: &magistrala.Token{},
+			refresErr:   svcerr.ErrAuthentication,
+			repoResp:    rClient,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
 			desc:     "refresh token with refresh token for a non-existing client",
+			session:  auth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			domainID: validID,
 			repoErr:  repoerr.ErrNotFound,
 			err:      repoerr.ErrNotFound,
 		},
 		{
 			desc:     "refresh token with refresh token for a disable client",
+			session:  auth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			domainID: validID,
 			repoResp: mgclients.Client{Status: mgclients.DisabledStatus},
 			err:      svcerr.ErrAuthentication,
 		},
+		{
+			desc:        "refresh token with empty domain id",
+			session:     auth.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			refreshResp: &magistrala.Token{},
+			refresErr:   svcerr.ErrAuthentication,
+			repoResp:    rClient,
+			err:         svcerr.ErrAuthentication,
+		},
 	}
 
 	for _, tc := range cases {
-		repoCall := crepo.On("RetrieveByID", context.Background(), "").Return(tc.repoResp, tc.repoErr)
-		_, err := svc.RefreshToken(context.Background(), auth.Session{}, tc.domainID)
+		authCall := authsvc.On("Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken, DomainId: &tc.domainID}).Return(tc.refreshResp, tc.refresErr)
+		repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
+		token, err := svc.RefreshToken(context.Background(), tc.session, validToken, tc.domainID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			ok := repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), "")
+			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
+			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
+			ok := authCall.Parent.AssertCalled(t, "Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken, DomainId: &tc.domainID})
+			assert.True(t, ok, fmt.Sprintf("Refresh was not called on %s", tc.desc))
+			ok = repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
 		}
+		authCall.Unset()
 		repoCall.Unset()
 	}
 }
 
 func TestGenerateResetToken(t *testing.T) {
-	svc, cRepo, _, e := newService()
+	svc, auth, cRepo, _, e := newService()
 
 	cases := []struct {
 		desc                       string
 		email                      string
 		host                       string
 		retrieveByIdentityResponse mgclients.Client
+		issueResponse              *magistrala.Token
 		retrieveByIdentityErr      error
+		issueErr                   error
 		err                        error
 	}{
 		{
@@ -1491,6 +1631,7 @@ func TestGenerateResetToken(t *testing.T) {
 			email:                      "existingemail@example.com",
 			host:                       "examplehost",
 			retrieveByIdentityResponse: client,
+			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                        nil,
 		},
 		{
@@ -1506,21 +1647,32 @@ func TestGenerateResetToken(t *testing.T) {
 			retrieveByIdentityErr: repoerr.ErrNotFound,
 			err:                   repoerr.ErrNotFound,
 		},
+		{
+			desc:                       "generate reset token with failed to issue token",
+			email:                      "existingemail@example.com",
+			host:                       "examplehost",
+			retrieveByIdentityResponse: client,
+			issueResponse:              &magistrala.Token{},
+			issueErr:                   svcerr.ErrAuthorization,
+			err:                        svcerr.ErrAuthorization,
+		},
 	}
 
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.email).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
+		authCall := auth.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
 		svcCall := e.On("SendPasswordReset", []string{tc.email}, tc.host, client.Name, validToken).Return(tc.err)
-		_, err := svc.GenerateResetToken(context.Background(), tc.email, tc.host)
+		err := svc.GenerateResetToken(context.Background(), tc.email, tc.host)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.email)
 		repoCall.Unset()
+		authCall.Unset()
 		svcCall.Unset()
 	}
 }
 
 func TestResetSecret(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	client := mgclients.Client{
 		ID: "clientID",
@@ -1607,7 +1759,7 @@ func TestResetSecret(t *testing.T) {
 }
 
 func TestViewProfile(t *testing.T) {
-	svc, cRepo, _, _ := newService()
+	svc, cRepo := newServiceMinimal()
 
 	client := mgclients.Client{
 		ID: "clientID",
@@ -1651,7 +1803,7 @@ func TestViewProfile(t *testing.T) {
 }
 
 func TestOAuthCallback(t *testing.T) {
-	svc, cRepo, policies, _ := newService()
+	svc, _, cRepo, policies, _ := newService()
 
 	cases := []struct {
 		desc                       string

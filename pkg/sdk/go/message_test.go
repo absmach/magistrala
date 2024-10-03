@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	adapter "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	pubsub "github.com/absmach/magistrala/pkg/messaging/mocks"
@@ -30,8 +30,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupMessages() (*httptest.Server, *authmocks.AuthServiceClient, *pubsub.PubSub) {
-	auth := new(authmocks.AuthServiceClient)
+func setupMessages() (*httptest.Server, *authmocks.AuthClient, *pubsub.PubSub) {
+	auth := new(authmocks.AuthClient)
 	pub := new(pubsub.PubSub)
 	handler := adapter.NewHandler(pub, mglog.NewMock(), auth)
 
@@ -50,9 +50,9 @@ func setupMessages() (*httptest.Server, *authmocks.AuthServiceClient, *pubsub.Pu
 	return httptest.NewServer(http.HandlerFunc(mp.ServeHTTP)), auth, pub
 }
 
-func setupReader() (*httptest.Server, *authmocks.AuthServiceClient, *readersmocks.MessageRepository) {
+func setupReader() (*httptest.Server, *authmocks.AuthClient, *readersmocks.MessageRepository) {
 	repo := new(readersmocks.MessageRepository)
-	auth := new(authmocks.AuthServiceClient)
+	auth := new(authmocks.AuthClient)
 	tauth := new(thmocks.AuthzServiceClient)
 
 	mux := readersapi.MakeHandler(repo, auth, tauth, "test", "")

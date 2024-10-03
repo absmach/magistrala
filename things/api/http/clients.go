@@ -147,8 +147,7 @@ func clientsHandler(svc things.Service, r *chi.Mux, authClient auth.AuthClient, 
 
 func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewClientReq{
-		id:    chi.URLParam(r, "thingID"),
-		token: apiutil.ExtractBearerToken(r),
+		id: chi.URLParam(r, "thingID"),
 	}
 
 	return req, nil
@@ -225,8 +224,7 @@ func decodeUpdateClient(_ context.Context, r *http.Request) (interface{}, error)
 	}
 
 	req := updateClientReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id: chi.URLParam(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -241,8 +239,7 @@ func decodeUpdateClientTags(_ context.Context, r *http.Request) (interface{}, er
 	}
 
 	req := updateClientTagsReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id: chi.URLParam(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -257,8 +254,7 @@ func decodeUpdateClientCredentials(_ context.Context, r *http.Request) (interfac
 	}
 
 	req := updateClientCredentialsReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id: chi.URLParam(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -298,8 +294,7 @@ func decodeCreateClientsReq(_ context.Context, r *http.Request) (interface{}, er
 
 func decodeChangeClientStatus(_ context.Context, r *http.Request) (interface{}, error) {
 	req := changeClientStatusReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id: chi.URLParam(r, "thingID"),
 	}
 
 	return req, nil
@@ -336,7 +331,6 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listMembersReq{
-		token: apiutil.ExtractBearerToken(r),
 		Page: mgclients.Page{
 			Status:     st,
 			Offset:     o,

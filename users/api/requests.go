@@ -33,14 +33,10 @@ func (req createClientReq) validate() error {
 }
 
 type viewClientReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req viewClientReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -91,15 +87,11 @@ func (req searchClientsReq) validate() error {
 
 type listMembersByObjectReq struct {
 	mgclients.Page
-	token      string
 	objectKind string
 	objectID   string
 }
 
 func (req listMembersByObjectReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.objectID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -265,17 +257,12 @@ func (req resetTokenReq) validate() error {
 }
 
 type assignUsersReq struct {
-	token    string
 	groupID  string
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`
 }
 
 func (req assignUsersReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.Relation == "" {
 		return apiutil.ErrMissingRelation
 	}
@@ -292,17 +279,12 @@ func (req assignUsersReq) validate() error {
 }
 
 type unassignUsersReq struct {
-	token    string
 	groupID  string
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`
 }
 
 func (req unassignUsersReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -315,16 +297,11 @@ func (req unassignUsersReq) validate() error {
 }
 
 type assignGroupsReq struct {
-	token    string
 	groupID  string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req assignGroupsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -337,16 +314,11 @@ func (req assignGroupsReq) validate() error {
 }
 
 type unassignGroupsReq struct {
-	token    string
 	groupID  string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req unassignGroupsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}

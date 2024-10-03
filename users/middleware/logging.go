@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/users"
@@ -48,11 +49,14 @@ func (lm *loggingMiddleware) RegisterClient(ctx context.Context, session auth.Se
 
 // IssueToken logs the issue_token request. It logs the client identity type and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (c mgclients.Client, err error) {
+func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("domain_id", domainID),
+		}
+		if t.AccessType != "" {
+			args = append(args, slog.String("access_type", t.AccessType))
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -66,11 +70,14 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, d
 
 // RefreshToken logs the refresh_token request. It logs the refreshtoken, token type and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) RefreshToken(ctx context.Context, session auth.Session, domainID string) (c mgclients.Client, err error) {
+func (lm *loggingMiddleware) RefreshToken(ctx context.Context, session auth.Session, refreshToken, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("domain_id", domainID),
+		}
+		if t.AccessType != "" {
+			args = append(args, slog.String("access_type", t.AccessType))
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -79,7 +86,7 @@ func (lm *loggingMiddleware) RefreshToken(ctx context.Context, session auth.Sess
 		}
 		lm.logger.Info("Refresh token completed successfully", args...)
 	}(time.Now())
-	return lm.svc.RefreshToken(ctx, session, domainID)
+	return lm.svc.RefreshToken(ctx, session, refreshToken, domainID)
 }
 
 // ViewClient logs the view_client request. It logs the client id and the time it took to complete the request.
@@ -255,7 +262,7 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, session aut
 
 // GenerateResetToken logs the generate_reset_token request. It logs the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) GenerateResetToken(ctx context.Context, email, host string) (c mgclients.Client, err error) {
+func (lm *loggingMiddleware) GenerateResetToken(ctx context.Context, email, host string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -446,7 +453,8 @@ func (lm *loggingMiddleware) DeleteClient(ctx context.Context, session auth.Sess
 	return lm.svc.DeleteClient(ctx, session, id)
 }
 
-func (lm *loggingMiddleware) AddClientPolicy(ctx context.Context, client mgclients.Client) (err error) {
+// OAuthAddClientPolicy logs the add_client_policy request. It logs the client id and the time it took to complete the request.
+func (lm *loggingMiddleware) OAuthAddClientPolicy(ctx context.Context, client mgclients.Client) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -459,5 +467,5 @@ func (lm *loggingMiddleware) AddClientPolicy(ctx context.Context, client mgclien
 		}
 		lm.logger.Info("Add client policy completed successfully", args...)
 	}(time.Now())
-	return lm.svc.AddClientPolicy(ctx, client)
+	return lm.svc.OAuthAddClientPolicy(ctx, client)
 }

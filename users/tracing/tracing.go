@@ -6,6 +6,7 @@ package tracing
 import (
 	"context"
 
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/users"
@@ -34,7 +35,7 @@ func (tm *tracingMiddleware) RegisterClient(ctx context.Context, session auth.Se
 }
 
 // IssueToken traces the "IssueToken" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (mgclients.Client, error) {
+func (tm *tracingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_issue_token", trace.WithAttributes(attribute.String("identity", identity)))
 	defer span.End()
 
@@ -42,11 +43,11 @@ func (tm *tracingMiddleware) IssueToken(ctx context.Context, identity, secret, d
 }
 
 // RefreshToken traces the "RefreshToken" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) RefreshToken(ctx context.Context, session auth.Session, domainID string) (mgclients.Client, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_refresh_token", trace.WithAttributes(attribute.String("user_id", session.UserID)))
+func (tm *tracingMiddleware) RefreshToken(ctx context.Context, session auth.Session, refreshToken, domainID string) (*magistrala.Token, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_refresh_token", trace.WithAttributes(attribute.String("refresh_token", refreshToken)))
 	defer span.End()
 
-	return tm.svc.RefreshToken(ctx, session, domainID)
+	return tm.svc.RefreshToken(ctx, session, refreshToken, domainID)
 }
 
 // ViewClient traces the "ViewClient" operation of the wrapped clients.Service.
@@ -126,7 +127,7 @@ func (tm *tracingMiddleware) UpdateClientSecret(ctx context.Context, session aut
 }
 
 // GenerateResetToken traces the "GenerateResetToken" operation of the wrapped clients.Service.
-func (tm *tracingMiddleware) GenerateResetToken(ctx context.Context, email, host string) (mgclients.Client, error) {
+func (tm *tracingMiddleware) GenerateResetToken(ctx context.Context, email, host string) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_generate_reset_token", trace.WithAttributes(
 		attribute.String("email", email),
 		attribute.String("host", host),
@@ -224,11 +225,12 @@ func (tm *tracingMiddleware) DeleteClient(ctx context.Context, session auth.Sess
 	return tm.svc.DeleteClient(ctx, session, id)
 }
 
-func (tm *tracingMiddleware) AddClientPolicy(ctx context.Context, client mgclients.Client) error {
+// OAuthAddClientPolicy traces the "OAuthAddClientPolicy" operation of the wrapped clients.Service.
+func (tm *tracingMiddleware) OAuthAddClientPolicy(ctx context.Context, client mgclients.Client) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_add_client_policy", trace.WithAttributes(
 		attribute.String("id", client.ID),
 	))
 	defer span.End()
 
-	return tm.svc.AddClientPolicy(ctx, client)
+	return tm.svc.OAuthAddClientPolicy(ctx, client)
 }

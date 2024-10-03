@@ -199,7 +199,6 @@ func decodeAssignUsersRequest(_ context.Context, r *http.Request) (interface{}, 
 	}
 
 	req := assignUsersRequest{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -215,7 +214,6 @@ func decodeUnassignUsersRequest(_ context.Context, r *http.Request) (interface{}
 	}
 
 	req := assignUsersRequest{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -231,7 +229,6 @@ func decodeAssignUserGroupsRequest(_ context.Context, r *http.Request) (interfac
 	}
 
 	req := assignUserGroupsRequest{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -247,7 +244,6 @@ func decodeUnassignUserGroupsRequest(_ context.Context, r *http.Request) (interf
 	}
 
 	req := assignUserGroupsRequest{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -259,7 +255,6 @@ func decodeUnassignUserGroupsRequest(_ context.Context, r *http.Request) (interf
 
 func decodeConnectChannelThingRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := connectChannelThingRequest{
-		token:     apiutil.ExtractBearerToken(r),
 		ThingID:   chi.URLParam(r, "thingID"),
 		ChannelID: chi.URLParam(r, "groupID"),
 	}
@@ -269,7 +264,6 @@ func decodeConnectChannelThingRequest(_ context.Context, r *http.Request) (inter
 
 func decodeDisconnectChannelThingRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := connectChannelThingRequest{
-		token:     apiutil.ExtractBearerToken(r),
 		ThingID:   chi.URLParam(r, "thingID"),
 		ChannelID: chi.URLParam(r, "groupID"),
 	}
@@ -282,9 +276,7 @@ func decodeConnectRequest(_ context.Context, r *http.Request) (interface{}, erro
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := connectChannelThingRequest{
-		token: apiutil.ExtractBearerToken(r),
-	}
+	req := connectChannelThingRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
@@ -297,9 +289,7 @@ func decodeDisconnectRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := connectChannelThingRequest{
-		token: apiutil.ExtractBearerToken(r),
-	}
+	req := connectChannelThingRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}

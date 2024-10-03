@@ -20,6 +20,9 @@ const groupTypeChannels = "channels"
 func CreateGroupEndpoint(svc groups.Service, kind string) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
+		if err := req.validate(); err != nil {
+			return createGroupRes{created: false}, errors.Wrap(apiutil.ErrValidation, err)
+		}
 
 		session, ok := ctx.Value(api.SessionKey).(auth.Session)
 		if !ok {
@@ -38,6 +41,9 @@ func CreateGroupEndpoint(svc groups.Service, kind string) endpoint.Endpoint {
 func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return viewGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
 
 		session, ok := ctx.Value(api.SessionKey).(auth.Session)
 		if !ok {
@@ -76,6 +82,9 @@ func ViewGroupPermsEndpoint(svc groups.Service) endpoint.Endpoint {
 func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
+		if err := req.validate(); err != nil {
+			return updateGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
 
 		session, ok := ctx.Value(api.SessionKey).(auth.Session)
 		if !ok {
@@ -101,6 +110,9 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 func EnableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeGroupStatusReq)
+		if err := req.validate(); err != nil {
+			return changeStatusRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
 
 		session, ok := ctx.Value(api.SessionKey).(auth.Session)
 		if !ok {
@@ -118,6 +130,9 @@ func EnableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 func DisableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeGroupStatusReq)
+		if err := req.validate(); err != nil {
+			return changeStatusRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
 
 		session, ok := ctx.Value(api.SessionKey).(auth.Session)
 		if !ok {
@@ -185,7 +200,7 @@ func ListMembersEndpoint(svc groups.Service, memberKind string) endpoint.Endpoin
 
 		session, ok := ctx.Value(api.SessionKey).(auth.Session)
 		if !ok {
-			return createGroupRes{created: false}, svcerr.ErrAuthorization
+			return listMembersRes{}, svcerr.ErrAuthorization
 		}
 
 		page, err := svc.ListMembers(ctx, session, req.groupID, req.permission, req.memberKind)
@@ -255,10 +270,13 @@ func UnassignMembersEndpoint(svc groups.Service, relation, memberKind string) en
 func DeleteGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return deleteGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
 
 		session, ok := ctx.Value(api.SessionKey).(auth.Session)
 		if !ok {
-			return createGroupRes{created: false}, svcerr.ErrAuthorization
+			return deleteGroupRes{}, svcerr.ErrAuthorization
 		}
 		if err := svc.DeleteGroup(ctx, session, req.id); err != nil {
 			return deleteGroupRes{}, err

@@ -20,6 +20,7 @@ import (
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	policies "github.com/absmach/magistrala/pkg/policies"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -417,7 +418,7 @@ func TestDomainPermissions(t *testing.T) {
 		desc     string
 		token    string
 		domainID string
-		svcRes   auth.Permissions
+		svcRes   policies.Permissions
 		svcErr   error
 		response sdk.Domain
 		err      error
@@ -426,7 +427,7 @@ func TestDomainPermissions(t *testing.T) {
 			desc:     "retrieve domain permissions successfully",
 			token:    validToken,
 			domainID: sdkDomain.ID,
-			svcRes:   auth.Permissions{auth.ViewPermission},
+			svcRes:   policies.Permissions{auth.ViewPermission},
 			svcErr:   nil,
 			response: sdk.Domain{
 				Permissions: []string{auth.ViewPermission},
@@ -437,7 +438,7 @@ func TestDomainPermissions(t *testing.T) {
 			desc:     "retrieve domain permissions with invalid token",
 			token:    invalidToken,
 			domainID: sdkDomain.ID,
-			svcRes:   auth.Permissions{},
+			svcRes:   policies.Permissions{},
 			svcErr:   svcerr.ErrAuthentication,
 			response: sdk.Domain{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -446,7 +447,7 @@ func TestDomainPermissions(t *testing.T) {
 			desc:     "retrieve domain permissions with empty token",
 			token:    "",
 			domainID: sdkDomain.ID,
-			svcRes:   auth.Permissions{},
+			svcRes:   policies.Permissions{},
 			svcErr:   nil,
 			response: sdk.Domain{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -455,7 +456,7 @@ func TestDomainPermissions(t *testing.T) {
 			desc:     "retrieve domain permissions with empty domain id",
 			token:    validToken,
 			domainID: "",
-			svcRes:   auth.Permissions{},
+			svcRes:   policies.Permissions{},
 			svcErr:   nil,
 			response: sdk.Domain{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
@@ -464,7 +465,7 @@ func TestDomainPermissions(t *testing.T) {
 			desc:     "retrieve domain permissions with invalid domain id",
 			token:    validToken,
 			domainID: wrongID,
-			svcRes:   auth.Permissions{},
+			svcRes:   policies.Permissions{},
 			svcErr:   svcerr.ErrAuthorization,
 			response: sdk.Domain{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),

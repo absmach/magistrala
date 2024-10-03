@@ -7,6 +7,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/users"
@@ -40,7 +41,7 @@ func (ms *metricsMiddleware) RegisterClient(ctx context.Context, session auth.Se
 }
 
 // IssueToken instruments IssueToken method with metrics.
-func (ms *metricsMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (mgclients.Client, error) {
+func (ms *metricsMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_token").Add(1)
 		ms.latency.With("method", "issue_token").Observe(time.Since(begin).Seconds())
@@ -49,12 +50,12 @@ func (ms *metricsMiddleware) IssueToken(ctx context.Context, identity, secret, d
 }
 
 // RefreshToken instruments RefreshToken method with metrics.
-func (ms *metricsMiddleware) RefreshToken(ctx context.Context, session auth.Session, domainID string) (mgclients.Client, error) {
+func (ms *metricsMiddleware) RefreshToken(ctx context.Context, session auth.Session, refreshToken, domainID string) (token *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "refresh_token").Add(1)
 		ms.latency.With("method", "refresh_token").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.RefreshToken(ctx, session, domainID)
+	return ms.svc.RefreshToken(ctx, session, refreshToken, domainID)
 }
 
 // ViewClient instruments ViewClient method with metrics.
@@ -130,7 +131,7 @@ func (ms *metricsMiddleware) UpdateClientSecret(ctx context.Context, session aut
 }
 
 // GenerateResetToken instruments GenerateResetToken method with metrics.
-func (ms *metricsMiddleware) GenerateResetToken(ctx context.Context, email, host string) (mgclients.Client, error) {
+func (ms *metricsMiddleware) GenerateResetToken(ctx context.Context, email, host string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "generate_reset_token").Add(1)
 		ms.latency.With("method", "generate_reset_token").Observe(time.Since(begin).Seconds())
@@ -219,11 +220,11 @@ func (ms *metricsMiddleware) DeleteClient(ctx context.Context, session auth.Sess
 	return ms.svc.DeleteClient(ctx, session, id)
 }
 
-// AddClientPolicy instruments AddClientPolicy method with metrics.
-func (ms *metricsMiddleware) AddClientPolicy(ctx context.Context, client mgclients.Client) error {
+// OAuthAddClientPolicy instruments OAuthAddClientPolicy method with metrics.
+func (ms *metricsMiddleware) OAuthAddClientPolicy(ctx context.Context, client mgclients.Client) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "add_client_policy").Add(1)
 		ms.latency.With("method", "add_client_policy").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.AddClientPolicy(ctx, client)
+	return ms.svc.OAuthAddClientPolicy(ctx, client)
 }

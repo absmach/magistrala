@@ -142,7 +142,7 @@ func clientsHandler(svc users.Service, authClient auth.AuthClient, selfRegister 
 			), "delete_client").ServeHTTP)
 
 			r.Post("/tokens/refresh", otelhttp.NewHandler(kithttp.NewServer(
-				refreshTokenEndpoint(svc, authClient),
+				refreshTokenEndpoint(svc),
 				decodeRefreshToken,
 				api.EncodeResponse,
 				opts...,
@@ -199,14 +199,14 @@ func clientsHandler(svc users.Service, authClient auth.AuthClient, selfRegister 
 	})
 
 	r.Post("/users/tokens/issue", otelhttp.NewHandler(kithttp.NewServer(
-		issueTokenEndpoint(svc, authClient),
+		issueTokenEndpoint(svc),
 		decodeCredentials,
 		api.EncodeResponse,
 		opts...,
 	), "issue_token").ServeHTTP)
 
 	r.Post("/password/reset-request", otelhttp.NewHandler(kithttp.NewServer(
-		passwordResetRequestEndpoint(svc, authClient),
+		passwordResetRequestEndpoint(svc),
 		decodePasswordResetRequest,
 		api.EncodeResponse,
 		opts...,
@@ -221,8 +221,7 @@ func clientsHandler(svc users.Service, authClient auth.AuthClient, selfRegister 
 
 func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewClientReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "id"),
+		id: chi.URLParam(r, "id"),
 	}
 
 	return req, nil
@@ -495,7 +494,6 @@ func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, 
 		return nil, err
 	}
 	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
 		Page:     page,
 		objectID: chi.URLParam(r, "groupID"),
 	}
@@ -509,7 +507,6 @@ func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}
 		return nil, err
 	}
 	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
 		Page:     page,
 		objectID: chi.URLParam(r, "channelID"),
 	}
@@ -523,7 +520,6 @@ func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, 
 		return nil, err
 	}
 	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
 		Page:     page,
 		objectID: chi.URLParam(r, "thingID"),
 	}
@@ -538,7 +534,6 @@ func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{},
 	}
 
 	req := listMembersByObjectReq{
-		token:    apiutil.ExtractBearerToken(r),
 		Page:     page,
 		objectID: chi.URLParam(r, "domainID"),
 	}
@@ -631,19 +626,9 @@ func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service, authClient 
 				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
 				return
 			}
-
-			if _, err = authClient.Authorize(r.Context(), &magistrala.AuthorizeReq{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Subject:     client.ID,
-				Permission:  policies.MembershipPermission,
-				ObjectType:  policies.PlatformType,
-				Object:      policies.MagistralaObject,
-			}); err != nil {
-				if err := svc.AddClientPolicy(r.Context(), client); err != nil {
-					http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
-					return
-				}
+			if err := svc.OAuthAddClientPolicy(r.Context(), client); err != nil {
+				http.Redirect(w, r, oauth.ErrorURL()+"?error="+err.Error(), http.StatusSeeOther)
+				return
 			}
 
 			jwt, err := authClient.Issue(r.Context(), &magistrala.IssueReq{

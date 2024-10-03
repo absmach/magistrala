@@ -11,10 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	pauth "github.com/absmach/magistrala/pkg/auth"
 	authmocks "github.com/absmach/magistrala/pkg/auth/mocks"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -22,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/groups/mocks"
 	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
+	"github.com/absmach/magistrala/pkg/policies"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/users/api"
 	umocks "github.com/absmach/magistrala/users/mocks"
@@ -37,7 +39,7 @@ var (
 	updatedDescription = "updated_description"
 )
 
-func setupGroups() (*httptest.Server, *mocks.Service) {
+func setupGroups() (*httptest.Server, *mocks.Service, *authmocks.AuthClient) {
 	usvc := new(umocks.Service)
 	gsvc := new(mocks.Service)
 
@@ -48,11 +50,11 @@ func setupGroups() (*httptest.Server, *mocks.Service) {
 	authClient := new(authmocks.AuthClient)
 	api.MakeHandler(usvc, authClient, true, gsvc, mux, logger, "", passRegex, provider)
 
-	return httptest.NewServer(mux), gsvc
+	return httptest.NewServer(mux), gsvc, authClient
 }
 
 func TestCreateGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -75,14 +77,17 @@ func TestCreateGroup(t *testing.T) {
 		"key": make(chan int),
 	}
 	cases := []struct {
-		desc     string
-		token    string
-		groupReq sdk.Group
-		svcReq   groups.Group
-		svcRes   groups.Group
-		svcErr   error
-		response sdk.Group
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupReq    sdk.Group
+		svcReq      groups.Group
+		svcRes      groups.Group
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.Group
+		err         errors.SDKError
 	}{
 		{
 			desc:     "create group successfully",
@@ -165,10 +170,10 @@ func TestCreateGroup(t *testing.T) {
 				Description: description,
 				Metadata:    mgclients.Metadata{"role": "client"},
 			},
-			svcRes:   groups.Group{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			svcRes:      groups.Group{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.Group{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:  "create group with empty token",
@@ -182,7 +187,7 @@ func TestCreateGroup(t *testing.T) {
 			svcRes:   groups.Group{},
 			svcErr:   nil,
 			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:  "create group with missing name",
@@ -248,21 +253,27 @@ func TestCreateGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("CreateGroup", mock.Anything, tc.token, auth.NewGroupKind, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("CreateGroup", mock.Anything, tc.session, policies.NewGroupKind, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.CreateGroup(tc.groupReq, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "CreateGroup", mock.Anything, tc.token, auth.NewGroupKind, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "CreateGroup", mock.Anything, tc.session, policies.NewGroupKind, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestListGroups(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	var grps []sdk.Group
@@ -282,14 +293,17 @@ func TestListGroups(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc     string
-		token    string
-		pageMeta sdk.PageMetadata
-		svcReq   groups.Page
-		svcRes   groups.Page
-		svcErr   error
-		response sdk.GroupsPage
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		pageMeta    sdk.PageMetadata
+		svcReq      groups.Page
+		svcRes      groups.Page
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.GroupsPage
+		err         errors.SDKError
 	}{
 		{
 			desc:  "list groups successfully",
@@ -303,7 +317,7 @@ func TestListGroups(t *testing.T) {
 					Offset: offset,
 					Limit:  100,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -332,7 +346,7 @@ func TestListGroups(t *testing.T) {
 					Offset: offset,
 					Limit:  100,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{},
@@ -350,7 +364,7 @@ func TestListGroups(t *testing.T) {
 			svcRes:   groups.Page{},
 			svcErr:   nil,
 			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:  "list groups with zero limit",
@@ -364,7 +378,7 @@ func TestListGroups(t *testing.T) {
 					Offset: offset,
 					Limit:  10,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -413,7 +427,7 @@ func TestListGroups(t *testing.T) {
 						"name": "user_89",
 					},
 				},
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -473,7 +487,7 @@ func TestListGroups(t *testing.T) {
 					Offset: offset,
 					Limit:  limit,
 				},
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 			},
 			svcRes: groups.Page{
@@ -495,21 +509,27 @@ func TestListGroups(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.UsersKind, "", tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.Groups(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.token, auth.UsersKind, "", tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestListParentGroups(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	var grps []sdk.Group
@@ -533,15 +553,18 @@ func TestListParentGroups(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc     string
-		token    string
-		pageMeta sdk.PageMetadata
-		parentID string
-		svcReq   groups.Page
-		svcRes   groups.Page
-		svcErr   error
-		response sdk.GroupsPage
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		pageMeta    sdk.PageMetadata
+		parentID    string
+		svcReq      groups.Page
+		svcRes      groups.Page
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.GroupsPage
+		err         errors.SDKError
 	}{
 		{
 			desc:     "list parent groups successfully",
@@ -557,7 +580,7 @@ func TestListParentGroups(t *testing.T) {
 					Limit:  limit,
 				},
 				ParentID:   parentID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  1,
 				Level:      sdk.MaxLevel,
 			},
@@ -589,14 +612,14 @@ func TestListParentGroups(t *testing.T) {
 					Limit:  limit,
 				},
 				ParentID:   parentID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  1,
 				Level:      sdk.MaxLevel,
 			},
-			svcRes:   groups.Page{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			svcRes:      groups.Page{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.GroupsPage{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "list parent groups with empty token",
@@ -610,7 +633,7 @@ func TestListParentGroups(t *testing.T) {
 			svcRes:   groups.Page{},
 			svcErr:   nil,
 			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "list parent groups with zero limit",
@@ -626,7 +649,7 @@ func TestListParentGroups(t *testing.T) {
 					Limit:  10,
 				},
 				ParentID:   parentID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  1,
 				Level:      sdk.MaxLevel,
 			},
@@ -678,7 +701,7 @@ func TestListParentGroups(t *testing.T) {
 					},
 				},
 				ParentID:   parentID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  1,
 				Level:      sdk.MaxLevel,
 			},
@@ -727,7 +750,7 @@ func TestListParentGroups(t *testing.T) {
 					Limit:  limit,
 				},
 				ParentID:   parentID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  1,
 				Level:      sdk.MaxLevel,
 			},
@@ -751,21 +774,27 @@ func TestListParentGroups(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.UsersKind, "", tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.Parents(tc.parentID, tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.token, auth.UsersKind, "", tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestListChildrenGroups(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	var grps []sdk.Group
@@ -790,15 +819,18 @@ func TestListChildrenGroups(t *testing.T) {
 	childID := grps[0].ID
 
 	cases := []struct {
-		desc     string
-		token    string
-		childID  string
-		pageMeta sdk.PageMetadata
-		svcReq   groups.Page
-		svcRes   groups.Page
-		svcErr   error
-		response sdk.GroupsPage
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		childID     string
+		pageMeta    sdk.PageMetadata
+		svcReq      groups.Page
+		svcRes      groups.Page
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.GroupsPage
+		err         errors.SDKError
 	}{
 		{
 			desc:    "list children groups successfully",
@@ -814,7 +846,7 @@ func TestListChildrenGroups(t *testing.T) {
 					Limit:  limit,
 				},
 				ParentID:   childID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 				Level:      sdk.MaxLevel,
 			},
@@ -846,14 +878,14 @@ func TestListChildrenGroups(t *testing.T) {
 					Limit:  limit,
 				},
 				ParentID:   childID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 				Level:      sdk.MaxLevel,
 			},
-			svcRes:   groups.Page{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			svcRes:      groups.Page{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.GroupsPage{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:    "list children groups with empty token",
@@ -867,7 +899,7 @@ func TestListChildrenGroups(t *testing.T) {
 			svcRes:   groups.Page{},
 			svcErr:   nil,
 			response: sdk.GroupsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:    "list children groups with zero limit",
@@ -883,7 +915,7 @@ func TestListChildrenGroups(t *testing.T) {
 					Limit:  10,
 				},
 				ParentID:   childID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 				Level:      sdk.MaxLevel,
 			},
@@ -934,7 +966,7 @@ func TestListChildrenGroups(t *testing.T) {
 					},
 				},
 				ParentID:   childID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 				Level:      sdk.MaxLevel,
 			},
@@ -983,7 +1015,7 @@ func TestListChildrenGroups(t *testing.T) {
 					Limit:  limit,
 				},
 				ParentID:   childID,
-				Permission: auth.ViewPermission,
+				Permission: policies.ViewPermission,
 				Direction:  -1,
 				Level:      sdk.MaxLevel,
 			},
@@ -1007,21 +1039,27 @@ func TestListChildrenGroups(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("ListGroups", mock.Anything, tc.token, auth.UsersKind, "", tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.Children(tc.childID, tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.token, auth.UsersKind, "", tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1030,13 +1068,16 @@ func TestViewGroup(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc     string
-		token    string
-		groupID  string
-		svcRes   groups.Group
-		svcErr   error
-		response sdk.Group
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupID     string
+		svcRes      groups.Group
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.Group
+		err         errors.SDKError
 	}{
 		{
 			desc:     "view group successfully",
@@ -1048,13 +1089,13 @@ func TestViewGroup(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "view group with invalid token",
-			token:    invalidToken,
-			groupID:  group.ID,
-			svcRes:   groups.Group{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:        "view group with invalid token",
+			token:       invalidToken,
+			groupID:     group.ID,
+			svcRes:      groups.Group{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.Group{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "view group with empty token",
@@ -1063,7 +1104,7 @@ func TestViewGroup(t *testing.T) {
 			svcRes:   groups.Group{},
 			svcErr:   nil,
 			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "view group with invalid group id",
@@ -1102,21 +1143,27 @@ func TestViewGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("ViewGroup", mock.Anything, tc.token, tc.groupID).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("ViewGroup", mock.Anything, tc.session, tc.groupID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.Group(tc.groupID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ViewGroup", mock.Anything, tc.token, tc.groupID)
+				ok := svcCall.Parent.AssertCalled(t, "ViewGroup", mock.Anything, tc.session, tc.groupID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewGroupPermissions(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1125,33 +1172,36 @@ func TestViewGroupPermissions(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc     string
-		token    string
-		groupID  string
-		svcRes   []string
-		svcErr   error
-		response sdk.Group
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupID     string
+		svcRes      []string
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.Group
+		err         errors.SDKError
 	}{
 		{
 			desc:    "view group permissions successfully",
 			token:   validToken,
 			groupID: group.ID,
-			svcRes:  []string{auth.ViewPermission, auth.MembershipPermission},
+			svcRes:  []string{policies.ViewPermission, policies.MembershipPermission},
 			svcErr:  nil,
 			response: sdk.Group{
-				Permissions: []string{auth.ViewPermission, auth.MembershipPermission},
+				Permissions: []string{policies.ViewPermission, policies.MembershipPermission},
 			},
 			err: nil,
 		},
 		{
-			desc:     "view group permissions with invalid token",
-			token:    invalidToken,
-			groupID:  group.ID,
-			svcRes:   []string{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:        "view group permissions with invalid token",
+			token:       invalidToken,
+			groupID:     group.ID,
+			svcRes:      []string{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.Group{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "view group permissions with empty token",
@@ -1160,7 +1210,7 @@ func TestViewGroupPermissions(t *testing.T) {
 			svcRes:   []string{},
 			svcErr:   nil,
 			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "view group permissions with invalid group id",
@@ -1183,21 +1233,27 @@ func TestViewGroupPermissions(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("ViewGroupPerms", mock.Anything, tc.token, tc.groupID).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("ViewGroupPerms", mock.Anything, tc.session, tc.groupID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.GroupPermissions(tc.groupID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ViewGroupPerms", mock.Anything, tc.token, tc.groupID)
+				ok := svcCall.Parent.AssertCalled(t, "ViewGroupPerms", mock.Anything, tc.session, tc.groupID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestUpdateGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	upGroup := sdkGroup
@@ -1213,14 +1269,17 @@ func TestUpdateGroup(t *testing.T) {
 	group.ID = generateUUID(t)
 
 	cases := []struct {
-		desc     string
-		token    string
-		groupReq sdk.Group
-		svcReq   groups.Group
-		svcRes   groups.Group
-		svcErr   error
-		response sdk.Group
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupReq    sdk.Group
+		svcReq      groups.Group
+		svcRes      groups.Group
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.Group
+		err         errors.SDKError
 	}{
 		{
 			desc:  "update group successfully",
@@ -1277,10 +1336,10 @@ func TestUpdateGroup(t *testing.T) {
 				Description: updatedDescription,
 				Metadata:    mgclients.Metadata{"key": "value"},
 			},
-			svcRes:   groups.Group{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			svcRes:      groups.Group{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.Group{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:  "update group name with empty token",
@@ -1295,7 +1354,7 @@ func TestUpdateGroup(t *testing.T) {
 			svcRes:   groups.Group{},
 			svcErr:   nil,
 			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:  "update group with empty id",
@@ -1357,21 +1416,27 @@ func TestUpdateGroup(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("UpdateGroup", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("UpdateGroup", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.UpdateGroup(tc.groupReq, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "UpdateGroup", mock.Anything, tc.token, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "UpdateGroup", mock.Anything, tc.session, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestEnableGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1383,13 +1448,16 @@ func TestEnableGroup(t *testing.T) {
 	enGroup.Status = mgclients.EnabledStatus.String()
 
 	cases := []struct {
-		desc     string
-		token    string
-		groupID  string
-		svcRes   groups.Group
-		svcErr   error
-		response sdk.Group
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupID     string
+		svcRes      groups.Group
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.Group
+		err         errors.SDKError
 	}{
 		{
 			desc:     "enable group successfully",
@@ -1410,13 +1478,13 @@ func TestEnableGroup(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:     "enable group with invalid token",
-			token:    invalidToken,
-			groupID:  group.ID,
-			svcRes:   groups.Group{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:        "enable group with invalid token",
+			token:       invalidToken,
+			groupID:     group.ID,
+			svcRes:      groups.Group{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.Group{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "enable group with empty token",
@@ -1425,7 +1493,7 @@ func TestEnableGroup(t *testing.T) {
 			svcRes:   groups.Group{},
 			svcErr:   nil,
 			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "enable group with empty id",
@@ -1454,21 +1522,27 @@ func TestEnableGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("EnableGroup", mock.Anything, tc.token, tc.groupID).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("EnableGroup", mock.Anything, tc.session, tc.groupID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.EnableGroup(tc.groupID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "EnableGroup", mock.Anything, tc.token, tc.groupID)
+				ok := svcCall.Parent.AssertCalled(t, "EnableGroup", mock.Anything, tc.session, tc.groupID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestDisableGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1480,13 +1554,16 @@ func TestDisableGroup(t *testing.T) {
 	disGroup.Status = mgclients.DisabledStatus.String()
 
 	cases := []struct {
-		desc     string
-		token    string
-		groupID  string
-		svcRes   groups.Group
-		svcErr   error
-		response sdk.Group
-		err      errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupID     string
+		svcRes      groups.Group
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		response    sdk.Group
+		err         errors.SDKError
 	}{
 		{
 			desc:     "disable group successfully",
@@ -1507,13 +1584,13 @@ func TestDisableGroup(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:     "disable group with invalid token",
-			token:    invalidToken,
-			groupID:  group.ID,
-			svcRes:   groups.Group{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:        "disable group with invalid token",
+			token:       invalidToken,
+			groupID:     group.ID,
+			svcRes:      groups.Group{},
+			identifyErr: svcerr.ErrAuthentication,
+			response:    sdk.Group{},
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "disable group with empty token",
@@ -1522,7 +1599,7 @@ func TestDisableGroup(t *testing.T) {
 			svcRes:   groups.Group{},
 			svcErr:   nil,
 			response: sdk.Group{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "disable group with empty id",
@@ -1551,21 +1628,27 @@ func TestDisableGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("DisableGroup", mock.Anything, tc.token, tc.groupID).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("DisableGroup", mock.Anything, tc.session, tc.groupID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.DisableGroup(tc.groupID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "DisableGroup", mock.Anything, tc.token, tc.groupID)
+				ok := svcCall.Parent.AssertCalled(t, "DisableGroup", mock.Anything, tc.session, tc.groupID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestDeleteGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1574,11 +1657,14 @@ func TestDeleteGroup(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc    string
-		token   string
-		groupID string
-		svcErr  error
-		err     errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupID     string
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		err         errors.SDKError
 	}{
 		{
 			desc:    "delete group successfully",
@@ -1595,18 +1681,18 @@ func TestDeleteGroup(t *testing.T) {
 			err:     errors.NewSDKErrorWithStatus(svcerr.ErrRemoveEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:    "delete group with invalid token",
-			token:   invalidToken,
-			groupID: group.ID,
-			svcErr:  svcerr.ErrAuthentication,
-			err:     errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:        "delete group with invalid token",
+			token:       invalidToken,
+			groupID:     group.ID,
+			identifyErr: svcerr.ErrAuthentication,
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:    "delete group with empty token",
 			token:   "",
 			groupID: group.ID,
 			svcErr:  nil,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:     errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:    "delete group with empty id",
@@ -1618,20 +1704,26 @@ func TestDeleteGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("DeleteGroup", mock.Anything, tc.token, tc.groupID).Return(tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("DeleteGroup", mock.Anything, tc.session, tc.groupID).Return(tc.svcErr)
 			err := mgsdk.DeleteGroup(tc.groupID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "DeleteGroup", mock.Anything, tc.token, tc.groupID)
+				ok := svcCall.Parent.AssertCalled(t, "DeleteGroup", mock.Anything, tc.session, tc.groupID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestAddUserToGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1640,12 +1732,15 @@ func TestAddUserToGroup(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc       string
-		token      string
-		groupID    string
-		addUserReq sdk.UsersRelationRequest
-		svcErr     error
-		err        errors.SDKError
+		desc        string
+		token       string
+		session     pauth.Session
+		groupID     string
+		addUserReq  sdk.UsersRelationRequest
+		svcErr      error
+		identifyRes *magistrala.IdentityRes
+		identifyErr error
+		err         errors.SDKError
 	}{
 		{
 			desc:    "add user to group successfully",
@@ -1666,8 +1761,8 @@ func TestAddUserToGroup(t *testing.T) {
 				Relation: "member",
 				UserIDs:  []string{user.ID},
 			},
-			svcErr: svcerr.ErrAuthentication,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			identifyErr: svcerr.ErrAuthentication,
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:    "add user to group with empty token",
@@ -1678,7 +1773,7 @@ func TestAddUserToGroup(t *testing.T) {
 				UserIDs:  []string{user.ID},
 			},
 			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:    "add user to group with invalid group id",
@@ -1727,20 +1822,26 @@ func TestAddUserToGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("Assign", mock.Anything, tc.token, tc.groupID, tc.addUserReq.Relation, auth.UsersKind, tc.addUserReq.UserIDs).Return(tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.groupID, tc.addUserReq.Relation, policies.UsersKind, tc.addUserReq.UserIDs).Return(tc.svcErr)
 			err := mgsdk.AddUserToGroup(tc.groupID, tc.addUserReq, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Assign", mock.Anything, tc.token, tc.groupID, tc.addUserReq.Relation, auth.UsersKind, tc.addUserReq.UserIDs)
+				ok := svcCall.Parent.AssertCalled(t, "Assign", mock.Anything, tc.session, tc.groupID, tc.addUserReq.Relation, policies.UsersKind, tc.addUserReq.UserIDs)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestRemoveUserFromGroup(t *testing.T) {
-	ts, gsvc := setupGroups()
+	ts, gsvc, auth := setupGroups()
 	defer ts.Close()
 
 	conf := sdk.Config{
@@ -1751,9 +1852,12 @@ func TestRemoveUserFromGroup(t *testing.T) {
 	cases := []struct {
 		desc          string
 		token         string
+		session       pauth.Session
 		groupID       string
 		removeUserReq sdk.UsersRelationRequest
 		svcErr        error
+		identifyRes   *magistrala.IdentityRes
+		identifyErr   error
 		err           errors.SDKError
 	}{
 		{
@@ -1775,8 +1879,8 @@ func TestRemoveUserFromGroup(t *testing.T) {
 				Relation: "member",
 				UserIDs:  []string{user.ID},
 			},
-			svcErr: svcerr.ErrAuthentication,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			identifyErr: svcerr.ErrAuthentication,
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:    "remove user from group with empty token",
@@ -1787,7 +1891,7 @@ func TestRemoveUserFromGroup(t *testing.T) {
 				UserIDs:  []string{user.ID},
 			},
 			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:    "remove user from group with invalid group id",
@@ -1825,14 +1929,20 @@ func TestRemoveUserFromGroup(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := gsvc.On("Unassign", mock.Anything, tc.token, tc.groupID, tc.removeUserReq.Relation, auth.UsersKind, tc.removeUserReq.UserIDs).Return(tc.svcErr)
+			if tc.token == validToken {
+				tc.session = pauth.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.identifyRes = &magistrala.IdentityRes{Id: validID, UserId: validID, DomainId: validID}
+			}
+			authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
+			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.groupID, tc.removeUserReq.Relation, policies.UsersKind, tc.removeUserReq.UserIDs).Return(tc.svcErr)
 			err := mgsdk.RemoveUserFromGroup(tc.groupID, tc.removeUserReq, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Unassign", mock.Anything, tc.token, tc.groupID, tc.removeUserReq.Relation, auth.UsersKind, tc.removeUserReq.UserIDs)
+				ok := svcCall.Parent.AssertCalled(t, "Unassign", mock.Anything, tc.session, tc.groupID, tc.removeUserReq.Relation, policies.UsersKind, tc.removeUserReq.UserIDs)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }

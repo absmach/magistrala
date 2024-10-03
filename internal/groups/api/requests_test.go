@@ -26,7 +26,6 @@ func TestCreateGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -34,18 +33,8 @@ func TestCreateGroupReqValidation(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: createGroupReq{
-				Group: groups.Group{
-					Name: valid,
-				},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "long name",
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{
 					Name: strings.Repeat("a", api.MaxNameSize+1),
 				},
@@ -55,7 +44,6 @@ func TestCreateGroupReqValidation(t *testing.T) {
 		{
 			desc: "empty name",
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{},
 			},
 			err: apiutil.ErrNameSize,
@@ -77,34 +65,23 @@ func TestUpdateGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateGroupReq{
-				token: valid,
-				id:    valid,
-				Name:  valid,
+				id:   valid,
+				Name: valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateGroupReq{
-				id:   valid,
-				Name: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "long name",
 			req: updateGroupReq{
-				token: valid,
-				id:    valid,
-				Name:  strings.Repeat("a", api.MaxNameSize+1),
+				id:   valid,
+				Name: strings.Repeat("a", api.MaxNameSize+1),
 			},
 			err: apiutil.ErrNameSize,
 		},
 		{
 			desc: "empty id",
 			req: updateGroupReq{
-				token: valid,
-				Name:  valid,
+				Name: valid,
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -125,7 +102,6 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listGroupsReq{
-				token:      valid,
 				memberKind: auth.ThingsKind,
 				memberID:   valid,
 				Page: groups.Page{
@@ -137,22 +113,8 @@ func TestListGroupReqValidation(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: listGroupsReq{
-				memberKind: auth.ThingsKind,
-				memberID:   valid,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
-				},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty memberkind",
 			req: listGroupsReq{
-				token:    valid,
 				memberID: valid,
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -165,7 +127,6 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "empty member id",
 			req: listGroupsReq{
-				token:      valid,
 				memberKind: auth.ThingsKind,
 				Page: groups.Page{
 					PageMeta: groups.PageMeta{
@@ -178,7 +139,6 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "invalid upper level",
 			req: listGroupsReq{
-				token:      valid,
 				memberKind: auth.ThingsKind,
 				memberID:   valid,
 				Page: groups.Page{
@@ -193,7 +153,6 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "invalid lower limit",
 			req: listGroupsReq{
-				token:      valid,
 				memberKind: auth.ThingsKind,
 				memberID:   valid,
 				Page: groups.Page{
@@ -207,7 +166,6 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "invalid upper limit",
 			req: listGroupsReq{
-				token:      valid,
 				memberKind: auth.ThingsKind,
 				memberID:   valid,
 				Page: groups.Page{
@@ -235,24 +193,14 @@ func TestGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: groupReq{
-				token: valid,
-				id:    valid,
+				id: valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: groupReq{
-				id: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
-			req: groupReq{
-				token: valid,
-			},
-			err: apiutil.ErrMissingID,
+			req:  groupReq{},
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -271,24 +219,14 @@ func TestGroupPermsReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: groupPermsReq{
-				token: valid,
-				id:    valid,
+				id: valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: groupPermsReq{
-				id: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
-			req: groupPermsReq{
-				token: valid,
-			},
-			err: apiutil.ErrMissingID,
+			req:  groupPermsReq{},
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -307,24 +245,14 @@ func TestChangeGroupStatusReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: changeGroupStatusReq{
-				token: valid,
-				id:    valid,
+				id: valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: changeGroupStatusReq{
-				id: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty id",
-			req: changeGroupStatusReq{
-				token: valid,
-			},
-			err: apiutil.ErrMissingID,
+			req:  changeGroupStatusReq{},
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -343,7 +271,6 @@ func TestAssignReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: assignReq{
-				token:      valid,
 				groupID:    valid,
 				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
@@ -352,19 +279,8 @@ func TestAssignReqValidation(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: assignReq{
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty member kind",
 			req: assignReq{
-				token:    valid,
 				groupID:  valid,
 				Relation: auth.ContributorRelation,
 				Members:  []string{valid},
@@ -374,7 +290,6 @@ func TestAssignReqValidation(t *testing.T) {
 		{
 			desc: "empty groupID",
 			req: assignReq{
-				token:      valid,
 				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
@@ -384,7 +299,6 @@ func TestAssignReqValidation(t *testing.T) {
 		{
 			desc: "empty Members",
 			req: assignReq{
-				token:      valid,
 				groupID:    valid,
 				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
@@ -408,7 +322,6 @@ func TestUnAssignReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: unassignReq{
-				token:      valid,
 				groupID:    valid,
 				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
@@ -417,19 +330,8 @@ func TestUnAssignReqValidation(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: unassignReq{
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty member kind",
 			req: unassignReq{
-				token:    valid,
 				groupID:  valid,
 				Relation: auth.ContributorRelation,
 				Members:  []string{valid},
@@ -439,7 +341,6 @@ func TestUnAssignReqValidation(t *testing.T) {
 		{
 			desc: "empty groupID",
 			req: unassignReq{
-				token:      valid,
 				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
 				Members:    []string{valid},
@@ -449,7 +350,6 @@ func TestUnAssignReqValidation(t *testing.T) {
 		{
 			desc: "empty Members",
 			req: unassignReq{
-				token:      valid,
 				groupID:    valid,
 				Relation:   auth.ContributorRelation,
 				MemberKind: auth.ThingsKind,
@@ -473,7 +373,6 @@ func TestListMembersReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listMembersReq{
-				token:      valid,
 				groupID:    valid,
 				permission: auth.ViewPermission,
 				memberKind: auth.ThingsKind,
@@ -481,18 +380,8 @@ func TestListMembersReqValidation(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: listMembersReq{
-				groupID:    valid,
-				permission: auth.ViewPermission,
-				memberKind: auth.ThingsKind,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty member kind",
 			req: listMembersReq{
-				token:      valid,
 				groupID:    valid,
 				permission: auth.ViewPermission,
 			},
@@ -501,7 +390,6 @@ func TestListMembersReqValidation(t *testing.T) {
 		{
 			desc: "empty groupID",
 			req: listMembersReq{
-				token:      valid,
 				permission: auth.ViewPermission,
 				memberKind: auth.ThingsKind,
 			},

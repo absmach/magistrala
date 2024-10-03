@@ -154,7 +154,6 @@ func groupsHandler(svc groups.Service, authClient auth.AuthClient, r *chi.Mux, l
 
 func decodeAssignUsersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := assignUsersReq{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -165,7 +164,6 @@ func decodeAssignUsersRequest(_ context.Context, r *http.Request) (interface{}, 
 
 func decodeUnassignUsersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := unassignUsersReq{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -213,7 +211,6 @@ func unassignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 
 func decodeAssignGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := assignGroupsReq{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -224,7 +221,6 @@ func decodeAssignGroupsRequest(_ context.Context, r *http.Request) (interface{},
 
 func decodeUnassignGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := unassignGroupsReq{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

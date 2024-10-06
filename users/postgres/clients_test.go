@@ -16,6 +16,7 @@ import (
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/users"
 	cpostgres "github.com/absmach/magistrala/users/postgres"
+	"github.com/absmach/magistrala/users/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +34,11 @@ func TestUsersSave(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := cpostgres.NewRepository(database)
+
+	storageClient, err := storage.NewStorageClient()
+	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+
+	repo := cpostgres.NewRepository(database, storageClient)
 
 	uid := testsutil.GenerateUUID(t)
 
@@ -54,8 +59,9 @@ func TestUsersSave(t *testing.T) {
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: users.Metadata{},
-				Status:   mgclients.EnabledStatus,
+				Metadata:       users.Metadata{},
+				Status:         mgclients.EnabledStatus,
+				ProfilePicture: "",
 			},
 			err: nil,
 		},
@@ -68,8 +74,9 @@ func TestUsersSave(t *testing.T) {
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: users.Metadata{},
-				Status:   mgclients.EnabledStatus,
+				Metadata:       users.Metadata{},
+				Status:         mgclients.EnabledStatus,
+				ProfilePicture: "",
 			},
 			err: repoerr.ErrConflict,
 		},
@@ -82,8 +89,9 @@ func TestUsersSave(t *testing.T) {
 					Identity: clientIdentity,
 					Secret:   password,
 				},
-				Metadata: users.Metadata{},
-				Status:   mgclients.EnabledStatus,
+				Metadata:       users.Metadata{},
+				Status:         mgclients.EnabledStatus,
+				ProfilePicture: "",
 			},
 			err: repoerr.ErrConflict,
 		},
@@ -96,8 +104,9 @@ func TestUsersSave(t *testing.T) {
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: users.Metadata{},
-				Status:   mgclients.EnabledStatus,
+				Metadata:       users.Metadata{},
+				Status:         mgclients.EnabledStatus,
+				ProfilePicture: "",
 			},
 			err: errors.ErrMalformedEntity,
 		},
@@ -110,8 +119,9 @@ func TestUsersSave(t *testing.T) {
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: users.Metadata{},
-				Status:   mgclients.EnabledStatus,
+				Metadata:       users.Metadata{},
+				Status:         mgclients.EnabledStatus,
+				ProfilePicture: "",
 			},
 			err: errors.ErrMalformedEntity,
 		},
@@ -124,8 +134,9 @@ func TestUsersSave(t *testing.T) {
 					Identity: invalidName,
 					Secret:   password,
 				},
-				Metadata: users.Metadata{},
-				Status:   mgclients.EnabledStatus,
+				Metadata:       users.Metadata{},
+				Status:         mgclients.EnabledStatus,
+				ProfilePicture: "",
 			},
 			err: errors.ErrMalformedEntity,
 		},
@@ -137,7 +148,8 @@ func TestUsersSave(t *testing.T) {
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 					Secret:   password,
 				},
-				Metadata: users.Metadata{},
+				Metadata:       users.Metadata{},
+				ProfilePicture: "",
 			},
 			err: nil,
 		},
@@ -149,7 +161,8 @@ func TestUsersSave(t *testing.T) {
 				Credentials: users.Credentials{
 					Secret: password,
 				},
-				Metadata: users.Metadata{},
+				Metadata:       users.Metadata{},
+				ProfilePicture: "",
 			},
 			err: nil,
 		},
@@ -161,7 +174,8 @@ func TestUsersSave(t *testing.T) {
 				Credentials: users.Credentials{
 					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 				},
-				Metadata: users.Metadata{},
+				Metadata:       users.Metadata{},
+				ProfilePicture: "",
 			},
 			err: nil,
 		},
@@ -177,6 +191,7 @@ func TestUsersSave(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"key": make(chan int),
 				},
+				ProfilePicture: "",
 			},
 			err: errors.ErrMalformedEntity,
 		},
@@ -197,7 +212,11 @@ func TestIsPlatformAdmin(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := cpostgres.NewRepository(database)
+
+	storageClient, err := storage.NewStorageClient()
+	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+
+	repo := cpostgres.NewRepository(database, storageClient)
 
 	cases := []struct {
 		desc   string
@@ -249,7 +268,11 @@ func TestRetrieveByID(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := cpostgres.NewRepository(database)
+
+	storageClient, err := storage.NewStorageClient()
+	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+
+	repo := cpostgres.NewRepository(database, storageClient)
 
 	client := users.User{
 		ID:   testsutil.GenerateUUID(t),
@@ -262,7 +285,7 @@ func TestRetrieveByID(t *testing.T) {
 		Status:   mgclients.EnabledStatus,
 	}
 
-	_, err := repo.Save(context.Background(), client)
+	_, err = repo.Save(context.Background(), client)
 	require.Nil(t, err, fmt.Sprintf("failed to save client %s", client.ID))
 
 	cases := []struct {
@@ -300,10 +323,13 @@ func TestRetrieveAll(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	repo := cpostgres.NewRepository(database)
+	storageClient, err := storage.NewStorageClient()
+	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+
+	repo := cpostgres.NewRepository(database, storageClient)
 
 	num := 200
-	var items, enabledClients []users.User
+	var items []users.User
 	for i := 0; i < num; i++ {
 		client := users.User{
 			ID:   testsutil.GenerateUUID(t),
@@ -329,9 +355,9 @@ func TestRetrieveAll(t *testing.T) {
 		_, err := repo.Save(context.Background(), client)
 		require.Nil(t, err, fmt.Sprintf("failed to save client %s", client.ID))
 		items = append(items, client)
-		if client.Status == mgclients.EnabledStatus {
-			enabledClients = append(enabledClients, client)
-		}
+		// if client.Status == mgclients.EnabledStatus {
+		// 	enabledClients = append(enabledClients, client)
+		// }
 	}
 
 	cases := []struct {
@@ -728,7 +754,10 @@ func TestUpdateRole(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	repo := cpostgres.NewRepository(database)
+	storageClient, err := storage.NewStorageClient()
+	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+
+	repo := cpostgres.NewRepository(database, storageClient)
 
 	client := users.User{
 		ID:   testsutil.GenerateUUID(t),
@@ -742,7 +771,7 @@ func TestUpdateRole(t *testing.T) {
 		Role:     mgclients.UserRole,
 	}
 
-	_, err := repo.Save(context.Background(), client)
+	_, err = repo.Save(context.Background(), client)
 	require.Nil(t, err, fmt.Sprintf("failed to save client %s", client.ID))
 
 	cases := []struct {

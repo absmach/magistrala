@@ -12,6 +12,7 @@ import (
 
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/postgres"
 	"golang.org/x/net/idna"
 )
 
@@ -69,6 +70,11 @@ type MembersPage struct {
 	Members []User
 }
 
+// UserRepository struct implements the Repository interface.
+type UserRepository struct {
+	DB postgres.Database
+}
+
 //go:generate mockery --name Repository --output=./mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
 type Repository interface {
 	// RetrieveByID retrieves user by their unique ID.
@@ -80,7 +86,7 @@ type Repository interface {
 	// RetrieveByUserName retrieves user by their user name
 	RetrieveByUserName(ctx context.Context, userName string) (User, error)
 
-	// RetrieveAll retrieves all clients.
+	// RetrieveAll retrieves all users.
 	RetrieveAll(ctx context.Context, pm clients.Page) (UsersPage, error)
 
 	// Update updates the user name and metadata.
@@ -92,8 +98,11 @@ type Repository interface {
 	// UpdateIdentity updates identity for user with given id.
 	UpdateIdentity(ctx context.Context, user User) (User, error)
 
-	// UpdateUserName updates user name for user with given id and full Name.
-	UpdateUserName(ctx context.Context, id, fullName string) (User, error)
+	// UpdateUserNames updates the User's names.
+	UpdateUserNames(ctx context.Context, user User) (User, error)
+
+	// UpdateProfilePicture updates profile picture for user with given ID.
+	UpdateProfilePicture(ctx context.Context, user User) (User, error)
 
 	// UpdateSecret updates secret for user with given identity.
 	UpdateSecret(ctx context.Context, user User) (User, error)

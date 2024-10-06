@@ -19,18 +19,32 @@ import (
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/users"
+	"github.com/absmach/magistrala/users/storage"
 	"github.com/jackc/pgtype"
 )
 
 type userRepo struct {
-	DB postgres.Database
+	Repository users.UserRepository
+	gcStorage  storage.Storage
 }
 
-func NewRepository(db postgres.Database) users.Repository {
-	return &userRepo{DB: db}
+func NewRepository(db postgres.Database, gcp storage.Storage) users.Repository {
+	return &userRepo{
+		Repository: users.UserRepository{DB: db},
+		gcStorage:  gcp,
+	}
 }
 
 func (repo *userRepo) Save(ctx context.Context, c users.User) (users.User, error) {
+	if c.ProfilePicture != "" {
+		profilePictureURL, err := repo.gcStorage.UploadProfilePicture(ctx, strings.NewReader(c.ProfilePicture), c.ID)
+		if err != nil {
+			return users.User{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		}
+
+		c.ProfilePicture = profilePictureURL
+	}
+
 	q := `INSERT INTO clients (id, name, tags, identity, secret, metadata, created_at, status, role, first_name, last_name, user_name, profile_picture)
         VALUES (:id, :name, :tags, :identity, :secret, :metadata, :created_at, :status, :role, :first_name, :last_name, :user_name, :profile_picture)
         RETURNING id, name, tags, identity, metadata, status, created_at, first_name, last_name, user_name, profile_picture`
@@ -40,13 +54,15 @@ func (repo *userRepo) Save(ctx context.Context, c users.User) (users.User, error
 		return users.User{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbc)
 	if err != nil {
 		return users.User{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
 
 	defer row.Close()
+
 	row.Next()
+
 	dbc = DBUser{}
 	if err := row.StructScan(&dbc); err != nil {
 		return users.User{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
@@ -62,7 +78,7 @@ func (repo *userRepo) Save(ctx context.Context, c users.User) (users.User, error
 
 func (repo *userRepo) CheckSuperAdmin(ctx context.Context, adminID string) error {
 	q := "SELECT 1 FROM clients WHERE id = $1 AND role = $2"
-	rows, err := repo.DB.QueryContext(ctx, q, adminID, mgclients.AdminRole)
+	rows, err := repo.Repository.DB.QueryContext(ctx, q, adminID, mgclients.AdminRole)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
@@ -79,14 +95,14 @@ func (repo *userRepo) CheckSuperAdmin(ctx context.Context, adminID string) error
 }
 
 func (repo *userRepo) RetrieveByID(ctx context.Context, id string) (users.User, error) {
-	q := `SELECT id, name, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role, first_name, last_name, user_name
+	q := `SELECT id, name, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role, first_name, last_name, user_name, profile_picture
         FROM clients WHERE id = :id`
 
 	dbc := DBUser{
 		ID: id,
 	}
 
-	rows, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbc)
 	if err != nil {
 		return users.User{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
@@ -110,14 +126,14 @@ func (repo *userRepo) RetrieveByID(ctx context.Context, id string) (users.User, 
 }
 
 func (repo *userRepo) RetrieveByUserName(ctx context.Context, userName string) (users.User, error) {
-	q := `SELECT id, name, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role, first_name, last_name, user_name
+	q := `SELECT id, name, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role, first_name, last_name, user_name, profile_picture
         FROM clients WHERE user_name = :user_name`
 
 	dbc := DBUser{
 		UserName: userName,
 	}
 
-	rows, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbc)
 	if err != nil {
 		return users.User{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
@@ -141,14 +157,14 @@ func (repo *userRepo) RetrieveByUserName(ctx context.Context, userName string) (
 }
 
 func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
-	// fails test
+	// fails test due to the fact that the query is not being generated correctly when it comes to status and role.
 	query, err := pgclients.PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, c.status, c.role, c.first_name, c.last_name, c.user_name,
-    c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by 
+    c.created_at, c.updated_at, c.profile_picture, COALESCE(c.updated_by, '') AS updated_by 
     FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
 
 	fmt.Println("query alone", query)
@@ -159,7 +175,7 @@ func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
@@ -182,7 +198,7 @@ func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients u %s;`, query)
 
-	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -202,14 +218,14 @@ func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users
 func (repo *userRepo) UpdateRole(ctx context.Context, user users.User) (users.User, error) {
 	query := `UPDATE clients SET role = :role, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
-        RETURNING id, name, tags, identity, metadata, status, role, first_name, last_name, user_name, created_at, updated_at, updated_by`
+        RETURNING id, name, tags, identity, metadata, status, role, first_name, last_name, user_name, created_at, updated_at, updated_by, profile_picture`
 
 	dbc, err := toDBUser(user)
 	if err != nil {
 		return users.User{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	row, err := repo.DB.NamedQueryContext(ctx, query, dbc)
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, query, dbc)
 	if err != nil {
 		return users.User{}, postgres.HandleError(err, repoerr.ErrUpdateEntity)
 	}
@@ -226,24 +242,60 @@ func (repo *userRepo) UpdateRole(ctx context.Context, user users.User) (users.Us
 	return ToUser(dbc)
 }
 
-func (repo *userRepo) UpdateUserName(ctx context.Context, id, fullName string) (users.User, error) {
-	nameParts := strings.SplitN(fullName, " ", 2)
-	if len(nameParts) < 2 {
-		return users.User{}, errors.Wrap(repoerr.ErrMalformedEntity, fmt.Errorf("invalid full name"))
+func (repo *userRepo) UpdateUserNames(ctx context.Context, user users.User) (users.User, error) {
+	if user.FirstName != "" && user.LastName != "" {
+		return users.User{}, repoerr.ErrMissingNames
 	}
-	firstName, lastName := nameParts[0], nameParts[1]
 
-	q := `UPDATE clients SET first_name = :first_name, last_name = :last_name, updated_at = :updated_at
+	user.Name = fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+
+	q := `UPDATE clients SET first_name = :first_name, last_name = :last_name, user_name = :user_name, name = :name, updated_at = :updated_at
         WHERE id = :id RETURNING id, name, tags, identity, secret, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
 
 	dbc := DBUser{
-		ID:        id,
-		FirstName: firstName,
-		LastName:  lastName,
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		UserName:  user.UserName,
+		Name:      user.Name,
 		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 	}
 
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbc)
+	if err != nil {
+		return users.User{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	dbc = DBUser{}
+	if row.Next() {
+		if err := row.StructScan(&dbc); err != nil {
+			return users.User{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+
+		return ToUser(dbc)
+	}
+
+	return users.User{}, repoerr.ErrNotFound
+}
+
+func (repo *userRepo) UpdateProfilePicture(ctx context.Context, user users.User) (users.User, error) {
+	profilePictureURL, err := repo.gcStorage.UploadProfilePicture(ctx, strings.NewReader(user.ProfilePicture), user.ID)
+	if err != nil {
+		return users.User{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	user.ProfilePicture = profilePictureURL
+
+	q := `UPDATE clients SET profile_picture = :profile_picture, updated_at = :updated_at
+		WHERE id = :id RETURNING id, name, tags, identity, secret, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name, profile_picture`
+
+	dbc, err := toDBUser(user)
+	if err != nil {
+		return users.User{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbc)
 	if err != nil {
 		return users.User{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
@@ -262,6 +314,12 @@ func (repo *userRepo) UpdateUserName(ctx context.Context, id, fullName string) (
 }
 
 func (repo *userRepo) Update(ctx context.Context, user users.User) (users.User, error) {
+	if user.FirstName != "" && user.LastName != "" {
+		return users.User{}, repoerr.ErrMissingNames
+	}
+
+	user.Name = fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+
 	var query []string
 	var upq string
 	if user.Name != "" {
@@ -285,7 +343,7 @@ func (repo *userRepo) Update(ctx context.Context, user users.User) (users.User, 
 
 	q := fmt.Sprintf(`UPDATE clients SET %s updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
-        RETURNING id, name, tags, identity, secret,  metadata, status, created_at, updated_at, updated_by, last_name, first_name, user_name`, upq)
+        RETURNING id, name, tags, identity, secret, metadata, status, created_at, updated_at, updated_by, last_name, first_name, user_name`, upq)
 	user.Status = mgclients.EnabledStatus
 	return repo.update(ctx, user, q)
 }
@@ -296,7 +354,7 @@ func (repo *userRepo) update(ctx context.Context, user users.User, query string)
 		return users.User{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	row, err := repo.DB.NamedQueryContext(ctx, query, dbc)
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, query, dbc)
 	if err != nil {
 		return users.User{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
@@ -349,7 +407,7 @@ func (repo *userRepo) UpdateTags(ctx context.Context, user users.User) (users.Us
 func (repo *userRepo) Delete(ctx context.Context, id string) error {
 	q := "DELETE FROM clients AS c  WHERE c.id = $1 ;"
 
-	result, err := repo.DB.ExecContext(ctx, q, id)
+	result, err := repo.Repository.DB.ExecContext(ctx, q, id)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
 	}
@@ -376,7 +434,7 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm mgclients.Page) (users
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
@@ -398,7 +456,7 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm mgclients.Page) (users
 	}
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, tq)
-	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -434,7 +492,7 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm mgclients.Page) (
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
-	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
@@ -456,7 +514,7 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm mgclients.Page) (
 	}
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, query)
 
-	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -482,7 +540,7 @@ func (repo *userRepo) RetrieveByIdentity(ctx context.Context, identity string) (
 		Status:   mgclients.EnabledStatus,
 	}
 
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbc)
 	if err != nil {
 		return users.User{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}

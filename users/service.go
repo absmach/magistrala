@@ -5,6 +5,7 @@ package users
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/absmach/magistrala"
@@ -57,6 +58,10 @@ func (svc service) RegisterClient(ctx context.Context, session authn.Session, cl
 	clientID, err := svc.idProvider.ID()
 	if err != nil {
 		return User{}, err
+	}
+
+	if user.FirstName != "" || user.LastName != "" {
+		user.Name = fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	}
 
 	if user.Credentials.Secret != "" {

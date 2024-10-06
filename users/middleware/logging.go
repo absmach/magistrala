@@ -284,9 +284,33 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, session aut
 	return lm.svc.UpdateClientSecret(ctx, session, oldSecret, newSecret)
 }
 
-// UpdateUserFullName logs the update_client_full_name request. It logs the client id and the time it took to complete the request.
+// UpdateUserNames logs the update_client_names request. It logs the client id and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) UpdateUserFullName(ctx context.Context, token, id, fullName string) (u users.User, err error) {
+func (lm *loggingMiddleware) UpdateUserNames(ctx context.Context, token string, user users.User) (u users.User, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("user",
+				slog.String("id", u.ID),
+				slog.String("name", u.Name),
+				slog.String("first_name", user.FirstName),
+				slog.String("last_name", user.LastName),
+				slog.String("user_name", user.UserName),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Update user name failed", args...)
+			return
+		}
+		lm.logger.Info("Update user name completed successfully", args...)
+	}(time.Now())
+	return lm.svc.UpdateUserNames(ctx, token, user)
+}
+
+// UpdateProfilePicture logs the update_profile_picture request. It logs the user id and the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) UpdateProfilePicture(ctx context.Context, token string, user users.User) (u users.User, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -297,12 +321,12 @@ func (lm *loggingMiddleware) UpdateUserFullName(ctx context.Context, token, id, 
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update user full name failed", args...)
+			lm.logger.Warn("Update profile picture failed", args...)
 			return
 		}
-		lm.logger.Info("Update user full name completed successfully", args...)
+		lm.logger.Info("Update profile picture completed successfully", args...)
 	}(time.Now())
-	return lm.svc.UpdateUserFullName(ctx, token, id, fullName)
+	return lm.svc.UpdateProfilePicture(ctx, token, user)
 }
 
 // GenerateResetToken logs the generate_reset_token request. It logs the time it took to complete the request.

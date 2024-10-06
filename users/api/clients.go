@@ -396,6 +396,25 @@ func decodeUpdateUserSecret(_ context.Context, r *http.Request) (interface{}, er
 	return req, nil
 }
 
+func decodeUpdateUserProfilePicture(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	var c users.User
+
+	req := updateProfilePictureReq{
+		token: apiutil.ExtractBearerToken(r),
+		User:  c,
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+	}
+
+	return req, nil
+}
+
 func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, apiutil.ErrUnsupportedContentType

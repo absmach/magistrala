@@ -4,9 +4,6 @@
 // Package main contains users main function to start the users service.
 package main
 
-// this will have the google cloud storage files i guess
-// this is also what is supposed to start the users service and I currently cant start that service
-
 import (
 	"context"
 	"fmt"

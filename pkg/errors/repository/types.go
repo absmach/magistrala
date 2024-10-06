@@ -33,4 +33,7 @@ var (
 
 	// ErrFailedToRetrieveAllGroups failed to retrieve groups.
 	ErrFailedToRetrieveAllGroups = errors.New("failed to retrieve all groups")
+
+	// ErrMissingNames indicates missing first and last names.
+	ErrMissingNames = errors.New("must have first and last names")
 )

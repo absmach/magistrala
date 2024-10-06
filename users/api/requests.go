@@ -61,7 +61,7 @@ type listClientsReq struct {
 	name     string
 	tag      string
 	identity string
-	metadata mgclients.Metadata // this is a hanging fix for now. using mgclients.page instead of users.page
+	metadata mgclients.Metadata
 	order    string
 	dir      string
 	id       string

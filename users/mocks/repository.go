@@ -335,6 +335,34 @@ func (_m *Repository) UpdateIdentity(ctx context.Context, user users.User) (user
 	return r0, r1
 }
 
+// UpdateProfilePicture provides a mock function with given fields: ctx, user
+func (_m *Repository) UpdateProfilePicture(ctx context.Context, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, user)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProfilePicture")
+	}
+
+	var r0 users.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
+		return rf(ctx, user)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+		r0 = rf(ctx, user)
+	} else {
+		r0 = ret.Get(0).(users.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateRole provides a mock function with given fields: ctx, user
 func (_m *Repository) UpdateRole(ctx context.Context, user users.User) (users.User, error) {
 	ret := _m.Called(ctx, user)
@@ -419,27 +447,27 @@ func (_m *Repository) UpdateTags(ctx context.Context, user users.User) (users.Us
 	return r0, r1
 }
 
-// UpdateUserName provides a mock function with given fields: ctx, id, fullName
-func (_m *Repository) UpdateUserName(ctx context.Context, id string, fullName string) (users.User, error) {
-	ret := _m.Called(ctx, id, fullName)
+// UpdateUserNames provides a mock function with given fields: ctx, user
+func (_m *Repository) UpdateUserNames(ctx context.Context, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateUserName")
+		panic("no return value specified for UpdateUserNames")
 	}
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (users.User, error)); ok {
-		return rf(ctx, id, fullName)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
+		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) users.User); ok {
-		r0 = rf(ctx, id, fullName)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, id, fullName)
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -401,7 +401,7 @@ func (_m *Service) UpdateClient(ctx context.Context, session authn.Session, clie
 	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateUser")
+		panic("no return value specified for UpdateProfilePicture")
 	}
 
 	var r0 users.User

@@ -18,3 +18,6 @@ coverage
 
 # Ignore Vault data directory as it contains runtime-generated data
 docker/addons/vault/data/
+
+# Ignore API keys in secrets folder
+secrets

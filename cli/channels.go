@@ -134,8 +134,8 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+				Offset:   Offset,
+				Limit:    Limit,
 				DomainID: args[1],
 			}
 			cl, err := sdk.ThingsByChannel(args[0], pm, args[2])

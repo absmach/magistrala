@@ -728,7 +728,6 @@ func TestRetrieveAll(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-
 		page, err := repo.RetrieveAll(context.Background(), tc.pageMeta)
 
 		assert.Equal(t, tc.page.Total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.page.Total, page.Total))

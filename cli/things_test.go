@@ -24,6 +24,7 @@ import (
 
 var (
 	token              = "valid" + "domaintoken"
+	domainID = "domain-id"
 	tokenWithoutDomain = "valid"
 	relation           = "administrator"
 	all                = "all"

@@ -87,6 +87,7 @@ func TestIssueCert(t *testing.T) {
 	cases := []struct {
 		desc        string
 		token       string
+		domainID    string
 		contentType string
 		thingID     string
 		ttl         string
@@ -99,6 +100,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue cert successfully",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			thingID:     thingID,
 			ttl:         ttl,
@@ -111,6 +113,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with invalid token",
 			token:       invalid,
+			domainID:    valid,
 			contentType: contentType,
 			thingID:     thingID,
 			ttl:         ttl,
@@ -123,6 +126,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with empty token",
 			token:       "",
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, thingID, ttl),
 			status:      http.StatusUnauthorized,
@@ -131,8 +135,20 @@ func TestIssueCert(t *testing.T) {
 			err:         apiutil.ErrBearerToken,
 		},
 		{
+			desc:        "issue with empty domain id",
+			token:       valid,
+			domainID:    "",
+			contentType: contentType,
+			request:     fmt.Sprintf(validReqString, thingID, ttl),
+			status:      http.StatusBadRequest,
+			svcRes:      certs.Cert{},
+			svcErr:      nil,
+			err:         apiutil.ErrMissingDomainID,
+		},
+		{
 			desc:        "issue with empty thing id",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, "", ttl),
 			status:      http.StatusBadRequest,
@@ -143,6 +159,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with empty ttl",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, thingID, ""),
 			status:      http.StatusBadRequest,
@@ -153,6 +170,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with invalid ttl",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, thingID, invalid),
 			status:      http.StatusBadRequest,
@@ -163,6 +181,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with invalid content type",
 			token:       valid,
+			domainID:    valid,
 			contentType: "application/xml",
 			request:     fmt.Sprintf(validReqString, thingID, ttl),
 			status:      http.StatusUnsupportedMediaType,
@@ -173,6 +192,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with invalid request body",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(invalidReqString, thingID, ttl),
 			status:      http.StatusInternalServerError,
@@ -186,12 +206,12 @@ func TestIssueCert(t *testing.T) {
 		req := testRequest{
 			client:      cs.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/certs", cs.URL),
+			url:         fmt.Sprintf("%s/domains/%s/certs", cs.URL, tc.domainID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.request),
 		}
-		svcCall := svc.On("IssueCert", mock.Anything, tc.token, tc.thingID, tc.ttl).Return(tc.svcRes, tc.svcErr)
+		svcCall := svc.On("IssueCert", mock.Anything, tc.domainID, tc.token, tc.thingID, tc.ttl).Return(tc.svcRes, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		var errRes respBody
@@ -213,6 +233,7 @@ func TestViewCert(t *testing.T) {
 	cases := []struct {
 		desc     string
 		token    string
+		domainID string
 		serialID string
 		status   int
 		svcRes   certs.Cert
@@ -222,6 +243,7 @@ func TestViewCert(t *testing.T) {
 		{
 			desc:     "view cert successfully",
 			token:    valid,
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusOK,
 			svcRes:   cert,
@@ -231,6 +253,7 @@ func TestViewCert(t *testing.T) {
 		{
 			desc:     "view with invalid token",
 			token:    invalid,
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusUnauthorized,
 			svcRes:   certs.Cert{},
@@ -238,8 +261,19 @@ func TestViewCert(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
+			desc:     "view with empty domain id",
+			token:    valid,
+			domainID: "",
+			serialID: serial,
+			status:   http.StatusBadRequest,
+			svcRes:   certs.Cert{},
+			svcErr:   nil,
+			err:      apiutil.ErrMissingDomainID,
+		},
+		{
 			desc:     "view with empty token",
 			token:    "",
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusUnauthorized,
 			svcRes:   certs.Cert{},
@@ -249,6 +283,7 @@ func TestViewCert(t *testing.T) {
 		{
 			desc:     "view non-existing cert",
 			token:    valid,
+			domainID: valid,
 			serialID: invalid,
 			status:   http.StatusNotFound,
 			svcRes:   certs.Cert{},
@@ -260,7 +295,7 @@ func TestViewCert(t *testing.T) {
 		req := testRequest{
 			client: cs.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/certs/%s", cs.URL, tc.serialID),
+			url:    fmt.Sprintf("%s/domains/%s/certs/%s", cs.URL, tc.domainID, tc.serialID),
 			token:  tc.token,
 		}
 		svcCall := svc.On("ViewCert", mock.Anything, tc.token, tc.serialID).Return(tc.svcRes, tc.svcErr)
@@ -285,6 +320,7 @@ func TestRevokeCert(t *testing.T) {
 	cases := []struct {
 		desc     string
 		token    string
+		domainID string
 		serialID string
 		status   int
 		svcRes   certs.Revoke
@@ -294,6 +330,7 @@ func TestRevokeCert(t *testing.T) {
 		{
 			desc:     "revoke cert successfully",
 			token:    valid,
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusOK,
 			svcRes:   certs.Revoke{RevocationTime: time.Now()},
@@ -303,6 +340,7 @@ func TestRevokeCert(t *testing.T) {
 		{
 			desc:     "revoke with invalid token",
 			token:    invalid,
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusUnauthorized,
 			svcRes:   certs.Revoke{},
@@ -310,8 +348,18 @@ func TestRevokeCert(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
+			desc:     "revoke with empty domain id",
+			token:    valid,
+			domainID: "",
+			serialID: serial,
+			status:   http.StatusBadRequest,
+			svcErr:   nil,
+			err:      apiutil.ErrMissingDomainID,
+		},
+		{
 			desc:     "revoke with empty token",
 			token:    "",
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusUnauthorized,
 			svcErr:   nil,
@@ -320,6 +368,7 @@ func TestRevokeCert(t *testing.T) {
 		{
 			desc:     "revoke non-existing cert",
 			token:    valid,
+			domainID: valid,
 			serialID: invalid,
 			status:   http.StatusNotFound,
 			svcRes:   certs.Revoke{},
@@ -331,10 +380,10 @@ func TestRevokeCert(t *testing.T) {
 		req := testRequest{
 			client: cs.Client(),
 			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/certs/%s", cs.URL, tc.serialID),
+			url:    fmt.Sprintf("%s/domains/%s/certs/%s", cs.URL, tc.domainID, tc.serialID),
 			token:  tc.token,
 		}
-		svcCall := svc.On("RevokeCert", mock.Anything, tc.token, tc.serialID).Return(tc.svcRes, tc.svcErr)
+		svcCall := svc.On("RevokeCert", mock.Anything, tc.domainID, tc.token, tc.serialID).Return(tc.svcRes, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		var errRes respBody
@@ -354,25 +403,27 @@ func TestListSerials(t *testing.T) {
 	defer cs.Close()
 
 	cases := []struct {
-		desc    string
-		token   string
-		thingID string
-		offset  uint64
-		limit   uint64
-		query   string
-		status  int
-		svcRes  certs.Page
-		svcErr  error
-		err     error
+		desc     string
+		token    string
+		domainID string
+		thingID  string
+		offset   uint64
+		limit    uint64
+		query    string
+		status   int
+		svcRes   certs.Page
+		svcErr   error
+		err      error
 	}{
 		{
-			desc:    "list certs successfully with default limit",
-			token:   valid,
-			thingID: thingID,
-			offset:  0,
-			limit:   10,
-			query:   "",
-			status:  http.StatusOK,
+			desc:     "list certs successfully with default limit",
+			token:    valid,
+			domainID: valid,
+			thingID:  thingID,
+			offset:   0,
+			limit:    10,
+			query:    "",
+			status:   http.StatusOK,
 			svcRes: certs.Page{
 				Total:  1,
 				Offset: 0,
@@ -383,13 +434,14 @@ func TestListSerials(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "list certs successfully with limit",
-			token:   valid,
-			thingID: thingID,
-			offset:  0,
-			limit:   5,
-			query:   "?limit=5",
-			status:  http.StatusOK,
+			desc:     "list certs successfully with limit",
+			token:    valid,
+			domainID: valid,
+			thingID:  thingID,
+			offset:   0,
+			limit:    5,
+			query:    "?limit=5",
+			status:   http.StatusOK,
 			svcRes: certs.Page{
 				Total:  1,
 				Offset: 0,
@@ -400,13 +452,14 @@ func TestListSerials(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "list certs successfully with offset",
-			token:   valid,
-			thingID: thingID,
-			offset:  1,
-			limit:   10,
-			query:   "?offset=1",
-			status:  http.StatusOK,
+			desc:     "list certs successfully with offset",
+			token:    valid,
+			domainID: valid,
+			thingID:  thingID,
+			offset:   1,
+			limit:    10,
+			query:    "?offset=1",
+			status:   http.StatusOK,
 			svcRes: certs.Page{
 				Total:  1,
 				Offset: 1,
@@ -417,13 +470,14 @@ func TestListSerials(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "list certs successfully with offset and limit",
-			token:   valid,
-			thingID: thingID,
-			offset:  1,
-			limit:   5,
-			query:   "?offset=1&limit=5",
-			status:  http.StatusOK,
+			desc:     "list certs successfully with offset and limit",
+			token:    valid,
+			domainID: valid,
+			thingID:  thingID,
+			offset:   1,
+			limit:    5,
+			query:    "?offset=1&limit=5",
+			status:   http.StatusOK,
 			svcRes: certs.Page{
 				Total:  1,
 				Offset: 1,
@@ -434,77 +488,96 @@ func TestListSerials(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "list with invalid token",
-			token:   invalid,
-			thingID: thingID,
-			offset:  0,
-			limit:   10,
-			query:   "",
-			status:  http.StatusUnauthorized,
-			svcRes:  certs.Page{},
-			svcErr:  svcerr.ErrAuthentication,
-			err:     svcerr.ErrAuthentication,
+			desc:     "list with invalid token",
+			token:    invalid,
+			domainID: valid,
+			thingID:  thingID,
+			offset:   0,
+			limit:    10,
+			query:    "",
+			status:   http.StatusUnauthorized,
+			svcRes:   certs.Page{},
+			svcErr:   svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:    "list with empty token",
-			token:   "",
-			thingID: thingID,
-			offset:  0,
-			limit:   10,
-			query:   "",
-			status:  http.StatusUnauthorized,
-			svcRes:  certs.Page{},
-			svcErr:  nil,
-			err:     apiutil.ErrBearerToken,
+			desc:     "list with empty token",
+			token:    "",
+			domainID: valid,
+			thingID:  thingID,
+			offset:   0,
+			limit:    10,
+			query:    "",
+			status:   http.StatusUnauthorized,
+			svcRes:   certs.Page{},
+			svcErr:   nil,
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:    "list with limit exceeding max limit",
-			token:   valid,
-			thingID: thingID,
-			query:   "?limit=1000",
-			status:  http.StatusBadRequest,
-			svcRes:  certs.Page{},
-			svcErr:  nil,
-			err:     apiutil.ErrLimitSize,
+			desc:     "list with empty domain id",
+			token:    valid,
+			domainID: "",
+			thingID:  thingID,
+			offset:   0,
+			limit:    10,
+			query:    "",
+			status:   http.StatusBadRequest,
+			svcRes:   certs.Page{},
+			svcErr:   nil,
+			err:      apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:    "list with invalid offset",
-			token:   valid,
-			thingID: thingID,
-			query:   "?offset=invalid",
-			status:  http.StatusBadRequest,
-			svcRes:  certs.Page{},
-			svcErr:  nil,
-			err:     apiutil.ErrValidation,
+			desc:     "list with limit exceeding max limit",
+			token:    valid,
+			domainID: valid,
+			thingID:  thingID,
+			query:    "?limit=1000",
+			status:   http.StatusBadRequest,
+			svcRes:   certs.Page{},
+			svcErr:   nil,
+			err:      apiutil.ErrLimitSize,
 		},
 		{
-			desc:    "list with invalid limit",
-			token:   valid,
-			thingID: thingID,
-			query:   "?limit=invalid",
-			status:  http.StatusBadRequest,
-			svcRes:  certs.Page{},
-			svcErr:  nil,
-			err:     apiutil.ErrValidation,
+			desc:     "list with invalid offset",
+			token:    valid,
+			domainID: valid,
+			thingID:  thingID,
+			query:    "?offset=invalid",
+			status:   http.StatusBadRequest,
+			svcRes:   certs.Page{},
+			svcErr:   nil,
+			err:      apiutil.ErrValidation,
 		},
 		{
-			desc:    "list with invalid thing id",
-			token:   valid,
-			thingID: invalid,
-			offset:  0,
-			limit:   10,
-			query:   "",
-			status:  http.StatusNotFound,
-			svcRes:  certs.Page{},
-			svcErr:  svcerr.ErrNotFound,
-			err:     svcerr.ErrNotFound,
+			desc:     "list with invalid limit",
+			token:    valid,
+			domainID: valid,
+			thingID:  thingID,
+			query:    "?limit=invalid",
+			status:   http.StatusBadRequest,
+			svcRes:   certs.Page{},
+			svcErr:   nil,
+			err:      apiutil.ErrValidation,
+		},
+		{
+			desc:     "list with invalid thing id",
+			token:    valid,
+			domainID: valid,
+			thingID:  invalid,
+			offset:   0,
+			limit:    10,
+			query:    "",
+			status:   http.StatusNotFound,
+			svcRes:   certs.Page{},
+			svcErr:   svcerr.ErrNotFound,
+			err:      svcerr.ErrNotFound,
 		},
 	}
 	for _, tc := range cases {
 		req := testRequest{
 			client: cs.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/serials/%s", cs.URL, tc.thingID) + tc.query,
+			url:    fmt.Sprintf("%s/domains/%s/serials/%s", cs.URL, tc.domainID, tc.thingID) + tc.query,
 			token:  tc.token,
 		}
 		svcCall := svc.On("ListSerials", mock.Anything, tc.token, tc.thingID, tc.offset, tc.limit).Return(tc.svcRes, tc.svcErr)

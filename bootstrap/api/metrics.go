@@ -71,13 +71,13 @@ func (mm *metricsMiddleware) UpdateCert(ctx context.Context, token, thingKey, cl
 }
 
 // UpdateConnections instruments UpdateConnections method with metrics.
-func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, domainID,token, id string, connections []string) (err error) {
+func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, domainID, token, id string, connections []string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_connections").Add(1)
 		mm.latency.With("method", "update_connections").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateConnections(ctx,domainID, token, id, connections)
+	return mm.svc.UpdateConnections(ctx, domainID, token, id, connections)
 }
 
 // List instruments List method with metrics.
@@ -111,13 +111,13 @@ func (mm *metricsMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 }
 
 // ChangeState instruments ChangeState method with metrics.
-func (mm *metricsMiddleware) ChangeState(ctx context.Context, domainID,token, id string, state bootstrap.State) (err error) {
+func (mm *metricsMiddleware) ChangeState(ctx context.Context, domainID, token, id string, state bootstrap.State) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "change_state").Add(1)
 		mm.latency.With("method", "change_state").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ChangeState(ctx, domainID,token, id, state)
+	return mm.svc.ChangeState(ctx, domainID, token, id, state)
 }
 
 // UpdateChannelHandler instruments UpdateChannelHandler method with metrics.

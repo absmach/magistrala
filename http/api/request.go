@@ -9,8 +9,8 @@ import (
 )
 
 type publishReq struct {
-	msg      *messaging.Message
-	token    string
+	msg   *messaging.Message
+	token string
 }
 
 func (req publishReq) validate() error {

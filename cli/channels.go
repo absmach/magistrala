@@ -125,19 +125,20 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "connections <channel_id> <user_auth_token>",
+		Use:   "connections <channel_id> <domain_id> <user_auth_token>",
 		Short: "Connections list",
 		Long:  `List of Things connected to a Channel`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
+				DomainID: args[1],
 			}
-			cl, err := sdk.ThingsByChannel(args[0], pm, args[1])
+			cl, err := sdk.ThingsByChannel(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -221,8 +222,8 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+				Offset:   Offset,
+				Limit:    Limit,
 				DomainID: args[1],
 			}
 			ul, err := sdk.ListChannelUserGroups(args[0], pm, args[2])

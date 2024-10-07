@@ -110,7 +110,7 @@ func decodeRetrieveJournalReq(_ context.Context, r *http.Request) (interface{}, 
 	}
 
 	req := retrieveJournalsReq{
-		token:    apiutil.ExtractBearerToken(r),
+		token: apiutil.ExtractBearerToken(r),
 		page: journal.Page{
 			Offset:         offset,
 			Limit:          limit,

@@ -22,6 +22,7 @@ func TestAddReqValidation(t *testing.T) {
 	cases := []struct {
 		desc        string
 		token       string
+		domainID    string
 		externalID  string
 		externalKey string
 		channels    []string
@@ -30,14 +31,25 @@ func TestAddReqValidation(t *testing.T) {
 		{
 			desc:        "valid request",
 			token:       "token",
+			domainID:    "domain-id",
 			externalID:  "external-id",
 			externalKey: "external-key",
 			channels:    []string{channel1, channel2},
 			err:         nil,
 		},
 		{
+			desc:        "empty domain id",
+			token:       "token",
+			domainID:    "",
+			externalID:  "external-id",
+			externalKey: "external-key",
+			channels:    []string{channel1, channel2},
+			err:         apiutil.ErrMissingDomainID,
+		},
+		{
 			desc:        "empty token",
 			token:       "",
+			domainID:    "domain-id",
 			externalID:  "external-id",
 			externalKey: "external-key",
 			channels:    []string{channel1, channel2},
@@ -46,6 +58,7 @@ func TestAddReqValidation(t *testing.T) {
 		{
 			desc:        "empty external ID",
 			token:       "token",
+			domainID:    "domain-id",
 			externalID:  "",
 			externalKey: "external-key",
 			channels:    []string{channel1, channel2},
@@ -54,6 +67,7 @@ func TestAddReqValidation(t *testing.T) {
 		{
 			desc:        "empty external key",
 			token:       "token",
+			domainID:    "domain-id",
 			externalID:  "external-id",
 			externalKey: "",
 			channels:    []string{channel1, channel2},
@@ -62,6 +76,7 @@ func TestAddReqValidation(t *testing.T) {
 		{
 			desc:        "empty external key and external ID",
 			token:       "token",
+			domainID:    "domain-id",
 			externalID:  "",
 			externalKey: "",
 			channels:    []string{channel1, channel2},
@@ -70,6 +85,7 @@ func TestAddReqValidation(t *testing.T) {
 		{
 			desc:        "empty channels",
 			token:       "token",
+			domainID:    "domain-id",
 			externalID:  "external-id",
 			externalKey: "external-key",
 			channels:    []string{},
@@ -78,6 +94,7 @@ func TestAddReqValidation(t *testing.T) {
 		{
 			desc:        "empty channel value",
 			token:       "token",
+			domainID:    "domain-id",
 			externalID:  "external-id",
 			externalKey: "external-key",
 			channels:    []string{channel1, ""},
@@ -88,6 +105,7 @@ func TestAddReqValidation(t *testing.T) {
 	for _, tc := range cases {
 		req := addReq{
 			token:       tc.token,
+			domainID:    tc.domainID,
 			ExternalID:  tc.externalID,
 			ExternalKey: tc.externalKey,
 			Channels:    tc.channels,
@@ -100,28 +118,39 @@ func TestAddReqValidation(t *testing.T) {
 
 func TestEntityReqValidation(t *testing.T) {
 	cases := []struct {
-		desc  string
-		token string
-		id    string
-		err   error
+		desc     string
+		token    string
+		domainID string
+		id       string
+		err      error
 	}{
 		{
-			desc:  "empty token",
-			token: "",
-			id:    "id",
-			err:   apiutil.ErrBearerToken,
+			desc:     "empty token",
+			token:    "",
+			domainID: "domain-id",
+			id:       "id",
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:  "empty id",
-			token: "token",
-			id:    "",
-			err:   apiutil.ErrMissingID,
+			desc:     "empty domain-id",
+			token:    "token",
+			domainID: "",
+			id:       "id",
+			err:      apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:     "empty id",
+			token:    "token",
+			domainID: "domain-id",
+			id:       "",
+			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := entityReq{
-			token: tc.token,
+			token:    tc.token,
+			domainID: tc.domainID,
 		}
 
 		err := req.validate()
@@ -131,35 +160,47 @@ func TestEntityReqValidation(t *testing.T) {
 
 func TestUpdateReqValidation(t *testing.T) {
 	cases := []struct {
-		desc  string
-		token string
-		id    string
-		err   error
+		desc     string
+		token    string
+		domainID string
+		id       string
+		err      error
 	}{
 		{
-			desc:  "valid request",
-			token: "token",
-			id:    "id",
-			err:   nil,
+			desc:     "valid request",
+			token:    "token",
+			domainID: "domain-id",
+			id:       "id",
+			err:      nil,
 		},
 		{
-			desc:  "empty token",
-			token: "",
-			id:    "id",
-			err:   apiutil.ErrBearerToken,
+			desc:     "empty domain-id",
+			token:    "token",
+			domainID: "",
+			id:       "id",
+			err:      apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:  "empty id",
-			token: "token",
-			id:    "",
-			err:   apiutil.ErrMissingID,
+			desc:     "empty token",
+			token:    "",
+			domainID: "domain-id",
+			id:       "id",
+			err:      apiutil.ErrBearerToken,
+		},
+		{
+			desc:     "empty id",
+			token:    "token",
+			domainID: "domain-id",
+			id:       "",
+			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateReq{
-			token: tc.token,
-			id:    tc.id,
+			token:    tc.token,
+			id:       tc.id,
+			domainID: tc.domainID,
 		}
 
 		err := req.validate()
@@ -169,29 +210,40 @@ func TestUpdateReqValidation(t *testing.T) {
 
 func TestUpdateCertReqValidation(t *testing.T) {
 	cases := []struct {
-		desc    string
-		token   string
-		thingID string
-		err     error
+		desc     string
+		token    string
+		domainID string
+		thingID  string
+		err      error
 	}{
 		{
-			desc:    "empty token",
-			token:   "",
-			thingID: "thingID",
-			err:     apiutil.ErrBearerToken,
+			desc:     "empty token",
+			token:    "",
+			domainID: "domainID",
+			thingID:  "thingID",
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:    "empty thing id",
-			token:   "token",
-			thingID: "",
-			err:     apiutil.ErrMissingID,
+			desc:     "empty domain id",
+			token:    "token",
+			domainID: "",
+			thingID:  "thingID",
+			err:      apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:     "empty thing id",
+			token:    "token",
+			domainID: "domainID",
+			thingID:  "",
+			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateCertReq{
-			token:   tc.token,
-			thingID: tc.thingID,
+			token:    tc.token,
+			thingID:  tc.thingID,
+			domainID: tc.domainID,
 		}
 
 		err := req.validate()
@@ -201,29 +253,40 @@ func TestUpdateCertReqValidation(t *testing.T) {
 
 func TestUpdateConnReqValidation(t *testing.T) {
 	cases := []struct {
-		desc  string
-		token string
-		id    string
-		err   error
+		desc     string
+		token    string
+		domainID string
+		id       string
+		err      error
 	}{
 		{
-			desc:  "empty token",
-			token: "",
-			id:    "id",
-			err:   apiutil.ErrBearerToken,
+			desc:     "empty token",
+			token:    "",
+			domainID: "domainID",
+			id:       "id",
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:  "empty id",
-			token: "token",
-			id:    "",
-			err:   apiutil.ErrMissingID,
+			desc:     "empty domain id",
+			token:    "token",
+			domainID: "",
+			id:       "id",
+			err:      apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:     "empty id",
+			token:    "token",
+			domainID: "domainID",
+			id:       "",
+			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateReq{
-			token: tc.token,
-			id:    tc.id,
+			token:    tc.token,
+			id:       tc.id,
+			domainID: tc.domainID,
 		}
 
 		err := req.validate()
@@ -233,40 +296,53 @@ func TestUpdateConnReqValidation(t *testing.T) {
 
 func TestListReqValidation(t *testing.T) {
 	cases := []struct {
-		desc   string
-		offset uint64
-		token  string
-		limit  uint64
-		err    error
+		desc     string
+		offset   uint64
+		token    string
+		domainID string
+		limit    uint64
+		err      error
 	}{
 		{
-			desc:   "empty token",
-			token:  "",
-			offset: 0,
-			limit:  1,
-			err:    apiutil.ErrBearerToken,
+			desc:     "empty token",
+			token:    "",
+			domainID: "domainID",
+			offset:   0,
+			limit:    1,
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:   "too large limit",
-			token:  "token",
-			offset: 0,
-			limit:  maxLimitSize + 1,
-			err:    apiutil.ErrLimitSize,
+			desc:     "empty domain id",
+			token:    "token",
+			domainID: "",
+			offset:   0,
+			limit:    1,
+			err:      apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:   "default limit",
-			token:  "token",
-			offset: 0,
-			limit:  defLimit,
-			err:    nil,
+			desc:     "too large limit",
+			token:    "token",
+			domainID: "domainID",
+			offset:   0,
+			limit:    maxLimitSize + 1,
+			err:      apiutil.ErrLimitSize,
+		},
+		{
+			desc:     "default limit",
+			token:    "token",
+			domainID: "domainID",
+			offset:   0,
+			limit:    defLimit,
+			err:      nil,
 		},
 	}
 
 	for _, tc := range cases {
 		req := listReq{
-			token:  tc.token,
-			offset: tc.offset,
-			limit:  tc.limit,
+			token:    tc.token,
+			offset:   tc.offset,
+			limit:    tc.limit,
+			domainID: tc.domainID,
 		}
 
 		err := req.validate()
@@ -308,40 +384,53 @@ func TestBootstrapReqValidation(t *testing.T) {
 
 func TestChangeStateReqValidation(t *testing.T) {
 	cases := []struct {
-		desc  string
-		token string
-		id    string
-		state bootstrap.State
-		err   error
+		desc     string
+		token    string
+		domainID string
+		id       string
+		state    bootstrap.State
+		err      error
 	}{
 		{
-			desc:  "empty token",
-			token: "",
-			id:    "id",
-			state: bootstrap.State(1),
-			err:   apiutil.ErrBearerToken,
+			desc:     "empty token",
+			token:    "",
+			domainID: "domainID",
+			id:       "id",
+			state:    bootstrap.State(1),
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:  "empty id",
-			token: "token",
-			id:    "",
-			state: bootstrap.State(0),
-			err:   apiutil.ErrMissingID,
+			desc:     "empty domain id",
+			token:    "token",
+			domainID: "",
+			id:       "id",
+			state:    bootstrap.State(1),
+			err:      apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:  "invalid state",
-			token: "token",
-			id:    "id",
-			state: bootstrap.State(14),
-			err:   apiutil.ErrBootstrapState,
+			desc:     "empty id",
+			token:    "token",
+			domainID: "domainID",
+			id:       "",
+			state:    bootstrap.State(0),
+			err:      apiutil.ErrMissingID,
+		},
+		{
+			desc:     "invalid state",
+			token:    "token",
+			domainID: "domainID",
+			id:       "id",
+			state:    bootstrap.State(14),
+			err:      apiutil.ErrBootstrapState,
 		},
 	}
 
 	for _, tc := range cases {
 		req := changeStateReq{
-			token: tc.token,
-			id:    tc.id,
-			State: tc.state,
+			token:    tc.token,
+			id:       tc.id,
+			State:    tc.state,
+			domainID: tc.domainID,
 		}
 
 		err := req.validate()

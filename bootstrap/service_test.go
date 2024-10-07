@@ -193,8 +193,8 @@ func TestAdd(t *testing.T) {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
 		authCall1 := auth.On("Authorize", context.Background(), mock.Anything).Return(tc.authResponse, tc.authorizeErr)
 		repoCall := sdk.On("Thing", tc.config.ThingID, tc.config.DomainID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, tc.thingErr)
-		repoCall1 := sdk.On("CreateThing", mock.Anything,tc.config.DomainID, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
-		repoCall2 := sdk.On("DeleteThing", tc.config.ThingID,tc.config.DomainID, tc.token).Return(tc.deleteThingErr)
+		repoCall1 := sdk.On("CreateThing", mock.Anything, tc.config.DomainID, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
+		repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.config.DomainID, tc.token).Return(tc.deleteThingErr)
 		repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
 		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 

@@ -227,7 +227,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /domains/{domainID}/things/bootstrap/{externalId}:
+  /things/bootstrap/{externalId}:
     get:
       operationId: getBootstrapConfig
       summary: Retrieves configuration.
@@ -238,7 +238,6 @@ paths:
       security:
         - bootstrapAuth: []
       parameters:
-        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ExternalId"
       responses:
         "200":
@@ -253,7 +252,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /domains/{domainID}/things/bootstrap/secure/{externalId}:
+  /things/bootstrap/secure/{externalId}:
     get:
       operationId: getSecureBootstrapConfig
       summary: Retrieves configuration.
@@ -264,7 +263,6 @@ paths:
       security:
         - bootstrapEncAuth: []
       parameters:
-        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ExternalId"
       responses:
         "200":

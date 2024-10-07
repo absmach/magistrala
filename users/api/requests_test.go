@@ -233,7 +233,6 @@ func TestListMembersByObjectReqValidate(t *testing.T) {
 		{
 			desc: "empty domain id",
 			req: listMembersByObjectReq{
-				token:      valid,
 				objectKind: "group",
 				domainID:   "",
 				objectID:   validID,
@@ -643,7 +642,6 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 		{
 			desc: "empty domain id",
 			req: assignUsersReq{
-				token:    valid,
 				domainID: "",
 				groupID:  validID,
 				UserIDs:  []string{validID},
@@ -737,16 +735,6 @@ func TestAssignGroupsRequestValidate(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: assignGroupsReq{
-				domainID: domain,
-				token:    "",
-				groupID:  validID,
-				GroupIDs: []string{validID},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "empty group id",
 			req: assignGroupsReq{
 				domainID: domain,
@@ -767,7 +755,6 @@ func TestAssignGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "empty domain id",
 			req: assignGroupsReq{
-				token:    valid,
 				domainID: "",
 				groupID:  validID,
 				GroupIDs: []string{validID},
@@ -818,7 +805,6 @@ func TestUnassignGroupsRequestValidate(t *testing.T) {
 			desc: "empty domain id",
 			req: unassignGroupsReq{
 				domainID: "",
-				token:    valid,
 				groupID:  validID,
 				GroupIDs: []string{valid},
 			},

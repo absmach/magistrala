@@ -796,7 +796,7 @@ func TestViewThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		domainID string
+		domainID    string
 		token       string
 		session     pauth.Session
 		thingID     string
@@ -819,7 +819,7 @@ func TestViewThing(t *testing.T) {
 		},
 		{
 			desc:        "view thing with an invalid token",
-			domainID: domainID,
+			domainID:    domainID,
 			token:       invalidToken,
 			thingID:     thing.ID,
 			svcRes:      mgclients.Client{},
@@ -910,7 +910,7 @@ func TestViewThingPermissions(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		domainID string
+		domainID    string
 		token       string
 		session     pauth.Session
 		thingID     string
@@ -933,7 +933,7 @@ func TestViewThingPermissions(t *testing.T) {
 		},
 		{
 			desc:        "view thing permissions with an invalid token",
-			domainID: domainID,
+			domainID:    domainID,
 			token:       invalidToken,
 			thingID:     validID,
 			svcRes:      []string{},
@@ -1323,7 +1323,7 @@ func TestUpdateThingSecret(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		domainID  string
+		domainID    string
 		token       string
 		session     pauth.Session
 		thingID     string
@@ -1348,7 +1348,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		},
 		{
 			desc:        "update thing secret with an invalid token",
-			domainID:  domainID,
+			domainID:    domainID,
 			token:       invalidToken,
 			thingID:     thing.ID,
 			newSecret:   newSecret,
@@ -1456,7 +1456,7 @@ func TestEnableThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		domainID string
+		domainID    string
 		token       string
 		session     pauth.Session
 		thingID     string
@@ -1479,7 +1479,7 @@ func TestEnableThing(t *testing.T) {
 		},
 		{
 			desc:        "enable thing with an invalid token",
-			domainID: domainID,
+			domainID:    domainID,
 			token:       invalidToken,
 			thingID:     thing.ID,
 			svcRes:      mgclients.Client{},
@@ -1561,7 +1561,7 @@ func TestDisableThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		domainID string
+		domainID    string
 		token       string
 		session     pauth.Session
 		thingID     string
@@ -1584,7 +1584,7 @@ func TestDisableThing(t *testing.T) {
 		},
 		{
 			desc:        "disable thing with an invalid token",
-			domainID: domainID,
+			domainID:    domainID,
 			token:       invalidToken,
 			thingID:     thing.ID,
 			svcRes:      mgclients.Client{},
@@ -1664,7 +1664,7 @@ func TestShareThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		domainID string
+		domainID    string
 		token       string
 		session     pauth.Session
 		thingID     string
@@ -1780,7 +1780,7 @@ func TestUnshareThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		domainID string
+		domainID    string
 		token       string
 		session     pauth.Session
 		thingID     string
@@ -1882,15 +1882,15 @@ func TestDeleteThing(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc         string
-		domainID string
-		token        string
+		desc        string
+		domainID    string
+		token       string
 		session     pauth.Session
-		thingID      string
-		svcErr       error
+		thingID     string
+		svcErr      error
 		identifyRes *magistrala.IdentityRes
 		identifyErr error
-		err          errors.SDKError
+		err         errors.SDKError
 	}{
 		{
 			desc:     "delete thing successfully",
@@ -1901,12 +1901,12 @@ func TestDeleteThing(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "delete thing with an invalid token",
-			domainID: domainID,
-			token:    invalidToken,
-			thingID:  thing.ID,
-			identifyErr:   svcerr.ErrAuthorization,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
+			desc:        "delete thing with an invalid token",
+			domainID:    domainID,
+			token:       invalidToken,
+			thingID:     thing.ID,
+			identifyErr: svcerr.ErrAuthorization,
+			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc:     "delete thing with empty token",

@@ -2521,7 +2521,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/groups/%s/users?", us.URL, tc.groupID) + tc.query,
+			url:    fmt.Sprintf("%s/domains/%s/groups/%s/users?", us.URL, validID, tc.groupID) + tc.query,
 			token:  tc.token,
 		}
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
@@ -2532,9 +2532,6 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			tc.err)
 		res, err := req.make()
-		fmt.Printf("Request is %+v\n", req)
-		fmt.Printf("Response is %+v\n", res)
-
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
@@ -2548,7 +2545,6 @@ func TestListUsersByChannelID(t *testing.T) {
 
 	cases := []struct {
 		desc              string
-		domainID          string
 		token             string
 		channelID         string
 		page              mgclients.Page
@@ -2561,7 +2557,6 @@ func TestListUsersByChannelID(t *testing.T) {
 	}{
 		{
 			desc:      "list users with valid token",
-			domainID:  validID,
 			token:     validToken,
 			status:    http.StatusOK,
 			channelID: validID,
@@ -2861,7 +2856,7 @@ func TestListUsersByChannelID(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/domains/%s/channels/%s/users?", us.URL,tc.domainID, validID) + tc.query,
+			url:    fmt.Sprintf("%s/domains/%s/channels/%s/users?", us.URL, validID, validID) + tc.query,
 			token:  tc.token,
 		}
 
@@ -3515,7 +3510,7 @@ func TestListUsersByThingID(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/%s/users?", us.URL, validID) + tc.query,
+			url:    fmt.Sprintf("%s/domains/%s/things/%s/users?", us.URL, validID, validID) + tc.query,
 			token:  tc.token,
 		}
 
@@ -3628,7 +3623,7 @@ func TestAssignUsers(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/users/assign", us.URL, tc.groupID),
+			url:    fmt.Sprintf("%s/domains/%s/groups/%s/users/assign", us.URL, tc.session.DomainID, tc.groupID),
 			token:  tc.token,
 			body:   strings.NewReader(data),
 		}
@@ -3735,7 +3730,7 @@ func TestUnassignUsers(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/users/unassign", us.URL, tc.groupID),
+			url:    fmt.Sprintf("%s/domains/%s/groups/%s/users/unassign", us.URL, tc.session.DomainID, tc.groupID),
 			token:  tc.token,
 			body:   strings.NewReader(data),
 		}
@@ -3838,7 +3833,7 @@ func TestAssignGroups(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/groups/assign", us.URL, tc.groupID),
+			url:    fmt.Sprintf("%s/domains/%s/groups/%s/groups/assign", us.URL, tc.session.DomainID, tc.groupID),
 			token:  tc.token,
 			body:   strings.NewReader(data),
 		}
@@ -3941,7 +3936,7 @@ func TestUnassignGroups(t *testing.T) {
 		req := testRequest{
 			client: us.Client(),
 			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/groups/unassign", us.URL, tc.groupID),
+			url:    fmt.Sprintf("%s/domains/%s/groups/%s/groups/unassign", us.URL, tc.session.DomainID, tc.groupID),
 			token:  tc.token,
 			body:   strings.NewReader(data),
 		}

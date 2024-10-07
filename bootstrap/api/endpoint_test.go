@@ -305,23 +305,24 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Add", mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("/%s/domains/%s/things/configs", bs.URL, domainID),
-			contentType: tc.contentType,
-			token:       tc.auth,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		fmt.Printf("Error is %+v\n", err)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("Add", mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/domains/%s/things/configs", bs.URL, domainID),
+				contentType: tc.contentType,
+				token:       tc.auth,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-		location := res.Header.Get("Location")
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location '%s' got '%s'", tc.desc, tc.location, location))
-		svcCall.Unset()
+			location := res.Header.Get("Location")
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location '%s' got '%s'", tc.desc, tc.location, location))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -397,28 +398,30 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("View", mock.Anything, tc.auth, tc.id).Return(c, tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			token:  tc.auth,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("View", mock.Anything, tc.auth, tc.id).Return(c, tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/domains/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				token:  tc.auth,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		var view config
-		if err := json.NewDecoder(res.Body).Decode(&view); err != io.EOF {
-			assert.Nil(t, err, fmt.Sprintf("Decoding expected to succeed %s: %s", tc.desc, err))
-		}
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			var view config
+			if err := json.NewDecoder(res.Body).Decode(&view); err != io.EOF {
+				assert.Nil(t, err, fmt.Sprintf("Decoding expected to succeed %s: %s", tc.desc, err))
+			}
 
-		assert.ElementsMatch(t, tc.res.Channels, view.Channels, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Channels, view.Channels))
-		// Empty channels to prevent order mismatch.
-		tc.res.Channels = []channel{}
-		view.Channels = []channel{}
-		assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
-		svcCall.Unset()
+			assert.ElementsMatch(t, tc.res.Channels, view.Channels, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Channels, view.Channels))
+			// Empty channels to prevent order mismatch.
+			tc.res.Channels = []channel{}
+			view.Channels = []channel{}
+			assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -504,19 +507,21 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Update", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.auth,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("Update", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/domains/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.auth,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -602,19 +607,21 @@ func TestUpdateCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("UpdateCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/things/configs/certs/%s", bs.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.auth,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("UpdateCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/domains/%s/things/configs/certs/%s", bs.URL, domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.auth,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -713,19 +720,21 @@ func TestUpdateConnections(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("UpdateConnections", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/configs/connections/%s", bs.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.auth,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := svc.On("UpdateConnections", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/domains/%s/things/configs/connections/%s", bs.URL, domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.auth,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -737,7 +746,7 @@ func TestList(t *testing.T) {
 
 	bs, svc := newBootstrapServer()
 	defer bs.Close()
-	path := fmt.Sprintf("%s/%s", bs.URL, "things/configs")
+	path := fmt.Sprintf("%s/domains/%s/%s", bs.URL, domainID, "things/configs")
 
 	c := newConfig()
 
@@ -769,7 +778,7 @@ func TestList(t *testing.T) {
 		if i%2 == 0 {
 			state = bootstrap.Inactive
 		}
-		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		err := svc.ChangeState(context.Background(), domainID, validToken, list[i].ThingID, state)
 		assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
@@ -973,28 +982,29 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodGet,
-			url:    tc.url,
-			token:  tc.auth,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodGet,
+				url:    tc.url,
+				token:  tc.auth,
+			}
 
-		_, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-		// assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		// var body configPage
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			var body configPage
 
-		// err = json.NewDecoder(res.Body).Decode(&body)
-		// assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			err = json.NewDecoder(res.Body).Decode(&body)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-		// assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		// assert.ElementsMatch(t, tc.res.Configs, body.Configs, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Configs, body.Configs))
-		// assert.Equal(t, tc.res.Total, body.Total, fmt.Sprintf("%s: expected response total '%d' got '%d'", tc.desc, tc.res.Total, body.Total))
+			assert.Equal(t, tc.res.Total, body.Total, fmt.Sprintf("%s: expected response total '%d' got '%d'", tc.desc, tc.res.Total, body.Total))
 
-		svcCall.Unset()
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -1048,17 +1058,19 @@ func TestRemove(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			token:  tc.auth,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodDelete,
+				url:    fmt.Sprintf("%s/domains/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				token:  tc.auth,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -1170,26 +1182,28 @@ func TestBootstrap(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Bootstrap", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.externalID),
-			key:    tc.externalKey,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("Bootstrap", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.externalID),
+				key:    tc.externalKey,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		body, err := io.ReadAll(res.Body)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		if tc.secure && tc.status == http.StatusOK {
-			body, err = dec(body)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding body: %s", tc.desc, err))
-		}
-		data := strings.Trim(string(body), "\n")
-		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, data))
-		svcCall.Unset()
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			body, err := io.ReadAll(res.Body)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			if tc.secure && tc.status == http.StatusOK {
+				body, err = dec(body)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding body: %s", tc.desc, err))
+			}
+			data := strings.Trim(string(body), "\n")
+			assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, data))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -1285,19 +1299,21 @@ func TestChangeState(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("ChangeState", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/state/%s", bs.URL, tc.id),
-			token:       tc.auth,
-			contentType: tc.contentType,
-			body:        strings.NewReader(tc.state),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("ChangeState", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/domains/%s/things/state/%s", bs.URL, domainID, tc.id),
+				token:       tc.auth,
+				contentType: tc.contentType,
+				body:        strings.NewReader(tc.state),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+		})
 	}
 }
 

@@ -90,29 +90,29 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger *s
 				opts...), "update_connections").ServeHTTP)
 		})
 
-		r.Route("/bootstrap", func(r chi.Router) {
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
-				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
-				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, true),
-				decodeBootstrapRequest,
-				encodeSecureRes,
-				opts...), "bootstrap_secure").ServeHTTP)
-		})
-
 		r.Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 			stateEndpoint(svc),
 			decodeStateRequest,
 			api.EncodeResponse,
 			opts...), "update_state").ServeHTTP)
+	})
+
+	r.Route("/things/bootstrap", func(r chi.Router) {
+		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+			bootstrapEndpoint(svc, reader, false),
+			decodeBootstrapRequest,
+			api.EncodeResponse,
+			opts...), "bootstrap").ServeHTTP)
+		r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+			bootstrapEndpoint(svc, reader, false),
+			decodeBootstrapRequest,
+			api.EncodeResponse,
+			opts...), "bootstrap").ServeHTTP)
+		r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+			bootstrapEndpoint(svc, reader, true),
+			decodeBootstrapRequest,
+			encodeSecureRes,
+			opts...), "bootstrap_secure").ServeHTTP)
 	})
 
 	r.Get("/health", magistrala.Health("bootstrap", instanceID))
@@ -217,9 +217,8 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := bootstrapReq{
-		id:       chi.URLParam(r, "externalID"),
-		key:      apiutil.ExtractThingKey(r),
-		domainID: chi.URLParam(r, "domainID"),
+		id:  chi.URLParam(r, "externalID"),
+		key: apiutil.ExtractThingKey(r),
 	}
 
 	return req, nil

@@ -401,11 +401,9 @@ func decodeUpdateUserProfilePicture(_ context.Context, r *http.Request) (interfa
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var c users.User
-
 	req := updateProfilePictureReq{
 		token: apiutil.ExtractBearerToken(r),
-		User:  c,
+		id:    chi.URLParam(r, "id"),
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -601,8 +599,6 @@ func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, err
 	if err != nil {
 		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-
-	// here's another mgclients.page
 
 	return mgclients.Page{
 		Status:     st,

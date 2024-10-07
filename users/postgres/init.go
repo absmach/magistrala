@@ -46,7 +46,6 @@ func Migration() *migrate.MemoryMigrationSource {
 				Down: []string{},
 			},
 			{
-				// To add creation of client's userName, first and last Names and profilephotos
 				Id: "clients_03",
 				Up: []string{
 					`ALTER TABLE clients ADD COLUMN user_name VARCHAR(254), ADD COLUMN first_name VARCHAR(254), ADD COLUMN last_name VARCHAR(254), ADD COLUMN profile_picture TEXT`,

@@ -24,8 +24,6 @@ type Repository struct {
 	DB postgres.Database
 }
 
-// here we have all the database functions needed
-
 func (repo *Repository) Update(ctx context.Context, client clients.Client) (clients.Client, error) {
 	var query []string
 	var upq string

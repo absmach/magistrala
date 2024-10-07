@@ -316,7 +316,7 @@ func createAdmin(ctx context.Context, c config, urepo users.Repository, hsr user
 		return "", err
 	}
 
-	client := users.User{
+	user := users.User{
 		ID:   id,
 		Name: "admin",
 		Credentials: users.Credentials{
@@ -332,18 +332,18 @@ func createAdmin(ctx context.Context, c config, urepo users.Repository, hsr user
 		Status:    mgclients.EnabledStatus,
 	}
 
-	if c, err := urepo.RetrieveByIdentity(ctx, client.Credentials.Identity); err == nil {
+	if c, err := urepo.RetrieveByIdentity(ctx, user.Credentials.Identity); err == nil {
 		return c.ID, nil
 	}
 
 	// Create an admin
-	if _, err = urepo.Save(ctx, client); err != nil {
+	if _, err = urepo.Save(ctx, user); err != nil {
 		return "", err
 	}
 	if _, err = svc.IssueToken(ctx, c.AdminEmail, c.AdminPassword, ""); err != nil {
 		return "", err
 	}
-	return client.ID, nil
+	return user.ID, nil
 }
 
 func createAdminPolicy(ctx context.Context, clientID string, authz mgauthz.Authorization, policyService policies.Service) error {

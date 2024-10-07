@@ -250,19 +250,19 @@ func createThings(s sdk.SDK, conf Config, token string) ([]sdk.Thing, error) {
 		for i := 0; i < batches; i++ {
 			ths, err := createThingsInBatch(s, conf, token, batchSize)
 			if err != nil {
-				return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+				return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 			}
 			things = append(things, ths...)
 		}
 		ths, err := createThingsInBatch(s, conf, token, conf.Num%uint64(batchSize))
 		if err != nil {
-			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+			return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 		}
 		things = append(things, ths...)
 	} else {
 		ths, err := createThingsInBatch(s, conf, token, conf.Num)
 		if err != nil {
-			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+			return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 		}
 		things = append(things, ths...)
 	}
@@ -295,19 +295,19 @@ func createChannels(s sdk.SDK, conf Config, token string) ([]sdk.Channel, error)
 		for i := 0; i < batches; i++ {
 			chs, err := createChannelsInBatch(s, conf, token, batchSize)
 			if err != nil {
-				return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+				return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 			}
 			channels = append(channels, chs...)
 		}
 		chs, err := createChannelsInBatch(s, conf, token, conf.Num%uint64(batchSize))
 		if err != nil {
-			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
 		channels = append(channels, chs...)
 	} else {
 		chs, err := createChannelsInBatch(s, conf, token, conf.Num)
 		if err != nil {
-			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
 		channels = append(channels, chs...)
 	}
@@ -546,19 +546,19 @@ func messaging(s sdk.SDK, conf Config, token string, things []sdk.Thing, channel
 			for _, channel := range channels {
 				func(num int64, thing sdk.Thing, channel sdk.Channel) {
 					g.Go(func() error {
-						msg := fmt.Sprintf(msgFormat, num+1, rand.Intn(100000))
+						msg := fmt.Sprintf(msgFormat, num+1, rand.Int())
 						return sendHTTPMessage(s, msg, thing, channel.ID)
 					})
 					g.Go(func() error {
-						msg := fmt.Sprintf(msgFormat, num+2, rand.Intn(100000))
+						msg := fmt.Sprintf(msgFormat, num+2, rand.Int())
 						return sendCoAPMessage(msg, thing, channel.ID)
 					})
 					g.Go(func() error {
-						msg := fmt.Sprintf(msgFormat, num+3, rand.Intn(100000))
+						msg := fmt.Sprintf(msgFormat, num+3, rand.Int())
 						return sendMQTTMessage(msg, thing, channel.ID)
 					})
 					g.Go(func() error {
-						msg := fmt.Sprintf(msgFormat, num+4, rand.Intn(100000))
+						msg := fmt.Sprintf(msgFormat, num+4, rand.Int())
 						return sendWSMessage(conf, msg, thing, channel.ID)
 					})
 				}(bt, thing, channel)

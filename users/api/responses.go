@@ -18,7 +18,7 @@ var (
 	_ magistrala.Response = (*tokenRes)(nil)
 	_ magistrala.Response = (*viewUserRes)(nil)
 	_ magistrala.Response = (*createUserRes)(nil)
-	_ magistrala.Response = (*changeUserStatusClientRes)(nil)
+	_ magistrala.Response = (*changeUserStatusRes)(nil)
 	_ magistrala.Response = (*usersPageRes)(nil)
 	_ magistrala.Response = (*viewMembersRes)(nil)
 	_ magistrala.Response = (*passwResetReqRes)(nil)
@@ -29,8 +29,6 @@ var (
 	_ magistrala.Response = (*tokenRes)(nil)
 	_ magistrala.Response = (*deleteUserRes)(nil)
 )
-
-// handle the responses structs to match the client name as User now
 
 type pageRes struct {
 	Limit  uint64 `json:"limit,omitempty"`
@@ -148,19 +146,19 @@ func (res viewMembersRes) Empty() bool {
 	return false
 }
 
-type changeUserStatusClientRes struct {
+type changeUserStatusRes struct {
 	users.User `json:",inline"`
 }
 
-func (res changeUserStatusClientRes) Code() int {
+func (res changeUserStatusRes) Code() int {
 	return http.StatusOK
 }
 
-func (res changeUserStatusClientRes) Headers() map[string]string {
+func (res changeUserStatusRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res changeUserStatusClientRes) Empty() bool {
+func (res changeUserStatusRes) Empty() bool {
 	return false
 }
 

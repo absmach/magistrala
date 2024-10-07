@@ -55,47 +55,47 @@ func (svc service) RegisterClient(ctx context.Context, session authn.Session, cl
 		}
 	}
 
-	clientID, err := svc.idProvider.ID()
+	userID, err := svc.idProvider.ID()
 	if err != nil {
 		return User{}, err
 	}
 
-	if user.FirstName != "" || user.LastName != "" {
-		user.Name = fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+	if u.FirstName != "" || u.LastName != "" {
+		u.Name = fmt.Sprintf("%s %s", u.FirstName, u.LastName)
 	}
 
-	if user.Credentials.Secret != "" {
-		hash, err := svc.hasher.Hash(user.Credentials.Secret)
+	if u.Credentials.Secret != "" {
+		hash, err := svc.hasher.Hash(u.Credentials.Secret)
 		if err != nil {
 			return User{}, errors.Wrap(svcerr.ErrMalformedEntity, err)
 		}
-		user.Credentials.Secret = hash
+		u.Credentials.Secret = hash
 	}
 
-	if user.Status != mgclients.DisabledStatus && user.Status != mgclients.EnabledStatus {
+	if u.Status != mgclients.DisabledStatus && u.Status != mgclients.EnabledStatus {
 		return User{}, errors.Wrap(svcerr.ErrMalformedEntity, svcerr.ErrInvalidStatus)
 	}
-	if user.Role != mgclients.UserRole && user.Role != mgclients.AdminRole {
+	if u.Role != mgclients.UserRole && u.Role != mgclients.AdminRole {
 		return User{}, errors.Wrap(svcerr.ErrMalformedEntity, svcerr.ErrInvalidRole)
 	}
-	user.ID = clientID
-	user.CreatedAt = time.Now()
+	u.ID = userID
+	u.CreatedAt = time.Now()
 
-	if err := svc.addUserPolicy(ctx, user.ID, user.Role); err != nil {
+	if err := svc.addUserPolicy(ctx, u.ID, u.Role); err != nil {
 		return User{}, err
 	}
 	defer func() {
 		if err != nil {
-			if errRollback := svc.addUserPolicyRollback(ctx, user.ID, user.Role); errRollback != nil {
+			if errRollback := svc.addUserPolicyRollback(ctx, u.ID, u.Role); errRollback != nil {
 				err = errors.Wrap(errors.Wrap(errors.ErrRollbackTx, errRollback), err)
 			}
 		}
 	}()
-	client, err := svc.users.Save(ctx, user)
+	user, err := svc.users.Save(ctx, u)
 	if err != nil {
 		return User{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
-	return client, nil
+	return user, nil
 }
 
 func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {

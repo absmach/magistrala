@@ -22,6 +22,6 @@ type Page struct {
 	Role       Role     `json:"-"`
 	ListPerms  bool     `json:"-"`
 	UserName   string   `json:"user_name,omitempty"`
-	FisrtName  string   `json:"first_name,omitempty"`
+	FirstName  string   `json:"first_name,omitempty"`
 	LastName   string   `json:"last_name,omitempty"`
 }

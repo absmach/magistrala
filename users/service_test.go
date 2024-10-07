@@ -461,9 +461,9 @@ func TestSearchUsers(t *testing.T) {
 		{
 			desc:  "search users with id",
 			token: validToken,
-			page:  mgclients.Page{Offset: 0, Id: "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f", Limit: 100}, // another mgclients.Page
+			page:  mgclients.Page{Offset: 0, Id: "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f", Limit: 100},
 			response: users.UsersPage{
-				Page:  mgclients.Page{Total: 1, Offset: 0, Limit: 100}, // another mgclients.Page
+				Page:  mgclients.Page{Total: 1, Offset: 0, Limit: 100},
 				Users: []users.User{user},
 			},
 		},

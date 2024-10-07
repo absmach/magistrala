@@ -212,7 +212,7 @@ func (tm *tracingMiddleware) Identify(ctx context.Context, session authn.Session
 // OAuthCallback traces the "OAuthCallback" operation of the wrapped clients.Service.
 func (tm *tracingMiddleware) OAuthCallback(ctx context.Context, client mgclients.Client) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_oauth_callback", trace.WithAttributes(
-		attribute.String("client_id", user.ID),
+		attribute.String("user_id", user.ID),
 	))
 	defer span.End()
 

@@ -27,17 +27,20 @@ const (
 
 // User represents magistrala user its credentials.
 type User struct {
-	// add the fields that are required for the user
-	ID          string      `json:"id"`
-	Name        string      `json:"name,omitempty"`
-	Credentials Credentials `json:"credentials"`
-	Tags        []string    `json:"tags,omitempty"`
-	Domain      string      `json:"-"` // ignoring Domain Field, since it will be always empty for users
-	Metadata    Metadata    `json:"metadata,omitempty"`
-	CreatedAt   time.Time   `json:"created_at,omitempty"`
-	UpdatedAt   time.Time   `json:"updated_at,omitempty"`
-	Status      string      `json:"status,omitempty"`
-	Role        string      `json:"role,omitempty"`
+	ID             string      `json:"id"`
+	Name           string      `json:"name,omitempty"`
+	UserName       string      `json:"user_name,omitempty"`
+	FirstName      string      `json:"first_name,omitempty"`
+	LastName       string      `json:"last_name,omitempty"`
+	Credentials    Credentials `json:"credentials"`
+	Tags           []string    `json:"tags,omitempty"`
+	Domain         string      `json:"-"` // ignoring Domain Field, since it will be always empty for users
+	Metadata       Metadata    `json:"metadata,omitempty"`
+	CreatedAt      time.Time   `json:"created_at,omitempty"`
+	UpdatedAt      time.Time   `json:"updated_at,omitempty"`
+	Status         string      `json:"status,omitempty"`
+	Role           string      `json:"role,omitempty"`
+	ProfilePicture string      `json:"profile_picture,omitempty"`
 }
 
 func (sdk mgSDK) CreateUser(user User, token string) (User, errors.SDKError) {

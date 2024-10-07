@@ -479,7 +479,7 @@ func enableUserEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return changeUserStatusClientRes{User: user}, nil
+		return changeUserStatusRes{User: user}, nil
 	}
 }
 
@@ -500,7 +500,7 @@ func disableUserEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return changeUserStatusClientRes{User: user}, nil
+		return changeUserStatusRes{User: user}, nil
 	}
 }
 

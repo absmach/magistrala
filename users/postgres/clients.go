@@ -157,7 +157,6 @@ func (repo *userRepo) RetrieveByUserName(ctx context.Context, userName string) (
 }
 
 func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
-	// fails test due to the fact that the query is not being generated correctly when it comes to status and role.
 	query, err := pgclients.PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)

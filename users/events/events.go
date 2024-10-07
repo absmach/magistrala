@@ -57,7 +57,7 @@ type createUserEvent struct {
 
 func (uce createUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":  clientCreate,
+		"operation":  userCreate,
 		"id":         uce.ID,
 		"status":     uce.Status.String(),
 		"created_at": uce.CreatedAt,
@@ -86,12 +86,12 @@ type updateUserEvent struct {
 
 func (uce updateUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":  clientUpdate,
+		"operation":  userUpdate,
 		"updated_at": uce.UpdatedAt,
 		"updated_by": uce.UpdatedBy,
 	}
 	if uce.operation != "" {
-		val["operation"] = clientUpdate + "_" + uce.operation
+		val["operation"] = userUpdate + "_" + uce.operation
 	}
 
 	if uce.ID != "" {
@@ -125,7 +125,7 @@ type updateUserNamesEvent struct {
 
 func (une updateUserNamesEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":  clientUpdateUserNames,
+		"operation":  userUpdateUserNames,
 		"updated_at": une.UpdatedAt,
 		"updated_by": une.UpdatedBy,
 	}
@@ -136,7 +136,6 @@ func (une updateUserNamesEvent) Encode() (map[string]interface{}, error) {
 	if une.Name != "" {
 		val["name"] = une.Name
 	}
-	// should these be in separate events?
 	if une.FirstName != "" {
 		val["first_name"] = une.FirstName
 	}
@@ -156,7 +155,7 @@ type updateProfilePictureEvent struct {
 
 func (uppe updateProfilePictureEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":  clientUpdateProfilePicture,
+		"operation":  userUpdateProfilePicture,
 		"updated_at": uppe.UpdatedAt,
 		"updated_by": uppe.UpdatedBy,
 	}
@@ -180,7 +179,7 @@ type removeUserEvent struct {
 
 func (rce removeUserEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation":  clientRemove,
+		"operation":  userRemove,
 		"id":         rce.id,
 		"status":     rce.status,
 		"updated_at": rce.updatedAt,
@@ -194,7 +193,7 @@ type viewUserEvent struct {
 
 func (vue viewUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": clientView,
+		"operation": userView,
 		"id":        vue.ID,
 	}
 
@@ -204,10 +203,9 @@ func (vue viewUserEvent) Encode() (map[string]interface{}, error) {
 	if len(vue.Tags) > 0 {
 		val["tags"] = vue.Tags
 	}
-	// remember to return domain_id to users struct. it seems important now
-	// if vue.Domain != "" {
-	// 	val["domain"] = vue.Domain
-	// }
+	if vue.DomainID != "" {
+		val["domain"] = vue.DomainID
+	}
 	if vue.Credentials.Identity != "" {
 		val["identity"] = vue.Credentials.Identity
 	}
@@ -246,9 +244,9 @@ func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
 	if len(vpe.Tags) > 0 {
 		val["tags"] = vpe.Tags
 	}
-	// if vpe.Domain != "" {
-	// 	val["domain"] = vpe.Domain
-	// }
+	if vpe.DomainID != "" {
+		val["domain"] = vpe.DomainID
+	}
 	if vpe.Credentials.Identity != "" {
 		val["identity"] = vpe.Credentials.Identity
 	}
@@ -277,7 +275,7 @@ type viewUserByUserNameEvent struct {
 
 func (vue viewUserByUserNameEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": clientView,
+		"operation": userView,
 		"name":      vue.Name,
 	}
 
@@ -298,7 +296,7 @@ type listUserEvent struct {
 
 func (lue listUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": clientList,
+		"operation": userList,
 		"total":     lue.Total,
 		"offset":    lue.Offset,
 		"limit":     lue.Limit,
@@ -343,7 +341,7 @@ type listUserByGroupEvent struct {
 
 func (lcge listUserByGroupEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":   clientListByGroup,
+		"operation":   userListByGroup,
 		"total":       lcge.Total,
 		"offset":      lcge.Offset,
 		"limit":       lcge.Limit,
@@ -388,7 +386,7 @@ type searchUserEvent struct {
 
 func (sce searchUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": clientSearch,
+		"operation": userSearch,
 		"total":     sce.Total,
 		"offset":    sce.Offset,
 		"limit":     sce.Limit,
@@ -412,7 +410,7 @@ type identifyUserEvent struct {
 
 func (ise identifyUserEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation": clientIdentify,
+		"operation": userIdentify,
 		"id":        ise.userID,
 	}, nil
 }

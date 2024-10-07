@@ -15,12 +15,18 @@ import (
 	"google.golang.org/api/option"
 )
 
+type Storage interface {
+	UploadProfilePicture(ctx context.Context, file io.Reader, id string) (string, error)
+	DeleteProfilePicture(ctx context.Context, imageURL string) error
+	UpdateProfilePicture(ctx context.Context, file io.Reader, id string) (string, error)
+}
+
 type storageClient struct {
 	client *storage.Client
 }
 
 func NewStorageClient(ctx context.Context) (Storage, error) {
-	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")))
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud storage client: %v", err)
 	}

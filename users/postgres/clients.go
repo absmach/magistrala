@@ -405,7 +405,25 @@ func (repo *userRepo) UpdateTags(ctx context.Context, user users.User) (users.Us
 }
 
 func (repo *userRepo) Delete(ctx context.Context, id string) error {
-	q := "DELETE FROM clients AS c  WHERE c.id = $1 ;"
+	var profilePictureURL string
+
+	q := `SELECT profile_picture FROM clients WHERE id = $1`
+
+	err := repo.Repository.DB.QueryRowxContext(ctx, q, id).Scan(&profilePictureURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return repoerr.ErrNotFound
+		}
+		return postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+
+	if profilePictureURL != "" {
+		if err := repo.gcStorage.DeleteProfilePicture(ctx, profilePictureURL); err != nil {
+			return errors.Wrap(repoerr.ErrRemoveEntity, fmt.Errorf("failed to delete profile picture: %v", err))
+		}
+	}
+
+	q = "DELETE FROM clients AS c  WHERE c.id = $1 ;"
 
 	result, err := repo.Repository.DB.ExecContext(ctx, q, id)
 	if err != nil {

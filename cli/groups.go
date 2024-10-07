@@ -97,7 +97,7 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "children" {
-				if len(args) > 3 {
+				if len(args) > 4 {
 					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
@@ -115,7 +115,7 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "parents" {
-				if len(args) > 3 {
+				if len(args) > 4 {
 					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
@@ -132,7 +132,7 @@ var cmdGroups = []cobra.Command{
 				logJSONCmd(*cmd, l)
 				return
 			}
-			if len(args) > 2 {
+			if len(args) > 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}

@@ -318,21 +318,22 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "users <thing_id> <user_auth_token>",
+		Use:   "users <thing_id> <domain_id> <user_auth_token>",
 		Short: "List users",
 		Long: "List users of a thing\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things users <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli things users <thing_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+				Offset:   Offset,
+				Limit:    Limit,
+				DomainID: args[1],
 			}
-			ul, err := sdk.ListThingUsers(args[0], pm, args[1])
+			ul, err := sdk.ListThingUsers(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

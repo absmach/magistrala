@@ -24,7 +24,7 @@ import (
 
 var (
 	token              = "valid" + "domaintoken"
-	domainID = "domain-id"
+	domainID           = "domain-id"
 	tokenWithoutDomain = "valid"
 	relation           = "administrator"
 	all                = "all"
@@ -61,6 +61,7 @@ func TestCreateThingsCmd(t *testing.T) {
 			desc: "create thing successfully with token",
 			args: []string{
 				thingJson,
+				domainID,
 				token,
 			},
 			thing:   thing,
@@ -70,6 +71,7 @@ func TestCreateThingsCmd(t *testing.T) {
 			desc: "create thing without token",
 			args: []string{
 				thingJson,
+				domainID,
 			},
 			logType: usageLog,
 		},
@@ -77,6 +79,7 @@ func TestCreateThingsCmd(t *testing.T) {
 			desc: "create thing with invalid token",
 			args: []string{
 				thingJson,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -87,6 +90,7 @@ func TestCreateThingsCmd(t *testing.T) {
 			desc: "failed to create thing",
 			args: []string{
 				thingJson,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
@@ -94,19 +98,10 @@ func TestCreateThingsCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "create thing without domain token",
-			args: []string{
-				thingJson,
-				tokenWithoutDomain,
-			},
-			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
-			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
-			logType:       errLog,
-		},
-		{
 			desc: "create thing with invalid metadata",
 			args: []string{
 				"{\"name\":\"testthing\", \"metadata\":{\"key1\":value1}}",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(errors.New("invalid character 'v' looking for beginning of value"), 306),
@@ -117,7 +112,7 @@ func TestCreateThingsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("CreateThing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			sdkCall := sdkMock.On("CreateThing", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{createCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -158,6 +153,7 @@ func TestGetThingsCmd(t *testing.T) {
 			desc: "get all things successfully",
 			args: []string{
 				all,
+				domainID,
 				token,
 			},
 			logType: entityLog,
@@ -169,6 +165,7 @@ func TestGetThingsCmd(t *testing.T) {
 			desc: "get thing successfully with id",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 			},
 			logType: entityLog,
@@ -178,21 +175,12 @@ func TestGetThingsCmd(t *testing.T) {
 			desc: "get things with invalid token",
 			args: []string{
 				all,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 			page:          sdk.ThingsPage{},
-			logType:       errLog,
-		},
-		{
-			desc: "get thing without domain token",
-			args: []string{
-				all,
-				tokenWithoutDomain,
-			},
-			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
-			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
 			logType:       errLog,
 		},
 		{
@@ -213,6 +201,7 @@ func TestGetThingsCmd(t *testing.T) {
 			desc: "get thing without token",
 			args: []string{
 				all,
+				domainID,
 			},
 			logType: usageLog,
 		},
@@ -220,6 +209,7 @@ func TestGetThingsCmd(t *testing.T) {
 			desc: "get thing with invalid thing id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -230,8 +220,8 @@ func TestGetThingsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Things", mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
-			sdkCall1 := sdkMock.On("Thing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			sdkCall := sdkMock.On("Things", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Thing", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 
@@ -297,6 +287,7 @@ func TestUpdateThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				newNameandMeta,
+				domainID,
 				token,
 			},
 			thing: sdk.Thing{
@@ -317,6 +308,7 @@ func TestUpdateThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				"{\"name\": \"thingName\", \"metadata\": {\"role\": \"general\"}",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -328,6 +320,7 @@ func TestUpdateThingCmd(t *testing.T) {
 			args: []string{
 				invalidID,
 				newNameandMeta,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -340,6 +333,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				tagUpdateType,
 				thing.ID,
 				newTagsJson,
+				domainID,
 				token,
 			},
 			thing: sdk.Thing{
@@ -357,6 +351,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				tagUpdateType,
 				thing.ID,
 				"[\"tag1\", \"tag2\"",
+				domainID,
 				token,
 			},
 			logType:       errLog,
@@ -369,6 +364,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				tagUpdateType,
 				invalidID,
 				newTagsJson,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -381,6 +377,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				secretUpdateType,
 				thing.ID,
 				newSecret,
+				domainID,
 				token,
 			},
 			thing: sdk.Thing{
@@ -400,6 +397,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				secretUpdateType,
 				thing.ID,
 				"",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingSecret), http.StatusBadRequest),
@@ -412,6 +410,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				secretUpdateType,
 				thing.ID,
 				newSecret,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -424,6 +423,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				secretUpdateType,
 				thing.ID,
 				newSecret,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -434,9 +434,9 @@ func TestUpdateThingCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var tg sdk.Thing
-			sdkCall := sdkMock.On("UpdateThing", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
-			sdkCall1 := sdkMock.On("UpdateThingTags", mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
-			sdkCall2 := sdkMock.On("UpdateThingSecret", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			sdkCall := sdkMock.On("UpdateThing", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			sdkCall1 := sdkMock.On("UpdateThingTags", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
+			sdkCall2 := sdkMock.On("UpdateThingSecret", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 
 			switch {
 			case tc.args[0] == tagUpdateType:
@@ -489,6 +489,7 @@ func TestDeleteThingCmd(t *testing.T) {
 			desc: "delete thing successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -497,6 +498,7 @@ func TestDeleteThingCmd(t *testing.T) {
 			desc: "delete thing with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -507,6 +509,7 @@ func TestDeleteThingCmd(t *testing.T) {
 			desc: "delete thing with invalid thing id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -517,6 +520,7 @@ func TestDeleteThingCmd(t *testing.T) {
 			desc: "delete thing with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -526,7 +530,7 @@ func TestDeleteThingCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("DeleteThing", tc.args[0], tc.args[1]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("DeleteThing", tc.args[0], tc.args[1], tc.args[2]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{delCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -561,6 +565,7 @@ func TestEnableThingCmd(t *testing.T) {
 			desc: "enable thing successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				validToken,
 			},
 			sdkErr:  nil,
@@ -571,6 +576,7 @@ func TestEnableThingCmd(t *testing.T) {
 			desc: "delete thing with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -581,6 +587,7 @@ func TestEnableThingCmd(t *testing.T) {
 			desc: "delete thing with invalid thing ID",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -591,6 +598,7 @@ func TestEnableThingCmd(t *testing.T) {
 			desc: "enable thing with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -600,7 +608,7 @@ func TestEnableThingCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("EnableThing", tc.args[0], tc.args[1]).Return(tc.thing, tc.sdkErr)
+			sdkCall := sdkMock.On("EnableThing", tc.args[0], tc.args[1], tc.args[2]).Return(tc.thing, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{enableCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -639,6 +647,7 @@ func TestDisablethingCmd(t *testing.T) {
 			desc: "disable thing successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				validToken,
 			},
 			logType: entityLog,
@@ -648,6 +657,7 @@ func TestDisablethingCmd(t *testing.T) {
 			desc: "delete thing with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -658,6 +668,7 @@ func TestDisablethingCmd(t *testing.T) {
 			desc: "delete thing with invalid thing ID",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -668,6 +679,7 @@ func TestDisablethingCmd(t *testing.T) {
 			desc: "disable thing with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -677,7 +689,7 @@ func TestDisablethingCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("DisableThing", tc.args[0], tc.args[1]).Return(tc.thing, tc.sdkErr)
+			sdkCall := sdkMock.On("DisableThing", tc.args[0], tc.args[1], tc.args[2]).Return(tc.thing, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{disableCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -718,6 +730,7 @@ func TestUsersThingCmd(t *testing.T) {
 			desc: "get thing's users successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 			},
 			page: sdk.UsersPage{
@@ -734,16 +747,18 @@ func TestUsersThingCmd(t *testing.T) {
 			desc: "list thing users' with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 				extraArg,
 			},
 			logType: usageLog,
 		},
 		{
-			desc: "list thing users' without domain token",
+			desc: "list thing users' with invalid domain",
 			args: []string{
 				thing.ID,
-				tokenWithoutDomain,
+				invalidID,
+				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
@@ -753,20 +768,11 @@ func TestUsersThingCmd(t *testing.T) {
 			desc: "list thing users with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
-			logType:       errLog,
-		},
-		{
-			desc: "list thing users' without domain token",
-			args: []string{
-				thing.ID,
-				tokenWithoutDomain,
-			},
-			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
-			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
 			logType:       errLog,
 		},
 	}
@@ -811,6 +817,7 @@ func TestConnectThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -820,6 +827,7 @@ func TestConnectThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -830,6 +838,7 @@ func TestConnectThingCmd(t *testing.T) {
 			args: []string{
 				invalidID,
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -841,6 +850,7 @@ func TestConnectThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -848,11 +858,12 @@ func TestConnectThingCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "list thing users' without domain token",
+			desc: "list thing users' with invalid domain",
 			args: []string{
 				thing.ID,
 				channel.ID,
-				tokenWithoutDomain,
+				invalidID,
+				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
@@ -862,7 +873,7 @@ func TestConnectThingCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Connect", mock.Anything, tc.args[2]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("Connect", mock.Anything, tc.args[2], tc.args[3]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{connCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -896,6 +907,7 @@ func TestDisconnectThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -905,6 +917,7 @@ func TestDisconnectThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -915,6 +928,7 @@ func TestDisconnectThingCmd(t *testing.T) {
 			args: []string{
 				invalidID,
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -926,6 +940,7 @@ func TestDisconnectThingCmd(t *testing.T) {
 			args: []string{
 				thing.ID,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -933,11 +948,12 @@ func TestDisconnectThingCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "disconnect thing without domain token",
+			desc: "disconnect thing with invalid domain",
 			args: []string{
 				thing.ID,
 				channel.ID,
-				tokenWithoutDomain,
+				invalidID,
+				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
@@ -947,7 +963,7 @@ func TestDisconnectThingCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Disconnect", mock.Anything, tc.args[2]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("Disconnect", mock.Anything, tc.args[2], tc.args[3]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{disconnCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -982,6 +998,7 @@ func TestListConnectionCmd(t *testing.T) {
 			desc: "list connections successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 			},
 			page: sdk.ChannelsPage{
@@ -998,6 +1015,7 @@ func TestListConnectionCmd(t *testing.T) {
 			desc: "list connections with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -1007,6 +1025,7 @@ func TestListConnectionCmd(t *testing.T) {
 			desc: "list connections with invalid thing ID",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1017,6 +1036,7 @@ func TestListConnectionCmd(t *testing.T) {
 			desc: "list connections with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -1026,7 +1046,7 @@ func TestListConnectionCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ChannelsByThing", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ChannelsByThing", tc.args[0], mock.Anything, tc.args[1], tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{connsCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -1066,6 +1086,7 @@ func TestShareThingCmd(t *testing.T) {
 				thing.ID,
 				user.ID,
 				relation,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -1076,6 +1097,7 @@ func TestShareThingCmd(t *testing.T) {
 				thing.ID,
 				invalidID,
 				relation,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -1088,6 +1110,7 @@ func TestShareThingCmd(t *testing.T) {
 				invalidID,
 				user.ID,
 				relation,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1100,6 +1123,7 @@ func TestShareThingCmd(t *testing.T) {
 				thing.ID,
 				user.ID,
 				relation,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -1111,6 +1135,7 @@ func TestShareThingCmd(t *testing.T) {
 				thing.ID,
 				user.ID,
 				"invalid",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusBadRequest),
@@ -1120,7 +1145,7 @@ func TestShareThingCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ShareThing", tc.args[0], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("ShareThing", tc.args[0], mock.Anything, tc.args[3], tc.args[4]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{shrCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -1155,6 +1180,7 @@ func TestUnshareThingCmd(t *testing.T) {
 				thing.ID,
 				user.ID,
 				relation,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -1165,6 +1191,7 @@ func TestUnshareThingCmd(t *testing.T) {
 				invalidID,
 				user.ID,
 				relation,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1177,6 +1204,7 @@ func TestUnshareThingCmd(t *testing.T) {
 				thing.ID,
 				user.ID,
 				relation,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -1188,6 +1216,7 @@ func TestUnshareThingCmd(t *testing.T) {
 				thing.ID,
 				user.ID,
 				"invalid",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusBadRequest),
@@ -1197,7 +1226,7 @@ func TestUnshareThingCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("UnshareThing", tc.args[0], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("UnshareThing", tc.args[0], mock.Anything, tc.args[3], tc.args[4]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{unshrCmd}, tc.args...)...)
 
 			switch tc.logType {

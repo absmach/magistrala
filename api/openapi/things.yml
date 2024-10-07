@@ -223,6 +223,7 @@ paths:
           description: Missing thing.
         "500":
           $ref: "#/components/responses/ServiceError"
+
   /domains/{domainID}/things/{thingID}/tags:
     patch:
       operationId: updateThingTags
@@ -458,6 +459,8 @@ paths:
         $ref: "#/components/requestBodies/ChannelCreateReq"
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       responses:
         "201":
           $ref: "#/components/responses/ChannelCreateRes"

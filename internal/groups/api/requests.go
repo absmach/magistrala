@@ -79,7 +79,7 @@ func (req listGroupsReq) validate() error {
 
 type groupReq struct {
 	domainID string
-	id string
+	id       string
 }
 
 func (req groupReq) validate() error {
@@ -134,7 +134,7 @@ type assignReq struct {
 
 func (req assignReq) validate() error {
 	if req.domainID == "" {
-		return apiutil.ErrMissingID
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.MemberKind == "" {
@@ -161,12 +161,8 @@ type unassignReq struct {
 }
 
 func (req unassignReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.domainID == "" {
-		return apiutil.ErrMissingID
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.MemberKind == "" {

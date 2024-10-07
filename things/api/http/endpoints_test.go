@@ -46,7 +46,7 @@ var (
 	inValidToken = "invalid"
 	inValid      = "invalid"
 	validID      = testsutil.GenerateUUID(&testing.T{})
-	domainID      = testsutil.GenerateUUID(&testing.T{})
+	domainID     = testsutil.GenerateUUID(&testing.T{})
 	namesgen     = namegenerator.NewGenerator()
 )
 
@@ -107,7 +107,7 @@ func TestCreateThing(t *testing.T) {
 	cases := []struct {
 		desc        string
 		client      mgclients.Client
-		domainID string
+		domainID    string
 		token       string
 		contentType string
 		status      int
@@ -118,7 +118,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register  a new thing with a valid token",
 			client:      client,
-			domainID: domainID,
+			domainID:    domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -128,7 +128,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register an existing thing",
 			client:      client,
-			domainID: domainID,
+			domainID:    domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -138,7 +138,7 @@ func TestCreateThing(t *testing.T) {
 		{
 			desc:        "register a new thing with an empty token",
 			client:      client,
-			domainID: domainID,
+			domainID:    domainID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -154,7 +154,7 @@ func TestCreateThing(t *testing.T) {
 					Secret:   "12345678",
 				},
 			},
-			domainID: domainID,
+			domainID:    domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -172,7 +172,7 @@ func TestCreateThing(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			domainID: domainID,
+			domainID:    domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -189,7 +189,7 @@ func TestCreateThing(t *testing.T) {
 				},
 				Status: mgclients.AllStatus,
 			},
-			domainID: domainID,
+			domainID:    domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: contentType,
@@ -205,7 +205,7 @@ func TestCreateThing(t *testing.T) {
 					Secret:   secret,
 				},
 			},
-			domainID: domainID,
+			domainID:    domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			contentType: "application/xml",
@@ -219,7 +219,7 @@ func TestCreateThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/things/", ts.URL,tc.domainID),
+			url:         fmt.Sprintf("%s/domains/%s/things/", ts.URL, tc.session.DomainID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(data),
@@ -380,7 +380,7 @@ func TestCreateThings(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/bulk", ts.URL),
+			url:         fmt.Sprintf("%s/domains/%s/things/bulk", ts.URL, tc.session.DomainID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(data),
@@ -701,7 +701,7 @@ func TestListThings(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodGet,
-			url:         ts.URL + "/things?" + tc.query,
+			url:         ts.URL + "/domains/" + tc.session.DomainID + "/things?" + tc.query,
 			contentType: contentType,
 			token:       tc.token,
 		}
@@ -776,7 +776,7 @@ func TestViewThing(t *testing.T) {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/%s", ts.URL, tc.id),
+			url:    fmt.Sprintf("%s/domains/%s/things/%s", ts.URL, tc.session.DomainID, tc.id),
 			token:  tc.token,
 		}
 
@@ -864,7 +864,7 @@ func TestViewThingPerms(t *testing.T) {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/%s/permissions", ts.URL, tc.thingID),
+			url:    fmt.Sprintf("%s/domains/%s/things/%s/permissions", ts.URL, tc.session.DomainID, tc.thingID),
 			token:  tc.token,
 		}
 
@@ -992,7 +992,7 @@ func TestUpdateThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/things/%s", ts.URL, tc.id),
+			url:         fmt.Sprintf("%s/domains/%s/things/%s", ts.URL, tc.session.DomainID, tc.id),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.data),
@@ -1121,7 +1121,7 @@ func TestUpdateThingsTags(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/things/%s/tags", ts.URL, tc.id),
+			url:         fmt.Sprintf("%s/domains/%s/things/%s/tags", ts.URL, tc.session.DomainID, tc.id),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.data),
@@ -1281,7 +1281,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/things/%s/secret", ts.URL, tc.client.ID),
+			url:         fmt.Sprintf("%s/domains/%s/things/%s/secret", ts.URL, tc.session.DomainID, tc.client.ID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.data),
@@ -1357,7 +1357,7 @@ func TestEnableThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/%s/enable", ts.URL, tc.client.ID),
+			url:         fmt.Sprintf("%s/domains/%s/things/%s/enable", ts.URL, tc.session.DomainID, tc.client.ID),
 			contentType: contentType,
 			token:       tc.token,
 			body:        strings.NewReader(data),
@@ -1436,7 +1436,7 @@ func TestDisableThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/%s/disable", ts.URL, tc.client.ID),
+			url:         fmt.Sprintf("%s/domains/%s/things/%s/disable", ts.URL, tc.session.DomainID, tc.client.ID),
 			contentType: contentType,
 			token:       tc.token,
 			body:        strings.NewReader(data),
@@ -1590,7 +1590,7 @@ func TestShareThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/%s/share", ts.URL, tc.thingID),
+			url:         fmt.Sprintf("%s/domains/%s/things/%s/share", ts.URL, tc.session.DomainID, tc.thingID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.data),
@@ -1734,7 +1734,7 @@ func TestUnShareThing(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/%s/unshare", ts.URL, tc.thingID),
+			url:         fmt.Sprintf("%s/domains/%s/things/%s/unshare", ts.URL, tc.session.DomainID, tc.thingID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.data),
@@ -1803,7 +1803,7 @@ func TestDeleteThing(t *testing.T) {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/things/%s", ts.URL, tc.id),
+			url:    fmt.Sprintf("%s/domains/%s/things/%s", ts.URL, tc.session.DomainID, tc.id),
 			token:  tc.token,
 		}
 
@@ -2165,7 +2165,7 @@ func TestListMembers(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodGet,
-			url:         ts.URL + fmt.Sprintf("/channels/%s/things?", tc.groupID) + tc.query,
+			url:         ts.URL + fmt.Sprintf("/domains/%s/channels/%s/things?", tc.session.DomainID, tc.groupID) + tc.query,
 			contentType: contentType,
 			token:       tc.token,
 		}
@@ -2319,7 +2319,7 @@ func TestAssignUsers(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/users/assign", ts.URL, tc.groupID),
+			url:         fmt.Sprintf("%s/domains/%s/channels/%s/users/assign", ts.URL, tc.session.DomainID, tc.groupID),
 			token:       tc.token,
 			contentType: tc.contentType,
 			body:        strings.NewReader(data),
@@ -2465,7 +2465,7 @@ func TestUnassignUsers(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/users/unassign", ts.URL, tc.groupID),
+			url:         fmt.Sprintf("%s/domains/%s/channels/%s/users/unassign", ts.URL, tc.session.DomainID, tc.groupID),
 			token:       tc.token,
 			contentType: tc.contentType,
 			body:        strings.NewReader(data),
@@ -2591,7 +2591,7 @@ func TestAssignGroupsToChannel(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/groups/assign", ts.URL, tc.groupID),
+			url:         fmt.Sprintf("%s/domains/%s/channels/%s/groups/assign", ts.URL, tc.session.DomainID, tc.groupID),
 			token:       tc.token,
 			contentType: tc.contentType,
 			body:        strings.NewReader(data),
@@ -2717,7 +2717,7 @@ func TestUnassignGroupsFromChannel(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/groups/unassign", ts.URL, tc.groupID),
+			url:         fmt.Sprintf("%s/domains/%s/channels/%s/groups/unassign", ts.URL, tc.session.DomainID, tc.groupID),
 			token:       tc.token,
 			contentType: tc.contentType,
 			body:        strings.NewReader(data),
@@ -2794,7 +2794,7 @@ func TestConnectThingToChannel(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/things/%s/connect", ts.URL, tc.channelID, tc.thingID),
+			url:         fmt.Sprintf("%s/domains/%s/channels/%s/things/%s/connect", ts.URL, tc.session.DomainID, tc.channelID, tc.thingID),
 			token:       tc.token,
 			contentType: tc.contentType,
 		}
@@ -2873,7 +2873,7 @@ func TestDisconnectThingFromChannel(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/things/%s/disconnect", ts.URL, tc.channelID, tc.thingID),
+			url:         fmt.Sprintf("%s/domains/%s/channels/%s/things/%s/disconnect", ts.URL, tc.session.DomainID, tc.channelID, tc.thingID),
 			token:       tc.token,
 			contentType: tc.contentType,
 		}
@@ -2985,7 +2985,7 @@ func TestConnect(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/connect", ts.URL),
+			url:         fmt.Sprintf("%s/domains/%s/connect", ts.URL, tc.session.DomainID),
 			token:       tc.token,
 			contentType: tc.contentType,
 			body:        strings.NewReader(data),
@@ -3098,7 +3098,7 @@ func TestDisconnect(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/disconnect", ts.URL),
+			url:         fmt.Sprintf("%s/domains/%s/disconnect", ts.URL, tc.session.DomainID),
 			token:       tc.token,
 			contentType: tc.contentType,
 			body:        strings.NewReader(data),

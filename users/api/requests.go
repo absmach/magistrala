@@ -317,8 +317,6 @@ type assignGroupsReq struct {
 }
 
 func (req assignGroupsReq) validate() error {
-
-
 	if req.domainID == "" {
 		return apiutil.ErrMissingDomainID
 	}
@@ -341,8 +339,6 @@ type unassignGroupsReq struct {
 }
 
 func (req unassignGroupsReq) validate() error {
-
-
 	if req.domainID == "" {
 		return apiutil.ErrMissingDomainID
 	}

@@ -87,14 +87,14 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 				opts...,
 			), "disable_channel").ServeHTTP)
 
-				// Request to add users to a channel
-				// This endpoint can be used alternative to /channels/{groupID}/members
-				r.Post("/{groupID}/users/assign", otelhttp.NewHandler(kithttp.NewServer(
-					assignUsersEndpoint(svc),
-					decodeAssignUsersRequest,
-					api.EncodeResponse,
-					opts...,
-				), "assign_users").ServeHTTP)
+			// Request to add users to a channel
+			// This endpoint can be used alternative to /channels/{groupID}/members
+			r.Post("/{groupID}/users/assign", otelhttp.NewHandler(kithttp.NewServer(
+				assignUsersEndpoint(svc),
+				decodeAssignUsersRequest,
+				api.EncodeResponse,
+				opts...,
+			), "assign_users").ServeHTTP)
 
 			// Request to remove users from a channel
 			// This endpoint can be used alternative to /channels/{groupID}/members
@@ -105,14 +105,14 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 				opts...,
 			), "unassign_users").ServeHTTP)
 
-				// Request to add user_groups to a channel
-				// This endpoint can be used alternative to /channels/{groupID}/members
-				r.Post("/{groupID}/groups/assign", otelhttp.NewHandler(kithttp.NewServer(
-					assignUserGroupsEndpoint(svc),
-					decodeAssignUserGroupsRequest,
-					api.EncodeResponse,
-					opts...,
-				), "assign_groups").ServeHTTP)
+			// Request to add user_groups to a channel
+			// This endpoint can be used alternative to /channels/{groupID}/members
+			r.Post("/{groupID}/groups/assign", otelhttp.NewHandler(kithttp.NewServer(
+				assignUserGroupsEndpoint(svc),
+				decodeAssignUserGroupsRequest,
+				api.EncodeResponse,
+				opts...,
+			), "assign_groups").ServeHTTP)
 
 			// Request to remove user_groups from a channel
 			// This endpoint can be used alternative to /channels/{groupID}/members
@@ -123,12 +123,12 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 				opts...,
 			), "unassign_groups").ServeHTTP)
 
-				r.Post("/{groupID}/things/{thingID}/connect", otelhttp.NewHandler(kithttp.NewServer(
-					connectChannelThingEndpoint(svc),
-					decodeConnectChannelThingRequest,
-					api.EncodeResponse,
-					opts...,
-				), "connect_channel_thing").ServeHTTP)
+			r.Post("/{groupID}/things/{thingID}/connect", otelhttp.NewHandler(kithttp.NewServer(
+				connectChannelThingEndpoint(svc),
+				decodeConnectChannelThingRequest,
+				api.EncodeResponse,
+				opts...,
+			), "connect_channel_thing").ServeHTTP)
 
 			r.Post("/{groupID}/things/{thingID}/disconnect", otelhttp.NewHandler(kithttp.NewServer(
 				disconnectChannelThingEndpoint(svc),
@@ -173,13 +173,13 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 			opts...,
 		), "list_channel_by_user_group_id").ServeHTTP)
 
-			// Connect channel and thing
-			r.Post("/domains/{domainID}/connect", otelhttp.NewHandler(kithttp.NewServer(
-				connectEndpoint(svc),
-				decodeConnectRequest,
-				api.EncodeResponse,
-				opts...,
-			), "connect").ServeHTTP)
+		// Connect channel and thing
+		r.Post("/domains/{domainID}/connect", otelhttp.NewHandler(kithttp.NewServer(
+			connectEndpoint(svc),
+			decodeConnectRequest,
+			api.EncodeResponse,
+			opts...,
+		), "connect").ServeHTTP)
 
 		// Disconnect channel and thing
 		r.Post("/domains/{domainID}/disconnect", otelhttp.NewHandler(kithttp.NewServer(

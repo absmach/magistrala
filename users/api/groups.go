@@ -33,14 +33,14 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 	r.Group(func(r chi.Router) {
 	r.Use(api.AuthenticateMiddleware(authn))
 
-	r.Route("/domains/{domainID}", func(r chi.Router) {
-			r.Route("/groups", func(r chi.Router) {
-				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-					gapi.CreateGroupEndpoint(svc, policies.NewGroupKind),
-					gapi.DecodeGroupCreate,
-					api.EncodeResponse,
-					opts...,
-				), "create_group").ServeHTTP)
+	
+	r.Route("/domains/{domainID}/groups", func(r chi.Router) {
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				gapi.CreateGroupEndpoint(svc, policies.NewGroupKind),
+				gapi.DecodeGroupCreate,
+				api.EncodeResponse,
+				opts...,
+			), "create_group").ServeHTTP)
 
 			r.Get("/{groupID}", otelhttp.NewHandler(kithttp.NewServer(
 				gapi.ViewGroupEndpoint(svc),
@@ -149,7 +149,6 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 			api.EncodeResponse,
 			opts...,
 		), "list_groups_by_user_id").ServeHTTP)
-
 	})
 
 	return r

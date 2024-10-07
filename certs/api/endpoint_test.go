@@ -99,6 +99,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue cert successfully",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			thingID:     thingID,
 			ttl:         ttl,
@@ -123,6 +124,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with empty token",
 			token:       "",
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, thingID, ttl),
 			status:      http.StatusUnauthorized,
@@ -131,8 +133,20 @@ func TestIssueCert(t *testing.T) {
 			err:         apiutil.ErrBearerToken,
 		},
 		{
+			desc:        "issue with empty domain id",
+			token:       valid,
+			domainID:    "",
+			contentType: contentType,
+			request:     fmt.Sprintf(validReqString, thingID, ttl),
+			status:      http.StatusBadRequest,
+			svcRes:      certs.Cert{},
+			svcErr:      nil,
+			err:         apiutil.ErrMissingDomainID,
+		},
+		{
 			desc:        "issue with empty thing id",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, "", ttl),
 			status:      http.StatusBadRequest,
@@ -143,6 +157,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with empty ttl",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, thingID, ""),
 			status:      http.StatusBadRequest,
@@ -153,6 +168,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with invalid ttl",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(validReqString, thingID, invalid),
 			status:      http.StatusBadRequest,
@@ -163,6 +179,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with invalid content type",
 			token:       valid,
+			domainID:    valid,
 			contentType: "application/xml",
 			request:     fmt.Sprintf(validReqString, thingID, ttl),
 			status:      http.StatusUnsupportedMediaType,
@@ -173,6 +190,7 @@ func TestIssueCert(t *testing.T) {
 		{
 			desc:        "issue with invalid request body",
 			token:       valid,
+			domainID:    valid,
 			contentType: contentType,
 			request:     fmt.Sprintf(invalidReqString, thingID, ttl),
 			status:      http.StatusInternalServerError,
@@ -186,7 +204,7 @@ func TestIssueCert(t *testing.T) {
 		req := testRequest{
 			client:      cs.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/certs", cs.URL),
+			url:         fmt.Sprintf("%s/domains/%s/certs", cs.URL, tc.domainID),
 			contentType: tc.contentType,
 			token:       tc.token,
 			body:        strings.NewReader(tc.request),
@@ -230,6 +248,7 @@ func TestViewCert(t *testing.T) {
 		{
 			desc:     "view cert successfully",
 			token:    valid,
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusOK,
 			svcRes:   certs.Cert{SerialNumber: serial},
@@ -246,8 +265,19 @@ func TestViewCert(t *testing.T) {
 			err:             svcerr.ErrAuthentication,
 		},
 		{
+			desc:     "view with empty domain id",
+			token:    valid,
+			domainID: "",
+			serialID: serial,
+			status:   http.StatusBadRequest,
+			svcRes:   certs.Cert{},
+			svcErr:   nil,
+			err:      apiutil.ErrMissingDomainID,
+		},
+		{
 			desc:     "view with empty token",
 			token:    "",
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusUnauthorized,
 			svcRes:   certs.Cert{},
@@ -257,6 +287,7 @@ func TestViewCert(t *testing.T) {
 		{
 			desc:     "view non-existing cert",
 			token:    valid,
+			domainID: valid,
 			serialID: invalid,
 			status:   http.StatusNotFound,
 			svcRes:   certs.Cert{},
@@ -268,7 +299,7 @@ func TestViewCert(t *testing.T) {
 		req := testRequest{
 			client: cs.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/certs/%s", cs.URL, tc.serialID),
+			url:    fmt.Sprintf("%s/domains/%s/certs/%s", cs.URL, tc.domainID, tc.serialID),
 			token:  tc.token,
 		}
 		if tc.token == valid {
@@ -309,6 +340,7 @@ func TestRevokeCert(t *testing.T) {
 		{
 			desc:     "revoke cert successfully",
 			token:    valid,
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusOK,
 			svcRes:   certs.Revoke{RevocationTime: time.Now()},
@@ -325,8 +357,18 @@ func TestRevokeCert(t *testing.T) {
 			err:             svcerr.ErrAuthentication,
 		},
 		{
+			desc:     "revoke with empty domain id",
+			token:    valid,
+			domainID: "",
+			serialID: serial,
+			status:   http.StatusBadRequest,
+			svcErr:   nil,
+			err:      apiutil.ErrMissingDomainID,
+		},
+		{
 			desc:     "revoke with empty token",
 			token:    "",
+			domainID: valid,
 			serialID: serial,
 			status:   http.StatusUnauthorized,
 			svcErr:   nil,
@@ -335,6 +377,7 @@ func TestRevokeCert(t *testing.T) {
 		{
 			desc:     "revoke non-existing cert",
 			token:    valid,
+			domainID: valid,
 			serialID: invalid,
 			status:   http.StatusNotFound,
 			svcRes:   certs.Revoke{},
@@ -346,7 +389,7 @@ func TestRevokeCert(t *testing.T) {
 		req := testRequest{
 			client: cs.Client(),
 			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/certs/%s", cs.URL, tc.serialID),
+			url:    fmt.Sprintf("%s/domains/%s/certs/%s", cs.URL, tc.domainID, tc.serialID),
 			token:  tc.token,
 		}
 		if tc.token == valid {
@@ -574,7 +617,7 @@ func TestListSerials(t *testing.T) {
 		req := testRequest{
 			client: cs.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/serials/%s", cs.URL, tc.thingID) + tc.query,
+			url:    fmt.Sprintf("%s/domains/%s/serials/%s", cs.URL, tc.domainID, tc.thingID) + tc.query,
 			token:  tc.token,
 		}
 		if tc.token == valid {

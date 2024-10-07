@@ -194,7 +194,7 @@ var cmdProvision = []cobra.Command{
 					Name:   fmt.Sprintf("%s-channel-%d", name, i),
 					Status: mgxsdk.EnabledStatus,
 				}
-				c, err = sdk.CreateChannel(c, domain.ID,ut.AccessToken)
+				c, err = sdk.CreateChannel(c, domain.ID, ut.AccessToken)
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -208,7 +208,7 @@ var cmdProvision = []cobra.Command{
 				ChannelID: channels[0].ID,
 				ThingID:   things[0].ID,
 			}
-			if err := sdk.Connect(conIDs,domain.ID, ut.AccessToken); err != nil {
+			if err := sdk.Connect(conIDs, domain.ID, ut.AccessToken); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}

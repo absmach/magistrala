@@ -60,7 +60,8 @@ func decodeProvisionRequest(_ context.Context, r *http.Request) (interface{}, er
 
 	req := provisionReq{
 		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID")}
+		domainID: chi.URLParam(r, "domainID"),
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}

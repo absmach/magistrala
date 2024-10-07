@@ -25,102 +25,102 @@ func clientsHandler(svc things.Service, r *chi.Mux, authn mgauthn.Authentication
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-		r.Group(func(r chi.Router) {
-			r.Use(api.AuthenticateMiddleware(authn))
+	r.Group(func(r chi.Router) {
+		r.Use(api.AuthenticateMiddleware(authn))
 
-			r.Route("/domains/{domainID}/things", func(r chi.Router) {
-					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-					createClientEndpoint(svc),
-					decodeCreateClientReq,
-					api.EncodeResponse,
-					opts...,
-				), "create_thing").ServeHTTP)
+		r.Route("/domains/{domainID}/things", func(r chi.Router) {
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				createClientEndpoint(svc),
+				decodeCreateClientReq,
+				api.EncodeResponse,
+				opts...,
+			), "create_thing").ServeHTTP)
 
-					r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-					listClientsEndpoint(svc),
-					decodeListClients,
-					api.EncodeResponse,
-					opts...,
-				), "list_things").ServeHTTP)
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				listClientsEndpoint(svc),
+				decodeListClients,
+				api.EncodeResponse,
+				opts...,
+			), "list_things").ServeHTTP)
 
-					r.Post("/bulk", otelhttp.NewHandler(kithttp.NewServer(
-					createClientsEndpoint(svc),
-					decodeCreateClientsReq,
-					api.EncodeResponse,
-					opts...,
-				), "create_things").ServeHTTP)
+			r.Post("/bulk", otelhttp.NewHandler(kithttp.NewServer(
+				createClientsEndpoint(svc),
+				decodeCreateClientsReq,
+				api.EncodeResponse,
+				opts...,
+			), "create_things").ServeHTTP)
 
-					r.Get("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-					viewClientEndpoint(svc),
-					decodeViewClient,
-					api.EncodeResponse,
-					opts...,
-				), "view_thing").ServeHTTP)
+			r.Get("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				viewClientEndpoint(svc),
+				decodeViewClient,
+				api.EncodeResponse,
+				opts...,
+			), "view_thing").ServeHTTP)
 
-				r.Get("/{thingID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
-					viewClientPermsEndpoint(svc),
-					decodeViewClientPerms,
-					api.EncodeResponse,
-					opts...,
-				), "view_thing_permissions").ServeHTTP)
+			r.Get("/{thingID}/permissions", otelhttp.NewHandler(kithttp.NewServer(
+				viewClientPermsEndpoint(svc),
+				decodeViewClientPerms,
+				api.EncodeResponse,
+				opts...,
+			), "view_thing_permissions").ServeHTTP)
 
-					r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-					updateClientEndpoint(svc),
-					decodeUpdateClient,
-					api.EncodeResponse,
-					opts...,
-				), "update_thing").ServeHTTP)
+			r.Patch("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				updateClientEndpoint(svc),
+				decodeUpdateClient,
+				api.EncodeResponse,
+				opts...,
+			), "update_thing").ServeHTTP)
 
-					r.Patch("/{thingID}/tags", otelhttp.NewHandler(kithttp.NewServer(
-					updateClientTagsEndpoint(svc),
-					decodeUpdateClientTags,
-					api.EncodeResponse,
-					opts...,
-				), "update_thing_tags").ServeHTTP)
+			r.Patch("/{thingID}/tags", otelhttp.NewHandler(kithttp.NewServer(
+				updateClientTagsEndpoint(svc),
+				decodeUpdateClientTags,
+				api.EncodeResponse,
+				opts...,
+			), "update_thing_tags").ServeHTTP)
 
-					r.Patch("/{thingID}/secret", otelhttp.NewHandler(kithttp.NewServer(
-					updateClientSecretEndpoint(svc),
-					decodeUpdateClientCredentials,
-					api.EncodeResponse,
-					opts...,
-				), "update_thing_credentials").ServeHTTP)
+			r.Patch("/{thingID}/secret", otelhttp.NewHandler(kithttp.NewServer(
+				updateClientSecretEndpoint(svc),
+				decodeUpdateClientCredentials,
+				api.EncodeResponse,
+				opts...,
+			), "update_thing_credentials").ServeHTTP)
 
-					r.Post("/{thingID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-					enableClientEndpoint(svc),
-					decodeChangeClientStatus,
-					api.EncodeResponse,
-					opts...,
-				), "enable_thing").ServeHTTP)
+			r.Post("/{thingID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+				enableClientEndpoint(svc),
+				decodeChangeClientStatus,
+				api.EncodeResponse,
+				opts...,
+			), "enable_thing").ServeHTTP)
 
-				r.Post("/{thingID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-					disableClientEndpoint(svc),
-					decodeChangeClientStatus,
-					api.EncodeResponse,
-					opts...,
-				), "disable_thing").ServeHTTP)
+			r.Post("/{thingID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+				disableClientEndpoint(svc),
+				decodeChangeClientStatus,
+				api.EncodeResponse,
+				opts...,
+			), "disable_thing").ServeHTTP)
 
-					r.Post("/{thingID}/share", otelhttp.NewHandler(kithttp.NewServer(
-					thingShareEndpoint(svc),
-					decodeThingShareRequest,
-					api.EncodeResponse,
-					opts...,
-				), "share_thing").ServeHTTP)
+			r.Post("/{thingID}/share", otelhttp.NewHandler(kithttp.NewServer(
+				thingShareEndpoint(svc),
+				decodeThingShareRequest,
+				api.EncodeResponse,
+				opts...,
+			), "share_thing").ServeHTTP)
 
-				r.Post("/{thingID}/unshare", otelhttp.NewHandler(kithttp.NewServer(
-					thingUnshareEndpoint(svc),
-					decodeThingUnshareRequest,
-					api.EncodeResponse,
-					opts...,
-				), "unshare_thing").ServeHTTP)
+			r.Post("/{thingID}/unshare", otelhttp.NewHandler(kithttp.NewServer(
+				thingUnshareEndpoint(svc),
+				decodeThingUnshareRequest,
+				api.EncodeResponse,
+				opts...,
+			), "unshare_thing").ServeHTTP)
 
-					r.Delete("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-					deleteClientEndpoint(svc),
-					decodeDeleteClientReq,
-					api.EncodeResponse,
-					opts...,
-				), "delete_thing").ServeHTTP)
-			})
+			r.Delete("/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+				deleteClientEndpoint(svc),
+				decodeDeleteClientReq,
+				api.EncodeResponse,
+				opts...,
+			), "delete_thing").ServeHTTP)
 		})
+
 		// Ideal location: things service,  channels endpoint
 		// Reason for placing here :
 		// SpiceDB provides list of thing ids present in given channel id
@@ -139,8 +139,7 @@ func clientsHandler(svc things.Service, r *chi.Mux, authn mgauthn.Authentication
 			api.EncodeResponse,
 			opts...,
 		), "list_user_things").ServeHTTP)
-	// })
-
+	})
 	return r
 }
 
@@ -346,7 +345,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 			Metadata:   m,
 			ListPerms:  lp,
 		},
-		groupID: chi.URLParam(r, "groupID"),
+		groupID:  chi.URLParam(r, "groupID"),
 		domainID: chi.URLParam(r, "domainID"),
 	}
 	return req, nil

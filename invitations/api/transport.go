@@ -168,8 +168,8 @@ func decodeAcceptInvitationReq(_ context.Context, r *http.Request) (interface{},
 
 func decodeInvitationReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := invitationReq{
-		token:    apiutil.ExtractBearerToken(r),
-		userID:   chi.URLParam(r, "user_id"),
+		token:  apiutil.ExtractBearerToken(r),
+		userID: chi.URLParam(r, "user_id"),
 	}
 
 	return req, nil

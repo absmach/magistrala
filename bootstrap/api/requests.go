@@ -152,18 +152,13 @@ func (req listReq) validate() error {
 }
 
 type bootstrapReq struct {
-	key      string
-	id       string
-	domainID string
+	key string
+	id  string
 }
 
 func (req bootstrapReq) validate() error {
 	if req.key == "" {
 		return apiutil.ErrBearerKey
-	}
-
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	if req.id == "" {

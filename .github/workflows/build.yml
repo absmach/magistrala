@@ -38,6 +38,7 @@ jobs:
           directory: ./coverage/
           name: codecov-umbrella
           verbose: true
+          config-file: tools/codecov.yml
 
       - name: Set up Docker Build
         uses: docker/setup-buildx-action@v3

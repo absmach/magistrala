@@ -35,7 +35,7 @@ func TestUsersSave(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient()
+	storageClient, err := storage.NewStorageClient(context.Background())
 	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
 
 	repo := cpostgres.NewRepository(database, storageClient)
@@ -213,7 +213,7 @@ func TestIsPlatformAdmin(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient()
+	storageClient, err := storage.NewStorageClient(context.Background())
 	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
 
 	repo := cpostgres.NewRepository(database, storageClient)
@@ -269,7 +269,7 @@ func TestRetrieveByID(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient()
+	storageClient, err := storage.NewStorageClient(context.Background())
 	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
 
 	repo := cpostgres.NewRepository(database, storageClient)
@@ -316,14 +316,13 @@ func TestRetrieveByID(t *testing.T) {
 	}
 }
 
-// fails with listB being empty and listA having 196 users. why
 func TestRetrieveAll(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient()
+	storageClient, err := storage.NewStorageClient(context.Background())
 	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
 
 	repo := cpostgres.NewRepository(database, storageClient)
@@ -754,7 +753,7 @@ func TestUpdateRole(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient()
+	storageClient, err := storage.NewStorageClient(context.Background())
 	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
 
 	repo := cpostgres.NewRepository(database, storageClient)

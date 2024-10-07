@@ -19,7 +19,7 @@ type storageClient struct {
 	client *storage.Client
 }
 
-func NewStorageClient() (Storage, error) {
+func NewStorageClient(ctx context.Context) (Storage, error) {
 	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud storage client: %v", err)

@@ -8,13 +8,15 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
 	"strings"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
 )
 
+// Storage is an interface that specifies the methods for uploading, deleting, and updating profile pictures.
+//
+//go:generate mockery --name Storage --output=../mocks --filename storage.go --quiet --note "Copyright (c) Abstract Machines"
 type Storage interface {
 	UploadProfilePicture(ctx context.Context, file io.Reader, id string) (string, error)
 	DeleteProfilePicture(ctx context.Context, imageURL string) error
@@ -22,23 +24,27 @@ type Storage interface {
 }
 
 type storageClient struct {
-	client *storage.Client
+	client     *storage.Client
+	bucketName string
 }
 
-func NewStorageClient(ctx context.Context) (Storage, error) {
-	client, err := storage.NewClient(ctx, option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")))
+func NewStorageClient(ctx context.Context, credentials, bucketName string) (Storage, error) {
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentials))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud storage client: %v", err)
 	}
-	return &storageClient{client: client}, nil
+
+	return &storageClient{
+		client:     client,
+		bucketName: bucketName,
+	}, nil
 }
 
 // UploadProfilePicture uploads a profile picture to Google Cloud Storage and returns the file URL.
 func (s *storageClient) UploadProfilePicture(ctx context.Context, file io.Reader, id string) (string, error) {
 	fileName := fmt.Sprintf("%s.jpg", id)
 
-	bucketName := os.Getenv("BUCKET_NAME")
-	bucket := s.client.Bucket(bucketName)
+	bucket := s.client.Bucket(s.bucketName)
 	object := bucket.Object(fileName)
 
 	writer := object.NewWriter(ctx)
@@ -50,7 +56,7 @@ func (s *storageClient) UploadProfilePicture(ctx context.Context, file io.Reader
 		return "", fmt.Errorf("failed to close writer: %v", err)
 	}
 
-	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucketName, fileName)
+	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", s.bucketName, fileName)
 	return url, nil
 }
 
@@ -67,8 +73,7 @@ func (s *storageClient) DeleteProfilePicture(ctx context.Context, imageURL strin
 	}
 	fileName := pathSegments[len(pathSegments)-1]
 
-	bucketName := os.Getenv("BUCKET_NAME")
-	bucket := s.client.Bucket(bucketName)
+	bucket := s.client.Bucket(s.bucketName)
 	object := bucket.Object(fileName)
 
 	if err := object.Delete(ctx); err != nil {
@@ -82,8 +87,7 @@ func (s *storageClient) DeleteProfilePicture(ctx context.Context, imageURL strin
 func (s *storageClient) UpdateProfilePicture(ctx context.Context, file io.Reader, id string) (string, error) {
 	fileName := fmt.Sprintf("%s.jpg", id)
 
-	bucketName := os.Getenv("BUCKET_NAME")
-	bucket := s.client.Bucket(bucketName)
+	bucket := s.client.Bucket(s.bucketName)
 	object := bucket.Object(fileName)
 
 	// Delete existing profile picture if it exists
@@ -100,6 +104,6 @@ func (s *storageClient) UpdateProfilePicture(ctx context.Context, file io.Reader
 		return "", fmt.Errorf("failed to close writer: %v", err)
 	}
 
-	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucketName, fileName)
+	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", s.bucketName, fileName)
 	return url, nil
 }

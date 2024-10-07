@@ -15,8 +15,8 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/users"
+	"github.com/absmach/magistrala/users/mocks"
 	cpostgres "github.com/absmach/magistrala/users/postgres"
-	"github.com/absmach/magistrala/users/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,9 +35,7 @@ func TestUsersSave(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient(context.Background())
-	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
-
+	storageClient := new(mocks.Storage)
 	repo := cpostgres.NewRepository(database, storageClient)
 
 	uid := testsutil.GenerateUUID(t)
@@ -213,8 +211,7 @@ func TestIsPlatformAdmin(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient(context.Background())
-	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+	storageClient := new(mocks.Storage)
 
 	repo := cpostgres.NewRepository(database, storageClient)
 
@@ -269,8 +266,7 @@ func TestRetrieveByID(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient(context.Background())
-	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+	storageClient := new(mocks.Storage)
 
 	repo := cpostgres.NewRepository(database, storageClient)
 
@@ -285,7 +281,7 @@ func TestRetrieveByID(t *testing.T) {
 		Status:   mgclients.EnabledStatus,
 	}
 
-	_, err = repo.Save(context.Background(), client)
+	_, err := repo.Save(context.Background(), client)
 	require.Nil(t, err, fmt.Sprintf("failed to save client %s", client.ID))
 
 	cases := []struct {
@@ -322,8 +318,7 @@ func TestRetrieveAll(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient(context.Background())
-	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+	storageClient := new(mocks.Storage)
 
 	repo := cpostgres.NewRepository(database, storageClient)
 
@@ -733,11 +728,9 @@ func TestRetrieveAll(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		// fmt.Printf("Expected users: %v\n", tc.page.Users)
 
 		page, err := repo.RetrieveAll(context.Background(), tc.pageMeta)
 
-		// fmt.Printf("Actual users: %v\n", page.Users)
 		assert.Equal(t, tc.page.Total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.page.Total, page.Total))
 		assert.Equal(t, tc.page.Offset, page.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.page.Offset, page.Offset))
 		assert.Equal(t, tc.page.Limit, page.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.page.Limit, page.Limit))
@@ -753,8 +746,7 @@ func TestUpdateRole(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 
-	storageClient, err := storage.NewStorageClient(context.Background())
-	require.Nil(t, err, fmt.Sprintf("failed to create storage client: %s", err))
+	storageClient := new(mocks.Storage)
 
 	repo := cpostgres.NewRepository(database, storageClient)
 
@@ -770,7 +762,7 @@ func TestUpdateRole(t *testing.T) {
 		Role:     mgclients.UserRole,
 	}
 
-	_, err = repo.Save(context.Background(), client)
+	_, err := repo.Save(context.Background(), client)
 	require.Nil(t, err, fmt.Sprintf("failed to save client %s", client.ID))
 
 	cases := []struct {

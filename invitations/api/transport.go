@@ -170,6 +170,7 @@ func decodeInvitationReq(_ context.Context, r *http.Request) (interface{}, error
 	req := invitationReq{
 		token:  apiutil.ExtractBearerToken(r),
 		userID: chi.URLParam(r, "user_id"),
+		domainID: chi.URLParam(r, "domain_id"),
 	}
 
 	return req, nil

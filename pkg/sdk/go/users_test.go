@@ -2249,8 +2249,8 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: domainID,
 			},
 			svcReq: groups.Page{
@@ -2281,8 +2281,8 @@ func TestListUserGroups(t *testing.T) {
 			token:  invalidToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: domainID,
 			},
 			svcReq: groups.Page{
@@ -2308,8 +2308,8 @@ func TestListUserGroups(t *testing.T) {
 			token:  "",
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
@@ -2322,8 +2322,8 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: wrongID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: domainID,
 			},
 			svcReq: groups.Page{
@@ -2344,8 +2344,8 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: domainID,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
@@ -2362,8 +2362,8 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: domainID,
 			},
 			svcReq: groups.Page{

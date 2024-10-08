@@ -2753,8 +2753,8 @@ func TestListGroupChannels(t *testing.T) {
 			token:   validToken,
 			groupID: group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: validID,
 			},
 			svcReq: groups.Page{
@@ -2785,8 +2785,8 @@ func TestListGroupChannels(t *testing.T) {
 			token:   invalidToken,
 			groupID: group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: validID,
 			},
 			svcReq: groups.Page{
@@ -2807,8 +2807,8 @@ func TestListGroupChannels(t *testing.T) {
 			token:   "",
 			groupID: group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: validID,
 			},
 			svcReq:   groups.Page{},
@@ -2822,8 +2822,8 @@ func TestListGroupChannels(t *testing.T) {
 			token:   validToken,
 			groupID: wrongID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: validID,
 			},
 			svcReq: groups.Page{
@@ -2844,8 +2844,8 @@ func TestListGroupChannels(t *testing.T) {
 			token:   validToken,
 			groupID: group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: validID,
 				Metadata: sdk.Metadata{
 					"test": make(chan int),
@@ -2862,8 +2862,8 @@ func TestListGroupChannels(t *testing.T) {
 			token:   validToken,
 			groupID: group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
 				DomainID: validID,
 			},
 			svcReq: groups.Page{

@@ -645,10 +645,10 @@ func TestUpdateBootstrap(t *testing.T) {
 		err               errors.SDKError
 	}{
 		{
-			desc:  "update successfully",
+			desc:     "update successfully",
 			domainID: domainID,
-			token: validToken,
-			cfg:   sdkBootstrapConfig,
+			token:    validToken,
+			cfg:      sdkBootstrapConfig,
 			svcReq: bootstrap.Config{
 				ThingID: thingId,
 				Name:    bsName,
@@ -658,10 +658,10 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:  "update with invalid token",
+			desc:     "update with invalid token",
 			domainID: domainID,
-			token: invalidToken,
-			cfg:   sdkBootstrapConfig,
+			token:    invalidToken,
+			cfg:      sdkBootstrapConfig,
 			svcReq: bootstrap.Config{
 				ThingID: thingId,
 				Name:    bsName,
@@ -671,7 +671,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:               errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:   "update with empty token",
+			desc:     "update with empty token",
 			domainID: domainID,
 			token:  "",
 			cfg:    sdkBootstrapConfig,
@@ -680,9 +680,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update with config that cannot be marshalled",
+			desc:     "update with config that cannot be marshalled",
 			domainID: domainID,
-			token: validToken,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				Channels: map[string]interface{}{
 					"channel1": make(chan int),
@@ -706,9 +706,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    errors.NewSDKError(errMarshalChan),
 		},
 		{
-			desc:  "update with non-existent thing Id",
+			desc:     "update with non-existent thing Id",
 			domainID: domainID,
-			token: validToken,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ThingID: invalid,
 				Channels: []sdk.Channel{
@@ -730,9 +730,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:  "update with empty thing Id",
+			desc:     "update with empty thing Id",
 			domainID: domainID,
-			token: validToken,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ThingID: "",
 				Channels: []sdk.Channel{
@@ -754,9 +754,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    errors.NewSDKError(apiutil.ErrMissingID),
 		},
 		{
-			desc:  "update with config with only thing Id",
+			desc:     "update with config with only thing Id",
 			domainID: domainID,
-			token: validToken,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ThingID: thingId,
 			},
@@ -818,7 +818,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 	}{
 		{
 			desc:       "update certs successfully",
-			domainID: domainID,
+			domainID:   domainID,
 			token:      validToken,
 			id:         thingId,
 			clientCert: clientCert,
@@ -842,7 +842,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with empty token",
-			domainID: domainID,
+			domainID:   domainID,
 			token:      "",
 			id:         thingId,
 			clientCert: clientCert,
@@ -854,7 +854,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with non-existent thing Id",
-			domainID: domainID,
+			domainID:   domainID,
 			token:      validToken,
 			id:         invalid,
 			clientCert: clientCert,
@@ -866,7 +866,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with empty certs",
-			domainID: domainID,
+			domainID:   domainID,
 			token:      validToken,
 			id:         thingId,
 			clientCert: "",
@@ -878,7 +878,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with empty id",
-			domainID: domainID,
+			domainID:   domainID,
 			token:      validToken,
 			id:         "",
 			clientCert: clientCert,

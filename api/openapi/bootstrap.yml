@@ -36,6 +36,8 @@ paths:
         the provided access token.
       tags:
         - configs
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCreateReq"
       responses:

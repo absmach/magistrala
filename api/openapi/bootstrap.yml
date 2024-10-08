@@ -95,6 +95,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       responses:
         "200":

@@ -367,58 +367,58 @@ func TestRevokeCert(t *testing.T) {
 	mgsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
-		desc    string
-		thingID string
+		desc     string
+		thingID  string
 		domainID string
-		token   string
-		svcResp certs.Revoke
-		svcErr  error
-		err     errors.SDKError
+		token    string
+		svcResp  certs.Revoke
+		svcErr   error
+		err      errors.SDKError
 	}{
 		{
-			desc:    "revoke cert successfully",
-			thingID: thingID,
+			desc:     "revoke cert successfully",
+			thingID:  thingID,
 			domainID: validID,
-			token:   validToken,
-			svcResp: certs.Revoke{RevocationTime: time.Now()},
-			svcErr:  nil,
-			err:     nil,
+			token:    validToken,
+			svcResp:  certs.Revoke{RevocationTime: time.Now()},
+			svcErr:   nil,
+			err:      nil,
 		},
 		{
-			desc:    "revoke cert with invalid token",
-			thingID: thingID,
+			desc:     "revoke cert with invalid token",
+			thingID:  thingID,
 			domainID: validID,
-			token:   invalidToken,
-			svcResp: certs.Revoke{},
-			svcErr:  errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication),
-			err:     errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			token:    invalidToken,
+			svcResp:  certs.Revoke{},
+			svcErr:   errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:    "revoke non-existing cert",
-			thingID: invalid,
+			desc:     "revoke non-existing cert",
+			thingID:  invalid,
 			domainID: validID,
-			token:   token,
-			svcResp: certs.Revoke{},
-			svcErr:  errors.Wrap(certs.ErrFailedCertRevocation, svcerr.ErrNotFound),
-			err:     errors.NewSDKErrorWithStatus(certs.ErrFailedCertRevocation, http.StatusNotFound),
+			token:    token,
+			svcResp:  certs.Revoke{},
+			svcErr:   errors.Wrap(certs.ErrFailedCertRevocation, svcerr.ErrNotFound),
+			err:      errors.NewSDKErrorWithStatus(certs.ErrFailedCertRevocation, http.StatusNotFound),
 		},
 		{
-			desc:    "revoke cert with empty token",
-			thingID: thingID,
+			desc:     "revoke cert with empty token",
+			thingID:  thingID,
 			domainID: validID,
-			token:   "",
-			svcResp: certs.Revoke{},
-			svcErr:  nil,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			token:    "",
+			svcResp:  certs.Revoke{},
+			svcErr:   nil,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
 		},
 		{
-			desc:    "revoke deleted cert",
-			thingID: thingID,
+			desc:     "revoke deleted cert",
+			thingID:  thingID,
 			domainID: validID,
-			token:   token,
-			svcResp: certs.Revoke{},
-			svcErr:  errors.Wrap(certs.ErrFailedToRemoveCertFromDB, svcerr.ErrNotFound),
-			err:     errors.NewSDKErrorWithStatus(certs.ErrFailedToRemoveCertFromDB, http.StatusNotFound),
+			token:    token,
+			svcResp:  certs.Revoke{},
+			svcErr:   errors.Wrap(certs.ErrFailedToRemoveCertFromDB, svcerr.ErrNotFound),
+			err:      errors.NewSDKErrorWithStatus(certs.ErrFailedToRemoveCertFromDB, http.StatusNotFound),
 		},
 	}
 	for _, tc := range cases {

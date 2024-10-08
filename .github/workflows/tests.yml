@@ -389,5 +389,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV }}
           files: ./coverage/*.out
-          name: codecov-umbrella
+          codecov_yml_path: tools/codecov.yml
           verbose: true

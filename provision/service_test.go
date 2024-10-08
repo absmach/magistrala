@@ -79,6 +79,7 @@ func TestCert(t *testing.T) {
 		{
 			desc:        "valid",
 			config:      validConfig,
+			domainID:    testsutil.GenerateUUID(t),
 			token:       validToken,
 			thingID:     testsutil.GenerateUUID(t),
 			ttl:         "1h",
@@ -95,6 +96,7 @@ func TestCert(t *testing.T) {
 				Server: provision.ServiceConf{MgAPIKey: "key"},
 				Cert:   provision.Cert{TTL: "1h"},
 			},
+			domainID:    testsutil.GenerateUUID(t),
 			token:       "",
 			thingID:     testsutil.GenerateUUID(t),
 			ttl:         "1h",
@@ -115,6 +117,7 @@ func TestCert(t *testing.T) {
 				},
 				Cert: provision.Cert{TTL: "1h"},
 			},
+			domainID:    testsutil.GenerateUUID(t),
 			token:       "",
 			thingID:     testsutil.GenerateUUID(t),
 			ttl:         "1h",
@@ -135,6 +138,7 @@ func TestCert(t *testing.T) {
 				},
 				Cert: provision.Cert{TTL: "1h"},
 			},
+			domainID:    testsutil.GenerateUUID(t),
 			token:       "",
 			thingID:     testsutil.GenerateUUID(t),
 			ttl:         "1h",
@@ -151,6 +155,7 @@ func TestCert(t *testing.T) {
 				Server: provision.ServiceConf{},
 				Cert:   provision.Cert{TTL: "1h"},
 			},
+			domainID:    testsutil.GenerateUUID(t),
 			token:       "",
 			thingID:     testsutil.GenerateUUID(t),
 			ttl:         "1h",
@@ -164,6 +169,7 @@ func TestCert(t *testing.T) {
 		{
 			desc:        "invalid thingID",
 			config:      validConfig,
+			domainID:    testsutil.GenerateUUID(t),
 			token:       "invalid",
 			thingID:     testsutil.GenerateUUID(t),
 			ttl:         "1h",
@@ -177,6 +183,7 @@ func TestCert(t *testing.T) {
 		{
 			desc:        "invalid thingID",
 			config:      validConfig,
+			domainID:    testsutil.GenerateUUID(t),
 			token:       validToken,
 			thingID:     "invalid",
 			ttl:         "1h",
@@ -190,6 +197,7 @@ func TestCert(t *testing.T) {
 		{
 			desc:        "failed to issue cert",
 			config:      validConfig,
+			domainID:    testsutil.GenerateUUID(t),
 			token:       validToken,
 			thingID:     testsutil.GenerateUUID(t),
 			ttl:         "1h",
@@ -207,8 +215,8 @@ func TestCert(t *testing.T) {
 			mgsdk := new(sdkmocks.SDK)
 			svc := provision.New(c.config, mgsdk, mglog.NewMock())
 
-			mgsdk.On("Thing", c.thingID, mock.Anything).Return(sdk.Thing{ID: c.thingID}, c.sdkThingErr)
-			mgsdk.On("IssueCert", c.thingID, c.config.Cert.TTL, mock.Anything).Return(sdk.Cert{SerialNumber: c.serial}, c.sdkCertErr)
+			mgsdk.On("Thing", c.thingID, c.domainID, mock.Anything).Return(sdk.Thing{ID: c.thingID}, c.sdkThingErr)
+			mgsdk.On("IssueCert", c.thingID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(sdk.Cert{SerialNumber: c.serial}, c.sdkCertErr)
 			mgsdk.On("ViewCert", c.serial, mock.Anything).Return(sdk.Cert{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
 			login := sdk.Login{
 				Identity: c.config.Server.MgUser,

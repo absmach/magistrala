@@ -357,7 +357,9 @@ func read(s sdk.SDK, conf Config, domainID, token string, users []sdk.User, grou
 			return fmt.Errorf("failed to get channel %w", err)
 		}
 	}
-	cp, err := s.Channels(sdk.PageMetadata{}, domainID, token)
+	cp, err := s.Channels(sdk.PageMetadata{
+		DomainID: domainID,
+	}, token)
 	if err != nil {
 		return fmt.Errorf("failed to get channels %w", err)
 	}

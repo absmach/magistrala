@@ -35,7 +35,7 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /domains/{domainID}/channels/{chanId}/messages:
+  /channels/{chanId}/messages:
     get:
       operationId: getMessages
       summary: Retrieves messages sent to single channel
@@ -47,7 +47,6 @@ paths:
       tags:
         - readers
       parameters:
-        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"

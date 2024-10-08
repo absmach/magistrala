@@ -985,6 +985,7 @@ func TestRemoveBootstrap(t *testing.T) {
 	}{
 		{
 			desc:   "remove successfully",
+			domainID: domainID,
 			token:  validToken,
 			id:     thingId,
 			svcErr: nil,
@@ -992,6 +993,7 @@ func TestRemoveBootstrap(t *testing.T) {
 		},
 		{
 			desc:   "remove with invalid token",
+			domainID: domainID,
 			token:  invalidToken,
 			id:     thingId,
 			svcErr: svcerr.ErrAuthentication,
@@ -999,6 +1001,7 @@ func TestRemoveBootstrap(t *testing.T) {
 		},
 		{
 			desc:   "remove with non-existent thing Id",
+			domainID: domainID,
 			token:  validToken,
 			id:     invalid,
 			svcErr: svcerr.ErrNotFound,
@@ -1006,6 +1009,7 @@ func TestRemoveBootstrap(t *testing.T) {
 		},
 		{
 			desc:   "remove removed bootstrap",
+			domainID: domainID,
 			token:  validToken,
 			id:     thingId,
 			svcErr: svcerr.ErrNotFound,
@@ -1013,6 +1017,7 @@ func TestRemoveBootstrap(t *testing.T) {
 		},
 		{
 			desc:   "remove with empty token",
+			domainID: domainID,
 			token:  "",
 			id:     thingId,
 			svcErr: nil,
@@ -1020,6 +1025,7 @@ func TestRemoveBootstrap(t *testing.T) {
 		},
 		{
 			desc:   "remove with empty id",
+			domainID: domainID,
 			token:  validToken,
 			id:     "",
 			svcErr: nil,

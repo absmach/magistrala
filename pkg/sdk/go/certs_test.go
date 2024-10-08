@@ -182,7 +182,7 @@ func TestIssueCert(t *testing.T) {
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				assert.Equal(t, sdkCert, resp)
-				ok := svcCall.Parent.AssertCalled(t, "IssueCert", mock.Anything, tc.token, tc.thingID, tc.duration)
+				ok := svcCall.Parent.AssertCalled(t, "IssueCert", mock.Anything, tc.domainID, tc.token, tc.thingID, tc.duration)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -428,7 +428,7 @@ func TestRevokeCert(t *testing.T) {
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.NotEmpty(t, resp)
-				ok := svcCall.Parent.AssertCalled(t, "RevokeCert", mock.Anything, tc.token, tc.thingID)
+				ok := svcCall.Parent.AssertCalled(t, "RevokeCert", mock.Anything, tc.domainID, tc.token, tc.thingID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

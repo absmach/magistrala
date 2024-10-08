@@ -52,8 +52,8 @@ func (sdk mgSDK) CreateChannel(c Channel, domainID, token string) (Channel, erro
 	return c, nil
 }
 
-func (sdk mgSDK) Channels(pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("/%s/%s/%s", domainsEndpoint, domainID, channelsEndpoint)
+func (sdk mgSDK) Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s/%s", domainsEndpoint, pm.DomainID, channelsEndpoint)
 	url, err := sdk.withQueryParams(sdk.thingsURL, endpoint, pm)
 	if err != nil {
 		return ChannelsPage{}, errors.NewSDKError(err)
@@ -216,7 +216,7 @@ func (sdk mgSDK) RemoveUserGroupFromChannel(channelID string, req UserGroupsRequ
 }
 
 func (sdk mgSDK) ListChannelUserGroups(channelID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", channelsEndpoint, channelID, groupsEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s/%s", domainsEndpoint, pm.DomainID, channelsEndpoint, channelID, groupsEndpoint), pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
 	}

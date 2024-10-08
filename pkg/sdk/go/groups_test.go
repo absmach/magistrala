@@ -320,8 +320,9 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups successfully",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  100,
+				Offset:   offset,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -349,8 +350,9 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups with invalid token",
 			token: invalidToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  100,
+				Offset:   offset,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -368,8 +370,9 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups with empty token",
 			token: "",
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  100,
+				Offset:   offset,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -381,8 +384,9 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups with zero limit",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  0,
+				Offset:   offset,
+				Limit:    0,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -411,8 +415,9 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups with limit greater than max",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  110,
+				Offset:   offset,
+				Limit:    110,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -424,8 +429,9 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups with given name",
 			token: token,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 				Metadata: sdk.Metadata{
 					"name": "user_89",
 				},
@@ -460,9 +466,10 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups with invalid level",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  100,
-				Level:  6,
+				Offset:   offset,
+				Limit:    100,
+				Level:    6,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -479,6 +486,7 @@ func TestListGroups(t *testing.T) {
 				Metadata: sdk.Metadata{
 					"key": make(chan int),
 				},
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -490,8 +498,9 @@ func TestListGroups(t *testing.T) {
 			desc:  "list groups with service response that cannot be unmarshalled",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -582,8 +591,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    validToken,
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -614,8 +624,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    invalidToken,
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -637,8 +648,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    "",
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -651,8 +663,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    validToken,
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  0,
+				Offset:   offset,
+				Limit:    0,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -683,8 +696,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    validToken,
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  110,
+				Offset:   offset,
+				Limit:    110,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -697,8 +711,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    validToken,
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 				Metadata: sdk.Metadata{
 					"name": "user_89",
 				},
@@ -735,8 +750,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    validToken,
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 				Metadata: sdk.Metadata{
 					"key": make(chan int),
 				},
@@ -752,8 +768,9 @@ func TestListParentGroups(t *testing.T) {
 			token:    validToken,
 			parentID: parentID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -848,8 +865,9 @@ func TestListChildrenGroups(t *testing.T) {
 			token:   validToken,
 			childID: childID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -880,8 +898,9 @@ func TestListChildrenGroups(t *testing.T) {
 			token:   invalidToken,
 			childID: childID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -903,8 +922,9 @@ func TestListChildrenGroups(t *testing.T) {
 			token:   "",
 			childID: childID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -917,8 +937,9 @@ func TestListChildrenGroups(t *testing.T) {
 			token:   validToken,
 			childID: childID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  0,
+				Offset:   offset,
+				Limit:    0,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -948,8 +969,9 @@ func TestListChildrenGroups(t *testing.T) {
 			desc:  "list children groups with limit greater than max",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  110,
+				Offset:   offset,
+				Limit:    110,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -962,8 +984,9 @@ func TestListChildrenGroups(t *testing.T) {
 			token:   validToken,
 			childID: childID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 				Metadata: sdk.Metadata{
 					"name": "user_89",
 				},
@@ -1000,8 +1023,9 @@ func TestListChildrenGroups(t *testing.T) {
 			token:   validToken,
 			childID: childID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 				Metadata: sdk.Metadata{
 					"key": make(chan int),
 				},
@@ -1017,8 +1041,9 @@ func TestListChildrenGroups(t *testing.T) {
 			token:   validToken,
 			childID: childID,
 			pageMeta: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
+				Offset:   offset,
+				Limit:    limit,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{

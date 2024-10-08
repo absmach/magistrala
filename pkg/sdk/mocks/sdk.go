@@ -296,9 +296,9 @@ func (_m *SDK) ChannelPermissions(id string, domainID string, token string) (sdk
 	return r0, r1
 }
 
-// Channels provides a mock function with given fields: pm, domainID, token
-func (_m *SDK) Channels(pm sdk.PageMetadata, domainID string, token string) (sdk.ChannelsPage, errors.SDKError) {
-	ret := _m.Called(pm, domainID, token)
+// Channels provides a mock function with given fields: pm, token
+func (_m *SDK) Channels(pm sdk.PageMetadata, token string) (sdk.ChannelsPage, errors.SDKError) {
+	ret := _m.Called(pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Channels")
@@ -306,17 +306,17 @@ func (_m *SDK) Channels(pm sdk.PageMetadata, domainID string, token string) (sdk
 
 	var r0 sdk.ChannelsPage
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) (sdk.ChannelsPage, errors.SDKError)); ok {
-		return rf(pm, domainID, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) (sdk.ChannelsPage, errors.SDKError)); ok {
+		return rf(pm, token)
 	}
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) sdk.ChannelsPage); ok {
-		r0 = rf(pm, domainID, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) sdk.ChannelsPage); ok {
+		r0 = rf(pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ChannelsPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = rf(pm, domainID, token)
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = rf(pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)

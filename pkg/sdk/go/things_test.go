@@ -361,8 +361,9 @@ func TestListThings(t *testing.T) {
 			desc:  "list all things successfully",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -391,8 +392,9 @@ func TestListThings(t *testing.T) {
 			desc:  "list all things with an invalid token",
 			token: invalidToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -409,8 +411,9 @@ func TestListThings(t *testing.T) {
 			desc:  "list all things with limit greater than max",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  1000,
+				Offset:   0,
+				Limit:    1000,
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -422,9 +425,10 @@ func TestListThings(t *testing.T) {
 			desc:  "list all things with name size greater than max",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
-				Name:   strings.Repeat("a", 1025),
+				Offset:   0,
+				Limit:    100,
+				Name:     strings.Repeat("a", 1025),
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -436,9 +440,10 @@ func TestListThings(t *testing.T) {
 			desc:  "list all things with status",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
-				Status: mgclients.DisabledStatus.String(),
+				Offset:   0,
+				Limit:    100,
+				Status:   mgclients.DisabledStatus.String(),
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -469,9 +474,10 @@ func TestListThings(t *testing.T) {
 			desc:  "list all things with tags",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
-				Tag:    "tag1",
+				Offset:   0,
+				Limit:    100,
+				Tag:      "tag1",
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -507,6 +513,7 @@ func TestListThings(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -518,8 +525,9 @@ func TestListThings(t *testing.T) {
 			desc:  "list all things with response that can't be unmarshalled",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -605,8 +613,9 @@ func TestListThingsByChannel(t *testing.T) {
 			token:     validToken,
 			channelID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -636,8 +645,9 @@ func TestListThingsByChannel(t *testing.T) {
 			token:     invalidToken,
 			channelID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -655,8 +665,9 @@ func TestListThingsByChannel(t *testing.T) {
 			token:     "",
 			channelID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.MembersPage{},
@@ -669,9 +680,10 @@ func TestListThingsByChannel(t *testing.T) {
 			token:     validToken,
 			channelID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
-				Status: mgclients.DisabledStatus.String(),
+				Offset:   0,
+				Limit:    100,
+				Status:   mgclients.DisabledStatus.String(),
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -703,8 +715,9 @@ func TestListThingsByChannel(t *testing.T) {
 			token:     validToken,
 			channelID: "",
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.MembersPage{},
@@ -722,6 +735,7 @@ func TestListThingsByChannel(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.MembersPage{},
@@ -734,8 +748,9 @@ func TestListThingsByChannel(t *testing.T) {
 			token:     validToken,
 			channelID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -1991,8 +2006,9 @@ func TestListUserThings(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2022,8 +2038,9 @@ func TestListUserThings(t *testing.T) {
 			token:  invalidToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2041,8 +2058,9 @@ func TestListUserThings(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  1000,
+				Offset:   0,
+				Limit:    1000,
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -2055,9 +2073,10 @@ func TestListUserThings(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
-				Name:   strings.Repeat("a", 1025),
+				Offset:   0,
+				Limit:    100,
+				Name:     strings.Repeat("a", 1025),
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -2070,9 +2089,10 @@ func TestListUserThings(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
-				Status: mgclients.DisabledStatus.String(),
+				Offset:   0,
+				Limit:    100,
+				Status:   mgclients.DisabledStatus.String(),
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2104,9 +2124,10 @@ func TestListUserThings(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
-				Tag:    "tag1",
+				Offset:   0,
+				Limit:    100,
+				Tag:      "tag1",
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2143,6 +2164,7 @@ func TestListUserThings(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
+				DomainID: domainID,
 			},
 			svcReq:   mgclients.Page{},
 			svcRes:   mgclients.ClientsPage{},
@@ -2154,8 +2176,9 @@ func TestListUserThings(t *testing.T) {
 			desc:  "list user things with response that can't be unmarshalled",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  100,
+				Offset:   0,
+				Limit:    100,
+				DomainID: domainID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,

@@ -673,10 +673,11 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//    Name:   "My Channel",
+	//	  Domain: "domainID"
 	//  }
-	//  channels, _ := sdk.Channels(pm, "domainID,", "token")
+	//  channels, _ := sdk.Channels(pm, "token")
 	//  fmt.Println(channels)
-	Channels(pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError)
+	Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
 
 	// ChannelsByThing returns page of channels that are connected to specified thing.
 	//

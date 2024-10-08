@@ -80,7 +80,7 @@ func (sdk mgSDK) CreateThings(things []Thing, domainID, token string) ([]Thing, 
 }
 
 func (sdk mgSDK) Things(pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("/%s/%s/%s", domainsEndpoint, pm.DomainID, thingsEndpoint)
+	endpoint := fmt.Sprintf("%s/%s/%s", domainsEndpoint, pm.DomainID, thingsEndpoint)
 	url, err := sdk.withQueryParams(sdk.thingsURL, endpoint, pm)
 	if err != nil {
 		return ThingsPage{}, errors.NewSDKError(err)
@@ -100,7 +100,7 @@ func (sdk mgSDK) Things(pm PageMetadata, token string) (ThingsPage, errors.SDKEr
 }
 
 func (sdk mgSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("channels/%s/%s", chanID, thingsEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("domains/%s/channels/%s/%s", pm.DomainID, chanID, thingsEndpoint), pm)
 	if err != nil {
 		return ThingsPage{}, errors.NewSDKError(err)
 	}

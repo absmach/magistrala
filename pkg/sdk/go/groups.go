@@ -60,7 +60,7 @@ func (sdk mgSDK) CreateGroup(g Group, domainID, token string) (Group, errors.SDK
 }
 
 func (sdk mgSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("/%s/%s/%s", domainsEndpoint, pm.DomainID, groupsEndpoint)
+	endpoint := fmt.Sprintf("%s/%s/%s", domainsEndpoint, pm.DomainID, groupsEndpoint)
 	url, err := sdk.withQueryParams(sdk.usersURL, endpoint, pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -71,7 +71,7 @@ func (sdk mgSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKEr
 
 func (sdk mgSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
 	pm.Level = MaxLevel
-	endpoint := fmt.Sprintf("/%s/%s/%s", domainsEndpoint, pm.DomainID, groupsEndpoint)
+	endpoint := fmt.Sprintf("%s/%s/%s", domainsEndpoint, pm.DomainID, groupsEndpoint)
 	url, err := sdk.withQueryParams(fmt.Sprintf("%s/%s/%s", sdk.usersURL, endpoint, id), "parents", pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -82,7 +82,7 @@ func (sdk mgSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, 
 
 func (sdk mgSDK) Children(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
 	pm.Level = MaxLevel
-	endpoint := fmt.Sprintf("/%s/%s/%s", domainsEndpoint, pm.DomainID, groupsEndpoint)
+	endpoint := fmt.Sprintf("%s/%s/%s", domainsEndpoint, pm.DomainID, groupsEndpoint)
 	url, err := sdk.withQueryParams(fmt.Sprintf("%s/%s/%s", sdk.usersURL, endpoint, id), "children", pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)

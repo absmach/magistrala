@@ -63,7 +63,7 @@ var cmdChannels = []cobra.Command{
 			}
 
 			if args[0] == all {
-				l, err := sdk.Channels(pageMetadata, args[1], args[2])
+				l, err := sdk.Channels(pageMetadata, args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return

@@ -2251,6 +2251,7 @@ func TestListUserGroups(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2282,6 +2283,7 @@ func TestListUserGroups(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2308,6 +2310,7 @@ func TestListUserGroups(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcErr:   nil,
@@ -2321,6 +2324,7 @@ func TestListUserGroups(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2342,6 +2346,7 @@ func TestListUserGroups(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: domainID,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
@@ -2359,6 +2364,7 @@ func TestListUserGroups(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{

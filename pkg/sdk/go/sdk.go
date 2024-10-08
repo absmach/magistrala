@@ -175,6 +175,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
+	//		DomainID: "domainID"
 	//	}
 	//	members, _ := sdk.Members("groupID", pm, "token")
 	//	fmt.Println(members)
@@ -887,16 +888,16 @@ type SDK interface {
 	//    ExternalKey: "externalKey",
 	//    Channels: []string{"channel1", "channel2"},
 	//  }
-	//  id, _ := sdk.AddBootstrap(cfg, "token")
+	//  id, _ := sdk.AddBootstrap(cfg, "domainID", "token")
 	//  fmt.Println(id)
-	AddBootstrap(cfg BootstrapConfig, token string) (string, errors.SDKError)
+	AddBootstrap(cfg BootstrapConfig, domainID, token string) (string, errors.SDKError)
 
 	// View returns Thing Config with given ID belonging to the user identified by the given token.
 	//
 	// example:
-	//  bootstrap, _ := sdk.ViewBootstrap("id", "token")
+	//  bootstrap, _ := sdk.ViewBootstrap("id", "domainID", "token")
 	//  fmt.Println(bootstrap)
-	ViewBootstrap(id, token string) (BootstrapConfig, errors.SDKError)
+	ViewBootstrap(id, domainID, token string) (BootstrapConfig, errors.SDKError)
 
 	// Update updates editable fields of the provided Config.
 	//
@@ -908,30 +909,30 @@ type SDK interface {
 	//    ExternalKey: "externalKey",
 	//    Channels: []string{"channel1", "channel2"},
 	//  }
-	//  err := sdk.UpdateBootstrap(cfg, "token")
+	//  err := sdk.UpdateBootstrap(cfg, "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKError
+	UpdateBootstrap(cfg BootstrapConfig, domainID, token string) errors.SDKError
 
 	// Update bootstrap config certificates.
 	//
 	// example:
-	//  err := sdk.UpdateBootstrapCerts("id", "clientCert", "clientKey", "ca", "token")
+	//  err := sdk.UpdateBootstrapCerts("id", "clientCert", "clientKey", "ca", "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, token string) (BootstrapConfig, errors.SDKError)
+	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, errors.SDKError)
 
 	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Thing is connected to.
 	//
 	// example:
-	//  err := sdk.UpdateBootstrapConnection("id", []string{"channel1", "channel2"}, "token")
+	//  err := sdk.UpdateBootstrapConnection("id", []string{"channel1", "channel2"}, "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError
+	UpdateBootstrapConnection(id string, channels []string, domainID, token string) errors.SDKError
 
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	//
 	// example:
-	//  err := sdk.RemoveBootstrap("id", "token")
+	//  err := sdk.RemoveBootstrap("id", "domainID", "token")
 	//  fmt.Println(err)
-	RemoveBootstrap(id, token string) errors.SDKError
+	RemoveBootstrap(id, domainID, token string) errors.SDKError
 
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
 	//
@@ -961,37 +962,37 @@ type SDK interface {
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	//
 	// example:
-	//  err := sdk.Whitelist("thingID", 1, "token")
+	//  err := sdk.Whitelist("thingID", 1, "domainID", "token")
 	//  fmt.Println(err)
-	Whitelist(thingID string, state int, token string) errors.SDKError
+	Whitelist(thingID string, state int, domainID, token string) errors.SDKError
 
 	// IssueCert issues a certificate for a thing required for mTLS.
 	//
 	// example:
-	//  cert, _ := sdk.IssueCert("thingID", "24h", "token")
+	//  cert, _ := sdk.IssueCert("thingID", "24h", "domainID", "token")
 	//  fmt.Println(cert)
-	IssueCert(thingID, validity, token string) (Cert, errors.SDKError)
+	IssueCert(thingID, validity, domainID, token string) (Cert, errors.SDKError)
 
 	// ViewCert returns a certificate given certificate ID
 	//
 	// example:
-	//  cert, _ := sdk.ViewCert("certID", "token")
+	//  cert, _ := sdk.ViewCert("certID", "domainID", "token")
 	//  fmt.Println(cert)
-	ViewCert(certID, token string) (Cert, errors.SDKError)
+	ViewCert(certID, domainID, token string) (Cert, errors.SDKError)
 
 	// ViewCertByThing retrieves a list of certificates' serial IDs for a given thing ID.
 	//
 	// example:
-	//  cserial, _ := sdk.ViewCertByThing("thingID", "token")
+	//  cserial, _ := sdk.ViewCertByThing("thingID", "domainID", "token")
 	//  fmt.Println(cserial)
-	ViewCertByThing(thingID, token string) (CertSerials, errors.SDKError)
+	ViewCertByThing(thingID, domainID, token string) (CertSerials, errors.SDKError)
 
 	// RevokeCert revokes certificate for thing with thingID
 	//
 	// example:
-	//  tm, _ := sdk.RevokeCert("thingID", "token")
+	//  tm, _ := sdk.RevokeCert("thingID", "domainID", "token")
 	//  fmt.Println(tm)
-	RevokeCert(thingID, token string) (time.Time, errors.SDKError)
+	RevokeCert(thingID, domainID, token string) (time.Time, errors.SDKError)
 
 	// CreateSubscription creates a new subscription
 	//

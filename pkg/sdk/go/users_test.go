@@ -2021,6 +2021,7 @@ func TestListMembers(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2048,6 +2049,7 @@ func TestListMembers(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2065,6 +2067,7 @@ func TestListMembers(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcErr:   nil,
@@ -2078,6 +2081,7 @@ func TestListMembers(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2095,6 +2099,7 @@ func TestListMembers(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcErr:   nil,
@@ -2108,6 +2113,7 @@ func TestListMembers(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: validID,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
@@ -2125,6 +2131,7 @@ func TestListMembers(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,

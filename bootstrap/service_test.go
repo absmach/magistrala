@@ -1261,7 +1261,7 @@ func TestChangeState(t *testing.T) {
 	for _, tc := range cases {
 		authCall := auth.On("Identify", mock.Anything, &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID, DomainId: tc.domainID}, tc.identifyErr)
 		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
-		sdkCall := sdk.On("Connect", mock.Anything, mock.Anything).Return(tc.connectErr)
+		sdkCall := sdk.On("Connect", mock.Anything, mock.Anything, mock.Anything).Return(tc.connectErr)
 		repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
 
 		err := svc.ChangeState(context.Background(), tc.domainID, tc.token, tc.id, tc.state)

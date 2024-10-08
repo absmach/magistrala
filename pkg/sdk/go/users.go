@@ -80,7 +80,7 @@ func (sdk mgSDK) Users(pm PageMetadata, token string) (UsersPage, errors.SDKErro
 }
 
 func (sdk mgSDK) Members(groupID string, meta PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, usersEndpoint), meta)
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s/%s", domainsEndpoint, meta.DomainID, groupsEndpoint, groupID, usersEndpoint), meta)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}

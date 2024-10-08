@@ -47,6 +47,7 @@ func TestGetCertCmd(t *testing.T) {
 			args: []string{
 				"thing",
 				thing.ID,
+				domainID,
 				validToken,
 			},
 			logType: entityLog,
@@ -63,6 +64,7 @@ func TestGetCertCmd(t *testing.T) {
 			desc: "get cert successfully by id",
 			args: []string{
 				thing.ID,
+				domainID,
 				validToken,
 			},
 			logType: entityLog,
@@ -73,6 +75,7 @@ func TestGetCertCmd(t *testing.T) {
 			args: []string{
 				"thing",
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -83,6 +86,7 @@ func TestGetCertCmd(t *testing.T) {
 			desc: "get cert by id with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -100,8 +104,8 @@ func TestGetCertCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ViewCertByThing", mock.Anything, mock.Anything).Return(tc.serials, tc.sdkErr)
-			sdkCall1 := sdkMock.On("ViewCert", mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
+			sdkCall := sdkMock.On("ViewCertByThing", mock.Anything, mock.Anything, mock.Anything).Return(tc.serials, tc.sdkErr)
+			sdkCall1 := sdkMock.On("ViewCert", mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -147,6 +151,7 @@ func TestRevokeCertCmd(t *testing.T) {
 			desc: "revoke cert successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 			},
 			logType:  revokeLog,
@@ -157,6 +162,7 @@ func TestRevokeCertCmd(t *testing.T) {
 			desc: "revoke cert with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -166,6 +172,7 @@ func TestRevokeCertCmd(t *testing.T) {
 			desc: "revoke cert with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -176,7 +183,7 @@ func TestRevokeCertCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RevokeCert", tc.args[0], tc.args[1]).Return(tc.time, tc.sdkErr)
+			sdkCall := sdkMock.On("RevokeCert", tc.args[0], tc.args[1], tc.args[2]).Return(tc.time, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{revokeCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -215,6 +222,7 @@ func TestIssueCertCmd(t *testing.T) {
 			desc: "issue cert successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				validToken,
 			},
 			cert:    cert,
@@ -224,6 +232,7 @@ func TestIssueCertCmd(t *testing.T) {
 			desc: "issue cert with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -233,6 +242,7 @@ func TestIssueCertCmd(t *testing.T) {
 			desc: "issue cert with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -243,7 +253,7 @@ func TestIssueCertCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("IssueCert", mock.Anything, mock.Anything, tc.args[1]).Return(tc.cert, tc.sdkErr)
+			sdkCall := sdkMock.On("IssueCert", mock.Anything, mock.Anything, tc.args[1], tc.args[2]).Return(tc.cert, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{issueCmd}, tc.args...)...)
 
 			switch tc.logType {

@@ -36,9 +36,9 @@ func (_m *SDK) AcceptInvitation(domainID string, token string) error {
 	return r0
 }
 
-// AddBootstrap provides a mock function with given fields: cfg, token
-func (_m *SDK) AddBootstrap(cfg sdk.BootstrapConfig, token string) (string, errors.SDKError) {
-	ret := _m.Called(cfg, token)
+// AddBootstrap provides a mock function with given fields: cfg, domainID, token
+func (_m *SDK) AddBootstrap(cfg sdk.BootstrapConfig, domainID string, token string) (string, errors.SDKError) {
+	ret := _m.Called(cfg, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddBootstrap")
@@ -46,17 +46,17 @@ func (_m *SDK) AddBootstrap(cfg sdk.BootstrapConfig, token string) (string, erro
 
 	var r0 string
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.BootstrapConfig, string) (string, errors.SDKError)); ok {
-		return rf(cfg, token)
+	if rf, ok := ret.Get(0).(func(sdk.BootstrapConfig, string, string) (string, errors.SDKError)); ok {
+		return rf(cfg, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(sdk.BootstrapConfig, string) string); ok {
-		r0 = rf(cfg, token)
+	if rf, ok := ret.Get(0).(func(sdk.BootstrapConfig, string, string) string); ok {
+		r0 = rf(cfg, domainID, token)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(sdk.BootstrapConfig, string) errors.SDKError); ok {
-		r1 = rf(cfg, token)
+	if rf, ok := ret.Get(1).(func(sdk.BootstrapConfig, string, string) errors.SDKError); ok {
+		r1 = rf(cfg, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1372,9 +1372,9 @@ func (_m *SDK) Invitations(pm sdk.PageMetadata, token string) (sdk.InvitationPag
 	return r0, r1
 }
 
-// IssueCert provides a mock function with given fields: thingID, validity, token
-func (_m *SDK) IssueCert(thingID string, validity string, token string) (sdk.Cert, errors.SDKError) {
-	ret := _m.Called(thingID, validity, token)
+// IssueCert provides a mock function with given fields: thingID, validity, domainID, token
+func (_m *SDK) IssueCert(thingID string, validity string, domainID string, token string) (sdk.Cert, errors.SDKError) {
+	ret := _m.Called(thingID, validity, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IssueCert")
@@ -1382,17 +1382,17 @@ func (_m *SDK) IssueCert(thingID string, validity string, token string) (sdk.Cer
 
 	var r0 sdk.Cert
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Cert, errors.SDKError)); ok {
-		return rf(thingID, validity, token)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (sdk.Cert, errors.SDKError)); ok {
+		return rf(thingID, validity, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Cert); ok {
-		r0 = rf(thingID, validity, token)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) sdk.Cert); ok {
+		r0 = rf(thingID, validity, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Cert)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
-		r1 = rf(thingID, validity, token)
+	if rf, ok := ret.Get(1).(func(string, string, string, string) errors.SDKError); ok {
+		r1 = rf(thingID, validity, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1898,17 +1898,17 @@ func (_m *SDK) RejectInvitation(domainID string, token string) error {
 	return r0
 }
 
-// RemoveBootstrap provides a mock function with given fields: id, token
-func (_m *SDK) RemoveBootstrap(id string, token string) errors.SDKError {
-	ret := _m.Called(id, token)
+// RemoveBootstrap provides a mock function with given fields: id, domainID, token
+func (_m *SDK) RemoveBootstrap(id string, domainID string, token string) errors.SDKError {
+	ret := _m.Called(id, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveBootstrap")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) errors.SDKError); ok {
-		r0 = rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) errors.SDKError); ok {
+		r0 = rf(id, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2038,9 +2038,9 @@ func (_m *SDK) ResetPasswordRequest(email string) errors.SDKError {
 	return r0
 }
 
-// RevokeCert provides a mock function with given fields: thingID, token
-func (_m *SDK) RevokeCert(thingID string, token string) (time.Time, errors.SDKError) {
-	ret := _m.Called(thingID, token)
+// RevokeCert provides a mock function with given fields: thingID, domainID, token
+func (_m *SDK) RevokeCert(thingID string, domainID string, token string) (time.Time, errors.SDKError) {
+	ret := _m.Called(thingID, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RevokeCert")
@@ -2048,17 +2048,17 @@ func (_m *SDK) RevokeCert(thingID string, token string) (time.Time, errors.SDKEr
 
 	var r0 time.Time
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (time.Time, errors.SDKError)); ok {
-		return rf(thingID, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (time.Time, errors.SDKError)); ok {
+		return rf(thingID, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) time.Time); ok {
-		r0 = rf(thingID, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) time.Time); ok {
+		r0 = rf(thingID, domainID, token)
 	} else {
 		r0 = ret.Get(0).(time.Time)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(thingID, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(thingID, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2316,17 +2316,17 @@ func (_m *SDK) UnshareThing(thingID string, req sdk.UsersRelationRequest, domain
 	return r0
 }
 
-// UpdateBootstrap provides a mock function with given fields: cfg, token
-func (_m *SDK) UpdateBootstrap(cfg sdk.BootstrapConfig, token string) errors.SDKError {
-	ret := _m.Called(cfg, token)
+// UpdateBootstrap provides a mock function with given fields: cfg, domainID, token
+func (_m *SDK) UpdateBootstrap(cfg sdk.BootstrapConfig, domainID string, token string) errors.SDKError {
+	ret := _m.Called(cfg, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrap")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.BootstrapConfig, string) errors.SDKError); ok {
-		r0 = rf(cfg, token)
+	if rf, ok := ret.Get(0).(func(sdk.BootstrapConfig, string, string) errors.SDKError); ok {
+		r0 = rf(cfg, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2336,9 +2336,9 @@ func (_m *SDK) UpdateBootstrap(cfg sdk.BootstrapConfig, token string) errors.SDK
 	return r0
 }
 
-// UpdateBootstrapCerts provides a mock function with given fields: id, clientCert, clientKey, ca, token
-func (_m *SDK) UpdateBootstrapCerts(id string, clientCert string, clientKey string, ca string, token string) (sdk.BootstrapConfig, errors.SDKError) {
-	ret := _m.Called(id, clientCert, clientKey, ca, token)
+// UpdateBootstrapCerts provides a mock function with given fields: id, clientCert, clientKey, ca, domainID, token
+func (_m *SDK) UpdateBootstrapCerts(id string, clientCert string, clientKey string, ca string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _m.Called(id, clientCert, clientKey, ca, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrapCerts")
@@ -2346,17 +2346,17 @@ func (_m *SDK) UpdateBootstrapCerts(id string, clientCert string, clientKey stri
 
 	var r0 sdk.BootstrapConfig
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
-		return rf(id, clientCert, clientKey, ca, token)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
+		return rf(id, clientCert, clientKey, ca, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string) sdk.BootstrapConfig); ok {
-		r0 = rf(id, clientCert, clientKey, ca, token)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string) sdk.BootstrapConfig); ok {
+		r0 = rf(id, clientCert, clientKey, ca, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string) errors.SDKError); ok {
-		r1 = rf(id, clientCert, clientKey, ca, token)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string) errors.SDKError); ok {
+		r1 = rf(id, clientCert, clientKey, ca, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2366,17 +2366,17 @@ func (_m *SDK) UpdateBootstrapCerts(id string, clientCert string, clientKey stri
 	return r0, r1
 }
 
-// UpdateBootstrapConnection provides a mock function with given fields: id, channels, token
-func (_m *SDK) UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError {
-	ret := _m.Called(id, channels, token)
+// UpdateBootstrapConnection provides a mock function with given fields: id, channels, domainID, token
+func (_m *SDK) UpdateBootstrapConnection(id string, channels []string, domainID string, token string) errors.SDKError {
+	ret := _m.Called(id, channels, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrapConnection")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, []string, string) errors.SDKError); ok {
-		r0 = rf(id, channels, token)
+	if rf, ok := ret.Get(0).(func(string, []string, string, string) errors.SDKError); ok {
+		r0 = rf(id, channels, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2806,9 +2806,9 @@ func (_m *SDK) Users(pm sdk.PageMetadata, token string) (sdk.UsersPage, errors.S
 	return r0, r1
 }
 
-// ViewBootstrap provides a mock function with given fields: id, token
-func (_m *SDK) ViewBootstrap(id string, token string) (sdk.BootstrapConfig, errors.SDKError) {
-	ret := _m.Called(id, token)
+// ViewBootstrap provides a mock function with given fields: id, domainID, token
+func (_m *SDK) ViewBootstrap(id string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewBootstrap")
@@ -2816,17 +2816,17 @@ func (_m *SDK) ViewBootstrap(id string, token string) (sdk.BootstrapConfig, erro
 
 	var r0 sdk.BootstrapConfig
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
-		return rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
+		return rf(id, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.BootstrapConfig); ok {
-		r0 = rf(id, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.BootstrapConfig); ok {
+		r0 = rf(id, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(id, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2836,9 +2836,9 @@ func (_m *SDK) ViewBootstrap(id string, token string) (sdk.BootstrapConfig, erro
 	return r0, r1
 }
 
-// ViewCert provides a mock function with given fields: certID, token
-func (_m *SDK) ViewCert(certID string, token string) (sdk.Cert, errors.SDKError) {
-	ret := _m.Called(certID, token)
+// ViewCert provides a mock function with given fields: certID, domainID, token
+func (_m *SDK) ViewCert(certID string, domainID string, token string) (sdk.Cert, errors.SDKError) {
+	ret := _m.Called(certID, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewCert")
@@ -2846,17 +2846,17 @@ func (_m *SDK) ViewCert(certID string, token string) (sdk.Cert, errors.SDKError)
 
 	var r0 sdk.Cert
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.Cert, errors.SDKError)); ok {
-		return rf(certID, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Cert, errors.SDKError)); ok {
+		return rf(certID, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.Cert); ok {
-		r0 = rf(certID, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Cert); ok {
+		r0 = rf(certID, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Cert)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(certID, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(certID, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2866,9 +2866,9 @@ func (_m *SDK) ViewCert(certID string, token string) (sdk.Cert, errors.SDKError)
 	return r0, r1
 }
 
-// ViewCertByThing provides a mock function with given fields: thingID, token
-func (_m *SDK) ViewCertByThing(thingID string, token string) (sdk.CertSerials, errors.SDKError) {
-	ret := _m.Called(thingID, token)
+// ViewCertByThing provides a mock function with given fields: thingID, domainID, token
+func (_m *SDK) ViewCertByThing(thingID string, domainID string, token string) (sdk.CertSerials, errors.SDKError) {
+	ret := _m.Called(thingID, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewCertByThing")
@@ -2876,17 +2876,17 @@ func (_m *SDK) ViewCertByThing(thingID string, token string) (sdk.CertSerials, e
 
 	var r0 sdk.CertSerials
 	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string) (sdk.CertSerials, errors.SDKError)); ok {
-		return rf(thingID, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.CertSerials, errors.SDKError)); ok {
+		return rf(thingID, domainID, token)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) sdk.CertSerials); ok {
-		r0 = rf(thingID, token)
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.CertSerials); ok {
+		r0 = rf(thingID, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.CertSerials)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
-		r1 = rf(thingID, token)
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(thingID, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2926,17 +2926,17 @@ func (_m *SDK) ViewSubscription(id string, token string) (sdk.Subscription, erro
 	return r0, r1
 }
 
-// Whitelist provides a mock function with given fields: thingID, state, token
-func (_m *SDK) Whitelist(thingID string, state int, token string) errors.SDKError {
-	ret := _m.Called(thingID, state, token)
+// Whitelist provides a mock function with given fields: thingID, state, domainID, token
+func (_m *SDK) Whitelist(thingID string, state int, domainID string, token string) errors.SDKError {
+	ret := _m.Called(thingID, state, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Whitelist")
 	}
 
 	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, int, string) errors.SDKError); ok {
-		r0 = rf(thingID, state, token)
+	if rf, ok := ret.Get(0).(func(string, int, string, string) errors.SDKError); ok {
+		r0 = rf(thingID, state, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)

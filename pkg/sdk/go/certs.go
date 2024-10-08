@@ -87,7 +87,7 @@ func (sdk mgSDK) ViewCertByThing(thingID, domainID, token string) (CertSerials, 
 }
 
 func (sdk mgSDK) RevokeCert(id, domainID, token string) (time.Time, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.certsURL,domainsEndpoint, domainID, certsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.certsURL, domainsEndpoint, domainID, certsEndpoint, id)
 
 	_, body, err := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusOK)
 	if err != nil {

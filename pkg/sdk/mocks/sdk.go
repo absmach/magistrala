@@ -2506,6 +2506,36 @@ func (_m *SDK) UpdatePassword(oldPass string, newPass string, token string) (sdk
 	return r0, r1
 }
 
+// UpdateProfilePicture provides a mock function with given fields: user, token
+func (_m *SDK) UpdateProfilePicture(user sdk.User, token string) (sdk.User, errors.SDKError) {
+	ret := _m.Called(user, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProfilePicture")
+	}
+
+	var r0 sdk.User
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.User, string) (sdk.User, errors.SDKError)); ok {
+		return rf(user, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.User, string) sdk.User); ok {
+		r0 = rf(user, token)
+	} else {
+		r0 = ret.Get(0).(sdk.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.User, string) errors.SDKError); ok {
+		r1 = rf(user, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
 // UpdateThing provides a mock function with given fields: thing, token
 func (_m *SDK) UpdateThing(thing sdk.Thing, token string) (sdk.Thing, errors.SDKError) {
 	ret := _m.Called(thing, token)
@@ -2656,6 +2686,36 @@ func (_m *SDK) UpdateUserIdentity(user sdk.User, token string) (sdk.User, errors
 	return r0, r1
 }
 
+// UpdateUserNames provides a mock function with given fields: user, token
+func (_m *SDK) UpdateUserNames(user sdk.User, token string) (sdk.User, errors.SDKError) {
+	ret := _m.Called(user, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUserNames")
+	}
+
+	var r0 sdk.User
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.User, string) (sdk.User, errors.SDKError)); ok {
+		return rf(user, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.User, string) sdk.User); ok {
+		r0 = rf(user, token)
+	} else {
+		r0 = ret.Get(0).(sdk.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.User, string) errors.SDKError); ok {
+		r1 = rf(user, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
 // UpdateUserRole provides a mock function with given fields: user, token
 func (_m *SDK) UpdateUserRole(user sdk.User, token string) (sdk.User, errors.SDKError) {
 	ret := _m.Called(user, token)
@@ -2737,6 +2797,36 @@ func (_m *SDK) User(id string, token string) (sdk.User, errors.SDKError) {
 
 	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
 		r1 = rf(id, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// UserByUserName provides a mock function with given fields: userName, token
+func (_m *SDK) UserByUserName(userName string, token string) (sdk.User, errors.SDKError) {
+	ret := _m.Called(userName, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UserByUserName")
+	}
+
+	var r0 sdk.User
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string) (sdk.User, errors.SDKError)); ok {
+		return rf(userName, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) sdk.User); ok {
+		r0 = rf(userName, token)
+	} else {
+		r0 = ret.Get(0).(sdk.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) errors.SDKError); ok {
+		r1 = rf(userName, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)

@@ -40,7 +40,7 @@ var (
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: users.Credentials{Identity: "useridentity", Secret: secret},
 		Metadata:    validCMetadata,
-		Status:      mgclients.EnabledStatus,
+		Status:      users.EnabledStatus,
 	}
 	basicUser = users.User{
 		Name: "usersname",
@@ -98,7 +98,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "newuserwithname@example.com",
 					Secret:   secret,
 				},
-				Status: mgclients.EnabledStatus,
+				Status: users.EnabledStatus,
 			},
 			err: nil,
 		},
@@ -125,7 +125,7 @@ func TestRegisterClient(t *testing.T) {
 				Metadata: users.Metadata{
 					"name": "newuserwithallfields",
 				},
-				Status: mgclients.EnabledStatus,
+				Status: users.EnabledStatus,
 			},
 			err: nil,
 		},
@@ -170,7 +170,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "user with invalid status",
 					Secret:   secret,
 				},
-				Status: mgclients.AllStatus,
+				Status: users.AllStatus,
 			},
 			err: svcerr.ErrInvalidStatus,
 		},
@@ -194,7 +194,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "userwithfailedpolicies@example.com",
 					Secret:   secret,
 				},
-				Role: mgclients.AdminRole,
+				Role: users.AdminRole,
 			},
 			addPoliciesResponseErr: svcerr.ErrAddPolicies,
 			err:                    svcerr.ErrAddPolicies,
@@ -207,7 +207,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "userwithfailedtodelete@example.com",
 					Secret:   secret,
 				},
-				Role: mgclients.AdminRole,
+				Role: users.AdminRole,
 			},
 			deletePoliciesResponseErr: svcerr.ErrConflict,
 			saveErr:                   repoerr.ErrConflict,
@@ -375,7 +375,7 @@ func TestListClients(t *testing.T) {
 	}{
 		{
 			desc: "list users as admin successfully",
-			page: mgclients.Page{
+			page: users.Page{
 				Total: 1,
 			},
 			retrieveAllResponse: mgclients.ClientsPage{
@@ -385,7 +385,7 @@ func TestListClients(t *testing.T) {
 				Users: []users.User{user},
 			},
 			response: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -395,7 +395,7 @@ func TestListClients(t *testing.T) {
 		},
 		{
 			desc: "list users as admin with failed to retrieve users",
-			page: mgclients.Page{
+			page: users.Page{
 				Total: 1,
 			},
 			retrieveAllResponse: mgclients.ClientsPage{},
@@ -405,7 +405,7 @@ func TestListClients(t *testing.T) {
 		},
 		{
 			desc: "list users as admin with failed check on super admin",
-			page: mgclients.Page{
+			page: users.Page{
 				Total: 1,
 			},
 			token:         validToken,
@@ -414,7 +414,7 @@ func TestListClients(t *testing.T) {
 		},
 		{
 			desc: "list users as normal user with failed to retrieve users",
-			page: mgclients.Page{
+			page: users.Page{
 				Total: 1,
 			},
 			retrieveAllResponse: mgclients.ClientsPage{},
@@ -452,27 +452,27 @@ func TestSearchUsers(t *testing.T) {
 		{
 			desc:  "search users with valid token",
 			token: validToken,
-			page:  mgclients.Page{Offset: 0, Name: "username", Limit: 100},
+			page:  users.Page{Offset: 0, Name: "username", Limit: 100},
 			response: users.UsersPage{
-				Page:  mgclients.Page{Total: 1, Offset: 0, Limit: 100},
+				Page:  users.Page{Total: 1, Offset: 0, Limit: 100},
 				Users: []users.User{user},
 			},
 		},
 		{
 			desc:  "search users with id",
 			token: validToken,
-			page:  mgclients.Page{Offset: 0, Id: "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f", Limit: 100},
+			page:  users.Page{Offset: 0, Id: "d8dd12ef-aa2a-43fe-8ef2-2e4fe514360f", Limit: 100},
 			response: users.UsersPage{
-				Page:  mgclients.Page{Total: 1, Offset: 0, Limit: 100},
+				Page:  users.Page{Total: 1, Offset: 0, Limit: 100},
 				Users: []users.User{user},
 			},
 		},
 		{
 			desc:  "search users with random name",
 			token: validToken,
-			page:  mgclients.Page{Offset: 0, Name: "randomname", Limit: 100},
+			page:  users.Page{Offset: 0, Name: "randomname", Limit: 100},
 			response: users.UsersPage{
-				Page:  mgclients.Page{Total: 0, Offset: 0, Limit: 100},
+				Page:  users.Page{Total: 0, Offset: 0, Limit: 100},
 				Users: []users.User{},
 			},
 		},
@@ -953,7 +953,7 @@ func TestEnableClient(t *testing.T) {
 	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "uaer1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
 	disabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "uaer3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
 	endisabledUser1 := disabledUser1
-	endisabledUser1.Status = mgclients.EnabledStatus
+	endisabledUser1.Status = users.EnabledStatus
 
 	cases := []struct {
 		desc                 string
@@ -1031,10 +1031,10 @@ func TestEnableClient(t *testing.T) {
 func TestDisableClient(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
-	disabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user3@example.com", Secret: "password"}, Status: mgclients.DisabledStatus}
+	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user1@example.com", Secret: "password"}, Status: users.EnabledStatus}
+	disabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user3@example.com", Secret: "password"}, Status: users.DisabledStatus}
 	disenabledUser1 := enabledUser1
-	disenabledUser1.Status = mgclients.DisabledStatus
+	disenabledUser1.Status = users.DisabledStatus
 
 	cases := []struct {
 		desc                 string
@@ -1111,10 +1111,10 @@ func TestDisableClient(t *testing.T) {
 func TestDeleteClient(t *testing.T) {
 	svc, cRepo := newServiceMinimal()
 
-	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user1@example.com", Secret: "password"}, Status: mgclients.EnabledStatus}
-	deletedUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user3@example.com", Secret: "password"}, Status: mgclients.DeletedStatus}
+	enabledUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user1@example.com", Secret: "password"}, Status: users.EnabledStatus}
+	deletedUser1 := users.User{ID: testsutil.GenerateUUID(t), Credentials: users.Credentials{Identity: "user3@example.com", Secret: "password"}, Status: users.DeletedStatus}
 	disenabledUser1 := enabledUser1
-	disenabledUser1.Status = mgclients.DeletedStatus
+	disenabledUser1.Status = users.DeletedStatus
 
 	cases := []struct {
 		desc                 string
@@ -1254,7 +1254,7 @@ func TestListMembers(t *testing.T) {
 				Users: []users.User{user},
 			},
 			response: users.MembersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  100,
@@ -1399,7 +1399,7 @@ func TestListMembers(t *testing.T) {
 				Users: []users.User{basicUser},
 			},
 			response: users.MembersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  100,
@@ -1453,7 +1453,7 @@ func TestListMembers(t *testing.T) {
 				Users: []users.User{user},
 			},
 			response: users.MembersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total:  1,
 					Offset: 0,
 					Limit:  100,
@@ -1855,7 +1855,7 @@ func TestOAuthCallback(t *testing.T) {
 			},
 			retrieveByIdentityResponse: users.User{
 				ID:   testsutil.GenerateUUID(t),
-				Role: mgclients.UserRole,
+				Role: users.UserRole,
 			},
 			err: nil,
 		},
@@ -1869,7 +1869,7 @@ func TestOAuthCallback(t *testing.T) {
 			retrieveByIdentityErr: repoerr.ErrNotFound,
 			saveResponse: mgclients.Client{
 				ID:   testsutil.GenerateUUID(t),
-				Role: mgclients.UserRole,
+				Role: users.UserRole,
 			},
 			err: nil,
 		},
@@ -1903,7 +1903,7 @@ func TestOAuthCallback(t *testing.T) {
 			},
 			retrieveByIdentityResponse: users.User{
 				ID:   testsutil.GenerateUUID(t),
-				Role: mgclients.UserRole,
+				Role: users.UserRole,
 			},
 			err: nil,
 		},

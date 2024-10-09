@@ -273,7 +273,7 @@ func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	st, err := mgclients.ToStatus(s)
+	st, err := users.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -452,7 +452,7 @@ func decodeUpdateUserRole(_ context.Context, r *http.Request) (interface{}, erro
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 	var err error
-	req.role, err = mgclients.ToRole(req.Role)
+	req.role, err = users.ToRole(req.Role)
 	return req, err
 }
 
@@ -558,49 +558,49 @@ func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{},
 	return req, nil
 }
 
-func queryPageParams(r *http.Request, defPermission string) (mgclients.Page, error) {
+func queryPageParams(r *http.Request, defPermission string) (users.Page, error) {
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	m, err := apiutil.ReadMetadataQuery(r, api.MetadataKey, nil)
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	i, err := apiutil.ReadStringQuery(r, api.IdentityKey, "")
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	t, err := apiutil.ReadStringQuery(r, api.TagKey, "")
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	st, err := mgclients.ToStatus(s)
+	st, err := users.ToStatus(s)
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	p, err := apiutil.ReadStringQuery(r, api.PermissionKey, defPermission)
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	lp, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
 	if err != nil {
-		return mgclients.Page{}, errors.Wrap(apiutil.ErrValidation, err)
+		return users.Page{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	return mgclients.Page{
+	return users.Page{
 		Status:     st,
 		Offset:     o,
 		Limit:      l,

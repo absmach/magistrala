@@ -35,7 +35,7 @@ var (
 	ErrRemoveEntity = errors.New("failed to remove entity")
 
 	// ErrViewEntity indicates error in viewing entity or entities.
-	ErrViewEntity = errors.New("view entity failed")
+	ErrViewEntity = errors.New("service error: view entity failed")
 
 	// ErrUpdateEntity indicates error in updating entity or entities.
 	ErrUpdateEntity = errors.New("update entity failed")

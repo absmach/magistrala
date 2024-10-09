@@ -43,7 +43,7 @@ var (
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: users.Credentials{Identity: "useridentity@example.com", Secret: secret},
 		Metadata:    validCMetadata,
-		Status:      mgclients.EnabledStatus,
+		Status:      users.EnabledStatus,
 	}
 	validToken   = "valid"
 	inValidToken = "invalid"
@@ -180,7 +180,7 @@ func TestRegisterClient(t *testing.T) {
 					Identity: "newclientwithinvalidstatus@example.com",
 					Secret:   secret,
 				},
-				Status: mgclients.AllStatus,
+				Status: users.AllStatus,
 			},
 			token:       validToken,
 			contentType: contentType,
@@ -404,7 +404,7 @@ func TestListClients(t *testing.T) {
 			token:  validToken,
 			status: http.StatusOK,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -432,7 +432,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with offset",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Offset: 1,
 					Total:  1,
 				},
@@ -455,7 +455,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with limit",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Limit: 1,
 					Total: 1,
 				},
@@ -486,7 +486,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with name",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -508,7 +508,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with status",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -538,7 +538,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with tags",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -560,7 +560,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with metadata",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -590,7 +590,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with permissions",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -612,7 +612,7 @@ func TestListClients(t *testing.T) {
 			desc:  "list users with list perms",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -635,7 +635,7 @@ func TestListClients(t *testing.T) {
 			token: validToken,
 			query: fmt.Sprintf("identity=%s", user.Credentials.Identity),
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -655,7 +655,7 @@ func TestListClients(t *testing.T) {
 		{
 			desc: "list users with order",
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -725,7 +725,7 @@ func TestSearchUsers(t *testing.T) {
 	cases := []struct {
 		desc              string
 		token             string
-		page              mgclients.Page
+		page              users.Page
 		status            int
 		query             string
 		listUsersResponse mgclients.ClientsPage
@@ -738,7 +738,7 @@ func TestSearchUsers(t *testing.T) {
 			status: http.StatusOK,
 			query:  "name=username",
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -765,7 +765,7 @@ func TestSearchUsers(t *testing.T) {
 			desc:  "search users with offset",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Offset: 1,
 					Total:  1,
 				},
@@ -786,7 +786,7 @@ func TestSearchUsers(t *testing.T) {
 			desc:  "search users with limit",
 			token: validToken,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Limit: 1,
 					Total: 1,
 				},
@@ -2143,7 +2143,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		desc              string
 		token             string
 		groupID           string
-		page              mgclients.Page
+		page              users.Page
 		status            int
 		query             string
 		listUsersResponse mgclients.ClientsPage
@@ -2157,7 +2157,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID: validID,
 			status:  http.StatusOK,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -2194,7 +2194,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Offset: 1,
 					Total:  1,
 				},
@@ -2218,7 +2218,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Limit: 1,
 					Total: 1,
 				},
@@ -2252,7 +2252,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -2284,7 +2284,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -2315,7 +2315,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -2348,7 +2348,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -2379,7 +2379,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{user},
@@ -2405,7 +2405,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID: validID,
 			query:   fmt.Sprintf("identity=%s", user.Credentials.Identity),
 			listUsersResponse: users.UsersPage{
-				Page: mgclients.Page{
+				Page: users.Page{
 					Total: 1,
 				},
 				Users: []users.User{
@@ -3855,13 +3855,13 @@ func TestUnassignGroups(t *testing.T) {
 }
 
 type respBody struct {
-	Err     string           `json:"error"`
-	Message string           `json:"message"`
-	Total   int              `json:"total"`
-	ID      string           `json:"id"`
-	Tags    []string         `json:"tags"`
-	Role    mgclients.Role   `json:"role"`
-	Status  mgclients.Status `json:"status"`
+	Err     string       `json:"error"`
+	Message string       `json:"message"`
+	Total   int          `json:"total"`
+	ID      string       `json:"id"`
+	Tags    []string     `json:"tags"`
+	Role    users.Role   `json:"role"`
+	Status  users.Status `json:"status"`
 }
 
 type groupReqBody struct {

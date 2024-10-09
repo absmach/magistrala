@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"time"
 
-	mfclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
 	uclient "github.com/absmach/magistrala/users"
@@ -125,7 +124,7 @@ func (cfg *config) UserInfo(accessToken string) (uclient.User, error) {
 			"oauth_provider":  providerName,
 			"profile_picture": user.Picture,
 		},
-		Status: mfclients.EnabledStatus,
+		Status: uclient.EnabledStatus,
 	}
 
 	return client, nil

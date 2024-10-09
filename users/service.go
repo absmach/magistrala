@@ -72,10 +72,11 @@ func (svc service) RegisterClient(ctx context.Context, session authn.Session, cl
 		u.Credentials.Secret = hash
 	}
 
-	if u.Status != mgclients.DisabledStatus && u.Status != mgclients.EnabledStatus {
+	if u.Status != DisabledStatus && u.Status != EnabledStatus {
 		return User{}, errors.Wrap(svcerr.ErrMalformedEntity, svcerr.ErrInvalidStatus)
 	}
-	if u.Role != mgclients.UserRole && u.Role != mgclients.AdminRole {
+
+	if u.Role != UserRole && u.Role != AdminRole {
 		return User{}, errors.Wrap(svcerr.ErrMalformedEntity, svcerr.ErrInvalidRole)
 	}
 	u.ID = userID
@@ -130,7 +131,7 @@ func (svc service) RefreshToken(ctx context.Context, session authn.Session, refr
 	if err != nil {
 		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if dbUser.Status == mgclients.DisabledStatus {
+	if dbUser.Status == DisabledStatus {
 		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
 	}
 
@@ -169,7 +170,7 @@ func (svc service) ListClients(ctx context.Context, session authn.Session, pm mg
 		return mgclients.ClientsPage{}, err
 	}
 
-	pm.Role = mgclients.AllRole
+	pm.Role = AllRole
 	pg, err := svc.users.RetrieveAll(ctx, pm)
 	if err != nil {
 		return UsersPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -183,7 +184,7 @@ func (svc service) SearchUsers(ctx context.Context, pm mgclients.Page) (mgclient
 		Limit:  pm.Limit,
 		Name:   pm.Name,
 		Id:     pm.Id,
-		Role:   mgclients.UserRole,
+		Role:   UserRole,
 	}
 
 	cp, err := svc.users.SearchUsers(ctx, page)
@@ -360,7 +361,7 @@ func (svc service) EnableClient(ctx context.Context, session authn.Session, id s
 	client := mgclients.Client{
 		ID:        id,
 		UpdatedAt: time.Now(),
-		Status:    mgclients.EnabledStatus,
+		Status:    EnabledStatus,
 	}
 	client, err := svc.changeClientStatus(ctx, session, client)
 	if err != nil {
@@ -374,7 +375,7 @@ func (svc service) DisableClient(ctx context.Context, session authn.Session, id 
 	client := mgclients.Client{
 		ID:        id,
 		UpdatedAt: time.Now(),
-		Status:    mgclients.DisabledStatus,
+		Status:    DisabledStatus,
 	}
 	client, err := svc.changeClientStatus(ctx, session, client)
 	if err != nil {
@@ -410,7 +411,7 @@ func (svc service) DeleteClient(ctx context.Context, session authn.Session, id s
 	client := mgclients.Client{
 		ID:        id,
 		UpdatedAt: time.Now(),
-		Status:    mgclients.DeletedStatus,
+		Status:    DeletedStatus,
 	}
 
 	if _, err := svc.changeClientStatus(ctx, session, client); err != nil {
@@ -444,7 +445,7 @@ func (svc service) ListMembers(ctx context.Context, session authn.Session, objec
 	}
 	if len(duids.Policies) == 0 {
 		return MembersPage{
-			Page: mgclients.Page{Total: 0, Offset: pm.Offset, Limit: pm.Limit},
+			Page: Page{Total: 0, Offset: pm.Offset, Limit: pm.Limit},
 		}, nil
 	}
 
@@ -610,7 +611,7 @@ func (svc service) addClientPolicyRollback(ctx context.Context, userID string, r
 	return nil
 }
 
-func (svc service) updateUserPolicy(ctx context.Context, userID string, role mgclients.Role) error {
+func (svc service) updateUserPolicy(ctx context.Context, userID string, role Role) error {
 	switch role {
 	case mgclients.AdminRole:
 		err := svc.policies.AddPolicy(ctx, policies.Policy{
@@ -625,7 +626,7 @@ func (svc service) updateUserPolicy(ctx context.Context, userID string, role mgc
 		}
 
 		return nil
-	case mgclients.UserRole:
+	case UserRole:
 		fallthrough
 	default:
 		err := svc.policies.DeletePolicyFilter(ctx, policies.Policy{

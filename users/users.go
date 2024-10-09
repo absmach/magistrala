@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"golang.org/x/net/idna"
@@ -32,22 +31,22 @@ var (
 )
 
 type User struct {
-	ID             string         `json:"id"`
-	Name           string         `json:"name,omitempty"`
-	UserName       string         `json:"user_name,omitempty"`
-	FirstName      string         `json:"first_name,omitempty"`
-	LastName       string         `json:"last_name,omitempty"`
-	Tags           []string       `json:"tags,omitempty"`
-	Credentials    Credentials    `json:"credentials,omitempty"`
-	Metadata       Metadata       `json:"metadata,omitempty"`
-	CreatedAt      time.Time      `json:"created_at,omitempty"`
-	UpdatedAt      time.Time      `json:"updated_at,omitempty"`
-	UpdatedBy      string         `json:"updated_by,omitempty"`
-	Status         clients.Status `json:"status,omitempty"` // 1 for enabled, 0 for disabled
-	Role           clients.Role   `json:"role,omitempty"`   // 1 for admin, 0 for normal user
-	Permissions    []string       `json:"permissions,omitempty"`
-	ProfilePicture string         `json:"profile_picture,omitempty"`
-	DomainID       string         `json:"domain_id,omitempty"`
+	ID             string      `json:"id"`
+	Name           string      `json:"name,omitempty"`
+	UserName       string      `json:"user_name,omitempty"`
+	FirstName      string      `json:"first_name,omitempty"`
+	LastName       string      `json:"last_name,omitempty"`
+	Tags           []string    `json:"tags,omitempty"`
+	Credentials    Credentials `json:"credentials,omitempty"`
+	Metadata       Metadata    `json:"metadata,omitempty"`
+	CreatedAt      time.Time   `json:"created_at,omitempty"`
+	UpdatedAt      time.Time   `json:"updated_at,omitempty"`
+	UpdatedBy      string      `json:"updated_by,omitempty"`
+	Status         Status      `json:"status,omitempty"` // 1 for enabled, 0 for disabled
+	Role           Role        `json:"role,omitempty"`   // 1 for admin, 0 for normal user
+	Permissions    []string    `json:"permissions,omitempty"`
+	ProfilePicture string      `json:"profile_picture,omitempty"`
+	DomainID       string      `json:"domain_id,omitempty"`
 }
 
 type Credentials struct {
@@ -56,7 +55,7 @@ type Credentials struct {
 }
 
 type UsersPage struct {
-	clients.Page
+	Page
 	Users []User
 }
 
@@ -66,7 +65,7 @@ type Metadata map[string]interface{}
 // MembersPage contains page related metadata as well as list of members that
 // belong to this page.
 type MembersPage struct {
-	clients.Page
+	Page
 	Members []User
 }
 
@@ -87,7 +86,7 @@ type Repository interface {
 	RetrieveByUserName(ctx context.Context, userName string) (User, error)
 
 	// RetrieveAll retrieves all users.
-	RetrieveAll(ctx context.Context, pm clients.Page) (UsersPage, error)
+	RetrieveAll(ctx context.Context, pm Page) (UsersPage, error)
 
 	// Update updates the user name and metadata.
 	Update(ctx context.Context, user User) (User, error)
@@ -117,10 +116,10 @@ type Repository interface {
 	Delete(ctx context.Context, id string) error
 
 	// Searchusers retrieves users based on search criteria.
-	SearchUsers(ctx context.Context, pm clients.Page) (UsersPage, error)
+	SearchUsers(ctx context.Context, pm Page) (UsersPage, error)
 
 	// RetrieveAllByIDs retrieves for given user IDs .
-	RetrieveAllByIDs(ctx context.Context, pm clients.Page) (UsersPage, error)
+	RetrieveAllByIDs(ctx context.Context, pm Page) (UsersPage, error)
 
 	CheckSuperAdmin(ctx context.Context, adminID string) error
 
@@ -196,4 +195,27 @@ func isEmail(email string) bool {
 	}
 
 	return true
+}
+
+// Page contains page metadata that helps navigation.
+type Page struct {
+	Total      uint64   `json:"total"`
+	Offset     uint64   `json:"offset"`
+	Limit      uint64   `json:"limit"`
+	Name       string   `json:"name,omitempty"`
+	Id         string   `json:"id,omitempty"`
+	Order      string   `json:"order,omitempty"`
+	Dir        string   `json:"dir,omitempty"`
+	Metadata   Metadata `json:"metadata,omitempty"`
+	Domain     string   `json:"domain,omitempty"`
+	Tag        string   `json:"tag,omitempty"`
+	Permission string   `json:"permission,omitempty"`
+	Status     Status   `json:"status,omitempty"`
+	IDs        []string `json:"ids,omitempty"`
+	Identity   string   `json:"identity,omitempty"`
+	Role       Role     `json:"-"`
+	ListPerms  bool     `json:"-"`
+	UserName   string   `json:"user_name,omitempty"`
+	FirstName  string   `json:"first_name,omitempty"`
+	LastName   string   `json:"last_name,omitempty"`
 }

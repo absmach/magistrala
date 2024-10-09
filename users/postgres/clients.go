@@ -13,7 +13,6 @@ import (
 
 	"github.com/absmach/magistrala/internal/api"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/groups"
@@ -156,8 +155,8 @@ func (repo *userRepo) RetrieveByUserName(ctx context.Context, userName string) (
 	return users.User{}, repoerr.ErrNotFound
 }
 
-func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
-	query, err := pgclients.PageQuery(pm)
+func (repo *userRepo) RetrieveAll(ctx context.Context, pm users.Page) (users.UsersPage, error) {
+	query, err := PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -203,7 +202,7 @@ func (repo *userRepo) RetrieveAll(ctx context.Context, pm mgclients.Page) (users
 	}
 
 	page := users.UsersPage{
-		Page: mgclients.Page{
+		Page: users.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
@@ -343,7 +342,7 @@ func (repo *userRepo) Update(ctx context.Context, user users.User) (users.User, 
 	q := fmt.Sprintf(`UPDATE clients SET %s updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, secret, metadata, status, created_at, updated_at, updated_by, last_name, first_name, user_name`, upq)
-	user.Status = mgclients.EnabledStatus
+	user.Status = users.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -375,7 +374,7 @@ func (repo *userRepo) UpdateIdentity(ctx context.Context, user users.User) (user
 	q := `UPDATE clients SET identity = :identity, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
-	user.Status = mgclients.EnabledStatus
+	user.Status = users.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -383,7 +382,7 @@ func (repo *userRepo) UpdateSecret(ctx context.Context, user users.User) (users.
 	q := `UPDATE clients SET secret = :secret, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
-	user.Status = mgclients.EnabledStatus
+	user.Status = users.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -399,7 +398,7 @@ func (repo *userRepo) UpdateTags(ctx context.Context, user users.User) (users.Us
 	q := `UPDATE clients SET tags = :tags, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, metadata, status, created_at, updated_at, updated_by, first_name, last_name, user_name`
-	user.Status = mgclients.EnabledStatus
+	user.Status = users.EnabledStatus
 	return repo.update(ctx, user, q)
 }
 
@@ -435,8 +434,8 @@ func (repo *userRepo) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (repo *userRepo) SearchUsers(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
-	query, err := pgclients.PageQuery(pm)
+func (repo *userRepo) SearchUsers(ctx context.Context, pm users.Page) (users.UsersPage, error) {
+	query, err := PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -480,7 +479,7 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm mgclients.Page) (users
 
 	page := users.UsersPage{
 		Users: items,
-		Page: mgclients.Page{
+		Page: users.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
@@ -490,13 +489,13 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm mgclients.Page) (users
 	return page, nil
 }
 
-func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm mgclients.Page) (users.UsersPage, error) {
+func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm users.Page) (users.UsersPage, error) {
 	if (len(pm.IDs) == 0) && (pm.Domain == "") {
 		return users.UsersPage{
-			Page: mgclients.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
+			Page: users.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
 		}, nil
 	}
-	query, err := pgclients.PageQuery(pm)
+	query, err := PageQuery(pm)
 	if err != nil {
 		return users.UsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -538,7 +537,7 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm mgclients.Page) (
 
 	page := users.UsersPage{
 		Users: items,
-		Page: mgclients.Page{
+		Page: users.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
@@ -554,7 +553,7 @@ func (repo *userRepo) RetrieveByIdentity(ctx context.Context, identity string) (
 
 	dbc := DBUser{
 		Identity: identity,
-		Status:   mgclients.EnabledStatus,
+		Status:   users.EnabledStatus,
 	}
 
 	row, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbc)
@@ -587,59 +586,59 @@ type DBUser struct {
 	UpdatedAt      sql.NullTime     `db:"updated_at,omitempty"`
 	UpdatedBy      *string          `db:"updated_by,omitempty"`
 	Groups         []groups.Group   `db:"groups,omitempty"`
-	Status         mgclients.Status `db:"status,omitempty"`
-	Role           *mgclients.Role  `db:"role,omitempty"`
+	Status         users.Status     `db:"status,omitempty"`
+	Role           *users.Role      `db:"role,omitempty"`
 	UserName       string           `db:"user_name, omitempty"`
 	FirstName      string           `db:"first_name, omitempty"`
 	LastName       string           `db:"last_name, omitempty"`
 	ProfilePicture string           `db:"profile_picture, omitempty"`
 }
 
-func toDBUser(c users.User) (DBUser, error) {
+func toDBUser(u users.User) (DBUser, error) {
 	data := []byte("{}")
-	if len(c.Metadata) > 0 {
-		b, err := json.Marshal(c.Metadata)
+	if len(u.Metadata) > 0 {
+		b, err := json.Marshal(u.Metadata)
 		if err != nil {
 			return DBUser{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
 		}
 		data = b
 	}
 	var tags pgtype.TextArray
-	if err := tags.Set(c.Tags); err != nil {
+	if err := tags.Set(u.Tags); err != nil {
 		return DBUser{}, err
 	}
 	var updatedBy *string
-	if c.UpdatedBy != "" {
-		updatedBy = &c.UpdatedBy
+	if u.UpdatedBy != "" {
+		updatedBy = &u.UpdatedBy
 	}
 	var updatedAt sql.NullTime
-	if c.UpdatedAt != (time.Time{}) {
-		updatedAt = sql.NullTime{Time: c.UpdatedAt, Valid: true}
+	if u.UpdatedAt != (time.Time{}) {
+		updatedAt = sql.NullTime{Time: u.UpdatedAt, Valid: true}
 	}
 
 	return DBUser{
-		ID:             c.ID,
-		Name:           c.Name,
+		ID:             u.ID,
+		Name:           u.Name,
 		Tags:           tags,
-		Identity:       c.Credentials.Identity,
-		Secret:         c.Credentials.Secret,
+		Identity:       u.Credentials.Identity,
+		Secret:         u.Credentials.Secret,
 		Metadata:       data,
-		CreatedAt:      c.CreatedAt,
+		CreatedAt:      u.CreatedAt,
 		UpdatedAt:      updatedAt,
 		UpdatedBy:      updatedBy,
-		Status:         c.Status,
-		Role:           &c.Role,
-		LastName:       c.LastName,
-		FirstName:      c.FirstName,
-		UserName:       c.UserName,
-		ProfilePicture: c.ProfilePicture,
+		Status:         u.Status,
+		Role:           &u.Role,
+		LastName:       u.LastName,
+		FirstName:      u.FirstName,
+		UserName:       u.UserName,
+		ProfilePicture: u.ProfilePicture,
 	}, nil
 }
 
 func ToUser(dbu DBUser) (users.User, error) {
 	var metadata users.Metadata
 	if dbu.Metadata != nil {
-		if err := json.Unmarshal(dbu.Metadata, &metadata); err != nil {
+		if err := json.Unmarshal([]byte(dbu.Metadata), &metadata); err != nil {
 			return users.User{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
 		}
 	}
@@ -681,20 +680,20 @@ func ToUser(dbu DBUser) (users.User, error) {
 }
 
 type DBUsersPage struct {
-	Total    uint64           `db:"total"`
-	Limit    uint64           `db:"limit"`
-	Offset   uint64           `db:"offset"`
-	Name     string           `db:"name"`
-	Id       string           `db:"id"`
-	Identity string           `db:"identity"`
-	Metadata []byte           `db:"metadata"`
-	Tag      string           `db:"tag"`
-	GroupID  string           `db:"group_id"`
-	Role     mgclients.Role   `db:"role"`
-	Status   mgclients.Status `db:"status"`
+	Total    uint64       `db:"total"`
+	Limit    uint64       `db:"limit"`
+	Offset   uint64       `db:"offset"`
+	Name     string       `db:"name"`
+	Id       string       `db:"id"`
+	Identity string       `db:"identity"`
+	Metadata []byte       `db:"metadata"`
+	Tag      string       `db:"tag"`
+	GroupID  string       `db:"group_id"`
+	Role     users.Role   `db:"role"`
+	Status   users.Status `db:"status"`
 }
 
-func ToDBUsersPage(pm mgclients.Page) (DBUsersPage, error) {
+func ToDBUsersPage(pm users.Page) (DBUsersPage, error) {
 	_, data, err := postgres.CreateMetadataQuery("", pm.Metadata)
 	if err != nil {
 		return DBUsersPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -714,7 +713,55 @@ func ToDBUsersPage(pm mgclients.Page) (DBUsersPage, error) {
 	}, nil
 }
 
-func applyOrdering(emq string, pm mgclients.Page) string {
+func PageQuery(pm users.Page) (string, error) {
+	mq, _, err := postgres.CreateMetadataQuery("", pm.Metadata)
+	if err != nil {
+		return "", errors.Wrap(errors.ErrMalformedEntity, err)
+	}
+
+	var query []string
+	if pm.Name != "" {
+		query = append(query, "name ILIKE '%' || :name || '%'")
+	}
+	if pm.Identity != "" {
+		query = append(query, "identity ILIKE '%' || :identity || '%'")
+	}
+	if pm.Id != "" {
+		query = append(query, "id ILIKE '%' || :id || '%'")
+	}
+	if pm.Tag != "" {
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
+	}
+	if pm.Role != users.AllRole {
+		query = append(query, "c.role = :role")
+	}
+	// If there are search params presents, use search and ignore other options.
+	// Always combine role with search params, so len(query) > 1.
+	if len(query) > 1 {
+		return fmt.Sprintf("WHERE %s", strings.Join(query, " AND ")), nil
+	}
+
+	if mq != "" {
+		query = append(query, mq)
+	}
+
+	if len(pm.IDs) != 0 {
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
+	}
+	if pm.Status != users.AllStatus {
+		query = append(query, "c.status = :status")
+	}
+	if pm.Domain != "" {
+		query = append(query, "c.domain_id = :domain_id")
+	}
+	var emq string
+	if len(query) > 0 {
+		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+	return emq, nil
+}
+
+func applyOrdering(emq string, pm users.Page) string {
 	switch pm.Order {
 	case "name", "identity", "created_at", "updated_at":
 		emq = fmt.Sprintf("%s ORDER BY %s", emq, pm.Order)

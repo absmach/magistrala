@@ -218,7 +218,7 @@ func (lm *loggingMiddleware) UpdateClient(ctx context.Context, session authn.Ses
 	return lm.svc.UpdateClient(ctx, session, client)
 }
 
-// UpdateUserTags logs the update_user_tags request. It logs the client id and the time it took to complete the request.
+// UpdateUserTags logs the update_user_tags request. It logs the user id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClientTags(ctx context.Context, session authn.Session, client mgclients.Client) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
@@ -261,7 +261,7 @@ func (lm *loggingMiddleware) UpdateClientIdentity(ctx context.Context, session a
 	return lm.svc.UpdateClientIdentity(ctx, session, id, identity)
 }
 
-// UpdateUserSecret logs the update_user_secret request. It logs the client id and the time it took to complete the request.
+// UpdateUserSecret logs the update_user_secret request. It logs the user id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, session authn.Session, oldSecret, newSecret string) (c mgclients.Client, err error) {
 	defer func(begin time.Time) {
@@ -282,7 +282,7 @@ func (lm *loggingMiddleware) UpdateClientSecret(ctx context.Context, session aut
 	return lm.svc.UpdateClientSecret(ctx, session, oldSecret, newSecret)
 }
 
-// UpdateUserNames logs the update_user_names request. It logs the client id and the time it took to complete the request.
+// UpdateUserNames logs the update_user_names request. It logs the user id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateUserNames(ctx context.Context, token string, user users.User) (u users.User, err error) {
 	defer func(begin time.Time) {
@@ -291,9 +291,9 @@ func (lm *loggingMiddleware) UpdateUserNames(ctx context.Context, token string, 
 			slog.Group("user",
 				slog.String("id", u.ID),
 				slog.String("name", u.Name),
-				slog.String("first_name", user.FirstName),
-				slog.String("last_name", user.LastName),
-				slog.String("user_name", user.UserName),
+				slog.String("first_name", u.FirstName),
+				slog.String("last_name", u.LastName),
+				slog.String("user_name", u.UserName),
 			),
 		}
 		if err != nil {

@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/users/postgres"
@@ -58,7 +57,7 @@ func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policySe
 }
 
 func (h *handler) handle(ctx context.Context) {
-	pm := mgclients.Page{Limit: defLimit, Offset: 0, Status: mgclients.DeletedStatus}
+	pm := Page{Limit: defLimit, Offset: 0, Status: DeletedStatus}
 
 	for {
 		dbUsers, err := h.users.RetrieveAll(ctx, pm)

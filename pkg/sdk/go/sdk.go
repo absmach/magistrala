@@ -187,6 +187,13 @@ type SDK interface {
 	//  fmt.Println(user)
 	UserProfile(token string) (User, errors.SDKError)
 
+	// UserByUserName returns user object by username.
+	//
+	// example:
+	//  user, _ := sdk.UserByUserName("username", "token")
+	//  fmt.Println(user)
+	UserByUserName(userName, token string) (User, errors.SDKError)
+
 	// UpdateUser updates existing user.
 	//
 	// example:
@@ -224,6 +231,28 @@ type SDK interface {
 	//  user, _ := sdk.UpdateUserIdentity(user, "token")
 	//  fmt.Println(user)
 	UpdateUserIdentity(user User, token string) (User, errors.SDKError)
+
+	// UpdateUserNames updates the user's names ie Name, FirstName, LastName and UserName.
+	//
+	// example:
+	//  user := sdk.User{
+	//    ID:   "userID",
+	//    Name: "John Doe",
+	//  }
+	//  user, _ := sdk.UpdateUserNames(user, "token")
+	//  fmt.Println(user)
+	UpdateUserNames(user User, token string) (User, errors.SDKError)
+
+	// UpdateProfilePicture updates the user's profile picture.
+	//
+	// example:
+	//  user := sdk.User{
+	//    ID:            "userID",
+	//    ProfilePicture: "profile_picture",
+	//  }
+	//  user, _ := sdk.UpdateProfilePicture(user, "token")
+	//  fmt.Println(user)
+	UpdateProfilePicture(user User, token string) (User, errors.SDKError)
 
 	// UpdateUserRole updates the user's role.
 	//

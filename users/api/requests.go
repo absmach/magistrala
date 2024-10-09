@@ -6,7 +6,6 @@ package api
 import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/users"
 )
 
@@ -61,7 +60,7 @@ type listClientsReq struct {
 	name     string
 	tag      string
 	identity string
-	metadata mgclients.Metadata
+	metadata users.Metadata
 	order    string
 	dir      string
 	id       string

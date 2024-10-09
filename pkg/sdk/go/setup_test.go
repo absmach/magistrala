@@ -17,6 +17,7 @@ import (
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/users"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,11 +53,11 @@ func generateUUID(t *testing.T) string {
 	return ulid
 }
 
-func convertClients(cs []sdk.User) []mgclients.Client {
-	ccs := []mgclients.Client{}
+func convertUsers(cs []sdk.User) []users.User {
+	ccs := []users.User{}
 
 	for _, c := range cs {
-		ccs = append(ccs, convertClient(c))
+		ccs = append(ccs, convertUser(c))
 	}
 
 	return ccs
@@ -132,29 +133,33 @@ func convertChildren(gs []*sdk.Group) []*mggroups.Group {
 	return cg
 }
 
-func convertClient(c sdk.User) mgclients.Client {
+func convertUser(c sdk.User) users.User {
 	if c.Status == "" {
-		c.Status = mgclients.EnabledStatus.String()
+		c.Status = users.EnabledStatus.String()
 	}
-	status, err := mgclients.ToStatus(c.Status)
+	status, err := users.ToStatus(c.Status)
 	if err != nil {
-		return mgclients.Client{}
+		return users.User{}
 	}
-	role, err := mgclients.ToRole(c.Role)
+	role, err := users.ToRole(c.Role)
 	if err != nil {
-		return mgclients.Client{}
+		return users.User{}
 	}
-	return mgclients.Client{
-		ID:          c.ID,
-		Name:        c.Name,
-		Tags:        c.Tags,
-		Domain:      c.Domain,
-		Credentials: mgclients.Credentials(c.Credentials),
-		Metadata:    mgclients.Metadata(c.Metadata),
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
-		Status:      status,
-		Role:        role,
+	return users.User{
+		ID:             c.ID,
+		Name:           c.Name,
+		FirstName:      c.FirstName,
+		LastName:       c.LastName,
+		UserName:       c.UserName,
+		Tags:           c.Tags,
+		DomainID:       c.Domain,
+		Credentials:    users.Credentials(c.Credentials),
+		Metadata:       users.Metadata(c.Metadata),
+		CreatedAt:      c.CreatedAt,
+		UpdatedAt:      c.UpdatedAt,
+		Status:         status,
+		Role:           role,
+		ProfilePicture: c.ProfilePicture,
 	}
 }
 
@@ -240,7 +245,7 @@ func generateTestUser(t *testing.T) sdk.User {
 		Metadata:  validMetadata,
 		CreatedAt: createdAt,
 		UpdatedAt: createdAt,
-		Status:    mgclients.EnabledStatus.String(),
+		Status:    users.EnabledStatus.String(),
 	}
 }
 

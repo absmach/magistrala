@@ -481,6 +481,10 @@ services:
         target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+      - ./../secrets/magistrala-photos-2935343c2361.json:/magistrala-photos-2935343c2361.json
+    
+    env_file:
+      - .env
 
   jaeger:
     image: jaegertracing/all-in-one:1.60

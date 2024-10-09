@@ -26,7 +26,6 @@ import (
 	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
 	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
@@ -328,8 +327,8 @@ func createAdmin(ctx context.Context, c config, urepo users.Repository, hsr user
 		},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Role:      mgclients.AdminRole,
-		Status:    mgclients.EnabledStatus,
+		Role:      users.AdminRole,
+		Status:    users.EnabledStatus,
 	}
 
 	if c, err := urepo.RetrieveByIdentity(ctx, user.Credentials.Identity); err == nil {

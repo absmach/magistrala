@@ -77,7 +77,9 @@ func (s *storageClient) DeleteProfilePicture(ctx context.Context, imageURL strin
 	object := bucket.Object(fileName)
 
 	if err := object.Delete(ctx); err != nil {
-		return fmt.Errorf("failed to delete object from bucket: %v", err)
+		if err != storage.ErrObjectNotExist {
+			return fmt.Errorf("failed to delete object from bucket: %v", err)
+		}
 	}
 
 	return nil

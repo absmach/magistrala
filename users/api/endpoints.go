@@ -132,7 +132,7 @@ func searchUsersEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		pm := mgclients.Page{
+		pm := users.Page{
 			Offset: req.Offset,
 			Limit:  req.Limit,
 			Name:   req.Name,

@@ -117,6 +117,8 @@ services:
       AM_CERTS_GRPC_PORT: 7012
       AM_JAEGER_URL: ${MG_JAEGER_URL}
       AM_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+    volumes:
+     - ./config.yml:/config/config.yml
     ports:
       - 9010:9010
       - 7012:7012

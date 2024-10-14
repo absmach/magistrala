@@ -40,9 +40,6 @@ func newToken(issuerName string, key auth.Key) string {
 		Claim(tokenType, "r").
 		Expiration(key.ExpiresAt)
 	builder.Claim(userField, key.User)
-	if key.Domain != "" {
-		builder.Claim(domainField, key.Domain)
-	}
 	if key.Subject != "" {
 		builder.Subject(key.Subject)
 	}

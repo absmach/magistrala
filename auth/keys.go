@@ -68,10 +68,9 @@ func (key Key) String() string {
 	issuer_id: %s,
 	subject: %s,
 	user: %s,
-	domain: %s,
 	iat: %v,
 	eat: %v
-}`, key.ID, key.Type, key.Issuer, key.Subject, key.User, key.Domain, key.IssuedAt, key.ExpiresAt)
+}`, key.ID, key.Type, key.Issuer, key.Subject, key.User, key.IssuedAt, key.ExpiresAt)
 }
 
 // Expired verifies if the key is expired.

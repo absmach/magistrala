@@ -22,7 +22,6 @@ func (req identityReq) validate() error {
 
 type issueReq struct {
 	userID   string
-	domainID string // optional
 	keyType  auth.KeyType
 }
 
@@ -39,7 +38,6 @@ func (req issueReq) validate() error {
 
 type refreshReq struct {
 	refreshToken string
-	domainID     string // optional
 }
 
 func (req refreshReq) validate() error {

@@ -44,18 +44,15 @@ message IdentityReq {
 message IdentityRes {
     string id    = 1; // IMPROVEMENT NOTE: change name from "id" to "subject" , sub in jwt = user id  + domain id //
     string user_id = 2; // user id
-    string domain_id = 3; // domain id
 }
 
 message IssueReq {
   string user_id = 1;
-  optional string domain_id = 2;
-  uint32 type = 3; 
+  uint32 type = 2; 
 }
 
 message RefreshReq {
   string refresh_token = 1;
-  optional string domain_id = 2;
 }
 
 message AuthorizeReq {

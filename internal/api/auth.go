@@ -34,7 +34,6 @@ func AuthenticateMiddleware(authClient auth.AuthClient) func(http.Handler) http.
 			ctx := context.WithValue(r.Context(), SessionKey, auth.Session{
 				DomainUserID: resp.GetId(),
 				UserID:       resp.GetUserId(),
-				DomainID:     resp.GetDomainId(),
 			})
 
 			next.ServeHTTP(w, r.WithContext(ctx))

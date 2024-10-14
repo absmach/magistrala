@@ -125,14 +125,13 @@ func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, er
 	req := grpcReq.(*magistrala.IssueReq)
 	return issueReq{
 		userID:   req.GetUserId(),
-		domainID: req.GetDomainId(),
 		keyType:  auth.KeyType(req.GetType()),
 	}, nil
 }
 
 func decodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.RefreshReq)
-	return refreshReq{refreshToken: req.GetRefreshToken(), domainID: req.GetDomainId()}, nil
+	return refreshReq{refreshToken: req.GetRefreshToken()}, nil
 }
 
 func encodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -152,7 +151,7 @@ func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 
 func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(identityRes)
-	return &magistrala.IdentityRes{Id: res.id, UserId: res.userID, DomainId: res.domainID}, nil
+	return &magistrala.IdentityRes{Id: res.id, UserId: res.userID}, nil
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

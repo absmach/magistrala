@@ -78,7 +78,6 @@ func (client authGrpcClient) Issue(ctx context.Context, req *magistrala.IssueReq
 
 	res, err := client.issue(ctx, issueReq{
 		userID:   req.GetUserId(),
-		domainID: req.GetDomainId(),
 		keyType:  mgauth.KeyType(req.GetType()),
 	})
 	if err != nil {
@@ -91,7 +90,6 @@ func encodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, er
 	req := grpcReq.(issueReq)
 	return &magistrala.IssueReq{
 		UserId:   req.userID,
-		DomainId: &req.domainID,
 		Type:     uint32(req.keyType),
 	}, nil
 }
@@ -104,7 +102,7 @@ func (client authGrpcClient) Refresh(ctx context.Context, req *magistrala.Refres
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
-	res, err := client.refresh(ctx, refreshReq{refreshToken: req.GetRefreshToken(), domainID: req.GetDomainId()})
+	res, err := client.refresh(ctx, refreshReq{refreshToken: req.GetRefreshToken()})
 	if err != nil {
 		return &magistrala.Token{}, decodeError(err)
 	}
@@ -113,7 +111,7 @@ func (client authGrpcClient) Refresh(ctx context.Context, req *magistrala.Refres
 
 func encodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(refreshReq)
-	return &magistrala.RefreshReq{RefreshToken: req.refreshToken, DomainId: &req.domainID}, nil
+	return &magistrala.RefreshReq{RefreshToken: req.refreshToken}, nil
 }
 
 func decodeRefreshResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -129,7 +127,7 @@ func (client authGrpcClient) Identify(ctx context.Context, token *magistrala.Ide
 		return &magistrala.IdentityRes{}, decodeError(err)
 	}
 	ir := res.(identityRes)
-	return &magistrala.IdentityRes{Id: ir.subject, UserId: ir.userID, DomainId: ir.domainID}, nil
+	return &magistrala.IdentityRes{Id: ir.subject, UserId: ir.userID}, nil
 }
 
 func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -139,7 +137,7 @@ func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 
 func decodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*magistrala.IdentityRes)
-	return identityRes{subject: res.GetId(), userID: res.GetUserId(), domainID: res.GetDomainId()}, nil
+	return identityRes{subject: res.GetId(), userID: res.GetUserId()}, nil
 }
 
 func (client authGrpcClient) Authorize(ctx context.Context, req *magistrala.AuthorizeReq, _ ...grpc.CallOption) (r *magistrala.AuthorizeRes, err error) {
@@ -213,7 +211,6 @@ func decodeError(err error) error {
 type identityRes struct {
 	subject  string
 	userID   string
-	domainID string
 }
 
 type authorizeRes struct {

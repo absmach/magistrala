@@ -102,10 +102,10 @@ func (svc service) IssueToken(ctx context.Context, identity, secret, domainID st
 		return &magistrala.Token{}, errors.Wrap(svcerr.ErrLogin, err)
 	}
 
-	var d string
-	if domainID != "" {
-		d = domainID
-	}
+	// var d string
+	// if domainID != "" {
+	// 	d = domainID
+	// }
 
 	token, err := svc.auth.Issue(ctx, &magistrala.IssueReq{UserId: dbUser.ID, DomainId: &d, Type: uint32(mgauth.AccessKey)})
 	if err != nil {

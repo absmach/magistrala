@@ -13,13 +13,11 @@ type identityReq struct {
 
 type issueReq struct {
 	userID   string
-	domainID string // optional
 	keyType  auth.KeyType
 }
 
 type refreshReq struct {
 	refreshToken string
-	domainID     string // optional
 }
 
 // authReq represents authorization request. It contains:

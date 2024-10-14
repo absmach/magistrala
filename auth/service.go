@@ -323,9 +323,7 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 		return Token{}, errIssueUser
 	}
 	key.ID = k.ID
-	if key.Domain == "" {
-		key.Domain = k.Domain
-	}
+
 	key.User = k.User
 	key.Type = AccessKey
 

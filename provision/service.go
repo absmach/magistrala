@@ -35,6 +35,7 @@ var (
 	ErrMissingCredentials       = errors.New("missing credentials")
 	ErrFailedBootstrapRetrieval = errors.New("failed to retrieve bootstrap")
 	ErrFailedCertCreation       = errors.New("failed to create certificates")
+	ErrFailedCertView           = errors.New("failed to view certificate")
 	ErrFailedBootstrap          = errors.New("failed to create bootstrap config")
 	ErrFailedBootstrapValidate  = errors.New("failed to validate bootstrap config creation")
 	ErrGatewayUpdate            = errors.New("failed to updated gateway metadata")
@@ -201,8 +202,8 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 				ExternalKey: externalKey,
 				Channels:    chanIDs,
 				CACert:      res.CACert,
-				ClientCert:  cert.ClientCert,
-				ClientKey:   cert.ClientKey,
+				ClientCert:  cert.Certificate,
+				ClientKey:   cert.Key,
 				Content:     string(content),
 			}
 			bsid, err := ps.sdk.AddBootstrap(bsReq, token)
@@ -224,13 +225,17 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 				e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
+			cert, err := ps.sdk.ViewCert(cert.SerialNumber, token)
+			if err != nil {
+				return res, errors.Wrap(ErrFailedCertView, err)
+			}
 
-			res.ClientCert[thing.ID] = cert.ClientCert
-			res.ClientKey[thing.ID] = cert.ClientKey
+			res.ClientCert[thing.ID] = cert.Certificate
+			res.ClientKey[thing.ID] = cert.Key
 			res.CACert = ""
 
 			if needsBootstrap(thing) {
-				if _, err = ps.sdk.UpdateBootstrapCerts(bsConfig.ThingID, cert.ClientCert, cert.ClientKey, "", token); err != nil {
+				if _, err = ps.sdk.UpdateBootstrapCerts(bsConfig.ThingID, cert.Certificate, cert.Key, "", token); err != nil {
 					return Result{}, errors.Wrap(ErrFailedCertCreation, err)
 				}
 			}
@@ -262,7 +267,14 @@ func (ps *provisionService) Cert(token, thingID, ttl string) (string, string, er
 		return "", "", errors.Wrap(ErrUnauthorized, err)
 	}
 	cert, err := ps.sdk.IssueCert(th.ID, ps.conf.Cert.TTL, token)
-	return cert.ClientCert, cert.ClientKey, err
+	if err != nil {
+		return "", "", errors.Wrap(ErrFailedCertCreation, err)
+	}
+	cert, err = ps.sdk.ViewCert(cert.SerialNumber, token)
+	if err != nil {
+		return "", "", errors.Wrap(ErrFailedCertView, err)
+	}
+	return cert.Certificate, cert.Key, err
 }
 
 func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {

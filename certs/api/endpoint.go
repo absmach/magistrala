@@ -24,12 +24,12 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		}
 
 		return certsRes{
-			CertSerial: res.Serial,
-			ThingID:    res.ThingID,
-			ClientCert: res.ClientCert,
-			ClientKey:  res.ClientKey,
-			Expiration: res.Expire,
-			created:    true,
+			SerialNumber: res.SerialNumber,
+			ThingID:      res.ThingID,
+			Certificate:  res.Certificate,
+			ExpiryTime:   res.ExpiryTime,
+			Revoked:      res.Revoked,
+			issued:       true,
 		}, nil
 	}
 }
@@ -41,7 +41,7 @@ func listSerials(svc certs.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		page, err := svc.ListSerials(ctx, req.token, req.thingID, req.offset, req.limit)
+		page, err := svc.ListSerials(ctx, req.token, req.thingID, req.pm)
 		if err != nil {
 			return certsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
@@ -54,9 +54,12 @@ func listSerials(svc certs.Service) endpoint.Endpoint {
 			Certs: []certsRes{},
 		}
 
-		for _, cert := range page.Certs {
+		for _, cert := range page.Certificates {
 			cr := certsRes{
-				CertSerial: cert.Serial,
+				SerialNumber: cert.SerialNumber,
+				ExpiryTime:   cert.ExpiryTime,
+				Revoked:      cert.Revoked,
+				ThingID:      cert.ThingID,
 			}
 			res.Certs = append(res.Certs, cr)
 		}
@@ -68,22 +71,23 @@ func viewCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return certsRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		cert, err := svc.ViewCert(ctx, req.token, req.serialID)
 		if err != nil {
-			return certsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return certsRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		certRes := certsRes{
-			CertSerial: cert.Serial,
-			ThingID:    cert.ThingID,
-			ClientCert: cert.ClientCert,
-			Expiration: cert.Expire,
-		}
-
-		return certRes, nil
+		return certsRes{
+			ThingID:      cert.ThingID,
+			Certificate:  cert.Certificate,
+			Key:          cert.Key,
+			SerialNumber: cert.SerialNumber,
+			ExpiryTime:   cert.ExpiryTime,
+			Revoked:      cert.Revoked,
+			issued:       false,
+		}, nil
 	}
 }
 

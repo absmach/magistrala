@@ -36,28 +36,24 @@ var (
 	cert, sdkCert        = generateTestCerts(&testing.T{})
 	defOffset     uint64 = 0
 	defLimit      uint64 = 10
+	defRevoke            = "false"
 )
 
 func generateTestCerts(t *testing.T) (certs.Cert, sdk.Cert) {
 	expirationTime, err := time.Parse(time.RFC3339, "2032-01-01T00:00:00Z")
 	assert.Nil(t, err, fmt.Sprintf("failed to parse expiration time: %v", err))
 	c := certs.Cert{
-		OwnerID:        testsutil.GenerateUUID(&testing.T{}),
-		ThingID:        thingID,
-		ClientCert:     valid,
-		IssuingCA:      valid,
-		CAChain:        []string{valid},
-		ClientKey:      valid,
-		PrivateKeyType: valid,
-		Serial:         serial,
-		Expire:         expirationTime,
+		ThingID:      thingID,
+		SerialNumber: serial,
+		ExpiryTime:   expirationTime,
+		Certificate:  valid,
 	}
 	sc := sdk.Cert{
-		ThingID:    thingID,
-		CertSerial: serial,
-		ClientKey:  valid,
-		ClientCert: valid,
-		Expiration: expirationTime,
+		ThingID:      thingID,
+		SerialNumber: serial,
+		Key:          valid,
+		Certificate:  valid,
+		ExpiryTime:   expirationTime,
 	}
 
 	return c, sc
@@ -97,7 +93,7 @@ func TestIssueCert(t *testing.T) {
 			thingID:  thingID,
 			duration: ttl,
 			token:    validToken,
-			svcRes:   cert,
+			svcRes:   certs.Cert{SerialNumber: serial},
 			svcErr:   nil,
 			err:      nil,
 		},
@@ -172,7 +168,7 @@ func TestIssueCert(t *testing.T) {
 			resp, err := mgsdk.IssueCert(tc.thingID, tc.duration, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				assert.Equal(t, sdkCert, resp)
+				assert.Equal(t, tc.svcRes.SerialNumber, resp.SerialNumber)
 				ok := svcCall.Parent.AssertCalled(t, "IssueCert", mock.Anything, tc.token, tc.thingID, tc.duration)
 				assert.True(t, ok)
 			}
@@ -194,7 +190,7 @@ func TestViewCert(t *testing.T) {
 	mgsdk := sdk.NewSDK(sdkConf)
 
 	viewCertRes := sdkCert
-	viewCertRes.ClientKey = ""
+	viewCertRes.Key = ""
 
 	cases := []struct {
 		desc   string
@@ -267,14 +263,14 @@ func TestViewCertByThing(t *testing.T) {
 
 	viewCertThingRes := sdk.CertSerials{
 		Certs: []sdk.Cert{{
-			CertSerial: serial,
+			SerialNumber: serial,
 		}},
 	}
 	cases := []struct {
 		desc    string
 		thingID string
 		token   string
-		svcRes  certs.Page
+		svcRes  certs.CertPage
 		svcErr  error
 		err     errors.SDKError
 	}{
@@ -282,7 +278,7 @@ func TestViewCertByThing(t *testing.T) {
 			desc:    "view existing cert",
 			thingID: thingID,
 			token:   validToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{cert}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{{SerialNumber: serial}}},
 			svcErr:  nil,
 			err:     nil,
 		},
@@ -290,7 +286,7 @@ func TestViewCertByThing(t *testing.T) {
 			desc:    "view non-existent cert",
 			thingID: invalid,
 			token:   validToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{}},
 			svcErr:  errors.Wrap(svcerr.ErrNotFound, repoerr.ErrNotFound),
 			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrNotFound), http.StatusNotFound),
 		},
@@ -298,7 +294,7 @@ func TestViewCertByThing(t *testing.T) {
 			desc:    "view cert with invalid token",
 			thingID: thingID,
 			token:   invalidToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{}},
 			svcErr:  svcerr.ErrAuthentication,
 			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrAuthentication), http.StatusUnauthorized),
 		},
@@ -306,7 +302,7 @@ func TestViewCertByThing(t *testing.T) {
 			desc:    "view cert with empty token",
 			thingID: thingID,
 			token:   "",
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{}},
 			svcErr:  nil,
 			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
 		},
@@ -314,19 +310,19 @@ func TestViewCertByThing(t *testing.T) {
 			desc:    "view cert with empty thing id",
 			thingID: "",
 			token:   validToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{}},
 			svcErr:  nil,
 			err:     errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ListSerials", mock.Anything, tc.token, tc.thingID, defOffset, defLimit).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("ListSerials", mock.Anything, tc.token, tc.thingID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit}).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.ViewCertByThing(tc.thingID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				assert.Equal(t, viewCertThingRes, resp)
-				ok := svcCall.Parent.AssertCalled(t, "ListSerials", mock.Anything, tc.token, tc.thingID, defOffset, defLimit)
+				ok := svcCall.Parent.AssertCalled(t, "ListSerials", mock.Anything, tc.token, tc.thingID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

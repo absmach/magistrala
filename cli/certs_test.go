@@ -198,7 +198,11 @@ func TestIssueCertCmd(t *testing.T) {
 	certCmd := cli.NewCertsCmd()
 	rootCmd := setFlags(certCmd)
 
-	var ct mgsdk.Cert
+	cert := mgsdk.Cert{
+		SerialNumber: "serial",
+	}
+
+	var cs mgsdk.Cert
 	cases := []struct {
 		desc          string
 		args          []string
@@ -248,9 +252,9 @@ func TestIssueCertCmd(t *testing.T) {
 			case errLog:
 				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
 			case entityLog:
-				err := json.Unmarshal([]byte(out), &ct)
+				err := json.Unmarshal([]byte(out), &cs)
 				assert.Nil(t, err)
-				assert.Equal(t, tc.cert, ct, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.cert, ct))
+				assert.Equal(t, tc.cert, cs, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.cert, cs))
 			}
 			sdkCall.Unset()
 		})

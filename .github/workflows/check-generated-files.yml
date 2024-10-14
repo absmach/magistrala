@@ -148,7 +148,6 @@ jobs:
           mv ./consumers/notifiers/mocks/notifier.go ./consumers/notifiers/mocks/notifier.go.tmp
           mv ./consumers/notifiers/mocks/service.go ./consumers/notifiers/mocks/service.go.tmp
           mv ./consumers/notifiers/mocks/repository.go ./consumers/notifiers/mocks/repository.go.tmp
-          mv ./certs/mocks/certs.go ./certs/mocks/certs.go.tmp
           mv ./certs/mocks/pki.go ./certs/mocks/pki.go.tmp
           mv ./certs/mocks/service.go ./certs/mocks/service.go.tmp
           mv ./journal/mocks/repository.go ./journal/mocks/repository.go.tmp
@@ -199,7 +198,6 @@ jobs:
           check_mock_changes ./consumers/notifiers/mocks/notifier.go "Notifiers Notifier ./consumers/notifiers/mocks/notifier.go"
           check_mock_changes ./consumers/notifiers/mocks/service.go "Notifiers Service ./consumers/notifiers/mocks/service.go"
           check_mock_changes ./consumers/notifiers/mocks/repository.go "Notifiers Repository ./consumers/notifiers/mocks/repository.go"
-          check_mock_changes ./certs/mocks/certs.go "Certs Repository ./certs/mocks/certs.go"
           check_mock_changes ./certs/mocks/pki.go "PKI ./certs/mocks/pki.go"
           check_mock_changes ./certs/mocks/service.go "Certs Service ./certs/mocks/service.go"
           check_mock_changes ./journal/mocks/repository.go "Journal Repository ./journal/mocks/repository.go"

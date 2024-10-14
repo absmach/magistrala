@@ -4,44 +4,42 @@
 package certs
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"os"
+	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
-// ConfigsPage contains page related metadata as well as list.
-type Page struct {
-	Total  uint64
-	Offset uint64
-	Limit  uint64
-	Certs  []Cert
+type Cert struct {
+	SerialNumber string    `json:"serial_number"`
+	Certificate  string    `json:"certificate,omitempty"`
+	Key          string    `json:"key,omitempty"`
+	Revoked      bool      `json:"revoked"`
+	ExpiryTime   time.Time `json:"expiry_time"`
+	ThingID      string    `json:"entity_id"`
+}
+
+type CertPage struct {
+	Total        uint64 `json:"total"`
+	Offset       uint64 `json:"offset"`
+	Limit        uint64 `json:"limit"`
+	Certificates []Cert `json:"certificates,omitempty"`
+}
+
+type PageMetadata struct {
+	Total      uint64 `json:"total,omitempty"`
+	Offset     uint64 `json:"offset,omitempty"`
+	Limit      uint64 `json:"limit,omitempty"`
+	ThingID    string `json:"thing_id,omitempty"`
+	Token      string `json:"token,omitempty"`
+	CommonName string `json:"common_name,omitempty"`
+	Revoked    string `json:"revoked,omitempty"`
 }
 
 var ErrMissingCerts = errors.New("CA path or CA key path not set")
-
-// Repository specifies a Config persistence API.
-//
-//go:generate mockery --name Repository --output=./mocks --filename certs.go --quiet --note "Copyright (c) Abstract Machines"
-type Repository interface {
-	// Save  saves cert for thing into database
-	Save(ctx context.Context, cert Cert) (string, error)
-
-	// RetrieveAll retrieve issued certificates for given owner ID
-	RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (Page, error)
-
-	// Remove removes certificate from DB for a given thing ID
-	Remove(ctx context.Context, ownerID, thingID string) error
-
-	// RetrieveByThing retrieves issued certificates for a given thing ID
-	RetrieveByThing(ctx context.Context, ownerID, thingID string, offset, limit uint64) (Page, error)
-
-	// RetrieveBySerial retrieves a certificate for a given serial ID
-	RetrieveBySerial(ctx context.Context, ownerID, serialID string) (Cert, error)
-}
 
 func LoadCertificates(caPath, caKeyPath string) (tls.Certificate, *x509.Certificate, error) {
 	if caPath == "" || caKeyPath == "" {

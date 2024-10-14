@@ -33,15 +33,9 @@ var (
 	serial      = testsutil.GenerateUUID(&testing.T{})
 	ttl         = "1h"
 	cert        = certs.Cert{
-		OwnerID:        testsutil.GenerateUUID(&testing.T{}),
-		ThingID:        thingID,
-		ClientCert:     valid,
-		IssuingCA:      valid,
-		CAChain:        []string{valid},
-		ClientKey:      valid,
-		PrivateKeyType: valid,
-		Serial:         serial,
-		Expire:         time.Now().Add(time.Hour),
+		ThingID:      thingID,
+		SerialNumber: serial,
+		ExpiryTime:   time.Now().Add(time.Hour),
 	}
 )
 
@@ -104,7 +98,7 @@ func TestIssueCert(t *testing.T) {
 			ttl:         ttl,
 			request:     fmt.Sprintf(validReqString, thingID, ttl),
 			status:      http.StatusCreated,
-			svcRes:      cert,
+			svcRes:      certs.Cert{SerialNumber: serial},
 			svcErr:      nil,
 			err:         nil,
 		},
@@ -224,7 +218,7 @@ func TestViewCert(t *testing.T) {
 			token:    valid,
 			serialID: serial,
 			status:   http.StatusOK,
-			svcRes:   cert,
+			svcRes:   certs.Cert{SerialNumber: serial},
 			svcErr:   nil,
 			err:      nil,
 		},
@@ -352,16 +346,18 @@ func TestRevokeCert(t *testing.T) {
 func TestListSerials(t *testing.T) {
 	cs, svc := newCertServer()
 	defer cs.Close()
+	revoked := "false"
 
 	cases := []struct {
 		desc    string
 		token   string
 		thingID string
+		revoked string
 		offset  uint64
 		limit   uint64
 		query   string
 		status  int
-		svcRes  certs.Page
+		svcRes  certs.CertPage
 		svcErr  error
 		err     error
 	}{
@@ -369,15 +365,52 @@ func TestListSerials(t *testing.T) {
 			desc:    "list certs successfully with default limit",
 			token:   valid,
 			thingID: thingID,
+			revoked: revoked,
 			offset:  0,
 			limit:   10,
 			query:   "",
 			status:  http.StatusOK,
-			svcRes: certs.Page{
-				Total:  1,
-				Offset: 0,
-				Limit:  10,
-				Certs:  []certs.Cert{cert},
+			svcRes: certs.CertPage{
+				Total:        1,
+				Offset:       0,
+				Limit:        10,
+				Certificates: []certs.Cert{cert},
+			},
+			svcErr: nil,
+			err:    nil,
+		},
+		{
+			desc:    "list certs successfully with default revoke",
+			token:   valid,
+			thingID: thingID,
+			revoked: revoked,
+			offset:  0,
+			limit:   10,
+			query:   "",
+			status:  http.StatusOK,
+			svcRes: certs.CertPage{
+				Total:        1,
+				Offset:       0,
+				Limit:        10,
+				Certificates: []certs.Cert{cert},
+			},
+			svcErr: nil,
+			err:    nil,
+		},
+		{
+			desc:    "list certs successfully with all certs",
+			token:   valid,
+			thingID: thingID,
+			revoked: "all",
+			offset:  0,
+			limit:   10,
+			query:   "?revoked=all",
+			status:  http.StatusOK,
+			svcRes: certs.CertPage{
+				Total:        1,
+				Offset:       0,
+				Limit:        10,
+				Certificates: []certs.Cert{cert},
 			},
 			svcErr: nil,
 			err:    nil,
@@ -386,15 +419,16 @@ func TestListSerials(t *testing.T) {
 			desc:    "list certs successfully with limit",
 			token:   valid,
 			thingID: thingID,
+			revoked: revoked,
 			offset:  0,
 			limit:   5,
 			query:   "?limit=5",
 			status:  http.StatusOK,
-			svcRes: certs.Page{
-				Total:  1,
-				Offset: 0,
-				Limit:  5,
-				Certs:  []certs.Cert{cert},
+			svcRes: certs.CertPage{
+				Total:        1,
+				Offset:       0,
+				Limit:        5,
+				Certificates: []certs.Cert{cert},
 			},
 			svcErr: nil,
 			err:    nil,
@@ -403,15 +437,16 @@ func TestListSerials(t *testing.T) {
 			desc:    "list certs successfully with offset",
 			token:   valid,
 			thingID: thingID,
+			revoked: revoked,
 			offset:  1,
 			limit:   10,
 			query:   "?offset=1",
 			status:  http.StatusOK,
-			svcRes: certs.Page{
-				Total:  1,
-				Offset: 1,
-				Limit:  10,
-				Certs:  []certs.Cert{},
+			svcRes: certs.CertPage{
+				Total:        1,
+				Offset:       1,
+				Limit:        10,
+				Certificates: []certs.Cert{},
 			},
 			svcErr: nil,
 			err:    nil,
@@ -420,15 +455,16 @@ func TestListSerials(t *testing.T) {
 			desc:    "list certs successfully with offset and limit",
 			token:   valid,
 			thingID: thingID,
+			revoked: revoked,
 			offset:  1,
 			limit:   5,
 			query:   "?offset=1&limit=5",
 			status:  http.StatusOK,
-			svcRes: certs.Page{
-				Total:  1,
-				Offset: 1,
-				Limit:  5,
-				Certs:  []certs.Cert{},
+			svcRes: certs.CertPage{
+				Total:        1,
+				Offset:       1,
+				Limit:        5,
+				Certificates: []certs.Cert{},
 			},
 			svcErr: nil,
 			err:    nil,
@@ -437,11 +473,12 @@ func TestListSerials(t *testing.T) {
 			desc:    "list with invalid token",
 			token:   invalid,
 			thingID: thingID,
+			revoked: revoked,
 			offset:  0,
 			limit:   10,
 			query:   "",
 			status:  http.StatusUnauthorized,
-			svcRes:  certs.Page{},
+			svcRes:  certs.CertPage{},
 			svcErr:  svcerr.ErrAuthentication,
 			err:     svcerr.ErrAuthentication,
 		},
@@ -449,11 +486,12 @@ func TestListSerials(t *testing.T) {
 			desc:    "list with empty token",
 			token:   "",
 			thingID: thingID,
+			revoked: revoked,
 			offset:  0,
 			limit:   10,
 			query:   "",
 			status:  http.StatusUnauthorized,
-			svcRes:  certs.Page{},
+			svcRes:  certs.CertPage{},
 			svcErr:  nil,
 			err:     apiutil.ErrBearerToken,
 		},
@@ -461,9 +499,10 @@ func TestListSerials(t *testing.T) {
 			desc:    "list with limit exceeding max limit",
 			token:   valid,
 			thingID: thingID,
+			revoked: revoked,
 			query:   "?limit=1000",
 			status:  http.StatusBadRequest,
-			svcRes:  certs.Page{},
+			svcRes:  certs.CertPage{},
 			svcErr:  nil,
 			err:     apiutil.ErrLimitSize,
 		},
@@ -471,9 +510,10 @@ func TestListSerials(t *testing.T) {
 			desc:    "list with invalid offset",
 			token:   valid,
 			thingID: thingID,
+			revoked: revoked,
 			query:   "?offset=invalid",
 			status:  http.StatusBadRequest,
-			svcRes:  certs.Page{},
+			svcRes:  certs.CertPage{},
 			svcErr:  nil,
 			err:     apiutil.ErrValidation,
 		},
@@ -481,9 +521,10 @@ func TestListSerials(t *testing.T) {
 			desc:    "list with invalid limit",
 			token:   valid,
 			thingID: thingID,
+			revoked: revoked,
 			query:   "?limit=invalid",
 			status:  http.StatusBadRequest,
-			svcRes:  certs.Page{},
+			svcRes:  certs.CertPage{},
 			svcErr:  nil,
 			err:     apiutil.ErrValidation,
 		},
@@ -491,11 +532,12 @@ func TestListSerials(t *testing.T) {
 			desc:    "list with invalid thing id",
 			token:   valid,
 			thingID: invalid,
+			revoked: revoked,
 			offset:  0,
 			limit:   10,
 			query:   "",
 			status:  http.StatusNotFound,
-			svcRes:  certs.Page{},
+			svcRes:  certs.CertPage{},
 			svcErr:  svcerr.ErrNotFound,
 			err:     svcerr.ErrNotFound,
 		},
@@ -507,7 +549,7 @@ func TestListSerials(t *testing.T) {
 			url:    fmt.Sprintf("%s/serials/%s", cs.URL, tc.thingID) + tc.query,
 			token:  tc.token,
 		}
-		svcCall := svc.On("ListSerials", mock.Anything, tc.token, tc.thingID, tc.offset, tc.limit).Return(tc.svcRes, tc.svcErr)
+		svcCall := svc.On("ListSerials", mock.Anything, tc.token, tc.thingID, certs.PageMetadata{Revoked: tc.revoked, Offset: tc.offset, Limit: tc.limit}).Return(tc.svcRes, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		var errRes respBody

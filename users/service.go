@@ -98,8 +98,8 @@ func (svc service) RegisterClient(ctx context.Context, session authn.Session, cl
 	return user, nil
 }
 
-func (svc service) IssueToken(ctx context.Context, id, secret, domainID string) (*magistrala.Token, error) {
-	dbUser, err := svc.users.RetrieveByID(ctx, id)
+func (svc service) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
+	dbUser, err := svc.users.RetrieveByIdentity(ctx, identity)
 	if err != nil {
 		return &magistrala.Token{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -260,7 +260,7 @@ func (svc service) UpdateClientIdentity(ctx context.Context, session authn.Sessi
 }
 
 func (svc service) GenerateResetToken(ctx context.Context, email, host string) error {
-	user, err := svc.users.RetrieveByUserName(ctx, email)
+	user, err := svc.users.RetrieveByIdentity(ctx, email)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -287,7 +287,8 @@ func (svc service) ResetSecret(ctx context.Context, session authn.Session, secre
 		return errors.Wrap(svcerr.ErrMalformedEntity, err)
 	}
 	u = User{
-		ID: u.ID,
+		ID:       u.ID,
+		Identity: u.Identity,
 		Credentials: Credentials{
 			UserName: u.Credentials.UserName,
 			Secret:   secret,
@@ -306,7 +307,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, session authn.Session
 	if err != nil {
 		return User{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	if _, err := svc.IssueToken(ctx, dbUser.ID, oldSecret, ""); err != nil {
+	if _, err := svc.IssueToken(ctx, dbUser.Identity, oldSecret, ""); err != nil {
 		return User{}, err
 	}
 	newSecret, err = svc.hasher.Hash(newSecret)

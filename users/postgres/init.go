@@ -53,8 +53,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						ADD COLUMN first_name VARCHAR(254), 
 						ADD COLUMN last_name VARCHAR(254), 
 						ADD COLUMN profile_picture TEXT,
-						DROP COLUMN name,
-						DROP COLUMN identity`,
+						DROP COLUMN name`,
 				},
 				Down: []string{
 					`ALTER TABLE clients

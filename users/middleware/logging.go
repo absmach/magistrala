@@ -47,9 +47,9 @@ func (lm *loggingMiddleware) RegisterClient(ctx context.Context, session authn.S
 	return lm.svc.RegisterClient(ctx, session, client, selfRegister)
 }
 
-// IssueToken logs the issue_token request. It logs the user id type and the time it took to complete the request.
+// IssueToken logs the issue_token request. It logs the user identity type and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) IssueToken(ctx context.Context, id, secret, domainID string) (t *magistrala.Token, err error) {
+func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (t *magistrala.Token, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -65,7 +65,7 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, id, secret, domainI
 		}
 		lm.logger.Info("Issue token completed successfully", args...)
 	}(time.Now())
-	return lm.svc.IssueToken(ctx, id, secret, domainID)
+	return lm.svc.IssueToken(ctx, identity, secret, domainID)
 }
 
 // RefreshToken logs the refresh_token request. It logs the refreshtoken, token type and the time it took to complete the request.
@@ -259,6 +259,27 @@ func (lm *loggingMiddleware) UpdateClientIdentity(ctx context.Context, session a
 		lm.logger.Info("Update user identity completed successfully", args...)
 	}(time.Now())
 	return lm.svc.UpdateClientIdentity(ctx, session, id, identity)
+}
+
+// UpdateUserIdentity logs the update_identity request. It logs the user id and the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) UpdateUserIdentity(ctx context.Context, token, id, identity string) (u users.User, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Group("user",
+				slog.String("id", u.ID),
+				slog.String("name", u.Credentials.UserName),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Update user identity failed", args...)
+			return
+		}
+		lm.logger.Info("Update user identity completed successfully", args...)
+	}(time.Now())
+	return lm.svc.UpdateUserIdentity(ctx, token, id, identity)
 }
 
 // UpdateUserSecret logs the update_user_secret request. It logs the user id and the time it took to complete the request.

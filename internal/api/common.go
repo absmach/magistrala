@@ -45,6 +45,7 @@ const (
 	DirKey           = "dir"
 	ListPerms        = "list_perms"
 	VisibilityKey    = "visibility"
+	IdentityKey      = "identity"
 	SharedByKey      = "shared_by"
 	TokenKey         = "token"
 	DefPermission    = "view"

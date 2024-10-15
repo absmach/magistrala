@@ -77,6 +77,9 @@ func (uce createUserEvent) Encode() (map[string]interface{}, error) {
 	if uce.Credentials.UserName != "" {
 		val["user_name"] = uce.Credentials.UserName
 	}
+	if uce.Identity != "" {
+		val["identity"] = uce.Identity
+	}
 
 	return val, nil
 }
@@ -110,6 +113,9 @@ func (uce updateUserEvent) Encode() (map[string]interface{}, error) {
 	}
 	if uce.Credentials.UserName != "" {
 		val["user_name"] = uce.Credentials.UserName
+	}
+	if uce.Identity != "" {
+		val["identity"] = uce.Identity
 	}
 	if uce.Metadata != nil {
 		val["metadata"] = uce.Metadata
@@ -211,6 +217,9 @@ func (vue viewUserEvent) Encode() (map[string]interface{}, error) {
 	if vue.DomainID != "" {
 		val["domain"] = vue.DomainID
 	}
+	if vue.Identity != "" {
+		val["identity"] = vue.Identity
+	}
 	if vue.Credentials.UserName != "" {
 		val["identity"] = vue.Credentials.UserName
 	}
@@ -269,6 +278,9 @@ func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
 	}
 	if vpe.Status.String() != "" {
 		val["status"] = vpe.Status.String()
+	}
+	if vpe.Identity != "" {
+		val["identity"] = vpe.Identity
 	}
 
 	return val, nil
@@ -333,6 +345,9 @@ func (lue listUserEvent) Encode() (map[string]interface{}, error) {
 	if lue.UserName != "" {
 		val["user_name"] = lue.UserName
 	}
+	if lue.Identity != "" {
+		val["identity"] = lue.Identity
+	}
 
 	return val, nil
 }
@@ -383,6 +398,9 @@ func (lcge listUserByGroupEvent) Encode() (map[string]interface{}, error) {
 	if lcge.LastName != "" {
 		val["last_name"] = lcge.LastName
 	}
+	if lcge.Identity != "" {
+		val["identity"] = lcge.Identity
+	}
 
 	return val, nil
 }
@@ -406,6 +424,9 @@ func (sce searchUserEvent) Encode() (map[string]interface{}, error) {
 	}
 	if sce.LastName != "" {
 		val["last_name"] = sce.LastName
+	}
+	if sce.Identity != "" {
+		val["identity"] = sce.Identity
 	}
 	if sce.Id != "" {
 		val["id"] = sce.Id

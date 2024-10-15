@@ -102,7 +102,7 @@ func (h *handler) handle(ctx context.Context) {
 
 			h.logger.Info("user deleted", slog.Group("user",
 				slog.String("id", u.ID),
-				slog.String("name", u.FirstName),
+				slog.String("first_name", u.FirstName),
 				slog.String("last_name", u.LastName),
 			))
 		}

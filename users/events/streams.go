@@ -99,6 +99,15 @@ func (es *eventStore) UpdateClientIdentity(ctx context.Context, session authn.Se
 	return es.update(ctx, "identity", user)
 }
 
+func (es *eventStore) UpdateUserIdentity(ctx context.Context, token, id, identity string) (users.User, error) {
+	user, err := es.svc.UpdateUserIdentity(ctx, token, id, identity)
+	if err != nil {
+		return user, err
+	}
+
+	return es.update(ctx, "identity", user)
+}
+
 func (es *eventStore) update(ctx context.Context, operation string, user users.User) (users.User, error) {
 	event := updateUserEvent{
 		user, operation,

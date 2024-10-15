@@ -261,10 +261,10 @@ func TestUpdateUserReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateUserTagsReqValidate(t *testing.T) {
+func TestUpdateUserRoleReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateUserTagsReq
+		req  updateUserRoleReq
 		err  error
 	}{
 		{
@@ -290,10 +290,10 @@ func TestUpdateUserTagsReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateUserRoleReqValidate(t *testing.T) {
+func TestUpdateUserIdentityReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateUserRoleReq
+		req  updateUserIdentityReq
 		err  error
 	}{
 		{
@@ -429,6 +429,7 @@ func TestLoginUserReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: loginUserReq{
+				Identity: "eaxmple,example.com",
 				UserName: "eaxmple",
 				Secret:   secret,
 			},
@@ -437,6 +438,7 @@ func TestLoginUserReqValidate(t *testing.T) {
 		{
 			desc: "empty identity",
 			req: loginUserReq{
+				Identity: "",
 				UserName: "",
 				Secret:   secret,
 			},
@@ -447,6 +449,7 @@ func TestLoginUserReqValidate(t *testing.T) {
 			req: loginUserReq{
 				UserName: "eaxmple",
 				Secret:   "",
+				Identity: "eaxmple,example.com",
 			},
 			err: apiutil.ErrMissingPass,
 		},

@@ -112,7 +112,7 @@ func (cfg *config) UserInfo(accessToken string) (uclient.User, error) {
 		return uclient.User{}, err
 	}
 
-	if user.ID == "" || user.FirstName == "" || user.LastName == "" {
+	if user.ID == "" || user.FirstName == "" || user.LastName == "" || user.Email == "" {
 		return uclient.User{}, svcerr.ErrAuthentication
 	}
 
@@ -120,9 +120,7 @@ func (cfg *config) UserInfo(accessToken string) (uclient.User, error) {
 		ID:        user.ID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
-		Credentials: uclient.Credentials{
-			UserName: user.UserName,
-		},
+		Identity:  user.Email,
 		Metadata: map[string]interface{}{
 			"oauth_provider":  providerName,
 			"profile_picture": user.Picture,

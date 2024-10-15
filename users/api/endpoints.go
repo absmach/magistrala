@@ -324,6 +324,21 @@ func updateUserIdentityEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
+func updateUserIdentityEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateUserIdentityReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		user, err := svc.UpdateUserIdentity(ctx, req.token, req.id, req.Identity)
+		if err != nil {
+			return nil, err
+		}
+		return updateUserRes{User: user}, nil
+	}
+}
+
 // Password reset request endpoint.
 // When successful password reset link is generated.
 // Link is generated using MG_TOKEN_RESET_ENDPOINT env.
@@ -424,7 +439,7 @@ func issueTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		token, err := svc.IssueToken(ctx, req.UserName, req.Secret, req.DomainID)
+		token, err := svc.IssueToken(ctx, req.Identity, req.Secret, req.DomainID)
 		if err != nil {
 			return nil, err
 		}

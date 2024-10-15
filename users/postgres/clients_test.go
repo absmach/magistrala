@@ -43,6 +43,8 @@ func TestUsersSave(t *testing.T) {
 	last_name := namesgen.Generate()
 	user_name := namesgen.Generate()
 
+	clientIdentity := first_name + "@example.com"
+
 	cases := []struct {
 		desc   string
 		client users.User
@@ -54,6 +56,7 @@ func TestUsersSave(t *testing.T) {
 				ID:        uid,
 				FirstName: first_name,
 				LastName:  last_name,
+				Identity:  clientIdentity,
 				Credentials: users.Credentials{
 					UserName: user_name,
 					Secret:   password,
@@ -65,11 +68,29 @@ func TestUsersSave(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc: "add user with duplicate user identity",
+			client: users.User{
+				ID:        testsutil.GenerateUUID(t),
+				FirstName: first_name,
+				LastName:  last_name,
+				Identity:  clientIdentity,
+				Credentials: users.Credentials{
+					UserName: namesgen.Generate(),
+					Secret:   password,
+				},
+				Metadata:       users.Metadata{},
+				Status:         users.EnabledStatus,
+				ProfilePicture: "",
+			},
+			err: repoerr.ErrConflict,
+		},
+		{
 			desc: "add user with duplicate user name",
 			client: users.User{
 				ID:        testsutil.GenerateUUID(t),
 				FirstName: namesgen.Generate(),
 				LastName:  last_name,
+				Identity:  namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					UserName: user_name,
 					Secret:   password,
@@ -86,6 +107,7 @@ func TestUsersSave(t *testing.T) {
 				ID:        invalidName,
 				FirstName: namesgen.Generate(),
 				LastName:  namesgen.Generate(),
+				Identity:  namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					UserName: user_name,
 					Secret:   password,
@@ -102,6 +124,7 @@ func TestUsersSave(t *testing.T) {
 				ID:        testsutil.GenerateUUID(t),
 				FirstName: invalidName,
 				LastName:  namesgen.Generate(),
+				Identity:  namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					UserName: user_name,
 					Secret:   password,
@@ -115,7 +138,8 @@ func TestUsersSave(t *testing.T) {
 		{
 			desc: "add user with a missing user name",
 			client: users.User{
-				ID: testsutil.GenerateUUID(t),
+				ID:       testsutil.GenerateUUID(t),
+				Identity: namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					Secret: password,
 				},
@@ -130,6 +154,7 @@ func TestUsersSave(t *testing.T) {
 				ID:        testsutil.GenerateUUID(t),
 				FirstName: namesgen.Generate(),
 				LastName:  namesgen.Generate(),
+				Identity:  namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					UserName: namesgen.Generate(),
 				},
@@ -142,6 +167,7 @@ func TestUsersSave(t *testing.T) {
 			client: users.User{
 				ID:        testsutil.GenerateUUID(t),
 				FirstName: namesgen.Generate(),
+				Identity:  namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					UserName: user_name,
 					Secret:   password,
@@ -185,6 +211,7 @@ func TestIsPlatformAdmin(t *testing.T) {
 			client: users.User{
 				ID:        testsutil.GenerateUUID(t),
 				FirstName: namesgen.Generate(),
+				Identity:  namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					UserName: namesgen.Generate(),
 					Secret:   password,
@@ -200,6 +227,7 @@ func TestIsPlatformAdmin(t *testing.T) {
 			client: users.User{
 				ID:        testsutil.GenerateUUID(t),
 				FirstName: namesgen.Generate(),
+				Identity:  namesgen.Generate() + "@example.com",
 				Credentials: users.Credentials{
 					UserName: namesgen.Generate(),
 					Secret:   password,
@@ -288,6 +316,7 @@ func TestRetrieveAll(t *testing.T) {
 		client := users.User{
 			ID:        testsutil.GenerateUUID(t),
 			FirstName: namesgen.Generate(),
+			Identity:  namesgen.Generate() + "@example.com",
 			Credentials: users.Credentials{
 				UserName: namesgen.Generate(),
 				Secret:   "",
@@ -407,19 +436,19 @@ func TestRetrieveAll(t *testing.T) {
 			},
 			err: nil,
 		},
-		// {
-		// 	desc:     "retrieve with empty page",
-		// 	pageMeta: users.Page{},
-		// 	page: users.UsersPage{
-		// 		Page: users.Page{
-		// 			Total:  196, // No of enabled clients.
-		// 			Offset: 0,
-		// 			Limit:  0,
-		// 		},
-		// 		Users: []users.User{},
-		// 	},
-		// 	err: nil,
-		// },
+		{
+			desc:     "retrieve with empty page",
+			pageMeta: users.Page{},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  196, // No of enabled clients.
+					Offset: 0,
+					Limit:  0,
+				},
+				Users: []users.User{},
+			},
+			err: nil,
+		},
 		{
 			desc: "retrieve with user id",
 			pageMeta: users.Page{
@@ -477,61 +506,60 @@ func TestRetrieveAll(t *testing.T) {
 			},
 			err: nil,
 		},
-		// {
-		// add username to pagequery
-		// 	desc: "retrieve with client User Name",
-		// 	pageMeta: users.Page{
-		// 		Name:   items[0].UserName,
-		// 		Offset: 0,
-		// 		Limit:  3,
-		// 		Role:   users.AllRole,
-		// 		Status: users.AllStatus,
-		// 	},
-		// 	page: users.UsersPage{
-		// 		Page: users.Page{
-		// 			Total:  1,
-		// 			Offset: 0,
-		// 			Limit:  3,
-		// 		},
-		// 		Users: []users.User{items[0]},
-		// 	},
-		// 	err: nil,
-		// },
-		// {
-		// 	desc: "retrieve with enabled status",
-		// 	pageMeta: users.Page{
-		// 		Status: users.EnabledStatus,
-		// 		Offset: 0,
-		// 		Limit:  200,
-		// 		Role:   users.AllRole,
-		// 	},
-		// 	page: users.UsersPage{
-		// 		Page: users.Page{
-		// 			Total:  196,
-		// 			Offset: 0,
-		// 			Limit:  200,
-		// 		},
-		// 		Users: enabledClients,
-		// 	},
-		// 	err: nil,
-		// },
-		// {
-		// 	desc: "retrieve with disabled status",
-		// 	pageMeta: users.Page{
-		// 		Status: users.DisabledStatus,
-		// 		Offset: 0,
-		// 		Limit:  200,
-		// 		Role:   users.AllRole,
-		// 	},
-		// 	page: users.UsersPage{
-		// 		Page: users.Page{
-		// 			Total:  4,
-		// 			Offset: 0,
-		// 			Limit:  200,
-		// 		},
-		// 		Users: []users.User{items[0], items[50], items[100], items[150]},
-		// 	},
-		// },
+		{
+			desc: "retrieve with client User Name",
+			pageMeta: users.Page{
+				UserName: items[0].Credentials.UserName,
+				Offset:   0,
+				Limit:    3,
+				Role:     users.AllRole,
+				Status:   users.AllStatus,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  1,
+					Offset: 0,
+					Limit:  3,
+				},
+				Users: []users.User{items[0]},
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve with enabled status",
+			pageMeta: users.Page{
+				Status: users.EnabledStatus,
+				Offset: 0,
+				Limit:  200,
+				Role:   users.AllRole,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  196,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: enabledClients,
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve with disabled status",
+			pageMeta: users.Page{
+				Status: users.DisabledStatus,
+				Offset: 0,
+				Limit:  200,
+				Role:   users.AllRole,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  4,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: []users.User{items[0], items[50], items[100], items[150]},
+			},
+		},
 		{
 			desc: "retrieve with all status",
 			pageMeta: users.Page{
@@ -628,42 +656,42 @@ func TestRetrieveAll(t *testing.T) {
 			},
 			err: nil,
 		},
-		// {
-		// 	desc: "retrieve with role",
-		// 	pageMeta: users.Page{
-		// 		Role:   AdminRole,
-		// 		Offset: 0,
-		// 		Limit:  200,
-		// 		Status: users.AllStatus,
-		// 	},
-		// 	page: users.UsersPage{
-		// 		Page: users.Page{
-		// 			Total:  4,
-		// 			Offset: 0,
-		// 			Limit:  200,
-		// 		},
-		// 		Users: []users.User{items[0], items[50], items[100], items[150]},
-		// 	},
-		// 	err: nil,
-		// },
-		// {
-		// 	desc: "retrieve with invalid role",
-		// 	pageMeta: users.Page{
-		// 		Role:   AdminRole + 2,
-		// 		Offset: 0,
-		// 		Limit:  200,
-		// 		Status: users.AllStatus,
-		// 	},
-		// 	page: users.UsersPage{
-		// 		Page: users.Page{
-		// 			Total:  0,
-		// 			Offset: 0,
-		// 			Limit:  200,
-		// 		},
-		// 		Users: []users.User{},
-		// 	},
-		// 	err: nil,
-		// },
+		{
+			desc: "retrieve with role",
+			pageMeta: users.Page{
+				Role:   users.AdminRole,
+				Offset: 0,
+				Limit:  200,
+				Status: users.AllStatus,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  4,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: []users.User{items[0], items[50], items[100], items[150]},
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve with invalid role",
+			pageMeta: users.Page{
+				Role:   users.AdminRole + 2,
+				Offset: 0,
+				Limit:  200,
+				Status: users.AllStatus,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  0,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: []users.User{},
+			},
+			err: nil,
+		},
 	}
 
 	for _, tc := range cases {

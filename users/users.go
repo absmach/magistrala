@@ -5,9 +5,29 @@ package users
 
 import (
 	"context"
+	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/postgres"
+	"golang.org/x/net/idna"
+)
+
+const (
+	maxLocalLen  = 64
+	maxDomainLen = 255
+	maxTLDLen    = 24 // longest TLD currently in existence
+
+	atSeparator  = "@"
+	dotSeparator = "."
+)
+
+var (
+	userRegexp    = regexp.MustCompile("^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$")
+	hostRegexp    = regexp.MustCompile(`^[^\s]+\.[^\s]+$`)
+	userDotRegexp = regexp.MustCompile("(^[.]{1})|([.]{1}$)|([.]{2,})")
 )
 
 type User struct {
@@ -25,6 +45,7 @@ type User struct {
 	DomainID       string      `json:"domain_id,omitempty"`
 	Credentials    Credentials `json:"credentials,omitempty"`
 	Permissions    []string    `json:"permissions,omitempty"`
+	Identity       string      `json:"identity,omitempty"`
 }
 
 type Credentials struct {
@@ -63,6 +84,9 @@ type Repository interface {
 	// RetrieveAll retrieves all users.
 	RetrieveAll(ctx context.Context, pm Page) (UsersPage, error)
 
+	// RetrieveByIdentity retrieves user by its unique credentials.
+	RetrieveByIdentity(ctx context.Context, identity string) (User, error)
+
 	// Update updates the user name and metadata.
 	Update(ctx context.Context, user User) (User, error)
 
@@ -91,6 +115,75 @@ type Repository interface {
 	Save(ctx context.Context, user User) (User, error)
 }
 
+// Validate returns an error if user representation is invalid.
+func (u User) Validate() error {
+	if !isEmail(u.Identity) {
+		return errors.ErrMalformedEntity
+	}
+	return nil
+}
+
+func isEmail(email string) bool {
+	if email == "" {
+		return false
+	}
+
+	es := strings.Split(email, atSeparator)
+	if len(es) != 2 {
+		return false
+	}
+	local, host := es[0], es[1]
+
+	if local == "" || len(local) > maxLocalLen {
+		return false
+	}
+
+	hs := strings.Split(host, dotSeparator)
+	if len(hs) < 2 {
+		return false
+	}
+	domain, ext := hs[0], hs[1]
+
+	// Check subdomain and validate
+	if len(hs) > 2 {
+		if domain == "" {
+			return false
+		}
+
+		for i := 1; i < len(hs)-1; i++ {
+			sub := hs[i]
+			if sub == "" {
+				return false
+			}
+			domain = fmt.Sprintf("%s.%s", domain, sub)
+		}
+
+		ext = hs[len(hs)-1]
+	}
+
+	if domain == "" || len(domain) > maxDomainLen {
+		return false
+	}
+	if ext == "" || len(ext) > maxTLDLen {
+		return false
+	}
+
+	punyLocal, err := idna.ToASCII(local)
+	if err != nil {
+		return false
+	}
+	punyHost, err := idna.ToASCII(host)
+	if err != nil {
+		return false
+	}
+
+	if userDotRegexp.MatchString(punyLocal) || !userRegexp.MatchString(punyLocal) || !hostRegexp.MatchString(punyHost) {
+		return false
+	}
+
+	return true
+}
+
 // Page contains page metadata that helps navigation.
 type Page struct {
 	Total      uint64   `json:"total"`
@@ -110,4 +203,5 @@ type Page struct {
 	UserName   string   `json:"user_name,omitempty"`
 	FirstName  string   `json:"first_name,omitempty"`
 	LastName   string   `json:"last_name,omitempty"`
+	Identity   string   `json:"identity,omitempty"`
 }

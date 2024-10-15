@@ -164,6 +164,34 @@ func (_m *Repository) RetrieveByID(ctx context.Context, id string) (users.User, 
 	return r0, r1
 }
 
+// RetrieveByIdentity provides a mock function with given fields: ctx, identity
+func (_m *Repository) RetrieveByIdentity(ctx context.Context, identity string) (users.User, error) {
+	ret := _m.Called(ctx, identity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveByIdentity")
+	}
+
+	var r0 users.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (users.User, error)); ok {
+		return rf(ctx, identity)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) users.User); ok {
+		r0 = rf(ctx, identity)
+	} else {
+		r0 = ret.Get(0).(users.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, identity)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RetrieveByUserName provides a mock function with given fields: ctx, userName
 func (_m *Repository) RetrieveByUserName(ctx context.Context, userName string) (users.User, error) {
 	ret := _m.Called(ctx, userName)

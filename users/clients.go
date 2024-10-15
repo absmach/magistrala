@@ -44,6 +44,9 @@ type Service interface {
 	// UpdateClientIdentity updates the client's identity.
 	UpdateClientIdentity(ctx context.Context, session authn.Session, id, identity string) (clients.Client, error)
 
+	// UpdateUserIdentity updates the user's identity.
+	UpdateUserIdentity(ctx context.Context, token, userID, identity string) (User, error)
+
 	// GenerateResetToken email where mail will be sent.
 	// host is used for generating reset link.
 	GenerateResetToken(ctx context.Context, email, host string) error
@@ -74,7 +77,7 @@ type Service interface {
 	Identify(ctx context.Context, session authn.Session) (string, error)
 
 	// IssueToken issues a new access and refresh token.
-	IssueToken(ctx context.Context, userName, secret, domainID string) (*magistrala.Token, error)
+	IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error)
 
 	// RefreshToken refreshes expired access tokens.
 	// After an access token expires, the refresh token is used to get

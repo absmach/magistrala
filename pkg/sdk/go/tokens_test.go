@@ -41,7 +41,7 @@ func TestIssueToken(t *testing.T) {
 		{
 			desc: "issue token successfully",
 			login: sdk.Login{
-				Identity: client.Credentials.Identity,
+				Identity: client.Credentials.UserName,
 				Secret:   client.Credentials.Secret,
 				DomainID: validID,
 			},
@@ -69,7 +69,7 @@ func TestIssueToken(t *testing.T) {
 		{
 			desc: "issue token with invalid secret",
 			login: sdk.Login{
-				Identity: client.Credentials.Identity,
+				Identity: client.Credentials.UserName,
 				Secret:   "invalid",
 				DomainID: validID,
 			},
@@ -93,7 +93,7 @@ func TestIssueToken(t *testing.T) {
 		{
 			desc: "issue token with empty secret",
 			login: sdk.Login{
-				Identity: client.Credentials.Identity,
+				Identity: client.Credentials.UserName,
 				Secret:   "",
 				DomainID: validID,
 			},

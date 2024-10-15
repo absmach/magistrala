@@ -36,6 +36,12 @@ var (
 	Contact string = ""
 	// RawOutput raw output mode.
 	RawOutput bool = false
+	// UserName query parameter.
+	UserName string = ""
+	// FirstName query parameter.
+	FirstName string = ""
+	// LastName query parameter.
+	LastName string = ""
 )
 
 func logJSONCmd(cmd cobra.Command, iList ...interface{}) {

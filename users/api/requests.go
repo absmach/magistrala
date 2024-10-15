@@ -16,20 +16,14 @@ type createClientReq struct {
 }
 
 func (req createUserReq) validate() error {
-	if len(req.user.Name) > api.MaxNameSize {
-		return apiutil.ErrNameSize
-	}
-	if len(req.user.UserName) > api.MaxNameSize {
-		return apiutil.ErrNameSize
-	}
 	if len(req.user.FirstName) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
 	if len(req.user.LastName) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
-	if req.user.Credentials.Identity == "" {
-		return apiutil.ErrMissingIdentity
+	if req.user.Credentials.UserName == "" {
+		return apiutil.ErrMissingUserName
 	}
 	if req.user.Credentials.Secret == "" {
 		return apiutil.ErrMissingPass
@@ -38,7 +32,7 @@ func (req createUserReq) validate() error {
 		return apiutil.ErrPasswordFormat
 	}
 
-	return req.user.Validate()
+	return nil
 }
 
 type viewClientReq struct {
@@ -113,7 +107,7 @@ func (req listMembersByObjectReq) validate() error {
 
 type updateClientReq struct {
 	id       string
-	Name     string         `json:"name,omitempty"`
+	UserName string         `json:"user_name,omitempty"`
 	Metadata users.Metadata `json:"metadata,omitempty"`
 }
 
@@ -209,14 +203,14 @@ func (req changeClientStatusReq) validate() error {
 }
 
 type loginUserReq struct {
-	Identity string `json:"identity,omitempty"`
+	UserName string `json:"user_name,omitempty"`
 	Secret   string `json:"secret,omitempty"`
 	DomainID string `json:"domain_id,omitempty"`
 }
 
 func (req loginUserReq) validate() error {
-	if req.Identity == "" {
-		return apiutil.ErrMissingIdentity
+	if req.UserName == "" {
+		return apiutil.ErrMissingUserName
 	}
 	if req.Secret == "" {
 		return apiutil.ErrMissingPass

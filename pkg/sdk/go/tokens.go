@@ -21,6 +21,7 @@ type Token struct {
 
 type Login struct {
 	Identity string `json:"identity"`
+	UserName string `json:"user_name,omitempty"`
 	Secret   string `json:"secret"`
 	DomainID string `json:"domain_id,omitempty"`
 }

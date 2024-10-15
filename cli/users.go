@@ -16,11 +16,11 @@ import (
 
 var cmdUsers = []cobra.Command{
 	{
-		Use:   "create <name> <username> <password> <user_auth_token>",
+		Use:   "create <first_name> <last_name> <username> <password> <user_auth_token>",
 		Short: "Create user",
-		Long: "Create user with provided name, username and password. Token is optional\n" +
+		Long: "Create user with provided firstname, lastname, username and password. Token is optional\n" +
 			"For example:\n" +
-			"\tmagistrala-cli users create user user@example.com 12345678 $USER_AUTH_TOKEN\n",
+			"\tmagistrala-cli users create user lastly user1 12345678 $USER_AUTH_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 3 || len(args) > 4 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -31,10 +31,11 @@ var cmdUsers = []cobra.Command{
 			}
 
 			user := mgxsdk.User{
-				Name: args[0],
+				FirstName: args[0],
+				LastName:  args[1],
 				Credentials: mgxsdk.Credentials{
-					Identity: args[1],
-					Secret:   args[2],
+					UserName: args[2],
+					Secret:   args[3],
 				},
 				Status: mgclients.EnabledStatus.String(),
 			}
@@ -66,7 +67,7 @@ var cmdUsers = []cobra.Command{
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
-				Identity: Identity,
+				UserName: UserName,
 				Offset:   Offset,
 				Limit:    Limit,
 				Metadata: metadata,
@@ -103,7 +104,7 @@ var cmdUsers = []cobra.Command{
 			}
 
 			lg := mgxsdk.Login{
-				Identity: args[0],
+				UserName: args[0],
 				Secret:   args[1],
 			}
 			if len(args) == 3 {
@@ -145,13 +146,13 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update [<user_id> <JSON_string> | tags <user_id> <tags> | identity <user_id> <identity> ] <user_auth_token>",
+		Use:   "update [<user_id> <JSON_string> | tags <user_id> <tags> | user_name <user_id> <user_name> ] <user_auth_token>",
 		Short: "Update user",
-		Long: "Updates either user name and metadata or user tags or user identity\n" +
+		Long: "Updates either user name and metadata or user tags\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli users update <user_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN - updates user name and metadata\n" +
+			"\tmagistrala-cli users update <user_id> '{\"first_name\":\"new first_name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN - updates user first and lastname and metadata\n" +
 			"\tmagistrala-cli users update tags <user_id> '[\"tag1\", \"tag2\"]' $USERTOKEN - updates user tags\n" +
-			"\tmagistrala-cli users update identity <user_id> newidentity@example.com $USERTOKEN - updates user identity\n",
+			"\tmagistrala-cli users update user_name <user_id> newusername $USERTOKEN - updates user name\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 && len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -175,10 +176,10 @@ var cmdUsers = []cobra.Command{
 				return
 			}
 
-			if args[0] == "identity" {
+			if args[0] == "username" {
 				user.ID = args[1]
-				user.Credentials.Identity = args[2]
-				user, err := sdk.UpdateUserIdentity(user, args[3])
+				user.Credentials.UserName = args[2]
+				user, err := sdk.UpdateUser(user, args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return

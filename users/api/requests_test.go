@@ -37,7 +37,7 @@ func TestCreateUserReqValidate(t *testing.T) {
 					ID:   validID,
 					Name: valid,
 					Credentials: users.Credentials{
-						Identity: "example@example.com",
+						UserName: "example",
 						Secret:   secret,
 					},
 				},
@@ -74,7 +74,7 @@ func TestCreateUserReqValidate(t *testing.T) {
 					ID:   validID,
 					Name: valid,
 					Credentials: users.Credentials{
-						Identity: "example@example.com",
+						UserName: "example",
 					},
 				},
 			},
@@ -87,7 +87,7 @@ func TestCreateUserReqValidate(t *testing.T) {
 					ID:   validID,
 					Name: valid,
 					Credentials: users.Credentials{
-						Identity: "example@example.com",
+						UserName: "example",
 						Secret:   "invalid",
 					},
 				},
@@ -429,7 +429,7 @@ func TestLoginUserReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: loginUserReq{
-				Identity: "eaxmple,example.com",
+				UserName: "eaxmple",
 				Secret:   secret,
 			},
 			err: nil,
@@ -437,7 +437,7 @@ func TestLoginUserReqValidate(t *testing.T) {
 		{
 			desc: "empty identity",
 			req: loginUserReq{
-				Identity: "",
+				UserName: "",
 				Secret:   secret,
 			},
 			err: apiutil.ErrMissingIdentity,
@@ -445,7 +445,7 @@ func TestLoginUserReqValidate(t *testing.T) {
 		{
 			desc: "empty secret",
 			req: loginUserReq{
-				Identity: "eaxmple,example.com",
+				UserName: "eaxmple",
 				Secret:   "",
 			},
 			err: apiutil.ErrMissingPass,

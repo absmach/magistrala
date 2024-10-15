@@ -94,7 +94,9 @@ type PageMetadata struct {
 	Order           string   `json:"order,omitempty"`
 	Direction       string   `json:"direction,omitempty"`
 	Level           uint64   `json:"level,omitempty"`
-	Identity        string   `json:"identity,omitempty"`
+	UserName        string   `json:"user_name,omitempty"`
+	LastName        string   `json:"last_name,omitempty"`
+	FirstName       string   `json:"first_name,omitempty"`
 	Name            string   `json:"name,omitempty"`
 	Type            string   `json:"type,omitempty"`
 	Metadata        Metadata `json:"metadata,omitempty"`
@@ -125,11 +127,11 @@ type PageMetadata struct {
 }
 
 // Credentials represent client credentials: it contains
-// "identity" which can be a username, email, generated name;
+// "UserName" which can be a username, email, generated name;
 // and "secret" which can be a password or access token.
 type Credentials struct {
-	Identity string `json:"identity,omitempty"` // username or generated login ID
-	Secret   string `json:"secret,omitempty"`   // password or token
+	UserName string `json:"user_name,omitempty"` // username or generated login ID
+	Secret   string `json:"secret,omitempty"`    // password or token
 }
 
 // SDK contains Magistrala API.
@@ -142,7 +144,7 @@ type SDK interface {
 	//  user := sdk.User{
 	//    Name:	 "John Doe",
 	//    Credentials: sdk.Credentials{
-	//      Identity: "john.doe@example",
+	//      UserName: "john.doe",
 	//      Secret:   "12345678",
 	//    },
 	//  }
@@ -219,19 +221,6 @@ type SDK interface {
 	//  fmt.Println(user)
 	UpdateUserTags(user User, token string) (User, errors.SDKError)
 
-	// UpdateUserIdentity updates the user's identity
-	//
-	// example:
-	//  user := sdk.User{
-	//    ID:   "userID",
-	//    Credentials: sdk.Credentials{
-	//      Identity: "john.doe@example",
-	//    },
-	//  }
-	//  user, _ := sdk.UpdateUserIdentity(user, "token")
-	//  fmt.Println(user)
-	UpdateUserIdentity(user User, token string) (User, errors.SDKError)
-
 	// UpdateUserNames updates the user's names ie Name, FirstName, LastName and UserName.
 	//
 	// example:
@@ -307,11 +296,11 @@ type SDK interface {
 	//  fmt.Println(err)
 	DeleteUser(id, token string) errors.SDKError
 
-	// CreateToken receives credentials and returns user token.
+	// CreateToken receives credentuserName and returns user token.
 	//
 	// example:
 	//  lt := sdk.Login{
-	//      Identity: "john.doe@example",
+	//      UserName: "john.doe",
 	//      Secret:   "12345678",
 	//  }
 	//  token, _ := sdk.CreateToken(lt)
@@ -1358,11 +1347,14 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Level != 0 {
 		q.Add("level", strconv.FormatUint(pm.Level, 10))
 	}
-	if pm.Identity != "" {
-		q.Add("identity", pm.Identity)
+	if pm.UserName != "" {
+		q.Add("user_name", pm.UserName)
 	}
-	if pm.Name != "" {
-		q.Add("name", pm.Name)
+	if pm.FirstName != "" {
+		q.Add("first_name", pm.FirstName)
+	}
+	if pm.LastName != "" {
+		q.Add("last_name", pm.LastName)
 	}
 	if pm.ID != "" {
 		q.Add("id", pm.ID)

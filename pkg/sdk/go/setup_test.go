@@ -147,10 +147,8 @@ func convertUser(c sdk.User) users.User {
 	}
 	return users.User{
 		ID:             c.ID,
-		Name:           c.Name,
 		FirstName:      c.FirstName,
 		LastName:       c.LastName,
-		UserName:       c.UserName,
 		Tags:           c.Tags,
 		DomainID:       c.Domain,
 		Credentials:    users.Credentials(c.Credentials),
@@ -176,7 +174,7 @@ func convertThing(c sdk.Thing) mgclients.Client {
 		Name:        c.Name,
 		Tags:        c.Tags,
 		Domain:      c.DomainID,
-		Credentials: mgclients.Credentials(c.Credentials),
+		Credentials: mgclients.Credentials(c.Credentials), // small fix
 		Metadata:    mgclients.Metadata(c.Metadata),
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
@@ -235,10 +233,11 @@ func generateTestUser(t *testing.T) sdk.User {
 	createdAt, err := time.Parse(time.RFC3339, "2024-01-01T00:00:00Z")
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error parsing time: %v", err))
 	return sdk.User{
-		ID:   generateUUID(t),
-		Name: "clientname",
+		ID:        generateUUID(t),
+		FirstName: "clientname",
+		LastName:  "clientlastname",
 		Credentials: sdk.Credentials{
-			Identity: "clientidentity@email.com",
+			UserName: "clientusername",
 			Secret:   secret,
 		},
 		Tags:      []string{"tag1", "tag2"},

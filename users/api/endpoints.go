@@ -133,12 +133,12 @@ func searchUsersEndpoint(svc users.Service) endpoint.Endpoint {
 		}
 
 		pm := users.Page{
-			Offset: req.Offset,
-			Limit:  req.Limit,
-			Name:   req.Name,
-			Id:     req.Id,
-			Order:  req.Order,
-			Dir:    req.Dir,
+			Offset:   req.Offset,
+			Limit:    req.Limit,
+			UserName: req.UserName,
+			Id:       req.Id,
+			Order:    req.Order,
+			Dir:      req.Dir,
 		}
 		page, err := svc.SearchUsers(ctx, pm)
 		if err != nil {
@@ -424,7 +424,7 @@ func issueTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		token, err := svc.IssueToken(ctx, req.Identity, req.Secret, req.DomainID)
+		token, err := svc.IssueToken(ctx, req.UserName, req.Secret, req.DomainID)
 		if err != nil {
 			return nil, err
 		}

@@ -39,8 +39,9 @@ func TestUsersSave(t *testing.T) {
 
 	uid := testsutil.GenerateUUID(t)
 
-	name := namesgen.Generate()
-	clientIdentity := name + "@example.com"
+	first_name := namesgen.Generate()
+	last_name := namesgen.Generate()
+	user_name := namesgen.Generate()
 
 	cases := []struct {
 		desc   string
@@ -50,10 +51,11 @@ func TestUsersSave(t *testing.T) {
 		{
 			desc: "add new user successfully",
 			client: users.User{
-				ID:   uid,
-				Name: name,
+				ID:        uid,
+				FirstName: first_name,
+				LastName:  last_name,
 				Credentials: users.Credentials{
-					Identity: clientIdentity,
+					UserName: user_name,
 					Secret:   password,
 				},
 				Metadata:       users.Metadata{},
@@ -63,27 +65,13 @@ func TestUsersSave(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "add user with duplicate user identity",
-			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
-				Credentials: users.Credentials{
-					Identity: clientIdentity,
-					Secret:   password,
-				},
-				Metadata:       users.Metadata{},
-				Status:         users.EnabledStatus,
-				ProfilePicture: "",
-			},
-			err: repoerr.ErrConflict,
-		},
-		{
 			desc: "add user with duplicate user name",
 			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: name,
+				ID:        testsutil.GenerateUUID(t),
+				FirstName: namesgen.Generate(),
+				LastName:  last_name,
 				Credentials: users.Credentials{
-					Identity: clientIdentity,
+					UserName: user_name,
 					Secret:   password,
 				},
 				Metadata:       users.Metadata{},
@@ -95,10 +83,11 @@ func TestUsersSave(t *testing.T) {
 		{
 			desc: "add user with invalid user id",
 			client: users.User{
-				ID:   invalidName,
-				Name: namesgen.Generate(),
+				ID:        invalidName,
+				FirstName: namesgen.Generate(),
+				LastName:  namesgen.Generate(),
 				Credentials: users.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+					UserName: user_name,
 					Secret:   password,
 				},
 				Metadata:       users.Metadata{},
@@ -110,25 +99,11 @@ func TestUsersSave(t *testing.T) {
 		{
 			desc: "add user with invalid user name",
 			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: invalidName,
+				ID:        testsutil.GenerateUUID(t),
+				FirstName: invalidName,
+				LastName:  namesgen.Generate(),
 				Credentials: users.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
-					Secret:   password,
-				},
-				Metadata:       users.Metadata{},
-				Status:         users.EnabledStatus,
-				ProfilePicture: "",
-			},
-			err: errors.ErrMalformedEntity,
-		},
-		{
-			desc: "add user with invalid user identity",
-			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
-				Credentials: users.Credentials{
-					Identity: invalidName,
+					UserName: user_name,
 					Secret:   password,
 				},
 				Metadata:       users.Metadata{},
@@ -142,20 +117,6 @@ func TestUsersSave(t *testing.T) {
 			client: users.User{
 				ID: testsutil.GenerateUUID(t),
 				Credentials: users.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
-					Secret:   password,
-				},
-				Metadata:       users.Metadata{},
-				ProfilePicture: "",
-			},
-			err: nil,
-		},
-		{
-			desc: "add user with a missing user identity",
-			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
-				Credentials: users.Credentials{
 					Secret: password,
 				},
 				Metadata:       users.Metadata{},
@@ -166,23 +127,23 @@ func TestUsersSave(t *testing.T) {
 		{
 			desc: "add user with a missing user secret",
 			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
+				ID:        testsutil.GenerateUUID(t),
+				FirstName: namesgen.Generate(),
+				LastName:  namesgen.Generate(),
 				Credentials: users.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+					UserName: namesgen.Generate(),
 				},
-				Metadata:       users.Metadata{},
-				ProfilePicture: "",
+				Metadata: users.Metadata{},
 			},
 			err: nil,
 		},
 		{
 			desc: "add a user with invalid metadata",
 			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
+				ID:        testsutil.GenerateUUID(t),
+				FirstName: namesgen.Generate(),
 				Credentials: users.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+					UserName: user_name,
 					Secret:   password,
 				},
 				Metadata: map[string]interface{}{
@@ -222,10 +183,10 @@ func TestIsPlatformAdmin(t *testing.T) {
 		{
 			desc: "authorize check for super user",
 			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
+				ID:        testsutil.GenerateUUID(t),
+				FirstName: namesgen.Generate(),
 				Credentials: users.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+					UserName: namesgen.Generate(),
 					Secret:   password,
 				},
 				Metadata: users.Metadata{},
@@ -237,10 +198,10 @@ func TestIsPlatformAdmin(t *testing.T) {
 		{
 			desc: "unauthorize user",
 			client: users.User{
-				ID:   testsutil.GenerateUUID(t),
-				Name: namesgen.Generate(),
+				ID:        testsutil.GenerateUUID(t),
+				FirstName: namesgen.Generate(),
 				Credentials: users.Credentials{
-					Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+					UserName: namesgen.Generate(),
 					Secret:   password,
 				},
 				Metadata: users.Metadata{},
@@ -270,10 +231,10 @@ func TestRetrieveByID(t *testing.T) {
 	repo := cpostgres.NewRepository(database, storageClient)
 
 	client := users.User{
-		ID:   testsutil.GenerateUUID(t),
-		Name: namesgen.Generate(),
+		ID:        testsutil.GenerateUUID(t),
+		FirstName: namesgen.Generate(),
 		Credentials: users.Credentials{
-			Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+			UserName: namesgen.Generate(),
 			Secret:   password,
 		},
 		Metadata: users.Metadata{},
@@ -325,18 +286,16 @@ func TestRetrieveAll(t *testing.T) {
 	var items, enabledClients []users.User
 	for i := 0; i < num; i++ {
 		client := users.User{
-			ID:   testsutil.GenerateUUID(t),
-			Name: namesgen.Generate(),
+			ID:        testsutil.GenerateUUID(t),
+			FirstName: namesgen.Generate(),
 			Credentials: users.Credentials{
-				Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+				UserName: namesgen.Generate(),
 				Secret:   "",
 			},
-			Metadata:  users.Metadata{},
-			Status:    users.EnabledStatus,
-			Tags:      []string{"tag1"},
-			UserName:  namesgen.Generate(),
-			FirstName: namesgen.Generate(),
-			LastName:  namesgen.Generate(),
+			Metadata: users.Metadata{},
+			Status:   users.EnabledStatus,
+			Tags:     []string{"tag1"},
+			LastName: namesgen.Generate(),
 		}
 		if i%50 == 0 {
 			client.Metadata = map[string]interface{}{
@@ -502,11 +461,11 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc: "retrieve with client name",
 			pageMeta: users.Page{
-				Name:   items[0].Name,
-				Offset: 0,
-				Limit:  3,
-				Role:   users.AllRole,
-				Status: users.AllStatus,
+				FirstName: items[0].FirstName,
+				Offset:    0,
+				Limit:     3,
+				Role:      users.AllRole,
+				Status:    users.AllStatus,
 			},
 			page: users.UsersPage{
 				Page: users.Page{
@@ -612,11 +571,11 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc: "retrieve with invalid client name",
 			pageMeta: users.Page{
-				Name:   invalidName,
-				Offset: 0,
-				Limit:  3,
-				Role:   users.AllRole,
-				Status: users.AllStatus,
+				FirstName: invalidName,
+				Offset:    0,
+				Limit:     3,
+				Role:      users.AllRole,
+				Status:    users.AllStatus,
 			},
 			page: users.UsersPage{
 				Page: users.Page{
@@ -705,25 +664,6 @@ func TestRetrieveAll(t *testing.T) {
 		// 	},
 		// 	err: nil,
 		// },
-		{
-			desc: "retrieve with identity",
-			pageMeta: users.Page{
-				Identity: items[0].Credentials.Identity,
-				Offset:   0,
-				Limit:    3,
-				Role:     users.AllRole,
-				Status:   users.AllStatus,
-			},
-			page: users.UsersPage{
-				Page: users.Page{
-					Total:  1,
-					Offset: 0,
-					Limit:  3,
-				},
-				Users: []users.User{items[0]},
-			},
-			err: nil,
-		},
 	}
 
 	for _, tc := range cases {
@@ -735,67 +675,5 @@ func TestRetrieveAll(t *testing.T) {
 		assert.Equal(t, tc.page.Page, page.Page, fmt.Sprintf("%s: expected  %v, got %v", tc.desc, tc.page, page))
 		assert.ElementsMatch(t, tc.page.Users, page.Users, fmt.Sprintf("%s: expected %v, got %v", tc.desc, tc.page.Users, page.Users))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-	}
-}
-
-func TestUpdateRole(t *testing.T) {
-	t.Cleanup(func() {
-		_, err := db.Exec("DELETE FROM clients")
-		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
-	})
-
-	storageClient := new(mocks.Storage)
-
-	repo := cpostgres.NewRepository(database, storageClient)
-
-	client := users.User{
-		ID:   testsutil.GenerateUUID(t),
-		Name: namesgen.Generate(),
-		Credentials: users.Credentials{
-			Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
-			Secret:   password,
-		},
-		Metadata: users.Metadata{},
-		Status:   users.EnabledStatus,
-		Role:     users.UserRole,
-	}
-
-	_, err := repo.Save(context.Background(), client)
-	require.Nil(t, err, fmt.Sprintf("failed to save client %s", client.ID))
-
-	cases := []struct {
-		desc    string
-		client  users.User
-		newRole users.Role
-		err     error
-	}{
-		{
-			desc:    "update role to admin",
-			client:  client,
-			newRole: users.AdminRole,
-			err:     nil,
-		},
-		{
-			desc:    "update role to user",
-			client:  client,
-			newRole: users.UserRole,
-			err:     nil,
-		},
-		{
-			desc:    "update role with invalid client id",
-			client:  users.User{ID: invalidName},
-			newRole: users.AdminRole,
-			err:     repoerr.ErrNotFound,
-		},
-	}
-
-	for _, tc := range cases {
-		tc.client.Role = tc.newRole
-		client, err := repo.UpdateRole(context.Background(), tc.client)
-		if err != nil {
-			assert.Equal(t, err, tc.err, fmt.Sprintf("%s: expected error %v, got %v", tc.desc, tc.err, err))
-		} else {
-			assert.Equal(t, tc.newRole, client.Role, fmt.Sprintf("%s: expected role %v, got %v", tc.desc, tc.newRole, client.Role))
-		}
 	}
 }

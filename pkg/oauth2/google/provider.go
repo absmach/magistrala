@@ -101,24 +101,27 @@ func (cfg *config) UserInfo(accessToken string) (uclient.User, error) {
 	}
 
 	var user struct {
-		ID      string `json:"id"`
-		Name    string `json:"name"`
-		Email   string `json:"email"`
-		Picture string `json:"picture"`
+		ID        string `json:"id"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		UserName  string `json:"username"`
+		Email     string `json:"email"`
+		Picture   string `json:"picture"`
 	}
 	if err := json.Unmarshal(data, &user); err != nil {
 		return uclient.User{}, err
 	}
 
-	if user.ID == "" || user.Name == "" || user.Email == "" {
+	if user.ID == "" || user.FirstName == "" || user.LastName == "" {
 		return uclient.User{}, svcerr.ErrAuthentication
 	}
 
 	client := uclient.User{
-		ID:   user.ID,
-		Name: user.Name,
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
 		Credentials: uclient.Credentials{
-			Identity: user.Email,
+			UserName: user.UserName,
 		},
 		Metadata: map[string]interface{}{
 			"oauth_provider":  providerName,

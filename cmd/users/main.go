@@ -316,10 +316,10 @@ func createAdmin(ctx context.Context, c config, urepo users.Repository, hsr user
 	}
 
 	user := users.User{
-		ID:   id,
-		Name: "admin",
+		ID:        id,
+		FirstName: "admin",
 		Credentials: users.Credentials{
-			Identity: c.AdminEmail,
+			UserName: c.AdminEmail,
 			Secret:   hash,
 		},
 		Metadata: users.Metadata{
@@ -331,7 +331,7 @@ func createAdmin(ctx context.Context, c config, urepo users.Repository, hsr user
 		Status:    users.EnabledStatus,
 	}
 
-	if c, err := urepo.RetrieveByIdentity(ctx, user.Credentials.Identity); err == nil {
+	if c, err := urepo.RetrieveByUserName(ctx, user.Credentials.UserName); err == nil {
 		return c.ID, nil
 	}
 

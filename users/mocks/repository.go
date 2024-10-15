@@ -164,34 +164,6 @@ func (_m *Repository) RetrieveByID(ctx context.Context, id string) (users.User, 
 	return r0, r1
 }
 
-// RetrieveByIdentity provides a mock function with given fields: ctx, identity
-func (_m *Repository) RetrieveByIdentity(ctx context.Context, identity string) (users.User, error) {
-	ret := _m.Called(ctx, identity)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RetrieveByIdentity")
-	}
-
-	var r0 users.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (users.User, error)); ok {
-		return rf(ctx, identity)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) users.User); ok {
-		r0 = rf(ctx, identity)
-	} else {
-		r0 = ret.Get(0).(users.User)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, identity)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RetrieveByUserName provides a mock function with given fields: ctx, userName
 func (_m *Repository) RetrieveByUserName(ctx context.Context, userName string) (users.User, error) {
 	ret := _m.Called(ctx, userName)
@@ -304,124 +276,12 @@ func (_m *Repository) Update(ctx context.Context, user users.User) (users.User, 
 	return r0, r1
 }
 
-// UpdateIdentity provides a mock function with given fields: ctx, user
-func (_m *Repository) UpdateIdentity(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateIdentity")
-	}
-
-	var r0 users.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
-	} else {
-		r0 = ret.Get(0).(users.User)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateProfilePicture provides a mock function with given fields: ctx, user
-func (_m *Repository) UpdateProfilePicture(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateProfilePicture")
-	}
-
-	var r0 users.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
-	} else {
-		r0 = ret.Get(0).(users.User)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateRole provides a mock function with given fields: ctx, user
-func (_m *Repository) UpdateRole(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateRole")
-	}
-
-	var r0 users.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
-	} else {
-		r0 = ret.Get(0).(users.User)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateSecret provides a mock function with given fields: ctx, user
 func (_m *Repository) UpdateSecret(ctx context.Context, user users.User) (users.User, error) {
 	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSecret")
-	}
-
-	var r0 users.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
-	} else {
-		r0 = ret.Get(0).(users.User)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateTags provides a mock function with given fields: ctx, user
-func (_m *Repository) UpdateTags(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateTags")
 	}
 
 	var r0 users.User

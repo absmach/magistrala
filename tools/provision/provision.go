@@ -74,13 +74,13 @@ func Provision(conf Config) error {
 
 	user := sdk.User{
 		Credentials: sdk.Credentials{
-			Identity: conf.Username,
+			UserName: conf.Username,
 			Secret:   conf.Password,
 		},
 	}
 
-	if user.Credentials.Identity == "" {
-		user.Credentials.Identity = fmt.Sprintf("%s@email.com", namesgenerator.Generate())
+	if user.Credentials.UserName == "" {
+		user.Credentials.UserName = fmt.Sprintf("%s@email.com", namesgenerator.Generate())
 		user.Credentials.Secret = defPass
 	}
 
@@ -92,7 +92,7 @@ func Provision(conf Config) error {
 	var err error
 
 	// Login user
-	token, err := s.CreateToken(sdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret})
+	token, err := s.CreateToken(sdk.Login{Identity: user.Credentials.UserName, Secret: user.Credentials.Secret})
 	if err != nil {
 		return fmt.Errorf("unable to login user: %s", err.Error())
 	}

@@ -62,8 +62,11 @@ func (uce createUserEvent) Encode() (map[string]interface{}, error) {
 		"created_at": uce.CreatedAt,
 	}
 
-	if uce.Name != "" {
-		val["name"] = uce.Name
+	if uce.FirstName != "" {
+		val["first_name"] = uce.FirstName
+	}
+	if uce.LastName != "" {
+		val["last_name"] = uce.LastName
 	}
 	if len(uce.Tags) > 0 {
 		val["tags"] = uce.Tags
@@ -71,8 +74,8 @@ func (uce createUserEvent) Encode() (map[string]interface{}, error) {
 	if uce.Metadata != nil {
 		val["metadata"] = uce.Metadata
 	}
-	if uce.Credentials.Identity != "" {
-		val["identity"] = uce.Credentials.Identity
+	if uce.Credentials.UserName != "" {
+		val["user_name"] = uce.Credentials.UserName
 	}
 
 	return val, nil
@@ -96,14 +99,17 @@ func (uce updateUserEvent) Encode() (map[string]interface{}, error) {
 	if uce.ID != "" {
 		val["id"] = uce.ID
 	}
-	if uce.Name != "" {
-		val["name"] = uce.Name
+	if uce.FirstName != "" {
+		val["first_name"] = uce.FirstName
+	}
+	if uce.LastName != "" {
+		val["last_name"] = uce.LastName
 	}
 	if len(uce.Tags) > 0 {
 		val["tags"] = uce.Tags
 	}
-	if uce.Credentials.Identity != "" {
-		val["identity"] = uce.Credentials.Identity
+	if uce.Credentials.UserName != "" {
+		val["user_name"] = uce.Credentials.UserName
 	}
 	if uce.Metadata != nil {
 		val["metadata"] = uce.Metadata
@@ -132,17 +138,14 @@ func (une updateUserNamesEvent) Encode() (map[string]interface{}, error) {
 	if une.ID != "" {
 		val["id"] = une.ID
 	}
-	if une.Name != "" {
-		val["name"] = une.Name
-	}
 	if une.FirstName != "" {
 		val["first_name"] = une.FirstName
 	}
 	if une.LastName != "" {
 		val["last_name"] = une.LastName
 	}
-	if une.UserName != "" {
-		val["user_name"] = une.UserName
+	if une.Credentials.UserName != "" {
+		val["user_name"] = une.Credentials.UserName
 	}
 
 	return val, nil
@@ -196,8 +199,11 @@ func (vue viewUserEvent) Encode() (map[string]interface{}, error) {
 		"id":        vue.ID,
 	}
 
-	if vue.Name != "" {
-		val["name"] = vue.Name
+	if vue.LastName != "" {
+		val["last_name"] = vue.LastName
+	}
+	if vue.FirstName != "" {
+		val["first_name"] = vue.FirstName
 	}
 	if len(vue.Tags) > 0 {
 		val["tags"] = vue.Tags
@@ -205,8 +211,8 @@ func (vue viewUserEvent) Encode() (map[string]interface{}, error) {
 	if vue.DomainID != "" {
 		val["domain"] = vue.DomainID
 	}
-	if vue.Credentials.Identity != "" {
-		val["identity"] = vue.Credentials.Identity
+	if vue.Credentials.UserName != "" {
+		val["identity"] = vue.Credentials.UserName
 	}
 	if vue.Metadata != nil {
 		val["metadata"] = vue.Metadata
@@ -237,8 +243,8 @@ func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
 		"id":        vpe.ID,
 	}
 
-	if vpe.Name != "" {
-		val["name"] = vpe.Name
+	if vpe.FirstName != "" {
+		val["first_name"] = vpe.FirstName
 	}
 	if len(vpe.Tags) > 0 {
 		val["tags"] = vpe.Tags
@@ -246,8 +252,8 @@ func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
 	if vpe.DomainID != "" {
 		val["domain"] = vpe.DomainID
 	}
-	if vpe.Credentials.Identity != "" {
-		val["identity"] = vpe.Credentials.Identity
+	if vpe.Credentials.UserName != "" {
+		val["user_name"] = vpe.Credentials.UserName
 	}
 	if vpe.Metadata != nil {
 		val["metadata"] = vpe.Metadata
@@ -275,15 +281,11 @@ type viewUserByUserNameEvent struct {
 func (vue viewUserByUserNameEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"operation": userView,
-		"name":      vue.Name,
+		"user_name": vue.Credentials.UserName,
 	}
 
 	if vue.ID != "" {
 		val["id"] = vue.ID
-	}
-
-	if vue.UserName != "" {
-		val["user_name"] = vue.UserName
 	}
 
 	return val, nil
@@ -301,8 +303,11 @@ func (lue listUserEvent) Encode() (map[string]interface{}, error) {
 		"limit":     lue.Limit,
 	}
 
-	if lue.Name != "" {
-		val["name"] = lue.Name
+	if lue.FirstName != "" {
+		val["first_name"] = lue.FirstName
+	}
+	if lue.LastName != "" {
+		val["last_name"] = lue.LastName
 	}
 	if lue.Order != "" {
 		val["order"] = lue.Order
@@ -325,8 +330,8 @@ func (lue listUserEvent) Encode() (map[string]interface{}, error) {
 	if lue.Status.String() != "" {
 		val["status"] = lue.Status.String()
 	}
-	if lue.Identity != "" {
-		val["identity"] = lue.Identity
+	if lue.UserName != "" {
+		val["user_name"] = lue.UserName
 	}
 
 	return val, nil
@@ -348,8 +353,8 @@ func (lcge listUserByGroupEvent) Encode() (map[string]interface{}, error) {
 		"object_id":   lcge.objectID,
 	}
 
-	if lcge.Name != "" {
-		val["name"] = lcge.Name
+	if lcge.UserName != "" {
+		val["user_name"] = lcge.UserName
 	}
 	if lcge.Order != "" {
 		val["order"] = lcge.Order
@@ -372,8 +377,11 @@ func (lcge listUserByGroupEvent) Encode() (map[string]interface{}, error) {
 	if lcge.Status.String() != "" {
 		val["status"] = lcge.Status.String()
 	}
-	if lcge.Identity != "" {
-		val["identity"] = lcge.Identity
+	if lcge.FirstName != "" {
+		val["first_name"] = lcge.FirstName
+	}
+	if lcge.LastName != "" {
+		val["last_name"] = lcge.LastName
 	}
 
 	return val, nil
@@ -390,11 +398,14 @@ func (sce searchUserEvent) Encode() (map[string]interface{}, error) {
 		"offset":    sce.Offset,
 		"limit":     sce.Limit,
 	}
-	if sce.Name != "" {
-		val["name"] = sce.Name
+	if sce.UserName != "" {
+		val["user_name"] = sce.UserName
 	}
-	if sce.Identity != "" {
-		val["identity"] = sce.Identity
+	if sce.FirstName != "" {
+		val["first_name"] = sce.FirstName
+	}
+	if sce.LastName != "" {
+		val["last_name"] = sce.LastName
 	}
 	if sce.Id != "" {
 		val["id"] = sce.Id

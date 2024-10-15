@@ -24,13 +24,6 @@ type updateThingSecretReq struct {
 	Secret string `json:"secret,omitempty"`
 }
 
-// updateUserIdentityReq is used to update the user identity.
-type updateUserIdentityReq struct {
-	token    string
-	id       string
-	Identity string `json:"identity,omitempty"`
-}
-
 // UserPasswordReq contains old and new passwords.
 type UserPasswordReq struct {
 	OldPassword string `json:"old_password,omitempty"`

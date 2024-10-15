@@ -48,7 +48,7 @@ var cmdInvitations = []cobra.Command{
 			}
 
 			pageMetadata := mgxsdk.PageMetadata{
-				Identity: Identity,
+				UserName: Identity,
 				Offset:   Offset,
 				Limit:    Limit,
 			}

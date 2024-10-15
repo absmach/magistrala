@@ -91,7 +91,8 @@ func (tm *tracingMiddleware) SearchUsers(ctx context.Context, pm mgclients.Page)
 func (tm *tracingMiddleware) UpdateClient(ctx context.Context, session authn.Session, cli mgclients.Client) (mgclients.Client, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_client_name_and_metadata", trace.WithAttributes(
 		attribute.String("id", usr.ID),
-		attribute.String("name", usr.Name),
+		attribute.String("first_name", usr.FirstName),
+		attribute.String("last_name", usr.LastName),
 	))
 	defer span.End()
 

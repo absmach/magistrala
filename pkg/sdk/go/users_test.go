@@ -55,7 +55,8 @@ func TestCreateUser(t *testing.T) {
 	defer ts.Close()
 
 	createSdkUserReq := sdk.User{
-		Name:        user.Name,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
 		Tags:        user.Tags,
 		Credentials: user.Credentials,
 		Metadata:    user.Metadata,
@@ -125,13 +126,13 @@ func TestCreateUser(t *testing.T) {
 			svcRes:           users.User{},
 			svcErr:           nil,
 			response:         sdk.User{},
-			err:              errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
+			err:              errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingUserName), http.StatusBadRequest),
 		},
 		{
 			desc:  "register user with name too long",
 			token: validToken,
 			createSdkUserReq: sdk.User{
-				Name:        strings.Repeat("a", 1025),
+				FirstName:   strings.Repeat("a", 1025),
 				Credentials: createSdkUserReq.Credentials,
 				Metadata:    createSdkUserReq.Metadata,
 				Tags:        createSdkUserReq.Tags,
@@ -143,12 +144,12 @@ func TestCreateUser(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
 		},
 		{
-			desc:  "register user with empty identity",
+			desc:  "register user with empty userName",
 			token: validToken,
 			createSdkUserReq: sdk.User{
-				Name: createSdkUserReq.Name,
+				FirstName: createSdkUserReq.FirstName,
 				Credentials: sdk.Credentials{
-					Identity: "",
+					UserName: "",
 					Secret:   createSdkUserReq.Credentials.Secret,
 				},
 				Metadata: createSdkUserReq.Metadata,
@@ -158,15 +159,16 @@ func TestCreateUser(t *testing.T) {
 			svcRes:   users.User{},
 			svcErr:   nil,
 			response: sdk.User{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingUserName), http.StatusBadRequest),
 		},
 		{
 			desc:  "register user with empty secret",
 			token: validToken,
 			createSdkUserReq: sdk.User{
-				Name: createSdkUserReq.Name,
+				FirstName: createSdkUserReq.FirstName,
+				LastName:  createSdkUserReq.LastName,
 				Credentials: sdk.Credentials{
-					Identity: createSdkUserReq.Credentials.Identity,
+					UserName: createSdkUserReq.Credentials.UserName,
 					Secret:   "",
 				},
 				Metadata: createSdkUserReq.Metadata,
@@ -182,9 +184,10 @@ func TestCreateUser(t *testing.T) {
 			desc:  "register user with secret that is too short",
 			token: validToken,
 			createSdkUserReq: sdk.User{
-				Name: createSdkUserReq.Name,
+				FirstName: createSdkUserReq.FirstName,
+				LastName:  createSdkUserReq.LastName,
 				Credentials: sdk.Credentials{
-					Identity: createSdkUserReq.Credentials.Identity,
+					UserName: createSdkUserReq.Credentials.UserName,
 					Secret:   "weak",
 				},
 				Metadata: createSdkUserReq.Metadata,
@@ -201,7 +204,7 @@ func TestCreateUser(t *testing.T) {
 			token: validToken,
 			createSdkUserReq: sdk.User{
 				Credentials: sdk.Credentials{
-					Identity: "user@example.com",
+					UserName: "user",
 					Secret:   "12345678",
 				},
 				Metadata: map[string]interface{}{
@@ -220,10 +223,11 @@ func TestCreateUser(t *testing.T) {
 			createSdkUserReq: createSdkUserReq,
 			svcReq:           convertUser(createSdkUserReq),
 			svcRes: users.User{
-				ID:   id,
-				Name: createSdkUserReq.Name,
+				ID:        id,
+				FirstName: createSdkUserReq.FirstName,
+				LastName:  createSdkUserReq.LastName,
 				Credentials: users.Credentials{
-					Identity: createSdkUserReq.Credentials.Identity,
+					UserName: createSdkUserReq.Credentials.UserName,
 					Secret:   createSdkUserReq.Credentials.Secret,
 				},
 				Metadata: users.Metadata{
@@ -262,10 +266,10 @@ func TestListUsers(t *testing.T) {
 
 	for i := 10; i < 100; i++ {
 		cl := sdk.User{
-			ID:   generateUUID(t),
-			Name: fmt.Sprintf("user_%d", i),
+			ID:        generateUUID(t),
+			FirstName: fmt.Sprintf("user_%d", i),
 			Credentials: sdk.Credentials{
-				Identity: fmt.Sprintf("identity_%d", i),
+				UserName: fmt.Sprintf("UserName_%d", i),
 				Secret:   fmt.Sprintf("password_%d", i),
 			},
 			Metadata: sdk.Metadata{"name": fmt.Sprintf("user_%d", i)},
@@ -521,8 +525,8 @@ func TestListUsers(t *testing.T) {
 				},
 				Users: []users.User{
 					{
-						ID:   id,
-						Name: "user_99",
+						ID:        id,
+						FirstName: "user_99",
 						Metadata: users.Metadata{
 							"key": make(chan int),
 						},
@@ -566,10 +570,10 @@ func TestSearchClients(t *testing.T) {
 
 	for i := 10; i < 100; i++ {
 		cl := sdk.User{
-			ID:   generateUUID(t),
-			Name: fmt.Sprintf("user_%d", i),
+			ID:        generateUUID(t),
+			FirstName: fmt.Sprintf("user_%d", i),
 			Credentials: sdk.Credentials{
-				Identity: fmt.Sprintf("identity_%d", i),
+				UserName: fmt.Sprintf("UserName_%d", i),
 				Secret:   fmt.Sprintf("password_%d", i),
 			},
 			Metadata: sdk.Metadata{"name": fmt.Sprintf("user_%d", i)},
@@ -596,9 +600,9 @@ func TestSearchClients(t *testing.T) {
 			token: validToken,
 			err:   nil,
 			page: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
-				Name:   "user_10",
+				Offset:    offset,
+				Limit:     limit,
+				FirstName: "user_10",
 			},
 			response: []sdk.User{cls[10]},
 			searchreturn: users.UsersPage{
@@ -614,9 +618,9 @@ func TestSearchClients(t *testing.T) {
 			desc:  "search for users with invalid token",
 			token: invalidToken,
 			page: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
-				Name:   "user_10",
+				Offset:    offset,
+				Limit:     limit,
+				FirstName: "user_10",
 			},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 			response:        nil,
@@ -626,9 +630,9 @@ func TestSearchClients(t *testing.T) {
 			desc:  "search for users with empty token",
 			token: "",
 			page: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
-				Name:   "user_10",
+				Offset:    offset,
+				Limit:     limit,
+				FirstName: "user_10",
 			},
 			err:             errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 			response:        nil,
@@ -638,9 +642,9 @@ func TestSearchClients(t *testing.T) {
 			desc:  "search for users with empty query",
 			token: validToken,
 			page: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
-				Name:   "",
+				Offset:    offset,
+				Limit:     limit,
+				FirstName: "",
 			},
 			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrEmptySearchQuery), http.StatusBadRequest),
 		},
@@ -648,9 +652,9 @@ func TestSearchClients(t *testing.T) {
 			desc:  "search for users with invalid length of query",
 			token: validToken,
 			page: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  limit,
-				Name:   "a",
+				Offset:    offset,
+				Limit:     limit,
+				FirstName: "a",
 			},
 			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrLenSearchQuery, apiutil.ErrValidation), http.StatusBadRequest),
 		},
@@ -658,9 +662,9 @@ func TestSearchClients(t *testing.T) {
 			desc:  "search for users with invalid limit",
 			token: validToken,
 			page: sdk.PageMetadata{
-				Offset: offset,
-				Limit:  0,
-				Name:   "user_10",
+				Offset:    offset,
+				Limit:     0,
+				FirstName: "user_10",
 			},
 			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
 		},
@@ -750,8 +754,9 @@ func TestViewUser(t *testing.T) {
 			token:  validToken,
 			userID: user.ID,
 			svcRes: users.User{
-				ID:   id,
-				Name: user.Name,
+				ID:        id,
+				FirstName: user.FirstName,
+				LastName:  user.LastName,
 				Metadata: users.Metadata{
 					"key": make(chan int),
 				},
@@ -829,8 +834,8 @@ func TestUserProfile(t *testing.T) {
 			desc:  "view user profile with response that can't be unmarshalled",
 			token: validToken,
 			svcRes: users.User{
-				ID:   id,
-				Name: user.Name,
+				ID:        id,
+				FirstName: user.FirstName,
 				Metadata: users.Metadata{
 					"key": make(chan int),
 				},
@@ -871,7 +876,7 @@ func TestUpdateUser(t *testing.T) {
 
 	updatedName := "updatedName"
 	updatedUser := user
-	updatedUser.Name = updatedName
+	updatedUser.FirstName = updatedName
 
 	cases := []struct {
 		desc            string
@@ -889,12 +894,12 @@ func TestUpdateUser(t *testing.T) {
 			desc:  "update user name with valid token",
 			token: validToken,
 			updateUserReq: sdk.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcReq: users.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcRes:   convertUser(updatedUser),
 			svcErr:   nil,
@@ -905,12 +910,12 @@ func TestUpdateUser(t *testing.T) {
 			desc:  "update user name with invalid token",
 			token: invalidToken,
 			updateUserReq: sdk.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcReq: users.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcRes:          mgclients.Client{},
 			authenticateErr: svcerr.ErrAuthentication,
@@ -921,12 +926,12 @@ func TestUpdateUser(t *testing.T) {
 			desc:  "update user name with invalid id",
 			token: validToken,
 			updateUserReq: sdk.User{
-				ID:   wrongID,
-				Name: updatedName,
+				ID:        wrongID,
+				FirstName: updatedName,
 			},
 			svcReq: users.User{
-				ID:   wrongID,
-				Name: updatedName,
+				ID:        wrongID,
+				FirstName: updatedName,
 			},
 			svcRes:   users.User{},
 			svcErr:   svcerr.ErrUpdateEntity,
@@ -937,12 +942,12 @@ func TestUpdateUser(t *testing.T) {
 			desc:  "update user name with empty token",
 			token: "",
 			updateUserReq: sdk.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcReq: users.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcRes:   users.User{},
 			svcErr:   nil,
@@ -953,12 +958,12 @@ func TestUpdateUser(t *testing.T) {
 			desc:  "update user name with empty id",
 			token: validToken,
 			updateUserReq: sdk.User{
-				ID:   "",
-				Name: updatedName,
+				ID:        "",
+				FirstName: updatedName,
 			},
 			svcReq: users.User{
-				ID:   "",
-				Name: updatedName,
+				ID:        "",
+				FirstName: updatedName,
 			},
 			svcRes:   users.User{},
 			svcErr:   nil,
@@ -984,16 +989,16 @@ func TestUpdateUser(t *testing.T) {
 			desc:  "update user with response that can't be unmarshalled",
 			token: validToken,
 			updateUserReq: sdk.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcReq: users.User{
-				ID:   user.ID,
-				Name: updatedName,
+				ID:        user.ID,
+				FirstName: updatedName,
 			},
 			svcRes: users.User{
-				ID:   id,
-				Name: updatedName,
+				ID:        id,
+				FirstName: updatedName,
 				Metadata: users.Metadata{
 					"key": make(chan int),
 				},
@@ -1191,9 +1196,9 @@ func TestUpdateUserIdentity(t *testing.T) {
 	}
 	mgsdk := sdk.NewSDK(conf)
 
-	updatedIdentity := "updatedIdentity@email.com"
+	updatedUserName := "updatedUserName@email.com"
 	updatedUser := user
-	updatedUser.Credentials.Identity = updatedIdentity
+	updatedUser.Credentials.UserName = updatedUserName
 
 	cases := []struct {
 		desc            string
@@ -1208,28 +1213,28 @@ func TestUpdateUserIdentity(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:  "update user identity with valid token",
+			desc:  "update user UserName with valid token",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID: user.ID,
 				Credentials: sdk.Credentials{
-					Identity: updatedIdentity,
+					UserName: updatedUserName,
 					Secret:   user.Credentials.Secret,
 				},
 			},
-			svcReq:   updatedIdentity,
+			svcReq:   updatedUserName,
 			svcRes:   convertUser(updatedUser),
 			svcErr:   nil,
 			response: updatedUser,
 			err:      nil,
 		},
 		{
-			desc:  "update user identity with invalid token",
+			desc:  "update user UserName with invalid token",
 			token: invalidToken,
 			updateUserReq: sdk.User{
 				ID: user.ID,
 				Credentials: sdk.Credentials{
-					Identity: updatedIdentity,
+					UserName: updatedUserName,
 					Secret:   user.Credentials.Secret,
 				},
 			},
@@ -1240,67 +1245,67 @@ func TestUpdateUserIdentity(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update user identity with empty token",
+			desc:  "update user UserName with empty token",
 			token: "",
 			updateUserReq: sdk.User{
 				ID: user.ID,
 				Credentials: sdk.Credentials{
-					Identity: updatedIdentity,
+					UserName: updatedUserName,
 					Secret:   user.Credentials.Secret,
 				},
 			},
-			svcReq:   updatedIdentity,
+			svcReq:   updatedUserName,
 			svcRes:   users.User{},
 			svcErr:   nil,
 			response: sdk.User{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update user identity with invalid id",
+			desc:  "update user UserName with invalid id",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID: wrongID,
 				Credentials: sdk.Credentials{
-					Identity: updatedIdentity,
+					UserName: updatedUserName,
 					Secret:   user.Credentials.Secret,
 				},
 			},
-			svcReq:   updatedIdentity,
+			svcReq:   updatedUserName,
 			svcRes:   users.User{},
 			svcErr:   svcerr.ErrUpdateEntity,
 			response: sdk.User{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:  "update user identity with empty id",
+			desc:  "update user UserName with empty id",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID: "",
 				Credentials: sdk.Credentials{
-					Identity: updatedIdentity,
+					UserName: updatedUserName,
 					Secret:   user.Credentials.Secret,
 				},
 			},
-			svcReq:   updatedIdentity,
+			svcReq:   updatedUserName,
 			svcRes:   users.User{},
 			svcErr:   nil,
 			response: sdk.User{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:  "update user identity with response that can't be unmarshalled",
+			desc:  "update user UserName with response that can't be unmarshalled",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID: user.ID,
 				Credentials: sdk.Credentials{
-					Identity: updatedIdentity,
+					UserName: updatedUserName,
 					Secret:   user.Credentials.Secret,
 				},
 			},
-			svcReq: updatedIdentity,
+			svcReq: updatedUserName,
 			svcRes: users.User{
-				ID:   id,
-				Name: user.Name,
+				ID:        id,
+				FirstName: updatedUserName,
 				Metadata: users.Metadata{
 					"key": make(chan int),
 				},
@@ -1597,8 +1602,8 @@ func TestUpdatePassword(t *testing.T) {
 			oldPassword: secret,
 			newPassword: newPassword,
 			svcRes: users.User{
-				ID:   id,
-				Name: user.Name,
+				ID:        id,
+				FirstName: user.FirstName,
 				Metadata: users.Metadata{
 					"key": make(chan int),
 				},
@@ -2107,8 +2112,8 @@ func TestListMembers(t *testing.T) {
 					Total: 1,
 				},
 				Members: []users.User{{
-					ID:   member.ID,
-					Name: member.Name,
+					ID:        member.ID,
+					FirstName: member.FirstName,
 					Metadata: map[string]interface{}{
 						"key": make(chan int),
 					},

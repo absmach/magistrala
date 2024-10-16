@@ -26,7 +26,7 @@ import (
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/ws"
 	"github.com/absmach/magistrala/ws/api"
-	"github.com/absmach/magistrala/ws/tracing"
+	"github.com/absmach/magistrala/ws/middleware"
 	"github.com/absmach/mproxy/pkg/session"
 	"github.com/absmach/mproxy/pkg/websockets"
 	"github.com/caarlos0/env/v11"
@@ -154,12 +154,12 @@ func main() {
 	}
 }
 
-func newService(thingsClient magistrala.AuthzServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
+func newService(thingsClient magistrala.ThingsServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
 	svc := ws.New(thingsClient, nps)
-	svc = tracing.New(tracer, svc)
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = middleware.TracingMiddleware(tracer, svc)
+	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("ws_adapter", "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.MetricsMiddleware(svc, counter, latency)
 	return svc
 }
 

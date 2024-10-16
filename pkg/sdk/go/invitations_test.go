@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/invitations/api"
@@ -19,6 +18,7 @@ import (
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	policies "github.com/absmach/magistrala/pkg/policies"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -522,7 +522,7 @@ func generateTestInvitation(t *testing.T) sdk.Invitation {
 		UserID:    testsutil.GenerateUUID(t),
 		DomainID:  testsutil.GenerateUUID(t),
 		Token:     validToken,
-		Relation:  auth.MemberRelation,
+		Relation:  policies.MemberRelation,
 		CreatedAt: createdAt,
 		UpdatedAt: createdAt,
 		Resend:    false,

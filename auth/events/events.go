@@ -8,6 +8,7 @@ import (
 
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 const (
@@ -99,7 +100,7 @@ func (rde retrieveDomainEvent) Encode() (map[string]interface{}, error) {
 
 type retrieveDomainPermissionsEvent struct {
 	domainID    string
-	permissions auth.Permissions
+	permissions policies.Permissions
 }
 
 func (rpe retrieveDomainPermissionsEvent) Encode() (map[string]interface{}, error) {

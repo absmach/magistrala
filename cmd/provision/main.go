@@ -24,6 +24,7 @@ import (
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/magistrala/provision/api"
+	"github.com/absmach/magistrala/provision/middleware"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -84,7 +85,7 @@ func main() {
 	SDK := mgsdk.NewSDK(SDKCfg)
 
 	svc := provision.New(cfg, SDK, logger)
-	svc = api.NewLoggingMiddleware(svc, logger)
+	svc = middleware.NewLoggingMiddleware(svc, logger)
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.HTTPPort, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)

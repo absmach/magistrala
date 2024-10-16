@@ -28,7 +28,6 @@ const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
 var (
 	valid                = "valid"
-	invalid              = "invalid"
 	thingID              = testsutil.GenerateUUID(&testing.T{})
 	OwnerID              = testsutil.GenerateUUID(&testing.T{})
 	serial               = testsutil.GenerateUUID(&testing.T{})

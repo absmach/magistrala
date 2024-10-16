@@ -227,7 +227,7 @@ func (sdk mgSDK) ResetPassword(password, confPass, token string) errors.SDKError
 	}
 	url := fmt.Sprintf("%s/%s/reset", sdk.usersURL, PasswordResetEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, "", data, nil, http.StatusCreated)
+	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, data, nil, http.StatusCreated)
 
 	return sdkerr
 }

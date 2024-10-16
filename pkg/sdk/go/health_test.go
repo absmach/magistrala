@@ -14,10 +14,10 @@ import (
 )
 
 func TestHealth(t *testing.T) {
-	thingsTs, _ := setupThings()
+	thingsTs, _, _ := setupThings()
 	defer thingsTs.Close()
 
-	usersTs, _ := setupUsers()
+	usersTs, _, _ := setupUsers()
 	defer usersTs.Close()
 
 	certsTs, _ := setupCerts()

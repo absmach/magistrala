@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/absmach/certs/sdk"
-	"github.com/absmach/magistrala"
 	pki "github.com/absmach/magistrala/certs/pki/amcerts"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -51,17 +51,17 @@ type Service interface {
 }
 
 type certsService struct {
-	auth magistrala.AuthnServiceClient
-	sdk  mgsdk.SDK
-	pki  pki.Agent
+	authn mgauthn.Authentication
+	sdk   mgsdk.SDK
+	pki   pki.Agent
 }
 
 // New returns new Certs service.
-func New(auth magistrala.AuthnServiceClient, sdk mgsdk.SDK, pkiAgent pki.Agent) Service {
+func New(authn mgauthn.Authentication, sdk mgsdk.SDK, pkiAgent pki.Agent) Service {
 	return &certsService{
-		sdk:  sdk,
-		auth: auth,
-		pki:  pkiAgent,
+		authn: authn,
+		sdk:   sdk,
+		pki:   pkiAgent,
 	}
 }
 
@@ -71,7 +71,7 @@ type Revoke struct {
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID, ttl string) (Cert, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	_, err := cs.authn.Authenticate(ctx, token)
 	if err != nil {
 		return Cert{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -98,7 +98,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID, ttl strin
 
 func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (Revoke, error) {
 	var revoke Revoke
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	_, err := cs.authn.Authenticate(ctx, token)
 	if err != nil {
 		return revoke, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -124,7 +124,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 }
 
 func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, pm PageMetadata) (CertPage, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	_, err := cs.authn.Authenticate(ctx, token)
 	if err != nil {
 		return CertPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -156,7 +156,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, pm
 }
 
 func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, pm PageMetadata) (CertPage, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	_, err := cs.authn.Authenticate(ctx, token)
 	if err != nil {
 		return CertPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
@@ -187,7 +187,7 @@ func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, 
 }
 
 func (cs *certsService) ViewCert(ctx context.Context, token, serialID string) (Cert, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	_, err := cs.authn.Authenticate(ctx, token)
 	if err != nil {
 		return Cert{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

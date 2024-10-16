@@ -5,9 +5,10 @@
 package mocks
 
 import (
-	context "context"
-
+	authn "github.com/absmach/magistrala/pkg/authn"
 	clients "github.com/absmach/magistrala/pkg/clients"
+
+	context "context"
 
 	magistrala "github.com/absmach/magistrala"
 
@@ -19,17 +20,17 @@ type Service struct {
 	mock.Mock
 }
 
-// DeleteClient provides a mock function with given fields: ctx, token, id
-func (_m *Service) DeleteClient(ctx context.Context, token string, id string) error {
-	ret := _m.Called(ctx, token, id)
+// DeleteClient provides a mock function with given fields: ctx, session, id
+func (_m *Service) DeleteClient(ctx context.Context, session authn.Session, id string) error {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteClient")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -37,9 +38,9 @@ func (_m *Service) DeleteClient(ctx context.Context, token string, id string) er
 	return r0
 }
 
-// DisableClient provides a mock function with given fields: ctx, token, id
-func (_m *Service) DisableClient(ctx context.Context, token string, id string) (clients.Client, error) {
-	ret := _m.Called(ctx, token, id)
+// DisableClient provides a mock function with given fields: ctx, session, id
+func (_m *Service) DisableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableClient")
@@ -47,17 +48,17 @@ func (_m *Service) DisableClient(ctx context.Context, token string, id string) (
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (clients.Client, error)); ok {
-		return rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) clients.Client); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, id)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -65,9 +66,9 @@ func (_m *Service) DisableClient(ctx context.Context, token string, id string) (
 	return r0, r1
 }
 
-// EnableClient provides a mock function with given fields: ctx, token, id
-func (_m *Service) EnableClient(ctx context.Context, token string, id string) (clients.Client, error) {
-	ret := _m.Called(ctx, token, id)
+// EnableClient provides a mock function with given fields: ctx, session, id
+func (_m *Service) EnableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableClient")
@@ -75,17 +76,17 @@ func (_m *Service) EnableClient(ctx context.Context, token string, id string) (c
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (clients.Client, error)); ok {
-		return rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) clients.Client); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, id)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -111,9 +112,9 @@ func (_m *Service) GenerateResetToken(ctx context.Context, email string, host st
 	return r0
 }
 
-// Identify provides a mock function with given fields: ctx, tkn
-func (_m *Service) Identify(ctx context.Context, tkn string) (string, error) {
-	ret := _m.Called(ctx, tkn)
+// Identify provides a mock function with given fields: ctx, session
+func (_m *Service) Identify(ctx context.Context, session authn.Session) (string, error) {
+	ret := _m.Called(ctx, session)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Identify")
@@ -121,17 +122,17 @@ func (_m *Service) Identify(ctx context.Context, tkn string) (string, error) {
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return rf(ctx, tkn)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session) (string, error)); ok {
+		return rf(ctx, session)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = rf(ctx, tkn)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session) string); ok {
+		r0 = rf(ctx, session)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, tkn)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session) error); ok {
+		r1 = rf(ctx, session)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -169,9 +170,9 @@ func (_m *Service) IssueToken(ctx context.Context, identity string, secret strin
 	return r0, r1
 }
 
-// ListClients provides a mock function with given fields: ctx, token, pm
-func (_m *Service) ListClients(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error) {
-	ret := _m.Called(ctx, token, pm)
+// ListClients provides a mock function with given fields: ctx, session, pm
+func (_m *Service) ListClients(ctx context.Context, session authn.Session, pm clients.Page) (clients.ClientsPage, error) {
+	ret := _m.Called(ctx, session, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListClients")
@@ -179,17 +180,17 @@ func (_m *Service) ListClients(ctx context.Context, token string, pm clients.Pag
 
 	var r0 clients.ClientsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) (clients.ClientsPage, error)); ok {
-		return rf(ctx, token, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Page) (clients.ClientsPage, error)); ok {
+		return rf(ctx, session, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) clients.ClientsPage); ok {
-		r0 = rf(ctx, token, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Page) clients.ClientsPage); ok {
+		r0 = rf(ctx, session, pm)
 	} else {
 		r0 = ret.Get(0).(clients.ClientsPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Page) error); ok {
-		r1 = rf(ctx, token, pm)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Page) error); ok {
+		r1 = rf(ctx, session, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -197,9 +198,9 @@ func (_m *Service) ListClients(ctx context.Context, token string, pm clients.Pag
 	return r0, r1
 }
 
-// ListMembers provides a mock function with given fields: ctx, token, objectKind, objectID, pm
-func (_m *Service) ListMembers(ctx context.Context, token string, objectKind string, objectID string, pm clients.Page) (clients.MembersPage, error) {
-	ret := _m.Called(ctx, token, objectKind, objectID, pm)
+// ListMembers provides a mock function with given fields: ctx, session, objectKind, objectID, pm
+func (_m *Service) ListMembers(ctx context.Context, session authn.Session, objectKind string, objectID string, pm clients.Page) (clients.MembersPage, error) {
+	ret := _m.Called(ctx, session, objectKind, objectID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMembers")
@@ -207,17 +208,17 @@ func (_m *Service) ListMembers(ctx context.Context, token string, objectKind str
 
 	var r0 clients.MembersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, clients.Page) (clients.MembersPage, error)); ok {
-		return rf(ctx, token, objectKind, objectID, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, clients.Page) (clients.MembersPage, error)); ok {
+		return rf(ctx, session, objectKind, objectID, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, clients.Page) clients.MembersPage); ok {
-		r0 = rf(ctx, token, objectKind, objectID, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, clients.Page) clients.MembersPage); ok {
+		r0 = rf(ctx, session, objectKind, objectID, pm)
 	} else {
 		r0 = ret.Get(0).(clients.MembersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, clients.Page) error); ok {
-		r1 = rf(ctx, token, objectKind, objectID, pm)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, clients.Page) error); ok {
+		r1 = rf(ctx, session, objectKind, objectID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -225,25 +226,41 @@ func (_m *Service) ListMembers(ctx context.Context, token string, objectKind str
 	return r0, r1
 }
 
+// OAuthAddClientPolicy provides a mock function with given fields: ctx, client
+func (_m *Service) OAuthAddClientPolicy(ctx context.Context, client clients.Client) error {
+	ret := _m.Called(ctx, client)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OAuthAddClientPolicy")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) error); ok {
+		r0 = rf(ctx, client)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // OAuthCallback provides a mock function with given fields: ctx, client
-func (_m *Service) OAuthCallback(ctx context.Context, client clients.Client) (*magistrala.Token, error) {
+func (_m *Service) OAuthCallback(ctx context.Context, client clients.Client) (clients.Client, error) {
 	ret := _m.Called(ctx, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for OAuthCallback")
 	}
 
-	var r0 *magistrala.Token
+	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (*magistrala.Token, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
 		return rf(ctx, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) *magistrala.Token); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
 		r0 = rf(ctx, client)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*magistrala.Token)
-		}
+		r0 = ret.Get(0).(clients.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
@@ -255,9 +272,9 @@ func (_m *Service) OAuthCallback(ctx context.Context, client clients.Client) (*m
 	return r0, r1
 }
 
-// RefreshToken provides a mock function with given fields: ctx, accessToken, domainID
-func (_m *Service) RefreshToken(ctx context.Context, accessToken string, domainID string) (*magistrala.Token, error) {
-	ret := _m.Called(ctx, accessToken, domainID)
+// RefreshToken provides a mock function with given fields: ctx, session, refreshToken, domainID
+func (_m *Service) RefreshToken(ctx context.Context, session authn.Session, refreshToken string, domainID string) (*magistrala.Token, error) {
+	ret := _m.Called(ctx, session, refreshToken, domainID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshToken")
@@ -265,19 +282,19 @@ func (_m *Service) RefreshToken(ctx context.Context, accessToken string, domainI
 
 	var r0 *magistrala.Token
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*magistrala.Token, error)); ok {
-		return rf(ctx, accessToken, domainID)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) (*magistrala.Token, error)); ok {
+		return rf(ctx, session, refreshToken, domainID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *magistrala.Token); ok {
-		r0 = rf(ctx, accessToken, domainID)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) *magistrala.Token); ok {
+		r0 = rf(ctx, session, refreshToken, domainID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*magistrala.Token)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, accessToken, domainID)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, string) error); ok {
+		r1 = rf(ctx, session, refreshToken, domainID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -285,9 +302,9 @@ func (_m *Service) RefreshToken(ctx context.Context, accessToken string, domainI
 	return r0, r1
 }
 
-// RegisterClient provides a mock function with given fields: ctx, token, client
-func (_m *Service) RegisterClient(ctx context.Context, token string, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, token, client)
+// RegisterClient provides a mock function with given fields: ctx, session, client, selfRegister
+func (_m *Service) RegisterClient(ctx context.Context, session authn.Session, client clients.Client, selfRegister bool) (clients.Client, error) {
+	ret := _m.Called(ctx, session, client, selfRegister)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RegisterClient")
@@ -295,17 +312,17 @@ func (_m *Service) RegisterClient(ctx context.Context, token string, client clie
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client, bool) (clients.Client, error)); ok {
+		return rf(ctx, session, client, selfRegister)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client, bool) clients.Client); ok {
+		r0 = rf(ctx, session, client, selfRegister)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Client) error); ok {
-		r1 = rf(ctx, token, client)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client, bool) error); ok {
+		r1 = rf(ctx, session, client, selfRegister)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -313,17 +330,17 @@ func (_m *Service) RegisterClient(ctx context.Context, token string, client clie
 	return r0, r1
 }
 
-// ResetSecret provides a mock function with given fields: ctx, resetToken, secret
-func (_m *Service) ResetSecret(ctx context.Context, resetToken string, secret string) error {
-	ret := _m.Called(ctx, resetToken, secret)
+// ResetSecret provides a mock function with given fields: ctx, session, secret
+func (_m *Service) ResetSecret(ctx context.Context, session authn.Session, secret string) error {
+	ret := _m.Called(ctx, session, secret)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResetSecret")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, resetToken, secret)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = rf(ctx, session, secret)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -331,9 +348,9 @@ func (_m *Service) ResetSecret(ctx context.Context, resetToken string, secret st
 	return r0
 }
 
-// SearchUsers provides a mock function with given fields: ctx, token, pm
-func (_m *Service) SearchUsers(ctx context.Context, token string, pm clients.Page) (clients.ClientsPage, error) {
-	ret := _m.Called(ctx, token, pm)
+// SearchUsers provides a mock function with given fields: ctx, pm
+func (_m *Service) SearchUsers(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SearchUsers")
@@ -341,17 +358,17 @@ func (_m *Service) SearchUsers(ctx context.Context, token string, pm clients.Pag
 
 	var r0 clients.ClientsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) (clients.ClientsPage, error)); ok {
-		return rf(ctx, token, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) (clients.ClientsPage, error)); ok {
+		return rf(ctx, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Page) clients.ClientsPage); ok {
-		r0 = rf(ctx, token, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) clients.ClientsPage); ok {
+		r0 = rf(ctx, pm)
 	} else {
 		r0 = ret.Get(0).(clients.ClientsPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Page) error); ok {
-		r1 = rf(ctx, token, pm)
+	if rf, ok := ret.Get(1).(func(context.Context, clients.Page) error); ok {
+		r1 = rf(ctx, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -377,9 +394,9 @@ func (_m *Service) SendPasswordReset(ctx context.Context, host string, email str
 	return r0
 }
 
-// UpdateClient provides a mock function with given fields: ctx, token, client
-func (_m *Service) UpdateClient(ctx context.Context, token string, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, token, client)
+// UpdateClient provides a mock function with given fields: ctx, session, client
+func (_m *Service) UpdateClient(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClient")
@@ -387,17 +404,17 @@ func (_m *Service) UpdateClient(ctx context.Context, token string, client client
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) (clients.Client, error)); ok {
+		return rf(ctx, session, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) clients.Client); ok {
+		r0 = rf(ctx, session, client)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Client) error); ok {
-		r1 = rf(ctx, token, client)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client) error); ok {
+		r1 = rf(ctx, session, client)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -405,9 +422,9 @@ func (_m *Service) UpdateClient(ctx context.Context, token string, client client
 	return r0, r1
 }
 
-// UpdateClientIdentity provides a mock function with given fields: ctx, token, id, identity
-func (_m *Service) UpdateClientIdentity(ctx context.Context, token string, id string, identity string) (clients.Client, error) {
-	ret := _m.Called(ctx, token, id, identity)
+// UpdateClientIdentity provides a mock function with given fields: ctx, session, id, identity
+func (_m *Service) UpdateClientIdentity(ctx context.Context, session authn.Session, id string, identity string) (clients.Client, error) {
+	ret := _m.Called(ctx, session, id, identity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClientIdentity")
@@ -415,17 +432,17 @@ func (_m *Service) UpdateClientIdentity(ctx context.Context, token string, id st
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (clients.Client, error)); ok {
-		return rf(ctx, token, id, identity)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) (clients.Client, error)); ok {
+		return rf(ctx, session, id, identity)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) clients.Client); ok {
-		r0 = rf(ctx, token, id, identity)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) clients.Client); ok {
+		r0 = rf(ctx, session, id, identity)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, token, id, identity)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, string) error); ok {
+		r1 = rf(ctx, session, id, identity)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -433,9 +450,9 @@ func (_m *Service) UpdateClientIdentity(ctx context.Context, token string, id st
 	return r0, r1
 }
 
-// UpdateClientRole provides a mock function with given fields: ctx, token, client
-func (_m *Service) UpdateClientRole(ctx context.Context, token string, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, token, client)
+// UpdateClientRole provides a mock function with given fields: ctx, session, client
+func (_m *Service) UpdateClientRole(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClientRole")
@@ -443,17 +460,17 @@ func (_m *Service) UpdateClientRole(ctx context.Context, token string, client cl
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) (clients.Client, error)); ok {
+		return rf(ctx, session, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) clients.Client); ok {
+		r0 = rf(ctx, session, client)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Client) error); ok {
-		r1 = rf(ctx, token, client)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client) error); ok {
+		r1 = rf(ctx, session, client)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -461,9 +478,9 @@ func (_m *Service) UpdateClientRole(ctx context.Context, token string, client cl
 	return r0, r1
 }
 
-// UpdateClientSecret provides a mock function with given fields: ctx, token, oldSecret, newSecret
-func (_m *Service) UpdateClientSecret(ctx context.Context, token string, oldSecret string, newSecret string) (clients.Client, error) {
-	ret := _m.Called(ctx, token, oldSecret, newSecret)
+// UpdateClientSecret provides a mock function with given fields: ctx, session, oldSecret, newSecret
+func (_m *Service) UpdateClientSecret(ctx context.Context, session authn.Session, oldSecret string, newSecret string) (clients.Client, error) {
+	ret := _m.Called(ctx, session, oldSecret, newSecret)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClientSecret")
@@ -471,17 +488,17 @@ func (_m *Service) UpdateClientSecret(ctx context.Context, token string, oldSecr
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (clients.Client, error)); ok {
-		return rf(ctx, token, oldSecret, newSecret)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) (clients.Client, error)); ok {
+		return rf(ctx, session, oldSecret, newSecret)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) clients.Client); ok {
-		r0 = rf(ctx, token, oldSecret, newSecret)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) clients.Client); ok {
+		r0 = rf(ctx, session, oldSecret, newSecret)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, token, oldSecret, newSecret)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, string) error); ok {
+		r1 = rf(ctx, session, oldSecret, newSecret)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -489,9 +506,9 @@ func (_m *Service) UpdateClientSecret(ctx context.Context, token string, oldSecr
 	return r0, r1
 }
 
-// UpdateClientTags provides a mock function with given fields: ctx, token, client
-func (_m *Service) UpdateClientTags(ctx context.Context, token string, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, token, client)
+// UpdateClientTags provides a mock function with given fields: ctx, session, client
+func (_m *Service) UpdateClientTags(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClientTags")
@@ -499,17 +516,17 @@ func (_m *Service) UpdateClientTags(ctx context.Context, token string, client cl
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) (clients.Client, error)); ok {
+		return rf(ctx, session, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, token, client)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) clients.Client); ok {
+		r0 = rf(ctx, session, client)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, clients.Client) error); ok {
-		r1 = rf(ctx, token, client)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client) error); ok {
+		r1 = rf(ctx, session, client)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -517,9 +534,9 @@ func (_m *Service) UpdateClientTags(ctx context.Context, token string, client cl
 	return r0, r1
 }
 
-// ViewClient provides a mock function with given fields: ctx, token, id
-func (_m *Service) ViewClient(ctx context.Context, token string, id string) (clients.Client, error) {
-	ret := _m.Called(ctx, token, id)
+// ViewClient provides a mock function with given fields: ctx, session, id
+func (_m *Service) ViewClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewClient")
@@ -527,17 +544,17 @@ func (_m *Service) ViewClient(ctx context.Context, token string, id string) (cli
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (clients.Client, error)); ok {
-		return rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
+		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) clients.Client); ok {
-		r0 = rf(ctx, token, id)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
+		r0 = rf(ctx, session, id)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, id)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = rf(ctx, session, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -545,9 +562,9 @@ func (_m *Service) ViewClient(ctx context.Context, token string, id string) (cli
 	return r0, r1
 }
 
-// ViewProfile provides a mock function with given fields: ctx, token
-func (_m *Service) ViewProfile(ctx context.Context, token string) (clients.Client, error) {
-	ret := _m.Called(ctx, token)
+// ViewProfile provides a mock function with given fields: ctx, session
+func (_m *Service) ViewProfile(ctx context.Context, session authn.Session) (clients.Client, error) {
+	ret := _m.Called(ctx, session)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewProfile")
@@ -555,17 +572,17 @@ func (_m *Service) ViewProfile(ctx context.Context, token string) (clients.Clien
 
 	var r0 clients.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (clients.Client, error)); ok {
-		return rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session) (clients.Client, error)); ok {
+		return rf(ctx, session)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) clients.Client); ok {
-		r0 = rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session) clients.Client); ok {
+		r0 = rf(ctx, session)
 	} else {
 		r0 = ret.Get(0).(clients.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, token)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session) error); ok {
+		r1 = rf(ctx, session)
 	} else {
 		r1 = ret.Error(1)
 	}

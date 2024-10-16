@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 // Invitation is an invitation to join a domain.
@@ -131,16 +131,16 @@ func CheckRelation(relation string) error {
 	if relation == "" {
 		return apiutil.ErrMissingRelation
 	}
-	if relation != auth.AdministratorRelation &&
-		relation != auth.EditorRelation &&
-		relation != auth.ContributorRelation &&
-		relation != auth.MemberRelation &&
-		relation != auth.GuestRelation &&
-		relation != auth.DomainRelation &&
-		relation != auth.ParentGroupRelation &&
-		relation != auth.RoleGroupRelation &&
-		relation != auth.GroupRelation &&
-		relation != auth.PlatformRelation {
+	if relation != policies.AdministratorRelation &&
+		relation != policies.EditorRelation &&
+		relation != policies.ContributorRelation &&
+		relation != policies.MemberRelation &&
+		relation != policies.GuestRelation &&
+		relation != policies.DomainRelation &&
+		relation != policies.ParentGroupRelation &&
+		relation != policies.RoleGroupRelation &&
+		relation != policies.GroupRelation &&
+		relation != policies.PlatformRelation {
 		return apiutil.ErrInvalidRelation
 	}
 

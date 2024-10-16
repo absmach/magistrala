@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/journal"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
@@ -26,19 +27,22 @@ const (
 	token           = "token"
 	invalidToken    = "invalid"
 	contentType     = "application/senml+json"
+	invalid         = "invalid"
+	wrongID         = "wrongID"
 )
 
 var (
-	idProvider    = uuid.New()
-	validMetadata = sdk.Metadata{"role": "client"}
-	user          = generateTestUser(&testing.T{})
-	description   = "shortdescription"
-	gName         = "groupname"
-
-	limit     uint64 = 5
-	offset    uint64 = 0
-	total     uint64 = 200
-	passRegex        = regexp.MustCompile("^.{8,}$")
+	idProvider           = uuid.New()
+	validMetadata        = sdk.Metadata{"role": "client"}
+	user                 = generateTestUser(&testing.T{})
+	description          = "shortdescription"
+	gName                = "groupname"
+	validToken           = "valid"
+	limit         uint64 = 5
+	offset        uint64 = 0
+	total         uint64 = 200
+	passRegex            = regexp.MustCompile("^.{8,}$")
+	validID              = testsutil.GenerateUUID(&testing.T{})
 )
 
 func generateUUID(t *testing.T) string {

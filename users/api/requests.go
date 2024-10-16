@@ -13,7 +13,6 @@ const maxLimitSize = 100
 
 type createClientReq struct {
 	client mgclients.Client
-	token  string
 }
 
 func (req createClientReq) validate() error {
@@ -34,14 +33,10 @@ func (req createClientReq) validate() error {
 }
 
 type viewClientReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req viewClientReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -49,20 +44,7 @@ func (req viewClientReq) validate() error {
 	return nil
 }
 
-type viewProfileReq struct {
-	token string
-}
-
-func (req viewProfileReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	return nil
-}
-
 type listClientsReq struct {
-	token    string
 	status   mgclients.Status
 	offset   uint64
 	limit    uint64
@@ -76,9 +58,6 @@ type listClientsReq struct {
 }
 
 func (req listClientsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.limit > maxLimitSize || req.limit < 1 {
 		return apiutil.ErrLimitSize
 	}
@@ -90,7 +69,6 @@ func (req listClientsReq) validate() error {
 }
 
 type searchClientsReq struct {
-	token  string
 	Offset uint64
 	Limit  uint64
 	Name   string
@@ -100,10 +78,6 @@ type searchClientsReq struct {
 }
 
 func (req searchClientsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.Name == "" && req.Id == "" {
 		return apiutil.ErrEmptySearchQuery
 	}
@@ -113,15 +87,11 @@ func (req searchClientsReq) validate() error {
 
 type listMembersByObjectReq struct {
 	mgclients.Page
-	token      string
 	objectKind string
 	objectID   string
 }
 
 func (req listMembersByObjectReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.objectID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -133,16 +103,12 @@ func (req listMembersByObjectReq) validate() error {
 }
 
 type updateClientReq struct {
-	token    string
 	id       string
 	Name     string             `json:"name,omitempty"`
 	Metadata mgclients.Metadata `json:"metadata,omitempty"`
 }
 
 func (req updateClientReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -151,15 +117,11 @@ func (req updateClientReq) validate() error {
 }
 
 type updateClientTagsReq struct {
-	id    string
-	token string
-	Tags  []string `json:"tags,omitempty"`
+	id   string
+	Tags []string `json:"tags,omitempty"`
 }
 
 func (req updateClientTagsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -168,16 +130,12 @@ func (req updateClientTagsReq) validate() error {
 }
 
 type updateClientRoleReq struct {
-	id    string
-	token string
-	role  mgclients.Role
-	Role  string `json:"role,omitempty"`
+	id   string
+	role mgclients.Role
+	Role string `json:"role,omitempty"`
 }
 
 func (req updateClientRoleReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -186,15 +144,11 @@ func (req updateClientRoleReq) validate() error {
 }
 
 type updateClientIdentityReq struct {
-	token    string
 	id       string
 	Identity string `json:"identity,omitempty"`
 }
 
 func (req updateClientIdentityReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -203,15 +157,11 @@ func (req updateClientIdentityReq) validate() error {
 }
 
 type updateClientSecretReq struct {
-	token     string
 	OldSecret string `json:"old_secret,omitempty"`
 	NewSecret string `json:"new_secret,omitempty"`
 }
 
 func (req updateClientSecretReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.OldSecret == "" || req.NewSecret == "" {
 		return apiutil.ErrMissingPass
 	}
@@ -223,14 +173,10 @@ func (req updateClientSecretReq) validate() error {
 }
 
 type changeClientStatusReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req changeClientStatusReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -311,17 +257,12 @@ func (req resetTokenReq) validate() error {
 }
 
 type assignUsersReq struct {
-	token    string
 	groupID  string
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`
 }
 
 func (req assignUsersReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.Relation == "" {
 		return apiutil.ErrMissingRelation
 	}
@@ -338,17 +279,12 @@ func (req assignUsersReq) validate() error {
 }
 
 type unassignUsersReq struct {
-	token    string
 	groupID  string
 	Relation string   `json:"relation"`
 	UserIDs  []string `json:"user_ids"`
 }
 
 func (req unassignUsersReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -361,16 +297,11 @@ func (req unassignUsersReq) validate() error {
 }
 
 type assignGroupsReq struct {
-	token    string
 	groupID  string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req assignGroupsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -383,16 +314,11 @@ func (req assignGroupsReq) validate() error {
 }
 
 type unassignGroupsReq struct {
-	token    string
 	groupID  string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req unassignGroupsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}

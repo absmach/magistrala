@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/things"
 	grpcapi "github.com/absmach/magistrala/things/api/grpc"
 	"github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
@@ -28,9 +28,9 @@ const port = 7000
 
 var (
 	thingID   = "testID"
+	thingKey  = "testKey"
 	channelID = "testID"
 	invalid   = "invalid"
-	valid     = "valid"
 )
 
 func startGRPCServer(svc *mocks.Service, port int) {
@@ -39,7 +39,7 @@ func startGRPCServer(svc *mocks.Service, port int) {
 		panic(fmt.Sprintf("failed to obtain port: %s", err))
 	}
 	server := grpc.NewServer()
-	magistrala.RegisterAuthzServiceServer(server, grpcapi.NewServer(svc))
+	magistrala.RegisterThingsServiceServer(server, grpcapi.NewServer(svc))
 	go func() {
 		if err := server.Serve(listener); err != nil {
 			panic(fmt.Sprintf("failed to serve: %s", err))
@@ -56,125 +56,153 @@ func TestAuthorize(t *testing.T) {
 
 	cases := []struct {
 		desc         string
-		authorizeReq *magistrala.AuthorizeReq
-		res          *magistrala.AuthorizeRes
+		req          *magistrala.ThingsAuthzReq
+		res          *magistrala.ThingsAuthzRes
 		thingID      string
+		identifyKey  string
+		authorizeReq things.AuthzReq
+		authorizeRes string
 		authorizeErr error
+		identifyErr  error
 		err          error
 		code         codes.Code
 	}{
 		{
-			desc: "authorize successfully",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     thingID,
-				SubjectKind: auth.ThingsKind,
-				Permission:  valid,
-				SubjectType: auth.ThingType,
-				Object:      channelID,
-				ObjectType:  auth.GroupType,
-			},
+			desc:    "authorize successfully",
 			thingID: thingID,
-			res:     &magistrala.AuthorizeRes{Authorized: true, Id: thingID},
-			err:     nil,
+			req: &magistrala.ThingsAuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  channelID,
+				Permission: policies.PublishPermission,
+			},
+			authorizeReq: things.AuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  channelID,
+				Permission: policies.PublishPermission,
+			},
+			authorizeRes: thingID,
+			identifyKey:  thingKey,
+			res:          &magistrala.ThingsAuthzRes{Authorized: true, Id: thingID},
+			err:          nil,
 		},
 		{
-			desc: "authorize with invalid id",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     invalid,
-				SubjectKind: auth.ThingsKind,
-				Permission:  "publish",
-				SubjectType: auth.ThingType,
-				Object:      channelID,
-				ObjectType:  auth.GroupType,
+			desc: "authorize with invalid key",
+			req: &magistrala.ThingsAuthzReq{
+				ThingKey:   invalid,
+				ChannelID:  channelID,
+				Permission: policies.PublishPermission,
 			},
-			res: &magistrala.AuthorizeRes{},
-			err: svcerr.ErrAuthentication,
+			authorizeReq: things.AuthzReq{
+				ThingKey:   invalid,
+				ChannelID:  channelID,
+				Permission: policies.PublishPermission,
+			},
+			authorizeErr: svcerr.ErrAuthentication,
+			identifyKey:  invalid,
+			identifyErr:  svcerr.ErrAuthentication,
+			res:          &magistrala.ThingsAuthzRes{},
+			err:          svcerr.ErrAuthentication,
 		},
 		{
-			desc: "authorize with missing ID",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     "",
-				SubjectKind: auth.ThingsKind,
-				Permission:  valid,
-				SubjectType: auth.ThingType,
-				Object:      channelID,
-				ObjectType:  auth.GroupType,
+			desc:    "authorize with failed authorization",
+			thingID: thingID,
+			req: &magistrala.ThingsAuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  channelID,
+				Permission: policies.PublishPermission,
 			},
-			res: &magistrala.AuthorizeRes{},
-			err: apiutil.ErrMissingID,
+			authorizeReq: things.AuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  channelID,
+				Permission: policies.PublishPermission,
+			},
+			authorizeErr: svcerr.ErrAuthorization,
+			identifyKey:  thingKey,
+			res:          &magistrala.ThingsAuthzRes{Authorized: false},
+			err:          svcerr.ErrAuthorization,
+		},
+
+		{
+			desc:    "authorize with invalid permission",
+			thingID: thingID,
+			req: &magistrala.ThingsAuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  channelID,
+				Permission: invalid,
+			},
+			authorizeReq: things.AuthzReq{
+				ChannelID:  channelID,
+				ThingKey:   thingKey,
+				Permission: invalid,
+			},
+			identifyKey:  thingKey,
+			authorizeErr: svcerr.ErrAuthorization,
+			res:          &magistrala.ThingsAuthzRes{Authorized: false},
+			err:          svcerr.ErrAuthorization,
 		},
 		{
-			desc: "authorize with unauthorized id",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     invalid,
-				SubjectKind: auth.ThingsKind,
-				Permission:  valid,
-				SubjectType: auth.ThingType,
-				Object:      channelID,
-				ObjectType:  auth.GroupType,
+			desc:    "authorize with invalid channel ID",
+			thingID: thingID,
+			req: &magistrala.ThingsAuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  invalid,
+				Permission: policies.PublishPermission,
 			},
-			res: &magistrala.AuthorizeRes{},
-			err: svcerr.ErrAuthorization,
+			authorizeReq: things.AuthzReq{
+				ChannelID:  invalid,
+				ThingKey:   thingKey,
+				Permission: policies.PublishPermission,
+			},
+			identifyKey:  thingKey,
+			authorizeErr: svcerr.ErrAuthorization,
+			res:          &magistrala.ThingsAuthzRes{Authorized: false},
+			err:          svcerr.ErrAuthorization,
 		},
 		{
-			desc: "authorize with invalid permission",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     thingID,
-				SubjectKind: auth.ThingsKind,
-				Permission:  invalid,
-				SubjectType: auth.ThingType,
-				Object:      channelID,
-				ObjectType:  auth.GroupType,
+			desc:    "authorize with empty channel ID",
+			thingID: thingID,
+			req: &magistrala.ThingsAuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  "",
+				Permission: policies.PublishPermission,
 			},
-			res: &magistrala.AuthorizeRes{},
-			err: svcerr.ErrAuthorization,
+			authorizeReq: things.AuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  "",
+				Permission: policies.PublishPermission,
+			},
+			authorizeErr: svcerr.ErrAuthorization,
+			identifyKey:  thingKey,
+			res:          &magistrala.ThingsAuthzRes{Authorized: false},
+			err:          svcerr.ErrAuthorization,
 		},
 		{
-			desc: "authorize with invalid channel ID",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     thingID,
-				SubjectKind: auth.ThingsKind,
-				Permission:  valid,
-				SubjectType: auth.ThingType,
-				Object:      invalid,
-				ObjectType:  auth.GroupType,
+			desc:    "authorize with empty permission",
+			thingID: thingID,
+			req: &magistrala.ThingsAuthzReq{
+				ThingKey:   thingKey,
+				ChannelID:  channelID,
+				Permission: "",
 			},
-			res: &magistrala.AuthorizeRes{},
-			err: svcerr.ErrAuthorization,
-		},
-		{
-			desc: "authorize with empty channel ID",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     thingID,
-				SubjectKind: auth.ThingsKind,
-				Permission:  valid,
-				SubjectType: auth.ThingType,
-				Object:      "",
-				ObjectType:  auth.GroupType,
+			authorizeReq: things.AuthzReq{
+				ChannelID:  channelID,
+				Permission: "",
+				ThingKey:   thingKey,
 			},
-			res: &magistrala.AuthorizeRes{},
-			err: svcerr.ErrAuthorization,
-		},
-		{
-			desc: "authorize with empty permission",
-			authorizeReq: &magistrala.AuthorizeReq{
-				Subject:     thingID,
-				SubjectKind: auth.ThingsKind,
-				Permission:  "",
-				SubjectType: auth.ThingType,
-				Object:      channelID,
-				ObjectType:  auth.GroupType,
-			},
-			res: &magistrala.AuthorizeRes{},
-			err: svcerr.ErrAuthorization,
+			identifyKey:  thingKey,
+			authorizeErr: svcerr.ErrAuthorization,
+			res:          &magistrala.ThingsAuthzRes{Authorized: false},
+			err:          svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Authorize", mock.Anything, tc.authorizeReq).Return(tc.thingID, tc.err)
-		res, err := client.Authorize(context.Background(), tc.authorizeReq)
+		svcCall1 := svc.On("Identify", mock.Anything, tc.identifyKey).Return(tc.thingID, tc.identifyErr)
+		svcCall2 := svc.On("Authorize", mock.Anything, tc.authorizeReq).Return(tc.thingID, tc.authorizeErr)
+		res, err := client.Authorize(context.Background(), tc.req)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.res, res, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.res, res))
-		svcCall.Unset()
+		svcCall1.Unset()
+		svcCall2.Unset()
 	}
 }

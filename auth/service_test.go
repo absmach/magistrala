@@ -15,18 +15,19 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 const (
-	secret      = "secret"
-	email       = "test@example.com"
-	id          = "testID"
-	groupName   = "mgx"
-	description = "Description"
-
+	secret          = "secret"
+	email           = "test@example.com"
+	id              = "testID"
+	groupName       = "mgx"
+	description     = "Description"
 	memberRelation  = "member"
 	authoritiesObj  = "authorities"
 	loginDuration   = 30 * time.Minute
@@ -51,22 +52,24 @@ var (
 		Name:       groupName,
 		Tags:       []string{"tag1", "tag2"},
 		Alias:      "test",
-		Permission: auth.AdminPermission,
+		Permission: policies.AdminPermission,
 		CreatedBy:  validID,
 		UpdatedBy:  validID,
 	}
 )
 
 var (
-	krepo *mocks.KeyRepository
-	prepo *mocks.PolicyAgent
-	drepo *mocks.DomainsRepository
+	krepo      *mocks.KeyRepository
+	drepo      *mocks.DomainsRepository
+	pService   *policymocks.Service
+	pEvaluator *policymocks.Evaluator
 )
 
 func newService() (auth.Service, string) {
 	krepo = new(mocks.KeyRepository)
-	prepo = new(mocks.PolicyAgent)
 	drepo = new(mocks.DomainsRepository)
+	pService = new(policymocks.Service)
+	pEvaluator = new(policymocks.Evaluator)
 	idProvider := uuid.NewMock()
 
 	t := jwt.New([]byte(secret))
@@ -80,7 +83,7 @@ func newService() (auth.Service, string) {
 	}
 	token, _ := t.Issue(key)
 
-	return auth.New(krepo, drepo, idProvider, t, prepo, loginDuration, refreshDuration, invalidDuration), token
+	return auth.New(krepo, drepo, idProvider, t, pEvaluator, pService, loginDuration, refreshDuration, invalidDuration), token
 }
 
 func TestIssue(t *testing.T) {
@@ -139,9 +142,9 @@ func TestIssue(t *testing.T) {
 		retrieveByIDResponse   auth.Domain
 		token                  string
 		saveErr                error
-		checkPolicyRequest     auth.PolicyReq
-		checkPlatformPolicyReq auth.PolicyReq
-		checkDomainPolicyReq   auth.PolicyReq
+		checkPolicyRequest     policies.Policy
+		checkPlatformPolicyReq policies.Policy
+		checkDomainPolicyReq   policies.Policy
 		checkPolicyErr         error
 		checkPolicyErr1        error
 		retreiveByIDErr        error
@@ -153,16 +156,16 @@ func TestIssue(t *testing.T) {
 				Type:     auth.AccessKey,
 				IssuedAt: time.Now(),
 			},
-			checkPolicyRequest: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyRequest: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+			checkDomainPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			token: accessToken,
 			err:   nil,
@@ -174,16 +177,16 @@ func TestIssue(t *testing.T) {
 				IssuedAt: time.Now(),
 				Domain:   groupName,
 			},
-			checkPolicyRequest: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyRequest: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+			checkDomainPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			token: accessToken,
 			err:   nil,
@@ -196,16 +199,16 @@ func TestIssue(t *testing.T) {
 				Domain:   groupName,
 			},
 			token: accessToken,
-			checkPolicyRequest: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyRequest: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPlatformPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+			checkPlatformPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 				Object:      groupName,
 			},
 			checkPolicyErr:       repoerr.ErrNotFound,
@@ -221,22 +224,22 @@ func TestIssue(t *testing.T) {
 				Domain:   groupName,
 			},
 			token: accessToken,
-			checkPolicyRequest: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyRequest: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPlatformPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
+			checkPlatformPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+			checkDomainPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyErr:       svcerr.ErrAuthorization,
 			checkPolicyErr1:      svcerr.ErrAuthorization,
@@ -251,22 +254,22 @@ func TestIssue(t *testing.T) {
 				Domain:   groupName,
 			},
 			token: accessToken,
-			checkPolicyRequest: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyRequest: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPlatformPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
+			checkPlatformPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+			checkDomainPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyErr:       svcerr.ErrAuthorization,
 			checkPolicyErr1:      svcerr.ErrAuthorization,
@@ -281,22 +284,22 @@ func TestIssue(t *testing.T) {
 				Domain:   groupName,
 			},
 			token: accessToken,
-			checkPolicyRequest: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyRequest: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPlatformPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
+			checkPlatformPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+			checkDomainPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyErr:       svcerr.ErrAuthorization,
 			checkPolicyErr1:      svcerr.ErrAuthorization,
@@ -306,10 +309,10 @@ func TestIssue(t *testing.T) {
 	}
 	for _, tc := range cases2 {
 		repoCall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
-		repoCall1 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyRequest).Return(tc.checkPolicyErr)
-		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkPlatformPolicyReq).Return(tc.checkPolicyErr1)
+		repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyRequest).Return(tc.checkPolicyErr)
+		repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPlatformPolicyReq).Return(tc.checkPolicyErr1)
 		repoCall3 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(tc.retrieveByIDResponse, tc.retreiveByIDErr)
-		repoCall4 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr)
+		repoCall4 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr)
 		_, err := svc.Issue(context.Background(), tc.token, tc.key)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -375,8 +378,8 @@ func TestIssue(t *testing.T) {
 		desc                 string
 		key                  auth.Key
 		token                string
-		checkPolicyRequest   auth.PolicyReq
-		checkDOmainPolicyReq auth.PolicyReq
+		checkPolicyRequest   policies.Policy
+		checkDOmainPolicyReq policies.Policy
 		checkPolicyErr       error
 		retrieveByIDErr      error
 		err                  error
@@ -387,35 +390,35 @@ func TestIssue(t *testing.T) {
 				Type:     auth.RefreshKey,
 				IssuedAt: time.Now(),
 			},
-			checkPolicyRequest: auth.PolicyReq{
+			checkPolicyRequest: policies.Policy{
 				Subject:     email,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
 			token: refreshToken,
 			err:   nil,
 		},
 		{
-			desc: "issue refresh token with invalid policy",
+			desc: "issue refresh token with invalid pService",
 			key: auth.Key{
 				Type:     auth.RefreshKey,
 				IssuedAt: time.Now(),
 			},
-			checkPolicyRequest: auth.PolicyReq{
+			checkPolicyRequest: policies.Policy{
 				Subject:     email,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDOmainPolicyReq: auth.PolicyReq{
+			checkDOmainPolicyReq: policies.Policy{
 				Subject:     "mgx_test@example.com",
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			token:           refreshToken,
 			checkPolicyErr:  svcerr.ErrAuthorization,
@@ -428,11 +431,11 @@ func TestIssue(t *testing.T) {
 				Type:     auth.RefreshKey,
 				IssuedAt: time.Now(),
 			},
-			checkDOmainPolicyReq: auth.PolicyReq{
+			checkDOmainPolicyReq: policies.Policy{
 				Subject:     "mgx_test@example.com",
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			token: accessToken,
 			err:   errIssueUser,
@@ -443,11 +446,11 @@ func TestIssue(t *testing.T) {
 				Type:     auth.RefreshKey,
 				IssuedAt: time.Now(),
 			},
-			checkDOmainPolicyReq: auth.PolicyReq{
+			checkDOmainPolicyReq: policies.Policy{
 				Subject:     "mgx_test@example.com",
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			token: "",
 			err:   errRetrieve,
@@ -458,34 +461,34 @@ func TestIssue(t *testing.T) {
 				Type:     auth.InvitationKey,
 				IssuedAt: time.Now(),
 			},
-			checkPolicyRequest: auth.PolicyReq{
+			checkPolicyRequest: policies.Policy{
 				Subject:     email,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
 			token: "",
 			err:   nil,
 		},
 		{
-			desc: "issue invitation key with invalid policy",
+			desc: "issue invitation key with invalid pService",
 			key: auth.Key{
 				Type:     auth.InvitationKey,
 				IssuedAt: time.Now(),
 				Domain:   groupName,
 			},
-			checkPolicyRequest: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyRequest: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDOmainPolicyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
+			checkDOmainPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			token:           refreshToken,
 			checkPolicyErr:  svcerr.ErrAuthorization,
@@ -494,9 +497,9 @@ func TestIssue(t *testing.T) {
 		},
 	}
 	for _, tc := range cases4 {
-		repoCall := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyRequest).Return(tc.checkPolicyErr)
+		repoCall := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyRequest).Return(tc.checkPolicyErr)
 		repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retrieveByIDErr)
-		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkDOmainPolicyReq).Return(tc.checkPolicyErr)
+		repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDOmainPolicyReq).Return(tc.checkPolicyErr)
 		_, err := svc.Issue(context.Background(), tc.token, tc.key)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -632,7 +635,7 @@ func TestIdentify(t *testing.T) {
 	svc, _ := newService()
 
 	repocall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	repocall1 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
+	repocall1 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
 	loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, User: id, IssuedAt: time.Now(), Domain: groupName})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	repocall.Unset()
@@ -737,7 +740,7 @@ func TestAuthorize(t *testing.T) {
 	svc, accessToken := newService()
 
 	repocall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	repocall1 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
+	repocall1 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
 	loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, User: id, IssuedAt: time.Now(), Domain: groupName})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	repocall.Unset()
@@ -749,7 +752,7 @@ func TestAuthorize(t *testing.T) {
 	saveCall.Unset()
 
 	repocall2 := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	repocall3 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
+	repocall3 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(nil)
 	emptySubject, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.AccessKey, User: "", IssuedAt: time.Now(), Domain: groupName})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	repocall2.Unset()
@@ -767,11 +770,11 @@ func TestAuthorize(t *testing.T) {
 
 	cases := []struct {
 		desc                 string
-		policyReq            auth.PolicyReq
+		policyReq            policies.Policy
 		retrieveDomainRes    auth.Domain
-		checkPolicyReq3      auth.PolicyReq
-		checkAdminPolicyReq  auth.PolicyReq
-		checkDomainPolicyReq auth.PolicyReq
+		checkPolicyReq3      policies.Policy
+		checkAdminPolicyReq  policies.Policy
+		checkDomainPolicyReq policies.Policy
 		checkPolicyErr       error
 		checkPolicyErr1      error
 		checkPolicyErr2      error
@@ -779,89 +782,89 @@ func TestAuthorize(t *testing.T) {
 	}{
 		{
 			desc: "authorize token successfully",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     accessToken,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			err: nil,
 		},
 		{
 			desc: "authorize token for group type with empty domain",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptyDomain,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      "",
-				ObjectType:  auth.GroupType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.GroupType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      "",
-				ObjectType:  auth.GroupType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.GroupType,
+				Permission:  policies.AdminPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			err:            svcerr.ErrDomainAuthorization,
 			checkPolicyErr: svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc: "authorize token with disabled domain",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptyDomain,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Permission:  policies.AdminPermission,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
+				ObjectType:  policies.DomainType,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
 
 			retrieveDomainRes: auth.Domain{
@@ -873,34 +876,34 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc: "authorize token with disabled domain with failed to authorize",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptyDomain,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Permission:  policies.AdminPermission,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
+				ObjectType:  policies.DomainType,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 
 			retrieveDomainRes: auth.Domain{
@@ -913,35 +916,35 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc: "authorize token with frozen domain",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptyDomain,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				Permission:  auth.AdminPermission,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 
 			retrieveDomainRes: auth.Domain{
@@ -953,35 +956,35 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc: "authorize token with frozen domain with failed to authorize",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptyDomain,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				Permission:  auth.AdminPermission,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 
 			retrieveDomainRes: auth.Domain{
@@ -994,35 +997,35 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc: "authorize token with domain with invalid status",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptyDomain,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				Permission:  auth.AdminPermission,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 
 			retrieveDomainRes: auth.Domain{
@@ -1035,136 +1038,136 @@ func TestAuthorize(t *testing.T) {
 
 		{
 			desc: "authorize an expired token",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     expSecret.AccessToken,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
+			checkPolicyReq3: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			err: svcerr.ErrAuthentication,
 		},
 		{
 			desc: "authorize a token with an empty subject",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptySubject.AccessToken,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyReq3: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			err: svcerr.ErrAuthentication,
 		},
 		{
 			desc: "authorize a token with an empty secret and invalid type",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptySubject.AccessToken,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformKind,
-				Permission:  auth.AdminPermission,
+			checkPolicyReq3: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformKind,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			err: svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc: "authorize a user key successfully",
-			policyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			policyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyReq3: policies.Policy{
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			err: nil,
 		},
 		{
 			desc: "authorize token with empty subject and domain object type",
-			policyReq: auth.PolicyReq{
+			policyReq: policies.Policy{
 				Subject:     emptySubject.AccessToken,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkPolicyReq3: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+			checkPolicyReq3: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			err: svcerr.ErrDomainAuthorization,
 		},
 	}
 	for _, tc := range cases {
-		repoCall := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq3).Return(tc.checkPolicyErr)
+		repoCall := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq3).Return(tc.checkPolicyErr)
 		repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(tc.retrieveDomainRes, nil)
-		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
-		repoCall3 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
+		repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
+		repoCall3 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
 		repoCall4 := krepo.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		err := svc.Authorize(context.Background(), tc.policyReq)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
@@ -1176,17 +1179,17 @@ func TestAuthorize(t *testing.T) {
 	}
 	cases2 := []struct {
 		desc      string
-		policyReq auth.PolicyReq
+		policyReq policies.Policy
 		err       error
 	}{
 		{
 			desc: "authorize token with invalid platform validation",
-			policyReq: auth.PolicyReq{
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
+			policyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
 				Object:      validID,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
 			},
 			err: errPlatform,
 		},
@@ -1197,468 +1200,6 @@ func TestAuthorize(t *testing.T) {
 	}
 }
 
-func TestAddPolicy(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "add policy successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: nil,
-		},
-		{
-			desc: "add policy with invalid object",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      inValid,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("AddPolicy", mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.AddPolicy(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestAddPolicies(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   []auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "add policy successfully",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: nil,
-		},
-		{
-			desc: "add policy with invalid object",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      inValid,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.AddPolicies(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestDeletePolicy(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "delete policy successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: nil,
-		},
-		{
-			desc: "delete policy with invalid object",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Object:      inValid,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.AdminPermission,
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("DeletePolicyFilter", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.DeletePolicyFilter(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestDeletePolicies(t *testing.T) {
-	svc, _ := newService()
-
-	cases := []struct {
-		desc string
-		pr   []auth.PolicyReq
-		err  error
-	}{
-		{
-			desc: "delete policy successfully",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: nil,
-		},
-		{
-			desc: "delete policy with invalid object",
-			pr: []auth.PolicyReq{
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      inValid,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-				{
-					Subject:     id,
-					SubjectType: auth.UserType,
-					SubjectKind: auth.UsersKind,
-					Object:      auth.MagistralaObject,
-					ObjectType:  auth.PlatformType,
-					Permission:  auth.AdminPermission,
-				},
-			},
-			err: svcerr.ErrInvalidPolicy,
-		},
-	}
-
-	for _, tc := range cases {
-		repocall := prepo.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.DeletePolicies(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
-	}
-}
-
-func TestListObjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         uint64
-		err           error
-	}{
-		{
-			desc: "list objects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list objects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall2 := prepo.On("RetrieveObjects", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(expectedPolicies, mock.Anything, tc.err)
-		page, err := svc.ListObjects(context.Background(), tc.pr, tc.nextPageToken, tc.limit)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall2.Unset()
-	}
-}
-
-func TestListAllObjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         int32
-		err           error
-	}{
-		{
-			desc: "list all objects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list all objects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall2 := prepo.On("RetrieveAllObjects", context.Background(), mock.Anything).Return(expectedPolicies, tc.err)
-		page, err := svc.ListAllObjects(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall2.Unset()
-	}
-}
-
-func TestCountObjects(t *testing.T) {
-	svc, _ := newService()
-
-	pageLen := uint64(15)
-
-	repocall2 := prepo.On("RetrieveAllObjectsCount", context.Background(), mock.Anything, mock.Anything).Return(pageLen, nil)
-	count, err := svc.CountObjects(context.Background(), auth.PolicyReq{Subject: id, SubjectType: auth.UserType, ObjectType: auth.ThingType, Permission: auth.ViewPermission})
-	assert.Nil(t, err, fmt.Sprintf("counting policies expected to succeed: %s", err))
-	assert.Equal(t, pageLen, count, fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, count, err))
-	repocall2.Unset()
-}
-
-func TestListSubjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         uint64
-		err           error
-	}{
-		{
-			desc: "list subjects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list subjects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall := prepo.On("RetrieveSubjects", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(expectedPolicies, mock.Anything, tc.err)
-		page, err := svc.ListSubjects(context.Background(), tc.pr, tc.nextPageToken, tc.limit)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall.Unset()
-	}
-}
-
-func TestListAllSubjects(t *testing.T) {
-	svc, accessToken := newService()
-
-	pageLen := 15
-	expectedPolicies := make([]auth.PolicyRes, pageLen)
-
-	cases := []struct {
-		desc          string
-		pr            auth.PolicyReq
-		nextPageToken string
-		limit         int32
-		err           error
-	}{
-		{
-			desc: "list all subjects successfully",
-			pr: auth.PolicyReq{
-				Subject:     id,
-				SubjectType: auth.UserType,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      "",
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           nil,
-		},
-		{
-			desc: "list all subjects with invalid request",
-			pr: auth.PolicyReq{
-				Subject:     inValid,
-				SubjectType: inValid,
-				Relation:    auth.ContributorRelation,
-				ObjectType:  auth.ThingType,
-				ObjectKind:  auth.ThingsKind,
-				Object:      inValid,
-			},
-			nextPageToken: accessToken,
-			limit:         10,
-			err:           svcerr.ErrInvalidPolicy,
-		},
-	}
-	for _, tc := range cases {
-		repocall := prepo.On("RetrieveAllSubjects", context.Background(), mock.Anything).Return(expectedPolicies, tc.err)
-		page, err := svc.ListAllSubjects(context.Background(), tc.pr)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("listing policies expected to succeed: %s", err))
-		if err == nil {
-			assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-		}
-		repocall.Unset()
-	}
-}
-
-func TestCountSubjects(t *testing.T) {
-	svc, _ := newService()
-	pageLen := uint64(15)
-
-	repocall := prepo.On("RetrieveAllSubjectsCount", mock.Anything, mock.Anything, mock.Anything).Return(pageLen, nil)
-	count, err := svc.CountSubjects(context.Background(), auth.PolicyReq{Object: id, ObjectType: auth.ThingType, Permission: auth.ViewPermission})
-	assert.Nil(t, err, fmt.Sprintf("counting policies expected to succeed: %s", err))
-	assert.Equal(t, pageLen, count, fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, count, err))
-	repocall.Unset()
-}
-
-func TestListPermissions(t *testing.T) {
-	svc, _ := newService()
-
-	pr := auth.PolicyReq{
-		Subject:     id,
-		SubjectType: auth.UserType,
-		Relation:    auth.ContributorRelation,
-		ObjectType:  auth.ThingType,
-		ObjectKind:  auth.ThingsKind,
-		Object:      "",
-	}
-	filterPermisions := []string{auth.ViewPermission, auth.AdminPermission}
-
-	repoCall := prepo.On("RetrievePermissions", context.Background(), pr, filterPermisions).Return(auth.Permissions{}, nil)
-	_, err := svc.ListPermissions(context.Background(), pr, filterPermisions)
-	assert.Nil(t, err, fmt.Sprintf("listing policies expected to succeed: %s", err))
-	repoCall.Unset()
-}
-
 func TestSwitchToPermission(t *testing.T) {
 	cases := []struct {
 		desc     string
@@ -1667,33 +1208,33 @@ func TestSwitchToPermission(t *testing.T) {
 	}{
 		{
 			desc:     "switch to admin permission",
-			relation: auth.AdministratorRelation,
-			result:   auth.AdminPermission,
+			relation: policies.AdministratorRelation,
+			result:   policies.AdminPermission,
 		},
 		{
 			desc:     "switch to editor permission",
-			relation: auth.EditorRelation,
-			result:   auth.EditPermission,
+			relation: policies.EditorRelation,
+			result:   policies.EditPermission,
 		},
 		{
 			desc:     "switch to contributor permission",
-			relation: auth.ContributorRelation,
-			result:   auth.ViewPermission,
+			relation: policies.ContributorRelation,
+			result:   policies.ViewPermission,
 		},
 		{
 			desc:     "switch to member permission",
-			relation: auth.MemberRelation,
-			result:   auth.MembershipPermission,
+			relation: policies.MemberRelation,
+			result:   policies.MembershipPermission,
 		},
 		{
 			desc:     "switch to group permission",
-			relation: auth.GroupRelation,
-			result:   auth.GroupRelation,
+			relation: policies.GroupRelation,
+			result:   policies.GroupRelation,
 		},
 		{
 			desc:     "switch to guest permission",
-			relation: auth.GuestRelation,
-			result:   auth.ViewPermission,
+			relation: policies.GuestRelation,
+			result:   policies.ViewPermission,
 		},
 	}
 	for _, tc := range cases {
@@ -1751,7 +1292,7 @@ func TestCreateDomain(t *testing.T) {
 			err:          errors.ErrMalformedEntity,
 		},
 		{
-			desc: "create domain with failed save policy request",
+			desc: "create domain with failed save policyrequest",
 			d: auth.Domain{
 				Status: auth.EnabledStatus,
 			},
@@ -1812,9 +1353,9 @@ func TestCreateDomain(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := prepo.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPolicyErr)
+		repoCall := pService.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPolicyErr)
 		repoCall1 := drepo.On("SavePolicies", mock.Anything, mock.Anything).Return(tc.savePolicyErr)
-		repoCall2 := prepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
+		repoCall2 := pService.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		repoCall3 := drepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deleteDomainErr)
 		repoCall4 := drepo.On("Save", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.saveDomainErr)
 		_, err := svc.CreateDomain(context.Background(), tc.token, tc.d)
@@ -1877,7 +1418,7 @@ func TestRetrieveDomain(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := drepo.On("RetrieveByID", mock.Anything, groupName).Return(auth.Domain{}, tc.domainRepoErr)
-		repoCall1 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+		repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
 		repoCall2 := drepo.On("RetrieveByID", mock.Anything, tc.domainID).Return(auth.Domain{}, tc.domainRepoErr1)
 		_, err := svc.RetrieveDomain(context.Background(), tc.token, tc.domainID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
@@ -1935,9 +1476,9 @@ func TestRetrieveDomainPermissions(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := prepo.On("RetrievePermissions", mock.Anything, mock.Anything, mock.Anything).Return(auth.Permissions{}, tc.retreivePermissionsErr)
+		repoCall := pService.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(policies.Permissions{}, tc.retreivePermissionsErr)
 		repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retreiveByIDErr)
-		repoCall2 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+		repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
 		_, err := svc.RetrieveDomainPermissions(context.Background(), tc.token, tc.domainID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -2015,7 +1556,7 @@ func TestUpdateDomain(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+		repoCall := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
 		repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retrieveByIDErr)
 		repoCall2 := drepo.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.Domain{}, tc.updateErr)
 		_, err := svc.UpdateDomain(context.Background(), tc.token, tc.domainID, tc.domReq)
@@ -2093,7 +1634,7 @@ func TestChangeDomainStatus(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retreieveByIDErr)
-		repoCall1 := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+		repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
 		repoCall2 := drepo.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.Domain{}, tc.updateErr)
 		_, err := svc.ChangeDomainStatus(context.Background(), tc.token, tc.domainID, tc.domainReq)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
@@ -2124,7 +1665,7 @@ func TestListDomains(t *testing.T) {
 			authReq: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 				Status:     auth.EnabledStatus,
 			},
 			listDomainsRes: auth.DomainsPage{
@@ -2139,7 +1680,7 @@ func TestListDomains(t *testing.T) {
 			authReq: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 				Status:     auth.EnabledStatus,
 			},
 			err: svcerr.ErrAuthentication,
@@ -2151,7 +1692,7 @@ func TestListDomains(t *testing.T) {
 			authReq: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 				Status:     auth.EnabledStatus,
 			},
 			listDomainErr: errors.ErrMalformedEntity,
@@ -2160,7 +1701,7 @@ func TestListDomains(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+		repoCall := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
 		repoCall1 := drepo.On("ListDomains", mock.Anything, mock.Anything).Return(tc.listDomainsRes, tc.listDomainErr)
 		_, err := svc.ListDomains(context.Background(), tc.token, auth.Page{})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
@@ -2178,10 +1719,10 @@ func TestAssignUsers(t *testing.T) {
 		domainID             string
 		userIDs              []string
 		relation             string
-		checkPolicyReq3      auth.PolicyReq
-		checkAdminPolicyReq  auth.PolicyReq
-		checkDomainPolicyReq auth.PolicyReq
-		checkPolicyReq33     auth.PolicyReq
+		checkPolicyReq3      policies.Policy
+		checkAdminPolicyReq  policies.Policy
+		checkDomainPolicyReq policies.Policy
+		checkPolicyReq33     policies.Policy
 		checkpolicyErr       error
 		checkPolicyErr1      error
 		checkPolicyErr2      error
@@ -2195,38 +1736,38 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ContributorRelation,
-			checkPolicyReq3: auth.PolicyReq{
+			relation: policies.ContributorRelation,
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.ViewPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     validID,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: auth.PolicyReq{
+			checkPolicyReq33: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 
 			err: nil,
@@ -2236,31 +1777,31 @@ func TestAssignUsers(t *testing.T) {
 			token:    inValidToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ContributorRelation,
-			checkPolicyReq3: auth.PolicyReq{
+			relation: policies.ContributorRelation,
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.ViewPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     validID,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.MembershipPermission,
 			},
 			err: svcerr.ErrAuthentication,
 		},
@@ -2268,31 +1809,31 @@ func TestAssignUsers(t *testing.T) {
 			desc:     "assign users with invalid domainID",
 			token:    accessToken,
 			domainID: inValid,
-			relation: auth.ContributorRelation,
-			checkPolicyReq3: auth.PolicyReq{
+			relation: policies.ContributorRelation,
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      inValid,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      inValid,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.ViewPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
 			},
-			checkPolicyReq33: auth.PolicyReq{
+			checkPolicyReq33: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyErr1: svcerr.ErrAuthorization,
 			err:             svcerr.ErrAuthorization,
@@ -2302,38 +1843,38 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			userIDs:  []string{inValid},
 			domainID: validID,
-			relation: auth.ContributorRelation,
-			checkPolicyReq3: auth.PolicyReq{
+			relation: policies.ContributorRelation,
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.ViewPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     inValid,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: auth.PolicyReq{
+			checkPolicyReq33: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyErr2: svcerr.ErrMalformedEntity,
 			err:             svcerr.ErrDomainAuthorization,
@@ -2343,38 +1884,38 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ContributorRelation,
-			checkPolicyReq3: auth.PolicyReq{
+			relation: policies.ContributorRelation,
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.ViewPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     validID,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: auth.PolicyReq{
+			checkPolicyReq33: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			addPoliciesErr: svcerr.ErrAuthorization,
 			err:            errAddPolicies,
@@ -2384,38 +1925,38 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ContributorRelation,
-			checkPolicyReq3: auth.PolicyReq{
+			relation: policies.ContributorRelation,
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.ViewPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     validID,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: auth.PolicyReq{
+			checkPolicyReq33: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			savePoliciesErr: repoerr.ErrCreateEntity,
 			err:             errAddPolicies,
@@ -2425,38 +1966,38 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
-			relation: auth.ContributorRelation,
-			checkPolicyReq3: auth.PolicyReq{
+			relation: policies.ContributorRelation,
+			checkPolicyReq3: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.ViewPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     validID,
-				SubjectType: auth.UserType,
-				Object:      auth.MagistralaObject,
-				ObjectType:  auth.PlatformType,
-				Permission:  auth.MembershipPermission,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: auth.PolicyReq{
+			checkPolicyReq33: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			savePoliciesErr:   repoerr.ErrCreateEntity,
 			deletePoliciesErr: svcerr.ErrDomainAuthorization,
@@ -2466,13 +2007,13 @@ func TestAssignUsers(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := drepo.On("RetrieveByID", mock.Anything, groupName).Return(auth.Domain{}, nil)
-		repoCall1 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq3).Return(tc.checkpolicyErr)
-		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
-		repoCall3 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr2)
-		repoCall4 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq33).Return(tc.checkPolicyErr2)
-		repoCall5 := prepo.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesErr)
+		repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq3).Return(tc.checkpolicyErr)
+		repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
+		repoCall3 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr2)
+		repoCall4 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq33).Return(tc.checkPolicyErr2)
+		repoCall5 := pService.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesErr)
 		repoCall6 := drepo.On("SavePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.savePoliciesErr)
-		repoCall7 := prepo.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
+		repoCall7 := pService.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		err := svc.AssignUsers(context.Background(), tc.token, tc.domainID, tc.userIDs, tc.relation)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
@@ -2494,9 +2035,9 @@ func TestUnassignUser(t *testing.T) {
 		token                 string
 		domainID              string
 		userID                string
-		checkPolicyReq        auth.PolicyReq
-		checkAdminPolicyReq   auth.PolicyReq
-		checkDomainPolicyReq  auth.PolicyReq
+		checkPolicyReq        policies.Policy
+		checkAdminPolicyReq   policies.Policy
+		checkDomainPolicyReq  policies.Policy
 		checkPolicyErr        error
 		checkPolicyErr1       error
 		deletePolicyFilterErr error
@@ -2508,30 +2049,30 @@ func TestUnassignUser(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userID:   validID,
-			checkPolicyReq: auth.PolicyReq{
+			checkPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
 			err: nil,
 		},
@@ -2540,23 +2081,23 @@ func TestUnassignUser(t *testing.T) {
 			token:    inValidToken,
 			domainID: validID,
 			userID:   validID,
-			checkPolicyReq: auth.PolicyReq{
+			checkPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
 			err: svcerr.ErrAuthentication,
 		},
@@ -2565,30 +2106,30 @@ func TestUnassignUser(t *testing.T) {
 			token:    accessToken,
 			domainID: inValid,
 			userID:   validID,
-			checkPolicyReq: auth.PolicyReq{
+			checkPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      inValid,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      inValid,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyErr1: svcerr.ErrAuthorization,
 			err:             svcerr.ErrDomainAuthorization,
@@ -2598,30 +2139,30 @@ func TestUnassignUser(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userID:   validID,
-			checkPolicyReq: auth.PolicyReq{
+			checkPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			deletePolicyFilterErr: errors.ErrMalformedEntity,
 			err:                   errors.ErrMalformedEntity,
@@ -2631,64 +2172,64 @@ func TestUnassignUser(t *testing.T) {
 			token:    accessToken,
 			domainID: validID,
 			userID:   validID,
-			checkPolicyReq: auth.PolicyReq{
+			checkPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			deletePoliciesErr:     errors.ErrMalformedEntity,
 			deletePolicyFilterErr: errors.ErrMalformedEntity,
 			err:                   errors.ErrMalformedEntity,
 		},
 		{
-			desc:     "unassign user with failed to delete policy from domain",
+			desc:     "unassign user with failed to delete pService from domain",
 			token:    accessToken,
 			domainID: validID,
 			userID:   validID,
-			checkPolicyReq: auth.PolicyReq{
+			checkPolicyReq: policies.Policy{
 				Subject:     id,
-				SubjectType: auth.UserType,
+				SubjectType: policies.UserType,
 				Object:      groupName,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
-			checkAdminPolicyReq: auth.PolicyReq{
+			checkAdminPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.AdminPermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: auth.PolicyReq{
+			checkDomainPolicyReq: policies.Policy{
 				Domain:      groupName,
 				Subject:     id,
-				SubjectType: auth.UserType,
-				SubjectKind: auth.TokenKind,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
 				Object:      validID,
-				ObjectType:  auth.DomainType,
-				Permission:  auth.SharePermission,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
 			},
 			deletePoliciesErr: errors.ErrMalformedEntity,
 			err:               errors.ErrMalformedEntity,
@@ -2697,10 +2238,10 @@ func TestUnassignUser(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, nil)
-		repoCall1 := prepo.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkPolicyErr)
-		repoCall2 := prepo.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
-		repoCall3 := prepo.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
-		repoCall4 := prepo.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePolicyFilterErr)
+		repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkPolicyErr)
+		repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
+		repoCall3 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
+		repoCall4 := pService.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePolicyFilterErr)
 		repoCall5 := drepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 		err := svc.UnassignUser(context.Background(), tc.token, tc.domainID, tc.userID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
@@ -2733,7 +2274,7 @@ func TestListUsersDomains(t *testing.T) {
 			page: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 			},
 			err: nil,
 		},
@@ -2744,7 +2285,7 @@ func TestListUsersDomains(t *testing.T) {
 			page: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 			},
 			err: nil,
 		},
@@ -2755,7 +2296,7 @@ func TestListUsersDomains(t *testing.T) {
 			page: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 			},
 			err: svcerr.ErrAuthentication,
 		},
@@ -2766,7 +2307,7 @@ func TestListUsersDomains(t *testing.T) {
 			page: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 			},
 			checkPolicyErr: svcerr.ErrAuthorization,
 			err:            svcerr.ErrAuthorization,
@@ -2778,7 +2319,7 @@ func TestListUsersDomains(t *testing.T) {
 			page: auth.Page{
 				Offset:     0,
 				Limit:      10,
-				Permission: auth.AdminPermission,
+				Permission: policies.AdminPermission,
 			},
 			listDomainErr: repoerr.ErrNotFound,
 			err:           svcerr.ErrViewEntity,
@@ -2786,7 +2327,7 @@ func TestListUsersDomains(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := prepo.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+		repoCall := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
 		repoCall1 := drepo.On("ListDomains", mock.Anything, mock.Anything).Return(auth.DomainsPage{}, tc.listDomainErr)
 		_, err := svc.ListUserDomains(context.Background(), tc.token, tc.userID, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))

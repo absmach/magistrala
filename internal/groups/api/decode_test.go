@@ -65,7 +65,6 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 					Direction:  -1,
 					ListPerms:  true,
 				},
-				token:      "123",
 				tree:       true,
 				memberKind: "random",
 			},
@@ -180,8 +179,7 @@ func TestDecodeListParentsRequest(t *testing.T) {
 					Direction:  +1,
 					ListPerms:  true,
 				},
-				token: "123",
-				tree:  true,
+				tree: true,
 			},
 			err: nil,
 		},
@@ -276,8 +274,7 @@ func TestDecodeListChildrenRequest(t *testing.T) {
 					Direction:  -1,
 					ListPerms:  true,
 				},
-				token: "123",
-				tree:  true,
+				tree: true,
 			},
 			err: nil,
 		},
@@ -351,7 +348,6 @@ func TestDecodeListMembersRequest(t *testing.T) {
 				"Authorization": {"Bearer 123"},
 			},
 			resp: listMembersReq{
-				token:      "123",
 				memberKind: "random",
 				permission: "random",
 			},
@@ -483,7 +479,6 @@ func TestDecodeGroupCreate(t *testing.T) {
 					Name:        "random",
 					Description: "random",
 				},
-				token: "123",
 			},
 			err: nil,
 		},
@@ -537,7 +532,6 @@ func TestDecodeGroupUpdate(t *testing.T) {
 			resp: updateGroupReq{
 				Name:        "random",
 				Description: "random",
-				token:       "123",
 			},
 			err: nil,
 		},
@@ -585,10 +579,8 @@ func TestDecodeGroupRequest(t *testing.T) {
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
-			resp: groupReq{
-				token: "123",
-			},
-			err: nil,
+			resp: groupReq{},
+			err:  nil,
 		},
 		{
 			desc: "empty token",
@@ -619,10 +611,8 @@ func TestDecodeGroupPermsRequest(t *testing.T) {
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
-			resp: groupPermsReq{
-				token: "123",
-			},
-			err: nil,
+			resp: groupPermsReq{},
+			err:  nil,
 		},
 		{
 			desc: "empty token",
@@ -653,10 +643,8 @@ func TestDecodeChangeGroupStatus(t *testing.T) {
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
-			resp: changeGroupStatusReq{
-				token: "123",
-			},
-			err: nil,
+			resp: changeGroupStatusReq{},
+			err:  nil,
 		},
 		{
 			desc: "empty token",
@@ -693,7 +681,6 @@ func TestDecodeAssignMembersRequest(t *testing.T) {
 			resp: assignReq{
 				MemberKind: "random",
 				Members:    []string{"random"},
-				token:      "123",
 			},
 			err: nil,
 		},
@@ -747,7 +734,6 @@ func TestDecodeUnassignMembersRequest(t *testing.T) {
 			resp: unassignReq{
 				MemberKind: "random",
 				Members:    []string{"random"},
-				token:      "123",
 			},
 			err: nil,
 		},

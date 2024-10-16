@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
-	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
@@ -120,8 +121,9 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	auth       grpcclient.AuthServiceClient
-	policy     magistrala.PolicyServiceClient
+	authn      mgauthn.Authentication
+	authz      mgauthz.Authorization
+	policies   policies.Service
 	configs    ConfigRepository
 	sdk        mgsdk.SDK
 	encKey     []byte
@@ -129,30 +131,31 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(auth grpcclient.AuthServiceClient, policy magistrala.PolicyServiceClient, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
+func New(authn mgauthn.Authentication, authz mgauthz.Authorization, policyService policies.Service, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
+		authn:      authn,
+		authz:      authz,
 		configs:    configs,
 		sdk:        sdk,
-		auth:       auth,
-		policy:     policy,
+		policies:   policyService,
 		encKey:     encKey,
 		idProvider: idp,
 	}
 }
 
 func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (Config, error) {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if _, err := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.MembershipPermission, auth.DomainType, user.GetDomainId()); err != nil {
+	if err := bs.authorize(ctx, "", policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID); err != nil {
 		return Config{}, err
 	}
 
 	toConnect := bs.toIDList(cfg.Channels)
 
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
-	existing, err := bs.configs.ListExisting(ctx, user.GetDomainId(), toConnect)
+	existing, err := bs.configs.ListExisting(ctx, session.DomainID, toConnect)
 	if err != nil {
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
@@ -175,7 +178,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	}
 
 	cfg.ThingID = mgThing.ID
-	cfg.DomainID = user.GetDomainId()
+	cfg.DomainID = session.DomainID
 	cfg.State = Inactive
 	cfg.ThingKey = mgThing.Credentials.Secret
 
@@ -198,14 +201,14 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 }
 
 func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, error) {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.ViewPermission, auth.ThingType, id); err != nil {
+	if err := bs.authorize(ctx, session.DomainID, policies.UsersKind, session.DomainUserID, policies.ViewPermission, policies.ThingType, id); err != nil {
 		return Config{}, err
 	}
-	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
+	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, id)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -213,15 +216,15 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 }
 
 func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config) error {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, cfg.ThingID); err != nil {
+	if err := bs.authorize(ctx, session.DomainID, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.ThingType, cfg.ThingID); err != nil {
 		return err
 	}
 
-	cfg.DomainID = user.GetDomainId()
+	cfg.DomainID = session.DomainID
 	if err = bs.configs.Update(ctx, cfg); err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -229,15 +232,15 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 }
 
 func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) (Config, error) {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, thingID); err != nil {
+	if err := bs.authorize(ctx, session.DomainID, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.ThingType, thingID); err != nil {
 		return Config{}, err
 	}
 
-	cfg, err := bs.configs.UpdateCert(ctx, user.GetDomainId(), thingID, clientCert, clientKey, caCert)
+	cfg, err := bs.configs.UpdateCert(ctx, session.DomainID, thingID, clientCert, clientKey, caCert)
 	if err != nil {
 		return Config{}, errors.Wrap(errUpdateCert, err)
 	}
@@ -245,16 +248,16 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 }
 
 func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.EditPermission, auth.ThingType, id); err != nil {
+	if err := bs.authorize(ctx, session.DomainID, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.ThingType, id); err != nil {
 		return err
 	}
 
-	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
+	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, id)
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -262,7 +265,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	add, remove := bs.updateList(cfg, connections)
 
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
-	existing, err := bs.configs.ListExisting(ctx, user.GetDomainId(), connections)
+	existing, err := bs.configs.ListExisting(ctx, session.DomainID, connections)
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -298,18 +301,18 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 			return ErrThings
 		}
 	}
-	if err := bs.configs.UpdateConnections(ctx, user.GetDomainId(), id, channels, connections); err != nil {
+	if err := bs.configs.UpdateConnections(ctx, session.DomainID, id, channels, connections); err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
 	return nil
 }
 
 func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
-	tids, err := bs.policy.ListAllObjects(ctx, &magistrala.ListObjectsReq{
-		SubjectType: auth.UserType,
+	tids, err := bs.policies.ListAllObjects(ctx, policies.Policy{
+		SubjectType: policies.UserType,
 		Subject:     userID,
-		Permission:  auth.ViewPermission,
-		ObjectType:  auth.ThingType,
+		Permission:  policies.ViewPermission,
+		ObjectType:  policies.ThingType,
 	})
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrNotFound, err)
@@ -318,38 +321,34 @@ func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]
 }
 
 func (bs bootstrapService) checkSuperAdmin(ctx context.Context, userID string) error {
-	res, err := bs.auth.Authorize(ctx, &magistrala.AuthorizeReq{
-		SubjectType: auth.UserType,
+	if err := bs.authz.Authorize(ctx, mgauthz.PolicyReq{
+		SubjectType: policies.UserType,
 		Subject:     userID,
-		Permission:  auth.AdminPermission,
-		ObjectType:  auth.PlatformType,
-		Object:      auth.MagistralaObject,
-	})
-	if err != nil {
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.MagistralaObject,
+	}); err != nil {
 		return err
-	}
-	if !res.Authorized {
-		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	return nil
 }
 
 func (bs bootstrapService) List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	if err := bs.checkSuperAdmin(ctx, user.GetId()); err == nil {
-		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
+	if err := bs.checkSuperAdmin(ctx, session.DomainUserID); err == nil {
+		return bs.configs.RetrieveAll(ctx, session.DomainID, []string{}, filter, offset, limit), nil
 	}
 
-	if _, err := bs.authorize(ctx, "", auth.UsersKind, user.GetId(), auth.AdminPermission, auth.DomainType, user.GetDomainId()); err == nil {
-		return bs.configs.RetrieveAll(ctx, user.GetDomainId(), []string{}, filter, offset, limit), nil
+	if err := bs.authorize(ctx, "", policies.UsersKind, session.DomainUserID, policies.AdminPermission, policies.DomainType, session.DomainID); err == nil {
+		return bs.configs.RetrieveAll(ctx, session.DomainID, []string{}, filter, offset, limit), nil
 	}
 
 	// Handle non-admin users
-	thingIDs, err := bs.listClientIDs(ctx, user.GetId())
+	thingIDs, err := bs.listClientIDs(ctx, session.DomainUserID)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
@@ -363,18 +362,18 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 		}, nil
 	}
 
-	return bs.configs.RetrieveAll(ctx, user.GetDomainId(), thingIDs, filter, offset, limit), nil
+	return bs.configs.RetrieveAll(ctx, session.DomainID, thingIDs, filter, offset, limit), nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if _, err := bs.authorize(ctx, user.GetDomainId(), auth.UsersKind, user.GetId(), auth.DeletePermission, auth.ThingType, id); err != nil {
+	if err := bs.authorize(ctx, session.DomainID, policies.UsersKind, session.DomainUserID, policies.DeletePermission, policies.ThingType, id); err != nil {
 		return err
 	}
-	if err := bs.configs.Remove(ctx, user.GetDomainId(), id); err != nil {
+	if err := bs.configs.Remove(ctx, session.DomainID, id); err != nil {
 		return errors.Wrap(errRemoveBootstrap, err)
 	}
 	return nil
@@ -400,12 +399,12 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 }
 
 func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, state State) error {
-	user, err := bs.identify(ctx, token)
+	session, err := bs.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	cfg, err := bs.configs.RetrieveByID(ctx, user.GetDomainId(), id)
+	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, id)
 	if err != nil {
 		return errors.Wrap(errChangeState, err)
 	}
@@ -439,7 +438,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 			}
 		}
 	}
-	if err := bs.configs.ChangeState(ctx, user.GetDomainId(), id, state); err != nil {
+	if err := bs.configs.ChangeState(ctx, session.DomainID, id, state); err != nil {
 		return errors.Wrap(errChangeState, err)
 	}
 	return nil
@@ -480,39 +479,35 @@ func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID
 	return nil
 }
 
-func (bs bootstrapService) identify(ctx context.Context, token string) (*magistrala.IdentityRes, error) {
+func (bs bootstrapService) identify(ctx context.Context, token string) (mgauthn.Session, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	res, err := bs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	res, err := bs.authn.Authenticate(ctx, token)
 	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrAuthentication, err)
+		return mgauthn.Session{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if res.GetId() == "" || res.GetDomainId() == "" {
-		return nil, errors.Wrap(svcerr.ErrAuthentication, err)
+	if res.DomainUserID == "" || res.DomainID == "" {
+		return mgauthn.Session{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	return res, nil
 }
 
-func (bs bootstrapService) authorize(ctx context.Context, domainID, subjKind, subj, perm, objType, obj string) (string, error) {
-	req := &magistrala.AuthorizeReq{
+func (bs bootstrapService) authorize(ctx context.Context, domainID, subjKind, subj, perm, objType, obj string) error {
+	req := mgauthz.PolicyReq{
 		Domain:      domainID,
-		SubjectType: auth.UserType,
+		SubjectType: policies.UserType,
 		SubjectKind: subjKind,
 		Subject:     subj,
 		Permission:  perm,
 		ObjectType:  objType,
 		Object:      obj,
 	}
-	res, err := bs.auth.Authorize(ctx, req)
-	if err != nil {
-		return "", errors.Wrap(svcerr.ErrAuthorization, err)
-	}
-	if !res.GetAuthorized() {
-		return "", errors.Wrap(svcerr.ErrAuthorization, err)
+	if err := bs.authz.Authorize(ctx, req); err != nil {
+		return err
 	}
 
-	return res.GetId(), nil
+	return nil
 }
 
 // Method thing retrieves Magistrala Thing creating one if an empty ID is passed.

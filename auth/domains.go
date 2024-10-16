@@ -11,6 +11,7 @@ import (
 
 	"github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 // Status represents Domain status.
@@ -157,13 +158,14 @@ type Policy struct {
 type Domains interface {
 	CreateDomain(ctx context.Context, token string, d Domain) (Domain, error)
 	RetrieveDomain(ctx context.Context, token string, id string) (Domain, error)
-	RetrieveDomainPermissions(ctx context.Context, token string, id string) (Permissions, error)
+	RetrieveDomainPermissions(ctx context.Context, token string, id string) (policies.Permissions, error)
 	UpdateDomain(ctx context.Context, token string, id string, d DomainReq) (Domain, error)
 	ChangeDomainStatus(ctx context.Context, token string, id string, d DomainReq) (Domain, error)
 	ListDomains(ctx context.Context, token string, page Page) (DomainsPage, error)
 	AssignUsers(ctx context.Context, token string, id string, userIds []string, relation string) error
 	UnassignUser(ctx context.Context, token string, id string, userID string) error
 	ListUserDomains(ctx context.Context, token string, userID string, page Page) (DomainsPage, error)
+	DeleteUserFromDomains(ctx context.Context, id string) error
 }
 
 // DomainsRepository specifies Domain persistence API.
@@ -197,7 +199,7 @@ type DomainsRepository interface {
 	// ListDomains list all the domains
 	ListDomains(ctx context.Context, pm Page) (DomainsPage, error)
 
-	// CheckPolicy check policy in domains database.
+	// CheckPolicy check policies in domains database.
 	CheckPolicy(ctx context.Context, pc Policy) error
 
 	// DeleteUserPolicies deletes user policies from domains database.

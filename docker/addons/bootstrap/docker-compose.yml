@@ -12,7 +12,6 @@ networks:
 volumes:
   magistrala-bootstrap-db-volume:
 
-
 services:
   bootstrap-db:
     image: postgres:16.2-alpine
@@ -63,6 +62,10 @@ services:
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
       MG_BOOTSTRAP_INSTANCE_ID: ${MG_BOOTSTRAP_INSTANCE_ID}
+      MG_SPICEDB_SCHEMA_FILE: ${MG_SPICEDB_SCHEMA_FILE}
+      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
     networks:
       - magistrala-base-net
     volumes:

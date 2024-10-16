@@ -27,8 +27,9 @@ const (
 const buffSize = 10 * 1024 * 1024
 
 var (
-	errGrpcConnect = errors.New("failed to connect to grpc server")
-	errGrpcClose   = errors.New("failed to close grpc connection")
+	errGrpcConnect   = errors.New("failed to connect to grpc server")
+	errGrpcClose     = errors.New("failed to close grpc connection")
+	ErrSvcNotServing = errors.New("service is not serving")
 )
 
 type Config struct {
@@ -59,7 +60,7 @@ type client struct {
 
 var _ Handler = (*client)(nil)
 
-func newHandler(cfg Config) (Handler, error) {
+func NewHandler(cfg Config) (Handler, error) {
 	conn, secure, err := connect(cfg)
 	if err != nil {
 		return nil, err

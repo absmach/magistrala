@@ -18,8 +18,8 @@ import (
 	"github.com/absmach/magistrala/bootstrap/api"
 	"github.com/absmach/magistrala/bootstrap/events/consumer"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
+	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
-	"github.com/absmach/magistrala/bootstrap/tracing"
 	mglog "github.com/absmach/magistrala/logger"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
@@ -218,10 +218,10 @@ func newService(ctx context.Context, authn mgauthn.Authentication, authz mgauthz
 	}
 
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
-	svc = tracing.New(svc, tracer)
+	svc = middleware.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.TracingMiddleware(svc, tracer)
 
 	return svc, nil
 }

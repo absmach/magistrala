@@ -15,15 +15,14 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
-	api "github.com/absmach/magistrala/auth/api"
 	authgrpcapi "github.com/absmach/magistrala/auth/api/grpc/auth"
 	domainsgrpcapi "github.com/absmach/magistrala/auth/api/grpc/domains"
 	tokengrpcapi "github.com/absmach/magistrala/auth/api/grpc/token"
 	httpapi "github.com/absmach/magistrala/auth/api/http"
 	"github.com/absmach/magistrala/auth/events"
 	"github.com/absmach/magistrala/auth/jwt"
+	"github.com/absmach/magistrala/auth/middleware"
 	apostgres "github.com/absmach/magistrala/auth/postgres"
-	"github.com/absmach/magistrala/auth/tracing"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/policies/spicedb"
@@ -224,10 +223,10 @@ func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg confi
 		logger.Error(fmt.Sprintf("failed to init event store middleware : %s", err))
 		return nil
 	}
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("groups", "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
-	svc = tracing.New(svc, tracer)
+	svc = middleware.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.TracingMiddleware(svc, tracer)
 
 	return svc
 }

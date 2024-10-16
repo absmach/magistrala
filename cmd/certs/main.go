@@ -16,8 +16,8 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/certs/api"
+	"github.com/absmach/magistrala/certs/middleware"
 	pki "github.com/absmach/magistrala/certs/pki/amcerts"
-	"github.com/absmach/magistrala/certs/tracing"
 	mglog "github.com/absmach/magistrala/logger"
 	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	"github.com/absmach/magistrala/pkg/grpcclient"
@@ -159,10 +159,10 @@ func newService(tracer trace.Tracer, logger *slog.Logger, cfg config, pkiAgent p
 	}
 	sdk := mgsdk.NewSDK(config)
 	svc := certs.New(sdk, pkiAgent)
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
-	svc = tracing.New(svc, tracer)
+	svc = middleware.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.TracingMiddleware(svc, tracer)
 
 	return svc
 }

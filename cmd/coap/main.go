@@ -15,7 +15,7 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/coap"
 	"github.com/absmach/magistrala/coap/api"
-	"github.com/absmach/magistrala/coap/tracing"
+	"github.com/absmach/magistrala/coap/middleware"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
@@ -128,12 +128,12 @@ func main() {
 
 	svc := coap.New(thingsClient, nps)
 
-	svc = tracing.New(tracer, svc)
+	svc = middleware.TracingMiddleware(tracer, svc)
 
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = middleware.LoggingMiddleware(svc, logger)
 
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.MetricsMiddleware(svc, counter, latency)
 
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(cfg.InstanceID), logger)
 

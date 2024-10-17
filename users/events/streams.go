@@ -8,7 +8,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/authn"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/users"
@@ -37,8 +36,8 @@ func NewEventStoreMiddleware(ctx context.Context, svc users.Service, url string)
 	}, nil
 }
 
-func (es *eventStore) RegisterClient(ctx context.Context, session authn.Session, user mgclients.Client, selfRegister bool) (mgclients.Client, error) {
-	user, err := es.svc.RegisterClient(ctx, session, user, selfRegister)
+func (es *eventStore) RegisterUser(ctx context.Context, session authn.Session, user users.User, selfRegister bool) (users.User, error) {
+	user, err := es.svc.RegisterUser(ctx, session, user, selfRegister)
 	if err != nil {
 		return user, err
 	}
@@ -54,8 +53,8 @@ func (es *eventStore) RegisterClient(ctx context.Context, session authn.Session,
 	return user, nil
 }
 
-func (es *eventStore) UpdateClient(ctx context.Context, session authn.Session, user mgclients.Client) (mgclients.Client, error) {
-	user, err := es.svc.UpdateClient(ctx, session, user)
+func (es *eventStore) UpdateUser(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
+	user, err := es.svc.UpdateUser(ctx, session, user)
 	if err != nil {
 		return user, err
 	}
@@ -63,8 +62,8 @@ func (es *eventStore) UpdateClient(ctx context.Context, session authn.Session, u
 	return es.update(ctx, "", user)
 }
 
-func (es *eventStore) UpdateClientRole(ctx context.Context, session authn.Session, user mgclients.Client) (mgclients.Client, error) {
-	user, err := es.svc.UpdateClientRole(ctx, session, user)
+func (es *eventStore) UpdateUserRole(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
+	user, err := es.svc.UpdateUserRole(ctx, session, user)
 	if err != nil {
 		return user, err
 	}
@@ -72,8 +71,8 @@ func (es *eventStore) UpdateClientRole(ctx context.Context, session authn.Sessio
 	return es.update(ctx, "role", user)
 }
 
-func (es *eventStore) UpdateClientTags(ctx context.Context, session authn.Session, user mgclients.Client) (mgclients.Client, error) {
-	user, err := es.svc.UpdateClientTags(ctx, session, user)
+func (es *eventStore) UpdateUserTags(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
+	user, err := es.svc.UpdateUserTags(ctx, session, user)
 	if err != nil {
 		return user, err
 	}
@@ -81,8 +80,8 @@ func (es *eventStore) UpdateClientTags(ctx context.Context, session authn.Sessio
 	return es.update(ctx, "tags", user)
 }
 
-func (es *eventStore) UpdateClientSecret(ctx context.Context, session authn.Session, oldSecret, newSecret string) (mgclients.Client, error) {
-	user, err := es.svc.UpdateClientSecret(ctx, session, oldSecret, newSecret)
+func (es *eventStore) UpdateUserSecret(ctx context.Context, session authn.Session, oldSecret, newSecret string) (users.User, error) {
+	user, err := es.svc.UpdateUserSecret(ctx, session, oldSecret, newSecret)
 	if err != nil {
 		return user, err
 	}
@@ -90,17 +89,42 @@ func (es *eventStore) UpdateClientSecret(ctx context.Context, session authn.Sess
 	return es.update(ctx, "secret", user)
 }
 
-func (es *eventStore) UpdateClientIdentity(ctx context.Context, session authn.Session, id, identity string) (mgclients.Client, error) {
-	user, err := es.svc.UpdateClientIdentity(ctx, session, id, identity)
+func (es *eventStore) UpdateUserNames(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
+	user, err := es.svc.UpdateUserNames(ctx, session, user)
 	if err != nil {
 		return user, err
 	}
 
-	return es.update(ctx, "identity", user)
+	event := updateUserNamesEvent{
+		user,
+	}
+
+	if err := es.Publish(ctx, event); err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
-func (es *eventStore) UpdateUserIdentity(ctx context.Context, token, id, identity string) (users.User, error) {
-	user, err := es.svc.UpdateUserIdentity(ctx, token, id, identity)
+func (es *eventStore) UpdateProfilePicture(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
+	user, err := es.svc.UpdateUser(ctx, session, user)
+	if err != nil {
+		return user, err
+	}
+
+	event := updateProfilePictureEvent{
+		user,
+	}
+
+	if err := es.Publish(ctx, event); err != nil {
+		return user, err
+	}
+
+	return es.update(ctx, "profile_picture", user)
+}
+
+func (es *eventStore) UpdateUserIdentity(ctx context.Context, session authn.Session, id, identity string) (users.User, error) {
+	user, err := es.svc.UpdateUserIdentity(ctx, session, id, identity)
 	if err != nil {
 		return user, err
 	}
@@ -120,8 +144,8 @@ func (es *eventStore) update(ctx context.Context, operation string, user users.U
 	return user, nil
 }
 
-func (es *eventStore) ViewClient(ctx context.Context, session authn.Session, id string) (mgclients.Client, error) {
-	user, err := es.svc.ViewClient(ctx, session, id)
+func (es *eventStore) ViewUser(ctx context.Context, session authn.Session, id string) (users.User, error) {
+	user, err := es.svc.ViewUser(ctx, session, id)
 	if err != nil {
 		return user, err
 	}
@@ -137,7 +161,7 @@ func (es *eventStore) ViewClient(ctx context.Context, session authn.Session, id 
 	return user, nil
 }
 
-func (es *eventStore) ViewProfile(ctx context.Context, session authn.Session) (mgclients.Client, error) {
+func (es *eventStore) ViewProfile(ctx context.Context, session authn.Session) (users.User, error) {
 	user, err := es.svc.ViewProfile(ctx, session)
 	if err != nil {
 		return user, err
@@ -154,8 +178,25 @@ func (es *eventStore) ViewProfile(ctx context.Context, session authn.Session) (m
 	return user, nil
 }
 
-func (es *eventStore) ListClients(ctx context.Context, session authn.Session, pm mgclients.Page) (mgclients.ClientsPage, error) {
-	cp, err := es.svc.ListClients(ctx, session, pm)
+func (es *eventStore) ViewUserByUserName(ctx context.Context, session authn.Session, userName string) (users.User, error) {
+	user, err := es.svc.ViewUserByUserName(ctx, session, userName)
+	if err != nil {
+		return user, err
+	}
+
+	event := viewUserByUserNameEvent{
+		user,
+	}
+
+	if err := es.Publish(ctx, event); err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (es *eventStore) ListUsers(ctx context.Context, session authn.Session, pm users.Page) (users.UsersPage, error) {
+	cp, err := es.svc.ListUsers(ctx, session, pm)
 	if err != nil {
 		return cp, err
 	}
@@ -170,7 +211,7 @@ func (es *eventStore) ListClients(ctx context.Context, session authn.Session, pm
 	return cp, nil
 }
 
-func (es *eventStore) SearchUsers(ctx context.Context, pm mgclients.Page) (mgclients.ClientsPage, error) {
+func (es *eventStore) SearchUsers(ctx context.Context, pm users.Page) (users.UsersPage, error) {
 	cp, err := es.svc.SearchUsers(ctx, pm)
 	if err != nil {
 		return cp, err
@@ -186,7 +227,7 @@ func (es *eventStore) SearchUsers(ctx context.Context, pm mgclients.Page) (mgcli
 	return cp, nil
 }
 
-func (es *eventStore) ListMembers(ctx context.Context, session authn.Session, objectKind, objectID string, pm mgclients.Page) (mgclients.MembersPage, error) {
+func (es *eventStore) ListMembers(ctx context.Context, session authn.Session, objectKind, objectID string, pm users.Page) (users.MembersPage, error) {
 	mp, err := es.svc.ListMembers(ctx, session, objectKind, objectID, pm)
 	if err != nil {
 		return mp, err
@@ -202,8 +243,8 @@ func (es *eventStore) ListMembers(ctx context.Context, session authn.Session, ob
 	return mp, nil
 }
 
-func (es *eventStore) EnableClient(ctx context.Context, session authn.Session, id string) (mgclients.Client, error) {
-	user, err := es.svc.EnableClient(ctx, session, id)
+func (es *eventStore) EnableUser(ctx context.Context, session authn.Session, id string) (users.User, error) {
+	user, err := es.svc.EnableUser(ctx, session, id)
 	if err != nil {
 		return user, err
 	}
@@ -211,8 +252,8 @@ func (es *eventStore) EnableClient(ctx context.Context, session authn.Session, i
 	return es.delete(ctx, user)
 }
 
-func (es *eventStore) DisableClient(ctx context.Context, session authn.Session, id string) (mgclients.Client, error) {
-	user, err := es.svc.DisableClient(ctx, session, id)
+func (es *eventStore) DisableUser(ctx context.Context, session authn.Session, id string) (users.User, error) {
+	user, err := es.svc.DisableUser(ctx, session, id)
 	if err != nil {
 		return user, err
 	}
@@ -323,8 +364,8 @@ func (es *eventStore) SendPasswordReset(ctx context.Context, host, email, user, 
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) OAuthCallback(ctx context.Context, client mgclients.Client) (mgclients.Client, error) {
-	token, err := es.svc.OAuthCallback(ctx, client)
+func (es *eventStore) OAuthCallback(ctx context.Context, user users.User) (users.User, error) {
+	token, err := es.svc.OAuthCallback(ctx, user)
 	if err != nil {
 		return token, err
 	}
@@ -340,8 +381,8 @@ func (es *eventStore) OAuthCallback(ctx context.Context, client mgclients.Client
 	return token, nil
 }
 
-func (es *eventStore) DeleteClient(ctx context.Context, session authn.Session, id string) error {
-	if err := es.svc.DeleteClient(ctx, session, id); err != nil {
+func (es *eventStore) DeleteUser(ctx context.Context, session authn.Session, id string) error {
+	if err := es.svc.DeleteUser(ctx, session, id); err != nil {
 		return err
 	}
 
@@ -352,12 +393,12 @@ func (es *eventStore) DeleteClient(ctx context.Context, session authn.Session, i
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) OAuthAddClientPolicy(ctx context.Context, client mgclients.Client) error {
-	if err := es.svc.OAuthAddClientPolicy(ctx, client); err != nil {
+func (es *eventStore) OAuthAddUserPolicy(ctx context.Context, client users.User) error {
+	if err := es.svc.OAuthAddUserPolicy(ctx, client); err != nil {
 		return err
 	}
 
-	event := addClientPolicyEvent{
+	event := addUserPolicyEvent{
 		id:   client.ID,
 		role: client.Role.String(),
 	}

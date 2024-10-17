@@ -484,7 +484,7 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm users.Page) (user
 }
 
 func (repo *userRepo) RetrieveByIdentity(ctx context.Context, identity string) (users.User, error) {
-	q := `SELECT id, name, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role, first_name, last_name, user_name
+	q := `SELECT id, tags, identity, secret, metadata, created_at, updated_at, updated_by, status, role, first_name, last_name, user_name
         FROM clients WHERE identity = :identity AND status = :status`
 
 	dbc := DBUser{

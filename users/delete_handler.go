@@ -17,13 +17,12 @@ import (
 	"github.com/absmach/magistrala"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/users/postgres"
 )
 
 const defLimit = uint64(100)
 
 type handler struct {
-	clients       postgres.Repository
+	users         Repository
 	domains       magistrala.DomainsServiceClient
 	policies      policies.Service
 	checkInterval time.Duration
@@ -31,9 +30,9 @@ type handler struct {
 	logger        *slog.Logger
 }
 
-func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
+func NewDeleteHandler(ctx context.Context, users Repository, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
 	handler := &handler{
-		clients:       clients,
+		users:         users,
 		domains:       domainsClient,
 		policies:      policyService,
 		checkInterval: defCheckInterval,
@@ -95,7 +94,7 @@ func (h *handler) handle(ctx context.Context) {
 				continue
 			}
 
-			if err := h.clients.Delete(ctx, u.ID); err != nil {
+			if err := h.users.Delete(ctx, u.ID); err != nil {
 				h.logger.Error("failed to delete user", slog.Any("error", err))
 				continue
 			}

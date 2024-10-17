@@ -11,32 +11,37 @@ import (
 )
 
 const (
-	clientPrefix       = "user."
-	clientCreate       = clientPrefix + "create"
-	clientUpdate       = clientPrefix + "update"
-	clientRemove       = clientPrefix + "remove"
-	clientView         = clientPrefix + "view"
-	profileView        = clientPrefix + "view_profile"
-	clientList         = clientPrefix + "list"
-	clientSearch       = clientPrefix + "search"
-	clientListByGroup  = clientPrefix + "list_by_group"
-	clientIdentify     = clientPrefix + "identify"
-	generateResetToken = clientPrefix + "generate_reset_token"
-	issueToken         = clientPrefix + "issue_token"
-	refreshToken       = clientPrefix + "refresh_token"
-	resetSecret        = clientPrefix + "reset_secret"
-	sendPasswordReset  = clientPrefix + "send_password_reset"
-	oauthCallback      = clientPrefix + "oauth_callback"
-	deleteClient       = clientPrefix + "delete"
-	addClientPolicy    = clientPrefix + "add_policy"
+	userPrefix               = "user."
+	userCreate               = userPrefix + "create"
+	userUpdate               = userPrefix + "update"
+	userRemove               = userPrefix + "remove"
+	userView                 = userPrefix + "view"
+	profileView              = userPrefix + "view_profile"
+	userList                 = userPrefix + "list"
+	userSearch               = userPrefix + "search"
+	userListByGroup          = userPrefix + "list_by_group"
+	userIdentify             = userPrefix + "identify"
+	generateResetToken       = userPrefix + "generate_reset_token"
+	issueToken               = userPrefix + "issue_token"
+	refreshToken             = userPrefix + "refresh_token"
+	resetSecret              = userPrefix + "reset_secret"
+	sendPasswordReset        = userPrefix + "send_password_reset"
+	oauthCallback            = userPrefix + "oauth_callback"
+	addClientPolicy          = userPrefix + "add_policy"
+	deleteUser               = userPrefix + "delete"
+	userUpdateUserNames      = userPrefix + "update_user_names"
+	userUpdateProfilePicture = userPrefix + "update_profile_picture"
 )
 
 var (
 	_ events.Event = (*createUserEvent)(nil)
 	_ events.Event = (*updateUserEvent)(nil)
+	_ events.Event = (*updateProfilePictureEvent)(nil)
+	_ events.Event = (*updateUserNamesEvent)(nil)
 	_ events.Event = (*removeUserEvent)(nil)
 	_ events.Event = (*viewUserEvent)(nil)
 	_ events.Event = (*viewProfileEvent)(nil)
+	_ events.Event = (*viewUserByUserNameEvent)(nil)
 	_ events.Event = (*listUserEvent)(nil)
 	_ events.Event = (*listUserByGroupEvent)(nil)
 	_ events.Event = (*searchUserEvent)(nil)
@@ -48,6 +53,7 @@ var (
 	_ events.Event = (*sendPasswordResetEvent)(nil)
 	_ events.Event = (*oauthCallbackEvent)(nil)
 	_ events.Event = (*deleteUserEvent)(nil)
+	_ events.Event = (*addUserPolicyEvent)(nil)
 )
 
 type createUserEvent struct {
@@ -70,6 +76,9 @@ func (uce createUserEvent) Encode() (map[string]interface{}, error) {
 	}
 	if len(uce.Tags) > 0 {
 		val["tags"] = uce.Tags
+	}
+	if uce.DomainID != "" {
+		val["domain"] = uce.DomainID
 	}
 	if uce.Metadata != nil {
 		val["metadata"] = uce.Metadata
@@ -300,6 +309,10 @@ func (vue viewUserByUserNameEvent) Encode() (map[string]interface{}, error) {
 		val["id"] = vue.ID
 	}
 
+	if vue.Credentials.UserName != "" {
+		val["user_name"] = vue.Credentials.UserName
+	}
+
 	return val, nil
 }
 
@@ -528,12 +541,12 @@ func (dce deleteUserEvent) Encode() (map[string]interface{}, error) {
 	}, nil
 }
 
-type addClientPolicyEvent struct {
+type addUserPolicyEvent struct {
 	id   string
 	role string
 }
 
-func (acpe addClientPolicyEvent) Encode() (map[string]interface{}, error) {
+func (acpe addUserPolicyEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": addClientPolicy,
 		"id":        acpe.id,

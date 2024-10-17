@@ -46,7 +46,7 @@ import (
 	"github.com/absmach/magistrala/users/hasher"
 	cmiddleware "github.com/absmach/magistrala/users/middleware"
 	clientspg "github.com/absmach/magistrala/users/postgres"
-
+	"github.com/absmach/magistrala/users/storage"
 	ctracing "github.com/absmach/magistrala/users/tracing"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
@@ -72,25 +72,27 @@ const (
 )
 
 type config struct {
-	LogLevel            string        `env:"MG_USERS_LOG_LEVEL"           envDefault:"info"`
-	AdminEmail          string        `env:"MG_USERS_ADMIN_EMAIL"         envDefault:"admin@example.com"`
-	AdminPassword       string        `env:"MG_USERS_ADMIN_PASSWORD"      envDefault:"12345678"`
-	PassRegexText       string        `env:"MG_USERS_PASS_REGEX"          envDefault:"^.{8,}$"`
-	ResetURL            string        `env:"MG_TOKEN_RESET_ENDPOINT"      envDefault:"/reset-request"`
-	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
-	InstanceID          string        `env:"MG_USERS_INSTANCE_ID"         envDefault:""`
-	ESURL               string        `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
-	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
-	SelfRegister        bool          `env:"MG_USERS_ALLOW_SELF_REGISTER" envDefault:"false"`
-	OAuthUIRedirectURL  string        `env:"MG_OAUTH_UI_REDIRECT_URL"     envDefault:"http://localhost:9095/domains"`
-	OAuthUIErrorURL     string        `env:"MG_OAUTH_UI_ERROR_URL"        envDefault:"http://localhost:9095/error"`
-	DeleteInterval      time.Duration `env:"MG_USERS_DELETE_INTERVAL"     envDefault:"24h"`
-	DeleteAfter         time.Duration `env:"MG_USERS_DELETE_AFTER"        envDefault:"720h"`
-	SpicedbHost         string        `env:"MG_SPICEDB_HOST"              envDefault:"localhost"`
-	SpicedbPort         string        `env:"MG_SPICEDB_PORT"              envDefault:"50051"`
-	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY"    envDefault:"12345678"`
-	PassRegex           *regexp.Regexp
+	LogLevel             string        `env:"MG_USERS_LOG_LEVEL"           envDefault:"info"`
+	AdminEmail           string        `env:"MG_USERS_ADMIN_EMAIL"         envDefault:"admin@example.com"`
+	AdminPassword        string        `env:"MG_USERS_ADMIN_PASSWORD"      envDefault:"12345678"`
+	PassRegexText        string        `env:"MG_USERS_PASS_REGEX"          envDefault:"^.{8,}$"`
+	ResetURL             string        `env:"MG_TOKEN_RESET_ENDPOINT"      envDefault:"/reset-request"`
+	JaegerURL            url.URL       `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry        bool          `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
+	InstanceID           string        `env:"MG_USERS_INSTANCE_ID"         envDefault:""`
+	ESURL                string        `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
+	TraceRatio           float64       `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
+	SelfRegister         bool          `env:"MG_USERS_ALLOW_SELF_REGISTER" envDefault:"false"`
+	OAuthUIRedirectURL   string        `env:"MG_OAUTH_UI_REDIRECT_URL"     envDefault:"http://localhost:9095/domains"`
+	OAuthUIErrorURL      string        `env:"MG_OAUTH_UI_ERROR_URL"        envDefault:"http://localhost:9095/error"`
+	DeleteInterval       time.Duration `env:"MG_USERS_DELETE_INTERVAL"     envDefault:"24h"`
+	DeleteAfter          time.Duration `env:"MG_USERS_DELETE_AFTER"        envDefault:"720h"`
+	SpicedbHost          string        `env:"MG_SPICEDB_HOST"              envDefault:"localhost"`
+	SpicedbPort          string        `env:"MG_SPICEDB_PORT"              envDefault:"50051"`
+	SpicedbPreSharedKey  string        `env:"MG_SPICEDB_PRE_SHARED_KEY"    envDefault:"12345678"`
+	GoogleAppCredentials string        `env:"MG_GOOGLE_APPLICATION_CREDENTIALS"`
+	GoogleBucketName     string        `env:"GOOGLE_MG_BUCKET_NAME"`
+	PassRegex            *regexp.Regexp
 }
 
 func main() {
@@ -256,7 +258,12 @@ func main() {
 
 func newService(ctx context.Context, authz mgauthz.Authorization, token magistrala.TokenServiceClient, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
-	cRepo := clientspg.NewRepository(database)
+	storageClient, err := storage.NewStorageClient(ctx, c.GoogleAppCredentials, c.GoogleBucketName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cRepo := clientspg.NewRepository(database, storageClient)
 	gRepo := gpostgres.New(database)
 
 	idp := uuid.New()
@@ -331,8 +338,8 @@ func createAdmin(ctx context.Context, c config, urepo users.Repository, hsr user
 		Status:    users.EnabledStatus,
 	}
 
-	if c, err := urepo.RetrieveByIdentity(ctx, user.Identity); err == nil {
-		return c.ID, nil
+	if u, err := urepo.RetrieveByIdentity(ctx, user.Identity); err == nil {
+		return u.ID, nil
 	}
 
 	// Create an admin

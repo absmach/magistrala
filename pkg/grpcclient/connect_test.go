@@ -102,7 +102,7 @@ func TestHandler(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			handler, err := newHandler(c.config)
+			handler, err := NewHandler(c.config)
 			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected %s to contain %s", err, c.err))
 			if err == nil {
 				assert.Equal(t, c.secure, handler.Secure())

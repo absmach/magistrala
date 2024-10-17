@@ -8,10 +8,10 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 const chansPrefix = "channels"
@@ -41,12 +41,12 @@ type Service interface {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	things magistrala.AuthzServiceClient
+	things magistrala.ThingsServiceClient
 	pubsub messaging.PubSub
 }
 
 // New instantiates the WS adapter implementation.
-func New(thingsClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(thingsClient magistrala.ThingsServiceClient, pubsub messaging.PubSub) Service {
 	return &adapterService{
 		things: thingsClient,
 		pubsub: pubsub,
@@ -58,7 +58,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 		return svcerr.ErrAuthentication
 	}
 
-	thingID, err := svc.authorize(ctx, thingKey, chanID, auth.SubscribePermission)
+	thingID, err := svc.authorize(ctx, thingKey, chanID, policies.SubscribePermission)
 	if err != nil {
 		return svcerr.ErrAuthorization
 	}
@@ -85,12 +85,10 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 // authorize checks if the thingKey is authorized to access the channel
 // and returns the thingID if it is.
 func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, action string) (string, error) {
-	ar := &magistrala.AuthorizeReq{
-		SubjectType: auth.ThingType,
-		Permission:  action,
-		Subject:     thingKey,
-		Object:      chanID,
-		ObjectType:  auth.GroupType,
+	ar := &magistrala.ThingsAuthzReq{
+		Permission: action,
+		ThingKey:   thingKey,
+		ChannelID:  chanID,
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {

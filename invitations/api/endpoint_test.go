@@ -17,6 +17,8 @@ import (
 	"github.com/absmach/magistrala/invitations/mocks"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -54,16 +56,16 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newIvitationsServer() (*httptest.Server, *mocks.Service) {
+func newIvitationsServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 	logger := mglog.NewMock()
-
-	mux := api.MakeHandler(svc, logger, "test")
-	return httptest.NewServer(mux), svc
+	authn := new(authnmocks.Authentication)
+	mux := api.MakeHandler(svc, logger, authn, "test")
+	return httptest.NewServer(mux), svc, authn
 }
 
 func TestSendInvitation(t *testing.T) {
-	is, svc := newIvitationsServer()
+	is, svc, authn := newIvitationsServer()
 
 	cases := []struct {
 		desc        string
@@ -71,12 +73,15 @@ func TestSendInvitation(t *testing.T) {
 		data        string
 		contentType string
 		status      int
+		authnRes    mgauthn.Session
+		authnErr    error
 		svcErr      error
 	}{
 		{
 			desc:        "valid request",
 			token:       validToken,
 			data:        fmt.Sprintf(`{"user_id": "%s", "domain_id": "%s", "relation": "%s"}`, validID, validID, "domain"),
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
 			status:      http.StatusCreated,
 			contentType: validContenType,
 			svcErr:      nil,
@@ -116,7 +121,8 @@ func TestSendInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("SendInvitation", mock.Anything, tc.token, mock.Anything).Return(tc.svcErr)
+		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+		repoCall := svc.On("SendInvitation", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
 		req := testRequest{
 			client:      is.Client(),
 			method:      http.MethodPost,
@@ -130,11 +136,12 @@ func TestSendInvitation(t *testing.T) {
 		assert.Nil(t, err, tc.desc)
 		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
 		repoCall.Unset()
+		authnCall.Unset()
 	}
 }
 
 func TestListInvitation(t *testing.T) {
-	is, svc := newIvitationsServer()
+	is, svc, authn := newIvitationsServer()
 
 	cases := []struct {
 		desc        string
@@ -143,6 +150,8 @@ func TestListInvitation(t *testing.T) {
 		contentType string
 		status      int
 		svcErr      error
+		authnRes    mgauthn.Session
+		authnErr    error
 	}{
 		{
 			desc:        "valid request",
@@ -288,7 +297,8 @@ func TestListInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("ListInvitations", mock.Anything, tc.token, mock.Anything).Return(invitations.InvitationPage{}, tc.svcErr)
+		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+		repoCall := svc.On("ListInvitations", mock.Anything, tc.authnRes, mock.Anything).Return(invitations.InvitationPage{}, tc.svcErr)
 		req := testRequest{
 			client:      is.Client(),
 			method:      http.MethodGet,
@@ -300,11 +310,12 @@ func TestListInvitation(t *testing.T) {
 		assert.Nil(t, err, tc.desc)
 		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
 		repoCall.Unset()
+		authnCall.Unset()
 	}
 }
 
 func TestViewInvitation(t *testing.T) {
-	is, svc := newIvitationsServer()
+	is, svc, authn := newIvitationsServer()
 
 	cases := []struct {
 		desc        string
@@ -314,6 +325,8 @@ func TestViewInvitation(t *testing.T) {
 		contentType string
 		status      int
 		svcErr      error
+		authnRes    mgauthn.Session
+		authnErr    error
 	}{
 		{
 			desc:        "valid request",
@@ -372,7 +385,8 @@ func TestViewInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("ViewInvitation", mock.Anything, tc.token, tc.userID, tc.domainID).Return(invitations.Invitation{}, tc.svcErr)
+		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+		repoCall := svc.On("ViewInvitation", mock.Anything, tc.authnRes, tc.userID, tc.domainID).Return(invitations.Invitation{}, tc.svcErr)
 		req := testRequest{
 			client:      is.Client(),
 			method:      http.MethodGet,
@@ -385,11 +399,13 @@ func TestViewInvitation(t *testing.T) {
 		assert.Nil(t, err, tc.desc)
 		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
 		repoCall.Unset()
+		authnCall.Unset()
 	}
 }
 
 func TestDeleteInvitation(t *testing.T) {
-	is, svc := newIvitationsServer()
+	is, svc, authn := newIvitationsServer()
+	_ = authn
 
 	cases := []struct {
 		desc        string
@@ -399,6 +415,8 @@ func TestDeleteInvitation(t *testing.T) {
 		contentType string
 		status      int
 		svcErr      error
+		authnRes    mgauthn.Session
+		authnErr    error
 	}{
 		{
 			desc:        "valid request",
@@ -457,7 +475,8 @@ func TestDeleteInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("DeleteInvitation", mock.Anything, tc.token, tc.userID, tc.domainID).Return(tc.svcErr)
+		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+		repoCall := svc.On("DeleteInvitation", mock.Anything, tc.authnRes, tc.userID, tc.domainID).Return(tc.svcErr)
 		req := testRequest{
 			client:      is.Client(),
 			method:      http.MethodDelete,
@@ -470,12 +489,13 @@ func TestDeleteInvitation(t *testing.T) {
 		assert.Nil(t, err, tc.desc)
 		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
 		repoCall.Unset()
+		authnCall.Unset()
 	}
 }
 
 func TestAcceptInvitation(t *testing.T) {
-	is, svc := newIvitationsServer()
-
+	is, svc, authn := newIvitationsServer()
+	_ = authn
 	cases := []struct {
 		desc        string
 		token       string
@@ -483,6 +503,8 @@ func TestAcceptInvitation(t *testing.T) {
 		contentType string
 		status      int
 		svcErr      error
+		authnRes    mgauthn.Session
+		authnErr    error
 	}{
 		{
 			desc:        "valid request",
@@ -527,7 +549,8 @@ func TestAcceptInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("AcceptInvitation", mock.Anything, tc.token, mock.Anything).Return(tc.svcErr)
+		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+		repoCall := svc.On("AcceptInvitation", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
 		req := testRequest{
 			client:      is.Client(),
 			method:      http.MethodPost,
@@ -541,11 +564,13 @@ func TestAcceptInvitation(t *testing.T) {
 		assert.Nil(t, err, tc.desc)
 		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
 		repoCall.Unset()
+		authnCall.Unset()
 	}
 }
 
 func TestRejectInvitation(t *testing.T) {
-	is, svc := newIvitationsServer()
+	is, svc, authn := newIvitationsServer()
+	_ = authn
 
 	cases := []struct {
 		desc        string
@@ -554,6 +579,8 @@ func TestRejectInvitation(t *testing.T) {
 		contentType string
 		status      int
 		svcErr      error
+		authnRes    mgauthn.Session
+		authnErr    error
 	}{
 		{
 			desc:        "valid request",
@@ -598,7 +625,8 @@ func TestRejectInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("RejectInvitation", mock.Anything, tc.token, mock.Anything).Return(tc.svcErr)
+		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+		repoCall := svc.On("RejectInvitation", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
 		req := testRequest{
 			client:      is.Client(),
 			method:      http.MethodPost,
@@ -612,5 +640,6 @@ func TestRejectInvitation(t *testing.T) {
 		assert.Nil(t, err, tc.desc)
 		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
 		repoCall.Unset()
+		authnCall.Unset()
 	}
 }

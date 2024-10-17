@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 type EntityType uint8
@@ -49,11 +49,11 @@ func (e EntityType) String() string {
 func (e EntityType) AuthString() string {
 	switch e {
 	case UserEntity:
-		return auth.UserType
+		return policies.UserType
 	case GroupEntity, ChannelEntity:
-		return auth.GroupType
+		return policies.GroupType
 	case ThingEntity:
-		return auth.ThingType
+		return policies.ThingType
 	default:
 		return ""
 	}

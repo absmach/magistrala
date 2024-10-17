@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/invitations"
+	"github.com/absmach/magistrala/pkg/authn"
 )
 
 var _ invitations.Service = (*logging)(nil)
@@ -22,7 +23,7 @@ func Logging(logger *slog.Logger, svc invitations.Service) invitations.Service {
 	return &logging{logger, svc}
 }
 
-func (lm *logging) SendInvitation(ctx context.Context, token string, invitation invitations.Invitation) (err error) {
+func (lm *logging) SendInvitation(ctx context.Context, session authn.Session, invitation invitations.Invitation) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -36,10 +37,10 @@ func (lm *logging) SendInvitation(ctx context.Context, token string, invitation 
 		}
 		lm.logger.Info("Send invitation completed successfully", args...)
 	}(time.Now())
-	return lm.svc.SendInvitation(ctx, token, invitation)
+	return lm.svc.SendInvitation(ctx, session, invitation)
 }
 
-func (lm *logging) ViewInvitation(ctx context.Context, token, userID, domainID string) (invitation invitations.Invitation, err error) {
+func (lm *logging) ViewInvitation(ctx context.Context, session authn.Session, userID, domainID string) (invitation invitations.Invitation, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -53,10 +54,10 @@ func (lm *logging) ViewInvitation(ctx context.Context, token, userID, domainID s
 		}
 		lm.logger.Info("View invitation completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ViewInvitation(ctx, token, userID, domainID)
+	return lm.svc.ViewInvitation(ctx, session, userID, domainID)
 }
 
-func (lm *logging) ListInvitations(ctx context.Context, token string, page invitations.Page) (invs invitations.InvitationPage, err error) {
+func (lm *logging) ListInvitations(ctx context.Context, session authn.Session, page invitations.Page) (invs invitations.InvitationPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -73,10 +74,10 @@ func (lm *logging) ListInvitations(ctx context.Context, token string, page invit
 		}
 		lm.logger.Info("List invitations completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ListInvitations(ctx, token, page)
+	return lm.svc.ListInvitations(ctx, session, page)
 }
 
-func (lm *logging) AcceptInvitation(ctx context.Context, token, domainID string) (err error) {
+func (lm *logging) AcceptInvitation(ctx context.Context, session authn.Session, domainID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -89,10 +90,10 @@ func (lm *logging) AcceptInvitation(ctx context.Context, token, domainID string)
 		}
 		lm.logger.Info("Accept invitation completed successfully", args...)
 	}(time.Now())
-	return lm.svc.AcceptInvitation(ctx, token, domainID)
+	return lm.svc.AcceptInvitation(ctx, session, domainID)
 }
 
-func (lm *logging) RejectInvitation(ctx context.Context, token, domainID string) (err error) {
+func (lm *logging) RejectInvitation(ctx context.Context, session authn.Session, domainID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -105,10 +106,10 @@ func (lm *logging) RejectInvitation(ctx context.Context, token, domainID string)
 		}
 		lm.logger.Info("Reject invitation completed successfully", args...)
 	}(time.Now())
-	return lm.svc.RejectInvitation(ctx, token, domainID)
+	return lm.svc.RejectInvitation(ctx, session, domainID)
 }
 
-func (lm *logging) DeleteInvitation(ctx context.Context, token, userID, domainID string) (err error) {
+func (lm *logging) DeleteInvitation(ctx context.Context, session authn.Session, userID, domainID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -122,5 +123,5 @@ func (lm *logging) DeleteInvitation(ctx context.Context, token, userID, domainID
 		}
 		lm.logger.Info("Delete invitation completed successfully", args...)
 	}(time.Now())
-	return lm.svc.DeleteInvitation(ctx, token, userID, domainID)
+	return lm.svc.DeleteInvitation(ctx, session, userID, domainID)
 }

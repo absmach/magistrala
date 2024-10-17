@@ -16,6 +16,8 @@ import (
 	"github.com/absmach/magistrala/journal"
 	aevents "github.com/absmach/magistrala/journal/events"
 	"github.com/absmach/magistrala/journal/mocks"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	authzmocks "github.com/absmach/magistrala/pkg/authz/mocks"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +53,9 @@ func NewTestEvent(data map[string]interface{}, err error) testEvent {
 
 func TestHandle(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := journal.NewService(idProvider, repo, nil)
+	authn := new(authnmocks.Authentication)
+	authz := new(authzmocks.Authorization)
+	svc := journal.NewService(authn, authz, idProvider, repo)
 
 	cases := []struct {
 		desc      string

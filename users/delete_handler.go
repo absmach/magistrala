@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/users/postgres"
 )
 
@@ -25,16 +25,18 @@ const defLimit = uint64(100)
 
 type handler struct {
 	clients       postgres.Repository
-	policy        magistrala.PolicyServiceClient
+	domains       magistrala.DomainsServiceClient
+	policies      policies.Service
 	checkInterval time.Duration
 	deleteAfter   time.Duration
 	logger        *slog.Logger
 }
 
-func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policyClient magistrala.PolicyServiceClient, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
+func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
 	handler := &handler{
 		clients:       clients,
-		policy:        policyClient,
+		domains:       domainsClient,
+		policies:      policyService,
 		checkInterval: defCheckInterval,
 		deleteAfter:   deleteAfter,
 		logger:        logger,
@@ -73,16 +75,24 @@ func (h *handler) handle(ctx context.Context) {
 				continue
 			}
 
-			deleteRes, err := h.policy.DeleteEntityPolicies(ctx, &magistrala.DeleteEntityPoliciesReq{
-				Id:         u.ID,
-				EntityType: auth.UserType,
+			deletedRes, err := h.domains.DeleteUserFromDomains(ctx, &magistrala.DeleteUserReq{
+				Id: u.ID,
 			})
 			if err != nil {
-				h.logger.Error("failed to delete user policies", slog.Any("error", err))
+				h.logger.Error("failed to delete user from domains", slog.Any("error", err))
 				continue
 			}
-			if !deleteRes.Deleted {
-				h.logger.Error("failed to delete user policies", slog.Any("error", svcerr.ErrAuthorization))
+			if !deletedRes.Deleted {
+				h.logger.Error("failed to delete user from domains", slog.Any("error", svcerr.ErrAuthorization))
+				continue
+			}
+
+			req := policies.Policy{
+				Subject:     u.ID,
+				SubjectType: policies.UserType,
+			}
+			if err := h.policies.DeletePolicyFilter(ctx, req); err != nil {
+				h.logger.Error("failed to delete user policies", slog.Any("error", err))
 				continue
 			}
 

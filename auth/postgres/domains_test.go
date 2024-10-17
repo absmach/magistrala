@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -297,11 +298,11 @@ func TestRetreivePermissions(t *testing.T) {
 	}
 
 	policy := auth.Policy{
-		SubjectType:     auth.UserType,
+		SubjectType:     policies.UserType,
 		SubjectID:       userID,
 		SubjectRelation: "admin",
 		Relation:        "admin",
-		ObjectType:      auth.DomainType,
+		ObjectType:      policies.DomainType,
 		ObjectID:        domainID,
 	}
 
@@ -593,7 +594,7 @@ func TestListDomains(t *testing.T) {
 
 	items := []auth.Domain{}
 	rDomains := []auth.Domain{}
-	policies := []auth.Policy{}
+	policyList := []auth.Policy{}
 	for i := 0; i < 10; i++ {
 		domain := auth.Domain{
 			ID:    testsutil.GenerateUUID(t),
@@ -615,24 +616,24 @@ func TestListDomains(t *testing.T) {
 			}
 		}
 		policy := auth.Policy{
-			SubjectType:     auth.UserType,
+			SubjectType:     policies.UserType,
 			SubjectID:       userID,
-			SubjectRelation: auth.AdministratorRelation,
-			Relation:        auth.DomainRelation,
-			ObjectType:      auth.DomainType,
+			SubjectRelation: policies.AdministratorRelation,
+			Relation:        policies.DomainRelation,
+			ObjectType:      policies.DomainType,
 			ObjectID:        domain.ID,
 		}
 		_, err := repo.Save(context.Background(), domain)
 		require.Nil(t, err, fmt.Sprintf("save domain unexpected error: %s", err))
 		items = append(items, domain)
-		policies = append(policies, policy)
+		policyList = append(policyList, policy)
 		rDomain := domain
 		rDomain.Permission = "domain"
 		rDomains = append(rDomains, rDomain)
 	}
 
-	err := repo.SavePolicies(context.Background(), policies...)
-	require.Nil(t, err, fmt.Sprintf("failed to save policies %s", policies))
+	err := repo.SavePolicies(context.Background(), policyList...)
+	require.Nil(t, err, fmt.Sprintf("failed to save policies %s", policyList))
 
 	cases := []struct {
 		desc     string
@@ -992,11 +993,11 @@ func TestCheckPolicy(t *testing.T) {
 	repo := postgres.NewDomainRepository(database)
 
 	policy := auth.Policy{
-		SubjectType:     auth.UserType,
+		SubjectType:     policies.UserType,
 		SubjectID:       userID,
-		SubjectRelation: auth.AdministratorRelation,
-		Relation:        auth.DomainRelation,
-		ObjectType:      auth.DomainType,
+		SubjectRelation: policies.AdministratorRelation,
+		Relation:        policies.DomainRelation,
+		ObjectType:      policies.DomainType,
 		ObjectID:        domainID,
 	}
 
@@ -1018,9 +1019,9 @@ func TestCheckPolicy(t *testing.T) {
 			policy: auth.Policy{
 				SubjectType:     inValid,
 				SubjectID:       userID,
-				SubjectRelation: auth.AdministratorRelation,
-				Relation:        auth.DomainRelation,
-				ObjectType:      auth.DomainType,
+				SubjectRelation: policies.AdministratorRelation,
+				Relation:        policies.DomainRelation,
+				ObjectType:      policies.DomainType,
 				ObjectID:        domainID,
 			},
 			err: repoerr.ErrNotFound,
@@ -1028,11 +1029,11 @@ func TestCheckPolicy(t *testing.T) {
 		{
 			desc: "check policy with invalid subject id",
 			policy: auth.Policy{
-				SubjectType:     auth.UserType,
+				SubjectType:     policies.UserType,
 				SubjectID:       inValid,
-				SubjectRelation: auth.AdministratorRelation,
-				Relation:        auth.DomainRelation,
-				ObjectType:      auth.DomainType,
+				SubjectRelation: policies.AdministratorRelation,
+				Relation:        policies.DomainRelation,
+				ObjectType:      policies.DomainType,
 				ObjectID:        domainID,
 			},
 			err: repoerr.ErrNotFound,
@@ -1040,11 +1041,11 @@ func TestCheckPolicy(t *testing.T) {
 		{
 			desc: "check policy with invalid subject relation",
 			policy: auth.Policy{
-				SubjectType:     auth.UserType,
+				SubjectType:     policies.UserType,
 				SubjectID:       userID,
 				SubjectRelation: inValid,
-				Relation:        auth.DomainRelation,
-				ObjectType:      auth.DomainType,
+				Relation:        policies.DomainRelation,
+				ObjectType:      policies.DomainType,
 				ObjectID:        domainID,
 			},
 			err: repoerr.ErrNotFound,
@@ -1052,11 +1053,11 @@ func TestCheckPolicy(t *testing.T) {
 		{
 			desc: "check policy with invalid relation",
 			policy: auth.Policy{
-				SubjectType:     auth.UserType,
+				SubjectType:     policies.UserType,
 				SubjectID:       userID,
-				SubjectRelation: auth.AdministratorRelation,
+				SubjectRelation: policies.AdministratorRelation,
 				Relation:        inValid,
-				ObjectType:      auth.DomainType,
+				ObjectType:      policies.DomainType,
 				ObjectID:        domainID,
 			},
 			err: repoerr.ErrNotFound,
@@ -1064,10 +1065,10 @@ func TestCheckPolicy(t *testing.T) {
 		{
 			desc: "check policy with invalid object type",
 			policy: auth.Policy{
-				SubjectType:     auth.UserType,
+				SubjectType:     policies.UserType,
 				SubjectID:       userID,
-				SubjectRelation: auth.AdministratorRelation,
-				Relation:        auth.DomainRelation,
+				SubjectRelation: policies.AdministratorRelation,
+				Relation:        policies.DomainRelation,
 				ObjectType:      inValid,
 				ObjectID:        domainID,
 			},
@@ -1076,11 +1077,11 @@ func TestCheckPolicy(t *testing.T) {
 		{
 			desc: "check policy with invalid object id",
 			policy: auth.Policy{
-				SubjectType:     auth.UserType,
+				SubjectType:     policies.UserType,
 				SubjectID:       userID,
-				SubjectRelation: auth.AdministratorRelation,
-				Relation:        auth.DomainRelation,
-				ObjectType:      auth.DomainType,
+				SubjectRelation: policies.AdministratorRelation,
+				Relation:        policies.DomainRelation,
+				ObjectType:      policies.DomainType,
 				ObjectID:        inValid,
 			},
 			err: repoerr.ErrNotFound,
@@ -1110,11 +1111,11 @@ func TestDeleteUserPolicies(t *testing.T) {
 	}
 
 	policy := auth.Policy{
-		SubjectType:     auth.UserType,
+		SubjectType:     policies.UserType,
 		SubjectID:       userID,
 		SubjectRelation: "admin",
 		Relation:        "admin",
-		ObjectType:      auth.DomainType,
+		ObjectType:      policies.DomainType,
 		ObjectID:        domainID,
 	}
 

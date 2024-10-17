@@ -35,7 +35,7 @@ func (tm *tracingMiddleware) IssueCert(ctx context.Context, token, thingID, ttl 
 }
 
 // ListCerts traces the "ListCerts" operation of the wrapped certs.Service.
-func (tm *tracingMiddleware) ListCerts(ctx context.Context, token, thingID string, pm certs.PageMetadata) (certs.CertPage, error) {
+func (tm *tracingMiddleware) ListCerts(ctx context.Context, thingID string, pm certs.PageMetadata) (certs.CertPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_certs", trace.WithAttributes(
 		attribute.String("thing_id", thingID),
 		attribute.Int64("offset", int64(pm.Offset)),
@@ -43,11 +43,11 @@ func (tm *tracingMiddleware) ListCerts(ctx context.Context, token, thingID strin
 	))
 	defer span.End()
 
-	return tm.svc.ListCerts(ctx, token, thingID, pm)
+	return tm.svc.ListCerts(ctx, thingID, pm)
 }
 
 // ListSerials traces the "ListSerials" operation of the wrapped certs.Service.
-func (tm *tracingMiddleware) ListSerials(ctx context.Context, token, thingID string, pm certs.PageMetadata) (certs.CertPage, error) {
+func (tm *tracingMiddleware) ListSerials(ctx context.Context, thingID string, pm certs.PageMetadata) (certs.CertPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_serials", trace.WithAttributes(
 		attribute.String("thing_id", thingID),
 		attribute.Int64("offset", int64(pm.Offset)),
@@ -55,17 +55,17 @@ func (tm *tracingMiddleware) ListSerials(ctx context.Context, token, thingID str
 	))
 	defer span.End()
 
-	return tm.svc.ListSerials(ctx, token, thingID, pm)
+	return tm.svc.ListSerials(ctx, thingID, pm)
 }
 
 // ViewCert traces the "ViewCert" operation of the wrapped certs.Service.
-func (tm *tracingMiddleware) ViewCert(ctx context.Context, token, serialID string) (certs.Cert, error) {
+func (tm *tracingMiddleware) ViewCert(ctx context.Context, serialID string) (certs.Cert, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_view_cert", trace.WithAttributes(
 		attribute.String("serial_id", serialID),
 	))
 	defer span.End()
 
-	return tm.svc.ViewCert(ctx, token, serialID)
+	return tm.svc.ViewCert(ctx, serialID)
 }
 
 // RevokeCert traces the "RevokeCert" operation of the wrapped certs.Service.

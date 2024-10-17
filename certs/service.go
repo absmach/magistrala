@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/absmach/certs/sdk"
-	"github.com/absmach/magistrala"
 	pki "github.com/absmach/magistrala/certs/pki/amcerts"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -38,30 +37,28 @@ type Service interface {
 	IssueCert(ctx context.Context, token, thingID, ttl string) (Cert, error)
 
 	// ListCerts lists certificates issued for a given thing ID
-	ListCerts(ctx context.Context, token, thingID string, pm PageMetadata) (CertPage, error)
+	ListCerts(ctx context.Context, thingID string, pm PageMetadata) (CertPage, error)
 
 	// ListSerials lists certificate serial IDs issued for a given thing ID
-	ListSerials(ctx context.Context, token, thingID string, pm PageMetadata) (CertPage, error)
+	ListSerials(ctx context.Context, thingID string, pm PageMetadata) (CertPage, error)
 
 	// ViewCert retrieves the certificate issued for a given serial ID
-	ViewCert(ctx context.Context, token, serialID string) (Cert, error)
+	ViewCert(ctx context.Context, serialID string) (Cert, error)
 
 	// RevokeCert revokes a certificate for a given thing ID
 	RevokeCert(ctx context.Context, token, thingID string) (Revoke, error)
 }
 
 type certsService struct {
-	auth magistrala.AuthnServiceClient
-	sdk  mgsdk.SDK
-	pki  pki.Agent
+	sdk mgsdk.SDK
+	pki pki.Agent
 }
 
 // New returns new Certs service.
-func New(auth magistrala.AuthnServiceClient, sdk mgsdk.SDK, pkiAgent pki.Agent) Service {
+func New(sdk mgsdk.SDK, pkiAgent pki.Agent) Service {
 	return &certsService{
-		sdk:  sdk,
-		auth: auth,
-		pki:  pkiAgent,
+		sdk: sdk,
+		pki: pkiAgent,
 	}
 }
 
@@ -71,10 +68,7 @@ type Revoke struct {
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID, ttl string) (Cert, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
-	if err != nil {
-		return Cert{}, errors.Wrap(svcerr.ErrAuthentication, err)
-	}
+	var err error
 
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
@@ -98,10 +92,8 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID, ttl strin
 
 func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (Revoke, error) {
 	var revoke Revoke
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
-	if err != nil {
-		return revoke, errors.Wrap(svcerr.ErrAuthentication, err)
-	}
+	var err error
+
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
 		return revoke, errors.Wrap(ErrFailedCertRevocation, err)
@@ -123,12 +115,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 	return revoke, nil
 }
 
-func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, pm PageMetadata) (CertPage, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
-	if err != nil {
-		return CertPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
-	}
-
+func (cs *certsService) ListCerts(ctx context.Context, thingID string, pm PageMetadata) (CertPage, error) {
 	cp, err := cs.pki.ListCerts(sdk.PageMetadata{Offset: pm.Offset, Limit: pm.Limit, EntityID: thingID})
 	if err != nil {
 		return CertPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -155,12 +142,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, pm
 	}, nil
 }
 
-func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, pm PageMetadata) (CertPage, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
-	if err != nil {
-		return CertPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
-	}
-
+func (cs *certsService) ListSerials(ctx context.Context, thingID string, pm PageMetadata) (CertPage, error) {
 	cp, err := cs.pki.ListCerts(sdk.PageMetadata{Offset: pm.Offset, Limit: pm.Limit, EntityID: thingID})
 	if err != nil {
 		return CertPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -186,12 +168,7 @@ func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, 
 	}, nil
 }
 
-func (cs *certsService) ViewCert(ctx context.Context, token, serialID string) (Cert, error) {
-	_, err := cs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
-	if err != nil {
-		return Cert{}, errors.Wrap(svcerr.ErrViewEntity, err)
-	}
-
+func (cs *certsService) ViewCert(ctx context.Context, serialID string) (Cert, error) {
 	cert, err := cs.pki.View(serialID)
 	if err != nil {
 		return Cert{}, errors.Wrap(ErrFailedReadFromPKI, err)

@@ -595,6 +595,8 @@ paths:
           $ref: "#/components/responses/TokenRes"
         "400":
           description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
         "404":
           description: A non-existent entity request.
         "415":

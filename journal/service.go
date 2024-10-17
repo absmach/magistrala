@@ -7,22 +7,23 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
-	grpcclient "github.com/absmach/magistrala/auth/api/grpc"
-	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 type service struct {
+	authn      mgauthn.Authentication
+	authz      mgauthz.Authorization
 	idProvider magistrala.IDProvider
-	auth       grpcclient.AuthServiceClient
 	repository Repository
 }
 
-func NewService(idp magistrala.IDProvider, repository Repository, authClient grpcclient.AuthServiceClient) Service {
+func NewService(authn mgauthn.Authentication, authz mgauthz.Authorization, idp magistrala.IDProvider, repository Repository) Service {
 	return &service{
 		idProvider: idp,
-		auth:       authClient,
+		authn:      authn,
+		authz:      authz,
 		repository: repository,
 	}
 }
@@ -46,40 +47,36 @@ func (svc *service) RetrieveAll(ctx context.Context, token string, page Page) (J
 }
 
 func (svc *service) authorize(ctx context.Context, token, entityID, entityType string) error {
-	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	session, err := svc.authn.Authenticate(ctx, token)
 	if err != nil {
-		return errors.Wrap(svcerr.ErrAuthentication, err)
+		return err
 	}
 
-	permission := auth.ViewPermission
+	permission := policies.ViewPermission
 	objectType := entityType
 	object := entityID
-	subject := user.GetId()
+	subject := session.DomainUserID
 
 	// If the entity is a user, we need to check if the user is an admin
-	if entityType == auth.UserType {
-		permission = auth.AdminPermission
-		objectType = auth.PlatformType
-		object = auth.MagistralaObject
-		subject = user.GetUserId()
+	if entityType == policies.UserType {
+		permission = policies.AdminPermission
+		objectType = policies.PlatformType
+		object = policies.MagistralaObject
+		subject = session.UserID
 	}
 
-	req := &magistrala.AuthorizeReq{
-		Domain:      user.GetDomainId(),
-		SubjectType: auth.UserType,
-		SubjectKind: auth.UsersKind,
+	req := mgauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
 		Subject:     subject,
 		Permission:  permission,
 		ObjectType:  objectType,
 		Object:      object,
 	}
 
-	res, err := svc.auth.Authorize(ctx, req)
-	if err != nil {
-		return errors.Wrap(svcerr.ErrAuthorization, err)
-	}
-	if !res.GetAuthorized() {
-		return svcerr.ErrAuthorization
+	if err := svc.authz.Authorize(ctx, req); err != nil {
+		return err
 	}
 
 	return nil

@@ -14,29 +14,37 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
-	authclient "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/api"
 	"github.com/absmach/magistrala/bootstrap/events/consumer"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
+	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
 	mglog "github.com/absmach/magistrala/logger"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/authzed/authzed-go/v1"
+	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -52,15 +60,18 @@ const (
 )
 
 type config struct {
-	LogLevel       string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
-	EncKey         string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
-	ESConsumerName string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	ThingsURL      string  `env:"MG_THINGS_URL"                 envDefault:"http://localhost:9000"`
-	JaegerURL      url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry  bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID     string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL          string  `env:"MG_ES_URL"                     envDefault:"nats://localhost:4222"`
-	TraceRatio     float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	LogLevel            string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
+	EncKey              string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
+	ESConsumerName      string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
+	ThingsURL           string  `env:"MG_THINGS_URL"                 envDefault:"http://localhost:9000"`
+	JaegerURL           url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
+	InstanceID          string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
+	ESURL               string  `env:"MG_ES_URL"                     envDefault:"nats://localhost:4222"`
+	TraceRatio          float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	SpicedbHost         string  `env:"MG_SPICEDB_HOST"               envDefault:"localhost"`
+	SpicedbPort         string  `env:"MG_SPICEDB_PORT"               envDefault:"50051"`
+	SpicedbPreSharedKey string  `env:"MG_SPICEDB_PRE_SHARED_KEY"     envDefault:"12345678"`
 }
 
 func main() {
@@ -101,30 +112,13 @@ func main() {
 	}
 	defer db.Close()
 
-	clientConfig := grpcclient.Config{}
-	if err := env.ParseWithOptions(&clientConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
-
-	authClient, authHandler, err := grpcclient.SetupAuthClient(ctx, clientConfig)
+	policySvc, err := newPolicyService(cfg, logger)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer authHandler.Close()
-	logger.Info("AuthService gRPC client successfully connected to auth gRPC server " + authHandler.Secure())
-
-	policyClient, policyHandler, err := grpcclient.SetupPolicyClient(ctx, clientConfig)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer policyHandler.Close()
-	logger.Info("PolicyService gRPC client successfully connected to auth gRPC server " + policyHandler.Secure())
+	logger.Info("Policy client successfully connected to spicedb gRPC server")
 
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
@@ -139,8 +133,32 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
+	grpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+	authn, authnClient, err := authsvcAuthn.NewAuthentication(ctx, grpcCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	logger.Info("AuthN successfully connected to auth gRPC server " + authnClient.Secure())
+	defer authnClient.Close()
+
+	authz, authzClient, err := authsvcAuthz.NewAuthorization(ctx, grpcCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authzClient.Close()
+	logger.Info("AuthZ successfully connected to auth gRPC server " + authzClient.Secure())
+
 	// Create new service
-	svc, err := newService(ctx, authClient, policyClient, db, tracer, logger, cfg, dbConfig)
+	svc, err := newService(ctx, authz, policySvc, db, tracer, logger, cfg, dbConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1
@@ -161,7 +179,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, authn, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -181,8 +199,8 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authClient authclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
-	database := postgres.NewDatabase(db, dbConfig, tracer)
+func newService(ctx context.Context, authz mgauthz.Authorization, policySvc policies.Service, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
+	database := pgclient.NewDatabase(db, dbConfig, tracer)
 
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 
@@ -193,17 +211,18 @@ func newService(ctx context.Context, authClient authclient.AuthServiceClient, po
 	sdk := mgsdk.NewSDK(config)
 	idp := uuid.New()
 
-	svc := bootstrap.New(authClient, policyClient, repoConfig, sdk, []byte(cfg.EncKey), idp)
+	svc := bootstrap.New(policySvc, repoConfig, sdk, []byte(cfg.EncKey), idp)
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, streamID)
 	if err != nil {
 		return nil, err
 	}
 
+	svc = middleware.AuthorizationMiddleware(svc, authz)
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.MetricsMiddleware(svc, counter, latency)
 	svc = tracing.New(svc, tracer)
 
 	return svc, nil
@@ -221,4 +240,18 @@ func subscribeToThingsES(ctx context.Context, svc bootstrap.Service, cfg config,
 		Handler:  consumer.NewEventHandler(svc),
 	}
 	return subscriber.Subscribe(ctx, subConfig)
+}
+
+func newPolicyService(cfg config, logger *slog.Logger) (policies.Service, error) {
+	client, err := authzed.NewClientWithExperimentalAPIs(
+		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	policySvc := spicedb.NewPolicyService(client, logger)
+
+	return policySvc, nil
 }

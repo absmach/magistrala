@@ -46,7 +46,7 @@ func (lm *loggingMiddleware) IssueCert(ctx context.Context, token, thingID, ttl 
 }
 
 // ListCerts logs the list_certs request. It logs the thing ID and the time it took to complete the request.
-func (lm *loggingMiddleware) ListCerts(ctx context.Context, token, thingID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
+func (lm *loggingMiddleware) ListCerts(ctx context.Context, thingID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -65,12 +65,12 @@ func (lm *loggingMiddleware) ListCerts(ctx context.Context, token, thingID strin
 		lm.logger.Info("List certificates completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ListCerts(ctx, token, thingID, pm)
+	return lm.svc.ListCerts(ctx, thingID, pm)
 }
 
 // ListSerials logs the list_serials request. It logs the thing ID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ListSerials(ctx context.Context, token, thingID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
+func (lm *loggingMiddleware) ListSerials(ctx context.Context, thingID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -90,12 +90,12 @@ func (lm *loggingMiddleware) ListSerials(ctx context.Context, token, thingID str
 		lm.logger.Info("List certificates serials completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ListSerials(ctx, token, thingID, pm)
+	return lm.svc.ListSerials(ctx, thingID, pm)
 }
 
 // ViewCert logs the view_cert request. It logs the serial ID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ViewCert(ctx context.Context, token, serialID string) (c certs.Cert, err error) {
+func (lm *loggingMiddleware) ViewCert(ctx context.Context, serialID string) (c certs.Cert, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -109,7 +109,7 @@ func (lm *loggingMiddleware) ViewCert(ctx context.Context, token, serialID strin
 		lm.logger.Info("View certificate completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ViewCert(ctx, token, serialID)
+	return lm.svc.ViewCert(ctx, serialID)
 }
 
 // RevokeCert logs the revoke_cert request. It logs the thing ID and the time it took to complete the request.

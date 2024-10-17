@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/bootstrap"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/events"
 )
 
@@ -26,8 +27,8 @@ func NewEventStoreMiddleware(svc bootstrap.Service, publisher events.Publisher) 
 	}
 }
 
-func (es *eventStore) Add(ctx context.Context, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
-	saved, err := es.svc.Add(ctx, token, cfg)
+func (es *eventStore) Add(ctx context.Context, session mgauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
+	saved, err := es.svc.Add(ctx, session, token, cfg)
 	if err != nil {
 		return saved, err
 	}
@@ -43,8 +44,8 @@ func (es *eventStore) Add(ctx context.Context, token string, cfg bootstrap.Confi
 	return saved, err
 }
 
-func (es *eventStore) View(ctx context.Context, token, id string) (bootstrap.Config, error) {
-	cfg, err := es.svc.View(ctx, token, id)
+func (es *eventStore) View(ctx context.Context, session mgauthn.Session, id string) (bootstrap.Config, error) {
+	cfg, err := es.svc.View(ctx, session, id)
 	if err != nil {
 		return cfg, err
 	}
@@ -59,8 +60,8 @@ func (es *eventStore) View(ctx context.Context, token, id string) (bootstrap.Con
 	return cfg, err
 }
 
-func (es *eventStore) Update(ctx context.Context, token string, cfg bootstrap.Config) error {
-	if err := es.svc.Update(ctx, token, cfg); err != nil {
+func (es *eventStore) Update(ctx context.Context, session mgauthn.Session, cfg bootstrap.Config) error {
+	if err := es.svc.Update(ctx, session, cfg); err != nil {
 		return err
 	}
 
@@ -71,8 +72,8 @@ func (es *eventStore) Update(ctx context.Context, token string, cfg bootstrap.Co
 	return es.Publish(ctx, ev)
 }
 
-func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	cfg, err := es.svc.UpdateCert(ctx, token, thingKey, clientCert, clientKey, caCert)
+func (es eventStore) UpdateCert(ctx context.Context, session mgauthn.Session, thingKey, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+	cfg, err := es.svc.UpdateCert(ctx, session, thingKey, clientCert, clientKey, caCert)
 	if err != nil {
 		return cfg, err
 	}
@@ -91,8 +92,8 @@ func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert
 	return cfg, nil
 }
 
-func (es *eventStore) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
-	if err := es.svc.UpdateConnections(ctx, token, id, connections); err != nil {
+func (es *eventStore) UpdateConnections(ctx context.Context, session mgauthn.Session, token, id string, connections []string) error {
+	if err := es.svc.UpdateConnections(ctx, session, token, id, connections); err != nil {
 		return err
 	}
 
@@ -104,8 +105,8 @@ func (es *eventStore) UpdateConnections(ctx context.Context, token, id string, c
 	return es.Publish(ctx, ev)
 }
 
-func (es *eventStore) List(ctx context.Context, token string, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
-	bp, err := es.svc.List(ctx, token, filter, offset, limit)
+func (es *eventStore) List(ctx context.Context, session mgauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
+	bp, err := es.svc.List(ctx, session, filter, offset, limit)
 	if err != nil {
 		return bp, err
 	}
@@ -124,8 +125,8 @@ func (es *eventStore) List(ctx context.Context, token string, filter bootstrap.F
 	return bp, nil
 }
 
-func (es *eventStore) Remove(ctx context.Context, token, id string) error {
-	if err := es.svc.Remove(ctx, token, id); err != nil {
+func (es *eventStore) Remove(ctx context.Context, session mgauthn.Session, id string) error {
+	if err := es.svc.Remove(ctx, session, id); err != nil {
 		return err
 	}
 
@@ -156,8 +157,8 @@ func (es *eventStore) Bootstrap(ctx context.Context, externalKey, externalID str
 	return cfg, err
 }
 
-func (es *eventStore) ChangeState(ctx context.Context, token, id string, state bootstrap.State) error {
-	if err := es.svc.ChangeState(ctx, token, id, state); err != nil {
+func (es *eventStore) ChangeState(ctx context.Context, session mgauthn.Session, token, id string, state bootstrap.State) error {
+	if err := es.svc.ChangeState(ctx, session, token, id, state); err != nil {
 		return err
 	}
 

@@ -16,22 +16,24 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
-	authSvc "github.com/absmach/magistrala/auth"
-	authclient "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/absmach/magistrala/internal/email"
 	mggroups "github.com/absmach/magistrala/internal/groups"
-	gapi "github.com/absmach/magistrala/internal/groups/api"
 	gevents "github.com/absmach/magistrala/internal/groups/events"
+	gmiddleware "github.com/absmach/magistrala/internal/groups/middleware"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
 	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
 	mglog "github.com/absmach/magistrala/logger"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/oauth2"
 	googleoauth "github.com/absmach/magistrala/pkg/oauth2/google"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
@@ -43,13 +45,18 @@ import (
 	"github.com/absmach/magistrala/users/emailer"
 	uevents "github.com/absmach/magistrala/users/events"
 	"github.com/absmach/magistrala/users/hasher"
+	cmiddleware "github.com/absmach/magistrala/users/middleware"
 	clientspg "github.com/absmach/magistrala/users/postgres"
 	ctracing "github.com/absmach/magistrala/users/tracing"
+	"github.com/authzed/authzed-go/v1"
+	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -65,22 +72,25 @@ const (
 )
 
 type config struct {
-	LogLevel           string        `env:"MG_USERS_LOG_LEVEL"           envDefault:"info"`
-	AdminEmail         string        `env:"MG_USERS_ADMIN_EMAIL"         envDefault:"admin@example.com"`
-	AdminPassword      string        `env:"MG_USERS_ADMIN_PASSWORD"      envDefault:"12345678"`
-	PassRegexText      string        `env:"MG_USERS_PASS_REGEX"          envDefault:"^.{8,}$"`
-	ResetURL           string        `env:"MG_TOKEN_RESET_ENDPOINT"      envDefault:"/reset-request"`
-	JaegerURL          url.URL       `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry      bool          `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
-	InstanceID         string        `env:"MG_USERS_INSTANCE_ID"         envDefault:""`
-	ESURL              string        `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
-	TraceRatio         float64       `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
-	SelfRegister       bool          `env:"MG_USERS_ALLOW_SELF_REGISTER" envDefault:"false"`
-	OAuthUIRedirectURL string        `env:"MG_OAUTH_UI_REDIRECT_URL"     envDefault:"http://localhost:9095/domains"`
-	OAuthUIErrorURL    string        `env:"MG_OAUTH_UI_ERROR_URL"        envDefault:"http://localhost:9095/error"`
-	DeleteInterval     time.Duration `env:"MG_USERS_DELETE_INTERVAL"     envDefault:"24h"`
-	DeleteAfter        time.Duration `env:"MG_USERS_DELETE_AFTER"        envDefault:"720h"`
-	PassRegex          *regexp.Regexp
+	LogLevel            string        `env:"MG_USERS_LOG_LEVEL"           envDefault:"info"`
+	AdminEmail          string        `env:"MG_USERS_ADMIN_EMAIL"         envDefault:"admin@example.com"`
+	AdminPassword       string        `env:"MG_USERS_ADMIN_PASSWORD"      envDefault:"12345678"`
+	PassRegexText       string        `env:"MG_USERS_PASS_REGEX"          envDefault:"^.{8,}$"`
+	ResetURL            string        `env:"MG_TOKEN_RESET_ENDPOINT"      envDefault:"/reset-request"`
+	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
+	InstanceID          string        `env:"MG_USERS_INSTANCE_ID"         envDefault:""`
+	ESURL               string        `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
+	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
+	SelfRegister        bool          `env:"MG_USERS_ALLOW_SELF_REGISTER" envDefault:"false"`
+	OAuthUIRedirectURL  string        `env:"MG_OAUTH_UI_REDIRECT_URL"     envDefault:"http://localhost:9095/domains"`
+	OAuthUIErrorURL     string        `env:"MG_OAUTH_UI_ERROR_URL"        envDefault:"http://localhost:9095/error"`
+	DeleteInterval      time.Duration `env:"MG_USERS_DELETE_INTERVAL"     envDefault:"24h"`
+	DeleteAfter         time.Duration `env:"MG_USERS_DELETE_AFTER"        envDefault:"720h"`
+	SpicedbHost         string        `env:"MG_SPICEDB_HOST"              envDefault:"localhost"`
+	SpicedbPort         string        `env:"MG_SPICEDB_PORT"              envDefault:"50051"`
+	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY"    envDefault:"12345678"`
+	PassRegex           *regexp.Regexp
 }
 
 func main() {
@@ -157,25 +167,51 @@ func main() {
 		return
 	}
 
-	authClient, authHandler, err := grpcclient.SetupAuthClient(ctx, clientConfig)
+	tokenClient, tokenHandler, err := grpcclient.SetupTokenClient(ctx, clientConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer authHandler.Close()
-	logger.Info("AuthService gRPC client successfully connected to auth gRPC server " + authHandler.Secure())
+	defer tokenHandler.Close()
+	logger.Info("Token service client successfully connected to auth gRPC server " + tokenHandler.Secure())
 
-	policyClient, policyHandler, err := grpcclient.SetupPolicyClient(ctx, clientConfig)
+	authn, authnHandler, err := authsvcAuthn.NewAuthentication(ctx, clientConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer policyHandler.Close()
-	logger.Info("PolicyService gRPC client successfully connected to auth gRPC server " + policyHandler.Secure())
+	defer authnHandler.Close()
+	logger.Info("Authn successfully connected to auth gRPC server " + authnHandler.Secure())
 
-	csvc, gsvc, err := newService(ctx, authClient, policyClient, db, dbConfig, tracer, cfg, ec, logger)
+	authz, authzHandler, err := authsvcAuthz.NewAuthorization(ctx, clientConfig)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authzHandler.Close()
+	logger.Info("Authz successfully connected to auth gRPC server " + authzHandler.Secure())
+
+	domainsClient, domainsHandler, err := grpcclient.SetupDomainsClient(ctx, clientConfig)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer domainsHandler.Close()
+	logger.Info("DomainsService gRPC client successfully connected to auth gRPC server " + domainsHandler.Secure())
+
+	policyService, err := newPolicyService(cfg, logger)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	logger.Info("Policy client successfully connected to spicedb gRPC server")
+
+	csvc, gsvc, err := newService(ctx, authz, tokenClient, policyService, domainsClient, db, dbConfig, tracer, cfg, ec, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup service: %s", err))
 		exitCode = 1
@@ -198,7 +234,7 @@ func main() {
 	oauthProvider := googleoauth.NewProvider(oauthConfig, cfg.OAuthUIRedirectURL, cfg.OAuthUIErrorURL)
 
 	mux := chi.NewRouter()
-	httpSrv := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID, cfg.PassRegex, oauthProvider), logger)
+	httpSrv := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, authn, tokenClient, cfg.SelfRegister, gsvc, mux, logger, cfg.InstanceID, cfg.PassRegex, oauthProvider), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -218,7 +254,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authClient authclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (users.Service, groups.Service, error) {
+func newService(ctx context.Context, authz mgauthz.Authorization, token magistrala.TokenServiceClient, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := clientspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -231,8 +267,8 @@ func newService(ctx context.Context, authClient authclient.AuthServiceClient, po
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := users.NewService(cRepo, authClient, policyClient, emailerClient, hsr, idp, c.SelfRegister)
-	gsvc := mggroups.NewService(gRepo, idp, authClient, policyClient)
+	csvc := users.NewService(token, cRepo, policyService, emailerClient, hsr, idp)
+	gsvc := mggroups.NewService(gRepo, idp, policyService)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
 	if err != nil {
@@ -243,25 +279,28 @@ func newService(ctx context.Context, authClient authclient.AuthServiceClient, po
 		return nil, nil, err
 	}
 
+	csvc = cmiddleware.AuthorizationMiddleware(csvc, authz, c.SelfRegister)
+	gsvc = gmiddleware.AuthorizationMiddleware(gsvc, authz)
+
 	csvc = ctracing.New(csvc, tracer)
-	csvc = capi.LoggingMiddleware(csvc, logger)
+	csvc = cmiddleware.LoggingMiddleware(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	csvc = capi.MetricsMiddleware(csvc, counter, latency)
+	csvc = cmiddleware.MetricsMiddleware(csvc, counter, latency)
 
 	gsvc = gtracing.New(gsvc, tracer)
-	gsvc = gapi.LoggingMiddleware(gsvc, logger)
+	gsvc = gmiddleware.LoggingMiddleware(gsvc, logger)
 	counter, latency = prometheus.MakeMetrics("groups", "api")
-	gsvc = gapi.MetricsMiddleware(gsvc, counter, latency)
+	gsvc = gmiddleware.MetricsMiddleware(gsvc, counter, latency)
 
 	clientID, err := createAdmin(ctx, c, cRepo, hsr, csvc)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-	if err := createAdminPolicy(ctx, clientID, authClient, policyClient); err != nil {
+	if err := createAdminPolicy(ctx, clientID, authz, policyService); err != nil {
 		return nil, nil, err
 	}
 
-	users.NewDeleteHandler(ctx, cRepo, policyClient, c.DeleteInterval, c.DeleteAfter, logger)
+	users.NewDeleteHandler(ctx, cRepo, policyService, domainsClient, c.DeleteInterval, c.DeleteAfter, logger)
 
 	return csvc, gsvc, err
 }
@@ -306,28 +345,38 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 	return client.ID, nil
 }
 
-func createAdminPolicy(ctx context.Context, clientID string, authClient authclient.AuthServiceClient, policyClient magistrala.PolicyServiceClient) error {
-	res, err := authClient.Authorize(ctx, &magistrala.AuthorizeReq{
-		SubjectType: authSvc.UserType,
+func createAdminPolicy(ctx context.Context, clientID string, authz mgauthz.Authorization, policyService policies.Service) error {
+	if err := authz.Authorize(ctx, mgauthz.PolicyReq{
+		SubjectType: policies.UserType,
 		Subject:     clientID,
-		Permission:  authSvc.AdministratorRelation,
-		Object:      authSvc.MagistralaObject,
-		ObjectType:  authSvc.PlatformType,
-	})
-	if err != nil || !res.Authorized {
-		addPolicyRes, err := policyClient.AddPolicy(ctx, &magistrala.AddPolicyReq{
-			SubjectType: authSvc.UserType,
+		Permission:  policies.AdministratorRelation,
+		Object:      policies.MagistralaObject,
+		ObjectType:  policies.PlatformType,
+	}); err != nil {
+		err := policyService.AddPolicy(ctx, policies.Policy{
+			SubjectType: policies.UserType,
 			Subject:     clientID,
-			Relation:    authSvc.AdministratorRelation,
-			Object:      authSvc.MagistralaObject,
-			ObjectType:  authSvc.PlatformType,
+			Relation:    policies.AdministratorRelation,
+			Object:      policies.MagistralaObject,
+			ObjectType:  policies.PlatformType,
 		})
 		if err != nil {
 			return err
 		}
-		if !addPolicyRes.Added {
-			return svcerr.ErrAuthorization
-		}
 	}
 	return nil
+}
+
+func newPolicyService(cfg config, logger *slog.Logger) (policies.Service, error) {
+	client, err := authzed.NewClientWithExperimentalAPIs(
+		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	policySvc := spicedb.NewPolicyService(client, logger)
+
+	return policySvc, nil
 }

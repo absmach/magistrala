@@ -8,8 +8,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 // Invitation is an invitation to join a domain.
@@ -67,7 +68,7 @@ func (page InvitationPage) MarshalJSON() ([]byte, error) {
 type Service interface {
 	// SendInvitation sends an invitation to the given user.
 	// Only domain administrators and platform administrators can send invitations.
-	SendInvitation(ctx context.Context, token string, invitation Invitation) (err error)
+	SendInvitation(ctx context.Context, session authn.Session, invitation Invitation) (err error)
 
 	// ViewInvitation returns an invitation.
 	// People who can view invitations are:
@@ -75,17 +76,17 @@ type Service interface {
 	// - the user who sent the invitation
 	// - domain administrators
 	// - platform administrators
-	ViewInvitation(ctx context.Context, token, userID, domainID string) (invitation Invitation, err error)
+	ViewInvitation(ctx context.Context, session authn.Session, userID, domainID string) (invitation Invitation, err error)
 
 	// ListInvitations returns a list of invitations.
 	// People who can list invitations are:
 	// - platform administrators can list all invitations
 	// - domain administrators can list invitations for their domain
 	// By default, it will list invitations the current user has sent or received.
-	ListInvitations(ctx context.Context, token string, page Page) (invitations InvitationPage, err error)
+	ListInvitations(ctx context.Context, session authn.Session, page Page) (invitations InvitationPage, err error)
 
 	// AcceptInvitation accepts an invitation by adding the user to the domain.
-	AcceptInvitation(ctx context.Context, token, domainID string) (err error)
+	AcceptInvitation(ctx context.Context, session authn.Session, domainID string) (err error)
 
 	// DeleteInvitation deletes an invitation.
 	// People who can delete invitations are:
@@ -93,12 +94,12 @@ type Service interface {
 	// - the user who sent the invitation
 	// - domain administrators
 	// - platform administrators
-	DeleteInvitation(ctx context.Context, token, userID, domainID string) (err error)
+	DeleteInvitation(ctx context.Context, session authn.Session, userID, domainID string) (err error)
 
 	// RejectInvitation rejects an invitation.
 	// People who can reject invitations are:
 	// - the invited user: they can reject their own invitations
-	RejectInvitation(ctx context.Context, token, domainID string) (err error)
+	RejectInvitation(ctx context.Context, session authn.Session, domainID string) (err error)
 }
 
 //go:generate mockery --name Repository --output=./mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
@@ -131,16 +132,16 @@ func CheckRelation(relation string) error {
 	if relation == "" {
 		return apiutil.ErrMissingRelation
 	}
-	if relation != auth.AdministratorRelation &&
-		relation != auth.EditorRelation &&
-		relation != auth.ContributorRelation &&
-		relation != auth.MemberRelation &&
-		relation != auth.GuestRelation &&
-		relation != auth.DomainRelation &&
-		relation != auth.ParentGroupRelation &&
-		relation != auth.RoleGroupRelation &&
-		relation != auth.GroupRelation &&
-		relation != auth.PlatformRelation {
+	if relation != policies.AdministratorRelation &&
+		relation != policies.EditorRelation &&
+		relation != policies.ContributorRelation &&
+		relation != policies.MemberRelation &&
+		relation != policies.GuestRelation &&
+		relation != policies.DomainRelation &&
+		relation != policies.ParentGroupRelation &&
+		relation != policies.RoleGroupRelation &&
+		relation != policies.GroupRelation &&
+		relation != policies.PlatformRelation {
 		return apiutil.ErrInvalidRelation
 	}
 

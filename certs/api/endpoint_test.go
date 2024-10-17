@@ -19,6 +19,8 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
@@ -37,6 +39,7 @@ var (
 		SerialNumber: serial,
 		ExpiryTime:   time.Now().Add(time.Hour),
 	}
+	validID = testsutil.GenerateUUID(&testing.T{})
 )
 
 type testRequest struct {
@@ -63,32 +66,35 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newCertServer() (*httptest.Server, *mocks.Service) {
+func newCertServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 	logger := mglog.NewMock()
+	authn := new(authnmocks.Authentication)
+	mux := httpapi.MakeHandler(svc, authn, logger, "")
 
-	mux := httpapi.MakeHandler(svc, logger, "")
-	return httptest.NewServer(mux), svc
+	return httptest.NewServer(mux), svc, authn
 }
 
 func TestIssueCert(t *testing.T) {
-	cs, svc := newCertServer()
+	cs, svc, auth := newCertServer()
 	defer cs.Close()
 
 	validReqString := `{"thing_id": "%s","ttl": "%s"}`
 	invalidReqString := `{"thing_id": "%s","ttl": %s}`
 
 	cases := []struct {
-		desc        string
-		token       string
-		contentType string
-		thingID     string
-		ttl         string
-		request     string
-		status      int
-		svcRes      certs.Cert
-		svcErr      error
-		err         error
+		desc            string
+		token           string
+		session         mgauthn.Session
+		contentType     string
+		thingID         string
+		ttl             string
+		request         string
+		status          int
+		authenticateErr error
+		svcRes          certs.Cert
+		svcErr          error
+		err             error
 	}{
 		{
 			desc:        "issue cert successfully",
@@ -103,16 +109,16 @@ func TestIssueCert(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc:        "issue with invalid token",
-			token:       invalid,
-			contentType: contentType,
-			thingID:     thingID,
-			ttl:         ttl,
-			request:     fmt.Sprintf(validReqString, thingID, ttl),
-			status:      http.StatusUnauthorized,
-			svcRes:      certs.Cert{},
-			svcErr:      svcerr.ErrAuthentication,
-			err:         svcerr.ErrAuthentication,
+			desc:            "issue with invalid token",
+			token:           invalid,
+			contentType:     contentType,
+			thingID:         thingID,
+			ttl:             ttl,
+			request:         fmt.Sprintf(validReqString, thingID, ttl),
+			status:          http.StatusUnauthorized,
+			svcRes:          certs.Cert{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "issue with empty token",
@@ -185,6 +191,10 @@ func TestIssueCert(t *testing.T) {
 			token:       tc.token,
 			body:        strings.NewReader(tc.request),
 		}
+		if tc.token == valid {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 		svcCall := svc.On("IssueCert", mock.Anything, tc.token, tc.thingID, tc.ttl).Return(tc.svcRes, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -197,21 +207,25 @@ func TestIssueCert(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestViewCert(t *testing.T) {
-	cs, svc := newCertServer()
+	cs, svc, auth := newCertServer()
 	defer cs.Close()
 
 	cases := []struct {
-		desc     string
-		token    string
-		serialID string
-		status   int
-		svcRes   certs.Cert
-		svcErr   error
-		err      error
+		desc            string
+		token           string
+		session         mgauthn.Session
+		serialID        string
+		status          int
+		authenticateRes mgauthn.Session
+		authenticateErr error
+		svcRes          certs.Cert
+		svcErr          error
+		err             error
 	}{
 		{
 			desc:     "view cert successfully",
@@ -223,13 +237,13 @@ func TestViewCert(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "view with invalid token",
-			token:    invalid,
-			serialID: serial,
-			status:   http.StatusUnauthorized,
-			svcRes:   certs.Cert{},
-			svcErr:   svcerr.ErrAuthentication,
-			err:      svcerr.ErrAuthentication,
+			desc:            "view with invalid token",
+			token:           invalid,
+			serialID:        serial,
+			status:          http.StatusUnauthorized,
+			svcRes:          certs.Cert{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:     "view with empty token",
@@ -257,7 +271,11 @@ func TestViewCert(t *testing.T) {
 			url:    fmt.Sprintf("%s/certs/%s", cs.URL, tc.serialID),
 			token:  tc.token,
 		}
-		svcCall := svc.On("ViewCert", mock.Anything, tc.token, tc.serialID).Return(tc.svcRes, tc.svcErr)
+		if tc.token == valid {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("ViewCert", mock.Anything, tc.serialID).Return(tc.svcRes, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		var errRes respBody
@@ -269,21 +287,24 @@ func TestViewCert(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestRevokeCert(t *testing.T) {
-	cs, svc := newCertServer()
+	cs, svc, auth := newCertServer()
 	defer cs.Close()
 
 	cases := []struct {
-		desc     string
-		token    string
-		serialID string
-		status   int
-		svcRes   certs.Revoke
-		svcErr   error
-		err      error
+		desc            string
+		token           string
+		session         mgauthn.Session
+		serialID        string
+		status          int
+		authenticateErr error
+		svcRes          certs.Revoke
+		svcErr          error
+		err             error
 	}{
 		{
 			desc:     "revoke cert successfully",
@@ -295,13 +316,13 @@ func TestRevokeCert(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "revoke with invalid token",
-			token:    invalid,
-			serialID: serial,
-			status:   http.StatusUnauthorized,
-			svcRes:   certs.Revoke{},
-			svcErr:   svcerr.ErrAuthentication,
-			err:      svcerr.ErrAuthentication,
+			desc:            "revoke with invalid token",
+			token:           invalid,
+			serialID:        serial,
+			status:          http.StatusUnauthorized,
+			svcRes:          certs.Revoke{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:     "revoke with empty token",
@@ -328,6 +349,10 @@ func TestRevokeCert(t *testing.T) {
 			url:    fmt.Sprintf("%s/certs/%s", cs.URL, tc.serialID),
 			token:  tc.token,
 		}
+		if tc.token == valid {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 		svcCall := svc.On("RevokeCert", mock.Anything, tc.token, tc.serialID).Return(tc.svcRes, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -340,26 +365,29 @@ func TestRevokeCert(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n ", tc.desc, tc.err, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestListSerials(t *testing.T) {
-	cs, svc := newCertServer()
+	cs, svc, auth := newCertServer()
 	defer cs.Close()
 	revoked := "false"
 
 	cases := []struct {
-		desc    string
-		token   string
-		thingID string
-		revoked string
-		offset  uint64
-		limit   uint64
-		query   string
-		status  int
-		svcRes  certs.CertPage
-		svcErr  error
-		err     error
+		desc            string
+		token           string
+		session         mgauthn.Session
+		thingID         string
+		revoked         string
+		offset          uint64
+		limit           uint64
+		query           string
+		status          int
+		authenticateErr error
+		svcRes          certs.CertPage
+		svcErr          error
+		err             error
 	}{
 		{
 			desc:    "list certs successfully with default limit",
@@ -470,17 +498,17 @@ func TestListSerials(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "list with invalid token",
-			token:   invalid,
-			thingID: thingID,
-			revoked: revoked,
-			offset:  0,
-			limit:   10,
-			query:   "",
-			status:  http.StatusUnauthorized,
-			svcRes:  certs.CertPage{},
-			svcErr:  svcerr.ErrAuthentication,
-			err:     svcerr.ErrAuthentication,
+			desc:            "list with invalid token",
+			token:           invalid,
+			thingID:         thingID,
+			revoked:         revoked,
+			offset:          0,
+			limit:           10,
+			query:           "",
+			status:          http.StatusUnauthorized,
+			svcRes:          certs.CertPage{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:    "list with empty token",
@@ -549,7 +577,11 @@ func TestListSerials(t *testing.T) {
 			url:    fmt.Sprintf("%s/serials/%s", cs.URL, tc.thingID) + tc.query,
 			token:  tc.token,
 		}
-		svcCall := svc.On("ListSerials", mock.Anything, tc.token, tc.thingID, certs.PageMetadata{Revoked: tc.revoked, Offset: tc.offset, Limit: tc.limit}).Return(tc.svcRes, tc.svcErr)
+		if tc.token == valid {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("ListSerials", mock.Anything, tc.thingID, certs.PageMetadata{Revoked: tc.revoked, Offset: tc.offset, Limit: tc.limit}).Return(tc.svcRes, tc.svcErr)
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		var errRes respBody
@@ -561,6 +593,7 @@ func TestListSerials(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n ", tc.desc, tc.err, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 

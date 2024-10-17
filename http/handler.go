@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/mproxy/pkg/session"
 )
 
@@ -47,12 +47,12 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 // Event implements events.Event interface.
 type handler struct {
 	publisher messaging.Publisher
-	things    magistrala.AuthzServiceClient
+	things    magistrala.ThingsServiceClient
 	logger    *slog.Logger
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publisher messaging.Publisher, logger *slog.Logger, thingsClient magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, logger *slog.Logger, thingsClient magistrala.ThingsServiceClient) session.Handler {
 	return &handler{
 		logger:    logger,
 		publisher: publisher,
@@ -140,12 +140,10 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	default:
 		tok = string(s.Password)
 	}
-	ar := &magistrala.AuthorizeReq{
-		Subject:     tok,
-		Object:      msg.Channel,
-		SubjectType: auth.ThingType,
-		Permission:  auth.PublishPermission,
-		ObjectType:  auth.GroupType,
+	ar := &magistrala.ThingsAuthzReq{
+		ThingKey:   tok,
+		ChannelID:  msg.Channel,
+		Permission: policies.PublishPermission,
 	}
 	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {

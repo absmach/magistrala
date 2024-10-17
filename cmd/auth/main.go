@@ -16,15 +16,17 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	api "github.com/absmach/magistrala/auth/api"
-	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	authgrpcapi "github.com/absmach/magistrala/auth/api/grpc/auth"
+	domainsgrpcapi "github.com/absmach/magistrala/auth/api/grpc/domains"
+	tokengrpcapi "github.com/absmach/magistrala/auth/api/grpc/token"
 	httpapi "github.com/absmach/magistrala/auth/api/http"
 	"github.com/absmach/magistrala/auth/events"
 	"github.com/absmach/magistrala/auth/jwt"
 	apostgres "github.com/absmach/magistrala/auth/postgres"
-	"github.com/absmach/magistrala/auth/spicedb"
 	"github.com/absmach/magistrala/auth/tracing"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
@@ -147,9 +149,9 @@ func main() {
 	}
 	registerAuthServiceServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		magistrala.RegisterAuthzServiceServer(srv, grpcapi.NewAuthzServer(svc))
-		magistrala.RegisterAuthnServiceServer(srv, grpcapi.NewAuthnServer(svc))
-		magistrala.RegisterPolicyServiceServer(srv, grpcapi.NewPolicyServer(svc))
+		magistrala.RegisterTokenServiceServer(srv, tokengrpcapi.NewTokenServer(svc))
+		magistrala.RegisterDomainsServiceServer(srv, domainsgrpcapi.NewDomainsServer(svc))
+		magistrala.RegisterAuthServiceServer(srv, authgrpcapi.NewAuthServer(svc))
 	}
 
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerAuthServiceServer, logger)
@@ -209,12 +211,14 @@ func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg confi
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
 	domainsRepo := apostgres.NewDomainRepository(database)
-	pa := spicedb.NewPolicyAgent(spicedbClient, logger)
 	idProvider := uuid.New()
+
+	pEvaluator := spicedb.NewPolicyEvaluator(spicedbClient, logger)
+	pService := spicedb.NewPolicyService(spicedbClient, logger)
 
 	t := jwt.New([]byte(cfg.SecretKey))
 
-	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
+	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pEvaluator, pService, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
 	svc, err := events.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init event store middleware : %s", err))

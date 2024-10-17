@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/mproxy/pkg/session"
 )
 
@@ -51,12 +51,12 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 // Event implements events.Event interface.
 type handler struct {
 	pubsub messaging.PubSub
-	things magistrala.AuthzServiceClient
+	things magistrala.ThingsServiceClient
 	logger *slog.Logger
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(pubsub messaging.PubSub, logger *slog.Logger, thingsClient magistrala.AuthzServiceClient) session.Handler {
+func NewHandler(pubsub messaging.PubSub, logger *slog.Logger, thingsClient magistrala.ThingsServiceClient) session.Handler {
 	return &handler{
 		logger: logger,
 		pubsub: pubsub,
@@ -89,7 +89,7 @@ func (h *handler) AuthPublish(ctx context.Context, topic *string, payload *[]byt
 		token = string(s.Password)
 	}
 
-	return h.authAccess(ctx, token, *topic, auth.PublishPermission)
+	return h.authAccess(ctx, token, *topic, policies.PublishPermission)
 }
 
 // AuthSubscribe is called on device publish,
@@ -112,7 +112,7 @@ func (h *handler) AuthSubscribe(ctx context.Context, topics *[]string) error {
 	}
 
 	for _, v := range *topics {
-		if err := h.authAccess(ctx, token, v, auth.SubscribePermission); err != nil {
+		if err := h.authAccess(ctx, token, v, policies.SubscribePermission); err != nil {
 			return err
 		}
 	}
@@ -160,12 +160,10 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		token = string(s.Password)
 	}
 
-	ar := &magistrala.AuthorizeReq{
-		SubjectType: auth.ThingType,
-		Permission:  auth.PublishPermission,
-		Subject:     token,
-		Object:      chanID,
-		ObjectType:  auth.GroupType,
+	ar := &magistrala.ThingsAuthzReq{
+		Permission: policies.PublishPermission,
+		ThingKey:   token,
+		ChannelID:  chanID,
 	}
 	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {
@@ -231,12 +229,10 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 
 	chanID := channelParts[1]
 
-	ar := &magistrala.AuthorizeReq{
-		SubjectType: auth.ThingType,
-		Permission:  action,
-		Subject:     password,
-		Object:      chanID,
-		ObjectType:  auth.GroupType,
+	ar := &magistrala.ThingsAuthzReq{
+		Permission: action,
+		ThingKey:   password,
+		ChannelID:  chanID,
 	}
 	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {

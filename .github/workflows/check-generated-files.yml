@@ -51,9 +51,10 @@ jobs:
               - "pkg/messaging/pubsub.go"
               - "things/postgres/clients.go"
               - "things/things.go"
+              - "pkg/authz.go"
+              - "pkg/authn.go"
               - "auth/domains.go"
               - "auth/keys.go"
-              - "auth/policies.go"
               - "auth/service.go"
               - "pkg/events/events.go"
               - "provision/service.go"
@@ -127,11 +128,11 @@ jobs:
           mv ./things/mocks/repository.go ./things/mocks/repository.go.tmp
           mv ./things/mocks/service.go ./things/mocks/service.go.tmp
           mv ./things/mocks/cache.go ./things/mocks/cache.go.tmp
-          mv ./auth/mocks/agent.go ./auth/mocks/agent.go.tmp
           mv ./auth/mocks/authz.go ./auth/mocks/authz.go.tmp
           mv ./auth/mocks/domains.go ./auth/mocks/domains.go.tmp
           mv ./auth/mocks/keys.go ./auth/mocks/keys.go.tmp
           mv ./auth/mocks/service.go ./auth/mocks/service.go.tmp
+          mv ./auth/mocks/token_client.go ./auth/mocks/token_client.go.tmp
           mv ./pkg/events/mocks/publisher.go ./pkg/events/mocks/publisher.go.tmp
           mv ./pkg/events/mocks/subscriber.go ./pkg/events/mocks/subscriber.go.tmp
           mv ./provision/mocks/service.go ./provision/mocks/service.go.tmp
@@ -152,9 +153,10 @@ jobs:
           mv ./certs/mocks/service.go ./certs/mocks/service.go.tmp
           mv ./journal/mocks/repository.go ./journal/mocks/repository.go.tmp
           mv ./journal/mocks/service.go ./journal/mocks/service.go.tmp
-          mv ./auth/mocks/auth_client.go ./auth/mocks/auth_client.go.tmp
-          mv ./auth/mocks/policy_client.go ./auth/mocks/policy_client.go.tmp
-          mv ./things/mocks/authz_client.go ./things/mocks/authz_client.go.tmp
+          mv ./auth/mocks/domains_client.go ./auth/mocks/domains_client.go.tmp
+          mv ./things/mocks/things_client.go ./things/mocks/things_client.go.tmp
+          mv ./pkg/authz/mocks/authz.go ./pkg/authz/mocks/authz.go.tmp
+          mv ./pkg/authn/mocks/authn.go ./pkg/authn/mocks/authn.go.tmp
 
           make mocks
 
@@ -177,11 +179,12 @@ jobs:
           check_mock_changes ./things/mocks/repository.go "Things Repository ./things/mocks/repository.go"
           check_mock_changes ./things/mocks/service.go "Things Service ./things/mocks/service.go"
           check_mock_changes ./things/mocks/cache.go "Things Cache ./things/mocks/cache.go"
-          check_mock_changes ./auth/mocks/agent.go "Auth Agent ./auth/mocks/agent.go"
           check_mock_changes ./auth/mocks/authz.go "Auth Authz ./auth/mocks/authz.go"
           check_mock_changes ./auth/mocks/domains.go "Auth Domains ./auth/mocks/domains.go"
           check_mock_changes ./auth/mocks/keys.go "Auth Keys ./auth/mocks/keys.go"
           check_mock_changes ./auth/mocks/service.go "Auth Service ./auth/mocks/service.go"
+          check_mock_changes ./pkg/authn/mocks/authn.go "Authn Service Client .pkg/authn/mocks/authn.go"
+          check_mock_changes ./pkg/authz/mocks/authz.go "Authz Service Client .pkg/authz/mocks/authz.go"
           check_mock_changes ./pkg/events/mocks/publisher.go "ES Publisher ./pkg/events/mocks/publisher.go"
           check_mock_changes ./pkg/events/mocks/subscriber.go "EE Subscriber ./pkg/events/mocks/subscriber.go"
           check_mock_changes ./provision/mocks/service.go "Provision Service ./provision/mocks/service.go"
@@ -202,6 +205,6 @@ jobs:
           check_mock_changes ./certs/mocks/service.go "Certs Service ./certs/mocks/service.go"
           check_mock_changes ./journal/mocks/repository.go "Journal Repository ./journal/mocks/repository.go"
           check_mock_changes ./journal/mocks/service.go "Journal Service ./journal/mocks/service.go"
-          check_mock_changes ./auth/mocks/auth_client.go "Auth Service Client ./auth/mocks/auth_client.go"
-          check_mock_changes ./auth/mocks/policy_client.go "Policy Service Client ./auth/mocks/policy_client.go"
-          check_mock_changes ./things/mocks/authz_client.go "Authz Service Client things/mocks/authz_client.go"
+          check_mock_changes ./auth/mocks/domains_client.go "Domains Service Client ./auth/mocks/domains_client.go"
+          check_mock_changes ./auth/mocks/token_client.go "Token Service Client ./auth/mocks/token_client.go"
+          check_mock_changes ./things/mocks/things_client.go "Things Service Client things/mocks/things_client.go"

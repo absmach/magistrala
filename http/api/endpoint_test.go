@@ -30,7 +30,7 @@ const (
 	invalidValue = "invalid"
 )
 
-func newService(things magistrala.AuthzServiceClient) (session.Handler, *pubsub.PubSub) {
+func newService(things magistrala.ThingsServiceClient) (session.Handler, *pubsub.PubSub) {
 	pub := new(pubsub.PubSub)
 	return server.NewHandler(pub, mglog.NewMock(), things), pub
 }
@@ -81,7 +81,7 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func TestPublish(t *testing.T) {
-	things := new(thmocks.AuthzServiceClient)
+	things := new(thmocks.ThingsServiceClient)
 	chanID := "1"
 	ctSenmlJSON := "application/senml+json"
 	ctSenmlCBOR := "application/senml+cbor"
@@ -99,8 +99,8 @@ func TestPublish(t *testing.T) {
 
 	defer ts.Close()
 
-	things.On("Authorize", mock.Anything, &magistrala.AuthorizeReq{Subject: thingKey, Object: chanID, Domain: "", SubjectType: "thing", Permission: "publish", ObjectType: "group"}).Return(&magistrala.AuthorizeRes{Authorized: true, Id: ""}, nil)
-	things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: false, Id: ""}, nil)
+	things.On("Authorize", mock.Anything, &magistrala.ThingsAuthzReq{ThingKey: thingKey, ChannelID: chanID, Permission: "publish"}).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: ""}, nil)
+	things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.ThingsAuthzRes{Authorized: false, Id: ""}, nil)
 
 	cases := map[string]struct {
 		chanID      string

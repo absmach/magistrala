@@ -9,6 +9,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -42,7 +43,7 @@ type Service interface {
 var _ Service = (*notifierService)(nil)
 
 type notifierService struct {
-	auth     magistrala.AuthnServiceClient
+	authn    mgauthn.Authentication
 	subs     SubscriptionsRepository
 	idp      magistrala.IDProvider
 	notifier Notifier
@@ -51,9 +52,9 @@ type notifierService struct {
 }
 
 // New instantiates the subscriptions service implementation.
-func New(auth magistrala.AuthnServiceClient, subs SubscriptionsRepository, idp magistrala.IDProvider, notifier Notifier, from string) Service {
+func New(authn mgauthn.Authentication, subs SubscriptionsRepository, idp magistrala.IDProvider, notifier Notifier, from string) Service {
 	return &notifierService{
-		auth:     auth,
+		authn:    authn,
 		subs:     subs,
 		idp:      idp,
 		notifier: notifier,
@@ -63,7 +64,7 @@ func New(auth magistrala.AuthnServiceClient, subs SubscriptionsRepository, idp m
 }
 
 func (ns *notifierService) CreateSubscription(ctx context.Context, token string, sub Subscription) (string, error) {
-	res, err := ns.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
+	session, err := ns.authn.Authenticate(ctx, token)
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +73,7 @@ func (ns *notifierService) CreateSubscription(ctx context.Context, token string,
 		return "", err
 	}
 
-	sub.OwnerID = res.GetId()
+	sub.OwnerID = session.DomainUserID
 	id, err := ns.subs.Save(ctx, sub)
 	if err != nil {
 		return "", errors.Wrap(svcerr.ErrCreateEntity, err)
@@ -81,7 +82,7 @@ func (ns *notifierService) CreateSubscription(ctx context.Context, token string,
 }
 
 func (ns *notifierService) ViewSubscription(ctx context.Context, token, id string) (Subscription, error) {
-	if _, err := ns.auth.Identify(ctx, &magistrala.IdentityReq{Token: token}); err != nil {
+	if _, err := ns.authn.Authenticate(ctx, token); err != nil {
 		return Subscription{}, err
 	}
 
@@ -89,7 +90,7 @@ func (ns *notifierService) ViewSubscription(ctx context.Context, token, id strin
 }
 
 func (ns *notifierService) ListSubscriptions(ctx context.Context, token string, pm PageMetadata) (Page, error) {
-	if _, err := ns.auth.Identify(ctx, &magistrala.IdentityReq{Token: token}); err != nil {
+	if _, err := ns.authn.Authenticate(ctx, token); err != nil {
 		return Page{}, err
 	}
 
@@ -97,7 +98,7 @@ func (ns *notifierService) ListSubscriptions(ctx context.Context, token string, 
 }
 
 func (ns *notifierService) RemoveSubscription(ctx context.Context, token, id string) error {
-	if _, err := ns.auth.Identify(ctx, &magistrala.IdentityReq{Token: token}); err != nil {
+	if _, err := ns.authn.Authenticate(ctx, token); err != nil {
 		return err
 	}
 

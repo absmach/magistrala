@@ -58,7 +58,7 @@ func (s *grpcServer) Start() error {
 	case s.Config.CertFile != "" || s.Config.KeyFile != "":
 		certificate, err := tls.LoadX509KeyPair(s.Config.CertFile, s.Config.KeyFile)
 		if err != nil {
-			return fmt.Errorf("failed to load auth certificates: %w", err)
+			return fmt.Errorf("failed to load auth gRPC client certificates: %w", err)
 		}
 		tlsConfig := &tls.Config{
 			ClientAuth:   tls.RequireAndVerifyClientCert,

@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/magistrala"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -29,9 +29,9 @@ const (
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
-func newService() (notifiers.Service, *authmocks.AuthServiceClient, *mocks.SubscriptionsRepository) {
+func newService() (notifiers.Service, *authnmocks.Authentication, *mocks.SubscriptionsRepository) {
 	repo := new(mocks.SubscriptionsRepository)
-	auth := new(authmocks.AuthServiceClient)
+	auth := new(authnmocks.Authentication)
 	notifier := new(mocks.Notifier)
 	idp := uuid.NewMock()
 	from := "exampleFrom"
@@ -42,44 +42,44 @@ func TestCreateSubscription(t *testing.T) {
 	svc, auth, repo := newService()
 
 	cases := []struct {
-		desc        string
-		token       string
-		sub         notifiers.Subscription
-		id          string
-		err         error
-		identifyErr error
-		userID      string
+		desc            string
+		token           string
+		sub             notifiers.Subscription
+		id              string
+		err             error
+		authenticateErr error
+		userID          string
 	}{
 		{
-			desc:        "test success",
-			token:       exampleUser1,
-			sub:         notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
-			id:          uuid.Prefix + fmt.Sprintf("%012d", 1),
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "test success",
+			token:           exampleUser1,
+			sub:             notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
+			id:              uuid.Prefix + fmt.Sprintf("%012d", 1),
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "test already existing",
-			token:       exampleUser1,
-			sub:         notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
-			id:          "",
-			err:         repoerr.ErrConflict,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "test already existing",
+			token:           exampleUser1,
+			sub:             notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
+			id:              "",
+			err:             repoerr.ErrConflict,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "test with empty token",
-			token:       "",
-			sub:         notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
-			id:          "",
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "test with empty token",
+			token:           "",
+			sub:             notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
+			id:              "",
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(mgauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall1 := repo.On("Save", context.Background(), mock.Anything).Return(tc.id, tc.err)
 		id, err := svc.CreateSubscription(context.Background(), tc.token, tc.sub)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -99,44 +99,44 @@ func TestViewSubscription(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc        string
-		token       string
-		id          string
-		sub         notifiers.Subscription
-		err         error
-		identifyErr error
-		userID      string
+		desc            string
+		token           string
+		id              string
+		sub             notifiers.Subscription
+		err             error
+		authenticateErr error
+		userID          string
 	}{
 		{
-			desc:        "test success",
-			token:       exampleUser1,
-			id:          validID,
-			sub:         sub,
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "test success",
+			token:           exampleUser1,
+			id:              validID,
+			sub:             sub,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "test not existing",
-			token:       exampleUser1,
-			id:          "not_exist",
-			sub:         notifiers.Subscription{},
-			err:         svcerr.ErrNotFound,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "test not existing",
+			token:           exampleUser1,
+			id:              "not_exist",
+			sub:             notifiers.Subscription{},
+			err:             svcerr.ErrNotFound,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "test with empty token",
-			token:       "",
-			id:          validID,
-			sub:         notifiers.Subscription{},
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "test with empty token",
+			token:           "",
+			id:              validID,
+			sub:             notifiers.Subscription{},
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(mgauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall1 := repo.On("Retrieve", context.Background(), tc.id).Return(tc.sub, tc.err)
 		sub, err := svc.ViewSubscription(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -169,13 +169,13 @@ func TestListSubscriptions(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc        string
-		token       string
-		pageMeta    notifiers.PageMetadata
-		page        notifiers.Page
-		err         error
-		identifyErr error
-		userID      string
+		desc            string
+		token           string
+		pageMeta        notifiers.PageMetadata
+		page            notifiers.Page
+		err             error
+		authenticateErr error
+		userID          string
 	}{
 		{
 			desc:  "test success",
@@ -193,8 +193,8 @@ func TestListSubscriptions(t *testing.T) {
 				Subscriptions: subs[:3],
 				Total:         total,
 			},
-			identifyErr: nil,
-			userID:      validID,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:  "test not existing",
@@ -203,10 +203,10 @@ func TestListSubscriptions(t *testing.T) {
 				Limit:   10,
 				Contact: "empty@example.com",
 			},
-			page:        notifiers.Page{},
-			err:         svcerr.ErrNotFound,
-			identifyErr: nil,
-			userID:      validID,
+			page:            notifiers.Page{},
+			err:             svcerr.ErrNotFound,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:  "test with empty token",
@@ -216,9 +216,9 @@ func TestListSubscriptions(t *testing.T) {
 				Limit:  12,
 				Topic:  "topic.subtopic.13",
 			},
-			page:        notifiers.Page{},
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			page:            notifiers.Page{},
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 		{
 			desc:  "test with topic",
@@ -235,9 +235,9 @@ func TestListSubscriptions(t *testing.T) {
 				Subscriptions: subs[4:5],
 				Total:         1,
 			},
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
 			desc:  "test with contact and offset",
@@ -256,14 +256,14 @@ func TestListSubscriptions(t *testing.T) {
 				Subscriptions: offsetSubs,
 				Total:         uint(total / 2),
 			},
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(mgauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall1 := repo.On("RetrieveAll", context.Background(), tc.pageMeta).Return(tc.page, tc.err)
 		page, err := svc.ListSubscriptions(context.Background(), tc.token, tc.pageMeta)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -280,40 +280,40 @@ func TestRemoveSubscription(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc        string
-		token       string
-		id          string
-		err         error
-		identifyErr error
-		userID      string
+		desc            string
+		token           string
+		id              string
+		err             error
+		authenticateErr error
+		userID          string
 	}{
 		{
-			desc:        "test success",
-			token:       exampleUser1,
-			id:          sub.ID,
-			err:         nil,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "test success",
+			token:           exampleUser1,
+			id:              sub.ID,
+			err:             nil,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "test not existing",
-			token:       exampleUser1,
-			id:          "not_exist",
-			err:         svcerr.ErrNotFound,
-			identifyErr: nil,
-			userID:      validID,
+			desc:            "test not existing",
+			token:           exampleUser1,
+			id:              "not_exist",
+			err:             svcerr.ErrNotFound,
+			authenticateErr: nil,
+			userID:          validID,
 		},
 		{
-			desc:        "test with empty token",
-			token:       "",
-			id:          sub.ID,
-			err:         svcerr.ErrAuthentication,
-			identifyErr: svcerr.ErrAuthentication,
+			desc:            "test with empty token",
+			token:           "",
+			id:              sub.ID,
+			err:             svcerr.ErrAuthentication,
+			authenticateErr: svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(&magistrala.IdentityRes{Id: tc.userID}, tc.identifyErr)
+		repoCall := auth.On("Authenticate", context.Background(), tc.token).Return(mgauthn.Session{UserID: tc.userID}, tc.authenticateErr)
 		repoCall1 := repo.On("Remove", context.Background(), tc.id).Return(tc.err)
 		err := svc.RemoveSubscription(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

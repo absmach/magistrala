@@ -24,6 +24,8 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
@@ -173,11 +175,12 @@ func dec(in []byte) ([]byte, error) {
 	return in, nil
 }
 
-func newBootstrapServer() (*httptest.Server, *mocks.Service) {
+func newBootstrapServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	logger := mglog.NewMock()
 	svc := new(mocks.Service)
-	mux := bsapi.MakeHandler(svc, bootstrap.NewConfigReader(encKey), logger, instanceID)
-	return httptest.NewServer(mux), svc
+	authn := new(authnmocks.Authentication)
+	mux := bsapi.MakeHandler(svc, authn, bootstrap.NewConfigReader(encKey), logger, instanceID)
+	return httptest.NewServer(mux), svc, authn
 }
 
 func toJSON(data interface{}) string {
@@ -189,7 +192,7 @@ func toJSON(data interface{}) string {
 }
 
 func TestAdd(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
@@ -204,27 +207,30 @@ func TestAdd(t *testing.T) {
 	wrongData := toJSON(invalidChannels)
 
 	cases := []struct {
-		desc        string
-		req         string
-		auth        string
-		contentType string
-		status      int
-		location    string
-		err         error
+		desc            string
+		req             string
+		token           string
+		session         mgauthn.Session
+		contentType     string
+		status          int
+		location        string
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:        "add a config with invalid token",
-			req:         data,
-			auth:        invalidToken,
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			location:    "",
-			err:         svcerr.ErrAuthentication,
+			desc:            "add a config with invalid token",
+			req:             data,
+			token:           invalidToken,
+			contentType:     contentType,
+			status:          http.StatusUnauthorized,
+			location:        "",
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "add a valid config",
 			req:         data,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
 			location:    "/things/configs/" + c.ThingID,
@@ -233,7 +239,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong content type",
 			req:         data,
-			auth:        validToken,
+			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
 			location:    "",
@@ -242,7 +248,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add an existing config",
 			req:         data,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
 			location:    "",
@@ -251,7 +257,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with non-existent ID",
 			req:         neData,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
 			location:    "",
@@ -260,7 +266,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid channels",
 			req:         wrongData,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
 			location:    "",
@@ -269,7 +275,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong JSON",
 			req:         "{\"external_id\": 5}",
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
@@ -277,7 +283,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid request format",
 			req:         "}",
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			location:    "",
@@ -286,7 +292,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with empty JSON",
 			req:         "{}",
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			location:    "",
@@ -295,7 +301,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with an empty request",
 			req:         "",
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			location:    "",
@@ -304,27 +310,31 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Add", mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("Add", mock.Anything, tc.session, tc.token, mock.Anything).Return(c, tc.err)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPost,
 			url:         fmt.Sprintf("%s/things/configs", bs.URL),
 			contentType: tc.contentType,
-			token:       tc.auth,
+			token:       tc.token,
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-
 		location := res.Header.Get("Location")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location '%s' got '%s'", tc.desc, tc.location, location))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestView(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
@@ -345,24 +355,27 @@ func TestView(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc   string
-		auth   string
-		id     string
-		status int
-		res    config
-		err    error
+		desc            string
+		token           string
+		session         mgauthn.Session
+		id              string
+		status          int
+		res             config
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:   "view a config with invalid token",
-			auth:   invalidToken,
-			id:     c.ThingID,
-			status: http.StatusUnauthorized,
-			res:    config{},
-			err:    svcerr.ErrAuthentication,
+			desc:            "view a config with invalid token",
+			token:           invalidToken,
+			id:              c.ThingID,
+			status:          http.StatusUnauthorized,
+			res:             config{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "view a config",
-			auth:   validToken,
+			token:  validToken,
 			id:     c.ThingID,
 			status: http.StatusOK,
 			res:    data,
@@ -370,7 +383,7 @@ func TestView(t *testing.T) {
 		},
 		{
 			desc:   "view a non-existing config",
-			auth:   validToken,
+			token:  validToken,
 			id:     wrongID,
 			status: http.StatusNotFound,
 			res:    config{},
@@ -378,15 +391,15 @@ func TestView(t *testing.T) {
 		},
 		{
 			desc:   "view a config with an empty token",
-			auth:   "",
+			token:  "",
 			id:     c.ThingID,
 			status: http.StatusUnauthorized,
 			res:    config{},
-			err:    svcerr.ErrAuthentication,
+			err:    apiutil.ErrBearerToken,
 		},
 		{
 			desc:   "view config without authorization",
-			auth:   validToken,
+			token:  validToken,
 			id:     c.ThingID,
 			status: http.StatusForbidden,
 			res:    config{},
@@ -395,12 +408,16 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("View", mock.Anything, tc.auth, tc.id).Return(c, tc.err)
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("View", mock.Anything, tc.session, tc.id).Return(c, tc.err)
 		req := testRequest{
 			client: bs.Client(),
 			method: http.MethodGet,
 			url:    fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			token:  tc.auth,
+			token:  tc.token,
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -417,48 +434,52 @@ func TestView(t *testing.T) {
 		view.Channels = []channel{}
 		assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestUpdate(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
 	data := toJSON(updateReq)
 
 	cases := []struct {
-		desc        string
-		req         string
-		id          string
-		auth        string
-		contentType string
-		status      int
-		err         error
+		desc            string
+		req             string
+		id              string
+		token           string
+		session         mgauthn.Session
+		contentType     string
+		status          int
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:        "update with invalid token",
-			req:         data,
-			id:          c.ThingID,
-			auth:        invalidToken,
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			desc:            "update with invalid token",
+			req:             data,
+			id:              c.ThingID,
+			token:           invalidToken,
+			contentType:     contentType,
+			status:          http.StatusUnauthorized,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "update with an empty token",
 			req:         data,
 			id:          c.ThingID,
-			auth:        "",
+			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			err:         apiutil.ErrBearerToken,
 		},
 		{
 			desc:        "update a valid config",
 			req:         data,
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
 			err:         nil,
@@ -467,7 +488,7 @@ func TestUpdate(t *testing.T) {
 			desc:        "update a config with wrong content type",
 			req:         data,
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrUnsupportedContentType,
@@ -476,7 +497,7 @@ func TestUpdate(t *testing.T) {
 			desc:        "update a non-existing config",
 			req:         data,
 			id:          wrongID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusNotFound,
 			err:         svcerr.ErrNotFound,
@@ -485,7 +506,7 @@ func TestUpdate(t *testing.T) {
 			desc:        "update a config with invalid request format",
 			req:         "}",
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
@@ -494,7 +515,7 @@ func TestUpdate(t *testing.T) {
 			desc:        "update a config with an empty request",
 			id:          c.ThingID,
 			req:         "",
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
@@ -502,61 +523,69 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Update", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("Update", mock.Anything, tc.session, mock.Anything).Return(tc.err)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPut,
 			url:         fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
 			contentType: tc.contentType,
-			token:       tc.auth,
+			token:       tc.token,
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestUpdateCert(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
 	data := toJSON(updateReq)
 
 	cases := []struct {
-		desc        string
-		req         string
-		id          string
-		auth        string
-		contentType string
-		status      int
-		err         error
+		desc            string
+		req             string
+		id              string
+		token           string
+		session         mgauthn.Session
+		contentType     string
+		status          int
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:        "update with invalid token",
-			req:         data,
-			id:          c.ThingID,
-			auth:        invalidToken,
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			desc:            "update with invalid token",
+			req:             data,
+			id:              c.ThingID,
+			token:           invalidToken,
+			contentType:     contentType,
+			status:          http.StatusUnauthorized,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "update with an empty token",
 			req:         data,
 			id:          c.ThingID,
-			auth:        "",
+			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			err:         apiutil.ErrBearerToken,
 		},
 		{
 			desc:        "update a valid config",
 			req:         data,
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
 			err:         nil,
@@ -565,7 +594,7 @@ func TestUpdateCert(t *testing.T) {
 			desc:        "update a config with wrong content type",
 			req:         data,
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrUnsupportedContentType,
@@ -574,7 +603,7 @@ func TestUpdateCert(t *testing.T) {
 			desc:        "update a non-existing config",
 			req:         data,
 			id:          wrongID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusNotFound,
 			err:         svcerr.ErrNotFound,
@@ -583,7 +612,7 @@ func TestUpdateCert(t *testing.T) {
 			desc:        "update a config with invalid request format",
 			req:         "}",
 			id:          c.ThingKey,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
@@ -592,7 +621,7 @@ func TestUpdateCert(t *testing.T) {
 			desc:        "update a config with an empty request",
 			id:          c.ThingID,
 			req:         "",
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
@@ -600,24 +629,29 @@ func TestUpdateCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 		svcCall := svc.On("UpdateCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPatch,
 			url:         fmt.Sprintf("%s/things/configs/certs/%s", bs.URL, tc.id),
 			contentType: tc.contentType,
-			token:       tc.auth,
+			token:       tc.token,
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestUpdateConnections(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 	data := toJSON(updateReq)
@@ -628,37 +662,40 @@ func TestUpdateConnections(t *testing.T) {
 	wrongData := toJSON(invalidChannels)
 
 	cases := []struct {
-		desc        string
-		req         string
-		id          string
-		auth        string
-		contentType string
-		status      int
-		err         error
+		desc            string
+		req             string
+		id              string
+		token           string
+		session         mgauthn.Session
+		contentType     string
+		status          int
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:        "update connections with invalid token",
-			req:         data,
-			id:          c.ThingID,
-			auth:        invalidToken,
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			desc:            "update connections with invalid token",
+			req:             data,
+			id:              c.ThingID,
+			token:           invalidToken,
+			contentType:     contentType,
+			status:          http.StatusUnauthorized,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "update connections with an empty token",
 			req:         data,
 			id:          c.ThingID,
-			auth:        "",
+			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			err:         apiutil.ErrBearerToken,
 		},
 		{
 			desc:        "update connections valid config",
 			req:         data,
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
 			err:         nil,
@@ -667,7 +704,7 @@ func TestUpdateConnections(t *testing.T) {
 			desc:        "update connections with wrong content type",
 			req:         data,
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrUnsupportedContentType,
@@ -676,7 +713,7 @@ func TestUpdateConnections(t *testing.T) {
 			desc:        "update connections for a non-existing config",
 			req:         data,
 			id:          wrongID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusNotFound,
 			err:         svcerr.ErrNotFound,
@@ -685,7 +722,7 @@ func TestUpdateConnections(t *testing.T) {
 			desc:        "update connections with invalid channels",
 			req:         wrongData,
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusNotFound,
 			err:         svcerr.ErrNotFound,
@@ -694,7 +731,7 @@ func TestUpdateConnections(t *testing.T) {
 			desc:        "update a config with invalid request format",
 			req:         "}",
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
@@ -703,7 +740,7 @@ func TestUpdateConnections(t *testing.T) {
 			desc:        "update a config with an empty request",
 			id:          c.ThingID,
 			req:         "",
-			auth:        validToken,
+			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
@@ -711,19 +748,24 @@ func TestUpdateConnections(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("UpdateConnections", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		repoCall := svc.On("UpdateConnections", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPut,
 			url:         fmt.Sprintf("%s/things/configs/connections/%s", bs.URL, tc.id),
 			contentType: tc.contentType,
-			token:       tc.auth,
+			token:       tc.token,
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		repoCall.Unset()
+		authCall.Unset()
 	}
 }
 
@@ -733,7 +775,7 @@ func TestList(t *testing.T) {
 	var active, inactive []config
 	list := make([]config, configNum)
 
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	path := fmt.Sprintf("%s/%s", bs.URL, "things/configs")
 
@@ -767,9 +809,8 @@ func TestList(t *testing.T) {
 		if i%2 == 0 {
 			state = bootstrap.Inactive
 		}
-		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-		err := svc.ChangeState(context.Background(), validToken, list[i].ThingID, state)
+		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		err := svc.ChangeState(context.Background(), mgauthn.Session{}, validToken, list[i].ThingID, state)
 		assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
 
 		svcCall.Unset()
@@ -783,32 +824,35 @@ func TestList(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc   string
-		auth   string
-		url    string
-		status int
-		res    configPage
-		err    error
+		desc            string
+		token           string
+		session         mgauthn.Session
+		url             string
+		status          int
+		res             configPage
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:   "view list with invalid token",
-			auth:   invalidToken,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 10),
-			status: http.StatusUnauthorized,
-			res:    configPage{},
-			err:    svcerr.ErrAuthentication,
+			desc:            "view list with invalid token",
+			token:           invalidToken,
+			url:             fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 10),
+			status:          http.StatusUnauthorized,
+			res:             configPage{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "view list with an empty token",
-			auth:   "",
+			token:  "",
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 10),
 			status: http.StatusUnauthorized,
 			res:    configPage{},
-			err:    svcerr.ErrAuthentication,
+			err:    apiutil.ErrBearerToken,
 		},
 		{
 			desc:   "view list",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 1),
 			status: http.StatusOK,
 			res: configPage{
@@ -821,7 +865,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view list searching by name",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", path, 0, 100, "95"),
 			status: http.StatusOK,
 			res: configPage{
@@ -834,7 +878,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view last page",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 100, 10),
 			status: http.StatusOK,
 			res: configPage{
@@ -847,7 +891,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view with limit greater than allowed",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 1000),
 			status: http.StatusBadRequest,
 			res:    configPage{},
@@ -855,7 +899,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view list with no specified limit and offset",
-			auth:   validToken,
+			token:  validToken,
 			url:    path,
 			status: http.StatusOK,
 			res: configPage{
@@ -868,7 +912,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view list with no specified limit",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d", path, 10),
 			status: http.StatusOK,
 			res: configPage{
@@ -881,7 +925,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view list with no specified offset",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?limit=%d", path, 10),
 			status: http.StatusOK,
 			res: configPage{
@@ -894,7 +938,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view list with limit < 0",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?limit=%d", path, -10),
 			status: http.StatusBadRequest,
 			res:    configPage{},
@@ -902,7 +946,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view list with offset < 0",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d", path, -10),
 			status: http.StatusBadRequest,
 			res:    configPage{},
@@ -910,7 +954,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view list with invalid query parameters",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d&key=%%", path, 10, 10, bootstrap.Inactive),
 			status: http.StatusBadRequest,
 			res:    configPage{},
@@ -918,7 +962,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view first 10 active",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 0, 20, bootstrap.Active),
 			status: http.StatusOK,
 			res: configPage{
@@ -931,7 +975,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view first 10 inactive",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 0, 20, bootstrap.Inactive),
 			status: http.StatusOK,
 			res: configPage{
@@ -944,7 +988,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view first 5 active",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 0, 10, bootstrap.Active),
 			status: http.StatusOK,
 			res: configPage{
@@ -957,7 +1001,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "view last 5 inactive",
-			auth:   validToken,
+			token:  validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 10, 10, bootstrap.Inactive),
 			status: http.StatusOK,
 			res: configPage{
@@ -971,97 +1015,100 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 		svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
 		req := testRequest{
 			client: bs.Client(),
 			method: http.MethodGet,
 			url:    tc.url,
-			token:  tc.auth,
+			token:  tc.token,
 		}
 
-		_, err := req.make()
+		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-
-		// assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		// var body configPage
-
-		// err = json.NewDecoder(res.Body).Decode(&body)
-		// assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-
-		// assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		// assert.ElementsMatch(t, tc.res.Configs, body.Configs, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Configs, body.Configs))
-		// assert.Equal(t, tc.res.Total, body.Total, fmt.Sprintf("%s: expected response total '%d' got '%d'", tc.desc, tc.res.Total, body.Total))
-
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestRemove(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
 	cases := []struct {
-		desc   string
-		id     string
-		auth   string
-		status int
-		err    error
+		desc            string
+		id              string
+		token           string
+		session         mgauthn.Session
+		status          int
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:   "remove with invalid token",
-			id:     c.ThingID,
-			auth:   invalidToken,
-			status: http.StatusUnauthorized,
-			err:    svcerr.ErrAuthentication,
+			desc:            "remove with invalid token",
+			id:              c.ThingID,
+			token:           invalidToken,
+			status:          http.StatusUnauthorized,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:   "remove with an empty token",
 			id:     c.ThingID,
-			auth:   "",
+			token:  "",
 			status: http.StatusUnauthorized,
-			err:    svcerr.ErrAuthentication,
+			err:    apiutil.ErrBearerToken,
 		},
 		{
 			desc:   "remove non-existing config",
 			id:     "non-existing",
-			auth:   validToken,
+			token:  validToken,
 			status: http.StatusNoContent,
 			err:    nil,
 		},
 		{
 			desc:   "remove config",
 			id:     c.ThingID,
-			auth:   validToken,
+			token:  validToken,
 			status: http.StatusNoContent,
 			err:    nil,
 		},
 		{
 			desc:   "remove removed config",
 			id:     wrongID,
-			auth:   validToken,
+			token:  validToken,
 			status: http.StatusNoContent,
 			err:    nil,
 		},
 	}
 
 	for _, tc := range cases {
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 		svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 		req := testRequest{
 			client: bs.Client(),
 			method: http.MethodDelete,
 			url:    fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			token:  tc.auth,
+			token:  tc.token,
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestBootstrap(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, _ := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
@@ -1192,7 +1239,7 @@ func TestBootstrap(t *testing.T) {
 }
 
 func TestChangeState(t *testing.T) {
-	bs, svc := newBootstrapServer()
+	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
@@ -1200,36 +1247,39 @@ func TestChangeState(t *testing.T) {
 	active := fmt.Sprintf("{\"state\": %d}", bootstrap.Active)
 
 	cases := []struct {
-		desc        string
-		id          string
-		auth        string
-		state       string
-		contentType string
-		status      int
-		err         error
+		desc            string
+		id              string
+		token           string
+		session         mgauthn.Session
+		state           string
+		contentType     string
+		status          int
+		authenticateErr error
+		err             error
 	}{
 		{
-			desc:        "change state with invalid token",
-			id:          c.ThingID,
-			auth:        invalidToken,
-			state:       active,
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			desc:            "change state with invalid token",
+			id:              c.ThingID,
+			token:           invalidToken,
+			state:           active,
+			contentType:     contentType,
+			status:          http.StatusUnauthorized,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc:        "change state with an empty token",
 			id:          c.ThingID,
-			auth:        "",
+			token:       "",
 			state:       active,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
+			err:         apiutil.ErrBearerToken,
 		},
 		{
 			desc:        "change state with invalid content type",
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			state:       active,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -1238,7 +1288,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:        "change state to active",
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			state:       active,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -1247,7 +1297,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:        "change state to inactive",
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			state:       inactive,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -1256,7 +1306,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:        "change state of non-existing config",
 			id:          wrongID,
-			auth:        validToken,
+			token:       validToken,
 			state:       active,
 			contentType: contentType,
 			status:      http.StatusNotFound,
@@ -1265,7 +1315,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:        "change state to invalid value",
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			state:       fmt.Sprintf("{\"state\": %d}", -3),
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -1274,7 +1324,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:        "change state with invalid data",
 			id:          c.ThingID,
-			auth:        validToken,
+			token:       validToken,
 			state:       "",
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -1283,12 +1333,16 @@ func TestChangeState(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("ChangeState", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		svcCall := svc.On("ChangeState", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
 		req := testRequest{
 			client:      bs.Client(),
 			method:      http.MethodPut,
 			url:         fmt.Sprintf("%s/things/state/%s", bs.URL, tc.id),
-			token:       tc.auth,
+			token:       tc.token,
 			contentType: tc.contentType,
 			body:        strings.NewReader(tc.state),
 		}
@@ -1296,6 +1350,7 @@ func TestChangeState(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 

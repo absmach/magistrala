@@ -28,6 +28,7 @@ const (
 	sendPasswordReset  = clientPrefix + "send_password_reset"
 	oauthCallback      = clientPrefix + "oauth_callback"
 	deleteClient       = clientPrefix + "delete"
+	addClientPolicy    = clientPrefix + "add_policy"
 )
 
 var (
@@ -423,5 +424,18 @@ func (dce deleteClientEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": deleteClient,
 		"id":        dce.id,
+	}, nil
+}
+
+type addClientPolicyEvent struct {
+	id   string
+	role string
+}
+
+func (acpe addClientPolicyEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": addClientPolicy,
+		"id":        acpe.id,
+		"role":      acpe.role,
 	}, nil
 }

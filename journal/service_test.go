@@ -10,15 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
-	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/journal"
 	"github.com/absmach/magistrala/journal/mocks"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
+	authzmocks "github.com/absmach/magistrala/pkg/authz/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -41,8 +43,9 @@ var (
 
 func TestSave(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
-	svc := journal.NewService(idProvider, repo, authsvc)
+	authn := new(authnmocks.Authentication)
+	authz := new(authzmocks.Authorization)
+	svc := journal.NewService(authn, authz, idProvider, repo)
 
 	cases := []struct {
 		desc    string
@@ -75,8 +78,9 @@ func TestSave(t *testing.T) {
 
 func TestReadAll(t *testing.T) {
 	repo := new(mocks.Repository)
-	authsvc := new(authmocks.AuthServiceClient)
-	svc := journal.NewService(idProvider, repo, authsvc)
+	authn := new(authnmocks.Authentication)
+	authz := new(authzmocks.Authorization)
+	svc := journal.NewService(authn, authz, idProvider, repo)
 
 	validToken := "token"
 	validPage := journal.Page{
@@ -91,9 +95,8 @@ func TestReadAll(t *testing.T) {
 		token       string
 		page        journal.Page
 		resp        journal.JournalsPage
-		identifyRes *magistrala.IdentityRes
+		identifyRes mgauthn.Session
 		identifyErr error
-		authRes     *magistrala.AuthorizeRes
 		authErr     error
 		repoErr     error
 		err         error
@@ -108,8 +111,7 @@ func TestReadAll(t *testing.T) {
 				Limit:    10,
 				Journals: []journal.Journal{validJournal},
 			},
-			identifyRes: &magistrala.IdentityRes{Id: testsutil.GenerateUUID(t), UserId: testsutil.GenerateUUID(t)},
-			authRes:     &magistrala.AuthorizeRes{Authorized: true},
+			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
 			authErr:     nil,
 			repoErr:     nil,
 			err:         nil,
@@ -129,8 +131,7 @@ func TestReadAll(t *testing.T) {
 				Limit:    10,
 				Journals: []journal.Journal{validJournal},
 			},
-			identifyRes: &magistrala.IdentityRes{Id: testsutil.GenerateUUID(t), UserId: testsutil.GenerateUUID(t)},
-			authRes:     &magistrala.AuthorizeRes{Authorized: true},
+			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
 			authErr:     nil,
 			repoErr:     nil,
 			err:         nil,
@@ -140,7 +141,7 @@ func TestReadAll(t *testing.T) {
 			token:       validToken,
 			page:        validPage,
 			resp:        journal.JournalsPage{},
-			identifyRes: &magistrala.IdentityRes{},
+			identifyRes: mgauthn.Session{},
 			identifyErr: svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
@@ -149,8 +150,7 @@ func TestReadAll(t *testing.T) {
 			token:       validToken,
 			page:        validPage,
 			resp:        journal.JournalsPage{},
-			identifyRes: &magistrala.IdentityRes{Id: testsutil.GenerateUUID(t), UserId: testsutil.GenerateUUID(t)},
-			authRes:     &magistrala.AuthorizeRes{Authorized: true},
+			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
 			repoErr:     repoerr.ErrViewEntity,
 			err:         repoerr.ErrViewEntity,
 		},
@@ -159,9 +159,8 @@ func TestReadAll(t *testing.T) {
 			token:       validToken,
 			page:        validPage,
 			resp:        journal.JournalsPage{},
-			identifyRes: &magistrala.IdentityRes{Id: testsutil.GenerateUUID(t), UserId: testsutil.GenerateUUID(t)},
-			authRes:     &magistrala.AuthorizeRes{Authorized: false},
-			authErr:     nil,
+			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
+			authErr:     svcerr.ErrAuthorization,
 			repoErr:     nil,
 			err:         svcerr.ErrAuthorization,
 		},
@@ -170,8 +169,7 @@ func TestReadAll(t *testing.T) {
 			token:       validToken,
 			page:        validPage,
 			resp:        journal.JournalsPage{},
-			identifyRes: &magistrala.IdentityRes{Id: testsutil.GenerateUUID(t), UserId: testsutil.GenerateUUID(t)},
-			authRes:     &magistrala.AuthorizeRes{Authorized: true},
+			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
 			authErr:     svcerr.ErrAuthorization,
 			repoErr:     nil,
 			err:         svcerr.ErrAuthorization,
@@ -180,22 +178,22 @@ func TestReadAll(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authReq := &magistrala.AuthorizeReq{
-				SubjectType: auth.UserType,
-				SubjectKind: auth.UsersKind,
-				Subject:     tc.identifyRes.GetId(),
+			authReq := mgauthz.PolicyReq{
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Subject:     tc.identifyRes.DomainUserID,
 				ObjectType:  tc.page.EntityType.AuthString(),
 				Object:      tc.page.EntityID,
-				Permission:  auth.ViewPermission,
+				Permission:  policies.ViewPermission,
 			}
 			if tc.page.EntityType == journal.UserEntity {
-				authReq.Permission = auth.AdminPermission
-				authReq.ObjectType = auth.PlatformType
-				authReq.Object = auth.MagistralaObject
-				authReq.Subject = tc.identifyRes.GetUserId()
+				authReq.Permission = policies.AdminPermission
+				authReq.ObjectType = policies.PlatformType
+				authReq.Object = policies.MagistralaObject
+				authReq.Subject = tc.identifyRes.UserID
 			}
-			authCall := authsvc.On("Identify", context.Background(), &magistrala.IdentityReq{Token: tc.token}).Return(tc.identifyRes, tc.identifyErr)
-			authCall1 := authsvc.On("Authorize", context.Background(), authReq).Return(tc.authRes, tc.authErr)
+			authCall := authn.On("Authenticate", context.Background(), tc.token).Return(tc.identifyRes, tc.identifyErr)
+			authCall1 := authz.On("Authorize", context.Background(), authReq).Return(tc.authErr)
 			repoCall := repo.On("RetrieveAll", context.Background(), tc.page).Return(tc.resp, tc.repoErr)
 			resp, err := svc.RetrieveAll(context.Background(), tc.token, tc.page)
 			if tc.err == nil {

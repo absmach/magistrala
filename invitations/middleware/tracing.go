@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/invitations"
+	"github.com/absmach/magistrala/pkg/authn"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -22,27 +23,27 @@ func Tracing(svc invitations.Service, tracer trace.Tracer) invitations.Service {
 	return &tracing{tracer, svc}
 }
 
-func (tm *tracing) SendInvitation(ctx context.Context, token string, invitation invitations.Invitation) (err error) {
+func (tm *tracing) SendInvitation(ctx context.Context, session authn.Session, invitation invitations.Invitation) (err error) {
 	ctx, span := tm.tracer.Start(ctx, "send_invitation", trace.WithAttributes(
 		attribute.String("domain_id", invitation.DomainID),
 		attribute.String("user_id", invitation.UserID),
 	))
 	defer span.End()
 
-	return tm.svc.SendInvitation(ctx, token, invitation)
+	return tm.svc.SendInvitation(ctx, session, invitation)
 }
 
-func (tm *tracing) ViewInvitation(ctx context.Context, token, userID, domain string) (invitation invitations.Invitation, err error) {
+func (tm *tracing) ViewInvitation(ctx context.Context, session authn.Session, userID, domain string) (invitation invitations.Invitation, err error) {
 	ctx, span := tm.tracer.Start(ctx, "view_invitation", trace.WithAttributes(
 		attribute.String("user_id", userID),
 		attribute.String("domain_id", domain),
 	))
 	defer span.End()
 
-	return tm.svc.ViewInvitation(ctx, token, userID, domain)
+	return tm.svc.ViewInvitation(ctx, session, userID, domain)
 }
 
-func (tm *tracing) ListInvitations(ctx context.Context, token string, page invitations.Page) (invs invitations.InvitationPage, err error) {
+func (tm *tracing) ListInvitations(ctx context.Context, session authn.Session, page invitations.Page) (invs invitations.InvitationPage, err error) {
 	ctx, span := tm.tracer.Start(ctx, "list_invitations", trace.WithAttributes(
 		attribute.Int("limit", int(page.Limit)),
 		attribute.Int("offset", int(page.Offset)),
@@ -52,33 +53,33 @@ func (tm *tracing) ListInvitations(ctx context.Context, token string, page invit
 	))
 	defer span.End()
 
-	return tm.svc.ListInvitations(ctx, token, page)
+	return tm.svc.ListInvitations(ctx, session, page)
 }
 
-func (tm *tracing) AcceptInvitation(ctx context.Context, token, domainID string) (err error) {
+func (tm *tracing) AcceptInvitation(ctx context.Context, session authn.Session, domainID string) (err error) {
 	ctx, span := tm.tracer.Start(ctx, "accept_invitation", trace.WithAttributes(
 		attribute.String("domain_id", domainID),
 	))
 	defer span.End()
 
-	return tm.svc.AcceptInvitation(ctx, token, domainID)
+	return tm.svc.AcceptInvitation(ctx, session, domainID)
 }
 
-func (tm *tracing) RejectInvitation(ctx context.Context, token, domainID string) (err error) {
+func (tm *tracing) RejectInvitation(ctx context.Context, session authn.Session, domainID string) (err error) {
 	ctx, span := tm.tracer.Start(ctx, "reject_invitation", trace.WithAttributes(
 		attribute.String("domain_id", domainID),
 	))
 	defer span.End()
 
-	return tm.svc.RejectInvitation(ctx, token, domainID)
+	return tm.svc.RejectInvitation(ctx, session, domainID)
 }
 
-func (tm *tracing) DeleteInvitation(ctx context.Context, token, userID, domainID string) (err error) {
+func (tm *tracing) DeleteInvitation(ctx context.Context, session authn.Session, userID, domainID string) (err error) {
 	ctx, span := tm.tracer.Start(ctx, "delete_invitation", trace.WithAttributes(
 		attribute.String("user_id", userID),
 		attribute.String("domain_id", domainID),
 	))
 	defer span.End()
 
-	return tm.svc.DeleteInvitation(ctx, token, userID, domainID)
+	return tm.svc.DeleteInvitation(ctx, session, userID, domainID)
 }

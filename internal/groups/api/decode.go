@@ -57,7 +57,6 @@ func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listGroupsReq{
-		token:      apiutil.ExtractBearerToken(r),
 		tree:       tree,
 		memberKind: memberKind,
 		memberID:   chi.URLParam(r, "memberID"),
@@ -98,8 +97,7 @@ func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listGroupsReq{
-		token: apiutil.ExtractBearerToken(r),
-		tree:  tree,
+		tree: tree,
 		Page: mggroups.Page{
 			Level:      level,
 			ParentID:   chi.URLParam(r, "groupID"),
@@ -137,8 +135,7 @@ func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{},
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listGroupsReq{
-		token: apiutil.ExtractBearerToken(r),
-		tree:  tree,
+		tree: tree,
 		Page: mggroups.Page{
 			Level:      level,
 			ParentID:   chi.URLParam(r, "groupID"),
@@ -161,7 +158,6 @@ func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 	req := createGroupReq{
 		Group: g,
-		token: apiutil.ExtractBearerToken(r),
 	}
 
 	return req, nil
@@ -172,8 +168,7 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateGroupReq{
-		id:    chi.URLParam(r, "groupID"),
-		token: apiutil.ExtractBearerToken(r),
+		id: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -183,24 +178,21 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 
 func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "groupID"),
+		id: chi.URLParam(r, "groupID"),
 	}
 	return req, nil
 }
 
 func DecodeGroupPermsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupPermsReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "groupID"),
+		id: chi.URLParam(r, "groupID"),
 	}
 	return req, nil
 }
 
 func DecodeChangeGroupStatus(_ context.Context, r *http.Request) (interface{}, error) {
 	req := changeGroupStatusReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "groupID"),
+		id: chi.URLParam(r, "groupID"),
 	}
 	return req, nil
 }
@@ -210,7 +202,6 @@ func DecodeAssignMembersRequest(_ context.Context, r *http.Request) (interface{}
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := assignReq{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -224,7 +215,6 @@ func DecodeUnassignMembersRequest(_ context.Context, r *http.Request) (interface
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := unassignReq{
-		token:   apiutil.ExtractBearerToken(r),
 		groupID: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -243,7 +233,6 @@ func DecodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listMembersReq{
-		token:      apiutil.ExtractBearerToken(r),
 		groupID:    chi.URLParam(r, "groupID"),
 		permission: permission,
 		memberKind: memberKind,

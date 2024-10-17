@@ -40,14 +40,10 @@ func (req addCertsReq) validate() error {
 
 type listReq struct {
 	thingID string
-	token   string
 	pm      certs.PageMetadata
 }
 
 func (req *listReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.pm.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
 	}
@@ -56,13 +52,9 @@ func (req *listReq) validate() error {
 
 type viewReq struct {
 	serialID string
-	token    string
 }
 
 func (req *viewReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.serialID == "" {
 		return apiutil.ErrMissingID
 	}

@@ -5,25 +5,30 @@ package sdk_test
 
 import (
 	"fmt"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/bootstrap/api"
+	bmocks "github.com/absmach/magistrala/bootstrap/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHealth(t *testing.T) {
-	thingsTs, _ := setupThings()
+	thingsTs, _, _ := setupThings()
 	defer thingsTs.Close()
 
-	usersTs, _ := setupUsers()
+	usersTs, _, _ := setupUsers()
 	defer usersTs.Close()
 
-	certsTs, _ := setupCerts()
+	certsTs, _, _ := setupCerts()
 	defer certsTs.Close()
 
-	bootstrapTs, _, _ := setupBootstrap()
+	bootstrapTs := setupMinimalBootstrap()
 	defer bootstrapTs.Close()
 
 	readerTs, _, _ := setupReader()
@@ -112,4 +117,14 @@ func TestHealth(t *testing.T) {
 			assert.Equal(t, magistrala.BuildTime, h.BuildTime, fmt.Sprintf("%s: expected default epoch date, got %s", tc.desc, h.BuildTime))
 		})
 	}
+}
+
+func setupMinimalBootstrap() *httptest.Server {
+	bsvc := new(bmocks.Service)
+	reader := new(bmocks.ConfigReader)
+	logger := mglog.NewMock()
+	authn := new(authnmocks.Authentication)
+	mux := api.MakeHandler(bsvc, authn, reader, logger, "")
+
+	return httptest.NewServer(mux)
 }

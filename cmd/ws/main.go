@@ -154,7 +154,7 @@ func main() {
 	}
 }
 
-func newService(thingsClient magistrala.AuthzServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
+func newService(thingsClient magistrala.ThingsServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
 	svc := ws.New(thingsClient, nps)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)

@@ -5,6 +5,7 @@ package things
 
 import (
 	"context"
+	"time"
 
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/clients"
@@ -83,4 +84,66 @@ type Cache interface {
 
 	// Removes thing from cache.
 	Remove(ctx context.Context, thingID string) error
+}
+
+// Thing Struct represents a thing.
+
+type Thing struct {
+	ID          string      `json:"id"`
+	Name        string      `json:"name,omitempty"`
+	Tags        []string    `json:"tags,omitempty"`
+	Domain      string      `json:"domain_id,omitempty"`
+	Credentials Credentials `json:"credentials,omitempty"`
+	Metadata    Metadata    `json:"metadata,omitempty"`
+	CreatedAt   time.Time   `json:"created_at,omitempty"`
+	UpdatedAt   time.Time   `json:"updated_at,omitempty"`
+	UpdatedBy   string      `json:"updated_by,omitempty"`
+	Status      Status      `json:"status,omitempty"` // 1 for enabled, 0 for disabled
+	Permissions []string    `json:"permissions,omitempty"`
+	Identity    string      `json:"identity,omitempty"`
+}
+
+// ThingsPage contains page related metadata as well as list
+type ThingsPage struct {
+	Page
+	Things []Thing
+}
+
+// MembersPage contains page related metadata as well as list of members that
+// belong to this page.
+
+type MembersPage struct {
+	Page
+	Things []Thing
+}
+
+// Page contains the page metadata that helps navigation.
+
+type Page struct {
+	Total      uint64   `json:"total"`
+	Offset     uint64   `json:"offset"`
+	Limit      uint64   `json:"limit"`
+	Name       string   `json:"name,omitempty"`
+	Id         string   `json:"id,omitempty"`
+	Order      string   `json:"order,omitempty"`
+	Dir        string   `json:"dir,omitempty"`
+	Metadata   Metadata `json:"metadata,omitempty"`
+	Domain     string   `json:"domain,omitempty"`
+	Tag        string   `json:"tag,omitempty"`
+	Permission string   `json:"permission,omitempty"`
+	Status     Status   `json:"status,omitempty"`
+	IDs        []string `json:"ids,omitempty"`
+	Identity   string   `json:"identity,omitempty"`
+	ListPerms  bool     `json:"-"`
+}
+
+// Metadata represents arbitrary JSON.
+type Metadata map[string]interface{}
+
+// Credentials represent client credentials: its
+// "identity" which can be a username, email, generated name;
+// and "secret" which can be a password or access token.
+type Credentials struct {
+	Identity string `json:"identity,omitempty"` // username or generated login ID
+	Secret   string `json:"secret,omitempty"`   // password or token
 }

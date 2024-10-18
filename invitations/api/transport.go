@@ -53,7 +53,7 @@ func MakeHandler(svc invitations.Service, logger *slog.Logger, authn mgauthn.Aut
 				api.EncodeResponse,
 				opts...,
 			), "list_invitations").ServeHTTP)
-			r.Route("/{user_id}", func(r chi.Router) {
+			r.Route("/users/{user_id}", func(r chi.Router) {
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					viewInvitationEndpoint(svc),
 					decodeInvitationReq,

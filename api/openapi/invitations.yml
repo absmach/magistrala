@@ -141,7 +141,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /domains/{domainID}/invitations/{user_id}:
+  /domains/{domainID}/invitations/users/{user_id}:
     get:
       operationId: getInvitation
       summary: Retrieves a specific invitation

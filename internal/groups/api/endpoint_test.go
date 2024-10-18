@@ -60,6 +60,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			kind:    policies.NewGroupKind,
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
+				domainID: testsutil.GenerateUUID(t),
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -74,6 +75,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			kind:    policies.NewChannelKind,
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
+				domainID: testsutil.GenerateUUID(t),
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -88,6 +90,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			kind:    policies.NewGroupKind,
 			session: nil,
 			req: createGroupReq{
+				domainID: testsutil.GenerateUUID(t),
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -100,7 +103,8 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			kind:    policies.NewGroupKind,
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
-				Group: groups.Group{},
+				domainID: testsutil.GenerateUUID(t),
+				Group:    groups.Group{},
 			},
 			resp: createGroupRes{created: false},
 			err:  apiutil.ErrValidation,
@@ -110,6 +114,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 			kind:    policies.NewGroupKind,
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
+				domainID: testsutil.GenerateUUID(t),
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -156,7 +161,8 @@ func TestViewGroupEndpoint(t *testing.T) {
 			desc:    "successfully",
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: groupReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			svcResp: validGroupResp,
 			svcErr:  nil,
@@ -166,7 +172,8 @@ func TestViewGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: groupReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Group{},
 			svcErr:  nil,
@@ -186,7 +193,8 @@ func TestViewGroupEndpoint(t *testing.T) {
 			desc:    "unsuccessfully with repo error",
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: groupReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			svcResp: groups.Group{},
 			svcErr:  svcerr.ErrAuthorization,
@@ -223,7 +231,8 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: groupPermsReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: []string{
@@ -236,7 +245,8 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: groupPermsReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			resp: viewGroupPermsRes{},
 			err:  svcerr.ErrAuthorization,
@@ -252,7 +262,8 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 			desc:    "unsuccessfully with repo error",
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			req: groupPermsReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			svcResp: []string{},
 			svcErr:  svcerr.ErrAuthorization,
@@ -289,7 +300,8 @@ func TestEnableGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: changeGroupStatusReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
@@ -300,7 +312,8 @@ func TestEnableGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: changeGroupStatusReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			resp: changeStatusRes{},
 			err:  svcerr.ErrAuthorization,
@@ -315,7 +328,8 @@ func TestEnableGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with repo error",
 			req: changeGroupStatusReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
@@ -353,7 +367,8 @@ func TestDisableGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: changeGroupStatusReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
@@ -364,7 +379,8 @@ func TestDisableGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: changeGroupStatusReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			resp: changeStatusRes{},
 			err:  svcerr.ErrAuthorization,
@@ -379,7 +395,8 @@ func TestDisableGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with repo error",
 			req: changeGroupStatusReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
@@ -416,7 +433,8 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: groupReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
@@ -426,7 +444,8 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: groupReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			resp: deleteGroupRes{},
 			err:  svcerr.ErrAuthorization,
@@ -441,7 +460,8 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with repo error",
 			req: groupReq{
-				id: testsutil.GenerateUUID(t),
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcErr:  svcerr.ErrAuthorization,
@@ -483,8 +503,9 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 		{
 			desc: "successfully",
 			req: updateGroupReq{
-				id:   testsutil.GenerateUUID(t),
-				Name: valid,
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
+				Name:     valid,
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
@@ -495,8 +516,9 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with invalid session",
 			req: updateGroupReq{
-				id:   testsutil.GenerateUUID(t),
-				Name: valid,
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
+				Name:     valid,
 			},
 			resp: updateGroupRes{},
 			err:  svcerr.ErrAuthorization,
@@ -511,8 +533,9 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 		{
 			desc: "unsuccessfully with repo error",
 			req: updateGroupReq{
-				id:   testsutil.GenerateUUID(t),
-				Name: valid,
+				domainID: testsutil.GenerateUUID(t),
+				id:       testsutil.GenerateUUID(t),
+				Name:     valid,
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
@@ -600,6 +623,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
@@ -625,6 +649,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
@@ -652,6 +677,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				tree:       true,
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
@@ -681,6 +707,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				tree:       false,
 				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
@@ -710,6 +737,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				tree:       false,
 				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
@@ -744,6 +772,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{},
@@ -762,6 +791,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			resp: groupPageRes{},
 			err:  svcerr.ErrAuthorization,
@@ -776,6 +806,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				},
 				memberKind: "",
 				memberID:   testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			resp:    groupPageRes{},
@@ -818,6 +849,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			req: listMembersReq{
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.MembersPage{
@@ -844,6 +876,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			req: listMembersReq{
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.MembersPage{
@@ -879,6 +912,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			req: listMembersReq{
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
 			svcResp: groups.MembersPage{},
@@ -892,6 +926,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			req: listMembersReq{
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 			},
 			resp: listMembersRes{},
 			err:  svcerr.ErrAuthorization,
@@ -934,6 +969,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			req: assignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -949,6 +985,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			relation: policies.ContributorRelation,
 			req: assignReq{
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				MemberKind: policies.ThingsKind,
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -966,6 +1003,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			req: assignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -992,6 +1030,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			req: assignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -1009,6 +1048,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			req: assignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -1063,6 +1103,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			req: unassignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -1078,6 +1119,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			relation: policies.ContributorRelation,
 			req: unassignReq{
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				MemberKind: policies.ThingsKind,
 				Members: []string{
 					testsutil.GenerateUUID(t),
@@ -1095,6 +1137,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			req: unassignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -1121,6 +1164,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			req: unassignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),
@@ -1138,6 +1182,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			req: unassignReq{
 				MemberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
+				domainID:   testsutil.GenerateUUID(t),
 				Members: []string{
 					testsutil.GenerateUUID(t),
 					testsutil.GenerateUUID(t),

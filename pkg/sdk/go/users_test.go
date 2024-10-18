@@ -33,7 +33,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var id = generateUUID(&testing.T{})
+var (
+	id       = generateUUID(&testing.T{})
+	domainID = "c717fa97-ffd9-40cb-8cf9-7c2859059395"
+)
 
 func setupUsers() (*httptest.Server, *umocks.Service, *authnmocks.Authentication) {
 	usvc := new(umocks.Service)
@@ -1989,8 +1992,9 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2016,8 +2020,9 @@ func TestListMembers(t *testing.T) {
 			token:   invalidToken,
 			groupID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2033,8 +2038,9 @@ func TestListMembers(t *testing.T) {
 			token:   "",
 			groupID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcErr:   nil,
@@ -2046,8 +2052,9 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: wrongID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2063,8 +2070,9 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: "",
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: validID,
 			},
 			svcReq:   mgclients.Page{},
 			svcErr:   nil,
@@ -2076,8 +2084,9 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: validID,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
@@ -2093,8 +2102,9 @@ func TestListMembers(t *testing.T) {
 			token:   validToken,
 			groupID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: validID,
 			},
 			svcReq: mgclients.Page{
 				Offset:     0,
@@ -2239,8 +2249,9 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2270,8 +2281,9 @@ func TestListUserGroups(t *testing.T) {
 			token:  invalidToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2296,8 +2308,9 @@ func TestListUserGroups(t *testing.T) {
 			token:  "",
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcReq:   groups.Page{},
 			svcErr:   nil,
@@ -2309,8 +2322,9 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: wrongID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2330,8 +2344,9 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
@@ -2347,8 +2362,9 @@ func TestListUserGroups(t *testing.T) {
 			token:  validToken,
 			userID: validID,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{

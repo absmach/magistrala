@@ -25,11 +25,10 @@ func clientsHandler(svc things.Service, r *chi.Mux, authn mgauthn.Authentication
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-
 	r.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn))
 
-		r.Route("/things", func(r chi.Router) {
+		r.Route("/domains/{domainID}/things", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				createClientEndpoint(svc),
 				decodeCreateClientReq,
@@ -127,27 +126,27 @@ func clientsHandler(svc things.Service, r *chi.Mux, authn mgauthn.Authentication
 		// SpiceDB provides list of thing ids present in given channel id
 		// and things service can access spiceDB and get the list of thing ids present in given channel id.
 		// Request to get list of things present in channelID ({groupID}) .
-		r.Get("/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/domains/{domainID}/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersEndpoint(svc),
 			decodeListMembersRequest,
 			api.EncodeResponse,
 			opts...,
 		), "list_things_by_channel_id").ServeHTTP)
 
-		r.Get("/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/domains/{domainID}/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
 			listClientsEndpoint(svc),
 			decodeListClients,
 			api.EncodeResponse,
 			opts...,
 		), "list_user_things").ServeHTTP)
 	})
-
 	return r
 }
 
 func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewClientReq{
-		id: chi.URLParam(r, "thingID"),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -155,7 +154,8 @@ func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeViewClientPerms(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewClientPermsReq{
-		id: chi.URLParam(r, "thingID"),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -214,6 +214,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		listPerms:  lp,
 		userID:     chi.URLParam(r, "userID"),
 		id:         id,
+		domainID:   chi.URLParam(r, "domainID"),
 	}
 	return req, nil
 }
@@ -224,7 +225,8 @@ func decodeUpdateClient(_ context.Context, r *http.Request) (interface{}, error)
 	}
 
 	req := updateClientReq{
-		id: chi.URLParam(r, "thingID"),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -239,7 +241,8 @@ func decodeUpdateClientTags(_ context.Context, r *http.Request) (interface{}, er
 	}
 
 	req := updateClientTagsReq{
-		id: chi.URLParam(r, "thingID"),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -254,7 +257,8 @@ func decodeUpdateClientCredentials(_ context.Context, r *http.Request) (interfac
 	}
 
 	req := updateClientCredentialsReq{
-		id: chi.URLParam(r, "thingID"),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -273,7 +277,8 @@ func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, err
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 	req := createClientReq{
-		client: c,
+		client:   c,
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -284,7 +289,7 @@ func decodeCreateClientsReq(_ context.Context, r *http.Request) (interface{}, er
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	c := createClientsReq{}
+	c := createClientsReq{domainID: chi.URLParam(r, "domainID")}
 	if err := json.NewDecoder(r.Body).Decode(&c.Clients); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
@@ -294,7 +299,8 @@ func decodeCreateClientsReq(_ context.Context, r *http.Request) (interface{}, er
 
 func decodeChangeClientStatus(_ context.Context, r *http.Request) (interface{}, error) {
 	req := changeClientStatusReq{
-		id: chi.URLParam(r, "thingID"),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -339,7 +345,8 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 			Metadata:   m,
 			ListPerms:  lp,
 		},
-		groupID: chi.URLParam(r, "groupID"),
+		groupID:  chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	return req, nil
 }
@@ -350,7 +357,8 @@ func decodeThingShareRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := thingShareRequest{
-		thingID: chi.URLParam(r, "thingID"),
+		thingID:  chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -365,7 +373,8 @@ func decodeThingUnshareRequest(_ context.Context, r *http.Request) (interface{},
 	}
 
 	req := thingShareRequest{
-		thingID: chi.URLParam(r, "thingID"),
+		thingID:  chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -376,7 +385,8 @@ func decodeThingUnshareRequest(_ context.Context, r *http.Request) (interface{},
 
 func decodeDeleteClientReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := deleteClientReq{
-		id: chi.URLParam(r, "thingID"),
+		id:       chi.URLParam(r, "thingID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil

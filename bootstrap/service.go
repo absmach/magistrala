@@ -146,13 +146,13 @@ func (bs bootstrapService) Add(ctx context.Context, session mgauthn.Session, tok
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
 
-	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
+	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), session.DomainID, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)
 	}
 
 	id := cfg.ThingID
-	mgThing, err := bs.thing(id, token)
+	mgThing, err := bs.thing(session.DomainID, id, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errThingNotFound, err)
 	}
@@ -173,7 +173,7 @@ func (bs bootstrapService) Add(ctx context.Context, session mgauthn.Session, tok
 		// If id is empty, then a new thing has been created function - bs.thing(id, token)
 		// So, on bootstrap config save error , delete the newly created thing.
 		if id == "" {
-			if errT := bs.sdk.DeleteThing(cfg.ThingID, token); errT != nil {
+			if errT := bs.sdk.DeleteThing(cfg.ThingID, cfg.DomainID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
@@ -224,7 +224,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session mgauth
 		return errors.Wrap(errUpdateConnections, err)
 	}
 
-	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), token)
+	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), session.DomainID, token)
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -238,7 +238,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session mgauth
 	}
 
 	for _, c := range disconnect {
-		if err := bs.sdk.DisconnectThing(id, c, token); err != nil {
+		if err := bs.sdk.DisconnectThing(id, c, session.DomainID, token); err != nil {
 			if errors.Contains(err, repoerr.ErrNotFound) {
 				continue
 			}
@@ -251,7 +251,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session mgauth
 			ChannelID: c,
 			ThingID:   id,
 		}
-		if err := bs.sdk.Connect(conIDs, token); err != nil {
+		if err := bs.sdk.Connect(conIDs, session.DomainID, token); err != nil {
 			return ErrThings
 		}
 	}
@@ -340,7 +340,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session mgauthn.Sess
 				ChannelID: c.ID,
 				ThingID:   cfg.ThingID,
 			}
-			if err := bs.sdk.Connect(conIDs, token); err != nil {
+			if err := bs.sdk.Connect(conIDs, session.DomainID, token); err != nil {
 				// Ignore conflict errors as they indicate the connection already exists.
 				if errors.Contains(err, svcerr.ErrConflict) {
 					continue
@@ -350,7 +350,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session mgauthn.Sess
 		}
 	case Inactive:
 		for _, c := range cfg.Channels {
-			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, token); err != nil {
+			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, session.DomainID, token); err != nil {
 				if errors.Contains(err, repoerr.ErrNotFound) {
 					continue
 				}
@@ -400,14 +400,14 @@ func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID
 }
 
 // Method thing retrieves Magistrala Thing creating one if an empty ID is passed.
-func (bs bootstrapService) thing(id, token string) (mgsdk.Thing, error) {
+func (bs bootstrapService) thing(domainID, id, token string) (mgsdk.Thing, error) {
 	// If Thing ID is not provided, then create new thing.
 	if id == "" {
 		id, err := bs.idProvider.ID()
 		if err != nil {
 			return mgsdk.Thing{}, errors.Wrap(errCreateThing, err)
 		}
-		thing, sdkErr := bs.sdk.CreateThing(mgsdk.Thing{ID: id, Name: "Bootstrapped Thing " + id}, token)
+		thing, sdkErr := bs.sdk.CreateThing(mgsdk.Thing{ID: id, Name: "Bootstrapped Thing " + id}, domainID, token)
 		if sdkErr != nil {
 			return mgsdk.Thing{}, errors.Wrap(errCreateThing, sdkErr)
 		}
@@ -415,14 +415,14 @@ func (bs bootstrapService) thing(id, token string) (mgsdk.Thing, error) {
 	}
 
 	// If Thing ID is provided, then retrieve thing
-	thing, sdkErr := bs.sdk.Thing(id, token)
+	thing, sdkErr := bs.sdk.Thing(id, domainID, token)
 	if sdkErr != nil {
 		return mgsdk.Thing{}, errors.Wrap(ErrThings, sdkErr)
 	}
 	return thing, nil
 }
 
-func (bs bootstrapService) connectionChannels(channels, existing []string, token string) ([]Channel, error) {
+func (bs bootstrapService) connectionChannels(channels, existing []string, domainID, token string) ([]Channel, error) {
 	add := make(map[string]bool, len(channels))
 	for _, ch := range channels {
 		add[ch] = true
@@ -436,7 +436,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 
 	var ret []Channel
 	for id := range add {
-		ch, err := bs.sdk.Channel(id, token)
+		ch, err := bs.sdk.Channel(id, domainID, token)
 		if err != nil {
 			return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 		}

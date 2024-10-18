@@ -14,9 +14,9 @@ type Service struct {
 	mock.Mock
 }
 
-// Cert provides a mock function with given fields: token, thingID, duration
-func (_m *Service) Cert(token string, thingID string, duration string) (string, string, error) {
-	ret := _m.Called(token, thingID, duration)
+// Cert provides a mock function with given fields: domainID, token, thingID, duration
+func (_m *Service) Cert(domainID string, token string, thingID string, duration string) (string, string, error) {
+	ret := _m.Called(domainID, token, thingID, duration)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Cert")
@@ -25,23 +25,23 @@ func (_m *Service) Cert(token string, thingID string, duration string) (string, 
 	var r0 string
 	var r1 string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (string, string, error)); ok {
-		return rf(token, thingID, duration)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (string, string, error)); ok {
+		return rf(domainID, token, thingID, duration)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) string); ok {
-		r0 = rf(token, thingID, duration)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) string); ok {
+		r0 = rf(domainID, token, thingID, duration)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) string); ok {
-		r1 = rf(token, thingID, duration)
+	if rf, ok := ret.Get(1).(func(string, string, string, string) string); ok {
+		r1 = rf(domainID, token, thingID, duration)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(string, string, string) error); ok {
-		r2 = rf(token, thingID, duration)
+	if rf, ok := ret.Get(2).(func(string, string, string, string) error); ok {
+		r2 = rf(domainID, token, thingID, duration)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -79,9 +79,9 @@ func (_m *Service) Mapping(token string) (map[string]interface{}, error) {
 	return r0, r1
 }
 
-// Provision provides a mock function with given fields: token, name, externalID, externalKey
-func (_m *Service) Provision(token string, name string, externalID string, externalKey string) (provision.Result, error) {
-	ret := _m.Called(token, name, externalID, externalKey)
+// Provision provides a mock function with given fields: domainID, token, name, externalID, externalKey
+func (_m *Service) Provision(domainID string, token string, name string, externalID string, externalKey string) (provision.Result, error) {
+	ret := _m.Called(domainID, token, name, externalID, externalKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Provision")
@@ -89,17 +89,17 @@ func (_m *Service) Provision(token string, name string, externalID string, exter
 
 	var r0 provision.Result
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (provision.Result, error)); ok {
-		return rf(token, name, externalID, externalKey)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) (provision.Result, error)); ok {
+		return rf(domainID, token, name, externalID, externalKey)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) provision.Result); ok {
-		r0 = rf(token, name, externalID, externalKey)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) provision.Result); ok {
+		r0 = rf(domainID, token, name, externalID, externalKey)
 	} else {
 		r0 = ret.Get(0).(provision.Result)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(token, name, externalID, externalKey)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string) error); ok {
+		r1 = rf(domainID, token, name, externalID, externalKey)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -17,9 +17,9 @@ type Service struct {
 	mock.Mock
 }
 
-// IssueCert provides a mock function with given fields: ctx, token, thingID, ttl
-func (_m *Service) IssueCert(ctx context.Context, token string, thingID string, ttl string) (certs.Cert, error) {
-	ret := _m.Called(ctx, token, thingID, ttl)
+// IssueCert provides a mock function with given fields: ctx, domainID, token, thingID, ttl
+func (_m *Service) IssueCert(ctx context.Context, domainID string, token string, thingID string, ttl string) (certs.Cert, error) {
+	ret := _m.Called(ctx, domainID, token, thingID, ttl)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IssueCert")
@@ -27,17 +27,17 @@ func (_m *Service) IssueCert(ctx context.Context, token string, thingID string, 
 
 	var r0 certs.Cert
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (certs.Cert, error)); ok {
-		return rf(ctx, token, thingID, ttl)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (certs.Cert, error)); ok {
+		return rf(ctx, domainID, token, thingID, ttl)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) certs.Cert); ok {
-		r0 = rf(ctx, token, thingID, ttl)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) certs.Cert); ok {
+		r0 = rf(ctx, domainID, token, thingID, ttl)
 	} else {
 		r0 = ret.Get(0).(certs.Cert)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, token, thingID, ttl)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, domainID, token, thingID, ttl)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -101,9 +101,9 @@ func (_m *Service) ListSerials(ctx context.Context, thingID string, pm certs.Pag
 	return r0, r1
 }
 
-// RevokeCert provides a mock function with given fields: ctx, token, thingID
-func (_m *Service) RevokeCert(ctx context.Context, token string, thingID string) (certs.Revoke, error) {
-	ret := _m.Called(ctx, token, thingID)
+// RevokeCert provides a mock function with given fields: ctx, domainID, token, thingID
+func (_m *Service) RevokeCert(ctx context.Context, domainID string, token string, thingID string) (certs.Revoke, error) {
+	ret := _m.Called(ctx, domainID, token, thingID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RevokeCert")
@@ -111,17 +111,17 @@ func (_m *Service) RevokeCert(ctx context.Context, token string, thingID string)
 
 	var r0 certs.Revoke
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (certs.Revoke, error)); ok {
-		return rf(ctx, token, thingID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (certs.Revoke, error)); ok {
+		return rf(ctx, domainID, token, thingID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) certs.Revoke); ok {
-		r0 = rf(ctx, token, thingID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) certs.Revoke); ok {
+		r0 = rf(ctx, domainID, token, thingID)
 	} else {
 		r0 = ret.Get(0).(certs.Revoke)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, token, thingID)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, domainID, token, thingID)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -24,14 +24,14 @@ func New(svc certs.Service, tracer trace.Tracer) certs.Service {
 }
 
 // IssueCert traces the "IssueCert" operation of the wrapped certs.Service.
-func (tm *tracingMiddleware) IssueCert(ctx context.Context, token, thingID, ttl string) (certs.Cert, error) {
+func (tm *tracingMiddleware) IssueCert(ctx context.Context, domainID, token, thingID, ttl string) (certs.Cert, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_create_group", trace.WithAttributes(
 		attribute.String("thing_id", thingID),
 		attribute.String("ttl", ttl),
 	))
 	defer span.End()
 
-	return tm.svc.IssueCert(ctx, token, thingID, ttl)
+	return tm.svc.IssueCert(ctx, domainID, token, thingID, ttl)
 }
 
 // ListCerts traces the "ListCerts" operation of the wrapped certs.Service.
@@ -69,11 +69,11 @@ func (tm *tracingMiddleware) ViewCert(ctx context.Context, serialID string) (cer
 }
 
 // RevokeCert traces the "RevokeCert" operation of the wrapped certs.Service.
-func (tm *tracingMiddleware) RevokeCert(ctx context.Context, token, serialID string) (certs.Revoke, error) {
+func (tm *tracingMiddleware) RevokeCert(ctx context.Context, domainID, token, serialID string) (certs.Revoke, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_revoke_cert", trace.WithAttributes(
 		attribute.String("serial_id", serialID),
 	))
 	defer span.End()
 
-	return tm.svc.RevokeCert(ctx, token, serialID)
+	return tm.svc.RevokeCert(ctx, domainID, token, serialID)
 }

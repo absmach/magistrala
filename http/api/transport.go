@@ -46,7 +46,6 @@ func MakeHandler(logger *slog.Logger, instanceID string) http.Handler {
 		api.EncodeResponse,
 		opts...,
 	), "publish").ServeHTTP)
-
 	r.Get("/health", magistrala.Health("http", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
@@ -60,7 +59,6 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	var req publishReq
-
 	_, pass, ok := r.BasicAuth()
 	switch {
 	case ok:

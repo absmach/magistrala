@@ -85,6 +85,20 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 				opts...,
 			), "search_clients").ServeHTTP)
 
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				listClientsEndpoint(svc),
+				decodeListClients,
+				api.EncodeResponse,
+				opts...,
+			), "list_clients").ServeHTTP)
+
+			r.Get("/search", otelhttp.NewHandler(kithttp.NewServer(
+				searchClientsEndpoint(svc),
+				decodeSearchClients,
+				api.EncodeResponse,
+				opts...,
+			), "search_clients").ServeHTTP)
+
 			r.Patch("/secret", otelhttp.NewHandler(kithttp.NewServer(
 				updateClientSecretEndpoint(svc),
 				decodeUpdateClientSecret,
@@ -112,6 +126,13 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 				api.EncodeResponse,
 				opts...,
 			), "update_client_identity").ServeHTTP)
+
+			r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
+				updateClientRoleEndpoint(svc),
+				decodeUpdateClientRole,
+				api.EncodeResponse,
+				opts...,
+			), "update_client_role").ServeHTTP)
 
 			r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
 				updateClientRoleEndpoint(svc),
@@ -164,7 +185,7 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 		// SpiceDB provides list of user ids in given user_group_id
 		// and users service can access spiceDB and get the user list with user_group_id.
 		// Request to get list of users present in the user_group_id {groupID}
-		r.Get("/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/domains/{domainID}/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByGroupEndpoint(svc),
 			decodeListMembersByGroup,
 			api.EncodeResponse,
@@ -176,14 +197,14 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 		// SpiceDB provides list of user ids in given channel_id
 		// and users service can access spiceDB and get the user list with channel_id.
 		// Request to get list of users present in the user_group_id {channelID}
-		r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/domains/{domainID}/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByChannelEndpoint(svc),
 			decodeListMembersByChannel,
 			api.EncodeResponse,
 			opts...,
 		), "list_users_by_channel_id").ServeHTTP)
 
-		r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/domains/{domainID}/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByThingEndpoint(svc),
 			decodeListMembersByThing,
 			api.EncodeResponse,
@@ -496,6 +517,7 @@ func decodeListMembersByGroup(_ context.Context, r *http.Request) (interface{}, 
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -509,6 +531,7 @@ func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}
 	req := listMembersByObjectReq{
 		Page:     page,
 		objectID: chi.URLParam(r, "channelID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil
@@ -521,6 +544,7 @@ func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, 
 	}
 	req := listMembersByObjectReq{
 		Page:     page,
+		domainID: chi.URLParam(r, "domainID"),
 		objectID: chi.URLParam(r, "thingID"),
 	}
 
@@ -535,6 +559,7 @@ func decodeListMembersByDomain(_ context.Context, r *http.Request) (interface{},
 
 	req := listMembersByObjectReq{
 		Page:     page,
+		domainID: chi.URLParam(r, "domainID"),
 		objectID: chi.URLParam(r, "domainID"),
 	}
 

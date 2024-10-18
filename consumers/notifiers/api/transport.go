@@ -38,7 +38,6 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 	}
 
 	mux := chi.NewRouter()
-
 	mux.Route("/subscriptions", func(r chi.Router) {
 		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 			createSubscriptionEndpoint(svc),
@@ -75,7 +74,6 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 			opts...,
 		), "delete").ServeHTTP)
 	})
-
 	mux.Get("/health", magistrala.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 

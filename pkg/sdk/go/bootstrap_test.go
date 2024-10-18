@@ -153,6 +153,7 @@ func TestAddBootstrap(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		cfg             sdk.BootstrapConfig
@@ -164,26 +165,29 @@ func TestAddBootstrap(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:   "add successfully",
-			token:  validToken,
-			cfg:    sdkBootstrapConfig,
-			svcReq: bootstrapConfig,
-			svcRes: bootstrapConfig,
-			svcErr: nil,
-			err:    nil,
+			desc:     "add successfully",
+			domainID: domainID,
+			token:    validToken,
+			cfg:      sdkBootstrapConfig,
+			svcReq:   bootstrapConfig,
+			svcRes:   bootstrapConfig,
+			svcErr:   nil,
+			err:      nil,
 		},
 		{
-			desc:   "add with invalid token",
-			token:  invalidToken,
-			cfg:    sdkBootstrapConfig,
-			svcReq: bootstrapConfig,
-			svcRes: bootstrap.Config{},
-			svcErr: svcerr.ErrAuthentication,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:     "add with invalid token",
+			domainID: domainID,
+			token:    invalidToken,
+			cfg:      sdkBootstrapConfig,
+			svcReq:   bootstrapConfig,
+			svcRes:   bootstrap.Config{},
+			svcErr:   svcerr.ErrAuthentication,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:  "add with config that cannot be marshalled",
-			token: validToken,
+			desc:     "add with config that cannot be marshalled",
+			domainID: domainID,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				Channels: map[string]interface{}{
 					"channel1": make(chan int),
@@ -204,42 +208,45 @@ func TestAddBootstrap(t *testing.T) {
 			err:    errors.NewSDKError(errMarshalChan),
 		},
 		{
-			desc:   "add an existing config",
-			token:  validToken,
-			cfg:    sdkBootstrapConfig,
-			svcReq: bootstrapConfig,
-			svcRes: bootstrap.Config{},
-			svcErr: svcerr.ErrConflict,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrConflict, http.StatusConflict),
+			desc:     "add an existing config",
+			domainID: domainID,
+			token:    validToken,
+			cfg:      sdkBootstrapConfig,
+			svcReq:   bootstrapConfig,
+			svcRes:   bootstrap.Config{},
+			svcErr:   svcerr.ErrConflict,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrConflict, http.StatusConflict),
 		},
 		{
-			desc:   "add empty config",
-			token:  validToken,
-			cfg:    sdk.BootstrapConfig{},
-			svcReq: bootstrap.Config{},
-			svcRes: bootstrap.Config{},
-			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
+			desc:     "add empty config",
+			domainID: domainID,
+			token:    validToken,
+			cfg:      sdk.BootstrapConfig{},
+			svcReq:   bootstrap.Config{},
+			svcRes:   bootstrap.Config{},
+			svcErr:   nil,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:   "add with non-existent thing Id",
-			token:  validToken,
-			cfg:    neID,
-			svcReq: neReqId,
-			svcRes: bootstrap.Config{},
-			svcErr: svcerr.ErrNotFound,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			desc:     "add with non-existent thing Id",
+			domainID: domainID,
+			token:    validToken,
+			cfg:      neID,
+			svcReq:   neReqId,
+			svcRes:   bootstrap.Config{},
+			svcErr:   svcerr.ErrNotFound,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("Add", mock.Anything, tc.session, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.AddBootstrap(tc.cfg, tc.token)
+			resp, err := mgsdk.AddBootstrap(tc.cfg, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.Equal(t, bootstrapConfig.ThingID, resp)
@@ -301,8 +308,9 @@ func TestListBootstraps(t *testing.T) {
 			desc:  "list successfully",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcResp: bootstrap.ConfigsPage{
 				Total:   1,
@@ -321,8 +329,9 @@ func TestListBootstraps(t *testing.T) {
 			desc:  "list with invalid token",
 			token: invalidToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcResp:  bootstrap.ConfigsPage{},
 			svcErr:   svcerr.ErrAuthentication,
@@ -333,8 +342,9 @@ func TestListBootstraps(t *testing.T) {
 			desc:  "list with empty token",
 			token: "",
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcResp:  bootstrap.ConfigsPage{},
 			svcErr:   nil,
@@ -345,8 +355,9 @@ func TestListBootstraps(t *testing.T) {
 			desc:  "list with invalid query params",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 1,
-				Limit:  10,
+				Offset:   1,
+				Limit:    10,
+				DomainID: domainID,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
@@ -360,8 +371,9 @@ func TestListBootstraps(t *testing.T) {
 			desc:  "list with response that cannot be unmarshalled",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcResp: bootstrap.ConfigsPage{
 				Total:   1,
@@ -376,7 +388,7 @@ func TestListBootstraps(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("List", mock.Anything, tc.session, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit).Return(tc.svcResp, tc.svcErr)
@@ -407,6 +419,7 @@ func TestWhiteList(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -417,25 +430,28 @@ func TestWhiteList(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:    "whitelist to active state successfully",
-			token:   validToken,
-			thingID: thingId,
-			state:   active,
-			svcReq:  bootstrap.Active,
-			svcErr:  nil,
-			err:     nil,
+			desc:     "whitelist to active state successfully",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thingId,
+			state:    active,
+			svcReq:   bootstrap.Active,
+			svcErr:   nil,
+			err:      nil,
 		},
 		{
-			desc:    "whitelist to inactive state successfully",
-			token:   validToken,
-			thingID: thingId,
-			state:   inactive,
-			svcReq:  bootstrap.Inactive,
-			svcErr:  nil,
-			err:     nil,
+			desc:     "whitelist to inactive state successfully",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thingId,
+			state:    inactive,
+			svcReq:   bootstrap.Inactive,
+			svcErr:   nil,
+			err:      nil,
 		},
 		{
 			desc:            "whitelist with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thingId,
 			state:           active,
@@ -444,41 +460,44 @@ func TestWhiteList(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:    "whitelist with empty token",
-			token:   "",
-			thingID: thingId,
-			state:   active,
-			svcReq:  bootstrap.Active,
-			svcErr:  nil,
-			err:     errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			desc:     "whitelist with empty token",
+			domainID: domainID,
+			token:    "",
+			thingID:  thingId,
+			state:    active,
+			svcReq:   bootstrap.Active,
+			svcErr:   nil,
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:    "whitelist with invalid state",
-			token:   validToken,
-			thingID: thingId,
-			state:   -1,
-			svcReq:  bootstrap.Active,
-			svcErr:  nil,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBootstrapState), http.StatusBadRequest),
+			desc:     "whitelist with invalid state",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  thingId,
+			state:    -1,
+			svcReq:   bootstrap.Active,
+			svcErr:   nil,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBootstrapState), http.StatusBadRequest),
 		},
 		{
-			desc:    "whitelist with empty thing Id",
-			token:   validToken,
-			thingID: "",
-			state:   1,
-			svcReq:  bootstrap.Active,
-			svcErr:  nil,
-			err:     errors.NewSDKError(apiutil.ErrMissingID),
+			desc:     "whitelist with empty thing Id",
+			domainID: domainID,
+			token:    validToken,
+			thingID:  "",
+			state:    1,
+			svcReq:   bootstrap.Active,
+			svcErr:   nil,
+			err:      errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("ChangeState", mock.Anything, tc.session, tc.token, tc.thingID, tc.svcReq).Return(tc.svcErr)
-			err := mgsdk.Whitelist(tc.thingID, tc.state, tc.token)
+			err := mgsdk.Whitelist(tc.thingID, tc.state, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "ChangeState", mock.Anything, tc.session, tc.token, tc.thingID, tc.svcReq)
@@ -511,6 +530,7 @@ func TestViewBootstrap(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		id              string
@@ -522,6 +542,7 @@ func TestViewBootstrap(t *testing.T) {
 	}{
 		{
 			desc:     "view successfully",
+			domainID: domainID,
 			token:    validToken,
 			id:       thingId,
 			svcResp:  bootstrapConfig,
@@ -531,6 +552,7 @@ func TestViewBootstrap(t *testing.T) {
 		},
 		{
 			desc:            "view with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			id:              thingId,
 			svcResp:         bootstrap.Config{},
@@ -540,6 +562,7 @@ func TestViewBootstrap(t *testing.T) {
 		},
 		{
 			desc:     "view with empty token",
+			domainID: domainID,
 			token:    "",
 			id:       thingId,
 			svcResp:  bootstrap.Config{},
@@ -549,6 +572,7 @@ func TestViewBootstrap(t *testing.T) {
 		},
 		{
 			desc:     "view with non-existent thing Id",
+			domainID: domainID,
 			token:    validToken,
 			id:       invalid,
 			svcResp:  bootstrap.Config{},
@@ -557,9 +581,10 @@ func TestViewBootstrap(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
 		},
 		{
-			desc:  "view with response that cannot be unmarshalled",
-			token: validToken,
-			id:    thingId,
+			desc:     "view with response that cannot be unmarshalled",
+			domainID: domainID,
+			token:    validToken,
+			id:       thingId,
 			svcResp: bootstrap.Config{
 				ThingID: thingId,
 				Channels: []bootstrap.Channel{
@@ -577,6 +602,7 @@ func TestViewBootstrap(t *testing.T) {
 		},
 		{
 			desc:     "view with empty thing Id",
+			domainID: domainID,
 			token:    validToken,
 			id:       "",
 			svcResp:  bootstrap.Config{},
@@ -588,11 +614,11 @@ func TestViewBootstrap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("View", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.ViewBootstrap(tc.id, tc.token)
+			resp, err := mgsdk.ViewBootstrap(tc.id, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if err == nil {
@@ -616,6 +642,7 @@ func TestUpdateBootstrap(t *testing.T) {
 
 	cases := []struct {
 		desc              string
+		domainID          string
 		token             string
 		session           mgauthn.Session
 		cfg               sdk.BootstrapConfig
@@ -625,9 +652,10 @@ func TestUpdateBootstrap(t *testing.T) {
 		err               errors.SDKError
 	}{
 		{
-			desc:  "update successfully",
-			token: validToken,
-			cfg:   sdkBootstrapConfig,
+			desc:     "update successfully",
+			domainID: domainID,
+			token:    validToken,
+			cfg:      sdkBootstrapConfig,
 			svcReq: bootstrap.Config{
 				ThingID: thingId,
 				Name:    bsName,
@@ -637,9 +665,10 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:  "update with invalid token",
-			token: invalidToken,
-			cfg:   sdkBootstrapConfig,
+			desc:     "update with invalid token",
+			domainID: domainID,
+			token:    invalidToken,
+			cfg:      sdkBootstrapConfig,
 			svcReq: bootstrap.Config{
 				ThingID: thingId,
 				Name:    bsName,
@@ -649,16 +678,18 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:               errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:   "update with empty token",
-			token:  "",
-			cfg:    sdkBootstrapConfig,
-			svcReq: bootstrap.Config{},
-			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			desc:     "update with empty token",
+			domainID: domainID,
+			token:    "",
+			cfg:      sdkBootstrapConfig,
+			svcReq:   bootstrap.Config{},
+			svcErr:   nil,
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update with config that cannot be marshalled",
-			token: validToken,
+			desc:     "update with config that cannot be marshalled",
+			domainID: domainID,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				Channels: map[string]interface{}{
 					"channel1": make(chan int),
@@ -682,8 +713,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    errors.NewSDKError(errMarshalChan),
 		},
 		{
-			desc:  "update with non-existent thing Id",
-			token: validToken,
+			desc:     "update with non-existent thing Id",
+			domainID: domainID,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ThingID: invalid,
 				Channels: []sdk.Channel{
@@ -705,8 +737,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:  "update with empty thing Id",
-			token: validToken,
+			desc:     "update with empty thing Id",
+			domainID: domainID,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ThingID: "",
 				Channels: []sdk.Channel{
@@ -728,8 +761,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			err:    errors.NewSDKError(apiutil.ErrMissingID),
 		},
 		{
-			desc:  "update with config with only thing Id",
-			token: validToken,
+			desc:     "update with config with only thing Id",
+			domainID: domainID,
+			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ThingID: thingId,
 			},
@@ -743,11 +777,11 @@ func TestUpdateBootstrap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticationErr)
 			svcCall := bsvc.On("Update", mock.Anything, tc.session, tc.svcReq).Return(tc.svcErr)
-			err := mgsdk.UpdateBootstrap(tc.cfg, tc.token)
+			err := mgsdk.UpdateBootstrap(tc.cfg, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Update", mock.Anything, tc.session, tc.svcReq)
@@ -777,6 +811,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		id              string
@@ -791,6 +826,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 	}{
 		{
 			desc:       "update certs successfully",
+			domainID:   domainID,
 			token:      validToken,
 			id:         thingId,
 			clientCert: clientCert,
@@ -803,6 +839,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:            "update certs with invalid token",
+			domainID:        domainID,
 			token:           validToken,
 			id:              thingId,
 			clientCert:      clientCert,
@@ -814,6 +851,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with empty token",
+			domainID:   domainID,
 			token:      "",
 			id:         thingId,
 			clientCert: clientCert,
@@ -825,6 +863,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with non-existent thing Id",
+			domainID:   domainID,
 			token:      validToken,
 			id:         invalid,
 			clientCert: clientCert,
@@ -836,6 +875,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with empty certs",
+			domainID:   domainID,
 			token:      validToken,
 			id:         thingId,
 			clientCert: "",
@@ -847,6 +887,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 		{
 			desc:       "update certs with empty id",
+			domainID:   domainID,
 			token:      validToken,
 			id:         "",
 			clientCert: clientCert,
@@ -859,11 +900,11 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 	}
 	for _, tc := range cases {
 		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 		}
 		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 		svcCall := bsvc.On("UpdateCert", mock.Anything, tc.session, tc.id, tc.clientCert, tc.clientKey, tc.caCert).Return(tc.svcResp, tc.svcErr)
-		resp, err := mgsdk.UpdateBootstrapCerts(tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.token)
+		resp, err := mgsdk.UpdateBootstrapCerts(tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.domainID, tc.token)
 		assert.Equal(t, tc.err, err)
 		if err == nil {
 			assert.Equal(t, tc.response, resp)
@@ -884,6 +925,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		id              string
@@ -895,6 +937,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 	}{
 		{
 			desc:     "update connection successfully",
+			domainID: domainID,
 			token:    validToken,
 			id:       thingId,
 			channels: []string{channel1Id, channel2Id},
@@ -903,6 +946,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 		},
 		{
 			desc:            "update connection with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			id:              thingId,
 			channels:        []string{channel1Id, channel2Id},
@@ -911,6 +955,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 		},
 		{
 			desc:     "update connection with empty token",
+			domainID: domainID,
 			token:    "",
 			id:       thingId,
 			channels: []string{channel1Id, channel2Id},
@@ -919,6 +964,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 		},
 		{
 			desc:     "update connection with non-existent thing Id",
+			domainID: domainID,
 			token:    validToken,
 			id:       invalid,
 			channels: []string{channel1Id, channel2Id},
@@ -927,6 +973,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 		},
 		{
 			desc:     "update connection with non-existent channel Id",
+			domainID: domainID,
 			token:    validToken,
 			id:       thingId,
 			channels: []string{invalid},
@@ -935,6 +982,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 		},
 		{
 			desc:     "update connection with empty channels",
+			domainID: domainID,
 			token:    validToken,
 			id:       thingId,
 			channels: []string{},
@@ -943,6 +991,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 		},
 		{
 			desc:     "update connection with empty id",
+			domainID: domainID,
 			token:    validToken,
 			id:       "",
 			channels: []string{channel1Id, channel2Id},
@@ -953,11 +1002,11 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels).Return(tc.svcErr)
-			err := mgsdk.UpdateBootstrapConnection(tc.id, tc.channels, tc.token)
+			err := mgsdk.UpdateBootstrapConnection(tc.id, tc.channels, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels)
@@ -980,6 +1029,7 @@ func TestRemoveBootstrap(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		id              string
@@ -988,56 +1038,62 @@ func TestRemoveBootstrap(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:   "remove successfully",
-			token:  validToken,
-			id:     thingId,
-			svcErr: nil,
-			err:    nil,
+			desc:     "remove successfully",
+			domainID: domainID,
+			token:    validToken,
+			id:       thingId,
+			svcErr:   nil,
+			err:      nil,
 		},
 		{
 			desc:            "remove with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			id:              thingId,
 			authenticateErr: svcerr.ErrAuthentication,
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:   "remove with non-existent thing Id",
-			token:  validToken,
-			id:     invalid,
-			svcErr: svcerr.ErrNotFound,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			desc:     "remove with non-existent thing Id",
+			domainID: domainID,
+			token:    validToken,
+			id:       invalid,
+			svcErr:   svcerr.ErrNotFound,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:   "remove removed bootstrap",
-			token:  validToken,
-			id:     thingId,
-			svcErr: svcerr.ErrNotFound,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			desc:     "remove removed bootstrap",
+			domainID: domainID,
+			token:    validToken,
+			id:       thingId,
+			svcErr:   svcerr.ErrNotFound,
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:   "remove with empty token",
-			token:  "",
-			id:     thingId,
-			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			desc:     "remove with empty token",
+			domainID: domainID,
+			token:    "",
+			id:       thingId,
+			svcErr:   nil,
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:   "remove with empty id",
-			token:  validToken,
-			id:     "",
-			svcErr: nil,
-			err:    errors.NewSDKError(apiutil.ErrMissingID),
+			desc:     "remove with empty id",
+			domainID: domainID,
+			token:    validToken,
+			id:       "",
+			svcErr:   nil,
+			err:      errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("Remove", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
-			err := mgsdk.RemoveBootstrap(tc.id, tc.token)
+			err := mgsdk.RemoveBootstrap(tc.id, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Remove", mock.Anything, tc.session, tc.id)

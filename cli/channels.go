@@ -14,11 +14,11 @@ const all = "all"
 
 var cmdChannels = []cobra.Command{
 	{
-		Use:   "create <JSON_channel> <user_auth_token>",
+		Use:   "create <JSON_channel> <domain_id> <user_auth_token>",
 		Short: "Create channel",
 		Long:  `Creates new channel and generates it's UUID`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -29,7 +29,7 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 
-			channel, err := sdk.CreateChannel(channel, args[1])
+			channel, err := sdk.CreateChannel(channel, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -39,14 +39,14 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "get [all | <channel_id>] <user_auth_token>",
+		Use:   "get [all | <channel_id>] <domain_id> <user_auth_token>",
 		Short: "Get channel",
 		Long: `Get all channels or get channel by id. Channels can be filtered by name or metadata.
 		all - lists all channels
 		<channel_id> - shows thing with provided <channel_id>`,
 
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -63,7 +63,7 @@ var cmdChannels = []cobra.Command{
 			}
 
 			if args[0] == all {
-				l, err := sdk.Channels(pageMetadata, args[1])
+				l, err := sdk.Channels(pageMetadata, args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -72,7 +72,7 @@ var cmdChannels = []cobra.Command{
 				logJSONCmd(*cmd, l)
 				return
 			}
-			c, err := sdk.Channel(args[0], args[1])
+			c, err := sdk.Channel(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -82,17 +82,17 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "delete <channel_id> <user_auth_token>",
+		Use:   "delete <channel_id> <domain_id> <user_auth_token>",
 		Short: "Delete channel",
 		Long: "Delete channel by id.\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli channels delete <channel_id> $USERTOKEN - delete the given channel ID\n",
+			"\tmagistrala-cli channels delete <channel_id> $DOMAINID $USERTOKEN - delete the given channel ID\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			if err := sdk.DeleteChannel(args[0], args[1]); err != nil {
+			if err := sdk.DeleteChannel(args[0], args[1], args[2]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -100,11 +100,11 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update <channel_id> <JSON_string> <user_auth_token>",
+		Use:   "update <channel_id> <JSON_string> <domain_id> <user_auth_token>",
 		Short: "Update channel",
 		Long:  `Updates channel record`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -115,7 +115,7 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 			channel.ID = args[0]
-			channel, err := sdk.UpdateChannel(channel, args[2])
+			channel, err := sdk.UpdateChannel(channel, args[2], args[3])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -125,19 +125,20 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "connections <channel_id> <user_auth_token>",
+		Use:   "connections <channel_id> <domain_id> <user_auth_token>",
 		Short: "Connections list",
 		Long:  `List of Things connected to a Channel`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+				Offset:   Offset,
+				Limit:    Limit,
+				DomainID: args[1],
 			}
-			cl, err := sdk.ThingsByChannel(args[0], pm, args[1])
+			cl, err := sdk.ThingsByChannel(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -147,16 +148,16 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "enable <channel_id> <user_auth_token>",
+		Use:   "enable <channel_id> <domain_id> <user_auth_token>",
 		Short: "Change channel status to enabled",
 		Long:  `Change channel status to enabled`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			channel, err := sdk.EnableChannel(args[0], args[1])
+			channel, err := sdk.EnableChannel(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -166,16 +167,16 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "disable <channel_id> <user_auth_token>",
+		Use:   "disable <channel_id> <domain_id> <user_auth_token>",
 		Short: "Change channel status to disabled",
 		Long:  `Change channel status to disabled`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			channel, err := sdk.DisableChannel(args[0], args[1])
+			channel, err := sdk.DisableChannel(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -185,21 +186,22 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "users <channel_id> <user_auth_token>",
+		Use:   "users <channel_id> <domain_id> <user_auth_token>",
 		Short: "List users",
 		Long: "List users of a channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli channels users <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels users <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+				Offset:   Offset,
+				Limit:    Limit,
+				DomainID: args[1],
 			}
-			ul, err := sdk.ListChannelUsers(args[0], pm, args[1])
+			ul, err := sdk.ListChannelUsers(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -209,21 +211,22 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "groups <channel_id> <user_auth_token>",
+		Use:   "groups <channel_id> <domain_id> <user_auth_token>",
 		Short: "List groups",
 		Long: "List groups of a channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli channels groups <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels groups <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+				Offset:   Offset,
+				Limit:    Limit,
+				DomainID: args[1],
 			}
-			ul, err := sdk.ListChannelUserGroups(args[0], pm, args[1])
+			ul, err := sdk.ListChannelUserGroups(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -236,13 +239,13 @@ var cmdChannels = []cobra.Command{
 
 var channelAssignCmds = []cobra.Command{
 	{
-		Use:   "users <relation> <user_ids> <channel_id> <user_auth_token>",
+		Use:   "users <relation> <user_ids> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Assign users",
 		Long: "Assign users to a channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli channels assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 5 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -251,7 +254,7 @@ var channelAssignCmds = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.AddUserToChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+			if err := sdk.AddUserToChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3], args[4]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -259,14 +262,14 @@ var channelAssignCmds = []cobra.Command{
 		},
 	},
 	{
-		Use:   "groups  <group_ids> <channel_id> <user_auth_token>",
+		Use:   "groups  <group_ids> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Assign groups",
 		Long: "Assign groups to a channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli channels assign groups  '[\"<group_id_1>\", \"<group_id_2>\"]' <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels assign groups  '[\"<group_id_1>\", \"<group_id_2>\"]' <channel_id> $DOMAINID $USERTOKEN\n",
 
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -275,7 +278,7 @@ var channelAssignCmds = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.AddUserGroupToChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+			if err := sdk.AddUserGroupToChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2], args[3]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -286,13 +289,13 @@ var channelAssignCmds = []cobra.Command{
 
 var channelUnassignCmds = []cobra.Command{
 	{
-		Use:   "groups  <group_ids> <channel_id> <user_auth_token>",
+		Use:   "groups  <group_ids> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Unassign groups",
 		Long: "Unassign groups from a channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli channels unassign groups '[\"<group_id_1>\", \"<group_id_2>\"]'  <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels unassign groups '[\"<group_id_1>\", \"<group_id_2>\"]'  <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -301,7 +304,7 @@ var channelUnassignCmds = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.RemoveUserGroupFromChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+			if err := sdk.RemoveUserGroupFromChannel(args[1], mgxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2], args[3]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -310,13 +313,13 @@ var channelUnassignCmds = []cobra.Command{
 	},
 
 	{
-		Use:   "users <relation> <user_ids> <channel_id> <user_auth_token>",
+		Use:   "users <relation> <user_ids> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Unassign users",
 		Long: "Unassign users from a channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli channels unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]'  <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli channels unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 5 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -325,7 +328,7 @@ var channelUnassignCmds = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.RemoveUserFromChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+			if err := sdk.RemoveUserFromChannel(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3], args[4]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}

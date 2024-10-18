@@ -31,6 +31,7 @@ func TestCreateThingReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: createClientReq{
+				domainID: validID,
 				client: mgclients.Client{
 					ID:   validID,
 					Name: valid,
@@ -39,8 +40,20 @@ func TestCreateThingReqValidate(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: createClientReq{
+				domainID: "",
+				client: mgclients.Client{
+					ID:   validID,
+					Name: valid,
+				},
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "name too long",
 			req: createClientReq{
+				domainID: validID,
 				client: mgclients.Client{
 					ID:   validID,
 					Name: strings.Repeat("a", api.MaxNameSize+1),
@@ -51,6 +64,7 @@ func TestCreateThingReqValidate(t *testing.T) {
 		{
 			desc: "invalid id",
 			req: createClientReq{
+				domainID: validID,
 				client: mgclients.Client{
 					ID:   invalid,
 					Name: valid,
@@ -74,6 +88,7 @@ func TestCreateThingsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: createClientsReq{
+				domainID: validID,
 				Clients: []mgclients.Client{
 					{
 						ID:   validID,
@@ -84,15 +99,30 @@ func TestCreateThingsReqValidate(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: createClientsReq{
+				domainID: "",
+				Clients: []mgclients.Client{
+					{
+						ID:   validID,
+						Name: valid,
+					},
+				},
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty list",
 			req: createClientsReq{
-				Clients: []mgclients.Client{},
+				domainID: validID,
+				Clients:  []mgclients.Client{},
 			},
 			err: apiutil.ErrEmptyList,
 		},
 		{
 			desc: "name too long",
 			req: createClientsReq{
+				domainID: validID,
 				Clients: []mgclients.Client{
 					{
 						ID:   validID,
@@ -105,6 +135,7 @@ func TestCreateThingsReqValidate(t *testing.T) {
 		{
 			desc: "invalid id",
 			req: createClientsReq{
+				domainID: validID,
 				Clients: []mgclients.Client{
 					{
 						ID:   invalid,
@@ -130,14 +161,24 @@ func TestViewClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: viewClientReq{
-				id: validID,
+				domainID: validID,
+				id:       validID,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: viewClientReq{
+				domainID: "",
+				id:       validID,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: viewClientReq{
-				id: "",
+				domainID: validID,
+				id:       "",
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -157,16 +198,26 @@ func TestViewClientPermsReq(t *testing.T) {
 		{
 			desc: "valid request",
 			req: viewClientPermsReq{
-				id: validID,
+				domainID: validID,
+				id:       validID,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
 			req: viewClientPermsReq{
-				id: "",
+				domainID: validID,
+				id:       "",
 			},
 			err: apiutil.ErrMissingID,
+		},
+		{
+			desc: "empty domain id",
+			req: viewClientPermsReq{
+				domainID: "",
+				id:       validID,
+			},
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 	for _, c := range cases {
@@ -184,27 +235,39 @@ func TestListClientsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listClientsReq{
-				limit: 10,
+				domainID: validID,
+				limit:    10,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domainID",
+			req: listClientsReq{
+				domainID: "",
+				limit:    10,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "limit too big",
 			req: listClientsReq{
-				limit: api.MaxLimitSize + 1,
+				domainID: validID,
+				limit:    api.MaxLimitSize + 1,
 			},
 			err: apiutil.ErrLimitSize,
 		},
 		{
 			desc: "limit too small",
 			req: listClientsReq{
-				limit: 0,
+				domainID: validID,
+				limit:    0,
 			},
 			err: apiutil.ErrLimitSize,
 		},
 		{
 			desc: "invalid visibility",
 			req: listClientsReq{
+				domainID:   validID,
 				limit:      10,
 				visibility: "invalid",
 			},
@@ -213,8 +276,9 @@ func TestListClientsReqValidate(t *testing.T) {
 		{
 			desc: "name too long",
 			req: listClientsReq{
-				limit: 10,
-				name:  strings.Repeat("a", api.MaxNameSize+1),
+				domainID: validID,
+				limit:    10,
+				name:     strings.Repeat("a", api.MaxNameSize+1),
 			},
 			err: apiutil.ErrNameSize,
 		},
@@ -234,14 +298,24 @@ func TestListMembersReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listMembersReq{
-				groupID: validID,
+				domainID: validID,
+				groupID:  validID,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: listMembersReq{
+				domainID: "",
+				groupID:  validID,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: listMembersReq{
-				groupID: "",
+				domainID: validID,
+				groupID:  "",
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -261,24 +335,36 @@ func TestUpdateClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientReq{
-				id:   validID,
-				Name: valid,
+				domainID: validID,
+				id:       validID,
+				Name:     valid,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: updateClientReq{
+				domainID: "",
+				id:       validID,
+				Name:     valid,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: updateClientReq{
-				id:   "",
-				Name: valid,
+				domainID: validID,
+				id:       "",
+				Name:     valid,
 			},
 			err: apiutil.ErrMissingID,
 		},
 		{
 			desc: "name too long",
 			req: updateClientReq{
-				id:   validID,
-				Name: strings.Repeat("a", api.MaxNameSize+1),
+				domainID: validID,
+				id:       validID,
+				Name:     strings.Repeat("a", api.MaxNameSize+1),
 			},
 			err: apiutil.ErrNameSize,
 		},
@@ -298,16 +384,27 @@ func TestUpdateClientTagsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientTagsReq{
-				id:   validID,
-				Tags: []string{"tag1", "tag2"},
+				domainID: validID,
+				id:       validID,
+				Tags:     []string{"tag1", "tag2"},
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: updateClientTagsReq{
+				domainID: "",
+				id:       validID,
+				Tags:     []string{"tag1", "tag2"},
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: updateClientTagsReq{
-				id:   "",
-				Tags: []string{"tag1", "tag2"},
+				domainID: validID,
+				id:       "",
+				Tags:     []string{"tag1", "tag2"},
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -327,24 +424,36 @@ func TestUpdateClientCredentialsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateClientCredentialsReq{
-				id:     validID,
-				Secret: valid,
+				domainID: validID,
+				id:       validID,
+				Secret:   valid,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: updateClientCredentialsReq{
+				domainID: "",
+				id:       validID,
+				Secret:   valid,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: updateClientCredentialsReq{
-				id:     "",
-				Secret: valid,
+				domainID: validID,
+				id:       "",
+				Secret:   valid,
 			},
 			err: apiutil.ErrMissingID,
 		},
 		{
 			desc: "empty secret",
 			req: updateClientCredentialsReq{
-				id:     validID,
-				Secret: "",
+				domainID: validID,
+				id:       validID,
+				Secret:   "",
 			},
 			err: apiutil.ErrMissingSecret,
 		},
@@ -364,14 +473,24 @@ func TestChangeClientStatusReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: changeClientStatusReq{
-				id: validID,
+				domainID: validID,
+				id:       validID,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: changeClientStatusReq{
+				domainID: "",
+				id:       validID,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: changeClientStatusReq{
-				id: "",
+				domainID: validID,
+				id:       "",
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -391,6 +510,7 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: assignUsersRequest{
+				domainID: validID,
 				groupID:  validID,
 				UserIDs:  []string{validID},
 				Relation: valid,
@@ -398,8 +518,19 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: assignUsersRequest{
+				domainID: "",
+				groupID:  validID,
+				UserIDs:  []string{validID},
+				Relation: valid,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: assignUsersRequest{
+				domainID: validID,
 				groupID:  "",
 				UserIDs:  []string{validID},
 				Relation: valid,
@@ -409,6 +540,7 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 		{
 			desc: "empty users",
 			req: assignUsersRequest{
+				domainID: validID,
 				groupID:  validID,
 				UserIDs:  []string{},
 				Relation: valid,
@@ -418,6 +550,7 @@ func TestAssignUsersRequestValidate(t *testing.T) {
 		{
 			desc: "empty relation",
 			req: assignUsersRequest{
+				domainID: validID,
 				groupID:  validID,
 				UserIDs:  []string{validID},
 				Relation: "",
@@ -440,14 +573,25 @@ func TestAssignUserGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: assignUserGroupsRequest{
+				domainID:     validID,
 				groupID:      validID,
 				UserGroupIDs: []string{validID},
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: assignUserGroupsRequest{
+				domainID:     "",
+				groupID:      validID,
+				UserGroupIDs: []string{validID},
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty group id",
 			req: assignUserGroupsRequest{
+				domainID:     validID,
 				groupID:      "",
 				UserGroupIDs: []string{validID},
 			},
@@ -456,6 +600,7 @@ func TestAssignUserGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "empty user group ids",
 			req: assignUserGroupsRequest{
+				domainID:     validID,
 				groupID:      validID,
 				UserGroupIDs: []string{},
 			},
@@ -477,14 +622,25 @@ func TestConnectChannelThingRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: connectChannelThingRequest{
+				domainID:  validID,
 				ChannelID: validID,
 				ThingID:   validID,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: connectChannelThingRequest{
+				domainID:  "",
+				ChannelID: validID,
+				ThingID:   validID,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty channel id",
 			req: connectChannelThingRequest{
+				domainID:  validID,
 				ChannelID: "",
 				ThingID:   validID,
 			},
@@ -493,6 +649,7 @@ func TestConnectChannelThingRequestValidate(t *testing.T) {
 		{
 			desc: "empty thing id",
 			req: connectChannelThingRequest{
+				domainID:  validID,
 				ChannelID: validID,
 				ThingID:   "",
 			},
@@ -514,6 +671,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: thingShareRequest{
+				domainID: validID,
 				thingID:  validID,
 				UserIDs:  []string{validID},
 				Relation: valid,
@@ -521,8 +679,19 @@ func TestThingShareRequestValidate(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: thingShareRequest{
+				domainID: "",
+				thingID:  validID,
+				UserIDs:  []string{validID},
+				Relation: valid,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty thing id",
 			req: thingShareRequest{
+				domainID: validID,
 				thingID:  "",
 				UserIDs:  []string{validID},
 				Relation: valid,
@@ -532,6 +701,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 		{
 			desc: "empty user ids",
 			req: thingShareRequest{
+				domainID: validID,
 				thingID:  validID,
 				UserIDs:  []string{},
 				Relation: valid,
@@ -541,6 +711,7 @@ func TestThingShareRequestValidate(t *testing.T) {
 		{
 			desc: "empty relation",
 			req: thingShareRequest{
+				domainID: validID,
 				thingID:  validID,
 				UserIDs:  []string{validID},
 				Relation: "",
@@ -563,14 +734,24 @@ func TestDeleteClientReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: deleteClientReq{
-				id: validID,
+				domainID: validID,
+				id:       validID,
 			},
 			err: nil,
 		},
 		{
+			desc: "empty domain id",
+			req: deleteClientReq{
+				domainID: "",
+				id:       validID,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty id",
 			req: deleteClientReq{
-				id: "",
+				domainID: validID,
+				id:       "",
 			},
 			err: apiutil.ErrMissingID,
 		},

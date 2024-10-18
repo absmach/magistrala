@@ -51,5 +51,6 @@ func (req listSubsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
+
 	return nil
 }

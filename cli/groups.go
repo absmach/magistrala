@@ -13,13 +13,13 @@ import (
 
 var cmdGroups = []cobra.Command{
 	{
-		Use:   "create <JSON_group> <user_auth_token>",
+		Use:   "create <JSON_group> <domain_id> <user_auth_token>",
 		Short: "Create group",
 		Long: "Creates new group\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups create '{\"name\":\"new group\", \"description\":\"new group description\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
+			"\tmagistrala-cli groups create '{\"name\":\"new group\", \"description\":\"new group description\", \"metadata\":{\"key\": \"value\"}}' $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -29,7 +29,7 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			group.Status = mgclients.EnabledStatus.String()
-			group, err := sdk.CreateGroup(group, args[1])
+			group, err := sdk.CreateGroup(group, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -38,13 +38,13 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update <JSON_group> <user_auth_token>",
+		Use:   "update <JSON_group> <domain_id> <user_auth_token>",
 		Short: "Update group",
 		Long: "Updates group\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups update '{\"id\":\"<group_id>\", \"name\":\"new group\", \"description\":\"new group description\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
+			"\tmagistrala-cli groups update '{\"id\":\"<group_id>\", \"name\":\"new group\", \"description\":\"new group description\", \"metadata\":{\"key\": \"value\"}}' $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -55,7 +55,7 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 
-			group, err := sdk.UpdateGroup(group, args[1])
+			group, err := sdk.UpdateGroup(group, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -65,29 +65,30 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "get [all | children <group_id> | parents <group_id> | members <group_id> | <group_id>] <user_auth_token>",
+		Use:   "get [all | children <group_id> | parents <group_id> | members <group_id> | <group_id>] <domain_id> <user_auth_token>",
 		Short: "Get group",
 		Long: "Get all users groups, group children or group by id.\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups get all $USERTOKEN - lists all groups\n" +
-			"\tmagistrala-cli groups get children <group_id> $USERTOKEN - lists all children groups of <group_id>\n" +
-			"\tmagistrala-cli groups get parents <group_id> $USERTOKEN - lists all parent groups of <group_id>\n" +
-			"\tmagistrala-cli groups get <group_id> $USERTOKEN - shows group with provided group ID\n",
+			"\tmagistrala-cli groups get all $DOMAINID $USERTOKEN - lists all groups\n" +
+			"\tmagistrala-cli groups get children <group_id> $DOMAINID $USERTOKEN - lists all children groups of <group_id>\n" +
+			"\tmagistrala-cli groups get parents <group_id> $DOMAINID $USERTOKEN - lists all parent groups of <group_id>\n" +
+			"\tmagistrala-cli groups get <group_id> $DOMAINID $USERTOKEN - shows group with provided group ID\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) < 2 {
+			if len(args) < 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			if args[0] == all {
-				if len(args) > 2 {
+				if len(args) > 3 {
 					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
 				pm := mgxsdk.PageMetadata{
-					Offset: Offset,
-					Limit:  Limit,
+					Offset:   Offset,
+					Limit:    Limit,
+					DomainID: args[1],
 				}
-				l, err := sdk.Groups(pm, args[1])
+				l, err := sdk.Groups(pm, args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -96,15 +97,16 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "children" {
-				if len(args) > 3 {
+				if len(args) > 4 {
 					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
 				pm := mgxsdk.PageMetadata{
-					Offset: Offset,
-					Limit:  Limit,
+					Offset:   Offset,
+					Limit:    Limit,
+					DomainID: args[2],
 				}
-				l, err := sdk.Children(args[1], pm, args[2])
+				l, err := sdk.Children(args[1], pm, args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -113,15 +115,16 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			if args[0] == "parents" {
-				if len(args) > 3 {
+				if len(args) > 4 {
 					logUsageCmd(*cmd, cmd.Use)
 					return
 				}
 				pm := mgxsdk.PageMetadata{
-					Offset: Offset,
-					Limit:  Limit,
+					Offset:   Offset,
+					Limit:    Limit,
+					DomainID: args[2],
 				}
-				l, err := sdk.Parents(args[1], pm, args[2])
+				l, err := sdk.Parents(args[1], pm, args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -129,11 +132,11 @@ var cmdGroups = []cobra.Command{
 				logJSONCmd(*cmd, l)
 				return
 			}
-			if len(args) > 2 {
+			if len(args) > 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			t, err := sdk.Group(args[0], args[1])
+			t, err := sdk.Group(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -142,17 +145,17 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "delete <group_id> <user_auth_token>",
+		Use:   "delete <group_id> <domain_id> <user_auth_token>",
 		Short: "Delete group",
 		Long: "Delete group by id.\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups delete <group_id> $USERTOKEN - delete the given group ID\n",
+			"\tmagistrala-cli groups delete <group_id> $DOMAINID $USERTOKEN - delete the given group ID\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			if err := sdk.DeleteGroup(args[0], args[1]); err != nil {
+			if err := sdk.DeleteGroup(args[0], args[1], args[2]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -160,22 +163,23 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "users <group_id> <user_auth_token>",
+		Use:   "users <group_id> <domain_id> <user_auth_token>",
 		Short: "List users",
 		Long: "List users in a group\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups users <group_id> $USERTOKEN",
+			"\tmagistrala-cli groups users <group_id> $DOMAINID $USERTOKEN",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
-				Status: Status,
+				Offset:   Offset,
+				Limit:    Limit,
+				Status:   Status,
+				DomainID: args[1],
 			}
-			users, err := sdk.ListGroupUsers(args[0], pm, args[1])
+			users, err := sdk.ListGroupUsers(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -184,22 +188,23 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "channels <group_id> <user_auth_token>",
+		Use:   "channels <group_id> <domain_id> <user_auth_token>",
 		Short: "List channels",
 		Long: "List channels in a group\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups channels <group_id> $USERTOKEN",
+			"\tmagistrala-cli groups channels <group_id> $DOMAINID $USERTOKEN",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
-				Status: Status,
+				Offset:   Offset,
+				Limit:    Limit,
+				Status:   Status,
+				DomainID: args[1],
 			}
-			channels, err := sdk.ListGroupChannels(args[0], pm, args[1])
+			channels, err := sdk.ListGroupChannels(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -208,18 +213,18 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "enable <group_id> <user_auth_token>",
+		Use:   "enable <group_id> <domain_id> <user_auth_token>",
 		Short: "Change group status to enabled",
 		Long: "Change group status to enabled\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups enable <group_id> $USERTOKEN\n",
+			"\tmagistrala-cli groups enable <group_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			group, err := sdk.EnableGroup(args[0], args[1])
+			group, err := sdk.EnableGroup(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -229,18 +234,18 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "disable <group_id> <user_auth_token>",
+		Use:   "disable <group_id> <domain_id> <user_auth_token>",
 		Short: "Change group status to disabled",
 		Long: "Change group status to disabled\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups disable <group_id> $USERTOKEN\n",
+			"\tmagistrala-cli groups disable <group_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			group, err := sdk.DisableGroup(args[0], args[1])
+			group, err := sdk.DisableGroup(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -253,13 +258,13 @@ var cmdGroups = []cobra.Command{
 
 var groupAssignCmds = []cobra.Command{
 	{
-		Use:   "users <relation> <user_ids> <group_id> <user_auth_token>",
+		Use:   "users <relation> <user_ids> <group_id> <domain_id> <user_auth_token>",
 		Short: "Assign users",
 		Long: "Assign users to a group\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $USERTOKEN\n",
+			"\tmagistrala-cli groups assign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 5 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -268,7 +273,7 @@ var groupAssignCmds = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.AddUserToGroup(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+			if err := sdk.AddUserToGroup(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3], args[4]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -279,13 +284,13 @@ var groupAssignCmds = []cobra.Command{
 
 var groupUnassignCmds = []cobra.Command{
 	{
-		Use:   "users <relation> <user_ids> <group_id> <user_auth_token>",
+		Use:   "users <relation> <user_ids> <group_id> <domain_id> <user_auth_token>",
 		Short: "Unassign users",
 		Long: "Unassign users from a group\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli groups unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $USERTOKEN\n",
+			"\tmagistrala-cli groups unassign users <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 5 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -294,7 +299,7 @@ var groupUnassignCmds = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.RemoveUserFromGroup(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+			if err := sdk.RemoveUserFromGroup(args[2], mgxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3], args[4]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}

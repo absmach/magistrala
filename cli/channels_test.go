@@ -45,6 +45,7 @@ func TestCreateChannelCmd(t *testing.T) {
 			desc: "create channel successfully",
 			args: []string{
 				channelJson,
+				domainID,
 				token,
 			},
 			channel: channel,
@@ -54,6 +55,7 @@ func TestCreateChannelCmd(t *testing.T) {
 			desc: "create channel with invalid args",
 			args: []string{
 				channelJson,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -63,6 +65,7 @@ func TestCreateChannelCmd(t *testing.T) {
 			desc: "create channel with invalid json",
 			args: []string{
 				"{\"name\":\"testchannel\", \"metadata\":{\"key1\":\"value1\"}",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -73,27 +76,18 @@ func TestCreateChannelCmd(t *testing.T) {
 			desc: "create channel with invalid token",
 			args: []string{
 				channelJson,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized)),
 			logType:       errLog,
 		},
-		{
-			desc: "create channel without domain token",
-			args: []string{
-				channelJson,
-				tokenWithoutDomain,
-			},
-			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
-			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
-			logType:       errLog,
-		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("CreateChannel", mock.Anything, tc.args[1]).Return(tc.channel, tc.sdkErr)
+			sdkCall := sdkMock.On("CreateChannel", mock.Anything, tc.args[1], tc.args[2]).Return(tc.channel, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{createCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -133,6 +127,7 @@ func TestGetChannelsCmd(t *testing.T) {
 			desc: "get all channels successfully",
 			args: []string{
 				all,
+				domainID,
 				token,
 			},
 			page: mgsdk.ChannelsPage{
@@ -144,6 +139,7 @@ func TestGetChannelsCmd(t *testing.T) {
 			desc: "get channel with id",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: entityLog,
@@ -153,6 +149,7 @@ func TestGetChannelsCmd(t *testing.T) {
 			desc: "get channels with invalid args",
 			args: []string{
 				all,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -162,6 +159,7 @@ func TestGetChannelsCmd(t *testing.T) {
 			desc: "get all channels with invalid token",
 			args: []string{
 				all,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -169,19 +167,10 @@ func TestGetChannelsCmd(t *testing.T) {
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 		{
-			desc: "get channel without domain token",
-			args: []string{
-				channel.ID,
-				tokenWithoutDomain,
-			},
-			logType:       errLog,
-			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
-			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
-		},
-		{
 			desc: "get channel with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -192,8 +181,8 @@ func TestGetChannelsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Channel", tc.args[0], tc.args[1]).Return(tc.channel, tc.sdkErr)
-			sdkCall1 := sdkMock.On("Channels", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("Channel", tc.args[0], tc.args[1], tc.args[2]).Return(tc.channel, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Channels", mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 
@@ -236,6 +225,7 @@ func TestDeleteChannelCmd(t *testing.T) {
 			desc: "delete channel successfully",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -244,6 +234,7 @@ func TestDeleteChannelCmd(t *testing.T) {
 			desc: "delete channel with invalid args",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -253,6 +244,7 @@ func TestDeleteChannelCmd(t *testing.T) {
 			desc: "delete channel with invalid channel id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -263,6 +255,7 @@ func TestDeleteChannelCmd(t *testing.T) {
 			desc: "delete channel with invalid token",
 			args: []string{
 				channel.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -273,7 +266,7 @@ func TestDeleteChannelCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("DeleteChannel", tc.args[0], tc.args[1]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("DeleteChannel", tc.args[0], tc.args[1], tc.args[2]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{delCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -309,6 +302,7 @@ func TestUpdateChannelCmd(t *testing.T) {
 			args: []string{
 				channel.ID,
 				newChannelJson,
+				domainID,
 				token,
 			},
 			channel: mgsdk.Channel{
@@ -322,6 +316,7 @@ func TestUpdateChannelCmd(t *testing.T) {
 			args: []string{
 				channel.ID,
 				newChannelJson,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -332,6 +327,7 @@ func TestUpdateChannelCmd(t *testing.T) {
 			args: []string{
 				invalidID,
 				newChannelJson,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -343,6 +339,7 @@ func TestUpdateChannelCmd(t *testing.T) {
 			args: []string{
 				channel.ID,
 				"{\"name\" : \"channel1\"",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -353,7 +350,7 @@ func TestUpdateChannelCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var ch mgsdk.Channel
-			sdkCall := sdkMock.On("UpdateChannel", mock.Anything, tc.args[2]).Return(tc.channel, tc.sdkErr)
+			sdkCall := sdkMock.On("UpdateChannel", mock.Anything, tc.args[2], tc.args[3]).Return(tc.channel, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{updCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -390,6 +387,7 @@ func TestListConnectionsCmd(t *testing.T) {
 			desc: "list connections successfully",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 			},
 			page: mgsdk.ThingsPage{
@@ -406,6 +404,7 @@ func TestListConnectionsCmd(t *testing.T) {
 			desc: "list connections with invalid args",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -415,6 +414,7 @@ func TestListConnectionsCmd(t *testing.T) {
 			desc: "list connections with invalid channel id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -425,7 +425,7 @@ func TestListConnectionsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ThingsByChannel", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ThingsByChannel", tc.args[0], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{connsCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -463,6 +463,7 @@ func TestEnableChannelCmd(t *testing.T) {
 			desc: "enable channel successfully",
 			args: []string{
 				channel.ID,
+				domainID,
 				validToken,
 			},
 			channel: channel,
@@ -472,6 +473,7 @@ func TestEnableChannelCmd(t *testing.T) {
 			desc: "delete channel with invalid token",
 			args: []string{
 				channel.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -482,6 +484,7 @@ func TestEnableChannelCmd(t *testing.T) {
 			desc: "delete channel with invalid channel ID",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -492,6 +495,7 @@ func TestEnableChannelCmd(t *testing.T) {
 			desc: "enable channel with invalid args",
 			args: []string{
 				channel.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -501,7 +505,7 @@ func TestEnableChannelCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("EnableChannel", tc.args[0], tc.args[1]).Return(tc.channel, tc.sdkErr)
+			sdkCall := sdkMock.On("EnableChannel", tc.args[0], tc.args[1], tc.args[2]).Return(tc.channel, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{enableCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -540,6 +544,7 @@ func TestDisableChannelCmd(t *testing.T) {
 			desc: "disable channel successfully",
 			args: []string{
 				channel.ID,
+				domainID,
 				validToken,
 			},
 			logType: entityLog,
@@ -549,6 +554,7 @@ func TestDisableChannelCmd(t *testing.T) {
 			desc: "disable channel with invalid token",
 			args: []string{
 				channel.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -559,6 +565,7 @@ func TestDisableChannelCmd(t *testing.T) {
 			desc: "disable channel with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -569,6 +576,7 @@ func TestDisableChannelCmd(t *testing.T) {
 			desc: "disable thing with invalid args",
 			args: []string{
 				channel.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -578,7 +586,7 @@ func TestDisableChannelCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("DisableChannel", tc.args[0], tc.args[1]).Return(tc.channel, tc.sdkErr)
+			sdkCall := sdkMock.On("DisableChannel", tc.args[0], tc.args[1], tc.args[2]).Return(tc.channel, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{disableCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -619,6 +627,7 @@ func TestUsersChannelCmd(t *testing.T) {
 			desc: "get channel's users successfully",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 			},
 			page: mgsdk.UsersPage{
@@ -635,25 +644,17 @@ func TestUsersChannelCmd(t *testing.T) {
 			desc: "list channel users with invalid args",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
 			logType: usageLog,
 		},
 		{
-			desc: "list channel users without domain token",
-			args: []string{
-				channel.ID,
-				tokenWithoutDomain,
-			},
-			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
-			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
-			logType:       errLog,
-		},
-		{
 			desc: "list channel users with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -664,7 +665,7 @@ func TestUsersChannelCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListChannelUsers", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListChannelUsers", tc.args[0], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{usrCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -703,6 +704,7 @@ func TestListGroupCmd(t *testing.T) {
 			desc: "list groups successfully",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 			},
 			page: mgsdk.GroupsPage{
@@ -719,6 +721,7 @@ func TestListGroupCmd(t *testing.T) {
 			desc: "list groups with invalid args",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -728,6 +731,7 @@ func TestListGroupCmd(t *testing.T) {
 			desc: "list groups with invalid channel id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -737,7 +741,7 @@ func TestListGroupCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListChannelUserGroups", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListChannelUserGroups", tc.args[0], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{grpCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -777,6 +781,7 @@ func TestAssignUserCmd(t *testing.T) {
 				relation,
 				userIds,
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -787,6 +792,7 @@ func TestAssignUserCmd(t *testing.T) {
 				relation,
 				userIds,
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -798,6 +804,7 @@ func TestAssignUserCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"", user.ID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -810,6 +817,7 @@ func TestAssignUserCmd(t *testing.T) {
 				relation,
 				userIds,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -822,6 +830,7 @@ func TestAssignUserCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"]", invalidID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -832,7 +841,7 @@ func TestAssignUserCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("AddUserToChannel", tc.args[2], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("AddUserToChannel", tc.args[2], mock.Anything, tc.args[3], tc.args[4]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{assignCmd, usrCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -867,6 +876,7 @@ func TestAssignGroupCmd(t *testing.T) {
 			args: []string{
 				grpIds,
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -876,6 +886,7 @@ func TestAssignGroupCmd(t *testing.T) {
 			args: []string{
 				grpIds,
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -886,6 +897,7 @@ func TestAssignGroupCmd(t *testing.T) {
 			args: []string{
 				fmt.Sprintf("[\"%s\"", group.ID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -897,6 +909,7 @@ func TestAssignGroupCmd(t *testing.T) {
 			args: []string{
 				grpIds,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -908,6 +921,7 @@ func TestAssignGroupCmd(t *testing.T) {
 			args: []string{
 				fmt.Sprintf("[\"%s\"]", invalidID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -918,7 +932,7 @@ func TestAssignGroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("AddUserGroupToChannel", tc.args[1], mock.Anything, tc.args[2]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("AddUserGroupToChannel", tc.args[1], mock.Anything, tc.args[2], tc.args[3]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{assignCmd, grpCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -954,6 +968,7 @@ func TestUnassignUserCmd(t *testing.T) {
 				relation,
 				userIds,
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -964,6 +979,7 @@ func TestUnassignUserCmd(t *testing.T) {
 				relation,
 				userIds,
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -975,6 +991,7 @@ func TestUnassignUserCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"", user.ID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -987,6 +1004,7 @@ func TestUnassignUserCmd(t *testing.T) {
 				relation,
 				userIds,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -999,6 +1017,7 @@ func TestUnassignUserCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"]", invalidID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -1009,7 +1028,7 @@ func TestUnassignUserCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RemoveUserFromChannel", tc.args[2], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("RemoveUserFromChannel", tc.args[2], mock.Anything, tc.args[3], tc.args[4]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{unassignCmd, usrCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -1046,6 +1065,7 @@ func TestUnassignGroupCmd(t *testing.T) {
 				grpCmd,
 				grpIds,
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -1055,6 +1075,7 @@ func TestUnassignGroupCmd(t *testing.T) {
 			args: []string{
 				grpIds,
 				channel.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -1065,6 +1086,7 @@ func TestUnassignGroupCmd(t *testing.T) {
 			args: []string{
 				fmt.Sprintf("[\"%s\"", group.ID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -1076,6 +1098,7 @@ func TestUnassignGroupCmd(t *testing.T) {
 			args: []string{
 				grpIds,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1087,6 +1110,7 @@ func TestUnassignGroupCmd(t *testing.T) {
 			args: []string{
 				fmt.Sprintf("[\"%s\"]", invalidID),
 				channel.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -1097,7 +1121,7 @@ func TestUnassignGroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RemoveUserGroupFromChannel", tc.args[1], mock.Anything, tc.args[2]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("RemoveUserGroupFromChannel", tc.args[1], mock.Anything, tc.args[2], tc.args[3]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{unassignCmd, grpCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:

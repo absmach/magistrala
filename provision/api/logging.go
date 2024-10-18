@@ -24,7 +24,7 @@ func NewLoggingMiddleware(svc provision.Service, logger *slog.Logger) provision.
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Provision(token, name, externalID, externalKey string) (res provision.Result, err error) {
+func (lm *loggingMiddleware) Provision(domainID, token, name, externalID, externalKey string) (res provision.Result, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -39,10 +39,10 @@ func (lm *loggingMiddleware) Provision(token, name, externalID, externalKey stri
 		lm.logger.Info("Provision completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Provision(token, name, externalID, externalKey)
+	return lm.svc.Provision(domainID, token, name, externalID, externalKey)
 }
 
-func (lm *loggingMiddleware) Cert(token, thingID, duration string) (cert, key string, err error) {
+func (lm *loggingMiddleware) Cert(domainID, token, thingID, duration string) (cert, key string, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -57,7 +57,7 @@ func (lm *loggingMiddleware) Cert(token, thingID, duration string) (cert, key st
 		lm.logger.Info("Thing certificate created successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Cert(token, thingID, duration)
+	return lm.svc.Cert(domainID, token, thingID, duration)
 }
 
 func (lm *loggingMiddleware) Mapping(token string) (res map[string]interface{}, err error) {

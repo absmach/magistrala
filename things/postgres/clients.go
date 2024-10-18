@@ -9,15 +9,18 @@ import (
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
+	entityRolesRepo "github.com/absmach/magistrala/pkg/entityroles/postrgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var _ mgclients.Repository = (*clientRepo)(nil)
 
 type clientRepo struct {
 	pgclients.Repository
+	entityRolesRepo.RolesSvcRepo
 }
 
 // Repository is the interface that wraps the basic methods for
@@ -33,6 +36,10 @@ type Repository interface {
 
 	// RetrieveBySecret retrieves a client based on the secret (key).
 	RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error)
+
+	RemoveThings(ctx context.Context, clientIDs ...[]string) error
+
+	roles.Repository
 }
 
 // NewRepository instantiates a PostgreSQL
@@ -120,4 +127,21 @@ func (repo clientRepo) RetrieveBySecret(ctx context.Context, key string) (mgclie
 	}
 
 	return mgclients.Client{}, repoerr.ErrNotFound
+}
+
+func (repo clientRepo) RemoveThings(ctx context.Context, clientIDs ...[]string) error {
+	q := "DELETE FROM clients AS c  WHERE c.id = ANY(:client_ids) ;"
+
+	params := map[string]interface{}{
+		"client_ids": clientIDs,
+	}
+	result, err := repo.DB.NamedExecContext(ctx, q, params)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
+	}
+
+	return nil
 }

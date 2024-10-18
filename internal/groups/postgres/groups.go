@@ -12,8 +12,10 @@ import (
 	"time"
 
 	mgclients "github.com/absmach/magistrala/pkg/clients"
+	entityRolesRepo "github.com/absmach/magistrala/pkg/entityroles/postrgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/groups"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jmoiron/sqlx"
@@ -21,22 +23,35 @@ import (
 
 var _ mggroups.Repository = (*groupRepository)(nil)
 
+const rolesTableNamePrefix = "groups"
+
+var (
+	errParentGroupID   = errors.New("parent group id is empty")
+	errParentGroupPath = errors.New("parent group path is empty")
+	errParentSuffix    = errors.New("parent group path doesn't have parent id suffix")
+)
+
 type groupRepository struct {
 	db postgres.Database
+	entityRolesRepo.RolesSvcRepo
 }
 
 // New instantiates a PostgreSQL implementation of group
 // repository.
 func New(db postgres.Database) mggroups.Repository {
+	rolesSvcRepo := entityRolesRepo.NewRolesSvcRepository(db, rolesTableNamePrefix)
+
 	return &groupRepository{
-		db: db,
+		db:           db,
+		RolesSvcRepo: rolesSvcRepo,
 	}
 }
 
 func (repo groupRepository) Save(ctx context.Context, g mggroups.Group) (mggroups.Group, error) {
-	q := `INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status)
-		VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status)
-		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status;`
+	q, err := repo.getInsertQuery(ctx, g)
+	if err != nil {
+		return mggroups.Group{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
 	dbg, err := toDBGroup(g)
 	if err != nil {
 		return mggroups.Group{}, err
@@ -145,24 +160,18 @@ func (repo groupRepository) RetrieveByID(ctx context.Context, id string) (mggrou
 	return toGroup(dbg)
 }
 
-func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (mggroups.Page, error) {
+func (repo groupRepository) RetrieveAll(ctx context.Context, pm mggroups.PageMeta) (mggroups.Page, error) {
 	var q string
-	query := buildQuery(gm)
+	query := buildQuery(pm)
 
-	if gm.ParentID != "" {
-		q = buildHierachy(gm)
-	}
-	if gm.ParentID == "" {
-		q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
-		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
-	}
-	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
+	q = fmt.Sprintf(`SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
+		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;`, query)
 
-	dbPage, err := toDBGroupPage(gm)
+	dbPageMeta, err := toDBGroupPageMeta(pm)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
-	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
+	rows, err := repo.db.NamedQueryContext(ctx, q, dbPageMeta)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
@@ -173,44 +182,39 @@ func (repo groupRepository) RetrieveAll(ctx context.Context, gm mggroups.Page) (
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	cq := "SELECT COUNT(*) FROM groups g"
-	if query != "" {
-		cq = fmt.Sprintf(" %s %s", cq, query)
-	}
+	cq := fmt.Sprintf(`	SELECT COUNT(*) AS total_count
+						FROM (
+							SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
+							g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g %s
+						) AS subquery;
+						`, query)
 
-	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
+	total, err := postgres.Total(ctx, repo.db, cq, dbPageMeta)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	page := gm
-	page.Groups = items
+	page := mggroups.Page{PageMeta: pm}
 	page.Total = total
-
+	page.Groups = items
 	return page, nil
 }
 
-func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page, ids ...string) (mggroups.Page, error) {
+func (repo groupRepository) RetrieveByIDs(ctx context.Context, pm mggroups.PageMeta, ids ...string) (mggroups.Page, error) {
 	var q string
-	if (len(ids) == 0) && (gm.PageMeta.DomainID == "") {
-		return mggroups.Page{PageMeta: mggroups.PageMeta{Offset: gm.Offset, Limit: gm.Limit}}, nil
+	if (len(ids) == 0) && (pm.DomainID == "") {
+		return mggroups.Page{PageMeta: mggroups.PageMeta{Offset: pm.Offset, Limit: pm.Limit}}, nil
 	}
-	query := buildQuery(gm, ids...)
+	query := buildQuery(pm, ids...)
 
-	if gm.ParentID != "" {
-		q = buildHierachy(gm)
-	}
-	if gm.ParentID == "" {
-		q = `SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
-		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g`
-	}
-	q = fmt.Sprintf("%s %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;", q, query)
+	q = fmt.Sprintf(`SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
+		g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g %s ORDER BY g.created_at LIMIT :limit OFFSET :offset;`, query)
 
-	dbPage, err := toDBGroupPage(gm)
+	dbPageMeta, err := toDBGroupPageMeta(pm)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
-	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
+	rows, err := repo.db.NamedQueryContext(ctx, q, dbPageMeta)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
@@ -221,69 +225,274 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mggroups.Page,
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	cq := "SELECT COUNT(*) FROM groups g"
-	if query != "" {
-		cq = fmt.Sprintf(" %s %s", cq, query)
-	}
+	cq := fmt.Sprintf(`	SELECT COUNT(*) AS total_count
+						FROM (
+							SELECT DISTINCT g.id, g.domain_id, COALESCE(g.parent_id, '') AS parent_id, g.name, g.description,
+							g.metadata, g.created_at, g.updated_at, g.updated_by, g.status FROM groups g %s
+						) AS subquery;
+						`, query)
 
-	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
+	total, err := postgres.Total(ctx, repo.db, cq, dbPageMeta)
 	if err != nil {
 		return mggroups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	page := gm
-	page.Groups = items
+	page := mggroups.Page{PageMeta: pm}
 	page.Total = total
-
+	page.Groups = items
 	return page, nil
 }
 
-func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error {
+func (repo groupRepository) RetrieveHierarchy(ctx context.Context, id string, hm groups.HierarchyPageMeta) (groups.HierarchyPage, error) {
+	query := ""
+	switch {
+	// ancestors
+	case hm.Direction >= 0:
+		query = `
+		SELECT
+			g.id,
+			COALESCE(g.parent_id, '') AS parent_id,
+			g.domain_id,
+			g.name,
+			g.description,
+			g.metadata,
+			g.created_at,
+			g.updated_at,
+			g.updated_by,
+			g.status,
+			g.path,
+			nlevel(g.path) AS level
+		FROM
+			groups g
+		WHERE
+			g.path @> (SELECT path FROM groups WHERE id = :id LIMIT 1);
+		`
+	// descendants
+	case hm.Direction < 0:
+		fallthrough
+	default:
+		query = `
+		SELECT
+			g.id,
+			COALESCE(g.parent_id, '') AS parent_id,
+			g.domain_id,
+			g.name,
+			g.description,
+			g.metadata,
+			g.created_at,
+			g.updated_at,
+			g.updated_by,
+			g.status,
+			g.path,
+			nlevel(g.path) AS level
+		FROM
+			groups g
+		WHERE
+			g.path <@ (SELECT path FROM groups WHERE id = :id LIMIT 1);
+		`
+	}
+	parameters := map[string]interface{}{
+		"id":    id,
+		"level": hm.Level,
+	}
+	rows, err := repo.db.NamedQueryContext(ctx, query, parameters)
+	if err != nil {
+		return mggroups.HierarchyPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	defer rows.Close()
+
+	items, err := repo.processRows(rows)
+	if err != nil {
+		return mggroups.HierarchyPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+
+	return mggroups.HierarchyPage{HierarchyPageMeta: hm, Groups: items}, nil
+}
+
+func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) (err error) {
 	if len(groupIDs) == 0 {
 		return nil
 	}
-	var updateColumns []string
-	for _, groupID := range groupIDs {
-		updateColumns = append(updateColumns, fmt.Sprintf("('%s', '%s') ", groupID, parentGroupID))
-	}
-	uc := strings.Join(updateColumns, ",")
-	query := fmt.Sprintf(`
-			UPDATE groups AS g SET
-				parent_id = u.parent_group_id
-			FROM (VALUES
-				%s
-			) AS u(id, parent_group_id)
-			WHERE g.id = u.id;
-	`, uc)
 
-	row, err := repo.db.QueryContext(ctx, query)
+	tx, err := repo.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	defer func() {
+		if err != nil {
+			if errRollback := tx.Rollback(); errRollback != nil {
+				err = errors.Wrap(err, errRollback)
+			}
+		}
+	}()
+
+	pq := `SELECT id, path FROM groups WHERE id = $1 LIMIT 1;`
+	rows, err := tx.Queryx(pq, parentGroupID)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	defer rows.Close()
+
+	pGroups, err := repo.processRows(rows)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	if len(pGroups) == 0 {
+		return repoerr.ErrUpdateEntity
+	}
+	pGroup := pGroups[0]
+
+	if pGroup.ID == "" {
+		return errors.Wrap(repoerr.ErrViewEntity, errParentGroupID)
+	}
+	if pGroup.Path == "" {
+		return errors.Wrap(repoerr.ErrViewEntity, errParentGroupPath)
+	}
+	if !strings.HasSuffix(pGroup.Path, pGroup.ID) {
+		return errors.Wrap(repoerr.ErrViewEntity, errParentSuffix)
+	}
+	sPaths := strings.Split(pGroup.Path, ".") // 021b9f24-5337-469b-abfa-586f5813dd41.bd4a1fea-6303-4dca-9628-301cd1165a8c.c7e8f389-11e9-4849-a474-e186012ddf38
+	for _, sPath := range sPaths {
+		for _, cgid := range groupIDs {
+			if sPath == cgid {
+				return errors.Wrap(repoerr.ErrUpdateEntity, fmt.Errorf("cyclic parent, group %s is parent of requested group %s", cgid, parentGroupID))
+			}
+		}
+	}
+
+	query := `	UPDATE groups
+			SET parent_id = :parent_id
+			WHERE id = ANY(:children_group_ids)
+			RETURNING id, path;`
+
+	params := map[string]interface{}{
+		"parent_id":          pGroup.ID,
+		"children_group_ids": groupIDs,
+	}
+
+	crows, err := tx.NamedQuery(query, params)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
-	defer row.Close()
+	defer crows.Close()
+	cgroups, err := repo.processRows(crows)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
 
+	childrenPaths := []string{}
+	for _, cg := range cgroups {
+		spath := strings.Split(cg.Path, ".")
+		if len(spath) > 0 {
+			childrenPaths = append(childrenPaths, cg.Path)
+		}
+	}
+
+	query = `UPDATE groups
+				SET path = text2ltree(COALESCE($1, '') || '.' || ltree2text(path))
+				WHERE path <@ ANY($2::ltree[]);`
+
+	if _, err := tx.Exec(query, pGroup.Path, childrenPaths); err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
 	return nil
 }
 
-func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error {
+// ToDo: Query need to change to ANY
+// ToDo: If parent is changed, then path of all children need to be updated https://patshaughnessy.net/2017/12/14/manipulating-trees-using-sql-and-the-postgres-ltree-extension
+func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) (err error) {
 	if len(groupIDs) == 0 {
 		return nil
 	}
-	var updateColumns []string
-	for _, groupID := range groupIDs {
-		updateColumns = append(updateColumns, fmt.Sprintf("('%s', '%s') ", groupID, parentGroupID))
+
+	tx, err := repo.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
-	uc := strings.Join(updateColumns, ",")
-	query := fmt.Sprintf(`
+	defer func() {
+		if err != nil {
+			if errRollback := tx.Rollback(); errRollback != nil {
+				err = errors.Wrap(err, errRollback)
+			}
+		}
+	}()
+	pq := `SELECT id, path FROM groups WHERE id = $1 LIMIT 1;`
+	rows, err := tx.Queryx(pq, parentGroupID)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	defer rows.Close()
+
+	pGroups, err := repo.processRows(rows)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	if len(pGroups) == 0 {
+		return repoerr.ErrUpdateEntity
+	}
+	pGroup := pGroups[0]
+
+	if pGroup.ID == "" {
+		return errors.Wrap(repoerr.ErrViewEntity, errParentGroupID)
+	}
+	if pGroup.Path == "" {
+		return errors.Wrap(repoerr.ErrViewEntity, errParentGroupPath)
+	}
+
+	query := `UPDATE groups
+			  SET parent_id = NULL
+			  WHERE id = ANY(:children_group_ids) AND parent_id = :parent_id
+			  RETURNING id, path;`
+
+	parameters := map[string]interface{}{
+		"parent_id":          pGroup.ID,
+		"children_group_ids": groupIDs,
+	}
+	crows, err := tx.NamedQuery(query, parameters)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer crows.Close()
+	cgroups, err := repo.processRows(crows)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	childrenPaths := []string{}
+	for _, cg := range cgroups {
+		spath := strings.Split(cg.Path, ".")
+		if len(spath) > 0 {
+			childrenPaths = append(childrenPaths, cg.Path)
+		}
+	}
+
+	query = `UPDATE groups
+				SET path = text2ltree(replace(ltree2text(path), $1 || '.', ''))
+				WHERE path <@ ANY($2::ltree[]);`
+
+	if _, err := tx.Exec(query, pGroup.Path, childrenPaths); err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	return nil
+}
+
+func (repo groupRepository) UnassignAllChildrenGroup(ctx context.Context, id string) error {
+
+	query := `
 			UPDATE groups AS g SET
 				parent_id = NULL
-			FROM (VALUES
-				%s
-			) AS u(id, parent_group_id)
-			WHERE g.id = u.id ;
-	`, uc)
+			WHERE g.parent = :parent_id ;
+	`
 
-	row, err := repo.db.QueryContext(ctx, query)
+	row, err := repo.db.NamedQueryContext(ctx, query, dbGroup{ParentID: &id})
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
@@ -305,27 +514,7 @@ func (repo groupRepository) Delete(ctx context.Context, groupID string) error {
 	return nil
 }
 
-func buildHierachy(gm mggroups.Page) string {
-	query := ""
-	switch {
-	case gm.Direction >= 0: // ancestors
-		query = `WITH RECURSIVE groups_cte as (
-			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level from groups WHERE id = :parent_id
-			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.domain_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level - 1 from groups x
-			INNER JOIN groups_cte a ON a.parent_id = x.id
-		) SELECT * FROM groups_cte g`
-
-	case gm.Direction < 0: // descendants
-		query = `WITH RECURSIVE groups_cte as (
-			SELECT id, COALESCE(parent_id, '') AS parent_id, domain_id, name, description, metadata, created_at, updated_at, updated_by, status, 0 as level, CONCAT('', '', id) as path from groups WHERE id = :parent_id
-			UNION SELECT x.id, COALESCE(x.parent_id, '') AS parent_id, x.domain_id, x.name, x.description, x.metadata, x.created_at, x.updated_at, x.updated_by, x.status, level + 1, CONCAT(path, '.', x.id) as path from groups x
-			INNER JOIN groups_cte d ON d.id = x.parent_id
-		) SELECT * FROM groups_cte g`
-	}
-	return query
-}
-
-func buildQuery(gm mggroups.Page, ids ...string) string {
+func buildQuery(gm mggroups.PageMeta, ids ...string) string {
 	queries := []string{}
 
 	if len(ids) > 0 {
@@ -334,7 +523,7 @@ func buildQuery(gm mggroups.Page, ids ...string) string {
 	if gm.Name != "" {
 		queries = append(queries, "g.name ILIKE '%' || :name || '%'")
 	}
-	if gm.PageMeta.ID != "" {
+	if gm.ID != "" {
 		queries = append(queries, "g.id ILIKE '%' || :id || '%'")
 	}
 	if gm.Status != mgclients.AllStatus {
@@ -440,36 +629,29 @@ func toGroup(g dbGroup) (mggroups.Group, error) {
 	}, nil
 }
 
-func toDBGroupPage(pm mggroups.Page) (dbGroupPage, error) {
-	level := mggroups.MaxLevel
-	if pm.Level < mggroups.MaxLevel {
-		level = pm.Level
-	}
+func toDBGroupPageMeta(pm mggroups.PageMeta) (dbGroupPageMeta, error) {
 	data := []byte("{}")
 	if len(pm.Metadata) > 0 {
 		b, err := json.Marshal(pm.Metadata)
 		if err != nil {
-			return dbGroupPage{}, errors.Wrap(errors.ErrMalformedEntity, err)
+			return dbGroupPageMeta{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 		data = b
 	}
-	return dbGroupPage{
+	return dbGroupPageMeta{
 		ID:       pm.ID,
 		Name:     pm.Name,
 		Metadata: data,
-		Path:     pm.Path,
-		Level:    level,
 		Total:    pm.Total,
 		Offset:   pm.Offset,
 		Limit:    pm.Limit,
-		ParentID: pm.ParentID,
 		DomainID: pm.DomainID,
 		Status:   pm.Status,
 	}, nil
 }
 
-type dbGroupPage struct {
-	ClientID string           `db:"client_id"`
+// ToDo: check and remove field "Level" after new auth stabilize
+type dbGroupPageMeta struct {
 	ID       string           `db:"id"`
 	Name     string           `db:"name"`
 	ParentID string           `db:"parent_id"`
@@ -499,4 +681,25 @@ func (repo groupRepository) processRows(rows *sqlx.Rows) ([]mggroups.Group, erro
 		items = append(items, group)
 	}
 	return items, nil
+}
+
+func (repo groupRepository) getInsertQuery(c context.Context, g mggroups.Group) (string, error) {
+	switch {
+	case g.Parent != "":
+		parent, err := repo.RetrieveByID(c, g.Parent)
+		if err != nil {
+			return "", err
+		}
+		path := parent.Path + "." + g.ID
+		if len(strings.Split(path, ".")) > mggroups.MaxPathLength {
+			return "", fmt.Errorf("reached max nested depth")
+		}
+		return fmt.Sprintf(`INSERT INTO groups (name, description, id, domain_id, parent_id, metadata, created_at, status, path)
+		VALUES (:name, :description, :id, :domain_id, :parent_id, :metadata, :created_at, :status, '%s')
+		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`, path), nil
+	default:
+		return `INSERT INTO groups (name, description, id, domain_id, metadata, created_at, status, path)
+		VALUES (:name, :description, :id, :domain_id, :metadata, :created_at, :status, :id)
+		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`, nil
+	}
 }

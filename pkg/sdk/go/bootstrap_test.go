@@ -20,6 +20,8 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -124,17 +126,18 @@ type readerChannelRes struct {
 	Metadata interface{} `json:"metadata,omitempty"`
 }
 
-func setupBootstrap() (*httptest.Server, *bmocks.Service, *bmocks.ConfigReader) {
+func setupBootstrap() (*httptest.Server, *bmocks.Service, *bmocks.ConfigReader, *authnmocks.Authentication) {
 	bsvc := new(bmocks.Service)
 	reader := new(bmocks.ConfigReader)
 	logger := mglog.NewMock()
+	authn := new(authnmocks.Authentication)
+	mux := api.MakeHandler(bsvc, authn, reader, logger, "")
 
-	mux := api.MakeHandler(bsvc, reader, logger, "")
-	return httptest.NewServer(mux), bsvc, reader
+	return httptest.NewServer(mux), bsvc, reader, authn
 }
 
 func TestAddBootstrap(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -149,14 +152,16 @@ func TestAddBootstrap(t *testing.T) {
 	neReqId.ThingID = "non-existent"
 
 	cases := []struct {
-		desc     string
-		token    string
-		cfg      sdk.BootstrapConfig
-		svcReq   bootstrap.Config
-		svcRes   bootstrap.Config
-		svcErr   error
-		response string
-		err      errors.SDKError
+		desc            string
+		token           string
+		session         mgauthn.Session
+		cfg             sdk.BootstrapConfig
+		svcReq          bootstrap.Config
+		svcRes          bootstrap.Config
+		svcErr          error
+		authenticateErr error
+		response        string
+		err             errors.SDKError
 	}{
 		{
 			desc:   "add successfully",
@@ -229,21 +234,26 @@ func TestAddBootstrap(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("Add", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := bsvc.On("Add", mock.Anything, tc.session, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.AddBootstrap(tc.cfg, tc.token)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.Equal(t, bootstrapConfig.ThingID, resp)
-				ok := svcCall.Parent.AssertCalled(t, "Add", mock.Anything, tc.token, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "Add", mock.Anything, tc.session, tc.token, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestListBootstraps(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -277,13 +287,15 @@ func TestListBootstraps(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc     string
-		token    string
-		pageMeta sdk.PageMetadata
-		svcResp  bootstrap.ConfigsPage
-		svcErr   error
-		response sdk.BootstrapPage
-		err      errors.SDKError
+		desc            string
+		token           string
+		session         mgauthn.Session
+		pageMeta        sdk.PageMetadata
+		svcResp         bootstrap.ConfigsPage
+		svcErr          error
+		authenticateErr error
+		response        sdk.BootstrapPage
+		err             errors.SDKError
 	}{
 		{
 			desc:  "list successfully",
@@ -327,7 +339,7 @@ func TestListBootstraps(t *testing.T) {
 			svcResp:  bootstrap.ConfigsPage{},
 			svcErr:   nil,
 			response: sdk.BootstrapPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:  "list with invalid query params",
@@ -363,21 +375,26 @@ func TestListBootstraps(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("List", mock.Anything, tc.token, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit).Return(tc.svcResp, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := bsvc.On("List", mock.Anything, tc.session, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit).Return(tc.svcResp, tc.svcErr)
 			resp, err := mgsdk.Bootstraps(tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "List", mock.Anything, tc.token, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit)
+				ok := svcCall.Parent.AssertCalled(t, "List", mock.Anything, tc.session, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestWhiteList(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -389,13 +406,15 @@ func TestWhiteList(t *testing.T) {
 	inactive := 0
 
 	cases := []struct {
-		desc    string
-		token   string
-		thingID string
-		state   int
-		svcReq  bootstrap.State
-		svcErr  error
-		err     errors.SDKError
+		desc            string
+		token           string
+		session         mgauthn.Session
+		thingID         string
+		state           int
+		svcReq          bootstrap.State
+		svcErr          error
+		authenticateErr error
+		err             errors.SDKError
 	}{
 		{
 			desc:    "whitelist to active state successfully",
@@ -416,13 +435,13 @@ func TestWhiteList(t *testing.T) {
 			err:     nil,
 		},
 		{
-			desc:    "whitelist with invalid token",
-			token:   invalidToken,
-			thingID: thingId,
-			state:   active,
-			svcReq:  bootstrap.Active,
-			svcErr:  svcerr.ErrAuthentication,
-			err:     errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:            "whitelist with invalid token",
+			token:           invalidToken,
+			thingID:         thingId,
+			state:           active,
+			svcReq:          bootstrap.Active,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:    "whitelist with empty token",
@@ -431,7 +450,7 @@ func TestWhiteList(t *testing.T) {
 			state:   active,
 			svcReq:  bootstrap.Active,
 			svcErr:  nil,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:     errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:    "whitelist with invalid state",
@@ -454,20 +473,25 @@ func TestWhiteList(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("ChangeState", mock.Anything, tc.token, tc.thingID, tc.svcReq).Return(tc.svcErr)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := bsvc.On("ChangeState", mock.Anything, tc.session, tc.token, tc.thingID, tc.svcReq).Return(tc.svcErr)
 			err := mgsdk.Whitelist(tc.thingID, tc.state, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ChangeState", mock.Anything, tc.token, tc.thingID, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ChangeState", mock.Anything, tc.session, tc.token, tc.thingID, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewBootstrap(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -486,13 +510,15 @@ func TestViewBootstrap(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc     string
-		token    string
-		id       string
-		svcResp  bootstrap.Config
-		svcErr   error
-		response sdk.BootstrapConfig
-		err      errors.SDKError
+		desc            string
+		token           string
+		session         mgauthn.Session
+		id              string
+		svcResp         bootstrap.Config
+		svcErr          error
+		authenticateErr error
+		response        sdk.BootstrapConfig
+		err             errors.SDKError
 	}{
 		{
 			desc:     "view successfully",
@@ -504,13 +530,13 @@ func TestViewBootstrap(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "view with invalid token",
-			token:    invalidToken,
-			id:       thingId,
-			svcResp:  bootstrap.Config{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.BootstrapConfig{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:            "view with invalid token",
+			token:           invalidToken,
+			id:              thingId,
+			svcResp:         bootstrap.Config{},
+			authenticateErr: svcerr.ErrAuthentication,
+			response:        sdk.BootstrapConfig{},
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "view with empty token",
@@ -519,7 +545,7 @@ func TestViewBootstrap(t *testing.T) {
 			svcResp:  bootstrap.Config{},
 			svcErr:   nil,
 			response: sdk.BootstrapConfig{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "view with non-existent thing Id",
@@ -561,21 +587,26 @@ func TestViewBootstrap(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("View", mock.Anything, tc.token, tc.id).Return(tc.svcResp, tc.svcErr)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := bsvc.On("View", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
 			resp, err := mgsdk.ViewBootstrap(tc.id, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "View", mock.Anything, tc.token, tc.id)
+				ok := svcCall.Parent.AssertCalled(t, "View", mock.Anything, tc.session, tc.id)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestUpdateBootstrap(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -584,12 +615,14 @@ func TestUpdateBootstrap(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc   string
-		token  string
-		cfg    sdk.BootstrapConfig
-		svcReq bootstrap.Config
-		svcErr error
-		err    errors.SDKError
+		desc              string
+		token             string
+		session           mgauthn.Session
+		cfg               sdk.BootstrapConfig
+		svcReq            bootstrap.Config
+		svcErr            error
+		authenticationErr error
+		err               errors.SDKError
 	}{
 		{
 			desc:  "update successfully",
@@ -612,8 +645,8 @@ func TestUpdateBootstrap(t *testing.T) {
 				Name:    bsName,
 				Content: content,
 			},
-			svcErr: svcerr.ErrAuthentication,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			authenticationErr: svcerr.ErrAuthentication,
+			err:               errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:   "update with empty token",
@@ -621,7 +654,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			cfg:    sdkBootstrapConfig,
 			svcReq: bootstrap.Config{},
 			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:  "update with config that cannot be marshalled",
@@ -709,20 +742,25 @@ func TestUpdateBootstrap(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("Update", mock.Anything, tc.token, tc.svcReq).Return(tc.svcErr)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticationErr)
+			svcCall := bsvc.On("Update", mock.Anything, tc.session, tc.svcReq).Return(tc.svcErr)
 			err := mgsdk.UpdateBootstrap(tc.cfg, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Update", mock.Anything, tc.token, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "Update", mock.Anything, tc.session, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestUpdateBootstrapCerts(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -738,16 +776,18 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc       string
-		token      string
-		id         string
-		clientCert string
-		clientKey  string
-		caCert     string
-		svcResp    bootstrap.Config
-		svcErr     error
-		response   sdk.BootstrapConfig
-		err        errors.SDKError
+		desc            string
+		token           string
+		session         mgauthn.Session
+		id              string
+		clientCert      string
+		clientKey       string
+		caCert          string
+		svcResp         bootstrap.Config
+		svcErr          error
+		authenticateErr error
+		response        sdk.BootstrapConfig
+		err             errors.SDKError
 	}{
 		{
 			desc:       "update certs successfully",
@@ -762,15 +802,15 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			err:        nil,
 		},
 		{
-			desc:       "update certs with invalid token",
-			token:      validToken,
-			id:         thingId,
-			clientCert: clientCert,
-			clientKey:  clientKey,
-			caCert:     caCert,
-			svcResp:    bootstrap.Config{},
-			svcErr:     svcerr.ErrAuthentication,
-			err:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:            "update certs with invalid token",
+			token:           validToken,
+			id:              thingId,
+			clientCert:      clientCert,
+			clientKey:       clientKey,
+			caCert:          caCert,
+			svcResp:         bootstrap.Config{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:       "update certs with empty token",
@@ -781,7 +821,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			caCert:     caCert,
 			svcResp:    bootstrap.Config{},
 			svcErr:     nil,
-			err:        errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:        errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:       "update certs with non-existent thing Id",
@@ -818,18 +858,23 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		svcCall := bsvc.On("UpdateCert", mock.Anything, tc.token, tc.id, tc.clientCert, tc.clientKey, tc.caCert).Return(tc.svcResp, tc.svcErr)
+		if tc.token == validToken {
+			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+		}
+		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+		svcCall := bsvc.On("UpdateCert", mock.Anything, tc.session, tc.id, tc.clientCert, tc.clientKey, tc.caCert).Return(tc.svcResp, tc.svcErr)
 		resp, err := mgsdk.UpdateBootstrapCerts(tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.token)
 		assert.Equal(t, tc.err, err)
 		if err == nil {
 			assert.Equal(t, tc.response, resp)
 		}
 		svcCall.Unset()
+		authCall.Unset()
 	}
 }
 
 func TestUpdateBootstrapConnection(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -838,13 +883,15 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc     string
-		token    string
-		id       string
-		channels []string
-		svcRes   bootstrap.Config
-		svcErr   error
-		err      errors.SDKError
+		desc            string
+		token           string
+		session         mgauthn.Session
+		id              string
+		channels        []string
+		svcRes          bootstrap.Config
+		svcErr          error
+		authenticateErr error
+		err             errors.SDKError
 	}{
 		{
 			desc:     "update connection successfully",
@@ -855,12 +902,12 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "update connection with invalid token",
-			token:    invalidToken,
-			id:       thingId,
-			channels: []string{channel1Id, channel2Id},
-			svcErr:   svcerr.ErrAuthentication,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:            "update connection with invalid token",
+			token:           invalidToken,
+			id:              thingId,
+			channels:        []string{channel1Id, channel2Id},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "update connection with empty token",
@@ -868,7 +915,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			id:       thingId,
 			channels: []string{channel1Id, channel2Id},
 			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "update connection with non-existent thing Id",
@@ -905,20 +952,25 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("UpdateConnections", mock.Anything, tc.token, tc.id, tc.channels).Return(tc.svcErr)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := bsvc.On("UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels).Return(tc.svcErr)
 			err := mgsdk.UpdateBootstrapConnection(tc.id, tc.channels, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "UpdateConnections", mock.Anything, tc.token, tc.id, tc.channels)
+				ok := svcCall.Parent.AssertCalled(t, "UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestRemoveBootstrap(t *testing.T) {
-	bs, bsvc, _ := setupBootstrap()
+	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -927,11 +979,13 @@ func TestRemoveBootstrap(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	cases := []struct {
-		desc   string
-		token  string
-		id     string
-		svcErr error
-		err    errors.SDKError
+		desc            string
+		token           string
+		session         mgauthn.Session
+		id              string
+		svcErr          error
+		authenticateErr error
+		err             errors.SDKError
 	}{
 		{
 			desc:   "remove successfully",
@@ -941,11 +995,11 @@ func TestRemoveBootstrap(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "remove with invalid token",
-			token:  invalidToken,
-			id:     thingId,
-			svcErr: svcerr.ErrAuthentication,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:            "remove with invalid token",
+			token:           invalidToken,
+			id:              thingId,
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:   "remove with non-existent thing Id",
@@ -966,7 +1020,7 @@ func TestRemoveBootstrap(t *testing.T) {
 			token:  "",
 			id:     thingId,
 			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:   "remove with empty id",
@@ -978,20 +1032,25 @@ func TestRemoveBootstrap(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("Remove", mock.Anything, tc.token, tc.id).Return(tc.svcErr)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := bsvc.On("Remove", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
 			err := mgsdk.RemoveBootstrap(tc.id, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Remove", mock.Anything, tc.token, tc.id)
+				ok := svcCall.Parent.AssertCalled(t, "Remove", mock.Anything, tc.session, tc.id)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestBoostrap(t *testing.T) {
-	bs, bsvc, reader := setupBootstrap()
+	bs, bsvc, reader, _ := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{
@@ -1097,7 +1156,7 @@ func TestBoostrap(t *testing.T) {
 }
 
 func TestBootstrapSecure(t *testing.T) {
-	bs, bsvc, reader := setupBootstrap()
+	bs, bsvc, reader, _ := setupBootstrap()
 	defer bs.Close()
 
 	conf := sdk.Config{

@@ -16,21 +16,18 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/certs/api"
-	vault "github.com/absmach/magistrala/certs/pki"
-	certspg "github.com/absmach/magistrala/certs/postgres"
+	pki "github.com/absmach/magistrala/certs/pki/amcerts"
 	"github.com/absmach/magistrala/certs/tracing"
 	mglog "github.com/absmach/magistrala/logger"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/postgres"
-	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v11"
-	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -56,13 +53,10 @@ type config struct {
 	SignCAPath    string `env:"MG_CERTS_SIGN_CA_PATH"        envDefault:"ca.crt"`
 	SignCAKeyPath string `env:"MG_CERTS_SIGN_CA_KEY_PATH"    envDefault:"ca.key"`
 
-	// 3rd party PKI API access settings
-	PkiHost      string `env:"MG_CERTS_VAULT_HOST"               envDefault:""`
-	PkiAppRoleID string `env:"MG_CERTS_VAULT_APPROLE_ROLEID"     envDefault:""`
-	PkiAppSecret string `env:"MG_CERTS_VAULT_APPROLE_SECRET"     envDefault:""`
-	PkiNamespace string `env:"MG_CERTS_VAULT_NAMESPACE"          envDefault:""`
-	PkiPath      string `env:"MG_CERTS_VAULT_THINGS_CERTS_PKI_PATH"       envDefault:"pki_int"`
-	PkiRole      string `env:"MG_CERTS_VAULT_THINGS_CERTS_PKI_ROLE_NAME"  envDefault:"magistrala"`
+	// Amcerts SDK settings
+	SDKHost         string `env:"MG_CERTS_SDK_HOST"             envDefault:""`
+	SDKCertsURL     string `env:"MG_CERTS_SDK_CERTS_URL"        envDefault:"http://localhost:9010"`
+	TLSVerification bool   `env:"MG_CERTS_SDK_TLS_VERIFICATION" envDefault:"false"`
 }
 
 func main() {
@@ -90,51 +84,33 @@ func main() {
 		}
 	}
 
-	if cfg.PkiHost == "" {
+	if cfg.SDKHost == "" {
 		logger.Error("No host specified for PKI engine")
 		exitCode = 1
 		return
 	}
 
-	pkiclient, err := vault.NewVaultClient(cfg.PkiAppRoleID, cfg.PkiAppSecret, cfg.PkiHost, cfg.PkiNamespace, cfg.PkiPath, cfg.PkiRole, logger)
+	pkiclient, err := pki.NewAgent(cfg.SDKHost, cfg.SDKCertsURL, cfg.TLSVerification)
 	if err != nil {
 		logger.Error("failed to configure client for PKI engine")
 		exitCode = 1
 		return
 	}
 
-	g.Go(func() error {
-		return pkiclient.LoginAndRenew(ctx)
-	})
-
-	dbConfig := pgclient.Config{Name: defDB}
-	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
-		logger.Error(err.Error())
+	grpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
+		exitCode = 1
+		return
 	}
-	db, err := pgclient.Setup(dbConfig, *certspg.Migration())
+	authn, authnClient, err := authsvcAuthn.NewAuthentication(ctx, grpcCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer db.Close()
-
-	authClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&authClientCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
-
-	authClient, authHandler, err := grpcclient.SetupAuthClient(ctx, authClientCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer authHandler.Close()
-
-	logger.Info("AuthService gRPC client successfully connected to auth gRPC server " + authHandler.Secure())
+	defer authnClient.Close()
+	logger.Info("AutN successfully connected to auth gRPC server " + authnClient.Secure())
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
@@ -149,7 +125,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	svc := newService(authClient, db, tracer, logger, cfg, dbConfig, pkiclient)
+	svc := newService(tracer, logger, cfg, pkiclient)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -157,7 +133,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, authn, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -177,14 +153,12 @@ func main() {
 	}
 }
 
-func newService(authClient magistrala.AuthnServiceClient, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config, pkiAgent vault.Agent) certs.Service {
-	database := postgres.NewDatabase(db, dbConfig, tracer)
-	certsRepo := certspg.NewRepository(database, logger)
+func newService(tracer trace.Tracer, logger *slog.Logger, cfg config, pkiAgent pki.Agent) certs.Service {
 	config := mgsdk.Config{
 		ThingsURL: cfg.ThingsURL,
 	}
 	sdk := mgsdk.NewSDK(config)
-	svc := certs.New(authClient, certsRepo, sdk, pkiAgent)
+	svc := certs.New(sdk, pkiAgent)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

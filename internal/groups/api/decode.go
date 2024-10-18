@@ -17,140 +17,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	pm, err := decodePageMeta(r)
-	if err != nil {
-		return nil, err
-	}
-
-	level, err := apiutil.ReadNumQuery[uint64](r, api.LevelKey, api.DefLevel)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	parentID, err := apiutil.ReadStringQuery(r, api.ParentKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	tree, err := apiutil.ReadBoolQuery(r, api.TreeKey, false)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	dir, err := apiutil.ReadNumQuery[int64](r, api.DirKey, -1)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	memberKind, err := apiutil.ReadStringQuery(r, api.MemberKindKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	listPerms, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	req := listGroupsReq{
-		token:      apiutil.ExtractBearerToken(r),
-		tree:       tree,
-		memberKind: memberKind,
-		memberID:   chi.URLParam(r, "memberID"),
-		Page: mggroups.Page{
-			Level:      level,
-			ParentID:   parentID,
-			Permission: permission,
-			PageMeta:   pm,
-			Direction:  dir,
-			ListPerms:  listPerms,
-		},
-	}
-	return req, nil
-}
-
-func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	pm, err := decodePageMeta(r)
-	if err != nil {
-		return nil, err
-	}
-
-	level, err := apiutil.ReadNumQuery[uint64](r, api.LevelKey, api.DefLevel)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	tree, err := apiutil.ReadBoolQuery(r, api.TreeKey, false)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	listPerms, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	req := listGroupsReq{
-		token: apiutil.ExtractBearerToken(r),
-		tree:  tree,
-		Page: mggroups.Page{
-			Level:      level,
-			ParentID:   chi.URLParam(r, "groupID"),
-			Permission: permission,
-			PageMeta:   pm,
-			Direction:  +1,
-			ListPerms:  listPerms,
-		},
-	}
-	return req, nil
-}
-
-func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	pm, err := decodePageMeta(r)
-	if err != nil {
-		return nil, err
-	}
-
-	level, err := apiutil.ReadNumQuery[uint64](r, api.LevelKey, api.DefLevel)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	tree, err := apiutil.ReadBoolQuery(r, api.TreeKey, false)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	listPerms, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	req := listGroupsReq{
-		token: apiutil.ExtractBearerToken(r),
-		tree:  tree,
-		Page: mggroups.Page{
-			Level:      level,
-			ParentID:   chi.URLParam(r, "groupID"),
-			Permission: permission,
-			PageMeta:   pm,
-			Direction:  -1,
-			ListPerms:  listPerms,
-		},
-	}
-	return req, nil
-}
-
 func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
@@ -161,9 +27,20 @@ func DecodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 	req := createGroupReq{
 		Group: g,
-		token: apiutil.ExtractBearerToken(r),
 	}
 
+	return req, nil
+}
+
+func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	pm, err := decodePageMeta(r)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listGroupsReq{
+		PageMeta: pm,
+	}
 	return req, nil
 }
 
@@ -172,8 +49,7 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateGroupReq{
-		id:    chi.URLParam(r, "groupID"),
-		token: apiutil.ExtractBearerToken(r),
+		id: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -183,35 +59,38 @@ func DecodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 
 func DecodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "groupID"),
+		id: chi.URLParam(r, "groupID"),
 	}
 	return req, nil
 }
 
-func DecodeGroupPermsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	req := groupPermsReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "groupID"),
-	}
-	return req, nil
-}
-
-func DecodeChangeGroupStatus(_ context.Context, r *http.Request) (interface{}, error) {
+func DecodeChangeGroupStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := changeGroupStatusReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "groupID"),
+		id: chi.URLParam(r, "groupID"),
 	}
 	return req, nil
 }
 
-func DecodeAssignMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeRetrieveGroupHierarchy(_ context.Context, r *http.Request) (interface{}, error) {
+	hm, err := decodeHierarchyPageMeta(r)
+	if err != nil {
+		return nil, err
+	}
+
+	req := retrieveGroupHierarchyReq{
+		id:                chi.URLParam(r, "groupID"),
+		HierarchyPageMeta: hm,
+	}
+	return req, nil
+}
+
+func decodeAddParentGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
-	req := assignReq{
-		token:   apiutil.ExtractBearerToken(r),
-		groupID: chi.URLParam(r, "groupID"),
+
+	req := addParentGroupReq{
+		id: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -219,13 +98,26 @@ func DecodeAssignMembersRequest(_ context.Context, r *http.Request) (interface{}
 	return req, nil
 }
 
-func DecodeUnassignMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeRemoveParentGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := removeParentGroupReq{
+		id: chi.URLParam(r, "groupID"),
+	}
+	return req, nil
+}
+
+func decodeViewParentGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := viewParentGroupReq{
+		id: chi.URLParam(r, "groupID"),
+	}
+	return req, nil
+}
+
+func decodeAddChildrenGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
-	req := unassignReq{
-		token:   apiutil.ExtractBearerToken(r),
-		groupID: chi.URLParam(r, "groupID"),
+	req := addChildrenGroupsReq{
+		id: chi.URLParam(r, "groupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -233,24 +125,60 @@ func DecodeUnassignMembersRequest(_ context.Context, r *http.Request) (interface
 	return req, nil
 }
 
-func DecodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	memberKind, err := apiutil.ReadStringQuery(r, api.MemberKindKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
+func decodeRemoveChildrenGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
-	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	req := removeChildrenGroupsReq{
+		id: chi.URLParam(r, "groupID"),
 	}
-	req := listMembersReq{
-		token:      apiutil.ExtractBearerToken(r),
-		groupID:    chi.URLParam(r, "groupID"),
-		permission: permission,
-		memberKind: memberKind,
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 	return req, nil
 }
 
+func decodeRemoveAllChildrenGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := removeAllChildrenGroupsReq{
+		id: chi.URLParam(r, "groupID"),
+	}
+	return req, nil
+}
+
+func decodeListChildrenGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	pm, err := decodePageMeta(r)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listChildrenGroupsReq{
+		id:       chi.URLParam(r, "groupID"),
+		PageMeta: pm,
+	}
+	return req, nil
+}
+
+func decodeHierarchyPageMeta(r *http.Request) (mggroups.HierarchyPageMeta, error) {
+	level, err := apiutil.ReadNumQuery[uint64](r, api.LevelKey, api.DefLevel)
+	if err != nil {
+		return mggroups.HierarchyPageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	tree, err := apiutil.ReadBoolQuery(r, api.TreeKey, false)
+	if err != nil {
+		return mggroups.HierarchyPageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	hierarchyDir, err := apiutil.ReadNumQuery[int64](r, api.DirKey, -1)
+	if err != nil {
+		return mggroups.HierarchyPageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return mggroups.HierarchyPageMeta{
+		Level:     level,
+		Direction: hierarchyDir,
+		Tree:      tree,
+	}, nil
+}
 func decodePageMeta(r *http.Request) (mggroups.PageMeta, error) {
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefGroupStatus)
 	if err != nil {
@@ -280,14 +208,23 @@ func decodePageMeta(r *http.Request) (mggroups.PageMeta, error) {
 	if err != nil {
 		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-
+	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
+	if err != nil {
+		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	listPerms, err := apiutil.ReadBoolQuery(r, api.ListPerms, api.DefListPerms)
+	if err != nil {
+		return mggroups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	ret := mggroups.PageMeta{
-		Offset:   offset,
-		Limit:    limit,
-		Name:     name,
-		ID:       id,
-		Metadata: meta,
-		Status:   st,
+		Offset:     offset,
+		Limit:      limit,
+		Name:       name,
+		ID:         id,
+		Metadata:   meta,
+		Status:     st,
+		Permission: permission,
+		ListPerms:  listPerms,
 	}
 	return ret, nil
 }

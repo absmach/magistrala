@@ -16,6 +16,8 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -28,7 +30,6 @@ const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
 var (
 	valid                = "valid"
-	invalid              = "invalid"
 	thingID              = testsutil.GenerateUUID(&testing.T{})
 	OwnerID              = testsutil.GenerateUUID(&testing.T{})
 	serial               = testsutil.GenerateUUID(&testing.T{})
@@ -36,43 +37,40 @@ var (
 	cert, sdkCert        = generateTestCerts(&testing.T{})
 	defOffset     uint64 = 0
 	defLimit      uint64 = 10
+	defRevoke            = "false"
 )
 
 func generateTestCerts(t *testing.T) (certs.Cert, sdk.Cert) {
 	expirationTime, err := time.Parse(time.RFC3339, "2032-01-01T00:00:00Z")
 	assert.Nil(t, err, fmt.Sprintf("failed to parse expiration time: %v", err))
 	c := certs.Cert{
-		OwnerID:        testsutil.GenerateUUID(&testing.T{}),
-		ThingID:        thingID,
-		ClientCert:     valid,
-		IssuingCA:      valid,
-		CAChain:        []string{valid},
-		ClientKey:      valid,
-		PrivateKeyType: valid,
-		Serial:         serial,
-		Expire:         expirationTime,
+		ThingID:      thingID,
+		SerialNumber: serial,
+		ExpiryTime:   expirationTime,
+		Certificate:  valid,
 	}
 	sc := sdk.Cert{
-		ThingID:    thingID,
-		CertSerial: serial,
-		ClientKey:  valid,
-		ClientCert: valid,
-		Expiration: expirationTime,
+		ThingID:      thingID,
+		SerialNumber: serial,
+		Key:          valid,
+		Certificate:  valid,
+		ExpiryTime:   expirationTime,
 	}
 
 	return c, sc
 }
 
-func setupCerts() (*httptest.Server, *mocks.Service) {
+func setupCerts() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 	logger := mglog.NewMock()
-	mux := httpapi.MakeHandler(svc, logger, instanceID)
+	authn := new(authnmocks.Authentication)
+	mux := httpapi.MakeHandler(svc, authn, logger, instanceID)
 
-	return httptest.NewServer(mux), svc
+	return httptest.NewServer(mux), svc, authn
 }
 
 func TestIssueCert(t *testing.T) {
-	ts, svc := setupCerts()
+	ts, svc, auth := setupCerts()
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -84,20 +82,22 @@ func TestIssueCert(t *testing.T) {
 	mgsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
-		desc     string
-		thingID  string
-		duration string
-		token    string
-		svcRes   certs.Cert
-		svcErr   error
-		err      errors.SDKError
+		desc            string
+		thingID         string
+		duration        string
+		token           string
+		session         mgauthn.Session
+		authenticateErr error
+		svcRes          certs.Cert
+		svcErr          error
+		err             errors.SDKError
 	}{
 		{
 			desc:     "create new cert with thing id and duration",
 			thingID:  thingID,
 			duration: ttl,
 			token:    validToken,
-			svcRes:   cert,
+			svcRes:   certs.Cert{SerialNumber: serial},
 			svcErr:   nil,
 			err:      nil,
 		},
@@ -144,16 +144,16 @@ func TestIssueCert(t *testing.T) {
 			token:    "",
 			svcRes:   certs.Cert{},
 			svcErr:   errors.Wrap(certs.ErrFailedCertCreation, svcerr.ErrAuthentication),
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:     "create new cert with invalid token",
-			thingID:  thingID,
-			duration: ttl,
-			token:    invalidToken,
-			svcRes:   certs.Cert{},
-			svcErr:   errors.Wrap(certs.ErrFailedCertCreation, svcerr.ErrAuthentication),
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, certs.ErrFailedCertCreation), http.StatusUnauthorized),
+			desc:            "create new cert with invalid token",
+			thingID:         thingID,
+			duration:        ttl,
+			token:           invalidToken,
+			svcRes:          certs.Cert{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "create new empty cert",
@@ -168,21 +168,26 @@ func TestIssueCert(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == valid {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("IssueCert", mock.Anything, tc.token, tc.thingID, tc.duration).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.IssueCert(tc.thingID, tc.duration, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				assert.Equal(t, sdkCert, resp)
+				assert.Equal(t, tc.svcRes.SerialNumber, resp.SerialNumber)
 				ok := svcCall.Parent.AssertCalled(t, "IssueCert", mock.Anything, tc.token, tc.thingID, tc.duration)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewCert(t *testing.T) {
-	ts, svc := setupCerts()
+	ts, svc, auth := setupCerts()
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -194,15 +199,17 @@ func TestViewCert(t *testing.T) {
 	mgsdk := sdk.NewSDK(sdkConf)
 
 	viewCertRes := sdkCert
-	viewCertRes.ClientKey = ""
+	viewCertRes.Key = ""
 
 	cases := []struct {
-		desc   string
-		certID string
-		token  string
-		svcRes certs.Cert
-		svcErr error
-		err    errors.SDKError
+		desc            string
+		certID          string
+		token           string
+		session         mgauthn.Session
+		authenticateErr error
+		svcRes          certs.Cert
+		svcErr          error
+		err             errors.SDKError
 	}{
 		{
 			desc:   "view existing cert",
@@ -221,12 +228,12 @@ func TestViewCert(t *testing.T) {
 			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
-			desc:   "view cert with invalid token",
-			certID: validID,
-			token:  invalidToken,
-			svcRes: certs.Cert{},
-			svcErr: svcerr.ErrAuthentication,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			desc:            "view cert with invalid token",
+			certID:          validID,
+			token:           invalidToken,
+			svcRes:          certs.Cert{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:   "view cert with empty token",
@@ -234,27 +241,32 @@ func TestViewCert(t *testing.T) {
 			token:  "",
 			svcRes: certs.Cert{},
 			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ViewCert", mock.Anything, tc.token, tc.certID).Return(tc.svcRes, tc.svcErr)
+			if tc.token == valid {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("ViewCert", mock.Anything, tc.certID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.ViewCert(tc.certID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.Equal(t, viewCertRes, resp)
-				ok := svcCall.Parent.AssertCalled(t, "ViewCert", mock.Anything, tc.token, tc.certID)
+				ok := svcCall.Parent.AssertCalled(t, "ViewCert", mock.Anything, tc.certID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewCertByThing(t *testing.T) {
-	ts, svc := setupCerts()
+	ts, svc, auth := setupCerts()
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -267,22 +279,24 @@ func TestViewCertByThing(t *testing.T) {
 
 	viewCertThingRes := sdk.CertSerials{
 		Certs: []sdk.Cert{{
-			CertSerial: serial,
+			SerialNumber: serial,
 		}},
 	}
 	cases := []struct {
-		desc    string
-		thingID string
-		token   string
-		svcRes  certs.Page
-		svcErr  error
-		err     errors.SDKError
+		desc            string
+		thingID         string
+		token           string
+		session         mgauthn.Session
+		authenticateErr error
+		svcRes          certs.CertPage
+		svcErr          error
+		err             errors.SDKError
 	}{
 		{
 			desc:    "view existing cert",
 			thingID: thingID,
 			token:   validToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{cert}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{{SerialNumber: serial}}},
 			svcErr:  nil,
 			err:     nil,
 		},
@@ -290,52 +304,57 @@ func TestViewCertByThing(t *testing.T) {
 			desc:    "view non-existent cert",
 			thingID: invalid,
 			token:   validToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{}},
 			svcErr:  errors.Wrap(svcerr.ErrNotFound, repoerr.ErrNotFound),
 			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrNotFound), http.StatusNotFound),
 		},
 		{
-			desc:    "view cert with invalid token",
-			thingID: thingID,
-			token:   invalidToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
-			svcErr:  svcerr.ErrAuthentication,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, svcerr.ErrAuthentication), http.StatusUnauthorized),
+			desc:            "view cert with invalid token",
+			thingID:         thingID,
+			token:           invalidToken,
+			svcRes:          certs.CertPage{Certificates: []certs.Cert{}},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:    "view cert with empty token",
 			thingID: thingID,
 			token:   "",
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{}},
 			svcErr:  nil,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:     errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:    "view cert with empty thing id",
 			thingID: "",
 			token:   validToken,
-			svcRes:  certs.Page{Certs: []certs.Cert{}},
+			svcRes:  certs.CertPage{Certificates: []certs.Cert{}},
 			svcErr:  nil,
 			err:     errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("ListSerials", mock.Anything, tc.token, tc.thingID, defOffset, defLimit).Return(tc.svcRes, tc.svcErr)
+			if tc.token == valid {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("ListSerials", mock.Anything, tc.thingID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit}).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.ViewCertByThing(tc.thingID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				assert.Equal(t, viewCertThingRes, resp)
-				ok := svcCall.Parent.AssertCalled(t, "ListSerials", mock.Anything, tc.token, tc.thingID, defOffset, defLimit)
+				ok := svcCall.Parent.AssertCalled(t, "ListSerials", mock.Anything, tc.thingID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestRevokeCert(t *testing.T) {
-	ts, svc := setupCerts()
+	ts, svc, auth := setupCerts()
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -347,12 +366,14 @@ func TestRevokeCert(t *testing.T) {
 	mgsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
-		desc    string
-		thingID string
-		token   string
-		svcResp certs.Revoke
-		svcErr  error
-		err     errors.SDKError
+		desc            string
+		thingID         string
+		token           string
+		session         mgauthn.Session
+		svcResp         certs.Revoke
+		authenticateErr error
+		svcErr          error
+		err             errors.SDKError
 	}{
 		{
 			desc:    "revoke cert successfully",
@@ -363,12 +384,12 @@ func TestRevokeCert(t *testing.T) {
 			err:     nil,
 		},
 		{
-			desc:    "revoke cert with invalid token",
-			thingID: thingID,
-			token:   invalidToken,
-			svcResp: certs.Revoke{},
-			svcErr:  errors.Wrap(svcerr.ErrAuthentication, svcerr.ErrAuthentication),
-			err:     errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:            "revoke cert with invalid token",
+			thingID:         thingID,
+			token:           invalidToken,
+			svcResp:         certs.Revoke{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:    "revoke non-existing cert",
@@ -384,7 +405,7 @@ func TestRevokeCert(t *testing.T) {
 			token:   "",
 			svcResp: certs.Revoke{},
 			svcErr:  nil,
-			err:     errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:     errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:    "revoke deleted cert",
@@ -397,6 +418,10 @@ func TestRevokeCert(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == valid {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("RevokeCert", mock.Anything, tc.token, tc.thingID).Return(tc.svcResp, tc.svcErr)
 			resp, err := mgsdk.RevokeCert(tc.thingID, tc.token)
 			assert.Equal(t, tc.err, err)
@@ -406,6 +431,7 @@ func TestRevokeCert(t *testing.T) {
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }

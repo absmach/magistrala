@@ -50,15 +50,10 @@ func (req addReq) validate() error {
 }
 
 type entityReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req entityReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -67,17 +62,12 @@ func (req entityReq) validate() error {
 }
 
 type updateReq struct {
-	token   string
 	id      string
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
 func (req updateReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -86,7 +76,6 @@ func (req updateReq) validate() error {
 }
 
 type updateCertReq struct {
-	token      string
 	thingID    string
 	ClientCert string `json:"client_cert"`
 	ClientKey  string `json:"client_key"`
@@ -94,10 +83,6 @@ type updateCertReq struct {
 }
 
 func (req updateCertReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.thingID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -124,17 +109,12 @@ func (req updateConnReq) validate() error {
 }
 
 type listReq struct {
-	token  string
 	filter bootstrap.Filter
 	offset uint64
 	limit  uint64
 }
 
 func (req listReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.limit > maxLimitSize {
 		return apiutil.ErrLimitSize
 	}

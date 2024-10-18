@@ -1,0 +1,100 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+run:
+  timeout: 10m
+  build-tags:
+    - "nats"
+
+issues:
+  max-issues-per-linter: 100
+  max-same-issues: 100
+  exclude:
+    - "string `Usage:\n` has (\\d+) occurrences, make it a constant"
+    - "string `For example:\n` has (\\d+) occurrences, make it a constant"
+  exclude-rules:
+    - path: cli/commands_test.go
+      linters:
+        - godot
+
+linters-settings:
+  importas:
+    no-unaliased: true
+    no-extra-aliases: false
+    alias:
+      - pkg: github.com/absmach/callhome/pkg/client
+        alias: chclient
+      - pkg: github.com/absmach/magistrala/logger
+        alias: mglog
+      - pkg: github.com/absmach/magistrala/pkg/errors/service
+        alias: svcerr
+      - pkg: github.com/absmach/magistrala/pkg/errors/repository
+        alias: repoerr
+      - pkg: github.com/absmach/magistrala/pkg/sdk/mocks
+        alias: sdkmocks
+
+  gocritic:
+    enabled-checks:
+      - importShadow
+      - httpNoBody
+      - paramTypeCombine
+      - emptyStringTest
+      - builtinShadow
+      - exposedSyncMutex
+    disabled-checks:
+      - appendAssign
+    enabled-tags:
+      - diagnostic
+    disabled-tags:
+      - performance
+      - style
+      - experimental
+      - opinionated
+  misspell:
+    ignore-words:
+      - "mosquitto"
+  stylecheck:
+    checks: ["-ST1000", "-ST1003", "-ST1020", "-ST1021", "-ST1022"]
+  goheader:
+    template: |-
+      Copyright (c) Abstract Machines
+      SPDX-License-Identifier: Apache-2.0
+
+linters:
+  disable-all: true
+  enable:
+    - gocritic
+    - gosimple
+    - errcheck
+    - govet
+    - unused
+    - goconst
+    - godot
+    - godox
+    - ineffassign
+    - misspell
+    - stylecheck
+    - whitespace
+    - gci
+    - gofmt
+    - goimports
+    - loggercheck
+    - goheader
+    - asasalint
+    - asciicheck
+    - bidichk
+    - contextcheck
+    - decorder
+    - dogsled
+    - errchkjson
+    - errname
+    - copyloopvar
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gofumpt
+    - goprintffuncname
+    - importas
+    - makezero
+    - mirror
+    - nakedret
+    - dupword

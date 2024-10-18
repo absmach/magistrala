@@ -1737,7 +1737,7 @@ func TestChangeStatus(t *testing.T) {
 	}
 }
 
-func TestUpdateRole(t *testing.T) {
+func TestUpdateClientRole(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
@@ -1787,7 +1787,7 @@ func TestUpdateRole(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			c.client.UpdatedAt = time.Now().UTC().Truncate(time.Millisecond)
 			c.client.UpdatedBy = testsutil.GenerateUUID(t)
-			expected, err := repo.UpdateRole(context.Background(), c.client)
+			expected, err := repo.UpdateClientRole(context.Background(), c.client)
 			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected %s to contain %s\n", err, c.err))
 			if err == nil {
 				assert.Equal(t, c.client.Role, expected.Role)

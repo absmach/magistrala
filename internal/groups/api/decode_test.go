@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
+	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,12 +34,9 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 			url:    "http://localhost:8080",
 			header: map[string][]string{},
 			resp: listGroupsReq{
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
+				PageMeta: groups.PageMeta{
+					Limit:      10,
 					Permission: api.DefPermission,
-					Direction:  -1,
 				},
 			},
 			err: nil,
@@ -49,25 +48,17 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 				"Authorization": {"Bearer 123"},
 			},
 			resp: listGroupsReq{
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Status: clients.EnabledStatus,
-						Offset: 10,
-						Limit:  10,
-						Name:   "random",
-						Metadata: clients.Metadata{
-							"test": "test",
-						},
-					},
-					Level:      2,
-					ParentID:   "random",
-					Permission: "random",
-					Direction:  -1,
+				PageMeta: groups.PageMeta{
+					Status:     clients.EnabledStatus,
+					Offset:     10,
+					Limit:      10,
+					Name:       "random",
 					ListPerms:  true,
+					Permission: "random",
+					Metadata: clients.Metadata{
+						"test": "test",
+					},
 				},
-				token:      "123",
-				tree:       true,
-				memberKind: "random",
 			},
 			err: nil,
 		},
@@ -135,7 +126,7 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 	}
 }
 
-func TestDecodeListParentsRequest(t *testing.T) {
+func TestDecodeRetrieveGroupHierarchy(t *testing.T) {
 	cases := []struct {
 		desc   string
 		url    string
@@ -147,14 +138,8 @@ func TestDecodeListParentsRequest(t *testing.T) {
 			desc:   "valid request with no parameters",
 			url:    "http://localhost:8080",
 			header: map[string][]string{},
-			resp: listGroupsReq{
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
-					Permission: api.DefPermission,
-					Direction:  +1,
-				},
+			resp: retrieveGroupHierarchyReq{
+				HierarchyPageMeta: groups.HierarchyPageMeta{},
 			},
 			err: nil,
 		},
@@ -164,24 +149,8 @@ func TestDecodeListParentsRequest(t *testing.T) {
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
-			resp: listGroupsReq{
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Status: clients.EnabledStatus,
-						Offset: 10,
-						Limit:  10,
-						Name:   "random",
-						Metadata: clients.Metadata{
-							"test": "test",
-						},
-					},
-					Level:      2,
-					Permission: "random",
-					Direction:  +1,
-					ListPerms:  true,
-				},
-				token: "123",
-				tree:  true,
+			resp: retrieveGroupHierarchyReq{
+				HierarchyPageMeta: groups.HierarchyPageMeta{},
 			},
 			err: nil,
 		},
@@ -225,7 +194,7 @@ func TestDecodeListParentsRequest(t *testing.T) {
 			URL:    parsedURL,
 			Header: tc.header,
 		}
-		resp, err := DecodeListParentsRequest(context.Background(), req)
+		resp, err := decodeRetrieveGroupHierarchy(context.Background(), req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 	}
@@ -244,12 +213,9 @@ func TestDecodeListChildrenRequest(t *testing.T) {
 			url:    "http://localhost:8080",
 			header: map[string][]string{},
 			resp: listGroupsReq{
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
+				PageMeta: groups.PageMeta{
+					Limit:      10,
 					Permission: api.DefPermission,
-					Direction:  -1,
 				},
 			},
 			err: nil,
@@ -261,23 +227,17 @@ func TestDecodeListChildrenRequest(t *testing.T) {
 				"Authorization": {"Bearer 123"},
 			},
 			resp: listGroupsReq{
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Status: clients.EnabledStatus,
-						Offset: 10,
-						Limit:  10,
-						Name:   "random",
-						Metadata: clients.Metadata{
-							"test": "test",
-						},
+				PageMeta: groups.PageMeta{
+					Status: clients.EnabledStatus,
+					Offset: 10,
+					Limit:  10,
+					Name:   "random",
+					Metadata: clients.Metadata{
+						"test": "test",
 					},
-					Level:      2,
 					Permission: "random",
-					Direction:  -1,
 					ListPerms:  true,
 				},
-				token: "123",
-				tree:  true,
 			},
 			err: nil,
 		},
@@ -321,65 +281,7 @@ func TestDecodeListChildrenRequest(t *testing.T) {
 			URL:    parsedURL,
 			Header: tc.header,
 		}
-		resp, err := DecodeListChildrenRequest(context.Background(), req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-	}
-}
-
-func TestDecodeListMembersRequest(t *testing.T) {
-	cases := []struct {
-		desc   string
-		url    string
-		header map[string][]string
-		resp   interface{}
-		err    error
-	}{
-		{
-			desc:   "valid request with no parameters",
-			url:    "http://localhost:8080",
-			header: map[string][]string{},
-			resp: listMembersReq{
-				permission: api.DefPermission,
-			},
-			err: nil,
-		},
-		{
-			desc: "valid request with all parameters",
-			url:  "http://localhost:8080?member_kind=random&permission=random",
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-			},
-			resp: listMembersReq{
-				token:      "123",
-				memberKind: "random",
-				permission: "random",
-			},
-			err: nil,
-		},
-		{
-			desc: "valid request with invalid permission",
-			url:  "http://localhost:8080?permission=random&permission=random",
-			resp: nil,
-			err:  apiutil.ErrValidation,
-		},
-		{
-			desc: "valid request with invalid member kind",
-			url:  "http://localhost:8080?member_kind=random&member_kind=random",
-			resp: nil,
-			err:  apiutil.ErrValidation,
-		},
-	}
-
-	for _, tc := range cases {
-		parsedURL, err := url.Parse(tc.url)
-		assert.NoError(t, err)
-
-		req := &http.Request{
-			URL:    parsedURL,
-			Header: tc.header,
-		}
-		resp, err := DecodeListMembersRequest(context.Background(), req)
+		resp, err := decodeListChildrenGroupsRequest(context.Background(), req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 	}
@@ -483,7 +385,6 @@ func TestDecodeGroupCreate(t *testing.T) {
 					Name:        "random",
 					Description: "random",
 				},
-				token: "123",
 			},
 			err: nil,
 		},
@@ -537,7 +438,6 @@ func TestDecodeGroupUpdate(t *testing.T) {
 			resp: updateGroupReq{
 				Name:        "random",
 				Description: "random",
-				token:       "123",
 			},
 			err: nil,
 		},
@@ -585,10 +485,8 @@ func TestDecodeGroupRequest(t *testing.T) {
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
-			resp: groupReq{
-				token: "123",
-			},
-			err: nil,
+			resp: groupReq{},
+			err:  nil,
 		},
 		{
 			desc: "empty token",
@@ -607,40 +505,6 @@ func TestDecodeGroupRequest(t *testing.T) {
 	}
 }
 
-func TestDecodeGroupPermsRequest(t *testing.T) {
-	cases := []struct {
-		desc   string
-		header map[string][]string
-		resp   interface{}
-		err    error
-	}{
-		{
-			desc: "valid request",
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-			},
-			resp: groupPermsReq{
-				token: "123",
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			resp: groupPermsReq{},
-			err:  nil,
-		},
-	}
-
-	for _, tc := range cases {
-		req, err := http.NewRequest(http.MethodGet, "http://localhost:8080", http.NoBody)
-		assert.NoError(t, err)
-		req.Header = tc.header
-		resp, err := DecodeGroupPermsRequest(context.Background(), req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-	}
-}
-
 func TestDecodeChangeGroupStatus(t *testing.T) {
 	cases := []struct {
 		desc   string
@@ -653,10 +517,8 @@ func TestDecodeChangeGroupStatus(t *testing.T) {
 			header: map[string][]string{
 				"Authorization": {"Bearer 123"},
 			},
-			resp: changeGroupStatusReq{
-				token: "123",
-			},
-			err: nil,
+			resp: changeGroupStatusReq{},
+			err:  nil,
 		},
 		{
 			desc: "empty token",
@@ -669,116 +531,303 @@ func TestDecodeChangeGroupStatus(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "http://localhost:8080", http.NoBody)
 		assert.NoError(t, err)
 		req.Header = tc.header
-		resp, err := DecodeChangeGroupStatus(context.Background(), req)
+		resp, err := DecodeChangeGroupStatusRequest(context.Background(), req)
 		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
 	}
 }
 
-func TestDecodeAssignMembersRequest(t *testing.T) {
-	cases := []struct {
-		desc   string
-		body   string
-		header map[string][]string
-		resp   interface{}
-		err    error
-	}{
-		{
-			desc: "valid request",
-			body: `{"member_kind": "random", "members": ["random"]}`,
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-				"Content-Type":  {api.ContentType},
-			},
-			resp: assignReq{
-				MemberKind: "random",
-				Members:    []string{"random"},
-				token:      "123",
-			},
-			err: nil,
-		},
-		{
-			desc: "invalid content type",
-			body: `{"member_kind": "random", "members": ["random"]}`,
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-				"Content-Type":  {"text/plain"},
-			},
-			resp: nil,
-			err:  apiutil.ErrUnsupportedContentType,
-		},
-		{
-			desc: "invalid request body",
-			body: `data`,
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-				"Content-Type":  {api.ContentType},
-			},
-			resp: nil,
-			err:  errors.ErrMalformedEntity,
-		},
+func TestDecodeChangeGroupStatusRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
 	}
-
-	for _, tc := range cases {
-		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080", strings.NewReader(tc.body))
-		assert.NoError(t, err)
-		req.Header = tc.header
-		resp, err := DecodeAssignMembersRequest(context.Background(), req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DecodeChangeGroupStatusRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecodeChangeGroupStatusRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DecodeChangeGroupStatusRequest() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
-func TestDecodeUnassignMembersRequest(t *testing.T) {
-	cases := []struct {
-		desc   string
-		body   string
-		header map[string][]string
-		resp   interface{}
-		err    error
-	}{
-		{
-			desc: "valid request",
-			body: `{"member_kind": "random", "members": ["random"]}`,
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-				"Content-Type":  {api.ContentType},
-			},
-			resp: unassignReq{
-				MemberKind: "random",
-				Members:    []string{"random"},
-				token:      "123",
-			},
-			err: nil,
-		},
-		{
-			desc: "invalid content type",
-			body: `{"member_kind": "random", "members": ["random"]}`,
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-				"Content-Type":  {"text/plain"},
-			},
-			resp: nil,
-			err:  apiutil.ErrUnsupportedContentType,
-		},
-		{
-			desc: "invalid request body",
-			body: `data`,
-			header: map[string][]string{
-				"Authorization": {"Bearer 123"},
-				"Content-Type":  {api.ContentType},
-			},
-			resp: nil,
-			err:  errors.ErrMalformedEntity,
-		},
+func Test_decodeRetrieveGroupHierarchy(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
 	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeRetrieveGroupHierarchy(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeRetrieveGroupHierarchy() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeRetrieveGroupHierarchy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
-	for _, tc := range cases {
-		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080", strings.NewReader(tc.body))
-		assert.NoError(t, err)
-		req.Header = tc.header
-		resp, err := DecodeUnassignMembersRequest(context.Background(), req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+func Test_decodeAddParentGroupRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeAddParentGroupRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeAddParentGroupRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeAddParentGroupRequest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodeRemoveParentGroupRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeRemoveParentGroupRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeRemoveParentGroupRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeRemoveParentGroupRequest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodeViewParentGroupRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeViewParentGroupRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeViewParentGroupRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeViewParentGroupRequest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodeAddChildrenGroupsRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeAddChildrenGroupsRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeAddChildrenGroupsRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeAddChildrenGroupsRequest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodeRemoveChildrenGroupsRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeRemoveChildrenGroupsRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeRemoveChildrenGroupsRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeRemoveChildrenGroupsRequest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodeRemoveAllChildrenGroupsRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeRemoveAllChildrenGroupsRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeRemoveAllChildrenGroupsRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeRemoveAllChildrenGroupsRequest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodeListChildrenGroupsRequest(t *testing.T) {
+	type args struct {
+		in0 context.Context
+		r   *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeListChildrenGroupsRequest(tt.args.in0, tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeListChildrenGroupsRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeListChildrenGroupsRequest() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodeHierarchyPageMeta(t *testing.T) {
+	type args struct {
+		r *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    mggroups.HierarchyPageMeta
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodeHierarchyPageMeta(tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodeHierarchyPageMeta() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodeHierarchyPageMeta() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_decodePageMeta(t *testing.T) {
+	type args struct {
+		r *http.Request
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    mggroups.PageMeta
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := decodePageMeta(tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("decodePageMeta() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("decodePageMeta() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

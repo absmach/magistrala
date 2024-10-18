@@ -37,9 +37,9 @@ var msg = messaging.Message{
 	Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
 }
 
-func newService() (ws.Service, *mocks.PubSub, *thmocks.AuthzServiceClient) {
+func newService() (ws.Service, *mocks.PubSub, *thmocks.ThingsServiceClient) {
 	pubsub := new(mocks.PubSub)
-	things := new(thmocks.AuthzServiceClient)
+	things := new(thmocks.ThingsServiceClient)
 
 	return ws.New(things, pubsub), pubsub, things
 }
@@ -115,7 +115,7 @@ func TestSubscribe(t *testing.T) {
 			Handler: c,
 		}
 		repocall := pubsub.On("Subscribe", mock.Anything, subConfig).Return(tc.err)
-		repocall1 := things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthorizeRes{Authorized: true, Id: thingID}, nil)
+		repocall1 := things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: thingID}, nil)
 		err := svc.Subscribe(context.Background(), tc.thingKey, tc.chanID, tc.subtopic, c)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repocall1.Parent.AssertCalled(t, "Authorize", mock.Anything, mock.Anything)

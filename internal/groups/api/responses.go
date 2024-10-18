@@ -17,8 +17,14 @@ var (
 	_ magistrala.Response = (*changeStatusRes)(nil)
 	_ magistrala.Response = (*viewGroupRes)(nil)
 	_ magistrala.Response = (*updateGroupRes)(nil)
-	_ magistrala.Response = (*assignRes)(nil)
-	_ magistrala.Response = (*unassignRes)(nil)
+	_ magistrala.Response = (*retrieveGroupHierarchyRes)(nil)
+	_ magistrala.Response = (*addParentGroupRes)(nil)
+	_ magistrala.Response = (*removeParentGroupRes)(nil)
+	_ magistrala.Response = (*viewParentGroupRes)(nil)
+	_ magistrala.Response = (*addChildrenGroupsRes)(nil)
+	_ magistrala.Response = (*removeChildrenGroupsRes)(nil)
+	_ magistrala.Response = (*removeAllChildrenGroupsRes)(nil)
+	_ magistrala.Response = (*listChildrenGroupsRes)(nil)
 )
 
 type viewGroupRes struct {
@@ -34,22 +40,6 @@ func (res viewGroupRes) Headers() map[string]string {
 }
 
 func (res viewGroupRes) Empty() bool {
-	return false
-}
-
-type viewGroupPermsRes struct {
-	Permissions []string `json:"permissions"`
-}
-
-func (res viewGroupPermsRes) Code() int {
-	return http.StatusOK
-}
-
-func (res viewGroupPermsRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res viewGroupPermsRes) Empty() bool {
 	return false
 }
 
@@ -89,7 +79,6 @@ type pageRes struct {
 	Limit  uint64 `json:"limit,omitempty"`
 	Offset uint64 `json:"offset"`
 	Total  uint64 `json:"total"`
-	Level  uint64 `json:"level,omitempty"`
 }
 
 func (res groupPageRes) Code() int {
@@ -101,23 +90,6 @@ func (res groupPageRes) Headers() map[string]string {
 }
 
 func (res groupPageRes) Empty() bool {
-	return false
-}
-
-type channelPageRes struct {
-	pageRes
-	Channels []viewGroupRes `json:"channels"`
-}
-
-func (res channelPageRes) Code() int {
-	return http.StatusOK
-}
-
-func (res channelPageRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res channelPageRes) Empty() bool {
 	return false
 }
 
@@ -153,63 +125,6 @@ func (res changeStatusRes) Empty() bool {
 	return false
 }
 
-type assignRes struct {
-	assigned bool
-}
-
-func (res assignRes) Code() int {
-	if res.assigned {
-		return http.StatusCreated
-	}
-
-	return http.StatusBadRequest
-}
-
-func (res assignRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res assignRes) Empty() bool {
-	return true
-}
-
-type unassignRes struct {
-	unassigned bool
-}
-
-func (res unassignRes) Code() int {
-	if res.unassigned {
-		return http.StatusCreated
-	}
-
-	return http.StatusBadRequest
-}
-
-func (res unassignRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res unassignRes) Empty() bool {
-	return true
-}
-
-type listMembersRes struct {
-	pageRes
-	Members []groups.Member `json:"members"`
-}
-
-func (res listMembersRes) Code() int {
-	return http.StatusOK
-}
-
-func (res listMembersRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res listMembersRes) Empty() bool {
-	return false
-}
-
 type deleteGroupRes struct {
 	deleted bool
 }
@@ -228,4 +143,133 @@ func (res deleteGroupRes) Headers() map[string]string {
 
 func (res deleteGroupRes) Empty() bool {
 	return true
+}
+
+type retrieveGroupHierarchyRes struct {
+	Level     uint64         `json:"level"`
+	Direction int64          `json:"direction"`
+	Groups    []viewGroupRes `json:"groups"`
+}
+
+func (res retrieveGroupHierarchyRes) Code() int {
+	return http.StatusOK
+}
+
+func (res retrieveGroupHierarchyRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res retrieveGroupHierarchyRes) Empty() bool {
+	return false
+}
+
+type addParentGroupRes struct {
+}
+
+func (res addParentGroupRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res addParentGroupRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res addParentGroupRes) Empty() bool {
+	return true
+}
+
+type removeParentGroupRes struct {
+}
+
+func (res removeParentGroupRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res removeParentGroupRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res removeParentGroupRes) Empty() bool {
+	return true
+}
+
+type viewParentGroupRes struct {
+	groups.Group `json:",inline"`
+}
+
+func (res viewParentGroupRes) Code() int {
+	if res.ID == "" {
+		return http.StatusNoContent
+	}
+	return http.StatusOK
+}
+
+func (res viewParentGroupRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res viewParentGroupRes) Empty() bool {
+	return res.ID == ""
+}
+
+type addChildrenGroupsRes struct {
+}
+
+func (res addChildrenGroupsRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res addChildrenGroupsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res addChildrenGroupsRes) Empty() bool {
+	return true
+}
+
+type removeChildrenGroupsRes struct {
+}
+
+func (res removeChildrenGroupsRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res removeChildrenGroupsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res removeChildrenGroupsRes) Empty() bool {
+	return true
+}
+
+type removeAllChildrenGroupsRes struct {
+}
+
+func (res removeAllChildrenGroupsRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res removeAllChildrenGroupsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res removeAllChildrenGroupsRes) Empty() bool {
+	return true
+}
+
+type listChildrenGroupsRes struct {
+	pageRes
+	Groups []viewGroupRes `json:"groups"`
+}
+
+func (res listChildrenGroupsRes) Code() int {
+	return http.StatusOK
+}
+
+func (res listChildrenGroupsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res listChildrenGroupsRes) Empty() bool {
+	return false
 }

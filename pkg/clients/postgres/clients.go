@@ -69,7 +69,7 @@ func (repo *Repository) UpdateSecret(ctx context.Context, client clients.Client)
 	return repo.update(ctx, client, q)
 }
 
-func (repo *Repository) UpdateRole(ctx context.Context, client clients.Client) (clients.Client, error) {
+func (repo *Repository) UpdateClientRole(ctx context.Context, client clients.Client) (clients.Client, error) {
 	q := `UPDATE clients SET role = :role, updated_at = :updated_at, updated_by = :updated_by
         WHERE id = :id AND status = :status
         RETURNING id, name, tags, identity, metadata, COALESCE(domain_id, '') AS domain_id, status, role, created_at, updated_at, updated_by`

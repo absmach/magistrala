@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -24,44 +25,50 @@ const (
 	contentType = "application/json"
 	offsetKey   = "offset"
 	limitKey    = "limit"
+	revokeKey   = "revoked"
+	defRevoke   = "false"
 	defOffset   = 0
 	defLimit    = 10
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc certs.Service, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc certs.Service, authn mgauthn.Authentication, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	r := chi.NewRouter()
 
-	r.Route("/certs", func(r chi.Router) {
-		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			issueCert(svc),
-			decodeCerts,
+	r.Group(func(r chi.Router) {
+		r.Use(api.AuthenticateMiddleware(authn))
+
+		r.Route("/certs", func(r chi.Router) {
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				issueCert(svc),
+				decodeCerts,
+				api.EncodeResponse,
+				opts...,
+			), "issue").ServeHTTP)
+			r.Get("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+				viewCert(svc),
+				decodeViewCert,
+				api.EncodeResponse,
+				opts...,
+			), "view").ServeHTTP)
+			r.Delete("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+				revokeCert(svc),
+				decodeRevokeCerts,
+				api.EncodeResponse,
+				opts...,
+			), "revoke").ServeHTTP)
+		})
+		r.Get("/serials/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+			listSerials(svc),
+			decodeListCerts,
 			api.EncodeResponse,
 			opts...,
-		), "issue").ServeHTTP)
-		r.Get("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
-			viewCert(svc),
-			decodeViewCert,
-			api.EncodeResponse,
-			opts...,
-		), "view").ServeHTTP)
-		r.Delete("/{certID}", otelhttp.NewHandler(kithttp.NewServer(
-			revokeCert(svc),
-			decodeRevokeCerts,
-			api.EncodeResponse,
-			opts...,
-		), "revoke").ServeHTTP)
+		), "list_serials").ServeHTTP)
 	})
-	r.Get("/serials/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
-		listSerials(svc),
-		decodeListCerts,
-		api.EncodeResponse,
-		opts...,
-	), "list_serials").ServeHTTP)
 
 	r.Handle("/metrics", promhttp.Handler())
 	r.Get("/health", magistrala.Health("certs", instanceID))
@@ -78,19 +85,24 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	rv, err := apiutil.ReadStringQuery(r, revokeKey, defRevoke)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	req := listReq{
-		token:   apiutil.ExtractBearerToken(r),
 		thingID: chi.URLParam(r, "thingID"),
-		limit:   l,
-		offset:  o,
+		pm: certs.PageMetadata{
+			Offset:  o,
+			Limit:   l,
+			Revoked: rv,
+		},
 	}
 	return req, nil
 }
 
 func decodeViewCert(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewReq{
-		token:    apiutil.ExtractBearerToken(r),
 		serialID: chi.URLParam(r, "certID"),
 	}
 

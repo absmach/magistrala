@@ -15,12 +15,13 @@ volumes:
   magistrala-mqtt-broker-volume:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
+  magistrala-domains-db-volume:
   magistrala-invitations-db-volume:
   magistrala-ui-db-volume:
 
 services:
   spicedb:
-    image: "authzed/spicedb:v1.30.0"
+    image: "authzed/spicedb:v1.37.0"
     container_name: magistrala-spicedb
     command: "serve"
     restart: "always"
@@ -38,7 +39,7 @@ services:
       - spicedb-migrate
 
   spicedb-migrate:
-    image: "authzed/spicedb:v1.30.0"
+    image: "authzed/spicedb:v1.37.0"
     container_name: magistrala-spicedb-migrate
     command: "migrate head"
     restart: "on-failure"
@@ -151,6 +152,90 @@ services:
       - type: bind
         source: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
         target: /auth-grpc-client-ca${MG_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  domains-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-domains-db
+    restart: on-failure
+    ports:
+      - 6005:5432
+    environment:
+      POSTGRES_USER: ${MG_DOMAINS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_DOMAINS_DB_PASS}
+      POSTGRES_DB: ${MG_DOMAINS_DB_NAME}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-domains-db-volume:/var/lib/postgresql/data
+
+  domains:
+    image: magistrala/domains:${MG_RELEASE_TAG}
+    container_name: magistrala-domains
+    depends_on:
+      - domains-db
+      - spicedb
+    expose:
+      - ${MG_DOMAINS_GRPC_PORT}
+    restart: on-failure
+    environment:
+      MG_DOMAINS_LOG_LEVEL: ${MG_DOMAINS_LOG_LEVEL}
+      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      MG_DOMAINS_HTTP_HOST: ${MG_DOMAINS_HTTP_HOST}
+      MG_DOMAINS_HTTP_PORT: ${MG_DOMAINS_HTTP_PORT}
+      MG_DOMAINS_HTTP_SERVER_CERT: ${MG_DOMAINS_HTTP_SERVER_CERT}
+      MG_DOMAINS_HTTP_SERVER_KEY: ${MG_DOMAINS_HTTP_SERVER_KEY}
+      MG_DOMAINS_GRPC_HOST: ${MG_DOMAINS_GRPC_HOST}
+      MG_DOMAINS_GRPC_PORT: ${MG_DOMAINS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      MG_DOMAINS_GRPC_SERVER_CERT: ${MG_DOMAINS_GRPC_SERVER_CERT:+/auth-grpc-server.crt}
+      MG_DOMAINS_GRPC_SERVER_KEY: ${MG_DOMAINS_GRPC_SERVER_KEY:+/auth-grpc-server.key}
+      MG_DOMAINS_GRPC_SERVER_CA_CERTS: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_DOMAINS_GRPC_CLIENT_CA_CERTS: ${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:+/auth-grpc-client-ca.crt}
+      MG_DOMAINS_DB_HOST: ${MG_DOMAINS_DB_HOST}
+      MG_DOMAINS_DB_PORT: ${MG_DOMAINS_DB_PORT}
+      MG_DOMAINS_DB_USER: ${MG_DOMAINS_DB_USER}
+      MG_DOMAINS_DB_PASS: ${MG_DOMAINS_DB_PASS}
+      MG_DOMAINS_DB_NAME: ${MG_DOMAINS_DB_NAME}
+      MG_DOMAINS_DB_SSL_MODE: ${MG_DOMAINS_DB_SSL_MODE}
+      MG_DOMAINS_DB_SSL_CERT: ${MG_DOMAINS_DB_SSL_CERT}
+      MG_DOMAINS_DB_SSL_KEY: ${MG_DOMAINS_DB_SSL_KEY}
+      MG_DOMAINS_DB_SSL_ROOT_CERT: ${MG_DOMAINS_DB_SSL_ROOT_CERT}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_AUTH_ADAPTER_INSTANCE_ID: ${MG_DOMAINS_ADAPTER_INSTANCE_ID}
+      MG_ES_URL: ${MG_ES_URL}
+    ports:
+      - ${MG_DOMAINS_HTTP_PORT}:${MG_DOMAINS_HTTP_PORT}
+      - ${MG_DOMAINS_GRPC_PORT}:${MG_DOMAINS_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      # Auth gRPC mTLS server certificates
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /auth-grpc-server${MG_DOMAINS_GRPC_SERVER_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /auth-grpc-server${MG_DOMAINS_GRPC_SERVER_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /auth-grpc-server-ca${MG_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /auth-grpc-client-ca${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -335,6 +420,9 @@ services:
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
     ports:
       - ${MG_THINGS_HTTP_PORT}:${MG_THINGS_HTTP_PORT}
       - ${MG_THINGS_AUTH_GRPC_PORT}:${MG_THINGS_AUTH_GRPC_PORT}
@@ -451,6 +539,9 @@ services:
       MG_OAUTH_UI_ERROR_URL: ${MG_OAUTH_UI_ERROR_URL}
       MG_USERS_DELETE_INTERVAL: ${MG_USERS_DELETE_INTERVAL}
       MG_USERS_DELETE_AFTER: ${MG_USERS_DELETE_AFTER}
+      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
     ports:
       - ${MG_USERS_HTTP_PORT}:${MG_USERS_HTTP_PORT}
     networks:

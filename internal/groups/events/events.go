@@ -11,22 +11,24 @@ import (
 )
 
 var (
-	groupPrefix          = "group."
-	groupCreate          = groupPrefix + "create"
-	groupUpdate          = groupPrefix + "update"
-	groupChangeStatus    = groupPrefix + "change_status"
-	groupView            = groupPrefix + "view"
-	groupViewPerms       = groupPrefix + "view_perms"
-	groupList            = groupPrefix + "list"
-	groupListMemberships = groupPrefix + "list_by_user"
-	groupRemove          = groupPrefix + "remove"
-	groupAssign          = groupPrefix + "assign"
-	groupUnassign        = groupPrefix + "unassign"
+	groupPrefix                  = "group."
+	groupCreate                  = groupPrefix + "create"
+	groupUpdate                  = groupPrefix + "update"
+	groupChangeStatus            = groupPrefix + "change_status"
+	groupView                    = groupPrefix + "view"
+	groupList                    = groupPrefix + "list"
+	groupRemove                  = groupPrefix + "remove"
+	groupRetrieveGroupHierarchy  = groupPrefix + "retrieve_group_hierarchy"
+	groupAddParentGroup          = groupPrefix + "add_parent_group"
+	groupRemoveParentGroup       = groupPrefix + "remove_parent_group"
+	groupViewParentGroup         = groupPrefix + "view_parent_group"
+	groupAddChildrenGroups       = groupPrefix + "add_children_groups"
+	groupRemoveChildrenGroups    = groupPrefix + "remove_children_groups"
+	groupRemoveAllChildrenGroups = groupPrefix + "remove_all_children_groups"
+	groupListChildrenGroups      = groupPrefix + "list_children_groups"
 )
 
 var (
-	_ events.Event = (*assignEvent)(nil)
-	_ events.Event = (*unassignEvent)(nil)
 	_ events.Event = (*createGroupEvent)(nil)
 	_ events.Event = (*updateGroupEvent)(nil)
 	_ events.Event = (*changeStatusGroupEvent)(nil)
@@ -34,42 +36,15 @@ var (
 	_ events.Event = (*deleteGroupEvent)(nil)
 	_ events.Event = (*viewGroupEvent)(nil)
 	_ events.Event = (*listGroupEvent)(nil)
-	_ events.Event = (*listGroupMembershipEvent)(nil)
+	_ events.Event = (*addParentGroupEvent)(nil)
+	_ events.Event = (*removeParentGroupEvent)(nil)
+	_ events.Event = (*viewParentGroupEvent)(nil)
+	_ events.Event = (*addChildrenGroupsEvent)(nil)
+	_ events.Event = (*removeChildrenGroupsEvent)(nil)
+	_ events.Event = (*removeAllChildrenGroupsEvent)(nil)
+	_ events.Event = (*listChildrenGroupsEvent)(nil)
+	_ events.Event = (*retrieveGroupHierarchyEvent)(nil)
 )
-
-type assignEvent struct {
-	memberIDs  []string
-	relation   string
-	memberKind string
-	groupID    string
-}
-
-func (cge assignEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"operation":  groupAssign,
-		"member_ids": cge.memberIDs,
-		"relation":   cge.relation,
-		"memberKind": cge.memberKind,
-		"group_id":   cge.groupID,
-	}, nil
-}
-
-type unassignEvent struct {
-	memberIDs  []string
-	relation   string
-	memberKind string
-	groupID    string
-}
-
-func (cge unassignEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"operation":  groupUnassign,
-		"member_ids": cge.memberIDs,
-		"relation":   cge.relation,
-		"memberKind": cge.memberKind,
-		"group_id":   cge.groupID,
-	}, nil
-}
 
 type createGroupEvent struct {
 	groups.Group
@@ -202,19 +177,8 @@ func (vge viewGroupEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
-type viewGroupPermsEvent struct {
-	permissions []string
-}
-
-func (vgpe viewGroupPermsEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"operation":   groupViewPerms,
-		"permissions": vgpe.permissions,
-	}, nil
-}
-
 type listGroupEvent struct {
-	groups.Page
+	groups.PageMeta
 }
 
 func (lge listGroupEvent) Encode() (map[string]interface{}, error) {
@@ -244,21 +208,6 @@ func (lge listGroupEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
-type listGroupMembershipEvent struct {
-	groupID    string
-	permission string
-	memberKind string
-}
-
-func (lgme listGroupMembershipEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"operation":   groupListMemberships,
-		"id":          lgme.groupID,
-		"permission":  lgme.permission,
-		"member_kind": lgme.memberKind,
-	}, nil
-}
-
 type deleteGroupEvent struct {
 	id string
 }
@@ -268,4 +217,123 @@ func (rge deleteGroupEvent) Encode() (map[string]interface{}, error) {
 		"operation": groupRemove,
 		"id":        rge.id,
 	}, nil
+}
+
+type retrieveGroupHierarchyEvent struct {
+	id string
+	groups.HierarchyPageMeta
+}
+
+func (vcge retrieveGroupHierarchyEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation": groupRetrieveGroupHierarchy,
+		"id":        vcge.id,
+		"level":     vcge.Level,
+		"direction": vcge.Direction,
+		"tree":      vcge.Tree,
+	}
+	return val, nil
+}
+
+type addParentGroupEvent struct {
+	id       string
+	parentID string
+}
+
+func (apge addParentGroupEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": groupAddParentGroup,
+		"id":        apge.id,
+		"parent_id": apge.parentID,
+	}, nil
+}
+
+type removeParentGroupEvent struct {
+	id string
+}
+
+func (rpge removeParentGroupEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": groupRemoveParentGroup,
+		"id":        rpge.id,
+	}, nil
+}
+
+type viewParentGroupEvent struct {
+	id string
+}
+
+func (vpge viewParentGroupEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": groupViewParentGroup,
+		"id":        vpge.id,
+	}, nil
+}
+
+type addChildrenGroupsEvent struct {
+	id          string
+	childrenIDs []string
+}
+
+func (acge addChildrenGroupsEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation":   groupAddChildrenGroups,
+		"id":          acge.id,
+		"childre_ids": acge.childrenIDs,
+	}, nil
+}
+
+type removeChildrenGroupsEvent struct {
+	id          string
+	childrenIDs []string
+}
+
+func (rcge removeChildrenGroupsEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation":    groupRemoveChildrenGroups,
+		"id":           rcge.id,
+		"children_ids": rcge.childrenIDs,
+	}, nil
+}
+
+type removeAllChildrenGroupsEvent struct {
+	id string
+}
+
+func (racge removeAllChildrenGroupsEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": groupRemoveAllChildrenGroups,
+		"id":        racge.id,
+	}, nil
+}
+
+type listChildrenGroupsEvent struct {
+	id string
+	groups.PageMeta
+}
+
+func (vcge listChildrenGroupsEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation": groupListChildrenGroups,
+		"id":        vcge.id,
+		"total":     vcge.Total,
+		"offset":    vcge.Offset,
+		"limit":     vcge.Limit,
+	}
+	if vcge.Name != "" {
+		val["name"] = vcge.Name
+	}
+	if vcge.DomainID != "" {
+		val["domain_id"] = vcge.DomainID
+	}
+	if vcge.Tag != "" {
+		val["tag"] = vcge.Tag
+	}
+	if vcge.Metadata != nil {
+		val["metadata"] = vcge.Metadata
+	}
+	if vcge.Status.String() != "" {
+		val["status"] = vcge.Status.String()
+	}
+	return val, nil
 }

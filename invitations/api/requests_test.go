@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +27,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 				token:    valid,
 				UserID:   valid,
 				DomainID: valid,
-				Relation: auth.DomainRelation,
+				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
 			err: nil,
@@ -38,7 +38,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 				token:    "",
 				UserID:   valid,
 				DomainID: valid,
-				Relation: auth.DomainRelation,
+				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
 			err: apiutil.ErrBearerToken,
@@ -49,7 +49,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 				token:    valid,
 				UserID:   "",
 				DomainID: valid,
-				Relation: auth.DomainRelation,
+				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
 			err: apiutil.ErrMissingID,
@@ -60,7 +60,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 				token:    valid,
 				UserID:   valid,
 				DomainID: "",
-				Relation: auth.DomainRelation,
+				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
 			err: errMissingDomain,

@@ -35,8 +35,8 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV }}
-          directory: ./coverage/
-          name: codecov-umbrella
+          files: ./coverage/*.out
+          codecov_yml_path: tools/codecov.yml
           verbose: true
 
       - name: Set up Docker Build

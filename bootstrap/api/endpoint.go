@@ -7,8 +7,11 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -17,6 +20,11 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		req := request.(addReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		channels := []bootstrap.Channel{}
@@ -36,7 +44,7 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			Content:     req.Content,
 		}
 
-		saved, err := svc.Add(ctx, req.token, config)
+		saved, err := svc.Add(ctx, session, req.token, config)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +65,12 @@ func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		cfg, err := svc.UpdateCert(ctx, req.token, req.thingID, req.ClientCert, req.ClientKey, req.CACert)
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		cfg, err := svc.UpdateCert(ctx, session, req.thingID, req.ClientCert, req.ClientKey, req.CACert)
 		if err != nil {
 			return nil, err
 		}
@@ -76,12 +89,16 @@ func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(entityReq)
-
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		config, err := svc.View(ctx, req.token, req.id)
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		config, err := svc.View(ctx, session, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -113,9 +130,13 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateReq)
-
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
 		}
 
 		config := bootstrap.Config{
@@ -124,7 +145,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			Content: req.Content,
 		}
 
-		if err := svc.Update(ctx, req.token, config); err != nil {
+		if err := svc.Update(ctx, session, config); err != nil {
 			return nil, err
 		}
 
@@ -140,12 +161,16 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateConnReq)
-
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.UpdateConnections(ctx, req.token, req.id, req.Channels); err != nil {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		if err := svc.UpdateConnections(ctx, session, req.token, req.id, req.Channels); err != nil {
 			return nil, err
 		}
 
@@ -161,12 +186,16 @@ func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listReq)
-
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		page, err := svc.List(ctx, req.token, req.filter, req.offset, req.limit)
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		page, err := svc.List(ctx, session, req.filter, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -207,12 +236,16 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 func removeEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(entityReq)
-
 		if err := req.validate(); err != nil {
 			return removeRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.Remove(ctx, req.token, req.id); err != nil {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		if err := svc.Remove(ctx, session, req.id); err != nil {
 			return nil, err
 		}
 
@@ -239,12 +272,16 @@ func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader, sec
 func stateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeStateReq)
-
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.ChangeState(ctx, req.token, req.id, req.State); err != nil {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		if err := svc.ChangeState(ctx, session, req.token, req.id, req.State); err != nil {
 			return nil, err
 		}
 

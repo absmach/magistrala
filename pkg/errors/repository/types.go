@@ -33,4 +33,6 @@ var (
 
 	// ErrFailedToRetrieveAllGroups failed to retrieve groups.
 	ErrFailedToRetrieveAllGroups = errors.New("failed to retrieve all groups")
+
+	ErrRoleMigration = errors.New("role migration initialization failed")
 )

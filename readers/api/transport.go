@@ -6,10 +6,12 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/readers"
@@ -54,14 +56,14 @@ const (
 var errUserAccess = errors.New("user has no permission")
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, auth magistrala.AuthzServiceClient, things magistrala.AuthzServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, authz mgauthz.Authorization, things magistrala.ThingsServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
 	mux := chi.NewRouter()
 	mux.Get("/channels/{chanID}/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, auth, things),
+		listMessagesEndpoint(svc, authz, things),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -241,10 +243,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, auth magistrala.AuthzServiceClient, things magistrala.AuthzServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, authz mgauthz.Authorization, things magistrala.ThingsServiceClient) (err error) {
 	switch {
 	case req.token != "":
-		if _, err = auth.Authorize(ctx, &magistrala.AuthorizeReq{
+		if err = authz.Authorize(ctx, mgauthz.PolicyReq{
 			SubjectType: userType,
 			SubjectKind: tokenKind,
 			Subject:     req.token,
@@ -256,16 +258,15 @@ func authorize(ctx context.Context, req listMessagesReq, auth magistrala.AuthzSe
 			if ok && e.Code() == codes.PermissionDenied {
 				return errors.Wrap(errUserAccess, err)
 			}
+			fmt.Println("err", err)
 			return err
 		}
 		return nil
 	case req.key != "":
-		if _, err = things.Authorize(ctx, &magistrala.AuthorizeReq{
-			SubjectType: groupType,
-			Subject:     req.key,
-			ObjectType:  thingType,
-			Object:      req.chanID,
-			Permission:  subscribePermission,
+		if _, err = things.Authorize(ctx, &magistrala.ThingsAuthzReq{
+			ThingKey:   req.key,
+			ChannelID:  req.chanID,
+			Permission: subscribePermission,
 		}); err != nil {
 			e, ok := status.FromError(err)
 			if ok && e.Code() == codes.PermissionDenied {

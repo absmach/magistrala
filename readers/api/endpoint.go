@@ -8,20 +8,21 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/readers"
 	"github.com/go-kit/kit/endpoint"
 )
 
-func listMessagesEndpoint(svc readers.MessageRepository, authClient magistrala.AuthzServiceClient, thingsClient magistrala.AuthzServiceClient) endpoint.Endpoint {
+func listMessagesEndpoint(svc readers.MessageRepository, authz mgauthz.Authorization, thingsClient magistrala.ThingsServiceClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMessagesReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := authorize(ctx, req, authClient, thingsClient); err != nil {
+		if err := authorize(ctx, req, authz, thingsClient); err != nil {
 			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
 

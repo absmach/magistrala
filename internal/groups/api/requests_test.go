@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/groups"
@@ -26,7 +25,6 @@ func TestCreateGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{
 					Name: valid,
 				},
@@ -34,18 +32,8 @@ func TestCreateGroupReqValidation(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: createGroupReq{
-				Group: groups.Group{
-					Name: valid,
-				},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "long name",
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{
 					Name: strings.Repeat("a", api.MaxNameSize+1),
 				},
@@ -55,7 +43,6 @@ func TestCreateGroupReqValidation(t *testing.T) {
 		{
 			desc: "empty name",
 			req: createGroupReq{
-				token: valid,
 				Group: groups.Group{},
 			},
 			err: apiutil.ErrNameSize,
@@ -77,34 +64,23 @@ func TestUpdateGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: updateGroupReq{
-				token: valid,
-				id:    valid,
-				Name:  valid,
+				id:   valid,
+				Name: valid,
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: updateGroupReq{
-				id:   valid,
-				Name: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
 			desc: "long name",
 			req: updateGroupReq{
-				token: valid,
-				id:    valid,
-				Name:  strings.Repeat("a", api.MaxNameSize+1),
+				id:   valid,
+				Name: strings.Repeat("a", api.MaxNameSize+1),
 			},
 			err: apiutil.ErrNameSize,
 		},
 		{
 			desc: "empty id",
 			req: updateGroupReq{
-				token: valid,
-				Name:  valid,
+				Name: valid,
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -125,67 +101,17 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listGroupsReq{
-				token:      valid,
-				memberKind: auth.ThingsKind,
-				memberID:   valid,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
+				PageMeta: groups.PageMeta{
+					Limit: 10,
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: "empty token",
-			req: listGroupsReq{
-				memberKind: auth.ThingsKind,
-				memberID:   valid,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
-				},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
-			desc: "empty memberkind",
-			req: listGroupsReq{
-				token:    valid,
-				memberID: valid,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
-				},
-			},
-			err: apiutil.ErrMissingMemberKind,
-		},
-		{
-			desc: "empty member id",
-			req: listGroupsReq{
-				token:      valid,
-				memberKind: auth.ThingsKind,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
-				},
-			},
-			err: apiutil.ErrMissingID,
-		},
-		{
 			desc: "invalid upper level",
 			req: listGroupsReq{
-				token:      valid,
-				memberKind: auth.ThingsKind,
-				memberID:   valid,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 10,
-					},
-					Level: groups.MaxLevel + 1,
+				PageMeta: groups.PageMeta{
+					Limit: 10,
 				},
 			},
 			err: apiutil.ErrInvalidLevel,
@@ -193,13 +119,8 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "invalid lower limit",
 			req: listGroupsReq{
-				token:      valid,
-				memberKind: auth.ThingsKind,
-				memberID:   valid,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: 0,
-					},
+				PageMeta: groups.PageMeta{
+					Limit: 0,
 				},
 			},
 			err: apiutil.ErrLimitSize,
@@ -207,13 +128,8 @@ func TestListGroupReqValidation(t *testing.T) {
 		{
 			desc: "invalid upper limit",
 			req: listGroupsReq{
-				token:      valid,
-				memberKind: auth.ThingsKind,
-				memberID:   valid,
-				Page: groups.Page{
-					PageMeta: groups.PageMeta{
-						Limit: api.MaxLimitSize + 1,
-					},
+				PageMeta: groups.PageMeta{
+					Limit: api.MaxLimitSize + 1,
 				},
 			},
 			err: apiutil.ErrLimitSize,
@@ -235,60 +151,15 @@ func TestGroupReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: groupReq{
-				token: valid,
-				id:    valid,
+				id: valid,
 			},
 			err: nil,
 		},
-		{
-			desc: "empty token",
-			req: groupReq{
-				id: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
+
 		{
 			desc: "empty id",
-			req: groupReq{
-				token: valid,
-			},
-			err: apiutil.ErrMissingID,
-		},
-	}
-
-	for _, tc := range cases {
-		err := tc.req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-	}
-}
-
-func TestGroupPermsReqValidation(t *testing.T) {
-	cases := []struct {
-		desc string
-		req  groupPermsReq
-		err  error
-	}{
-		{
-			desc: "valid request",
-			req: groupPermsReq{
-				token: valid,
-				id:    valid,
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			req: groupPermsReq{
-				id: valid,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
-			desc: "empty id",
-			req: groupPermsReq{
-				token: valid,
-			},
-			err: apiutil.ErrMissingID,
+			req:  groupReq{},
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -307,24 +178,14 @@ func TestChangeGroupStatusReqValidation(t *testing.T) {
 		{
 			desc: "valid request",
 			req: changeGroupStatusReq{
-				token: valid,
-				id:    valid,
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			req: changeGroupStatusReq{
 				id: valid,
 			},
-			err: apiutil.ErrBearerToken,
+			err: nil,
 		},
 		{
 			desc: "empty id",
-			req: changeGroupStatusReq{
-				token: valid,
-			},
-			err: apiutil.ErrMissingID,
+			req:  changeGroupStatusReq{},
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -334,183 +195,223 @@ func TestChangeGroupStatusReqValidation(t *testing.T) {
 	}
 }
 
-func TestAssignReqValidation(t *testing.T) {
-	cases := []struct {
-		desc string
-		req  assignReq
-		err  error
+func Test_createGroupReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     createGroupReq
+		wantErr bool
 	}{
-		{
-			desc: "valid request",
-			req: assignReq{
-				token:      valid,
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			req: assignReq{
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
-			desc: "empty member kind",
-			req: assignReq{
-				token:    valid,
-				groupID:  valid,
-				Relation: auth.ContributorRelation,
-				Members:  []string{valid},
-			},
-			err: apiutil.ErrMissingMemberKind,
-		},
-		{
-			desc: "empty groupID",
-			req: assignReq{
-				token:      valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: apiutil.ErrMissingID,
-		},
-		{
-			desc: "empty Members",
-			req: assignReq{
-				token:      valid,
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-			},
-			err: apiutil.ErrEmptyList,
-		},
+		// TODO: Add test cases.
 	}
-
-	for _, tc := range cases {
-		err := tc.req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("createGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 
-func TestUnAssignReqValidation(t *testing.T) {
-	cases := []struct {
-		desc string
-		req  unassignReq
-		err  error
+func Test_updateGroupReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     updateGroupReq
+		wantErr bool
 	}{
-		{
-			desc: "valid request",
-			req: unassignReq{
-				token:      valid,
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			req: unassignReq{
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
-			desc: "empty member kind",
-			req: unassignReq{
-				token:    valid,
-				groupID:  valid,
-				Relation: auth.ContributorRelation,
-				Members:  []string{valid},
-			},
-			err: apiutil.ErrMissingMemberKind,
-		},
-		{
-			desc: "empty groupID",
-			req: unassignReq{
-				token:      valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-				Members:    []string{valid},
-			},
-			err: apiutil.ErrMissingID,
-		},
-		{
-			desc: "empty Members",
-			req: unassignReq{
-				token:      valid,
-				groupID:    valid,
-				Relation:   auth.ContributorRelation,
-				MemberKind: auth.ThingsKind,
-			},
-			err: apiutil.ErrEmptyList,
-		},
+		// TODO: Add test cases.
 	}
-
-	for _, tc := range cases {
-		err := tc.req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("updateGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 
-func TestListMembersReqValidation(t *testing.T) {
-	cases := []struct {
-		desc string
-		req  listMembersReq
-		err  error
+func Test_listGroupsReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     listGroupsReq
+		wantErr bool
 	}{
-		{
-			desc: "valid request",
-			req: listMembersReq{
-				token:      valid,
-				groupID:    valid,
-				permission: auth.ViewPermission,
-				memberKind: auth.ThingsKind,
-			},
-			err: nil,
-		},
-		{
-			desc: "empty token",
-			req: listMembersReq{
-				groupID:    valid,
-				permission: auth.ViewPermission,
-				memberKind: auth.ThingsKind,
-			},
-			err: apiutil.ErrBearerToken,
-		},
-		{
-			desc: "empty member kind",
-			req: listMembersReq{
-				token:      valid,
-				groupID:    valid,
-				permission: auth.ViewPermission,
-			},
-			err: apiutil.ErrMissingMemberKind,
-		},
-		{
-			desc: "empty groupID",
-			req: listMembersReq{
-				token:      valid,
-				permission: auth.ViewPermission,
-				memberKind: auth.ThingsKind,
-			},
-			err: apiutil.ErrMissingID,
-		},
+		// TODO: Add test cases.
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("listGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
 
-	for _, tc := range cases {
-		err := tc.req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+func Test_groupReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     groupReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("groupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_changeGroupStatusReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     changeGroupStatusReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("changeGroupStatusReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_retrieveGroupHierarchyReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     retrieveGroupHierarchyReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("retrieveGroupHierarchyReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_addParentGroupReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     addParentGroupReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("addParentGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_removeParentGroupReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     removeParentGroupReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("removeParentGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_viewParentGroupReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     viewParentGroupReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("viewParentGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_addChildrenGroupsReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     addChildrenGroupsReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("addChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_removeChildrenGroupsReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     removeChildrenGroupsReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("removeChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_removeAllChildrenGroupsReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     removeAllChildrenGroupsReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("removeAllChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_listChildrenGroupsReq_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     listChildrenGroupsReq
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.validate(); (err != nil) != tt.wantErr {
+				t.Errorf("listChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }

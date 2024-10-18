@@ -16,15 +16,15 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	api "github.com/absmach/magistrala/auth/api"
-	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	authgrpcapi "github.com/absmach/magistrala/auth/api/grpc/auth"
+	tokengrpcapi "github.com/absmach/magistrala/auth/api/grpc/token"
 	httpapi "github.com/absmach/magistrala/auth/api/http"
-	"github.com/absmach/magistrala/auth/events"
 	"github.com/absmach/magistrala/auth/jwt"
 	apostgres "github.com/absmach/magistrala/auth/postgres"
-	"github.com/absmach/magistrala/auth/spicedb"
 	"github.com/absmach/magistrala/auth/tracing"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
@@ -101,7 +101,8 @@ func main() {
 		logger.Error(err.Error())
 	}
 
-	db, err := pgclient.Setup(dbConfig, *apostgres.Migration())
+	am := apostgres.Migration()
+	db, err := pgclient.Setup(dbConfig, *am)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -128,16 +129,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-
 	svc := newService(ctx, db, tracer, cfg, dbConfig, logger, spicedbclient)
-
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))
-		exitCode = 1
-		return
-	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
@@ -147,9 +139,8 @@ func main() {
 	}
 	registerAuthServiceServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		magistrala.RegisterAuthzServiceServer(srv, grpcapi.NewAuthzServer(svc))
-		magistrala.RegisterAuthnServiceServer(srv, grpcapi.NewAuthnServer(svc))
-		magistrala.RegisterPolicyServiceServer(srv, grpcapi.NewPolicyServer(svc))
+		magistrala.RegisterTokenServiceServer(srv, tokengrpcapi.NewTokenServer(svc))
+		magistrala.RegisterAuthServiceServer(srv, authgrpcapi.NewAuthServer(svc))
 	}
 
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerAuthServiceServer, logger)
@@ -158,12 +149,25 @@ func main() {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
+	g.Go(func() error {
+		return gs.Start()
+	})
+
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))
+		exitCode = 1
+		return
+	}
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, logger, cfg.InstanceID), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	g.Go(func() error {
 		return hs.Start()
-	})
-	g.Go(func() error {
-		return gs.Start()
 	})
 
 	g.Go(func() error {
@@ -205,23 +209,19 @@ func initSchema(ctx context.Context, client *authzed.ClientWithExperimental, sch
 	return nil
 }
 
-func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental) auth.Service {
+func newService(_ context.Context, db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental) auth.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
-	domainsRepo := apostgres.NewDomainRepository(database)
-	pa := spicedb.NewPolicyAgent(spicedbClient, logger)
 	idProvider := uuid.New()
+
+	pEvaluator := spicedb.NewPolicyEvaluator(spicedbClient, logger)
+	pService := spicedb.NewPolicyService(spicedbClient, logger)
 
 	t := jwt.New([]byte(cfg.SecretKey))
 
-	svc := auth.New(keysRepo, domainsRepo, idProvider, t, pa, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
-	svc, err := events.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to init event store middleware : %s", err))
-		return nil
-	}
+	svc := auth.New(keysRepo, idProvider, t, pEvaluator, pService, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
 	svc = api.LoggingMiddleware(svc, logger)
-	counter, latency := prometheus.MakeMetrics("groups", "api")
+	counter, latency := prometheus.MakeMetrics("auth", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 	svc = tracing.New(svc, tracer)
 

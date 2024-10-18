@@ -67,6 +67,7 @@ func TestCert(t *testing.T) {
 		token       string
 		thingID     string
 		ttl         string
+		serial      string
 		cert        string
 		key         string
 		sdkThingErr error
@@ -206,7 +207,8 @@ func TestCert(t *testing.T) {
 			svc := provision.New(c.config, mgsdk, mglog.NewMock())
 
 			mgsdk.On("Thing", c.thingID, mock.Anything).Return(sdk.Thing{ID: c.thingID}, c.sdkThingErr)
-			mgsdk.On("IssueCert", c.thingID, c.config.Cert.TTL, mock.Anything).Return(sdk.Cert{ClientCert: c.cert, ClientKey: c.key}, c.sdkCertErr)
+			mgsdk.On("IssueCert", c.thingID, c.config.Cert.TTL, mock.Anything).Return(sdk.Cert{SerialNumber: c.serial}, c.sdkCertErr)
+			mgsdk.On("ViewCert", c.serial, mock.Anything).Return(sdk.Cert{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
 			login := sdk.Login{
 				Identity: c.config.Server.MgUser,
 				Secret:   c.config.Server.MgPass,

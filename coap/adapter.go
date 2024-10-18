@@ -11,10 +11,10 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 const chansPrefix = "channels"
@@ -37,12 +37,12 @@ var _ Service = (*adapterService)(nil)
 
 // Observers is a map of maps,.
 type adapterService struct {
-	things magistrala.AuthzServiceClient
+	things magistrala.ThingsServiceClient
 	pubsub messaging.PubSub
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(thingsClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Service {
+func New(thingsClient magistrala.ThingsServiceClient, pubsub messaging.PubSub) Service {
 	as := &adapterService{
 		things: thingsClient,
 		pubsub: pubsub,
@@ -52,12 +52,10 @@ func New(thingsClient magistrala.AuthzServiceClient, pubsub messaging.PubSub) Se
 }
 
 func (svc *adapterService) Publish(ctx context.Context, key string, msg *messaging.Message) error {
-	ar := &magistrala.AuthorizeReq{
-		SubjectType: auth.ThingType,
-		Permission:  auth.PublishPermission,
-		Subject:     key,
-		Object:      msg.GetChannel(),
-		ObjectType:  auth.GroupType,
+	ar := &magistrala.ThingsAuthzReq{
+		Permission: policies.PublishPermission,
+		ThingKey:   key,
+		ChannelID:  msg.GetChannel(),
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
@@ -72,12 +70,10 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 }
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
-	ar := &magistrala.AuthorizeReq{
-		SubjectType: auth.ThingType,
-		Permission:  auth.SubscribePermission,
-		Subject:     key,
-		Object:      chanID,
-		ObjectType:  auth.GroupType,
+	ar := &magistrala.ThingsAuthzReq{
+		Permission: policies.SubscribePermission,
+		ThingKey:   key,
+		ChannelID:  chanID,
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
@@ -99,13 +95,10 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 }
 
 func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
-	ar := &magistrala.AuthorizeReq{
-		Domain:      "",
-		SubjectType: auth.ThingType,
-		Permission:  auth.SubscribePermission,
-		Subject:     key,
-		Object:      chanID,
-		ObjectType:  auth.GroupType,
+	ar := &magistrala.ThingsAuthzReq{
+		Permission: policies.SubscribePermission,
+		ThingKey:   key,
+		ChannelID:  chanID,
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {

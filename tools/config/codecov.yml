@@ -1,0 +1,10 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# CoAP is temporarily ignored since we don't have tests for it yet.
+coverage:
+  ignore:
+    - "tools/*"
+    - "coap/*"
+    - "**/mocks*"
+    - "*/middleware/*"

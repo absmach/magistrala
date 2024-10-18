@@ -97,7 +97,7 @@ type Repository interface {
 	UpdateSecret(ctx context.Context, client Client) (Client, error)
 
 	// UpdateRole updates role for client with given id.
-	UpdateRole(ctx context.Context, client Client) (Client, error)
+	UpdateClientRole(ctx context.Context, client Client) (Client, error)
 
 	// ChangeStatus changes client status to enabled or disabled
 	ChangeStatus(ctx context.Context, client Client) (Client, error)

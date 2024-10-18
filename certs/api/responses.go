@@ -20,12 +20,13 @@ type certsPageRes struct {
 }
 
 type certsRes struct {
-	ThingID    string    `json:"thing_id"`
-	ClientCert string    `json:"client_cert"`
-	ClientKey  string    `json:"client_key"`
-	CertSerial string    `json:"cert_serial"`
-	Expiration time.Time `json:"expiration"`
-	created    bool
+	ThingID      string    `json:"thing_id"`
+	Certificate  string    `json:"certificate,omitempty"`
+	Key          string    `json:"key,omitempty"`
+	SerialNumber string    `json:"serial_number"`
+	ExpiryTime   time.Time `json:"expiry_time"`
+	Revoked      bool      `json:"revoked"`
+	issued       bool
 }
 
 type revokeCertsRes struct {
@@ -45,10 +46,9 @@ func (res certsPageRes) Empty() bool {
 }
 
 func (res certsRes) Code() int {
-	if res.created {
+	if res.issued {
 		return http.StatusCreated
 	}
-
 	return http.StatusOK
 }
 

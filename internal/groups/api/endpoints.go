@@ -6,22 +6,30 @@ package api
 import (
 	"context"
 
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/go-kit/kit/endpoint"
 )
 
 const groupTypeChannels = "channels"
 
-func CreateGroupEndpoint(svc groups.Service, kind string) endpoint.Endpoint {
+func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
 		if err := req.validate(); err != nil {
 			return createGroupRes{created: false}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		group, err := svc.CreateGroup(ctx, req.token, kind, req.Group)
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return createGroupRes{created: false}, svcerr.ErrAuthorization
+		}
+
+		group, err := svc.CreateGroup(ctx, session, req.Group)
 		if err != nil {
 			return createGroupRes{created: false}, err
 		}
@@ -37,28 +45,16 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			return viewGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		group, err := svc.ViewGroup(ctx, req.token, req.id)
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return viewGroupRes{}, svcerr.ErrAuthorization
+		}
+		group, err := svc.ViewGroup(ctx, session, req.id)
 		if err != nil {
 			return viewGroupRes{}, err
 		}
 
 		return viewGroupRes{Group: group}, nil
-	}
-}
-
-func ViewGroupPermsEndpoint(svc groups.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(groupPermsReq)
-		if err := req.validate(); err != nil {
-			return viewGroupPermsRes{}, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		p, err := svc.ViewGroupPerms(ctx, req.token, req.id)
-		if err != nil {
-			return viewGroupPermsRes{}, err
-		}
-
-		return viewGroupPermsRes{Permissions: p}, nil
 	}
 }
 
@@ -69,6 +65,11 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			return updateGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return updateGroupRes{}, svcerr.ErrAuthorization
+		}
+
 		group := groups.Group{
 			ID:          req.id,
 			Name:        req.Name,
@@ -76,7 +77,7 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Metadata:    req.Metadata,
 		}
 
-		group, err := svc.UpdateGroup(ctx, req.token, group)
+		group, err := svc.UpdateGroup(ctx, session, group)
 		if err != nil {
 			return updateGroupRes{}, err
 		}
@@ -91,7 +92,13 @@ func EnableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return changeStatusRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		group, err := svc.EnableGroup(ctx, req.token, req.id)
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		group, err := svc.EnableGroup(ctx, session, req.id)
 		if err != nil {
 			return changeStatusRes{}, err
 		}
@@ -105,7 +112,13 @@ func DisableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return changeStatusRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		group, err := svc.DisableGroup(ctx, req.token, req.id)
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		group, err := svc.DisableGroup(ctx, session, req.id)
 		if err != nil {
 			return changeStatusRes{}, err
 		}
@@ -113,100 +126,37 @@ func DisableGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func ListGroupsEndpoint(svc groups.Service, groupType, memberKind string) endpoint.Endpoint {
+func ListGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
-		if memberKind != "" {
-			req.memberKind = memberKind
-		}
+
 		if err := req.validate(); err != nil {
-			if groupType == groupTypeChannels {
-				return channelPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
-			}
 			return groupPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		page, err := svc.ListGroups(ctx, req.token, req.memberKind, req.memberID, req.Page)
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return groupPageRes{}, svcerr.ErrAuthorization
+		}
+
+		page, err := svc.ListGroups(ctx, session, req.PageMeta)
 		if err != nil {
-			if groupType == groupTypeChannels {
-				return channelPageRes{}, err
-			}
 			return groupPageRes{}, err
 		}
 
-		if req.tree {
-			return buildGroupsResponseTree(page), nil
-		}
-		filterByID := req.Page.ParentID != ""
-
-		if groupType == groupTypeChannels {
-			return buildChannelsResponse(page, filterByID), nil
-		}
-		return buildGroupsResponse(page, filterByID), nil
-	}
-}
-
-func ListMembersEndpoint(svc groups.Service, memberKind string) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersReq)
-		if memberKind != "" {
-			req.memberKind = memberKind
-		}
-		if err := req.validate(); err != nil {
-			return listMembersRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		groups := []viewGroupRes{}
+		for _, g := range page.Groups {
+			groups = append(groups, toViewGroupRes(g))
 		}
 
-		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.permission, req.memberKind)
-		if err != nil {
-			return listMembersRes{}, err
-		}
-
-		return listMembersRes{
-			pageRes: pageRes{
-				Limit:  page.Limit,
-				Offset: page.Offset,
-				Total:  page.Total,
-			},
-			Members: page.Members,
+		return groupPageRes{pageRes: pageRes{
+			Limit:  page.Limit,
+			Offset: page.Offset,
+			Total:  page.Total,
+		},
+			Groups: groups,
 		}, nil
-	}
-}
 
-func AssignMembersEndpoint(svc groups.Service, relation, memberKind string) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignReq)
-		if relation != "" {
-			req.Relation = relation
-		}
-		if memberKind != "" {
-			req.MemberKind = memberKind
-		}
-		if err := req.validate(); err != nil {
-			return assignRes{}, errors.Wrap(apiutil.ErrValidation, err)
-		}
-		if err := svc.Assign(ctx, req.token, req.groupID, req.Relation, req.MemberKind, req.Members...); err != nil {
-			return assignRes{}, err
-		}
-		return assignRes{assigned: true}, nil
-	}
-}
-
-func UnassignMembersEndpoint(svc groups.Service, relation, memberKind string) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(unassignReq)
-		if relation != "" {
-			req.Relation = relation
-		}
-		if memberKind != "" {
-			req.MemberKind = memberKind
-		}
-		if err := req.validate(); err != nil {
-			return unassignRes{}, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		if err := svc.Unassign(ctx, req.token, req.groupID, req.Relation, req.MemberKind, req.Members...); err != nil {
-			return unassignRes{}, err
-		}
-		return unassignRes{unassigned: true}, nil
 	}
 }
 
@@ -216,10 +166,187 @@ func DeleteGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return deleteGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		if err := svc.DeleteGroup(ctx, req.token, req.id); err != nil {
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return deleteGroupRes{}, svcerr.ErrAuthorization
+		}
+		if err := svc.DeleteGroup(ctx, session, req.id); err != nil {
 			return deleteGroupRes{}, err
 		}
 		return deleteGroupRes{deleted: true}, nil
+	}
+}
+
+func retrieveGroupHierarchyEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(retrieveGroupHierarchyReq)
+		if err := req.validate(); err != nil {
+			return retrieveGroupHierarchyRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		hp, err := svc.RetrieveGroupHierarchy(ctx, session, req.id, req.HierarchyPageMeta)
+		if err != nil {
+			return retrieveGroupHierarchyRes{}, err
+		}
+
+		groups := []viewGroupRes{}
+		for _, g := range hp.Groups {
+			groups = append(groups, toViewGroupRes(g))
+		}
+		return retrieveGroupHierarchyRes{Level: hp.Level, Direction: hp.Direction, Groups: groups}, nil
+
+	}
+}
+
+func addParentGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(addParentGroupReq)
+		if err := req.validate(); err != nil {
+			return addParentGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		if err := svc.AddParentGroup(ctx, session, req.id, req.ParentID); err != nil {
+			return addParentGroupRes{}, err
+		}
+		return addParentGroupRes{}, nil
+	}
+}
+
+func removeParentGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(removeParentGroupReq)
+		if err := req.validate(); err != nil {
+			return removeParentGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		if err := svc.RemoveParentGroup(ctx, session, req.id); err != nil {
+			return removeParentGroupRes{}, err
+		}
+		return removeParentGroupRes{}, nil
+	}
+}
+func viewParentGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewParentGroupReq)
+		if err := req.validate(); err != nil {
+			return viewParentGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		pg, err := svc.ViewParentGroup(ctx, session, req.id)
+		if err != nil {
+			return viewParentGroupRes{}, err
+		}
+		return viewParentGroupRes{pg}, nil
+	}
+}
+
+func addChildrenGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(addChildrenGroupsReq)
+		if err := req.validate(); err != nil {
+			return addChildrenGroupsRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		if err := svc.AddChildrenGroups(ctx, session, req.id, req.ChildrenIDs); err != nil {
+			return addChildrenGroupsRes{}, err
+		}
+		return addChildrenGroupsRes{}, nil
+	}
+}
+
+func removeChildrenGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(removeChildrenGroupsReq)
+		if err := req.validate(); err != nil {
+			return removeChildrenGroupsRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		if err := svc.RemoveChildrenGroups(ctx, session, req.id, req.ChildrenIDs); err != nil {
+			return removeChildrenGroupsRes{}, err
+		}
+		return removeChildrenGroupsRes{}, nil
+	}
+}
+
+func removeAllChildrenGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(removeAllChildrenGroupsReq)
+		if err := req.validate(); err != nil {
+			return removeAllChildrenGroupsRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		if err := svc.RemoveAllChildrenGroups(ctx, session, req.id); err != nil {
+			return removeAllChildrenGroupsRes{}, err
+		}
+		return removeAllChildrenGroupsRes{}, nil
+	}
+}
+
+func listChildrenGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listChildrenGroupsReq)
+		if err := req.validate(); err != nil {
+			return listChildrenGroupsRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return changeStatusRes{}, svcerr.ErrAuthorization
+		}
+
+		gp, err := svc.ListChildrenGroups(ctx, session, req.id, req.PageMeta)
+		if err != nil {
+			return listChildrenGroupsRes{}, err
+		}
+		viewGroups := []viewGroupRes{}
+
+		for _, group := range gp.Groups {
+			viewGroups = append(viewGroups, toViewGroupRes(group))
+		}
+		return listChildrenGroupsRes{
+			pageRes: pageRes{
+				Limit:  gp.Limit,
+				Offset: gp.Offset,
+				Total:  gp.Total,
+			},
+			Groups: viewGroups,
+		}, nil
 	}
 }
 
@@ -246,7 +373,6 @@ func buildGroupsResponseTree(page groups.Page) groupPageRes {
 			Limit:  page.Limit,
 			Offset: page.Offset,
 			Total:  page.Total,
-			Level:  page.Level,
 		},
 		Groups: []viewGroupRes{},
 	}
@@ -278,7 +404,6 @@ func buildGroupsResponse(gp groups.Page, filterByID bool) groupPageRes {
 	res := groupPageRes{
 		pageRes: pageRes{
 			Total: gp.Total,
-			Level: gp.Level,
 		},
 		Groups: []viewGroupRes{},
 	}
@@ -291,28 +416,6 @@ func buildGroupsResponse(gp groups.Page, filterByID bool) groupPageRes {
 			continue
 		}
 		res.Groups = append(res.Groups, view)
-	}
-
-	return res
-}
-
-func buildChannelsResponse(cp groups.Page, filterByID bool) channelPageRes {
-	res := channelPageRes{
-		pageRes: pageRes{
-			Total: cp.Total,
-			Level: cp.Level,
-		},
-		Channels: []viewGroupRes{},
-	}
-
-	for _, channel := range cp.Groups {
-		if filterByID && channel.Level == 0 {
-			continue
-		}
-		view := viewGroupRes{
-			Group: channel,
-		}
-		res.Channels = append(res.Channels, view)
 	}
 
 	return res

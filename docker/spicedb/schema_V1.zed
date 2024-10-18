@@ -1,0 +1,193 @@
+definition user {}
+
+definition thing {
+	relation administrator: user
+	relation group: group
+	relation domain: domain
+
+	permission admin = administrator + group->admin + domain->admin
+	permission delete = admin
+	permission edit = admin + group->edit + domain->edit
+	permission view = edit + group->view  + domain->view
+	permission share = edit
+
+	// These permission are made for only list purpose. It helps to list users have only particular permission excluding other higher and lower permission.
+	permission admin_only = admin
+	permission edit_only = edit - admin
+	permission view_only = view
+
+	// These permission are made for only list purpose. It helps to list users from external, users who are not in group but have permission on the group through parent group
+	permission ext_admin = admin - administrator // For list of external admin , not having direct relation with group, but have indirect relation from parent group
+}
+
+definition channel {
+	relation administrator: user
+	relation editor: user
+	relation contributor: user
+	relation member: user
+	relation guest: user
+
+	relation publisher: thing | user
+	relation subscriber: thing | user
+	relation publisher_subscriber: thing | user
+
+	relation parent_group: group
+	relation domain: domain
+
+	permission admin =  administrator + parent_group->admin + domain->admin
+	permission delete = admin
+	permission edit = admin + editor + parent_group->edit  + domain->edit
+	permission share = edit
+	permission view = contributor + edit + parent_group->view + domain->view + guest
+	permission membership = view + member
+	permission create = membership - guest
+
+	permission publish = publisher + edit + publisher_subscriber
+	permission subscribe = subscriber + view + publisher_subscriber
+
+	// These permissions are made for listing purposes. They enable listing users who have only particular permission excluding higher-level permissions users.
+	permission admin_only = admin
+	permission edit_only = edit - admin
+	permission view_only = view
+	permission membership_only = membership - view
+
+	// These permission are made for only list purpose. They enable listing users who have only particular permission from parent group excluding higher-level permissions.
+	permission ext_admin = admin - administrator  // For list of external admin , not having direct relation with group, but have indirect relation from parent group
+	permission ext_edit = edit - editor  // For list of external edit , not having direct relation with group, but have indirect relation from parent group
+	permission ext_view = view - contributor  // For list of external view , not having direct relation with group, but have indirect relation from parent group
+}
+
+definition group {
+	relation administrator: user
+	relation editor: user
+	relation contributor: user
+	relation member: user
+	relation guest: user
+
+	relation parent_group: group
+	relation domain: domain
+
+	permission admin =  administrator + parent_group->admin + domain->admin
+	permission delete = admin
+	permission edit = admin + editor + parent_group->edit  + domain->edit
+	permission share = edit
+	permission view = contributor + edit + parent_group->view + domain->view + guest
+	permission membership = view + member
+	permission create = membership - guest
+
+	// These permissions are made for listing purposes. They enable listing users who have only particular permission excluding higher-level permissions users.
+	permission admin_only = admin
+	permission edit_only = edit - admin
+	permission view_only = view
+	permission membership_only = membership - view
+
+	// These permission are made for only list purpose. They enable listing users who have only particular permission from parent group excluding higher-level permissions.
+	permission ext_admin = admin - administrator  // For list of external admin , not having direct relation with group, but have indirect relation from parent group
+	permission ext_edit = edit - editor  // For list of external edit , not having direct relation with group, but have indirect relation from parent group
+	permission ext_view = view - contributor  // For list of external view , not having direct relation with group, but have indirect relation from parent group
+}
+
+definition domain {
+	relation organization: organization
+	relation org_group: organization_group#membership
+
+    // Collaborator can be a user or an organization group member
+	relation collabrator_adminstrator: user | organization_group#membership // collabrator organization group
+	relation collabrator_editor: user | organization_group#membership // collabrator organization group
+	relation collabrator_contributor: user | organization_group#membership // collabrator organization group
+	relation collabrator_member: user | organization_group#membership // collabrator organization group
+	relation collabrator_guest: user | organization_group#membership // collabrator organization group
+
+	permission admin = organization->admin + org_group->admin + collabrator_adminstrator->admin
+	permission edit =  admin + org_group->edit +  collabrator_adminstrator->edit + collabrator_editor->edit
+	permission share = edit
+	permission view = edit + org_group->view +  collabrator_adminstrator->view + collabrator_editor->view + collabrator_guest->view
+	permission membership = view + org_group->membership  +  collabrator_adminstrator->membership + collabrator_editor->membership
+	permission create = membership - org_group->guest  +  collabrator_adminstrator->guest + collabrator_editor->guest
+}
+
+definition organization_group {
+	// users should be withing the organization , user outside the organization could not have thes following relations
+	relation ou_administrator: user
+	relation ou_editor: user
+	relation ou_contributor: user
+	relation ou_delegate: user
+	relation ou_guest: user
+	relation ou_scoped_guest: user
+
+	// Internal organiztion groups
+	relation iog_admininstrator: organization_group#membership
+	relation iog_editor: organization_group#membership
+	relation iog_contributor: organization_group#membership
+	relation iog_delegate: organization_group#membership
+	relation iog_guest: organization_group#membership
+	relation iog_scoped_guest: organization_group#membership
+
+	// An organization_group can have only one organization
+	relation organization: organization
+
+	// External Users relatiuons
+	relation eu_administrator: user
+	relation eu_editor: user
+	relation eu_contributor: user
+	relation eu_delegate: user
+	relation eu_guest: user
+	relation eu_scoped_guest: user
+
+
+	// External organization group
+	relation eog_admininstrator: organization_group#membership
+	relation eog_editor: organization_group#membership
+	relation eog_contributor: organization_group#membership
+	relation eog_delegate: organization_group#membership
+	relation eog_guest: organization_group#membership
+	relation eog_scoped_guest: organization_group#membership
+
+	permission admin = 	organization->admin +
+						ou_administrator + iog_admininstrator->admin +
+						eu_administrator +  eog_admininstrator->admin
+
+	permission edit =  admin + ou_editor + iog_editor->edit +
+						eu_editor + eog_editor->edit +
+						iog_admininstrator->edit + eog_admininstrator->edit
+
+	permission share = edit
+
+	permission contribute = edit + ou_contributor + iog_contributor->contribute +
+							eu_contributor + eog_contributor->contribute +
+							iog_admininstrator->contribute + eog_admininstrator->contribute +
+							iog_editor->contribute + eog_editor->contribute
+
+	permission create = contribute  + ou_delegate + iog_delegate->create +
+							eu_delegate + eog_delegate->create +
+							iog_admininstrator->create + eog_admininstrator->create +
+							iog_editor->create + eog_editor->create +
+							iog_contributor-create + eog_contributor->create
+
+
+	permission view = contribute +  ou_guest + iog_guest->contribute +
+						eu_guest + eog_guest->contribute
+
+	permission membership = create + ou_guest + iog_guest->contribute +
+						eu_guest + eog_guest->contribute +
+						ou_scoped_guest + eu_scoped_guest +
+						iog_scoped_guest->contribute + eog_scoped_guest->contribute
+}
+
+definition organization {
+	relation administrator: user
+	relation member: user
+
+	relation platform: platform
+
+	permission admin = administrator + platform->admin
+	permission membership = admin + member
+}
+
+definition platform {
+  relation administrator: user
+  relation member: user
+
+  permission admin = administrator
+  permission membership = administrator + member
+}

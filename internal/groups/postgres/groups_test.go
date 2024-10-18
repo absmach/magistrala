@@ -638,8 +638,6 @@ func TestRetrieveAll(t *testing.T) {
 					Offset: 0,
 					Limit:  uint64(num),
 				},
-				ParentID:  items[5].ID,
-				Direction: 1,
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
@@ -658,8 +656,6 @@ func TestRetrieveAll(t *testing.T) {
 					Offset: 0,
 					Limit:  uint64(num),
 				},
-				ParentID:  items[150].ID,
-				Direction: -1,
 			},
 			response: mggroups.Page{
 				PageMeta: mggroups.PageMeta{
@@ -674,7 +670,7 @@ func TestRetrieveAll(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch groups, err := repo.RetrieveAll(context.Background(), tc.page); {
+		switch groups, err := repo.RetrieveAll(context.Background(), tc.page.PageMeta); {
 		case err == nil:
 			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))
@@ -949,8 +945,6 @@ func TestRetrieveByIDs(t *testing.T) {
 					Offset: 0,
 					Limit:  uint64(num),
 				},
-				ParentID:  items[5].ID,
-				Direction: 1,
 			},
 			ids: getIDs(items[0:20]),
 			response: mggroups.Page{
@@ -970,8 +964,6 @@ func TestRetrieveByIDs(t *testing.T) {
 					Offset: 0,
 					Limit:  uint64(num),
 				},
-				ParentID:  items[15].ID,
-				Direction: -1,
 			},
 			ids: getIDs(items[0:20]),
 			response: mggroups.Page{
@@ -987,7 +979,7 @@ func TestRetrieveByIDs(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch groups, err := repo.RetrieveByIDs(context.Background(), tc.page, tc.ids...); {
+		switch groups, err := repo.RetrieveByIDs(context.Background(), tc.page.PageMeta, tc.ids...); {
 		case err == nil:
 			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))

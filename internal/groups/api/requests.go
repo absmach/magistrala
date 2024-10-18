@@ -4,21 +4,17 @@
 package api
 
 import (
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/groups"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 )
 
 type createGroupReq struct {
 	mggroups.Group
-	token string
 }
 
 func (req createGroupReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if len(req.Name) > api.MaxNameSize || req.Name == "" {
 		return apiutil.ErrNameSize
 	}
@@ -27,7 +23,6 @@ func (req createGroupReq) validate() error {
 }
 
 type updateGroupReq struct {
-	token       string
 	id          string
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
@@ -35,9 +30,6 @@ type updateGroupReq struct {
 }
 
 func (req updateGroupReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -48,28 +40,11 @@ func (req updateGroupReq) validate() error {
 }
 
 type listGroupsReq struct {
-	mggroups.Page
-	token      string
-	memberKind string
-	memberID   string
-	// - `true`  - result is JSON tree representing groups hierarchy,
-	// - `false` - result is JSON array of groups.
-	tree bool
+	mggroups.PageMeta
 }
 
 func (req listGroupsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-	if req.memberKind == "" {
-		return apiutil.ErrMissingMemberKind
-	}
-	if req.memberKind == auth.ThingsKind && req.memberID == "" {
-		return apiutil.ErrMissingID
-	}
-	if req.Level > mggroups.MaxLevel {
-		return apiutil.ErrInvalidLevel
-	}
+
 	if req.Limit > api.MaxLimitSize || req.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
@@ -78,30 +53,10 @@ func (req listGroupsReq) validate() error {
 }
 
 type groupReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req groupReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-	if req.id == "" {
-		return apiutil.ErrMissingID
-	}
-
-	return nil
-}
-
-type groupPermsReq struct {
-	token string
-	id    string
-}
-
-func (req groupPermsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -110,94 +65,134 @@ func (req groupPermsReq) validate() error {
 }
 
 type changeGroupStatusReq struct {
-	token string
-	id    string
+	id string
 }
 
 func (req changeGroupStatusReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
 	return nil
 }
 
-type assignReq struct {
-	token      string
-	groupID    string
-	Relation   string   `json:"relation,omitempty"`
-	MemberKind string   `json:"member_kind,omitempty"`
-	Members    []string `json:"members"`
+type retrieveGroupHierarchyReq struct {
+	mggroups.HierarchyPageMeta
+	id string
 }
 
-func (req assignReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.MemberKind == "" {
-		return apiutil.ErrMissingMemberKind
-	}
-
-	if req.groupID == "" {
-		return apiutil.ErrMissingID
-	}
-
-	if len(req.Members) == 0 {
-		return apiutil.ErrEmptyList
+func (req retrieveGroupHierarchyReq) validate() error {
+	if req.Level > groups.MaxLevel {
+		return apiutil.ErrLevel
 	}
 
 	return nil
 }
 
-type unassignReq struct {
-	token      string
-	groupID    string
-	Relation   string   `json:"relation,omitempty"`
-	MemberKind string   `json:"member_kind,omitempty"`
-	Members    []string `json:"members"`
+type addParentGroupReq struct {
+	id       string
+	ParentID string `json:"parent_id"`
 }
 
-func (req unassignReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.MemberKind == "" {
-		return apiutil.ErrMissingMemberKind
-	}
-
-	if req.groupID == "" {
+func (req addParentGroupReq) validate() error {
+	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
-
-	if len(req.Members) == 0 {
-		return apiutil.ErrEmptyList
+	if err := api.ValidateUUID(req.ParentID); err != nil {
+		return err
 	}
-
+	if req.id == req.ParentID {
+		return apiutil.ErrSelfParentingNotAllowed
+	}
 	return nil
 }
 
-type listMembersReq struct {
-	token      string
-	groupID    string
-	permission string
-	memberKind string
+type removeParentGroupReq struct {
+	id string
 }
 
-func (req listMembersReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.memberKind == "" {
-		return apiutil.ErrMissingMemberKind
-	}
-
-	if req.groupID == "" {
+func (req removeParentGroupReq) validate() error {
+	if req.id == "" {
 		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type viewParentGroupReq struct {
+	id string
+}
+
+func (req viewParentGroupReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type addChildrenGroupsReq struct {
+	id          string
+	ChildrenIDs []string `json:"children_ids"`
+}
+
+func (req addChildrenGroupsReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+	if len(req.ChildrenIDs) == 0 {
+		return apiutil.ErrMissingChildrenGroupIDs
+	}
+	for _, childID := range req.ChildrenIDs {
+		if err := api.ValidateUUID(childID); err != nil {
+			return err
+		}
+		if req.id == childID {
+			return apiutil.ErrSelfParentingNotAllowed
+		}
+	}
+	return nil
+}
+
+type removeChildrenGroupsReq struct {
+	id          string
+	ChildrenIDs []string `json:"children_ids"`
+}
+
+func (req removeChildrenGroupsReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+	if len(req.ChildrenIDs) == 0 {
+		return apiutil.ErrMissingChildrenGroupIDs
+	}
+	for _, childID := range req.ChildrenIDs {
+		if err := api.ValidateUUID(childID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type removeAllChildrenGroupsReq struct {
+	id string
+}
+
+func (req removeAllChildrenGroupsReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type listChildrenGroupsReq struct {
+	id string
+	mggroups.PageMeta
+}
+
+func (req listChildrenGroupsReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+	if req.Limit > api.MaxLimitSize || req.Limit < 1 {
+		return apiutil.ErrLimitSize
 	}
 	return nil
 }

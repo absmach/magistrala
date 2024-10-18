@@ -6,9 +6,12 @@ package api
 import (
 	"context"
 
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -22,6 +25,11 @@ func sendInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
 		invitation := invitations.Invitation{
 			UserID:   req.UserID,
 			DomainID: req.DomainID,
@@ -29,7 +37,7 @@ func sendInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			Resend:   req.Resend,
 		}
 
-		if err := svc.SendInvitation(ctx, req.token, invitation); err != nil {
+		if err := svc.SendInvitation(ctx, session, invitation); err != nil {
 			return nil, err
 		}
 
@@ -46,7 +54,12 @@ func viewInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		invitation, err := svc.ViewInvitation(ctx, req.token, req.userID, req.domainID)
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		invitation, err := svc.ViewInvitation(ctx, session, req.userID, req.domainID)
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +77,12 @@ func listInvitationsEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		page, err := svc.ListInvitations(ctx, req.token, req.Page)
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		page, err := svc.ListInvitations(ctx, session, req.Page)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +100,12 @@ func acceptInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.AcceptInvitation(ctx, req.token, req.DomainID); err != nil {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		if err := svc.AcceptInvitation(ctx, session, req.DomainID); err != nil {
 			return nil, err
 		}
 
@@ -97,7 +120,12 @@ func rejectInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.RejectInvitation(ctx, req.token, req.DomainID); err != nil {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		if err := svc.RejectInvitation(ctx, session, req.DomainID); err != nil {
 			return nil, err
 		}
 
@@ -112,7 +140,12 @@ func deleteInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := svc.DeleteInvitation(ctx, req.token, req.userID, req.domainID); err != nil {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		if err := svc.DeleteInvitation(ctx, session, req.userID, req.domainID); err != nil {
 			return nil, err
 		}
 

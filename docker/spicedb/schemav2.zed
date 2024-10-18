@@ -1,0 +1,176 @@
+definition user {}
+
+
+definition thing {
+	relation administrator: user
+
+
+	relation parent_group: group
+
+    relation add_role: role#member
+    relation edit_role: role#member
+    relation delete_role: role#member
+
+	relation update: role#member
+	relation share: role#member
+	relation read: role#member
+	relation delete: role#member
+	relation set_parent: role#member
+	relation connect_to_channel: role#member
+
+	permission admin = administrator
+
+	permission update_perm  =  admin + update + parent_group->update_thing
+	permission share_perm  =  admin + share + parent_group->share_thing
+	permission read_perm  = admin + read + parent_group->read_thing
+	permission delete_perm  = admin + delete + parent_group->delete_thing
+	permission connect_to_channel_perm  = admin + connect_to_channel + parent_group->connect_thing_to_channel
+
+
+}
+
+definition channel {
+	relation administrator: user
+
+
+	relation parent_group: group
+
+    relation add_role: role#member
+    relation edit_role: role#member
+    relation delete_role: role#member
+
+	relation update: role#member
+	relation share: role#member
+	relation read: role#member
+	relation delete: role#member
+	relation set_parent: role#member
+	relation connect_to_thing: role#member
+	relation publish: role#member | thing
+	relation subscribe: role#member | thing
+
+	permission admin = administrator
+
+	permission update_perm  =  admin + update + parent_group->update_thing_permission
+	permission share_perm  =  admin + share + parent_group->update_thing_permission
+	permission read_perm  = admin + read + parent_group->read_thing_permission
+	permission delete_perm  = admin + delete + parent_group->delete_thing_permission
+	permission connect_to_channel_perm  = admin + connect_to_thing + parent_group->connect_to_channel_permission
+}
+
+definition group {
+
+    relation domain: domain // This can't be clubed with parent_group, but if parent_group is unassigned then we could not track belongs to which domain, so it safe to add domain
+	relation parent_group: group
+
+    relation add_role: role#member
+    relation edit_role: role#member
+    relation delete_role: role#member
+
+	relation update: role#member
+	relation share: role#member
+	relation read: role#member
+	relation delete: role#member
+	relation set_child: role#member
+	relation set_parent: role#member
+
+	relation create_thing: role#member
+	relation update_thing: role#member
+	relation share_thing: role#member
+	relation read_thing: role#member
+	relation delete_thing: role#member
+	relation set_parent_group_thing: role#member
+	relation connect_thing_to_channel: role#member
+
+	relation create_channel: role#member
+	relation update_channel: role#member
+	relation share_channel: role#member
+	relation read_channel: role#member
+	relation delete_channel: role#member
+	relation set_parent_group_channel: role#member
+	relation connect_to_thing: role#member
+	relation publish_channel: role#member
+	relation subscribe_channel: role#member
+
+	relation create_subgroup: role#member // this allows to add parent for group during the new group creation
+	relation update_subgroup: role#member
+	relation share_subgroup: role#member
+	relation read_subgroup: role#member
+	relation delete_subgroup: role#member
+	relation set_child_subgroup: role#member
+	relation set_parent_subgroup: role#member
+
+
+
+	permission update_perm 		=	update + parent_group->update_subgroup + domain->update_group
+	permission share_perm 		=	share  parent_group->share_subgroup + domain->share_group
+	permission read_perm 		=	read + parent_group->read_subgroup + domain->read_group
+	permission delete_perm 		=	delete + parent_group->delete_subgroup + domain->delete_group
+	permission set_child_perm 	=	set_child  + parent_group->set_child_subgroup + domain->set_child_group
+	permission set_parent_perm 	=	set_parent + parent_group->set_parent_subgroup + domain->set_parent_group
+
+
+	permission create_thing_permission =  create_thing + parent_group->create_thing_permission
+	permission update_thing_permission =  update_thing + parent_group->update_thing_permission
+	permission share_thing_permission = share_thing + parent_group->share_thing_permission
+	permission read_thing_permission =  read_thing  + parent_group->read_thing_permission
+	permission delete_thing_permission = delete_thing  + parent_group->delete_thing_permission
+	permission set_parent_group_thing_permission = set_parent_group_thing + parent_group->set_parent_group_thing_permission
+	permission connect_thing_to_channel_permission = connect_thing_to_channel
+
+
+}
+
+definition domain {
+
+	relation update: role#member
+	relation share: role#member
+	relation read: role#member
+	relation delete: role#member
+
+    relation add_role: role#member
+    relation edit_role: role#member
+    relation delete_role: role#member
+
+	relation create_thing: role#member
+	relation update_thing: role#member
+	relation share_thing: role#member
+	relation read_thing: role#member
+	relation delete_thing: role#member
+	relation set_parent_group_thing: role#member
+	relation connect_to_channel: role#member
+
+	relation create_channel: role#member
+	relation update_channel: role#member
+	relation share_channel: role#member
+	relation read_channel: role#member
+	relation delete_channel: role#member
+	relation set_parent_group_channel: role#member
+	relation connect_to_thing: role#member
+	relation publish_channel: role#member
+	relation subscribe_channel: role#member
+
+	relation create_group: role#member
+	relation update_group: role#member
+	relation share_group: role#member
+	relation read_group: role#member
+	relation delete_group: role#member
+	relation set_child_group: role#member
+	relation set_parent_group: role#member
+
+}
+
+
+definition role {
+	relation entity: domain | group | channel | thing
+	relation member: user
+}
+
+
+
+definition platform {
+  relation administrator: user
+  relation member: user
+
+  permission admin = administrator
+  permission membership = administrator + member
+}

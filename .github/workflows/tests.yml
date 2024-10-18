@@ -26,8 +26,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.59.1
-          args: --config ./tools/config/.golangci.yml
+          version: v1.60.3
+          args: --config ./tools/config/golangci.yml
 
       - name: Build all Binaries
         run: |
@@ -388,6 +388,6 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV }}
-          directory: ./coverage/
-          name: codecov-umbrella
+          files: ./coverage/*.out
+          codecov_yml_path: tools/codecov.yml
           verbose: true

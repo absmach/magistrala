@@ -189,3 +189,17 @@ By utilizing Magistrala, you actively contribute to its improvement. Together, w
 [rodneyosodo]: https://github.com/rodneyosodo
 [callhome]: https://deployments.magistrala.abstractmachines.fr/
 [contrib]: https://www.github.com/absmach/mg-contrib
+
+
+## This will be removed
+Notes:
+
+Domain Have two in-build roles
+- Admin 
+- Member
+
+Both role could not be deleted
+
+Any user in platform can abe added to role Member
+
+But to other roles (incl. Admin) able to add only  users of Member role and organization team members only . 

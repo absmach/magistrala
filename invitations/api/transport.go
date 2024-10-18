@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -29,52 +30,56 @@ const (
 	stateKey     = "state"
 )
 
-func MakeHandler(svc invitations.Service, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc invitations.Service, logger *slog.Logger, authn mgauthn.Authentication, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	mux := chi.NewRouter()
 
-	mux.Route("/invitations", func(r chi.Router) {
-		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			sendInvitationEndpoint(svc),
-			decodeSendInvitationReq,
-			api.EncodeResponse,
-			opts...,
-		), "send_invitation").ServeHTTP)
-		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			listInvitationsEndpoint(svc),
-			decodeListInvitationsReq,
-			api.EncodeResponse,
-			opts...,
-		), "list_invitations").ServeHTTP)
-		r.Route("/{user_id}/{domain_id}", func(r chi.Router) {
+	mux.Group(func(r chi.Router) {
+		r.Use(api.AuthenticateMiddleware(authn))
+
+		r.Route("/invitations", func(r chi.Router) {
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				sendInvitationEndpoint(svc),
+				decodeSendInvitationReq,
+				api.EncodeResponse,
+				opts...,
+			), "send_invitation").ServeHTTP)
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				viewInvitationEndpoint(svc),
-				decodeInvitationReq,
+				listInvitationsEndpoint(svc),
+				decodeListInvitationsReq,
 				api.EncodeResponse,
 				opts...,
-			), "view_invitations").ServeHTTP)
-			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
-				deleteInvitationEndpoint(svc),
-				decodeInvitationReq,
+			), "list_invitations").ServeHTTP)
+			r.Route("/{user_id}/{domain_id}", func(r chi.Router) {
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					viewInvitationEndpoint(svc),
+					decodeInvitationReq,
+					api.EncodeResponse,
+					opts...,
+				), "view_invitations").ServeHTTP)
+				r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+					deleteInvitationEndpoint(svc),
+					decodeInvitationReq,
+					api.EncodeResponse,
+					opts...,
+				), "delete_invitation").ServeHTTP)
+			})
+			r.Post("/accept", otelhttp.NewHandler(kithttp.NewServer(
+				acceptInvitationEndpoint(svc),
+				decodeAcceptInvitationReq,
 				api.EncodeResponse,
 				opts...,
-			), "delete_invitation").ServeHTTP)
+			), "accept_invitation").ServeHTTP)
+			r.Post("/reject", otelhttp.NewHandler(kithttp.NewServer(
+				rejectInvitationEndpoint(svc),
+				decodeAcceptInvitationReq,
+				api.EncodeResponse,
+				opts...,
+			), "reject_invitation").ServeHTTP)
 		})
-		r.Post("/accept", otelhttp.NewHandler(kithttp.NewServer(
-			acceptInvitationEndpoint(svc),
-			decodeAcceptInvitationReq,
-			api.EncodeResponse,
-			opts...,
-		), "accept_invitation").ServeHTTP)
-		r.Post("/reject", otelhttp.NewHandler(kithttp.NewServer(
-			rejectInvitationEndpoint(svc),
-			decodeAcceptInvitationReq,
-			api.EncodeResponse,
-			opts...,
-		), "reject_invitation").ServeHTTP)
 	})
 
 	mux.Get("/health", magistrala.Health("invitations", instanceID))

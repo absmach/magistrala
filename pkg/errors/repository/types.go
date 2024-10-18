@@ -20,7 +20,7 @@ var (
 	ErrCreateEntity = errors.New("failed to create entity in the db")
 
 	// ErrViewEntity indicates error in viewing entity or entities.
-	ErrViewEntity = errors.New("view entity failed")
+	ErrViewEntity = errors.New(" repository error: view entity failed")
 
 	// ErrUpdateEntity indicates error in updating entity or entities.
 	ErrUpdateEntity = errors.New("update entity failed")
@@ -33,4 +33,7 @@ var (
 
 	// ErrFailedToRetrieveAllGroups failed to retrieve groups.
 	ErrFailedToRetrieveAllGroups = errors.New("failed to retrieve all groups")
+
+	// ErrMissingNames indicates missing first and last names.
+	ErrMissingNames = errors.New("must have first and last names")
 )

@@ -133,9 +133,11 @@ func errExit(err error) {
 
 func createUser(s sdk.SDK, conf Config) (string, error) {
 	user := sdk.User{
-		Name: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+		FirstName: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+		LastName:  fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+		Identity:  fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
 		Credentials: sdk.Credentials{
-			Identity: fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
+			UserName: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
 			Secret:   defPass,
 		},
 		Status: sdk.EnabledStatus,
@@ -147,7 +149,7 @@ func createUser(s sdk.SDK, conf Config) (string, error) {
 	}
 
 	login := sdk.Login{
-		Identity: user.Credentials.Identity,
+		Identity: user.Identity,
 		Secret:   user.Credentials.Secret,
 	}
 	token, err := s.CreateToken(login)
@@ -168,7 +170,7 @@ func createUser(s sdk.SDK, conf Config) (string, error) {
 	}
 
 	login = sdk.Login{
-		Identity: user.Credentials.Identity,
+		Identity: user.Identity,
 		Secret:   user.Credentials.Secret,
 		DomainID: domain.ID,
 	}
@@ -186,9 +188,11 @@ func createUsers(s sdk.SDK, conf Config, token string) ([]sdk.User, error) {
 
 	for i := uint64(0); i < conf.Num; i++ {
 		user := sdk.User{
-			Name: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+			FirstName: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+			LastName:  fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+			Identity:  fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
 			Credentials: sdk.Credentials{
-				Identity: fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
+				UserName: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
 				Secret:   defPass,
 			},
 			Status: sdk.EnabledStatus,
@@ -250,19 +254,19 @@ func createThings(s sdk.SDK, conf Config, token string) ([]sdk.Thing, error) {
 		for i := 0; i < batches; i++ {
 			ths, err := createThingsInBatch(s, conf, token, batchSize)
 			if err != nil {
-				return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+				return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 			}
 			things = append(things, ths...)
 		}
 		ths, err := createThingsInBatch(s, conf, token, conf.Num%uint64(batchSize))
 		if err != nil {
-			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+			return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 		}
 		things = append(things, ths...)
 	} else {
 		ths, err := createThingsInBatch(s, conf, token, conf.Num)
 		if err != nil {
-			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+			return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 		}
 		things = append(things, ths...)
 	}
@@ -295,19 +299,19 @@ func createChannels(s sdk.SDK, conf Config, token string) ([]sdk.Channel, error)
 		for i := 0; i < batches; i++ {
 			chs, err := createChannelsInBatch(s, conf, token, batchSize)
 			if err != nil {
-				return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+				return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 			}
 			channels = append(channels, chs...)
 		}
 		chs, err := createChannelsInBatch(s, conf, token, conf.Num%uint64(batchSize))
 		if err != nil {
-			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
 		channels = append(channels, chs...)
 	} else {
 		chs, err := createChannelsInBatch(s, conf, token, conf.Num)
 		if err != nil {
-			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
 		channels = append(channels, chs...)
 	}
@@ -370,26 +374,34 @@ func read(s sdk.SDK, conf Config, token string, users []sdk.User, groups []sdk.G
 
 func update(s sdk.SDK, token string, users []sdk.User, groups []sdk.Group, things []sdk.Thing, channels []sdk.Channel) error {
 	for _, user := range users {
-		user.Name = namesgenerator.Generate()
+		user.FirstName = namesgenerator.Generate()
 		user.Metadata = sdk.Metadata{"Update": namesgenerator.Generate()}
 		rUser, err := s.UpdateUser(user, token)
 		if err != nil {
 			return fmt.Errorf("failed to update user %w", err)
 		}
-		if rUser.Name != user.Name {
-			return fmt.Errorf("failed to update user name before %s after %s", user.Name, rUser.Name)
+		if rUser.FirstName != user.FirstName {
+			return fmt.Errorf("failed to update user name before %s after %s", user.FirstName, rUser.FirstName)
 		}
 		if rUser.Metadata["Update"] != user.Metadata["Update"] {
 			return fmt.Errorf("failed to update user metadata before %s after %s", user.Metadata["Update"], rUser.Metadata["Update"])
 		}
 		user = rUser
-		user.Credentials.Identity = namesgenerator.Generate()
+		user.Credentials.UserName = namesgenerator.Generate()
+		rUser, err = s.UpdateUserNames(user, token)
+		if err != nil {
+			return fmt.Errorf("failed to update user identity %w", err)
+		}
+		if rUser.Credentials.UserName != user.Credentials.UserName {
+			return fmt.Errorf("failed to update user name before %s after %s", user.Credentials.UserName, rUser.Credentials.UserName)
+		}
+		user = rUser
 		rUser, err = s.UpdateUserIdentity(user, token)
 		if err != nil {
 			return fmt.Errorf("failed to update user identity %w", err)
 		}
-		if rUser.Credentials.Identity != user.Credentials.Identity {
-			return fmt.Errorf("failed to update user identity before %s after %s", user.Credentials.Identity, rUser.Credentials.Identity)
+		if rUser.Identity != user.Identity {
+			return fmt.Errorf("failed to update user identity before %s after %s", user.Identity, rUser.Identity)
 		}
 		user = rUser
 		user.Tags = []string{namesgenerator.Generate()}

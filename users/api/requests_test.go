@@ -10,7 +10,7 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/users"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,25 +18,27 @@ const (
 	valid   = "valid"
 	invalid = "invalid"
 	secret  = "QJg58*aMan7j"
-	name    = "client"
+	name    = "user"
 )
 
 var validID = testsutil.GenerateUUID(&testing.T{})
 
-func TestCreateClientReqValidate(t *testing.T) {
+func TestCreateUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  createClientReq
+		req  createUserReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: createClientReq{
-				client: mgclients.Client{
-					ID:   validID,
-					Name: valid,
-					Credentials: mgclients.Credentials{
-						Identity: "example@example.com",
+			req: createUserReq{
+				user: users.User{
+					ID:        validID,
+					FirstName: valid,
+					LastName:  valid,
+					Identity:  "example@domain.com",
+					Credentials: users.Credentials{
+						UserName: "example",
 						Secret:   secret,
 					},
 				},
@@ -45,22 +47,25 @@ func TestCreateClientReqValidate(t *testing.T) {
 		},
 		{
 			desc: "name too long",
-			req: createClientReq{
-				client: mgclients.Client{
-					ID:   validID,
-					Name: strings.Repeat("a", api.MaxNameSize+1),
+			req: createUserReq{
+				user: users.User{
+					ID:        validID,
+					FirstName: strings.Repeat("a", api.MaxNameSize+1),
+					LastName:  valid,
 				},
 			},
 			err: apiutil.ErrNameSize,
 		},
 		{
 			desc: "missing identity in request",
-			req: createClientReq{
-				client: mgclients.Client{
-					ID:   validID,
-					Name: valid,
-					Credentials: mgclients.Credentials{
-						Secret: valid,
+			req: createUserReq{
+				user: users.User{
+					ID:        validID,
+					FirstName: valid,
+					LastName:  valid,
+					Credentials: users.Credentials{
+						UserName: "example",
+						Secret:   secret,
 					},
 				},
 			},
@@ -68,12 +73,14 @@ func TestCreateClientReqValidate(t *testing.T) {
 		},
 		{
 			desc: "missing secret in request",
-			req: createClientReq{
-				client: mgclients.Client{
-					ID:   validID,
-					Name: valid,
-					Credentials: mgclients.Credentials{
-						Identity: "example@example.com",
+			req: createUserReq{
+				user: users.User{
+					ID:        validID,
+					FirstName: valid,
+					LastName:  valid,
+					Identity:  "example@domain.com",
+					Credentials: users.Credentials{
+						UserName: "example",
 					},
 				},
 			},
@@ -81,12 +88,14 @@ func TestCreateClientReqValidate(t *testing.T) {
 		},
 		{
 			desc: "invalid secret in request",
-			req: createClientReq{
-				client: mgclients.Client{
-					ID:   validID,
-					Name: valid,
-					Credentials: mgclients.Credentials{
-						Identity: "example@example.com",
+			req: createUserReq{
+				user: users.User{
+					ID:        validID,
+					FirstName: valid,
+					LastName:  valid,
+					Identity:  "example@domain.com",
+					Credentials: users.Credentials{
+						UserName: "example",
 						Secret:   "invalid",
 					},
 				},
@@ -96,26 +105,26 @@ func TestCreateClientReqValidate(t *testing.T) {
 	}
 	for _, tc := range cases {
 		err := tc.req.validate()
-		assert.Equal(t, tc.err, err)
+		assert.Equal(t, tc.err, err, "%s: expected %s got %s\n", tc.desc, tc.err, err)
 	}
 }
 
-func TestViewClientReqValidate(t *testing.T) {
+func TestViewUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  viewClientReq
+		req  viewUserReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: viewClientReq{
+			req: viewUserReq{
 				id: validID,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
-			req: viewClientReq{
+			req: viewUserReq{
 				id: "",
 			},
 			err: apiutil.ErrMissingID,
@@ -127,36 +136,36 @@ func TestViewClientReqValidate(t *testing.T) {
 	}
 }
 
-func TestListClientsReqValidate(t *testing.T) {
+func TestListUsersReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  listClientsReq
+		req  listUsersReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: listClientsReq{
+			req: listUsersReq{
 				limit: 10,
 			},
 			err: nil,
 		},
 		{
 			desc: "limit too big",
-			req: listClientsReq{
+			req: listUsersReq{
 				limit: api.MaxLimitSize + 1,
 			},
 			err: apiutil.ErrLimitSize,
 		},
 		{
 			desc: "limit too small",
-			req: listClientsReq{
+			req: listUsersReq{
 				limit: 0,
 			},
 			err: apiutil.ErrLimitSize,
 		},
 		{
 			desc: "invalid direction",
-			req: listClientsReq{
+			req: listUsersReq{
 				limit: 10,
 				dir:   "invalid",
 			},
@@ -169,22 +178,22 @@ func TestListClientsReqValidate(t *testing.T) {
 	}
 }
 
-func TestSearchClientsReqValidate(t *testing.T) {
+func TestSearchUsersReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  searchClientsReq
+		req  searchUsersReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: searchClientsReq{
-				Name: name,
+			req: searchUsersReq{
+				UserName: name,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty query",
-			req:  searchClientsReq{},
+			req:  searchUsersReq{},
 			err:  apiutil.ErrEmptySearchQuery,
 		},
 	}
@@ -231,25 +240,25 @@ func TestListMembersByObjectReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientReqValidate(t *testing.T) {
+func TestUpdateUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientReq
+		req  updateUserReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: updateClientReq{
-				id:   validID,
-				Name: valid,
+			req: updateUserReq{
+				id:       validID,
+				UserName: valid,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
-			req: updateClientReq{
-				id:   "",
-				Name: valid,
+			req: updateUserReq{
+				id:       "",
+				UserName: valid,
 			},
 			err: apiutil.ErrMissingID,
 		},
@@ -260,15 +269,15 @@ func TestUpdateClientReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientTagsReqValidate(t *testing.T) {
+func TestUpdateUserTagsReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientTagsReq
+		req  updateUserTagsReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: updateClientTagsReq{
+			req: updateUserTagsReq{
 				id:   validID,
 				Tags: []string{"tag1", "tag2"},
 			},
@@ -276,7 +285,7 @@ func TestUpdateClientTagsReqValidate(t *testing.T) {
 		},
 		{
 			desc: "empty id",
-			req: updateClientTagsReq{
+			req: updateUserTagsReq{
 				id:   "",
 				Tags: []string{"tag1", "tag2"},
 			},
@@ -289,15 +298,103 @@ func TestUpdateClientTagsReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientRoleReqValidate(t *testing.T) {
+func TestUpdateUserNamesReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientRoleReq
+		req  updateUserNamesReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: updateClientRoleReq{
+			req: updateUserNamesReq{
+				User: users.User{
+					ID:        validID,
+					FirstName: "First",
+					LastName:  "Last",
+					Credentials: users.Credentials{
+						UserName: "validUsername",
+					},
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "missing user ID",
+			req: updateUserNamesReq{
+				User: users.User{
+					FirstName: "First",
+					LastName:  "Last",
+					Credentials: users.Credentials{
+						UserName: "validUsername",
+					},
+				},
+			},
+			err: apiutil.ErrMissingID,
+		},
+		{
+			desc: "name too long",
+			req: updateUserNamesReq{
+				User: users.User{
+					ID:        validID,
+					FirstName: strings.Repeat("a", api.MaxNameSize+1),
+				},
+			},
+			err: apiutil.ErrNameSize,
+		},
+		{
+			desc: "missing full name",
+			req: updateUserNamesReq{
+				User: users.User{
+					ID: validID,
+				},
+			},
+			err: apiutil.ErrMissingFullName,
+		},
+	}
+	for _, tc := range cases {
+		err := tc.req.validate()
+		assert.Equal(t, tc.err, err, "%s: expected %s got %s\n", tc.desc, tc.err, err)
+	}
+}
+
+func TestUpdateProfilePictureReqValidate(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  updateProfilePictureReq
+		err  error
+	}{
+		{
+			desc: "valid request",
+			req: updateProfilePictureReq{
+				id:             validID,
+				ProfilePicture: "base64encodedstring",
+			},
+			err: nil,
+		},
+		{
+			desc: "empty ID",
+			req: updateProfilePictureReq{
+				id:             "",
+				ProfilePicture: "base64encodedstring",
+			},
+			err: apiutil.ErrMissingID,
+		},
+	}
+	for _, tc := range cases {
+		err := tc.req.validate()
+		assert.Equal(t, tc.err, err, "%s: expected %s got %s\n", tc.desc, tc.err, err)
+	}
+}
+
+func TestUpdateUserRoleReqValidate(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  updateUserRoleReq
+		err  error
+	}{
+		{
+			desc: "valid request",
+			req: updateUserRoleReq{
 				id:   validID,
 				Role: "admin",
 			},
@@ -305,7 +402,7 @@ func TestUpdateClientRoleReqValidate(t *testing.T) {
 		},
 		{
 			desc: "empty id",
-			req: updateClientRoleReq{
+			req: updateUserRoleReq{
 				id:   "",
 				Role: "admin",
 			},
@@ -318,15 +415,42 @@ func TestUpdateClientRoleReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientIdentityReqValidate(t *testing.T) {
+func TestViewUserByUserNameReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientIdentityReq
+		req  viewUserByUserNameReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: updateClientIdentityReq{
+			req: viewUserByUserNameReq{
+				userName: name,
+			},
+			err: nil,
+		},
+		{
+			desc: "empty userName",
+			req: viewUserByUserNameReq{
+				userName: "",
+			},
+			err: apiutil.ErrMissingUserName,
+		},
+	}
+	for _, c := range cases {
+		err := c.req.validate()
+		assert.Equal(t, c.err, err, "%s: expected %s got %s\n", c.desc, c.err, err)
+	}
+}
+
+func TestUpdateUserIdentityReqValidate(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  updateUserIdentityReq
+		err  error
+	}{
+		{
+			desc: "valid request",
+			req: updateUserIdentityReq{
 				id:       validID,
 				Identity: "example@example.com",
 			},
@@ -334,7 +458,7 @@ func TestUpdateClientIdentityReqValidate(t *testing.T) {
 		},
 		{
 			desc: "empty id",
-			req: updateClientIdentityReq{
+			req: updateUserIdentityReq{
 				id:       "",
 				Identity: "example@example.com",
 			},
@@ -347,15 +471,15 @@ func TestUpdateClientIdentityReqValidate(t *testing.T) {
 	}
 }
 
-func TestUpdateClientSecretReqValidate(t *testing.T) {
+func TestUpdateUserSecretReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  updateClientSecretReq
+		req  updateUserSecretReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: updateClientSecretReq{
+			req: updateUserSecretReq{
 				OldSecret: secret,
 				NewSecret: secret,
 			},
@@ -363,7 +487,7 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 		},
 		{
 			desc: "missing old secret",
-			req: updateClientSecretReq{
+			req: updateUserSecretReq{
 				OldSecret: "",
 				NewSecret: secret,
 			},
@@ -371,7 +495,7 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 		},
 		{
 			desc: "missing new secret",
-			req: updateClientSecretReq{
+			req: updateUserSecretReq{
 				OldSecret: secret,
 				NewSecret: "",
 			},
@@ -379,7 +503,7 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 		},
 		{
 			desc: "invalid new secret",
-			req: updateClientSecretReq{
+			req: updateUserSecretReq{
 				OldSecret: secret,
 				NewSecret: "invalid",
 			},
@@ -392,22 +516,22 @@ func TestUpdateClientSecretReqValidate(t *testing.T) {
 	}
 }
 
-func TestChangeClientStatusReqValidate(t *testing.T) {
+func TestChangeUserStatusReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  changeClientStatusReq
+		req  changeUserStatusReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: changeClientStatusReq{
+			req: changeUserStatusReq{
 				id: validID,
 			},
 			err: nil,
 		},
 		{
 			desc: "empty id",
-			req: changeClientStatusReq{
+			req: changeUserStatusReq{
 				id: "",
 			},
 			err: apiutil.ErrMissingID,
@@ -419,15 +543,15 @@ func TestChangeClientStatusReqValidate(t *testing.T) {
 	}
 }
 
-func TestLoginClientReqValidate(t *testing.T) {
+func TestLoginUserReqValidate(t *testing.T) {
 	cases := []struct {
 		desc string
-		req  loginClientReq
+		req  loginUserReq
 		err  error
 	}{
 		{
 			desc: "valid request",
-			req: loginClientReq{
+			req: loginUserReq{
 				Identity: "eaxmple,example.com",
 				Secret:   secret,
 			},
@@ -435,7 +559,7 @@ func TestLoginClientReqValidate(t *testing.T) {
 		},
 		{
 			desc: "empty identity",
-			req: loginClientReq{
+			req: loginUserReq{
 				Identity: "",
 				Secret:   secret,
 			},
@@ -443,9 +567,9 @@ func TestLoginClientReqValidate(t *testing.T) {
 		},
 		{
 			desc: "empty secret",
-			req: loginClientReq{
-				Identity: "eaxmple,example.com",
+			req: loginUserReq{
 				Secret:   "",
+				Identity: "eaxmple,example.com",
 			},
 			err: apiutil.ErrMissingPass,
 		},

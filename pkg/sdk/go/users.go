@@ -11,6 +11,7 @@ import (
 
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users"
 )
 
 const (
@@ -27,16 +28,20 @@ const (
 
 // User represents magistrala user its credentials.
 type User struct {
-	ID          string      `json:"id"`
-	Name        string      `json:"name,omitempty"`
-	Credentials Credentials `json:"credentials"`
-	Tags        []string    `json:"tags,omitempty"`
-	Domain      string      `json:"-"` // ignoring Domain Field, since it will be always empty for users
-	Metadata    Metadata    `json:"metadata,omitempty"`
-	CreatedAt   time.Time   `json:"created_at,omitempty"`
-	UpdatedAt   time.Time   `json:"updated_at,omitempty"`
-	Status      string      `json:"status,omitempty"`
-	Role        string      `json:"role,omitempty"`
+	ID             string      `json:"id"`
+	UserName       string      `json:"user_name,omitempty"`
+	FirstName      string      `json:"first_name,omitempty"`
+	LastName       string      `json:"last_name,omitempty"`
+	Identity       string      `json:"identity,omitempty"`
+	Credentials    Credentials `json:"credentials"`
+	Tags           []string    `json:"tags,omitempty"`
+	Domain         string      `json:"-"` // ignoring Domain Field, since it will be always empty for users
+	Metadata       Metadata    `json:"metadata,omitempty"`
+	CreatedAt      time.Time   `json:"created_at,omitempty"`
+	UpdatedAt      time.Time   `json:"updated_at,omitempty"`
+	Status         string      `json:"status,omitempty"`
+	Role           string      `json:"role,omitempty"`
+	ProfilePicture string      `json:"profile_picture,omitempty"`
 }
 
 func (sdk mgSDK) CreateUser(user User, token string) (User, errors.SDKError) {
@@ -117,6 +122,25 @@ func (sdk mgSDK) User(id, token string) (User, errors.SDKError) {
 	return user, nil
 }
 
+func (sdk mgSDK) UserByUserName(userName, token string) (User, errors.SDKError) {
+	if userName == "" {
+		return User{}, errors.NewSDKError(apiutil.ErrMissingUserName)
+	}
+	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, userName)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	var user User
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
+}
+
 func (sdk mgSDK) UserProfile(token string) (User, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/profile", sdk.usersURL, usersEndpoint)
 
@@ -179,7 +203,7 @@ func (sdk mgSDK) UpdateUserTags(user User, token string) (User, errors.SDKError)
 }
 
 func (sdk mgSDK) UpdateUserIdentity(user User, token string) (User, errors.SDKError) {
-	ucir := updateClientIdentityReq{token: token, id: user.ID, Identity: user.Credentials.Identity}
+	ucir := updateUserIdentityReq{token: token, id: user.ID, Identity: user.Identity}
 
 	data, err := json.Marshal(ucir)
 	if err != nil {
@@ -233,7 +257,7 @@ func (sdk mgSDK) ResetPassword(password, confPass, token string) errors.SDKError
 }
 
 func (sdk mgSDK) UpdatePassword(oldPass, newPass, token string) (User, errors.SDKError) {
-	ucsr := updateClientSecretReq{OldSecret: oldPass, NewSecret: newPass}
+	ucsr := updateUserSecretReq{OldSecret: oldPass, NewSecret: newPass}
 
 	data, err := json.Marshal(ucsr)
 	if err != nil {
@@ -262,6 +286,48 @@ func (sdk mgSDK) UpdateUserRole(user User, token string) (User, errors.SDKError)
 	}
 
 	url := fmt.Sprintf("%s/%s/%s/role", sdk.usersURL, usersEndpoint, user.ID)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	user = User{}
+	if err = json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
+}
+
+func (sdk mgSDK) UpdateUserNames(user User, token string) (User, errors.SDKError) {
+	data, err := json.Marshal(user)
+	if err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/names", sdk.usersURL, usersEndpoint, user.ID)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	user = User{}
+	if err = json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
+}
+
+func (sdk mgSDK) UpdateProfilePicture(user User, token string) (User, errors.SDKError) {
+	data, err := json.Marshal(user)
+	if err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/picture", sdk.usersURL, usersEndpoint, user.ID)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -348,14 +414,14 @@ func (sdk mgSDK) SearchUsers(pm PageMetadata, token string) (UsersPage, errors.S
 }
 
 func (sdk mgSDK) EnableUser(id, token string) (User, errors.SDKError) {
-	return sdk.changeClientStatus(token, id, enableEndpoint)
+	return sdk.changeUserStatus(token, id, users.EnabledStatus.String())
 }
 
 func (sdk mgSDK) DisableUser(id, token string) (User, errors.SDKError) {
-	return sdk.changeClientStatus(token, id, disableEndpoint)
+	return sdk.changeUserStatus(token, id, users.DisabledStatus.String())
 }
 
-func (sdk mgSDK) changeClientStatus(token, id, status string) (User, errors.SDKError) {
+func (sdk mgSDK) changeUserStatus(token, id, status string) (User, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.usersURL, usersEndpoint, id, status)
 
 	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusOK)

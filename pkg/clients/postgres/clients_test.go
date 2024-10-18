@@ -13,9 +13,7 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/pkg/clients"
 	mgclients "github.com/absmach/magistrala/pkg/clients"
-	"github.com/absmach/magistrala/pkg/clients/postgres"
 	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
@@ -35,7 +33,7 @@ func TestRetrieveByID(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 
@@ -85,7 +83,7 @@ func TestRetrieveByIdentity(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 
@@ -135,7 +133,7 @@ func TestRetrieveAll(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	nClients := uint64(200)
 
@@ -668,7 +666,7 @@ func TestRetrieveByIDs(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	num := 200
 
@@ -686,7 +684,7 @@ func TestRetrieveByIDs(t *testing.T) {
 			Tags:      namegen.GenerateMultiple(5),
 			Metadata:  map[string]interface{}{"name": name},
 			CreatedAt: time.Now().UTC().Truncate(time.Millisecond),
-			Status:    clients.EnabledStatus,
+			Status:    mgclients.EnabledStatus,
 		}
 		client, err := save(context.Background(), repo, client)
 		require.Nil(t, err, fmt.Sprintf("add new client: expected nil got %s\n", err))
@@ -932,7 +930,7 @@ func TestSearchClients(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	name := namegen.Generate()
 
@@ -1311,7 +1309,7 @@ func TestUpdate(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client1 := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 	client2 := generateClient(t, mgclients.DisabledStatus, mgclients.UserRole, repo)
@@ -1487,7 +1485,7 @@ func TestUpdateTags(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client1 := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 	client2 := generateClient(t, mgclients.DisabledStatus, mgclients.UserRole, repo)
@@ -1547,7 +1545,7 @@ func TestUpdateSecret(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client1 := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 	client2 := generateClient(t, mgclients.DisabledStatus, mgclients.UserRole, repo)
@@ -1615,7 +1613,7 @@ func TestUpdateIdentity(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client1 := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 	client2 := generateClient(t, mgclients.DisabledStatus, mgclients.UserRole, repo)
@@ -1681,7 +1679,7 @@ func TestChangeStatus(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client1 := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 	client2 := generateClient(t, mgclients.DisabledStatus, mgclients.UserRole, repo)
@@ -1742,7 +1740,7 @@ func TestUpdateRole(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client1 := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 	client2 := generateClient(t, mgclients.DisabledStatus, mgclients.UserRole, repo)
@@ -1803,7 +1801,7 @@ func TestDelete(t *testing.T) {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
-	repo := &postgres.Repository{database}
+	repo := &pgclients.Repository{database}
 
 	client := generateClient(t, mgclients.EnabledStatus, mgclients.UserRole, repo)
 
@@ -1854,7 +1852,7 @@ func findClients(clis []mgclients.Client, query string, offset, limit uint64) []
 	return rclients[offset:limit]
 }
 
-func generateClient(t *testing.T, status mgclients.Status, role mgclients.Role, repo *postgres.Repository) mgclients.Client {
+func generateClient(t *testing.T, status mgclients.Status, role mgclients.Role, repo *pgclients.Repository) mgclients.Client {
 	client := mgclients.Client{
 		ID:   testsutil.GenerateUUID(t),
 		Name: namegen.Generate(),
@@ -1876,7 +1874,7 @@ func generateClient(t *testing.T, status mgclients.Status, role mgclients.Role, 
 	return client
 }
 
-func save(ctx context.Context, repo *postgres.Repository, c mgclients.Client) (mgclients.Client, error) {
+func save(ctx context.Context, repo *pgclients.Repository, c mgclients.Client) (mgclients.Client, error) {
 	q := `INSERT INTO clients (id, name, tags, domain_id, identity, secret, metadata, created_at, status, role)
         VALUES (:id, :name, :tags, :domain_id, :identity, :secret, :metadata, :created_at, :status, :role)
         RETURNING id, name, tags, identity, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at`

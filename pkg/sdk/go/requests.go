@@ -3,8 +3,8 @@
 
 package sdk
 
-// updateClientSecretReq is used to update the client secret.
-type updateClientSecretReq struct {
+// updateUserSecretReq is used to update the user secret.
+type updateUserSecretReq struct {
 	OldSecret string `json:"old_secret,omitempty"`
 	NewSecret string `json:"new_secret,omitempty"`
 }
@@ -24,8 +24,8 @@ type updateThingSecretReq struct {
 	Secret string `json:"secret,omitempty"`
 }
 
-// updateClientIdentityReq is used to update the client identity.
-type updateClientIdentityReq struct {
+// updateUserIdentityReq is used to update the user identity.
+type updateUserIdentityReq struct {
 	token    string
 	id       string
 	Identity string `json:"identity,omitempty"`

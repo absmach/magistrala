@@ -11,7 +11,6 @@ import (
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/authz"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
-	"github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/users"
@@ -34,94 +33,110 @@ func AuthorizationMiddleware(svc users.Service, authz mgauthz.Authorization, sel
 	}
 }
 
-func (am *authorizationMiddleware) RegisterClient(ctx context.Context, session authn.Session, client clients.Client, selfRegister bool) (clients.Client, error) {
+func (am *authorizationMiddleware) RegisterUser(ctx context.Context, session authn.Session, user users.User, selfRegister bool) (users.User, error) {
 	if selfRegister {
 		if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 			session.SuperAdmin = true
 		}
 	}
 
-	return am.svc.RegisterClient(ctx, session, client, selfRegister)
+	return am.svc.RegisterUser(ctx, session, user, selfRegister)
 }
 
-func (am *authorizationMiddleware) ViewClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+func (am *authorizationMiddleware) ViewUser(ctx context.Context, session authn.Session, id string) (users.User, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.ViewClient(ctx, session, id)
+	return am.svc.ViewUser(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) ViewProfile(ctx context.Context, session authn.Session) (clients.Client, error) {
+func (am *authorizationMiddleware) ViewProfile(ctx context.Context, session authn.Session) (users.User, error) {
 	return am.svc.ViewProfile(ctx, session)
 }
 
-func (am *authorizationMiddleware) ListClients(ctx context.Context, session authn.Session, pm clients.Page) (clients.ClientsPage, error) {
+func (am *authorizationMiddleware) ViewUserByUserName(ctx context.Context, session authn.Session, userName string) (users.User, error) {
+	return am.svc.ViewUserByUserName(ctx, session, userName)
+}
+
+func (am *authorizationMiddleware) ListUsers(ctx context.Context, session authn.Session, pm users.Page) (users.UsersPage, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.ListClients(ctx, session, pm)
+	return am.svc.ListUsers(ctx, session, pm)
 }
 
-func (am *authorizationMiddleware) ListMembers(ctx context.Context, session authn.Session, objectKind, objectID string, pm clients.Page) (clients.MembersPage, error) {
+func (am *authorizationMiddleware) ListMembers(ctx context.Context, session authn.Session, objectKind, objectID string, pm users.Page) (users.MembersPage, error) {
 	if session.DomainUserID == "" {
-		return clients.MembersPage{}, svcerr.ErrDomainAuthorization
+		return users.MembersPage{}, svcerr.ErrDomainAuthorization
 	}
 	switch objectKind {
 	case policies.GroupsKind:
 		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.GroupType, objectID); err != nil {
-			return clients.MembersPage{}, err
+			return users.MembersPage{}, err
 		}
 	case policies.DomainsKind:
 		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.DomainType, objectID); err != nil {
-			return clients.MembersPage{}, err
+			return users.MembersPage{}, err
 		}
 	case policies.ThingsKind:
 		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.ThingType, objectID); err != nil {
-			return clients.MembersPage{}, err
+			return users.MembersPage{}, err
 		}
 	default:
-		return clients.MembersPage{}, svcerr.ErrAuthorization
+		return users.MembersPage{}, svcerr.ErrAuthorization
 	}
 
 	return am.svc.ListMembers(ctx, session, objectKind, objectID, pm)
 }
 
-func (am *authorizationMiddleware) SearchUsers(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+func (am *authorizationMiddleware) SearchUsers(ctx context.Context, pm users.Page) (users.UsersPage, error) {
 	return am.svc.SearchUsers(ctx, pm)
 }
 
-func (am *authorizationMiddleware) UpdateClient(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+func (am *authorizationMiddleware) UpdateUser(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.UpdateClient(ctx, session, client)
+	return am.svc.UpdateUser(ctx, session, user)
 }
 
-func (am *authorizationMiddleware) UpdateClientTags(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+func (am *authorizationMiddleware) UpdateUserTags(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.UpdateClientTags(ctx, session, client)
+	return am.svc.UpdateUserTags(ctx, session, user)
 }
 
-func (am *authorizationMiddleware) UpdateClientIdentity(ctx context.Context, session authn.Session, id, identity string) (clients.Client, error) {
+func (am *authorizationMiddleware) UpdateUserIdentity(ctx context.Context, session authn.Session, id, identity string) (users.User, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.UpdateClientIdentity(ctx, session, id, identity)
+	return am.svc.UpdateUserIdentity(ctx, session, id, identity)
+}
+
+func (am *authorizationMiddleware) UpdateUserNames(ctx context.Context, session authn.Session, usr users.User) (users.User, error) {
+	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
+		session.SuperAdmin = true
+	}
+
+	return am.svc.UpdateUserNames(ctx, session, usr)
+}
+
+func (am *authorizationMiddleware) UpdateProfilePicture(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
+	return am.svc.UpdateProfilePicture(ctx, session, user)
 }
 
 func (am *authorizationMiddleware) GenerateResetToken(ctx context.Context, email, host string) error {
 	return am.svc.GenerateResetToken(ctx, email, host)
 }
 
-func (am *authorizationMiddleware) UpdateClientSecret(ctx context.Context, session authn.Session, oldSecret, newSecret string) (clients.Client, error) {
-	return am.svc.UpdateClientSecret(ctx, session, oldSecret, newSecret)
+func (am *authorizationMiddleware) UpdateUserSecret(ctx context.Context, session authn.Session, oldSecret, newSecret string) (users.User, error) {
+	return am.svc.UpdateUserSecret(ctx, session, oldSecret, newSecret)
 }
 
 func (am *authorizationMiddleware) ResetSecret(ctx context.Context, session authn.Session, secret string) error {
@@ -132,39 +147,39 @@ func (am *authorizationMiddleware) SendPasswordReset(ctx context.Context, host, 
 	return am.svc.SendPasswordReset(ctx, host, email, user, token)
 }
 
-func (am *authorizationMiddleware) UpdateClientRole(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+func (am *authorizationMiddleware) UpdateUserRole(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
-	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, client.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err != nil {
-		return clients.Client{}, err
+	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, user.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err != nil {
+		return users.User{}, err
 	}
 
-	return am.svc.UpdateClientRole(ctx, session, client)
+	return am.svc.UpdateUserRole(ctx, session, user)
 }
 
-func (am *authorizationMiddleware) EnableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+func (am *authorizationMiddleware) EnableUser(ctx context.Context, session authn.Session, id string) (users.User, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.EnableClient(ctx, session, id)
+	return am.svc.EnableUser(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) DisableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+func (am *authorizationMiddleware) DisableUser(ctx context.Context, session authn.Session, id string) (users.User, error) {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.DisableClient(ctx, session, id)
+	return am.svc.DisableUser(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) DeleteClient(ctx context.Context, session authn.Session, id string) error {
+func (am *authorizationMiddleware) DeleteUser(ctx context.Context, session authn.Session, id string) error {
 	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
 		session.SuperAdmin = true
 	}
 
-	return am.svc.DeleteClient(ctx, session, id)
+	return am.svc.DeleteUser(ctx, session, id)
 }
 
 func (am *authorizationMiddleware) Identify(ctx context.Context, session authn.Session) (string, error) {
@@ -179,15 +194,15 @@ func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session aut
 	return am.svc.RefreshToken(ctx, session, refreshToken, domainID)
 }
 
-func (am *authorizationMiddleware) OAuthCallback(ctx context.Context, client clients.Client) (clients.Client, error) {
-	return am.svc.OAuthCallback(ctx, client)
+func (am *authorizationMiddleware) OAuthCallback(ctx context.Context, user users.User) (users.User, error) {
+	return am.svc.OAuthCallback(ctx, user)
 }
 
-func (am *authorizationMiddleware) OAuthAddClientPolicy(ctx context.Context, client clients.Client) error {
-	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, client.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err == nil {
+func (am *authorizationMiddleware) OAuthAddUserPolicy(ctx context.Context, user users.User) error {
+	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, user.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err == nil {
 		return nil
 	}
-	return am.svc.OAuthAddClientPolicy(ctx, client)
+	return am.svc.OAuthAddUserPolicy(ctx, user)
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, adminID string) error {

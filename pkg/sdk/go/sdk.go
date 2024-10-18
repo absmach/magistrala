@@ -95,6 +95,9 @@ type PageMetadata struct {
 	Direction       string   `json:"direction,omitempty"`
 	Level           uint64   `json:"level,omitempty"`
 	Identity        string   `json:"identity,omitempty"`
+	UserName        string   `json:"user_name,omitempty"`
+	LastName        string   `json:"last_name,omitempty"`
+	FirstName       string   `json:"first_name,omitempty"`
 	Name            string   `json:"name,omitempty"`
 	Type            string   `json:"type,omitempty"`
 	Metadata        Metadata `json:"metadata,omitempty"`
@@ -128,8 +131,8 @@ type PageMetadata struct {
 // "identity" which can be a username, email, generated name;
 // and "secret" which can be a password or access token.
 type Credentials struct {
-	Identity string `json:"identity,omitempty"` // username or generated login ID
-	Secret   string `json:"secret,omitempty"`   // password or token
+	UserName string `json:"user_name,omitempty"` // username or generated login ID
+	Secret   string `json:"secret,omitempty"`    // password or token
 }
 
 // SDK contains Magistrala API.
@@ -141,8 +144,9 @@ type SDK interface {
 	// example:
 	//  user := sdk.User{
 	//    Name:	 "John Doe",
+	// 		Identity: "john.doe@example",
 	//    Credentials: sdk.Credentials{
-	//      Identity: "john.doe@example",
+	//      UserName: "john.doe",
 	//      Secret:   "12345678",
 	//    },
 	//  }
@@ -187,6 +191,13 @@ type SDK interface {
 	//  fmt.Println(user)
 	UserProfile(token string) (User, errors.SDKError)
 
+	// UserByUserName returns user object by username.
+	//
+	// example:
+	//  user, _ := sdk.UserByUserName("username", "token")
+	//  fmt.Println(user)
+	UserByUserName(userName, token string) (User, errors.SDKError)
+
 	// UpdateUser updates existing user.
 	//
 	// example:
@@ -201,17 +212,6 @@ type SDK interface {
 	//  fmt.Println(user)
 	UpdateUser(user User, token string) (User, errors.SDKError)
 
-	// UpdateUserTags updates the user's tags.
-	//
-	// example:
-	//  user := sdk.User{
-	//    ID:   "userID",
-	//    Tags: []string{"tag1", "tag2"},
-	//  }
-	//  user, _ := sdk.UpdateUserTags(user, "token")
-	//  fmt.Println(user)
-	UpdateUserTags(user User, token string) (User, errors.SDKError)
-
 	// UpdateUserIdentity updates the user's identity
 	//
 	// example:
@@ -224,6 +224,39 @@ type SDK interface {
 	//  user, _ := sdk.UpdateUserIdentity(user, "token")
 	//  fmt.Println(user)
 	UpdateUserIdentity(user User, token string) (User, errors.SDKError)
+
+	// UpdateUserTags updates the user's tags.
+	//
+	// example:
+	//  user := sdk.User{
+	//    ID:   "userID",
+	//    Tags: []string{"tag1", "tag2"},
+	//  }
+	//  user, _ := sdk.UpdateUserTags(user, "token")
+	//  fmt.Println(user)
+	UpdateUserTags(user User, token string) (User, errors.SDKError)
+
+	// UpdateUserNames updates the user's names ie Name, FirstName, LastName and UserName.
+	//
+	// example:
+	//  user := sdk.User{
+	//    ID:   "userID",
+	//    Name: "John Doe",
+	//  }
+	//  user, _ := sdk.UpdateUserNames(user, "token")
+	//  fmt.Println(user)
+	UpdateUserNames(user User, token string) (User, errors.SDKError)
+
+	// UpdateProfilePicture updates the user's profile picture.
+	//
+	// example:
+	//  user := sdk.User{
+	//    ID:            "userID",
+	//    ProfilePicture: "profile_picture",
+	//  }
+	//  user, _ := sdk.UpdateProfilePicture(user, "token")
+	//  fmt.Println(user)
+	UpdateProfilePicture(user User, token string) (User, errors.SDKError)
 
 	// UpdateUserRole updates the user's role.
 	//
@@ -1332,8 +1365,14 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Identity != "" {
 		q.Add("identity", pm.Identity)
 	}
-	if pm.Name != "" {
-		q.Add("name", pm.Name)
+	if pm.UserName != "" {
+		q.Add("user_name", pm.UserName)
+	}
+	if pm.FirstName != "" {
+		q.Add("first_name", pm.FirstName)
+	}
+	if pm.LastName != "" {
+		q.Add("last_name", pm.LastName)
 	}
 	if pm.ID != "" {
 		q.Add("id", pm.ID)

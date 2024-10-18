@@ -28,6 +28,7 @@ var (
 	validToken      = "valid"
 	validContenType = "application/json"
 	validID         = testsutil.GenerateUUID(&testing.T{})
+	domainID        = testsutil.GenerateUUID(&testing.T{})
 )
 
 type testRequest struct {
@@ -69,6 +70,7 @@ func TestSendInvitation(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID    string
 		token       string
 		data        string
 		contentType string
@@ -79,6 +81,7 @@ func TestSendInvitation(t *testing.T) {
 	}{
 		{
 			desc:        "valid request",
+			domainID:    domainID,
 			token:       validToken,
 			data:        fmt.Sprintf(`{"user_id": "%s", "domain_id": "%s", "relation": "%s"}`, validID, validID, "domain"),
 			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
@@ -88,6 +91,7 @@ func TestSendInvitation(t *testing.T) {
 		},
 		{
 			desc:        "invalid token",
+			domainID:    domainID,
 			token:       "",
 			data:        fmt.Sprintf(`{"user_id": "%s", "domain_id": "%s", "relation": "%s"}`, validID, validID, "domain"),
 			status:      http.StatusUnauthorized,
@@ -96,6 +100,7 @@ func TestSendInvitation(t *testing.T) {
 		},
 		{
 			desc:        "invalid content type",
+			domainID:    domainID,
 			token:       validToken,
 			data:        fmt.Sprintf(`{"user_id": "%s", "domain_id": "%s", "relation": "%s"}`, validID, validID, "domain"),
 			status:      http.StatusUnsupportedMediaType,
@@ -104,6 +109,7 @@ func TestSendInvitation(t *testing.T) {
 		},
 		{
 			desc:        "invalid data",
+			domainID:    domainID,
 			token:       validToken,
 			data:        `data`,
 			status:      http.StatusBadRequest,
@@ -112,6 +118,7 @@ func TestSendInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with service error",
+			domainID:    domainID,
 			token:       validToken,
 			data:        fmt.Sprintf(`{"user_id": "%s", "domain_id": "%s", "relation": "%s"}`, validID, validID, "domain"),
 			status:      http.StatusForbidden,
@@ -121,22 +128,24 @@ func TestSendInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		repoCall := svc.On("SendInvitation", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
-		req := testRequest{
-			client:      is.Client(),
-			method:      http.MethodPost,
-			url:         is.URL + "/invitations",
-			token:       tc.token,
-			contentType: tc.contentType,
-			body:        strings.NewReader(tc.data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			repoCall := svc.On("SendInvitation", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
+			req := testRequest{
+				client:      is.Client(),
+				method:      http.MethodPost,
+				url:         is.URL + "/domains/" + tc.domainID + "/invitations",
+				token:       tc.token,
+				contentType: tc.contentType,
+				body:        strings.NewReader(tc.data),
+			}
 
-		res, err := req.make()
-		assert.Nil(t, err, tc.desc)
-		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
-		repoCall.Unset()
-		authnCall.Unset()
+			res, err := req.make()
+			assert.Nil(t, err, tc.desc)
+			assert.Equal(t, tc.status, res.StatusCode, tc.desc)
+			repoCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -145,6 +154,7 @@ func TestListInvitation(t *testing.T) {
 
 	cases := []struct {
 		desc        string
+		domainID    string
 		token       string
 		query       string
 		contentType string
@@ -155,6 +165,7 @@ func TestListInvitation(t *testing.T) {
 	}{
 		{
 			desc:        "valid request",
+			domainID:    domainID,
 			token:       validToken,
 			status:      http.StatusOK,
 			contentType: validContenType,
@@ -162,6 +173,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "invalid token",
+			domainID:    domainID,
 			token:       "",
 			status:      http.StatusUnauthorized,
 			contentType: validContenType,
@@ -169,6 +181,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with offset",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "offset=1",
 			status:      http.StatusOK,
@@ -177,6 +190,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with invalid offset",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "offset=invalid",
 			status:      http.StatusBadRequest,
@@ -185,6 +199,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with limit",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "limit=1",
 			status:      http.StatusOK,
@@ -193,6 +208,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with invalid limit",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "limit=invalid",
 			status:      http.StatusBadRequest,
@@ -201,6 +217,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with user_id",
+			domainID:    domainID,
 			token:       validToken,
 			query:       fmt.Sprintf("user_id=%s", validID),
 			status:      http.StatusOK,
@@ -209,6 +226,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with duplicate user_id",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "user_id=1&user_id=2",
 			status:      http.StatusBadRequest,
@@ -217,6 +235,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with invited_by",
+			domainID:    domainID,
 			token:       validToken,
 			query:       fmt.Sprintf("invited_by=%s", validID),
 			status:      http.StatusOK,
@@ -225,6 +244,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with duplicate invited_by",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "invited_by=1&invited_by=2",
 			status:      http.StatusBadRequest,
@@ -233,6 +253,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with relation",
+			domainID:    domainID,
 			token:       validToken,
 			query:       fmt.Sprintf("relation=%s", "relation"),
 			status:      http.StatusOK,
@@ -241,6 +262,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with duplicate relation",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "relation=1&relation=2",
 			status:      http.StatusBadRequest,
@@ -248,23 +270,16 @@ func TestListInvitation(t *testing.T) {
 			svcErr:      nil,
 		},
 		{
-			desc:        "with domain_id",
+			desc:        "with empty domain_id",
+			domainID:    "",
 			token:       validToken,
-			query:       fmt.Sprintf("domain_id=%s", validID),
-			status:      http.StatusOK,
-			contentType: validContenType,
-			svcErr:      nil,
-		},
-		{
-			desc:        "with duplicate domain_id",
-			token:       validToken,
-			query:       "domain_id=1&domain_id=2",
 			status:      http.StatusBadRequest,
 			contentType: validContenType,
 			svcErr:      nil,
 		},
 		{
 			desc:        "with state",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "state=pending",
 			status:      http.StatusOK,
@@ -273,6 +288,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with invalid state",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "state=invalid",
 			status:      http.StatusBadRequest,
@@ -281,6 +297,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with duplicate state",
+			domainID:    domainID,
 			token:       validToken,
 			query:       "state=all&state=all",
 			status:      http.StatusBadRequest,
@@ -289,6 +306,7 @@ func TestListInvitation(t *testing.T) {
 		},
 		{
 			desc:        "with service error",
+			domainID:    domainID,
 			token:       validToken,
 			status:      http.StatusForbidden,
 			contentType: validContenType,
@@ -297,20 +315,22 @@ func TestListInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		repoCall := svc.On("ListInvitations", mock.Anything, tc.authnRes, mock.Anything).Return(invitations.InvitationPage{}, tc.svcErr)
-		req := testRequest{
-			client:      is.Client(),
-			method:      http.MethodGet,
-			url:         is.URL + "/invitations?" + tc.query,
-			token:       tc.token,
-			contentType: tc.contentType,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, tc.desc)
-		assert.Equal(t, tc.status, res.StatusCode, tc.desc)
-		repoCall.Unset()
-		authnCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			repoCall := svc.On("ListInvitations", mock.Anything, tc.authnRes, mock.Anything).Return(invitations.InvitationPage{}, tc.svcErr)
+			req := testRequest{
+				client:      is.Client(),
+				method:      http.MethodGet,
+				url:         is.URL + "/domains/" + tc.domainID + "/invitations?" + tc.query,
+				token:       tc.token,
+				contentType: tc.contentType,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, tc.desc)
+			assert.Equal(t, tc.status, res.StatusCode, tc.desc)
+			repoCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -390,7 +410,7 @@ func TestViewInvitation(t *testing.T) {
 		req := testRequest{
 			client:      is.Client(),
 			method:      http.MethodGet,
-			url:         is.URL + "/invitations/" + tc.userID + "/" + tc.domainID,
+			url:         is.URL + "/domains/" + tc.domainID +"/invitations/" + tc.userID,
 			token:       tc.token,
 			contentType: tc.contentType,
 		}

@@ -210,6 +210,7 @@ func TestAdd(t *testing.T) {
 	cases := []struct {
 		desc            string
 		req             string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		contentType     string
@@ -221,6 +222,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:            "add a config with invalid token",
 			req:             data,
+			domainID:        domainID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -231,6 +233,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a valid config",
 			req:         data,
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
@@ -240,6 +243,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong content type",
 			req:         data,
+			domainID:        domainID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -249,6 +253,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add an existing config",
 			req:         data,
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -258,6 +263,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with non-existent ID",
 			req:         neData,
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -267,6 +273,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid channels",
 			req:         wrongData,
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -276,6 +283,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong JSON",
 			req:         "{\"external_id\": 5}",
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -284,6 +292,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid request format",
 			req:         "}",
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -293,6 +302,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with empty JSON",
 			req:         "{}",
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -302,6 +312,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with an empty request",
 			req:         "",
+			domainID:        domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -321,7 +332,7 @@ func TestAdd(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/domains/%s/things/configs", bs.URL, domainID),
+				url:         fmt.Sprintf("%s/domains/%s/things/configs", bs.URL, tc.domainID),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -439,8 +450,8 @@ func TestView(t *testing.T) {
 			view.Channels = []channel{}
 			assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
 			svcCall.Unset()
+			authCall.Unset()
 		})
-		authCall.Unset()
 	}
 }
 
@@ -547,8 +558,8 @@ func TestUpdate(t *testing.T) {
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 			svcCall.Unset()
+			authCall.Unset()
 		})
-		authCall.Unset()
 	}
 }
 
@@ -655,8 +666,8 @@ func TestUpdateCert(t *testing.T) {
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 			svcCall.Unset()
+			authCall.Unset()
 		})
-		authCall.Unset()
 	}
 }
 
@@ -763,7 +774,7 @@ func TestUpdateConnections(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			repoCall := svc.On("UpdateConnections", mock.Anything, mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
+			repoCall := svc.On("UpdateConnections", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPut,
@@ -776,8 +787,8 @@ func TestUpdateConnections(t *testing.T) {
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 			repoCall.Unset()
+			authCall.Unset()
 		})
-		authCall.Unset()
 	}
 }
 
@@ -1029,10 +1040,10 @@ func TestList(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodGet,
@@ -1051,8 +1062,8 @@ func TestList(t *testing.T) {
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
 			assert.Equal(t, tc.res.Total, body.Total, fmt.Sprintf("%s: expected response total '%d' got '%d'", tc.desc, tc.res.Total, body.Total))
-
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
@@ -1112,10 +1123,10 @@ func TestRemove(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodDelete,
@@ -1126,8 +1137,8 @@ func TestRemove(t *testing.T) {
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 			svcCall.Unset()
+			authCall.Unset()
 		})
-		authCall.Unset()
 	}
 }
 
@@ -1361,10 +1372,10 @@ func TestChangeState(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("ChangeState", mock.Anything, mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("ChangeState", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPut,
@@ -1377,8 +1388,8 @@ func TestChangeState(t *testing.T) {
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 			svcCall.Unset()
+			authCall.Unset()
 		})
-		authCall.Unset()
 	}
 }
 

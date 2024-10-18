@@ -225,7 +225,7 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 				e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
-			cert, err := ps.sdk.ViewCert(cert.SerialNumber, token)
+			cert, err := ps.sdk.ViewCert(cert.SerialNumber, domainID, token)
 			if err != nil {
 				return res, errors.Wrap(ErrFailedCertView, err)
 			}
@@ -235,7 +235,7 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			res.CACert = ""
 
 			if needsBootstrap(thing) {
-				if _, err = ps.sdk.UpdateBootstrapCerts(bsConfig.ThingID, cert.Certificate, cert.Key, "", token); err != nil {
+				if _, err = ps.sdk.UpdateBootstrapCerts(bsConfig.ThingID, cert.Certificate, cert.Key, "", domainID, token); err != nil {
 					return Result{}, errors.Wrap(ErrFailedCertCreation, err)
 				}
 			}
@@ -270,7 +270,7 @@ func (ps *provisionService) Cert(domainID, token, thingID, ttl string) (string, 
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedCertCreation, err)
 	}
-	cert, err = ps.sdk.ViewCert(cert.SerialNumber, token)
+	cert, err = ps.sdk.ViewCert(cert.SerialNumber, domainID, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedCertView, err)
 	}

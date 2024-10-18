@@ -293,7 +293,6 @@ func TestListReqValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		req := listReq{
-			token:    tc.token,
 			offset:   tc.offset,
 			limit:    tc.limit,
 			domainID: tc.domainID,

@@ -26,7 +26,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			req: sendInvitationReq{
 				token:    valid,
 				UserID:   valid,
-				DomainID: valid,
+				domainID: valid,
 				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
@@ -37,7 +37,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			req: sendInvitationReq{
 				token:    "",
 				UserID:   valid,
-				DomainID: valid,
+				domainID: valid,
 				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
@@ -48,7 +48,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			req: sendInvitationReq{
 				token:    valid,
 				UserID:   "",
-				DomainID: valid,
+				domainID: valid,
 				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
@@ -59,7 +59,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			req: sendInvitationReq{
 				token:    valid,
 				UserID:   valid,
-				DomainID: "",
+				domainID: "",
 				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
@@ -70,7 +70,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			req: sendInvitationReq{
 				token:    valid,
 				UserID:   valid,
-				DomainID: valid,
+				domainID: valid,
 				Relation: "",
 				Resend:   true,
 			},
@@ -81,7 +81,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			req: sendInvitationReq{
 				token:    valid,
 				UserID:   valid,
-				DomainID: valid,
+				domainID: valid,
 				Relation: "invalid",
 				Resend:   true,
 			},
@@ -105,15 +105,29 @@ func TestListInvitationsReq(t *testing.T) {
 			desc: "valid request",
 			req: listInvitationsReq{
 				token: valid,
-				Page:  invitations.Page{Limit: 1},
+				Page: invitations.Page{
+					Limit:    1,
+					DomainID: valid,
+				},
 			},
 			err: nil,
+		},
+		{
+			desc: "empty domainID",
+			req: listInvitationsReq{
+				token: valid,
+				Page:  invitations.Page{Limit: 1},
+			},
+			err: apiutil.ErrMissingDomainID,
 		},
 		{
 			desc: "empty token",
 			req: listInvitationsReq{
 				token: "",
-				Page:  invitations.Page{Limit: 1},
+				Page: invitations.Page{
+					Limit:    1,
+					DomainID: valid,
+				},
 			},
 			err: apiutil.ErrBearerToken,
 		},
@@ -121,7 +135,10 @@ func TestListInvitationsReq(t *testing.T) {
 			desc: "invalid limit",
 			req: listInvitationsReq{
 				token: valid,
-				Page:  invitations.Page{Limit: 1000},
+				Page: invitations.Page{
+					Limit:    1000,
+					DomainID: valid,
+				},
 			},
 			err: apiutil.ErrLimitSize,
 		},
@@ -143,7 +160,7 @@ func TestAcceptInvitationReq(t *testing.T) {
 			desc: "valid request",
 			req: acceptInvitationReq{
 				token:    valid,
-				DomainID: valid,
+				domainID: valid,
 			},
 			err: nil,
 		},
@@ -158,7 +175,7 @@ func TestAcceptInvitationReq(t *testing.T) {
 			desc: "empty domain_id",
 			req: acceptInvitationReq{
 				token:    valid,
-				DomainID: "",
+				domainID: "",
 			},
 			err: apiutil.ErrMissingDomainID,
 		},

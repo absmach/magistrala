@@ -79,6 +79,7 @@ func TestCreateGroup(t *testing.T) {
 	}
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupReq        sdk.Group
@@ -1097,6 +1098,7 @@ func TestViewGroup(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string
@@ -1118,6 +1120,7 @@ func TestViewGroup(t *testing.T) {
 		},
 		{
 			desc:            "view group with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			groupID:         group.ID,
 			svcRes:          groups.Group{},
@@ -1204,6 +1207,7 @@ func TestViewGroupPermissions(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string
@@ -1227,6 +1231,7 @@ func TestViewGroupPermissions(t *testing.T) {
 		},
 		{
 			desc:            "view group permissions with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			groupID:         group.ID,
 			svcRes:          []string{},
@@ -1303,6 +1308,7 @@ func TestUpdateGroup(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupReq        sdk.Group
@@ -1487,6 +1493,7 @@ func TestEnableGroup(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string
@@ -1518,6 +1525,7 @@ func TestEnableGroup(t *testing.T) {
 		},
 		{
 			desc:            "enable group with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			groupID:         group.ID,
 			svcRes:          groups.Group{},
@@ -1596,6 +1604,7 @@ func TestDisableGroup(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string
@@ -1627,6 +1636,7 @@ func TestDisableGroup(t *testing.T) {
 		},
 		{
 			desc:            "disable group with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			groupID:         group.ID,
 			svcRes:          groups.Group{},
@@ -1702,6 +1712,7 @@ func TestDeleteGroup(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string
@@ -1727,6 +1738,7 @@ func TestDeleteGroup(t *testing.T) {
 		},
 		{
 			desc:            "delete group with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			groupID:         group.ID,
 			authenticateErr: svcerr.ErrAuthentication,
@@ -1779,6 +1791,7 @@ func TestAddUserToGroup(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string
@@ -1902,6 +1915,7 @@ func TestRemoveUserFromGroup(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string

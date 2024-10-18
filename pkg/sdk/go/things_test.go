@@ -62,6 +62,7 @@ func TestCreateThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		createThingReq  sdk.Thing
@@ -85,6 +86,7 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc:            "create new thing with invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			createThingReq:  createThingReq,
 			svcReq:          convertThing(createThingReq),
@@ -188,7 +190,7 @@ func TestCreateThing(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("CreateThings", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
@@ -798,6 +800,7 @@ func TestViewThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -819,6 +822,7 @@ func TestViewThing(t *testing.T) {
 		},
 		{
 			desc:            "view thing with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
 			svcRes:          mgclients.Client{},
@@ -877,7 +881,7 @@ func TestViewThing(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("ViewClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
@@ -908,6 +912,7 @@ func TestViewThingPermissions(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -929,6 +934,7 @@ func TestViewThingPermissions(t *testing.T) {
 		},
 		{
 			desc:            "view thing permissions with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         validID,
 			svcRes:          []string{},
@@ -970,7 +976,7 @@ func TestViewThingPermissions(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
 			svcCall := tsvc.On("ViewClientPerms", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
@@ -1010,6 +1016,7 @@ func TestUpdateThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		updateThingReq  sdk.Thing
@@ -1033,6 +1040,7 @@ func TestUpdateThing(t *testing.T) {
 		},
 		{
 			desc:            "update thing with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			updateThingReq:  updateThingReq,
 			svcReq:          convertThing(updateThingReq),
@@ -1162,6 +1170,7 @@ func TestUpdateThingTags(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		updateThingReq  sdk.Thing
@@ -1185,6 +1194,7 @@ func TestUpdateThingTags(t *testing.T) {
 		},
 		{
 			desc:            "update thing tags with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			updateThingReq:  updateThingReq,
 			svcReq:          convertThing(updateThingReq),
@@ -1309,6 +1319,7 @@ func TestUpdateThingSecret(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -1332,6 +1343,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		},
 		{
 			desc:            "update thing secret with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
 			newSecret:       newSecret,
@@ -1438,6 +1450,7 @@ func TestEnableThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -1459,6 +1472,7 @@ func TestEnableThing(t *testing.T) {
 		},
 		{
 			desc:            "enable thing with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
 			svcRes:          mgclients.Client{},
@@ -1539,6 +1553,7 @@ func TestDisableThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -1560,6 +1575,7 @@ func TestDisableThing(t *testing.T) {
 		},
 		{
 			desc:            "disable thing with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
 			svcRes:          mgclients.Client{},
@@ -1638,6 +1654,7 @@ func TestShareThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -1751,6 +1768,7 @@ func TestUnshareThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -1851,6 +1869,7 @@ func TestDeleteThing(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		thingID         string
@@ -1868,6 +1887,7 @@ func TestDeleteThing(t *testing.T) {
 		},
 		{
 			desc:            "delete thing with an invalid token",
+			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
 			authenticateErr: svcerr.ErrAuthorization,

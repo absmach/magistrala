@@ -31,10 +31,9 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 	}
 
 	r.Group(func(r chi.Router) {
-	r.Use(api.AuthenticateMiddleware(authn))
+		r.Use(api.AuthenticateMiddleware(authn))
 
-	
-	r.Route("/domains/{domainID}/groups", func(r chi.Router) {
+		r.Route("/domains/{domainID}/groups", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				gapi.CreateGroupEndpoint(svc, policies.NewGroupKind),
 				gapi.DecodeGroupCreate,

@@ -46,7 +46,7 @@ func (req addCertsReq) validate() error {
 type listReq struct {
 	thingID  string
 	domainID string
-	pm      certs.PageMetadata
+	pm       certs.PageMetadata
 }
 
 func (req *listReq) validate() error {

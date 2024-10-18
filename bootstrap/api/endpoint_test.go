@@ -233,7 +233,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a valid config",
 			req:         data,
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
@@ -243,7 +243,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong content type",
 			req:         data,
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -253,7 +253,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add an existing config",
 			req:         data,
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -263,7 +263,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with non-existent ID",
 			req:         neData,
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -273,7 +273,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid channels",
 			req:         wrongData,
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -283,7 +283,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong JSON",
 			req:         "{\"external_id\": 5}",
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -292,7 +292,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid request format",
 			req:         "}",
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -302,7 +302,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with empty JSON",
 			req:         "{}",
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -312,7 +312,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with an empty request",
 			req:         "",
-			domainID:        domainID,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,

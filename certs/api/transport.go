@@ -41,7 +41,7 @@ func MakeHandler(svc certs.Service, authn mgauthn.Authentication, logger *slog.L
 
 	r.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn))
-	r.Route("/domains/{domainID}", func(r chi.Router) {
+		r.Route("/domains/{domainID}", func(r chi.Router) {
 			r.Route("/certs", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					issueCert(svc),
@@ -68,7 +68,7 @@ func MakeHandler(svc certs.Service, authn mgauthn.Authentication, logger *slog.L
 				api.EncodeResponse,
 				opts...,
 			), "list_serials").ServeHTTP)
-	})
+		})
 	})
 	r.Handle("/metrics", promhttp.Handler())
 	r.Get("/health", magistrala.Health("certs", instanceID))

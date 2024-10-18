@@ -299,6 +299,8 @@ func (repo *userRepo) Update(ctx context.Context, user users.User) (users.User, 
 }
 
 func (repo *userRepo) update(ctx context.Context, user users.User, query string) (users.User, error) {
+	fmt.Printf("Debug: Executing query: %s with user: %+v\n", query, user)
+
 	dbc, err := toDBUser(user)
 	if err != nil {
 		return users.User{}, errors.Wrap(repoerr.ErrUpdateEntity, err)

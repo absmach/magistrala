@@ -235,7 +235,6 @@ components:
           description: Resend invitation.
       required:
         - user_id
-        - domain_id
         - relation
 
     Invitation:

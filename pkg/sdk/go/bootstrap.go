@@ -114,7 +114,7 @@ func (sdk mgSDK) AddBootstrap(cfg BootstrapConfig, domainID, token string) (stri
 }
 
 func (sdk mgSDK) Bootstraps(pm PageMetadata, token string) (BootstrapPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("domains/%s/%s", pm.DomainID, configsEndpoint)
+	endpoint := fmt.Sprintf("%s/%s/%s", domainsEndpoint, pm.DomainID, configsEndpoint)
 	url, err := sdk.withQueryParams(sdk.bootstrapURL, endpoint, pm)
 	if err != nil {
 		return BootstrapPage{}, errors.NewSDKError(err)

@@ -12,122 +12,386 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/internal/api"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
-	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/things"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgtype"
 )
 
-var _ mgclients.Repository = (*clientRepo)(nil)
-
-type clientRepo struct {
-	pgclients.Repository
-}
-
-// Repository is the interface that wraps the basic methods for
-// a client repository.
-//
-//go:generate mockery --name Repository --output=../mocks --filename repository.go --quiet --note "Copyright (c) Abstract Machines"
-type Repository interface {
-	mgclients.Repository
-
-	// Save persists the client account. A non-nil error is returned to indicate
-	// operation failure.
-	Save(ctx context.Context, client ...mgclients.Client) ([]mgclients.Client, error)
-
-	// RetrieveBySecret retrieves a client based on the secret (key).
-	RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error)
+type thingRepo struct {
+	Repository things.ThingRepository
 }
 
 // NewRepository instantiates a PostgreSQL
-// implementation of Clients repository.
-func NewRepository(db postgres.Database) Repository {
-	return &clientRepo{
-		Repository: pgclients.Repository{DB: db},
+// implementation of Things repository.
+func NewRepository(db postgres.Database) things.Repository {
+	return &thingRepo{
+		Repository: things.ThingRepository{DB: db},
 	}
 }
 
-func (repo clientRepo) Save(ctx context.Context, cs ...mgclients.Client) ([]mgclients.Client, error) {
-	tx, err := repo.DB.BeginTxx(ctx, nil)
+func (repo *thingRepo) Save(ctx context.Context, th ...things.Thing) ([]things.Thing, error) {
+	tx, err := repo.Repository.DB.BeginTxx(ctx, nil)
 	if err != nil {
-		return []mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return []things.Thing{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
-	var clients []mgclients.Client
+	var thingsList []things.Thing
 
-	for _, cli := range cs {
+	for _, thi := range th {
 		q := `INSERT INTO clients (id, name, tags, domain_id, identity, secret, metadata, created_at, updated_at, updated_by, status)
         VALUES (:id, :name, :tags, :domain_id, :identity, :secret, :metadata, :created_at, :updated_at, :updated_by, :status)
         RETURNING id, name, tags, identity, secret, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at, updated_at, updated_by`
 
-		dbcli, err := pgclients.ToDBClient(cli)
+		dbthi, err := ToDBThing(thi)
 		if err != nil {
-			return []mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+			return []things.Thing{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 		}
 
-		row, err := repo.DB.NamedQueryContext(ctx, q, dbcli)
+		row, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbthi)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
-				return []mgclients.Client{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
+				return []things.Thing{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
 			}
-			return []mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+			return []things.Thing{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 		}
 
 		defer row.Close()
 
 		if row.Next() {
-			dbcli = pgclients.DBClient{}
-			if err := row.StructScan(&dbcli); err != nil {
-				return []mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+			dbthi = DBThing{}
+			if err := row.StructScan(&dbthi); err != nil {
+				return []things.Thing{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 			}
 
-			client, err := pgclients.ToClient(dbcli)
+			thing, err := ToThing(dbthi)
 			if err != nil {
-				return []mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+				return []things.Thing{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 			}
-			clients = append(clients, client)
+			thingsList = append(thingsList, thing)
 		}
 	}
 	if err = tx.Commit(); err != nil {
-		return []mgclients.Client{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return []things.Thing{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
-	return clients, nil
+	return thingsList, nil
 }
 
-func (repo clientRepo) RetrieveBySecret(ctx context.Context, key string) (mgclients.Client, error) {
+func (repo *thingRepo) RetrieveBySecret(ctx context.Context, key string) (things.Thing, error) {
 	q := fmt.Sprintf(`SELECT id, name, tags, COALESCE(domain_id, '') AS domain_id, identity, secret, metadata, created_at, updated_at, updated_by, status
         FROM clients
-        WHERE secret = :secret AND status = %d`, mgclients.EnabledStatus)
+        WHERE secret = :secret AND status = %d`, things.EnabledStatus)
 
-	dbc := pgclients.DBClient{
+	dbt := DBThing{
 		Secret: key,
 	}
 
-	rows, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbt)
 	if err != nil {
-		return mgclients.Client{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+		return things.Thing{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
-	dbc = pgclients.DBClient{}
+	dbt = DBThing{}
 	if rows.Next() {
-		if err = rows.StructScan(&dbc); err != nil {
-			return mgclients.Client{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+		if err = rows.StructScan(&dbt); err != nil {
+			return things.Thing{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 		}
 
-		client, err := pgclients.ToClient(dbc)
+		thing, err := ToThing(dbt)
 		if err != nil {
-			return mgclients.Client{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+			return things.Thing{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
 		}
 
-		return client, nil
+		return thing, nil
 	}
 
-	return mgclients.Client{}, repoerr.ErrNotFound
+	return things.Thing{}, repoerr.ErrNotFound
+}
+
+func (repo *thingRepo) Update(ctx context.Context, thing things.Thing) (things.Thing, error) {
+	var query []string
+	var upq string
+	if thing.Name != "" {
+		query = append(query, "name = :name,")
+	}
+	if thing.Metadata != nil {
+		query = append(query, "metadata = :metadata,")
+	}
+	if len(query) > 0 {
+		upq = strings.Join(query, " ")
+	}
+
+	q := fmt.Sprintf(`UPDATE clients SET %s updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, secret,  metadata, COALESCE(domain_id, '') AS domain_id, status, created_at, updated_at, updated_by`,
+		upq)
+	thing.Status = things.EnabledStatus
+	return repo.update(ctx, thing, q)
+}
+
+func (repo *thingRepo) UpdateTags(ctx context.Context, thing things.Thing) (things.Thing, error) {
+	q := `UPDATE clients SET tags = :tags, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at, updated_at, updated_by`
+	thing.Status = things.EnabledStatus
+	return repo.update(ctx, thing, q)
+}
+
+func (repo *thingRepo) UpdateIdentity(ctx context.Context, thing things.Thing) (things.Thing, error) {
+	q := `UPDATE clients SET identity = :identity, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at, updated_at, updated_by`
+	thing.Status = things.EnabledStatus
+	return repo.update(ctx, thing, q)
+}
+
+func (repo *thingRepo) UpdateSecret(ctx context.Context, thing things.Thing) (things.Thing, error) {
+	q := `UPDATE clients SET secret = :secret, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at, updated_at, updated_by`
+	thing.Status = things.EnabledStatus
+	return repo.update(ctx, thing, q)
+}
+
+func (repo *thingRepo) ChangeStatus(ctx context.Context, thing things.Thing) (things.Thing, error) {
+	q := `UPDATE clients SET status = :status, updated_at = :updated_at, updated_by = :updated_by
+		WHERE id = :id
+        RETURNING id, name, tags, identity, metadata, COALESCE(domain_id, '') AS domain_id, status, created_at, updated_at, updated_by`
+
+	return repo.update(ctx, thing, q)
+}
+
+func (repo *thingRepo) RetrieveByID(ctx context.Context, id string) (things.Thing, error) {
+	q := `SELECT id, name, tags, COALESCE(domain_id, '') AS domain_id, identity, secret, metadata, created_at, updated_at, updated_by, status
+        FROM clients WHERE id = :id`
+
+	dbt := DBThing{
+		ID: id,
+	}
+
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbt)
+	if err != nil {
+		return things.Thing{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	defer row.Close()
+
+	dbt = DBThing{}
+	if row.Next() {
+		if err := row.StructScan(&dbt); err != nil {
+			return things.Thing{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		return ToThing(dbt)
+	}
+
+	return things.Thing{}, repoerr.ErrNotFound
+}
+
+func (repo *thingRepo) RetrieveAll(ctx context.Context, pm things.Page) (things.ThingsPage, error) {
+	query, err := PageQuery(pm)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	query = applyOrdering(query, pm)
+
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.domain_id, '') AS domain_id, c.status,
+					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+
+	dbPage, err := ToDBThingsPage(pm)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	defer rows.Close()
+
+	var items []things.Thing
+	for rows.Next() {
+		dbt := DBThing{}
+		if err := rows.StructScan(&dbt); err != nil {
+			return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		c, err := ToThing(dbt)
+		if err != nil {
+			return things.ThingsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, query)
+
+	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	page := things.ThingsPage{
+		Things: items,
+		Page: things.Page{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+
+	return page, nil
+}
+
+func (repo *thingRepo) SearchThings(ctx context.Context, pm things.Page) (things.ThingsPage, error) {
+	query, err := PageQuery(pm)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	tq := query
+	query = applyOrdering(query, pm)
+
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, query)
+
+	dbPage, err := ToDBThingsPage(pm)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	defer rows.Close()
+
+	var items []things.Thing
+	for rows.Next() {
+		dbt := DBThing{}
+		if err := rows.StructScan(&dbt); err != nil {
+			return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		c, err := ToThing(dbt)
+		if err != nil {
+			return things.ThingsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, tq)
+	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	page := things.ThingsPage{
+		Things: items,
+		Page: things.Page{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+
+	return page, nil
+}
+
+func (repo *thingRepo) RetrieveAllByIDs(ctx context.Context, pm things.Page) (things.ThingsPage, error) {
+	if (len(pm.IDs) == 0) && (pm.Domain == "") {
+		return things.ThingsPage{
+			Page: things.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
+		}, nil
+	}
+	query, err := PageQuery(pm)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	query = applyOrdering(query, pm)
+
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.metadata, COALESCE(c.domain_id, '') AS domain_id, c.status,
+					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+
+	dbPage, err := ToDBThingsPage(pm)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	defer rows.Close()
+
+	var items []things.Thing
+	for rows.Next() {
+		dbt := DBThing{}
+		if err := rows.StructScan(&dbt); err != nil {
+			return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		c, err := ToThing(dbt)
+		if err != nil {
+			return things.ThingsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, query)
+
+	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
+	if err != nil {
+		return things.ThingsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	page := things.ThingsPage{
+		Things: items,
+		Page: things.Page{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+
+	return page, nil
+}
+
+func (repo *thingRepo) update(ctx context.Context, thing things.Thing, query string) (things.Thing, error) {
+	dbc, err := ToDBThing(thing)
+	if err != nil {
+		return things.Thing{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	row, err := repo.Repository.DB.NamedQueryContext(ctx, query, dbc)
+	if err != nil {
+		return things.Thing{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	dbc = DBThing{}
+	if row.Next() {
+		if err := row.StructScan(&dbc); err != nil {
+			return things.Thing{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+
+		return ToThing(dbc)
+	}
+
+	return things.Thing{}, repoerr.ErrNotFound
+}
+
+func (repo *thingRepo) Delete(ctx context.Context, id string) error {
+	q := "DELETE FROM clients AS c  WHERE c.id = $1 ;"
+
+	result, err := repo.Repository.DB.ExecContext(ctx, q, id)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
+	}
+
+	return nil
 }
 
 type DBThing struct {

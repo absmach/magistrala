@@ -63,7 +63,7 @@ func (_m *Service) CreateThings(ctx context.Context, session authn.Session, clie
 		panic("no return value specified for CreateThings")
 	}
 
-	var r0 []clients.Client
+	var r0 []things.Thing
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, ...clients.Client) ([]clients.Client, error)); ok {
 		return rf(ctx, session, client...)
@@ -72,7 +72,7 @@ func (_m *Service) CreateThings(ctx context.Context, session authn.Session, clie
 		r0 = rf(ctx, session, client...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]clients.Client)
+			r0 = ret.Get(0).([]things.Thing)
 		}
 	}
 
@@ -90,7 +90,7 @@ func (_m *Service) DeleteClient(ctx context.Context, session authn.Session, id s
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteClient")
+		panic("no return value specified for Delete")
 	}
 
 	var r0 error
@@ -108,10 +108,10 @@ func (_m *Service) DisableClient(ctx context.Context, session authn.Session, id 
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DisableClient")
+		panic("no return value specified for Disable")
 	}
 
-	var r0 clients.Client
+	var r0 things.Thing
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
 		return rf(ctx, session, id)
@@ -119,7 +119,7 @@ func (_m *Service) DisableClient(ctx context.Context, session authn.Session, id 
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
 		r0 = rf(ctx, session, id)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Thing)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
@@ -136,10 +136,10 @@ func (_m *Service) EnableClient(ctx context.Context, session authn.Session, id s
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for EnableClient")
+		panic("no return value specified for Enable")
 	}
 
-	var r0 clients.Client
+	var r0 things.Thing
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
 		return rf(ctx, session, id)
@@ -147,7 +147,7 @@ func (_m *Service) EnableClient(ctx context.Context, session authn.Session, id s
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
 		r0 = rf(ctx, session, id)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Thing)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
@@ -192,10 +192,10 @@ func (_m *Service) ListClients(ctx context.Context, session authn.Session, reqUs
 	ret := _m.Called(ctx, session, reqUserID, pm)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListClients")
+		panic("no return value specified for ListThings")
 	}
 
-	var r0 clients.ClientsPage
+	var r0 things.ThingsPage
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) (clients.ClientsPage, error)); ok {
 		return rf(ctx, session, reqUserID, pm)
@@ -203,7 +203,7 @@ func (_m *Service) ListClients(ctx context.Context, session authn.Session, reqUs
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) clients.ClientsPage); ok {
 		r0 = rf(ctx, session, reqUserID, pm)
 	} else {
-		r0 = ret.Get(0).(clients.ClientsPage)
+		r0 = ret.Get(0).(things.ThingsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, clients.Page) error); ok {
@@ -220,10 +220,10 @@ func (_m *Service) ListClientsByGroup(ctx context.Context, session authn.Session
 	ret := _m.Called(ctx, session, groupID, pm)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListClientsByGroup")
+		panic("no return value specified for ListThingsByGroup")
 	}
 
-	var r0 clients.MembersPage
+	var r0 things.MembersPage
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) (clients.MembersPage, error)); ok {
 		return rf(ctx, session, groupID, pm)
@@ -231,7 +231,7 @@ func (_m *Service) ListClientsByGroup(ctx context.Context, session authn.Session
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) clients.MembersPage); ok {
 		r0 = rf(ctx, session, groupID, pm)
 	} else {
-		r0 = ret.Get(0).(clients.MembersPage)
+		r0 = ret.Get(0).(things.MembersPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, clients.Page) error); ok {
@@ -298,10 +298,10 @@ func (_m *Service) UpdateClient(ctx context.Context, session authn.Session, clie
 	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateClient")
+		panic("no return value specified for Update")
 	}
 
-	var r0 clients.Client
+	var r0 things.Thing
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) (clients.Client, error)); ok {
 		return rf(ctx, session, client)
@@ -309,7 +309,7 @@ func (_m *Service) UpdateClient(ctx context.Context, session authn.Session, clie
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) clients.Client); ok {
 		r0 = rf(ctx, session, client)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Thing)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client) error); ok {
@@ -326,10 +326,10 @@ func (_m *Service) UpdateClientSecret(ctx context.Context, session authn.Session
 	ret := _m.Called(ctx, session, id, key)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateClientSecret")
+		panic("no return value specified for UpdateSecret")
 	}
 
-	var r0 clients.Client
+	var r0 things.Thing
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) (clients.Client, error)); ok {
 		return rf(ctx, session, id, key)
@@ -337,7 +337,7 @@ func (_m *Service) UpdateClientSecret(ctx context.Context, session authn.Session
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) clients.Client); ok {
 		r0 = rf(ctx, session, id, key)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Thing)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, string) error); ok {
@@ -354,10 +354,10 @@ func (_m *Service) UpdateClientTags(ctx context.Context, session authn.Session, 
 	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateClientTags")
+		panic("no return value specified for UpdateTags")
 	}
 
-	var r0 clients.Client
+	var r0 things.Thing
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) (clients.Client, error)); ok {
 		return rf(ctx, session, client)
@@ -365,7 +365,7 @@ func (_m *Service) UpdateClientTags(ctx context.Context, session authn.Session, 
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) clients.Client); ok {
 		r0 = rf(ctx, session, client)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Thing)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client) error); ok {
@@ -382,10 +382,10 @@ func (_m *Service) ViewClient(ctx context.Context, session authn.Session, id str
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ViewClient")
+		panic("no return value specified for View")
 	}
 
-	var r0 clients.Client
+	var r0 things.Thing
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
 		return rf(ctx, session, id)
@@ -393,7 +393,7 @@ func (_m *Service) ViewClient(ctx context.Context, session authn.Session, id str
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
 		r0 = rf(ctx, session, id)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Thing)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
@@ -410,7 +410,7 @@ func (_m *Service) ViewClientPerms(ctx context.Context, session authn.Session, i
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ViewClientPerms")
+		panic("no return value specified for ViewPerms")
 	}
 
 	var r0 []string

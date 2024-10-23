@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/clients"
 )
 
 type AuthzReq struct {
@@ -23,38 +22,38 @@ type AuthzReq struct {
 //
 //go:generate mockery --name Service --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
-	// CreateThings creates new client. In case of the failed registration, a
+	// CreateThings creates new thing. In case of the failed registration, a
 	// non-nil error value is returned.
-	CreateThings(ctx context.Context, session authn.Session, client ...clients.Client) ([]clients.Client, error)
+	CreateThings(ctx context.Context, session authn.Session, thing ...Thing) ([]Thing, error)
 
-	// ViewClient retrieves client info for a given client ID and an authorized token.
-	ViewClient(ctx context.Context, session authn.Session, id string) (clients.Client, error)
+	// View retrieves thing info for a given thing ID and an authorized token.
+	View(ctx context.Context, session authn.Session, id string) (Thing, error)
 
-	// ViewClientPerms retrieves permissions on the client id for the given authorized token.
-	ViewClientPerms(ctx context.Context, session authn.Session, id string) ([]string, error)
+	// ViewPerms retrieves permissions on the thing id for the given authorized token.
+	ViewPerms(ctx context.Context, session authn.Session, id string) ([]string, error)
 
-	// ListClients retrieves clients list for a valid auth token.
-	ListClients(ctx context.Context, session authn.Session, reqUserID string, pm clients.Page) (clients.ClientsPage, error)
+	// ListThings retrieves clients list for a valid auth token.
+	ListThings(ctx context.Context, session authn.Session, reqUserID string, pm Page) (ThingsPage, error)
 
-	// ListClientsByGroup retrieves data about subset of things that are
+	// ListThingsByGroup retrieves data about subset of things that are
 	// connected or not connected to specified channel and belong to the user identified by
 	// the provided key.
-	ListClientsByGroup(ctx context.Context, session authn.Session, groupID string, pm clients.Page) (clients.MembersPage, error)
+	ListThingsByGroup(ctx context.Context, session authn.Session, groupID string, pm Page) (MembersPage, error)
 
-	// UpdateClient updates the client's name and metadata.
-	UpdateClient(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error)
+	// Update updates the thing's name and metadata.
+	Update(ctx context.Context, session authn.Session, thing Thing) (Thing, error)
 
-	// UpdateClientTags updates the client's tags.
-	UpdateClientTags(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error)
+	// UpdateTags updates the thing's tags.
+	UpdateTags(ctx context.Context, session authn.Session, thing Thing) (Thing, error)
 
-	// UpdateClientSecret updates the client's secret
-	UpdateClientSecret(ctx context.Context, session authn.Session, id, key string) (clients.Client, error)
+	// UpdateSecret updates the thing's secret
+	UpdateSecret(ctx context.Context, session authn.Session, id, key string) (Thing, error)
 
-	// EnableClient logically enableds the client identified with the provided ID
-	EnableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error)
+	// Enable logically enableds the thing identified with the provided ID
+	Enable(ctx context.Context, session authn.Session, id string) (Thing, error)
 
-	// DisableClient logically disables the client identified with the provided ID
-	DisableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error)
+	// Disable logically disables the thing identified with the provided ID
+	Disable(ctx context.Context, session authn.Session, id string) (Thing, error)
 
 	// Share add share policy to thing id with given relation for given user ids
 	Share(ctx context.Context, session authn.Session, id string, relation string, userids ...string) error
@@ -68,8 +67,8 @@ type Service interface {
 	// Authorize used for Things authorization.
 	Authorize(ctx context.Context, req AuthzReq) (string, error)
 
-	// DeleteClient deletes client with given ID.
-	DeleteClient(ctx context.Context, session authn.Session, id string) error
+	// Delete deletes thing with given ID.
+	Delete(ctx context.Context, session authn.Session, id string) error
 }
 
 // Cache contains thing caching interface.
@@ -140,7 +139,7 @@ type Page struct {
 // Metadata represents arbitrary JSON.
 type Metadata map[string]interface{}
 
-// Credentials represent client credentials: its
+// Credentials represent thing credentials: its
 // "identity" which can be a username, email, generated name;
 // and "secret" which can be a password or access token.
 type Credentials struct {

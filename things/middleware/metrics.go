@@ -21,8 +21,8 @@ type metricsMiddleware struct {
 	svc     things.Service
 }
 
-// MetricsMiddleware returns a new metrics middleware wrapper.
-func MetricsMiddleware(svc things.Service, counter metrics.Counter, latency metrics.Histogram) things.Service {
+// Metrics returns a new metrics middleware wrapper.
+func Metrics(svc things.Service, counter metrics.Counter, latency metrics.Histogram) things.Service {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,

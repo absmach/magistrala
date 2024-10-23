@@ -186,7 +186,7 @@ func newService(db *sqlx.DB, dbConfig clientspg.Config, authz mgauthz.Authorizat
 	sdk := mgsdk.NewSDK(config)
 
 	svc := invitations.NewService(token, repo, sdk)
-	svc = middleware.AuthorizationMiddleware(authz, svc)
+	svc = middleware.Authorization(authz, svc)
 	svc = middleware.Tracing(svc, tracer)
 	svc = middleware.Logging(logger, svc)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")

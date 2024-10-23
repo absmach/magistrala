@@ -19,8 +19,8 @@ type loggingMiddleware struct {
 	svc    groups.Service
 }
 
-// LoggingMiddleware adds logging facilities to the groups service.
-func LoggingMiddleware(svc groups.Service, logger *slog.Logger) groups.Service {
+// Logging adds logging facilities to the groups service.
+func Logging(svc groups.Service, logger *slog.Logger) groups.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

@@ -20,8 +20,8 @@ type authorizationMiddleware struct {
 	authz mgauthz.Authorization
 }
 
-// AuthorizationMiddleware adds authorization to the clients service.
-func AuthorizationMiddleware(svc bootstrap.Service, authz mgauthz.Authorization) bootstrap.Service {
+// Authorization adds authorization to the clients service.
+func Authorization(svc bootstrap.Service, authz mgauthz.Authorization) bootstrap.Service {
 	return &authorizationMiddleware{
 		svc:   svc,
 		authz: authz,

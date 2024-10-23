@@ -20,7 +20,6 @@ import (
 	gevents "github.com/absmach/magistrala/internal/groups/events"
 	gmiddleware "github.com/absmach/magistrala/internal/groups/middleware"
 	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
-	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
 	mglog "github.com/absmach/magistrala/logger"
 	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
@@ -44,7 +43,6 @@ import (
 	thevents "github.com/absmach/magistrala/things/events"
 	tmiddleware "github.com/absmach/magistrala/things/middleware"
 	thingspg "github.com/absmach/magistrala/things/postgres"
-	ctracing "github.com/absmach/magistrala/things/tracing"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
@@ -259,18 +257,18 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 		return nil, nil, err
 	}
 
-	csvc = tmiddleware.AuthorizationMiddleware(csvc, authz)
-	gsvc = gmiddleware.AuthorizationMiddleware(gsvc, authz)
+	csvc = tmiddleware.Authorization(csvc, authz)
+	gsvc = gmiddleware.Authorization(gsvc, authz)
 
-	csvc = ctracing.New(csvc, tracer)
-	csvc = tmiddleware.LoggingMiddleware(csvc, logger)
+	csvc = tmiddleware.Tracing(csvc, tracer)
+	csvc = tmiddleware.Logging(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	csvc = tmiddleware.MetricsMiddleware(csvc, counter, latency)
+	csvc = tmiddleware.Metrics(csvc, counter, latency)
 
-	gsvc = gtracing.New(gsvc, tracer)
-	gsvc = gmiddleware.LoggingMiddleware(gsvc, logger)
+	gsvc = gmiddleware.Tracing(gsvc, tracer)
+	gsvc = gmiddleware.Logging(gsvc, logger)
 	counter, latency = prometheus.MakeMetrics(fmt.Sprintf("%s_groups", svcName), "api")
-	gsvc = gmiddleware.MetricsMiddleware(gsvc, counter, latency)
+	gsvc = gmiddleware.Metrics(gsvc, counter, latency)
 
 	return csvc, gsvc, err
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/magistrala/readers/api"
+	"github.com/absmach/magistrala/readers/middleware"
 	"github.com/absmach/magistrala/readers/postgres"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
@@ -147,9 +148,9 @@ func main() {
 
 func newService(db *sqlx.DB, logger *slog.Logger) readers.MessageRepository {
 	svc := postgres.New(db)
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = middleware.Logging(svc, logger)
 	counter, latency := prometheus.MakeMetrics("postgres", "message_reader")
-	svc = api.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.Metrics(svc, counter, latency)
 
 	return svc
 }

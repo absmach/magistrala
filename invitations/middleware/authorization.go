@@ -25,7 +25,7 @@ type authorizationMiddleware struct {
 	svc   invitations.Service
 }
 
-func AuthorizationMiddleware(authz authz.Authorization, svc invitations.Service) invitations.Service {
+func Authorization(authz authz.Authorization, svc invitations.Service) invitations.Service {
 	return &authorizationMiddleware{authz, svc}
 }
 

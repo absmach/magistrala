@@ -1,6 +1,9 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-// Package middleware provides middleware for the journal service.
-// This is logging, metrics, and tracing middleware.
+// Package middleware provides tracing, logging and metrics middleware
+// for Magistrala Journal service.
+//
+// For more details about tracing instrumentation for Magistrala messaging refer
+// to the documentation at https://docs.magistrala.abstractmachines.fr/tracing/.
 package middleware

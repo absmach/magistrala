@@ -29,9 +29,9 @@ import (
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
-	"github.com/absmach/mproxy"
-	mproxyhttp "github.com/absmach/mproxy/pkg/http"
-	"github.com/absmach/mproxy/pkg/session"
+	"github.com/absmach/mgate"
+	mgatehttp "github.com/absmach/mgate/pkg/http"
+	"github.com/absmach/mgate/pkg/session"
 	"github.com/caarlos0/env/v11"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -163,7 +163,7 @@ func newService(pub messaging.Publisher, tc magistrala.ThingsServiceClient, logg
 }
 
 func proxyHTTP(ctx context.Context, cfg server.Config, logger *slog.Logger, sessionHandler session.Handler) error {
-	config := mproxy.Config{
+	config := mgate.Config{
 		Address:    fmt.Sprintf("%s:%s", "", cfg.Port),
 		Target:     fmt.Sprintf("%s:%s", targetHTTPHost, targetHTTPPort),
 		PathPrefix: "/",
@@ -177,7 +177,7 @@ func proxyHTTP(ctx context.Context, cfg server.Config, logger *slog.Logger, sess
 			Certificates: []tls.Certificate{tlsCert},
 		}
 	}
-	mp, err := mproxyhttp.NewProxy(config, sessionHandler, logger)
+	mp, err := mgatehttp.NewProxy(config, sessionHandler, logger)
 	if err != nil {
 		return err
 	}

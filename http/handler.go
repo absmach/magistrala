@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -18,7 +19,8 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/mproxy/pkg/session"
+	mhttp "github.com/absmach/mgate/pkg/http"
+	"github.com/absmach/mgate/pkg/session"
 )
 
 var _ session.Handler = (*handler)(nil)
@@ -65,13 +67,13 @@ func NewHandler(publisher messaging.Publisher, logger *slog.Logger, thingsClient
 func (h *handler) AuthConnect(ctx context.Context) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return errClientNotInitialized
+		return mhttp.NewHTTPProxyError(http.StatusUnauthorized, errClientNotInitialized)
 	}
 
 	var tok string
 	switch {
 	case string(s.Password) == "":
-		return errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey)
+		return mhttp.NewHTTPProxyError(http.StatusUnauthorized, errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey))
 	case strings.HasPrefix(string(s.Password), "Thing"):
 		tok = extractThingKey(string(s.Password))
 	default:
@@ -100,12 +102,12 @@ func (h *handler) Connect(ctx context.Context) error {
 // Publish - after client successfully published.
 func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) error {
 	if topic == nil {
-		return errMissingTopicPub
+		return mhttp.NewHTTPProxyError(http.StatusBadRequest, errMissingTopicPub)
 	}
 	topic = &strings.Split(*topic, "?")[0]
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		return errors.Wrap(errFailedPublish, errClientNotInitialized)
+		return mhttp.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(errFailedPublish, errClientNotInitialized))
 	}
 	h.logger.Info(fmt.Sprintf(logInfoPublished, s.ID, *topic))
 	// Topics are in the format:
@@ -113,7 +115,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 
 	channelParts := channelRegExp.FindStringSubmatch(*topic)
 	if len(channelParts) < 2 {
-		return errors.Wrap(errFailedPublish, errMalformedTopic)
+		return mhttp.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(errFailedPublish, errMalformedTopic))
 	}
 
 	chanID := channelParts[1]
@@ -121,7 +123,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
-		return errors.Wrap(errFailedParseSubtopic, err)
+		return mhttp.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(errFailedParseSubtopic, err))
 	}
 
 	msg := messaging.Message{
@@ -134,7 +136,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	var tok string
 	switch {
 	case string(s.Password) == "":
-		return errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey)
+		return mhttp.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey))
 	case strings.HasPrefix(string(s.Password), "Thing"):
 		tok = extractThingKey(string(s.Password))
 	default:
@@ -147,15 +149,15 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	}
 	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {
-		return err
+		return mhttp.NewHTTPProxyError(http.StatusForbidden, err)
 	}
 	if !res.GetAuthorized() {
-		return svcerr.ErrAuthorization
+		return mhttp.NewHTTPProxyError(http.StatusForbidden, svcerr.ErrAuthorization)
 	}
 	msg.Publisher = res.GetId()
 
 	if err := h.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
-		return errors.Wrap(errFailedPublishToMsgBroker, err)
+		return mhttp.NewHTTPProxyError(http.StatusForbidden, errors.Wrap(errFailedPublishToMsgBroker, err))
 	}
 
 	return nil

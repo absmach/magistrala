@@ -24,8 +24,8 @@ import (
 	readersapi "github.com/absmach/magistrala/readers/api"
 	readersmocks "github.com/absmach/magistrala/readers/mocks"
 	thmocks "github.com/absmach/magistrala/things/mocks"
-	"github.com/absmach/mproxy"
-	mproxyhttp "github.com/absmach/mproxy/pkg/http"
+	"github.com/absmach/mgate"
+	mproxyhttp "github.com/absmach/mgate/pkg/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -38,7 +38,7 @@ func setupMessages() (*httptest.Server, *thmocks.ThingsServiceClient, *pubsub.Pu
 	mux := api.MakeHandler(mglog.NewMock(), "")
 	target := httptest.NewServer(mux)
 
-	config := mproxy.Config{
+	config := mgate.Config{
 		Address: "",
 		Target:  target.URL,
 	}

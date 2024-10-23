@@ -6,7 +6,7 @@ package handler
 import (
 	"context"
 
-	"github.com/absmach/mproxy/pkg/session"
+	"github.com/absmach/mgate/pkg/session"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

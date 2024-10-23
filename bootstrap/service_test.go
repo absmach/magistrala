@@ -150,19 +150,21 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, tc.thingErr)
-		repoCall1 := sdk.On("CreateThing", mock.Anything, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
-		repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.token).Return(tc.deleteThingErr)
-		repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
-		repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
-		_, err := svc.Add(context.Background(), tc.session, tc.token, tc.config)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
-		repoCall4.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			repoCall := sdk.On("Thing", tc.config.ThingID, mock.Anything, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, tc.thingErr)
+			repoCall1 := sdk.On("CreateThing", mock.Anything, tc.domainID, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
+			repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.domainID, tc.token).Return(tc.deleteThingErr)
+			repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
+			repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+			_, err := svc.Add(context.Background(), tc.session, tc.token, tc.config)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+			repoCall1.Unset()
+			repoCall2.Unset()
+			repoCall3.Unset()
+			repoCall4.Unset()
+		})
 	}
 }
 
@@ -214,11 +216,13 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domain, DomainUserID: validID}
-		repoCall := boot.On("RetrieveByID", context.Background(), tc.thingDomain, tc.configID).Return(config, tc.retrieveErr)
-		_, err := svc.View(context.Background(), tc.session, tc.configID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domain, DomainUserID: validID}
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.thingDomain, tc.configID).Return(config, tc.retrieveErr)
+			_, err := svc.View(context.Background(), tc.session, tc.configID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -276,11 +280,13 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
-		err := svc.Update(context.Background(), tc.session, tc.config)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			repoCall := boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
+			err := svc.Update(context.Background(), tc.session, tc.config)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -349,18 +355,20 @@ func TestUpdateCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := boot.On("UpdateCert", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedConfig, tc.updateErr)
-		cfg, err := svc.UpdateCert(context.Background(), tc.session, tc.thingID, tc.clientCert, tc.clientKey, tc.caCert)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		sort.Slice(cfg.Channels, func(i, j int) bool {
-			return cfg.Channels[i].ID < cfg.Channels[j].ID
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			repoCall := boot.On("UpdateCert", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedConfig, tc.updateErr)
+			cfg, err := svc.UpdateCert(context.Background(), tc.session, tc.thingID, tc.clientCert, tc.clientKey, tc.caCert)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			sort.Slice(cfg.Channels, func(i, j int) bool {
+				return cfg.Channels[i].ID < cfg.Channels[j].ID
+			})
+			sort.Slice(tc.expectedConfig.Channels, func(i, j int) bool {
+				return tc.expectedConfig.Channels[i].ID < tc.expectedConfig.Channels[j].ID
+			})
+			assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
+			repoCall.Unset()
 		})
-		sort.Slice(tc.expectedConfig.Channels, func(i, j int) bool {
-			return tc.expectedConfig.Channels[i].ID < tc.expectedConfig.Channels[j].ID
-		})
-		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
-		repoCall.Unset()
 	}
 }
 
@@ -424,17 +432,19 @@ func TestUpdateConnections(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-		sdkCall := sdk.On("Channel", mock.Anything, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
-		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
-		repoCall1 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(c.Channels, tc.listErr)
-		repoCall2 := boot.On("UpdateConnections", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.updateErr)
-		err := svc.UpdateConnections(context.Background(), tc.session, tc.token, tc.id, tc.connections)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		sdkCall.Unset()
-		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			sdkCall := sdk.On("Channel", mock.Anything, tc.domainID, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
+			repoCall1 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(c.Channels, tc.listErr)
+			repoCall2 := boot.On("UpdateConnections", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.updateErr)
+			err := svc.UpdateConnections(context.Background(), tc.session, tc.token, tc.id, tc.connections)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			sdkCall.Unset()
+			repoCall.Unset()
+			repoCall1.Unset()
+			repoCall2.Unset()
+		})
 	}
 }
 
@@ -707,20 +717,22 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		policyCall := policies.On("ListAllObjects", mock.Anything, policysvc.Policy{
-			SubjectType: policysvc.UserType,
-			Subject:     tc.userID,
-			Permission:  policysvc.ViewPermission,
-			ObjectType:  policysvc.ThingType,
-		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
+		t.Run(tc.desc, func(t *testing.T) {
+			policyCall := policies.On("ListAllObjects", mock.Anything, policysvc.Policy{
+				SubjectType: policysvc.UserType,
+				Subject:     tc.userID,
+				Permission:  policysvc.ViewPermission,
+				ObjectType:  policysvc.ThingType,
+			}).Return(tc.listObjectsResponse, tc.listObjectsErr)
+			repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 
-		result, err := svc.List(context.Background(), tc.session, tc.filter, tc.offset, tc.limit)
-		assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
-		assert.Equal(t, tc.config.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Total, result.Total))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		policyCall.Unset()
-		repoCall.Unset()
+			result, err := svc.List(context.Background(), tc.session, tc.filter, tc.offset, tc.limit)
+			assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
+			assert.Equal(t, tc.config.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Total, result.Total))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			policyCall.Unset()
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -766,11 +778,13 @@ func TestRemove(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
-		err := svc.Remove(context.Background(), tc.session, tc.id)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			repoCall := boot.On("Remove", context.Background(), mock.Anything, mock.Anything).Return(tc.removeErr)
+			err := svc.Remove(context.Background(), tc.session, tc.id)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -834,11 +848,13 @@ func TestBootstrap(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(tc.config, tc.err)
-		config, err := svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, tc.encrypted)
-		assert.Equal(t, tc.config, config, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.config, config))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(tc.config, tc.err)
+			config, err := svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, tc.encrypted)
+			assert.Equal(t, tc.config, config, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.config, config))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -920,15 +936,17 @@ func TestChangeState(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
-		sdkCall := sdk.On("Connect", mock.Anything, mock.Anything).Return(tc.connectErr)
-		repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
-		err := svc.ChangeState(context.Background(), tc.session, tc.token, tc.id, tc.state)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		sdkCall.Unset()
-		repoCall.Unset()
-		repoCall1.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
+			sdkCall := sdk.On("Connect", mock.Anything, mock.Anything, mock.Anything).Return(tc.connectErr)
+			repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
+			err := svc.ChangeState(context.Background(), tc.session, tc.token, tc.id, tc.state)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			sdkCall.Unset()
+			repoCall.Unset()
+			repoCall1.Unset()
+		})
 	}
 }
 
@@ -959,10 +977,12 @@ func TestUpdateChannelHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := boot.On("UpdateChannel", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.UpdateChannelHandler(context.Background(), tc.channel)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := boot.On("UpdateChannel", context.Background(), mock.Anything).Return(tc.err)
+			err := svc.UpdateChannelHandler(context.Background(), tc.channel)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -987,10 +1007,12 @@ func TestRemoveChannelHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := boot.On("RemoveChannel", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.RemoveChannelHandler(context.Background(), tc.id)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := boot.On("RemoveChannel", context.Background(), mock.Anything).Return(tc.err)
+			err := svc.RemoveChannelHandler(context.Background(), tc.id)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -1015,10 +1037,12 @@ func TestRemoveConfigHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := boot.On("RemoveThing", context.Background(), mock.Anything).Return(tc.err)
-		err := svc.RemoveConfigHandler(context.Background(), tc.id)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := boot.On("RemoveThing", context.Background(), mock.Anything).Return(tc.err)
+			err := svc.RemoveConfigHandler(context.Background(), tc.id)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -1046,10 +1070,12 @@ func TestConnectThingsHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+			err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -1077,9 +1103,11 @@ func TestDisconnectThingsHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := boot.On("DisconnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := boot.On("DisconnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+			err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Unset()
+		})
 	}
 }

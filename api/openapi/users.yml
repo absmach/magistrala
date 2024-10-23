@@ -606,7 +606,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups:
+  /{domainID}/groups:
     post:
       operationId: createGroup
       tags:
@@ -615,6 +615,8 @@ paths:
       description: |
         Creates new group that can be used for grouping entities. New account will
         be uniquely identified by its identity.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       requestBody:
         $ref: "#/components/requestBodies/GroupCreateReq"
       security:
@@ -652,6 +654,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Level"
@@ -675,7 +678,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}:
+  /{domainID}/groups/{groupID}:
     get:
       operationId: getGroup
       summary: Gets group info.
@@ -684,6 +687,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -711,6 +715,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -743,12 +748,15 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
       responses:
         "204":
           description: Group deleted.
+        "400":
+          description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -758,7 +766,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/children:
+  /{domainID}/groups/{groupID}/children:
     get:
       operationId: listChildren
       summary: List children of a certain group
@@ -772,6 +780,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -796,7 +805,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/parents:
+  /{domainID}/groups/{groupID}/parents:
     get:
       operationId: listParents
       summary: List parents of a certain group
@@ -810,6 +819,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -834,7 +844,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/enable:
+  /{domainID}/groups/{groupID}/enable:
     post:
       operationId: enableGroup
       summary: Enables a group
@@ -843,6 +853,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -866,7 +877,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/disable:
+  /{domainID}/groups/{groupID}/disable:
     post:
       operationId: disableGroup
       summary: Disables a group
@@ -875,6 +886,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -898,7 +910,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/users/assign:
+  /{domainID}/groups/{groupID}/users/assign:
     post:
       operationId: assignUser
       summary: Assigns a user to a group
@@ -907,6 +919,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
       requestBody:
         $ref: "#/components/requestBodies/AssignUserReq"
@@ -930,7 +943,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/users/unassign:
+  /{domainID}/groups/{groupID}/users/unassign:
     post:
       operationId: unassignUser
       summary: Unassigns a user to a group
@@ -939,6 +952,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
       requestBody:
         $ref: "#/components/requestBodies/AssignUserReq"
@@ -962,7 +976,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{memberID}/groups:
+  /{domainID}/channels/{memberID}/groups:
     get:
       operationId: listGroupsInChannel
       summary: Get group associated with the member
@@ -971,6 +985,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/MemberID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -995,7 +1010,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /users/{memberID}/groups:
+  /{domainID}/users/{memberID}/groups:
     get:
       operationId: listGroupsByUser
       summary: Get group associated with the member
@@ -1004,6 +1019,7 @@ paths:
       tags:
         - Groups
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/MemberID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -1027,7 +1043,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /domains/{domainID}/users:
+  /{domainID}/users:
     get:
       summary: List users assigned to domain
       description: |

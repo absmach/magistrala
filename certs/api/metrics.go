@@ -31,13 +31,13 @@ func MetricsMiddleware(svc certs.Service, counter metrics.Counter, latency metri
 }
 
 // IssueCert instruments IssueCert method with metrics.
-func (ms *metricsMiddleware) IssueCert(ctx context.Context, token, thingID, ttl string) (certs.Cert, error) {
+func (ms *metricsMiddleware) IssueCert(ctx context.Context, domainID, token, thingID, ttl string) (certs.Cert, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_cert").Add(1)
 		ms.latency.With("method", "issue_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.IssueCert(ctx, token, thingID, ttl)
+	return ms.svc.IssueCert(ctx, domainID, token, thingID, ttl)
 }
 
 // ListCerts instruments ListCerts method with metrics.
@@ -71,11 +71,11 @@ func (ms *metricsMiddleware) ViewCert(ctx context.Context, serialID string) (cer
 }
 
 // RevokeCert instruments RevokeCert method with metrics.
-func (ms *metricsMiddleware) RevokeCert(ctx context.Context, token, thingID string) (certs.Revoke, error) {
+func (ms *metricsMiddleware) RevokeCert(ctx context.Context, domainID, token, thingID string) (certs.Revoke, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "revoke_cert").Add(1)
 		ms.latency.With("method", "revoke_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RevokeCert(ctx, token, thingID)
+	return ms.svc.RevokeCert(ctx, domainID, token, thingID)
 }

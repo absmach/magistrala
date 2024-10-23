@@ -67,6 +67,7 @@ func TestProvision(t *testing.T) {
 	cases := []struct {
 		desc        string
 		token       string
+		domainID    string
 		data        string
 		contentType string
 		status      int
@@ -75,6 +76,7 @@ func TestProvision(t *testing.T) {
 		{
 			desc:        "valid request",
 			token:       validToken,
+			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusCreated,
 			contentType: validContenType,
@@ -83,6 +85,7 @@ func TestProvision(t *testing.T) {
 		{
 			desc:        "request with empty external id",
 			token:       validToken,
+			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_key": "%s"}`, validID),
 			status:      http.StatusBadRequest,
 			contentType: validContenType,
@@ -91,6 +94,7 @@ func TestProvision(t *testing.T) {
 		{
 			desc:        "request with empty external key",
 			token:       validToken,
+			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s"}`, validID),
 			status:      http.StatusBadRequest,
 			contentType: validContenType,
@@ -99,6 +103,7 @@ func TestProvision(t *testing.T) {
 		{
 			desc:        "empty token",
 			token:       "",
+			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusCreated,
 			contentType: validContenType,
@@ -107,6 +112,7 @@ func TestProvision(t *testing.T) {
 		{
 			desc:        "invalid content type",
 			token:       validToken,
+			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusUnsupportedMediaType,
 			contentType: "text/plain",
@@ -115,6 +121,7 @@ func TestProvision(t *testing.T) {
 		{
 			desc:        "invalid request",
 			token:       validToken,
+			domainID:    validID,
 			data:        `data`,
 			status:      http.StatusBadRequest,
 			contentType: validContenType,
@@ -123,6 +130,7 @@ func TestProvision(t *testing.T) {
 		{
 			desc:        "service error",
 			token:       validToken,
+			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusForbidden,
 			contentType: validContenType,
@@ -132,11 +140,11 @@ func TestProvision(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repocall := svc.On("Provision", tc.token, "test", validID, validID).Return(provision.Result{}, tc.svcErr)
+			repocall := svc.On("Provision", validID, tc.token, "test", validID, validID).Return(provision.Result{}, tc.svcErr)
 			req := testRequest{
 				client:      is.Client(),
 				method:      http.MethodPost,
-				url:         is.URL + "/mapping",
+				url:         is.URL + fmt.Sprintf("/%s/mapping", tc.domainID),
 				token:       tc.token,
 				contentType: tc.contentType,
 				body:        strings.NewReader(tc.data),
@@ -156,6 +164,7 @@ func TestMapping(t *testing.T) {
 	cases := []struct {
 		desc        string
 		token       string
+		domainID    string
 		contentType string
 		status      int
 		svcErr      error
@@ -163,6 +172,7 @@ func TestMapping(t *testing.T) {
 		{
 			desc:        "valid request",
 			token:       validToken,
+			domainID:    validID,
 			status:      http.StatusOK,
 			contentType: validContenType,
 			svcErr:      nil,
@@ -170,6 +180,7 @@ func TestMapping(t *testing.T) {
 		{
 			desc:        "empty token",
 			token:       "",
+			domainID:    validID,
 			status:      http.StatusUnauthorized,
 			contentType: validContenType,
 			svcErr:      nil,
@@ -177,6 +188,7 @@ func TestMapping(t *testing.T) {
 		{
 			desc:        "invalid content type",
 			token:       validToken,
+			domainID:    validID,
 			status:      http.StatusUnsupportedMediaType,
 			contentType: "text/plain",
 			svcErr:      nil,
@@ -184,6 +196,7 @@ func TestMapping(t *testing.T) {
 		{
 			desc:        "service error",
 			token:       validToken,
+			domainID:    validID,
 			status:      http.StatusForbidden,
 			contentType: validContenType,
 			svcErr:      svcerr.ErrAuthorization,
@@ -196,7 +209,7 @@ func TestMapping(t *testing.T) {
 			req := testRequest{
 				client:      is.Client(),
 				method:      http.MethodGet,
-				url:         is.URL + "/mapping",
+				url:         is.URL + fmt.Sprintf("/%s/mapping", tc.domainID),
 				token:       tc.token,
 				contentType: tc.contentType,
 			}

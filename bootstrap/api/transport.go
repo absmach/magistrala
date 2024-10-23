@@ -47,7 +47,7 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 
 	r := chi.NewRouter()
 
-	r.Route("/things", func(r chi.Router) {
+	r.Route("/{domainID}/things", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(api.AuthenticateMiddleware(authn))
 
@@ -96,30 +96,31 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 			})
 		})
 
-		r.Route("/bootstrap", func(r chi.Router) {
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
-				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, false),
-				decodeBootstrapRequest,
-				api.EncodeResponse,
-				opts...), "bootstrap").ServeHTTP)
-			r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-				bootstrapEndpoint(svc, reader, true),
-				decodeBootstrapRequest,
-				encodeSecureRes,
-				opts...), "bootstrap_secure").ServeHTTP)
-		})
-
 		r.With(api.AuthenticateMiddleware(authn)).Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
 			stateEndpoint(svc),
 			decodeStateRequest,
 			api.EncodeResponse,
 			opts...), "update_state").ServeHTTP)
 	})
+
+	r.Route("/things/bootstrap", func(r chi.Router) {
+		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+			bootstrapEndpoint(svc, reader, false),
+			decodeBootstrapRequest,
+			api.EncodeResponse,
+			opts...), "bootstrap").ServeHTTP)
+		r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+			bootstrapEndpoint(svc, reader, false),
+			decodeBootstrapRequest,
+			api.EncodeResponse,
+			opts...), "bootstrap").ServeHTTP)
+		r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+			bootstrapEndpoint(svc, reader, true),
+			decodeBootstrapRequest,
+			encodeSecureRes,
+			opts...), "bootstrap_secure").ServeHTTP)
+	})
+
 	r.Get("/health", magistrala.Health("bootstrap", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
@@ -131,7 +132,9 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := addReq{token: apiutil.ExtractBearerToken(r)}
+	req := addReq{
+		token: apiutil.ExtractBearerToken(r),
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}

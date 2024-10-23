@@ -28,9 +28,9 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddleware(authn))
+		r.Use(api.AuthenticateMiddlewareDomain(authn))
 
-		r.Route("/channels", func(r chi.Router) {
+		r.Route("/{domainID}/channels", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				gapi.CreateGroupEndpoint(svc, policies.NewChannelKind),
 				gapi.DecodeGroupCreate,
@@ -143,7 +143,7 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 		// SpiceDB provides list of channel ids to which thing id attached
 		// and channel service can access spiceDB and get this channel ids list with given thing id.
 		// Request to get list of channels to which thingID ({memberID}) belongs
-		r.Get("/things/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/things/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ListGroupsEndpoint(svc, "channels", "things"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
@@ -155,7 +155,7 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 		// SpiceDB provides list of channel ids attached to given user id
 		// and channel service can access spiceDB and get this user ids list with given thing id.
 		// Request to get list of channels to which userID ({memberID}) have permission.
-		r.Get("/users/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/users/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ListGroupsEndpoint(svc, "channels", "users"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
@@ -166,7 +166,7 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 		// SpiceDB provides list of channel ids attached to given user_group id
 		// and channel service can access spiceDB and get this user ids list with given user_group id.
 		// Request to get list of channels to which user_group_id ({memberID}) attached.
-		r.Get("/groups/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/groups/{memberID}/channels", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ListGroupsEndpoint(svc, "channels", "groups"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
@@ -174,7 +174,7 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 		), "list_channel_by_user_group_id").ServeHTTP)
 
 		// Connect channel and thing
-		r.Post("/connect", otelhttp.NewHandler(kithttp.NewServer(
+		r.Post("/{domainID}/connect", otelhttp.NewHandler(kithttp.NewServer(
 			connectEndpoint(svc),
 			decodeConnectRequest,
 			api.EncodeResponse,
@@ -182,7 +182,7 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 		), "connect").ServeHTTP)
 
 		// Disconnect channel and thing
-		r.Post("/disconnect", otelhttp.NewHandler(kithttp.NewServer(
+		r.Post("/{domainID}/disconnect", otelhttp.NewHandler(kithttp.NewServer(
 			disconnectEndpoint(svc),
 			decodeDisconnectRequest,
 			api.EncodeResponse,

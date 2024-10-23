@@ -40,7 +40,7 @@ func MakeHandler(svc invitations.Service, logger *slog.Logger, authn mgauthn.Aut
 	mux.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn))
 
-		r.Route("/invitations", func(r chi.Router) {
+		r.Route("/{domainID}/invitations", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				sendInvitationEndpoint(svc),
 				decodeSendInvitationReq,
@@ -53,7 +53,7 @@ func MakeHandler(svc invitations.Service, logger *slog.Logger, authn mgauthn.Aut
 				api.EncodeResponse,
 				opts...,
 			), "list_invitations").ServeHTTP)
-			r.Route("/{user_id}/{domain_id}", func(r chi.Router) {
+			r.Route("/users/{user_id}", func(r chi.Router) {
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					viewInvitationEndpoint(svc),
 					decodeInvitationReq,
@@ -94,6 +94,7 @@ func decodeSendInvitationReq(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	var req sendInvitationReq
+	req.DomainID = chi.URLParam(r, "domainID")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -123,10 +124,6 @@ func decodeListInvitationsReq(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	domainID, err := apiutil.ReadStringQuery(r, domainIDKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
 	st, err := apiutil.ReadStringQuery(r, stateKey, invitations.All.String())
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -144,7 +141,7 @@ func decodeListInvitationsReq(_ context.Context, r *http.Request) (interface{}, 
 			InvitedBy: invitedBy,
 			UserID:    userID,
 			Relation:  relation,
-			DomainID:  domainID,
+			DomainID:  chi.URLParam(r, "domainID"),
 			State:     state,
 		},
 	}
@@ -157,20 +154,17 @@ func decodeAcceptInvitationReq(_ context.Context, r *http.Request) (interface{},
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var req acceptInvitationReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
-	}
-	req.token = apiutil.ExtractBearerToken(r)
-
-	return req, nil
+	return acceptInvitationReq{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}, nil
 }
 
 func decodeInvitationReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := invitationReq{
 		token:    apiutil.ExtractBearerToken(r),
 		userID:   chi.URLParam(r, "user_id"),
-		domainID: chi.URLParam(r, "domain_id"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 
 	return req, nil

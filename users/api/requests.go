@@ -298,10 +298,15 @@ func (req unassignUsersReq) validate() error {
 
 type assignGroupsReq struct {
 	groupID  string
+	domainID string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req assignGroupsReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}
@@ -315,10 +320,15 @@ func (req assignGroupsReq) validate() error {
 
 type unassignGroupsReq struct {
 	groupID  string
+	domainID string
 	GroupIDs []string `json:"group_ids"`
 }
 
 func (req unassignGroupsReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.groupID == "" {
 		return apiutil.ErrMissingID
 	}

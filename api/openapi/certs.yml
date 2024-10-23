@@ -27,13 +27,15 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /certs:
+  /{domainID}/certs:
     post:
       operationId: createCert
       summary: Creates a certificate for thing
       description: Creates a certificate for thing
       tags:
         - certs
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       requestBody:
         $ref: "#/components/requestBodies/CertReq"
       responses:
@@ -51,7 +53,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /certs/{certID}:
+  /{domainID}/certs/{certID}:
     get:
       operationId: getCert
       summary: Retrieves a certificate
@@ -60,6 +62,7 @@ paths:
       tags:
         - certs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/CertID"
       responses:
         "200":
@@ -85,10 +88,13 @@ paths:
       tags:
         - certs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/CertID"
       responses:
         "200":
           $ref: "#/components/responses/RevokeRes"
+        "400":
+          description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -100,7 +106,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /serials/{thingID}:
+  /{domainID}/serials/{thingID}:
     get:
       operationId: getSerials
       summary: Retrieves certificates' serial IDs
@@ -109,6 +115,7 @@ paths:
       tags:
         - certs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       responses:
         "200":

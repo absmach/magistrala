@@ -27,7 +27,7 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /things/configs:
+  /{domainID}/things/configs:
     post:
       operationId: createConfig
       summary: Adds new config
@@ -36,6 +36,8 @@ paths:
         the provided access token.
       tags:
         - configs
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCreateReq"
       responses:
@@ -70,6 +72,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/State"
@@ -85,13 +88,14 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/configs/{configId}:
+  /{domainID}/things/configs/{configId}:
     get:
       operationId: getConfig
       summary: Retrieves config info (with channels).
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       responses:
         "200":
@@ -118,6 +122,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigUpdateReq"
@@ -147,6 +152,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       responses:
         "204":
@@ -161,7 +167,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/configs/certs/{configId}:
+  /{domainID}/things/configs/certs/{configId}:
     patch:
       operationId: updateConfigCerts
       summary: Updates certs
@@ -171,6 +177,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCertUpdateReq"
@@ -192,7 +199,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/configs/connections/{configId}:
+  /{domainID}/things/configs/connections/{configId}:
     put:
       operationId: updateConfigConnections
       summary: Updates channels the thing is connected to
@@ -202,6 +209,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigConnUpdateReq"
@@ -273,7 +281,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/state/{configId}:
+  /{domainID}/things/state/{configId}:
     put:
       operationId: updateConfigState
       summary: Updates Config state.
@@ -283,6 +291,7 @@ paths:
       tags:
         - configs
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigStateUpdateReq"

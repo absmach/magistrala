@@ -120,6 +120,13 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 				opts...,
 			), "update_client_role").ServeHTTP)
 
+			r.Patch("/{id}/role", otelhttp.NewHandler(kithttp.NewServer(
+				updateClientRoleEndpoint(svc),
+				decodeUpdateClientRole,
+				api.EncodeResponse,
+				opts...,
+			), "update_client_role").ServeHTTP)
+
 			r.Post("/{id}/enable", otelhttp.NewHandler(kithttp.NewServer(
 				enableClientEndpoint(svc),
 				decodeChangeClientStatus,
@@ -164,7 +171,7 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 		// SpiceDB provides list of user ids in given user_group_id
 		// and users service can access spiceDB and get the user list with user_group_id.
 		// Request to get list of users present in the user_group_id {groupID}
-		r.Get("/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/groups/{groupID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByGroupEndpoint(svc),
 			decodeListMembersByGroup,
 			api.EncodeResponse,
@@ -176,21 +183,21 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 		// SpiceDB provides list of user ids in given channel_id
 		// and users service can access spiceDB and get the user list with channel_id.
 		// Request to get list of users present in the user_group_id {channelID}
-		r.Get("/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/channels/{channelID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByChannelEndpoint(svc),
 			decodeListMembersByChannel,
 			api.EncodeResponse,
 			opts...,
 		), "list_users_by_channel_id").ServeHTTP)
 
-		r.Get("/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByThingEndpoint(svc),
 			decodeListMembersByThing,
 			api.EncodeResponse,
 			opts...,
 		), "list_users_by_thing_id").ServeHTTP)
 
-		r.Get("/domains/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByDomainEndpoint(svc),
 			decodeListMembersByDomain,
 			api.EncodeResponse,

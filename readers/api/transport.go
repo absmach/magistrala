@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/absmach/magistrala"
@@ -258,7 +257,6 @@ func authorize(ctx context.Context, req listMessagesReq, authz mgauthz.Authoriza
 			if ok && e.Code() == codes.PermissionDenied {
 				return errors.Wrap(errUserAccess, err)
 			}
-			fmt.Println("err", err)
 			return err
 		}
 		return nil

@@ -31,9 +31,9 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddleware(authn))
+		r.Use(api.AuthenticateMiddlewareDomain(authn))
 
-		r.Route("/groups", func(r chi.Router) {
+		r.Route("/{domainID}/groups", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				gapi.CreateGroupEndpoint(svc, policies.NewGroupKind),
 				gapi.DecodeGroupCreate,
@@ -135,14 +135,14 @@ func groupsHandler(svc groups.Service, authn mgauthn.Authentication, r *chi.Mux,
 
 		// The ideal placeholder name should be {channelID}, but gapi.DecodeListGroupsRequest uses {memberID} as a placeholder for the ID.
 		// So here, we are using {memberID} as the placeholder.
-		r.Get("/channels/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/channels/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ListGroupsEndpoint(svc, "groups", "channels"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
 			opts...,
 		), "list_groups_by_channel_id").ServeHTTP)
 
-		r.Get("/users/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/users/{memberID}/groups", otelhttp.NewHandler(kithttp.NewServer(
 			gapi.ListGroupsEndpoint(svc, "groups", "users"),
 			gapi.DecodeListGroupsRequest,
 			api.EncodeResponse,
@@ -212,7 +212,8 @@ func unassignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 
 func decodeAssignGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := assignGroupsReq{
-		groupID: chi.URLParam(r, "groupID"),
+		groupID:  chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -222,7 +223,8 @@ func decodeAssignGroupsRequest(_ context.Context, r *http.Request) (interface{},
 
 func decodeUnassignGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := unassignGroupsReq{
-		groupID: chi.URLParam(r, "groupID"),
+		groupID:  chi.URLParam(r, "groupID"),
+		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))

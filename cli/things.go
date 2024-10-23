@@ -13,13 +13,13 @@ import (
 
 var cmdThings = []cobra.Command{
 	{
-		Use:   "create <JSON_thing> <user_auth_token>",
+		Use:   "create <JSON_thing> <domain_id> <user_auth_token>",
 		Short: "Create thing",
 		Long: "Creates new thing with provided name and metadata\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things create '{\"name\":\"new thing\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n",
+			"\tmagistrala-cli things create '{\"name\":\"new thing\", \"metadata\":{\"key\": \"value\"}}' $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -30,7 +30,7 @@ var cmdThings = []cobra.Command{
 				return
 			}
 			thing.Status = mgclients.EnabledStatus.String()
-			thing, err := sdk.CreateThing(thing, args[1])
+			thing, err := sdk.CreateThing(thing, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -40,15 +40,15 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "get [all | <thing_id>] <user_auth_token>",
+		Use:   "get [all | <thing_id>] <domain_id> <user_auth_token>",
 		Short: "Get things",
 		Long: "Get all things or get thing by id. Things can be filtered by name or metadata\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things get all $USERTOKEN - lists all things\n" +
-			"\tmagistrala-cli things get all $USERTOKEN --offset=10 --limit=10 - lists all things with offset and limit\n" +
+			"\tmagistrala-cli things get all $DOMAINID $USERTOKEN - lists all things\n" +
+			"\tmagistrala-cli things get all $DOMAINID $USERTOKEN --offset=10 --limit=10 - lists all things with offset and limit\n" +
 			"\tmagistrala-cli things get <thing_id> $USERTOKEN - shows thing with provided <thing_id>\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -72,7 +72,7 @@ var cmdThings = []cobra.Command{
 				logJSONCmd(*cmd, l)
 				return
 			}
-			t, err := sdk.Thing(args[0], args[1])
+			t, err := sdk.Thing(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -82,17 +82,17 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "delete <thing_id> <user_auth_token>",
+		Use:   "delete <thing_id> <domain_id> <user_auth_token>",
 		Short: "Delete thing",
 		Long: "Delete thing by id\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things delete <thing_id> $USERTOKEN - delete thing with <thing_id>\n",
+			"\tmagistrala-cli things delete <thing_id> $DOMAINID $USERTOKEN - delete thing with <thing_id>\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			if err := sdk.DeleteThing(args[0], args[1]); err != nil {
+			if err := sdk.DeleteThing(args[0], args[1], args[2]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -100,15 +100,15 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update [<thing_id> <JSON_string> | tags <thing_id> <tags> | secret <thing_id> <secret> ] <user_auth_token>",
+		Use:   "update [<thing_id> <JSON_string> | tags <thing_id> <tags> | secret <thing_id> <secret> ] <domain_id> <user_auth_token>",
 		Short: "Update thing",
 		Long: "Updates thing with provided id, name and metadata, or updates thing tags, secret\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things update <thing_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN\n" +
-			"\tmagistrala-cli things update tags <thing_id> '{\"tag1\":\"value1\", \"tag2\":\"value2\"}' $USERTOKEN\n" +
-			"\tmagistrala-cli things update secret <thing_id> <newsecret> $USERTOKEN\n",
+			"\tmagistrala-cli things update <thing_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $DOMAINID $USERTOKEN\n" +
+			"\tmagistrala-cli things update tags <thing_id> '{\"tag1\":\"value1\", \"tag2\":\"value2\"}' $DOMAINID $USERTOKEN\n" +
+			"\tmagistrala-cli things update secret <thing_id> <newsecret> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 && len(args) != 3 {
+			if len(args) != 5 && len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -120,7 +120,7 @@ var cmdThings = []cobra.Command{
 					return
 				}
 				thing.ID = args[1]
-				thing, err := sdk.UpdateThingTags(thing, args[3])
+				thing, err := sdk.UpdateThingTags(thing, args[3], args[4])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -131,7 +131,7 @@ var cmdThings = []cobra.Command{
 			}
 
 			if args[0] == "secret" {
-				thing, err := sdk.UpdateThingSecret(args[1], args[2], args[3])
+				thing, err := sdk.UpdateThingSecret(args[1], args[2], args[3], args[4])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -146,7 +146,7 @@ var cmdThings = []cobra.Command{
 				return
 			}
 			thing.ID = args[0]
-			thing, err := sdk.UpdateThing(thing, args[2])
+			thing, err := sdk.UpdateThing(thing, args[2], args[3])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -156,18 +156,18 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "enable <thing_id> <user_auth_token>",
+		Use:   "enable <thing_id> <domain_id> <user_auth_token>",
 		Short: "Change thing status to enabled",
 		Long: "Change thing status to enabled\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things enable <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli things enable <thing_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			thing, err := sdk.EnableThing(args[0], args[1])
+			thing, err := sdk.EnableThing(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -177,18 +177,18 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "disable <thing_id> <user_auth_token>",
+		Use:   "disable <thing_id> <domain_id> <user_auth_token>",
 		Short: "Change thing status to disabled",
 		Long: "Change thing status to disabled\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things disable <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli things disable <thing_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			thing, err := sdk.DisableThing(args[0], args[1])
+			thing, err := sdk.DisableThing(args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -198,13 +198,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "share <thing_id> <user_id> <relation> <user_auth_token>",
+		Use:   "share <thing_id> <user_id> <relation> <domain_id> <user_auth_token>",
 		Short: "Share thing with a user",
 		Long: "Share thing with a user\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things share <thing_id> <user_id> <relation> $USERTOKEN\n",
+			"\tmagistrala-cli things share <thing_id> <user_id> <relation> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 5 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -212,7 +212,7 @@ var cmdThings = []cobra.Command{
 				Relation: args[2],
 				UserIDs:  []string{args[1]},
 			}
-			err := sdk.ShareThing(args[0], req, args[3])
+			err := sdk.ShareThing(args[0], req, args[3], args[4])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -222,13 +222,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "unshare <thing_id> <user_id> <relation> <user_auth_token>",
+		Use:   "unshare <thing_id> <user_id> <relation> <domain_id> <user_auth_token>",
 		Short: "Unshare thing with a user",
 		Long: "Unshare thing with a user\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things share  <thing_id> <user_id> <relation> $USERTOKEN\n",
+			"\tmagistrala-cli things share  <thing_id> <user_id> <relation> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 5 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -236,7 +236,7 @@ var cmdThings = []cobra.Command{
 				Relation: args[2],
 				UserIDs:  []string{args[1]},
 			}
-			err := sdk.UnshareThing(args[0], req, args[3])
+			err := sdk.UnshareThing(args[0], req, args[3], args[4])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -246,13 +246,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "connect <thing_id> <channel_id> <user_auth_token>",
+		Use:   "connect <thing_id> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Connect thing",
 		Long: "Connect thing to the channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things connect <thing_id> <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli things connect <thing_id> <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -261,7 +261,7 @@ var cmdThings = []cobra.Command{
 				ChannelID: args[1],
 				ThingID:   args[0],
 			}
-			if err := sdk.Connect(connIDs, args[2]); err != nil {
+			if err := sdk.Connect(connIDs, args[2], args[3]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -270,13 +270,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "disconnect <thing_id> <channel_id> <user_auth_token>",
+		Use:   "disconnect <thing_id> <channel_id> <domain_id> <user_auth_token>",
 		Short: "Disconnect thing",
 		Long: "Disconnect thing to the channel\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things disconnect <thing_id> <channel_id> $USERTOKEN\n",
+			"\tmagistrala-cli things disconnect <thing_id> <channel_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -285,7 +285,7 @@ var cmdThings = []cobra.Command{
 				ThingID:   args[0],
 				ChannelID: args[1],
 			}
-			if err := sdk.Disconnect(connIDs, args[2]); err != nil {
+			if err := sdk.Disconnect(connIDs, args[2], args[3]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -294,13 +294,13 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "connections <thing_id> <user_auth_token>",
+		Use:   "connections <thing_id> <domain_id> <user_auth_token>",
 		Short: "Connected list",
 		Long: "List of Channels connected to Thing\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli connections <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli connections <thing_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -308,7 +308,7 @@ var cmdThings = []cobra.Command{
 				Offset: Offset,
 				Limit:  Limit,
 			}
-			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
+			cl, err := sdk.ChannelsByThing(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -318,21 +318,22 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "users <thing_id> <user_auth_token>",
+		Use:   "users <thing_id> <domain_id> <user_auth_token>",
 		Short: "List users",
 		Long: "List users of a thing\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli things users <thing_id> $USERTOKEN\n",
+			"\tmagistrala-cli things users <thing_id> $DOMAINID $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset: Offset,
-				Limit:  Limit,
+				Offset:   Offset,
+				Limit:    Limit,
+				DomainID: args[1],
 			}
-			ul, err := sdk.ListThingUsers(args[0], pm, args[1])
+			ul, err := sdk.ListThingUsers(args[0], pm, args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

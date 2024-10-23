@@ -4,20 +4,16 @@
 package api
 
 import (
-	"errors"
-
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/pkg/apiutil"
 )
 
 const maxLimitSize = 100
 
-var errMissingDomain = errors.New("missing domain")
-
 type sendInvitationReq struct {
 	token    string
-	UserID   string `json:"user_id,omitempty"`
 	DomainID string `json:"domain_id,omitempty"`
+	UserID   string `json:"user_id,omitempty"`
 	Relation string `json:"relation,omitempty"`
 	Resend   bool   `json:"resend,omitempty"`
 }
@@ -30,7 +26,7 @@ func (req *sendInvitationReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 	if req.DomainID == "" {
-		return errMissingDomain
+		return apiutil.ErrMissingDomainID
 	}
 	if err := invitations.CheckRelation(req.Relation); err != nil {
 		return err
@@ -48,6 +44,10 @@ func (req *listInvitationsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
+	if req.Page.DomainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
 	if req.Page.Limit > maxLimitSize || req.Page.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
@@ -57,15 +57,15 @@ func (req *listInvitationsReq) validate() error {
 
 type acceptInvitationReq struct {
 	token    string
-	DomainID string `json:"domain_id,omitempty"`
+	domainID string
 }
 
 func (req *acceptInvitationReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.DomainID == "" {
-		return errMissingDomain
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	return nil
@@ -85,7 +85,7 @@ func (req *invitationReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 	if req.domainID == "" {
-		return errMissingDomain
+		return apiutil.ErrMissingDomainID
 	}
 
 	return nil

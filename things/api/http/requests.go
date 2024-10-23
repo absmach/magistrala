@@ -54,6 +54,7 @@ func (req viewClientReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
+
 	return nil
 }
 
@@ -65,6 +66,7 @@ func (req viewClientPermsReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
+
 	return nil
 }
 
@@ -123,6 +125,7 @@ func (req updateClientReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
+
 	if len(req.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
@@ -152,6 +155,7 @@ func (req updateClientCredentialsReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
+
 	if req.Secret == "" {
 		return apiutil.ErrMissingSecret
 	}
@@ -246,5 +250,6 @@ func (req deleteClientReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
+
 	return nil
 }

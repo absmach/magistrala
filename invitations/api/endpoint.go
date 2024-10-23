@@ -105,7 +105,7 @@ func acceptInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		if err := svc.AcceptInvitation(ctx, session, req.DomainID); err != nil {
+		if err := svc.AcceptInvitation(ctx, session, req.domainID); err != nil {
 			return nil, err
 		}
 
@@ -125,7 +125,7 @@ func rejectInvitationEndpoint(svc invitations.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		if err := svc.RejectInvitation(ctx, session, req.DomainID); err != nil {
+		if err := svc.RejectInvitation(ctx, session, req.domainID); err != nil {
 			return nil, err
 		}
 

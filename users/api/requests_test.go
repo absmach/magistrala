@@ -21,7 +21,10 @@ const (
 	name    = "client"
 )
 
-var validID = testsutil.GenerateUUID(&testing.T{})
+var (
+	validID = testsutil.GenerateUUID(&testing.T{})
+	domain  = testsutil.GenerateUUID(&testing.T{})
+)
 
 func TestCreateClientReqValidate(t *testing.T) {
 	cases := []struct {
@@ -685,6 +688,7 @@ func TestAssignGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: assignGroupsReq{
+				domainID: domain,
 				groupID:  validID,
 				GroupIDs: []string{validID},
 			},
@@ -693,6 +697,7 @@ func TestAssignGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "empty group id",
 			req: assignGroupsReq{
+				domainID: domain,
 				groupID:  "",
 				GroupIDs: []string{validID},
 			},
@@ -701,10 +706,20 @@ func TestAssignGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "empty user group ids",
 			req: assignGroupsReq{
+				domainID: domain,
 				groupID:  validID,
 				GroupIDs: []string{},
 			},
 			err: apiutil.ErrEmptyList,
+		},
+		{
+			desc: "empty domain id",
+			req: assignGroupsReq{
+				domainID: "",
+				groupID:  validID,
+				GroupIDs: []string{validID},
+			},
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 	for _, c := range cases {
@@ -722,6 +737,7 @@ func TestUnassignGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: unassignGroupsReq{
+				domainID: domain,
 				groupID:  validID,
 				GroupIDs: []string{validID},
 			},
@@ -730,6 +746,7 @@ func TestUnassignGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "empty group id",
 			req: unassignGroupsReq{
+				domainID: domain,
 				groupID:  "",
 				GroupIDs: []string{validID},
 			},
@@ -738,10 +755,20 @@ func TestUnassignGroupsRequestValidate(t *testing.T) {
 		{
 			desc: "empty user group ids",
 			req: unassignGroupsReq{
+				domainID: domain,
 				groupID:  validID,
 				GroupIDs: []string{},
 			},
 			err: apiutil.ErrEmptyList,
+		},
+		{
+			desc: "empty domain id",
+			req: unassignGroupsReq{
+				domainID: "",
+				groupID:  validID,
+				GroupIDs: []string{valid},
+			},
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 	for _, c := range cases {

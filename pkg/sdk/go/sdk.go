@@ -175,6 +175,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
+	//		DomainID: "domainID"
 	//	}
 	//	members, _ := sdk.Members("groupID", pm, "token")
 	//	fmt.Println(members)
@@ -353,13 +354,13 @@ type SDK interface {
 	// example:
 	//  thing := sdk.Thing{
 	//    Name: "My Thing",
-	//    Metadata: sdk.Metadata{
+	//    Metadata: sdk.Metadata{"domain_1"
 	//      "key": "value",
 	//    },
 	//  }
-	//  thing, _ := sdk.CreateThing(thing, "token")
+	//  thing, _ := sdk.CreateThing(thing, "domainID", "token")
 	//  fmt.Println(thing)
-	CreateThing(thing Thing, token string) (Thing, errors.SDKError)
+	CreateThing(thing Thing, domainID, token string) (Thing, errors.SDKError)
 
 	// CreateThings registers new things and returns their ids.
 	//
@@ -378,9 +379,9 @@ type SDK interface {
 	//      },
 	//    },
 	//  }
-	//  things, _ := sdk.CreateThings(things, "token")
+	//  things, _ := sdk.CreateThings(things, "domainID", "token")
 	//  fmt.Println(things)
-	CreateThings(things []Thing, token string) ([]Thing, errors.SDKError)
+	CreateThings(things []Thing, domainID, token string) ([]Thing, errors.SDKError)
 
 	// Filters things and returns a page result.
 	//
@@ -409,16 +410,16 @@ type SDK interface {
 	// Thing returns thing object by id.
 	//
 	// example:
-	//  thing, _ := sdk.Thing("thingID", "token")
+	//  thing, _ := sdk.Thing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	Thing(id, token string) (Thing, errors.SDKError)
+	Thing(id, domainID, token string) (Thing, errors.SDKError)
 
 	// ThingPermissions returns user permissions on the thing id.
 	//
 	// example:
-	//  thing, _ := sdk.Thing("thingID", "token")
+	//  thing, _ := sdk.Thing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	ThingPermissions(id, token string) (Thing, errors.SDKError)
+	ThingPermissions(id, domainID, token string) (Thing, errors.SDKError)
 
 	// UpdateThing updates existing thing.
 	//
@@ -430,9 +431,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  thing, _ := sdk.UpdateThing(thing, "token")
+	//  thing, _ := sdk.UpdateThing(thing, "domainID", "token")
 	//  fmt.Println(thing)
-	UpdateThing(thing Thing, token string) (Thing, errors.SDKError)
+	UpdateThing(thing Thing, domainID, token string) (Thing, errors.SDKError)
 
 	// UpdateThingTags updates the client's tags.
 	//
@@ -441,30 +442,30 @@ type SDK interface {
 	//    ID:   "thingID",
 	//    Tags: []string{"tag1", "tag2"},
 	//  }
-	//  thing, _ := sdk.UpdateThingTags(thing, "token")
+	//  thing, _ := sdk.UpdateThingTags(thing, "domainID", "token")
 	//  fmt.Println(thing)
-	UpdateThingTags(thing Thing, token string) (Thing, errors.SDKError)
+	UpdateThingTags(thing Thing, domainID, token string) (Thing, errors.SDKError)
 
 	// UpdateThingSecret updates the client's secret
 	//
 	// example:
-	//  thing, err := sdk.UpdateThingSecret("thingID", "newSecret", "token")
+	//  thing, err := sdk.UpdateThingSecret("thingID", "newSecret", "domainID," "token")
 	//  fmt.Println(thing)
-	UpdateThingSecret(id, secret, token string) (Thing, errors.SDKError)
+	UpdateThingSecret(id, secret, domainID, token string) (Thing, errors.SDKError)
 
 	// EnableThing changes client status to enabled.
 	//
 	// example:
-	//  thing, _ := sdk.EnableThing("thingID", "token")
+	//  thing, _ := sdk.EnableThing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	EnableThing(id, token string) (Thing, errors.SDKError)
+	EnableThing(id, domainID, token string) (Thing, errors.SDKError)
 
 	// DisableThing changes client status to disabled - soft delete.
 	//
 	// example:
-	//  thing, _ := sdk.DisableThing("thingID", "token")
+	//  thing, _ := sdk.DisableThing("thingID", "domainID", "token")
 	//  fmt.Println(thing)
-	DisableThing(id, token string) (Thing, errors.SDKError)
+	DisableThing(id, domainID, token string) (Thing, errors.SDKError)
 
 	// ShareThing shares thing with other users.
 	//
@@ -473,9 +474,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	//  err := sdk.ShareThing("thing_id", req, "token")
+	//  err := sdk.ShareThing("thing_id", req, "domainID","token")
 	//  fmt.Println(err)
-	ShareThing(thingID string, req UsersRelationRequest, token string) errors.SDKError
+	ShareThing(thingID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// UnshareThing unshare a thing with other users.
 	//
@@ -484,9 +485,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	//  err := sdk.UnshareThing("thing_id", req, "token")
+	//  err := sdk.UnshareThing("thing_id", req, "domainID", "token")
 	//  fmt.Println(err)
-	UnshareThing(thingID string, req UsersRelationRequest, token string) errors.SDKError
+	UnshareThing(thingID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// ListThingUsers all users in a thing.
 	//
@@ -503,9 +504,9 @@ type SDK interface {
 	// DeleteThing deletes a thing with the given id.
 	//
 	// example:
-	//  err := sdk.DeleteThing("thingID", "token")
+	//  err := sdk.DeleteThing("thingID", "domainID", "token")
 	//  fmt.Println(err)
-	DeleteThing(id, token string) errors.SDKError
+	DeleteThing(id, domainID, token string) errors.SDKError
 
 	// CreateGroup creates new group and returns its id.
 	//
@@ -516,9 +517,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  group, _ := sdk.CreateGroup(group, "token")
+	//  group, _ := sdk.CreateGroup(group, "domainID", "token")
 	//  fmt.Println(group)
-	CreateGroup(group Group, token string) (Group, errors.SDKError)
+	CreateGroup(group Group, domainID, token string) (Group, errors.SDKError)
 
 	// Groups returns page of groups.
 	//
@@ -559,16 +560,16 @@ type SDK interface {
 	// Group returns users group object by id.
 	//
 	// example:
-	//  group, _ := sdk.Group("groupID", "token")
+	//  group, _ := sdk.Group("groupID", "domainID", "token")
 	//  fmt.Println(group)
-	Group(id, token string) (Group, errors.SDKError)
+	Group(id, domainID, token string) (Group, errors.SDKError)
 
 	// GroupPermissions returns user permissions by group ID.
 	//
 	// example:
-	//  group, _ := sdk.Group("groupID", "token")
+	//  group, _ := sdk.Group("groupID", "domainID" "token")
 	//  fmt.Println(group)
-	GroupPermissions(id, token string) (Group, errors.SDKError)
+	GroupPermissions(id, domainID, token string) (Group, errors.SDKError)
 
 	// UpdateGroup updates existing group.
 	//
@@ -580,23 +581,23 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  group, _ := sdk.UpdateGroup(group, "token")
+	//  group, _ := sdk.UpdateGroup(group, "domainID", "token")
 	//  fmt.Println(group)
-	UpdateGroup(group Group, token string) (Group, errors.SDKError)
+	UpdateGroup(group Group, domainID, token string) (Group, errors.SDKError)
 
 	// EnableGroup changes group status to enabled.
 	//
 	// example:
-	//  group, _ := sdk.EnableGroup("groupID", "token")
+	//  group, _ := sdk.EnableGroup("groupID", "domainID", "token")
 	//  fmt.Println(group)
-	EnableGroup(id, token string) (Group, errors.SDKError)
+	EnableGroup(id, domainID, token string) (Group, errors.SDKError)
 
 	// DisableGroup changes group status to disabled - soft delete.
 	//
 	// example:
-	//  group, _ := sdk.DisableGroup("groupID", "token")
+	//  group, _ := sdk.DisableGroup("groupID", "domainID", "token")
 	//  fmt.Println(group)
-	DisableGroup(id, token string) (Group, errors.SDKError)
+	DisableGroup(id, domainID, token string) (Group, errors.SDKError)
 
 	// AddUserToGroup add user to a group.
 	//
@@ -605,9 +606,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.AddUserToGroup("groupID",req, "token")
+	// err := sdk.AddUserToGroup("groupID",req, "domainID", "token")
 	// fmt.Println(err)
-	AddUserToGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
+	AddUserToGroup(groupID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// RemoveUserFromGroup remove user from a group.
 	//
@@ -616,9 +617,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.RemoveUserFromGroup("groupID",req, "token")
+	// err := sdk.RemoveUserFromGroup("groupID",req, "domainID", "token")
 	// fmt.Println(err)
-	RemoveUserFromGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
+	RemoveUserFromGroup(groupID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// ListGroupUsers list all users in the group id .
 	//
@@ -638,6 +639,7 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
+	//		DomainID: "domain"
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
 	//  groups, _ := sdk.ListGroupChannels("groupID", pm, "token")
@@ -647,9 +649,9 @@ type SDK interface {
 	// DeleteGroup delete given group id.
 	//
 	// example:
-	//  err := sdk.DeleteGroup("groupID", "token")
+	//  err := sdk.DeleteGroup("groupID", "domainID", "token")
 	//  fmt.Println(err)
-	DeleteGroup(id, token string) errors.SDKError
+	DeleteGroup(id, domainID, token string) errors.SDKError
 
 	// CreateChannel creates new channel and returns its id.
 	//
@@ -660,9 +662,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  channel, _ := sdk.CreateChannel(channel, "token")
+	//  channel, _ := sdk.CreateChannel(channel, "domainID", "token")
 	//  fmt.Println(channel)
-	CreateChannel(channel Channel, token string) (Channel, errors.SDKError)
+	CreateChannel(channel Channel, domainID, token string) (Channel, errors.SDKError)
 
 	// Channels returns page of channels.
 	//
@@ -671,6 +673,7 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//    Name:   "My Channel",
+	//	  Domain: "domainID"
 	//  }
 	//  channels, _ := sdk.Channels(pm, "token")
 	//  fmt.Println(channels)
@@ -684,23 +687,23 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Channel",
 	//  }
-	//  channels, _ := sdk.ChannelsByThing("thingID", pm, "token")
+	//  channels, _ := sdk.ChannelsByThing("thingID", pm, "domainID" "token")
 	//  fmt.Println(channels)
-	ChannelsByThing(thingID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
+	ChannelsByThing(thingID string, pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError)
 
 	// Channel returns channel data by id.
 	//
 	// example:
-	//  channel, _ := sdk.Channel("channelID", "token")
+	//  channel, _ := sdk.Channel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	Channel(id, token string) (Channel, errors.SDKError)
+	Channel(id, domainID, token string) (Channel, errors.SDKError)
 
 	// ChannelPermissions returns user permissions on the channel ID.
 	//
 	// example:
-	//  channel, _ := sdk.Channel("channelID", "token")
+	//  channel, _ := sdk.Channel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	ChannelPermissions(id, token string) (Channel, errors.SDKError)
+	ChannelPermissions(id, domainID, token string) (Channel, errors.SDKError)
 
 	// UpdateChannel updates existing channel.
 	//
@@ -712,23 +715,23 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  channel, _ := sdk.UpdateChannel(channel, "token")
+	//  channel, _ := sdk.UpdateChannel(channel, "domainID", "token")
 	//  fmt.Println(channel)
-	UpdateChannel(channel Channel, token string) (Channel, errors.SDKError)
+	UpdateChannel(channel Channel, domainID, token string) (Channel, errors.SDKError)
 
 	// EnableChannel changes channel status to enabled.
 	//
 	// example:
-	//  channel, _ := sdk.EnableChannel("channelID", "token")
+	//  channel, _ := sdk.EnableChannel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	EnableChannel(id, token string) (Channel, errors.SDKError)
+	EnableChannel(id, domainID, token string) (Channel, errors.SDKError)
 
 	// DisableChannel changes channel status to disabled - soft delete.
 	//
 	// example:
-	//  channel, _ := sdk.DisableChannel("channelID", "token")
+	//  channel, _ := sdk.DisableChannel("channelID", "domainID", "token")
 	//  fmt.Println(channel)
-	DisableChannel(id, token string) (Channel, errors.SDKError)
+	DisableChannel(id, domainID, token string) (Channel, errors.SDKError)
 
 	// AddUserToChannel add user to a channel.
 	//
@@ -737,9 +740,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	// 		UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.AddUserToChannel("channel_id", req, "token")
+	// err := sdk.AddUserToChannel("channel_id", req, "domainID", "token")
 	// fmt.Println(err)
-	AddUserToChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError
+	AddUserToChannel(channelID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// RemoveUserFromChannel remove user from a group.
 	//
@@ -748,9 +751,9 @@ type SDK interface {
 	//		Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
 	// }
-	// err := sdk.RemoveUserFromChannel("channel_id", req, "token")
+	// err := sdk.RemoveUserFromChannel("channel_id", req, "domainID", "token")
 	// fmt.Println(err)
-	RemoveUserFromChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError
+	RemoveUserFromChannel(channelID string, req UsersRelationRequest, domainID, token string) errors.SDKError
 
 	// ListChannelUsers list all users in a channel .
 	//
@@ -770,9 +773,9 @@ type SDK interface {
 	// req := sdk.UserGroupsRequest{
 	//  	GroupsIDs: ["group_id_1", "group_id_2", "group_id_3"]
 	// }
-	// err := sdk.AddUserGroupToChannel("channel_id",req, "token")
+	// err := sdk.AddUserGroupToChannel("channel_id",req, "domainID", "token")
 	// fmt.Println(err)
-	AddUserGroupToChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError
+	AddUserGroupToChannel(channelID string, req UserGroupsRequest, domainID, token string) errors.SDKError
 
 	// RemoveUserGroupFromChannel remove user group from a channel.
 	//
@@ -780,9 +783,9 @@ type SDK interface {
 	// req := sdk.UserGroupsRequest{
 	//  	GroupsIDs: ["group_id_1", "group_id_2", "group_id_3"]
 	// }
-	// err := sdk.RemoveUserGroupFromChannel("channel_id",req, "token")
+	// err := sdk.RemoveUserGroupFromChannel("channel_id",req, "domainID", "token")
 	// fmt.Println(err)
-	RemoveUserGroupFromChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError
+	RemoveUserGroupFromChannel(channelID string, req UserGroupsRequest, domainID, token string) errors.SDKError
 
 	// ListChannelUserGroups list all user groups in a channel.
 	//
@@ -799,9 +802,9 @@ type SDK interface {
 	// DeleteChannel delete given group id.
 	//
 	// example:
-	//  err := sdk.DeleteChannel("channelID", "token")
+	//  err := sdk.DeleteChannel("channelID", "domainID", "token")
 	//  fmt.Println(err)
-	DeleteChannel(id, token string) errors.SDKError
+	DeleteChannel(id, domainID, token string) errors.SDKError
 
 	// Connect bulk connects things to channels specified by id.
 	//
@@ -810,9 +813,9 @@ type SDK interface {
 	//    ChannelID: "channel_id_1",
 	//    ThingID:   "thing_id_1",
 	//  }
-	//  err := sdk.Connect(conns, "token")
+	//  err := sdk.Connect(conns, "domainID", "token")
 	//  fmt.Println(err)
-	Connect(conns Connection, token string) errors.SDKError
+	Connect(conns Connection, domainID, token string) errors.SDKError
 
 	// Disconnect
 	//
@@ -821,9 +824,9 @@ type SDK interface {
 	//    ChannelID: "channel_id_1",
 	//    ThingID:   "thing_id_1",
 	//  }
-	//  err := sdk.Disconnect(conns, "token")
+	//  err := sdk.Disconnect(conns, "domainID", "token")
 	//  fmt.Println(err)
-	Disconnect(connIDs Connection, token string) errors.SDKError
+	Disconnect(connIDs Connection, domainID, token string) errors.SDKError
 
 	// ConnectThing connects thing to specified channel by id.
 	//
@@ -832,7 +835,7 @@ type SDK interface {
 	// example:
 	//  err := sdk.ConnectThing("thingID", "channelID", "token")
 	//  fmt.Println(err)
-	ConnectThing(thingID, chanID, token string) errors.SDKError
+	ConnectThing(thingID, chanID, domainID, token string) errors.SDKError
 
 	// DisconnectThing disconnect thing from specified channel by id.
 	//
@@ -841,7 +844,7 @@ type SDK interface {
 	// example:
 	//  err := sdk.DisconnectThing("thingID", "channelID", "token")
 	//  fmt.Println(err)
-	DisconnectThing(thingID, chanID, token string) errors.SDKError
+	DisconnectThing(thingID, chanID, domainID, token string) errors.SDKError
 
 	// SendMessage send message to specified channel.
 	//
@@ -886,16 +889,16 @@ type SDK interface {
 	//    ExternalKey: "externalKey",
 	//    Channels: []string{"channel1", "channel2"},
 	//  }
-	//  id, _ := sdk.AddBootstrap(cfg, "token")
+	//  id, _ := sdk.AddBootstrap(cfg, "domainID", "token")
 	//  fmt.Println(id)
-	AddBootstrap(cfg BootstrapConfig, token string) (string, errors.SDKError)
+	AddBootstrap(cfg BootstrapConfig, domainID, token string) (string, errors.SDKError)
 
 	// View returns Thing Config with given ID belonging to the user identified by the given token.
 	//
 	// example:
-	//  bootstrap, _ := sdk.ViewBootstrap("id", "token")
+	//  bootstrap, _ := sdk.ViewBootstrap("id", "domainID", "token")
 	//  fmt.Println(bootstrap)
-	ViewBootstrap(id, token string) (BootstrapConfig, errors.SDKError)
+	ViewBootstrap(id, domainID, token string) (BootstrapConfig, errors.SDKError)
 
 	// Update updates editable fields of the provided Config.
 	//
@@ -907,30 +910,30 @@ type SDK interface {
 	//    ExternalKey: "externalKey",
 	//    Channels: []string{"channel1", "channel2"},
 	//  }
-	//  err := sdk.UpdateBootstrap(cfg, "token")
+	//  err := sdk.UpdateBootstrap(cfg, "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKError
+	UpdateBootstrap(cfg BootstrapConfig, domainID, token string) errors.SDKError
 
 	// Update bootstrap config certificates.
 	//
 	// example:
-	//  err := sdk.UpdateBootstrapCerts("id", "clientCert", "clientKey", "ca", "token")
+	//  err := sdk.UpdateBootstrapCerts("id", "clientCert", "clientKey", "ca", "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, token string) (BootstrapConfig, errors.SDKError)
+	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, errors.SDKError)
 
 	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Thing is connected to.
 	//
 	// example:
-	//  err := sdk.UpdateBootstrapConnection("id", []string{"channel1", "channel2"}, "token")
+	//  err := sdk.UpdateBootstrapConnection("id", []string{"channel1", "channel2"}, "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError
+	UpdateBootstrapConnection(id string, channels []string, domainID, token string) errors.SDKError
 
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	//
 	// example:
-	//  err := sdk.RemoveBootstrap("id", "token")
+	//  err := sdk.RemoveBootstrap("id", "domainID", "token")
 	//  fmt.Println(err)
-	RemoveBootstrap(id, token string) errors.SDKError
+	RemoveBootstrap(id, domainID, token string) errors.SDKError
 
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
 	//
@@ -960,37 +963,37 @@ type SDK interface {
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	//
 	// example:
-	//  err := sdk.Whitelist("thingID", 1, "token")
+	//  err := sdk.Whitelist("thingID", 1, "domainID", "token")
 	//  fmt.Println(err)
-	Whitelist(thingID string, state int, token string) errors.SDKError
+	Whitelist(thingID string, state int, domainID, token string) errors.SDKError
 
 	// IssueCert issues a certificate for a thing required for mTLS.
 	//
 	// example:
-	//  cert, _ := sdk.IssueCert("thingID", "24h", "token")
+	//  cert, _ := sdk.IssueCert("thingID", "24h", "domainID", "token")
 	//  fmt.Println(cert)
-	IssueCert(thingID, validity, token string) (Cert, errors.SDKError)
+	IssueCert(thingID, validity, domainID, token string) (Cert, errors.SDKError)
 
 	// ViewCert returns a certificate given certificate ID
 	//
 	// example:
-	//  cert, _ := sdk.ViewCert("certID", "token")
+	//  cert, _ := sdk.ViewCert("certID", "domainID", "token")
 	//  fmt.Println(cert)
-	ViewCert(certID, token string) (Cert, errors.SDKError)
+	ViewCert(certID, domainID, token string) (Cert, errors.SDKError)
 
 	// ViewCertByThing retrieves a list of certificates' serial IDs for a given thing ID.
 	//
 	// example:
-	//  cserial, _ := sdk.ViewCertByThing("thingID", "token")
+	//  cserial, _ := sdk.ViewCertByThing("thingID", "domainID", "token")
 	//  fmt.Println(cserial)
-	ViewCertByThing(thingID, token string) (CertSerials, errors.SDKError)
+	ViewCertByThing(thingID, domainID, token string) (CertSerials, errors.SDKError)
 
 	// RevokeCert revokes certificate for thing with thingID
 	//
 	// example:
-	//  tm, _ := sdk.RevokeCert("thingID", "token")
+	//  tm, _ := sdk.RevokeCert("thingID", "domainID", "token")
 	//  fmt.Println(tm)
-	RevokeCert(thingID, token string) (time.Time, errors.SDKError)
+	RevokeCert(thingID, domainID, token string) (time.Time, errors.SDKError)
 
 	// CreateSubscription creates a new subscription
 	//

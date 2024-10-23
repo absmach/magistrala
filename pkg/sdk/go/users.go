@@ -80,7 +80,7 @@ func (sdk mgSDK) Users(pm PageMetadata, token string) (UsersPage, errors.SDKErro
 }
 
 func (sdk mgSDK) Members(groupID string, meta PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, usersEndpoint), meta)
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", meta.DomainID, groupsEndpoint, groupID, usersEndpoint), meta)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}
@@ -277,7 +277,7 @@ func (sdk mgSDK) UpdateUserRole(user User, token string) (User, errors.SDKError)
 }
 
 func (sdk mgSDK) ListUserChannels(userID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s", usersEndpoint, userID, channelsEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, usersEndpoint, userID, channelsEndpoint), pm)
 	if err != nil {
 		return ChannelsPage{}, errors.NewSDKError(err)
 	}
@@ -295,7 +295,7 @@ func (sdk mgSDK) ListUserChannels(userID string, pm PageMetadata, token string) 
 }
 
 func (sdk mgSDK) ListUserGroups(userID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", usersEndpoint, userID, groupsEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, usersEndpoint, userID, groupsEndpoint), pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
 	}
@@ -312,7 +312,7 @@ func (sdk mgSDK) ListUserGroups(userID string, pm PageMetadata, token string) (G
 }
 
 func (sdk mgSDK) ListUserThings(userID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s", usersEndpoint, userID, thingsEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, usersEndpoint, userID, thingsEndpoint), pm)
 	if err != nil {
 		return ThingsPage{}, errors.NewSDKError(err)
 	}

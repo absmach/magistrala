@@ -7,6 +7,7 @@ import "github.com/absmach/magistrala/pkg/apiutil"
 
 type provisionReq struct {
 	token       string
+	domainID    string
 	Name        string `json:"name"`
 	ExternalID  string `json:"external_id"`
 	ExternalKey string `json:"external_key"`
@@ -15,6 +16,9 @@ type provisionReq struct {
 func (req provisionReq) validate() error {
 	if req.ExternalID == "" {
 		return apiutil.ErrMissingID
+	}
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 
 	if req.ExternalKey == "" {
@@ -29,12 +33,16 @@ func (req provisionReq) validate() error {
 }
 
 type mappingReq struct {
-	token string
+	token    string
+	domainID string
 }
 
 func (req mappingReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
+	}
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
 	}
 	return nil
 }

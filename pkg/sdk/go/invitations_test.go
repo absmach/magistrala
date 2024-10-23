@@ -206,16 +206,6 @@ func TestViewInvitation(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:     "view invitation with empty userID",
-			token:    validToken,
-			userID:   "",
-			domainID: invitation.DomainID,
-			svcRes:   invitations.Invitation{},
-			svcErr:   nil,
-			response: sdk.Invitation{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
-		},
-		{
 			desc:     "view invitation with invalid domainID",
 			token:    validToken,
 			userID:   invitation.UserID,
@@ -229,7 +219,7 @@ func TestViewInvitation(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == valid {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := svc.On("ViewInvitation", mock.Anything, tc.session, tc.userID, tc.domainID).Return(tc.svcRes, tc.svcErr)
@@ -271,12 +261,14 @@ func TestListInvitation(t *testing.T) {
 			desc:  "list invitations successfully",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcReq: invitations.Page{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcRes: invitations.InvitationPage{
 				Total:       1,
@@ -293,8 +285,9 @@ func TestListInvitation(t *testing.T) {
 			desc:  "list invitations with invalid token",
 			token: invalidToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:   0,
+				Limit:    10,
+				DomainID: domainID,
 			},
 			svcReq: invitations.Page{
 				Offset: 0,
@@ -306,20 +299,32 @@ func TestListInvitation(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "list invitations with empty token",
-			token:    "",
-			pageMeta: sdk.PageMetadata{},
+			desc:  "list invitations with empty token",
+			token: "",
+			pageMeta: sdk.PageMetadata{
+				DomainID: domainID,
+			},
 			svcRes:   invitations.InvitationPage{},
 			svcErr:   nil,
 			response: sdk.InvitationPage{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
+			desc:     "list invitations with empty domainID",
+			token:    validToken,
+			pageMeta: sdk.PageMetadata{},
+			svcRes:   invitations.InvitationPage{},
+			svcErr:   nil,
+			response: sdk.InvitationPage{},
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingDomainID), http.StatusBadRequest),
+		},
+		{
 			desc:  "list invitations with limit greater than max limit",
 			token: validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  101,
+				Offset:   0,
+				Limit:    101,
+				DomainID: domainID,
 			},
 			svcReq:   invitations.Page{},
 			svcRes:   invitations.InvitationPage{},
@@ -522,14 +527,6 @@ func TestDeleteInvitation(t *testing.T) {
 			domainID: invitation.DomainID,
 			svcErr:   nil,
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
-		},
-		{
-			desc:     "delete invitation with empty userID",
-			token:    validToken,
-			userID:   "",
-			domainID: invitation.DomainID,
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
 			desc:     "delete invitation with invalid domainID",

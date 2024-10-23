@@ -31,21 +31,22 @@ func MakeHandler(svc provision.Service, logger *slog.Logger, instanceID string) 
 
 	r := chi.NewRouter()
 
-	r.Route("/mapping", func(r chi.Router) {
-		r.Post("/", kithttp.NewServer(
-			doProvision(svc),
-			decodeProvisionRequest,
-			api.EncodeResponse,
-			opts...,
-		).ServeHTTP)
-		r.Get("/", kithttp.NewServer(
-			getMapping(svc),
-			decodeMappingRequest,
-			api.EncodeResponse,
-			opts...,
-		).ServeHTTP)
+	r.Route("/{domainID}", func(r chi.Router) {
+		r.Route("/mapping", func(r chi.Router) {
+			r.Post("/", kithttp.NewServer(
+				doProvision(svc),
+				decodeProvisionRequest,
+				api.EncodeResponse,
+				opts...,
+			).ServeHTTP)
+			r.Get("/", kithttp.NewServer(
+				getMapping(svc),
+				decodeMappingRequest,
+				api.EncodeResponse,
+				opts...,
+			).ServeHTTP)
+		})
 	})
-
 	r.Handle("/metrics", promhttp.Handler())
 	r.Get("/health", magistrala.Health("provision", instanceID))
 
@@ -57,7 +58,10 @@ func decodeProvisionRequest(_ context.Context, r *http.Request) (interface{}, er
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := provisionReq{token: apiutil.ExtractBearerToken(r)}
+	req := provisionReq{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -70,7 +74,10 @@ func decodeMappingRequest(_ context.Context, r *http.Request) (interface{}, erro
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := mappingReq{token: apiutil.ExtractBearerToken(r)}
+	req := mappingReq{
+		token:    apiutil.ExtractBearerToken(r),
+		domainID: chi.URLParam(r, "domainID"),
+	}
 
 	return req, nil
 }

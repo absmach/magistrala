@@ -112,7 +112,10 @@ func TestEntityReqValidation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := entityReq{}
+		req := entityReq{
+			id: tc.id,
+		}
+
 		err := req.validate()
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
@@ -120,10 +123,9 @@ func TestEntityReqValidation(t *testing.T) {
 
 func TestUpdateReqValidation(t *testing.T) {
 	cases := []struct {
-		desc  string
-		token string
-		id    string
-		err   error
+		desc string
+		id   string
+		err  error
 	}{
 		{
 			desc: "valid request",
@@ -175,7 +177,8 @@ func TestUpdateConnReqValidation(t *testing.T) {
 		desc  string
 		id    string
 		token string
-		err   error
+
+		err error
 	}{
 		{
 			desc:  "empty token",

@@ -34,6 +34,7 @@ import (
 
 const (
 	validToken   = "validToken"
+	domainID     = "b4d7d79e-fd99-4c2b-ac09-524e43df6888"
 	invalidToken = "invalid"
 	email        = "test@example.com"
 	unknown      = "unknown"
@@ -209,6 +210,7 @@ func TestAdd(t *testing.T) {
 	cases := []struct {
 		desc            string
 		req             string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		contentType     string
@@ -220,6 +222,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:            "add a config with invalid token",
 			req:             data,
+			domainID:        domainID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -230,6 +233,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a valid config",
 			req:         data,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
@@ -239,6 +243,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong content type",
 			req:         data,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -248,6 +253,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add an existing config",
 			req:         data,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -257,6 +263,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with non-existent ID",
 			req:         neData,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -266,6 +273,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid channels",
 			req:         wrongData,
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusConflict,
@@ -275,6 +283,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with wrong JSON",
 			req:         "{\"external_id\": 5}",
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -283,6 +292,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with invalid request format",
 			req:         "}",
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -292,6 +302,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with empty JSON",
 			req:         "{}",
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -301,6 +312,7 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with an empty request",
 			req:         "",
+			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -310,26 +322,29 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("Add", mock.Anything, tc.session, tc.token, mock.Anything).Return(c, tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/things/configs", bs.URL),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		location := res.Header.Get("Location")
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location '%s' got '%s'", tc.desc, tc.location, location))
-		svcCall.Unset()
-		authCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+
+			svcCall := svc.On("Add", mock.Anything, tc.session, tc.token, mock.Anything).Return(c, tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/%s/things/configs", bs.URL, tc.domainID),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			location := res.Header.Get("Location")
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location '%s' got '%s'", tc.desc, tc.location, location))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -408,33 +423,35 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("View", mock.Anything, tc.session, tc.id).Return(c, tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			token:  tc.token,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("View", mock.Anything, tc.session, tc.id).Return(c, tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				token:  tc.token,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		var view config
-		if err := json.NewDecoder(res.Body).Decode(&view); err != io.EOF {
-			assert.Nil(t, err, fmt.Sprintf("Decoding expected to succeed %s: %s", tc.desc, err))
-		}
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			var view config
+			if err := json.NewDecoder(res.Body).Decode(&view); err != io.EOF {
+				assert.Nil(t, err, fmt.Sprintf("Decoding expected to succeed %s: %s", tc.desc, err))
+			}
 
-		assert.ElementsMatch(t, tc.res.Channels, view.Channels, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Channels, view.Channels))
-		// Empty channels to prevent order mismatch.
-		tc.res.Channels = []channel{}
-		view.Channels = []channel{}
-		assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
-		svcCall.Unset()
-		authCall.Unset()
+			assert.ElementsMatch(t, tc.res.Channels, view.Channels, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Channels, view.Channels))
+			// Empty channels to prevent order mismatch.
+			tc.res.Channels = []channel{}
+			view.Channels = []channel{}
+			assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -523,24 +540,26 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("Update", mock.Anything, tc.session, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("Update", mock.Anything, tc.session, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -629,24 +648,26 @@ func TestUpdateCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("UpdateCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/things/configs/certs/%s", bs.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("UpdateCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/%s/things/configs/certs/%s", bs.URL, domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -748,24 +769,26 @@ func TestUpdateConnections(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		repoCall := svc.On("UpdateConnections", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/configs/connections/%s", bs.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.req),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		repoCall.Unset()
-		authCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			repoCall := svc.On("UpdateConnections", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/%s/things/configs/connections/%s", bs.URL, domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.req),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			repoCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -777,7 +800,7 @@ func TestList(t *testing.T) {
 
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
-	path := fmt.Sprintf("%s/%s", bs.URL, "things/configs")
+	path := fmt.Sprintf("%s/%s/%s", bs.URL, domainID, "things/configs")
 
 	c := newConfig()
 
@@ -1015,23 +1038,33 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodGet,
-			url:    tc.url,
-			token:  tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(bootstrap.ConfigsPage{Total: tc.res.Total, Offset: tc.res.Offset, Limit: tc.res.Limit}, tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodGet,
+				url:    tc.url,
+				token:  tc.token,
+			}
 
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authCall.Unset()
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			var body configPage
+
+			err = json.NewDecoder(res.Body).Decode(&body)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+			assert.Equal(t, tc.res.Total, body.Total, fmt.Sprintf("%s: expected response total '%d' got '%d'", tc.desc, tc.res.Total, body.Total))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -1088,22 +1121,24 @@ func TestRemove(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
-			token:  tc.token,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodDelete,
+				url:    fmt.Sprintf("%s/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				token:  tc.token,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -1215,26 +1250,28 @@ func TestBootstrap(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Bootstrap", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
-		req := testRequest{
-			client: bs.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.externalID),
-			key:    tc.externalKey,
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("Bootstrap", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.externalID),
+				key:    tc.externalKey,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		body, err := io.ReadAll(res.Body)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		if tc.secure && tc.status == http.StatusOK {
-			body, err = dec(body)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding body: %s", tc.desc, err))
-		}
-		data := strings.Trim(string(body), "\n")
-		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, data))
-		svcCall.Unset()
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			body, err := io.ReadAll(res.Body)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			if tc.secure && tc.status == http.StatusOK {
+				body, err = dec(body)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding body: %s", tc.desc, err))
+			}
+			data := strings.Trim(string(body), "\n")
+			assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, data))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -1333,24 +1370,26 @@ func TestChangeState(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := svc.On("ChangeState", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
-		req := testRequest{
-			client:      bs.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/state/%s", bs.URL, tc.id),
-			token:       tc.token,
-			contentType: tc.contentType,
-			body:        strings.NewReader(tc.state),
-		}
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("ChangeState", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/%s/things/state/%s", bs.URL, domainID, tc.id),
+				token:       tc.token,
+				contentType: tc.contentType,
+				body:        strings.NewReader(tc.state),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 

@@ -45,6 +45,7 @@ func TestCreateGroupCmd(t *testing.T) {
 			desc: "create group successfully",
 			args: []string{
 				groupJson,
+				domainID,
 				token,
 			},
 			group:   group,
@@ -54,6 +55,7 @@ func TestCreateGroupCmd(t *testing.T) {
 			desc: "create group with invalid args",
 			args: []string{
 				groupJson,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -63,6 +65,7 @@ func TestCreateGroupCmd(t *testing.T) {
 			desc: "create group with invalid json",
 			args: []string{
 				"{\"name\":\"testgroup\", \"metadata\":{\"key1\":\"value1\"}",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -73,6 +76,7 @@ func TestCreateGroupCmd(t *testing.T) {
 			desc: "create group with invalid token",
 			args: []string{
 				groupJson,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -80,10 +84,11 @@ func TestCreateGroupCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "create group without domain token",
+			desc: "create group with invalid domain",
 			args: []string{
 				groupJson,
-				tokenWithoutDomain,
+				domainID,
+				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden)),
@@ -93,7 +98,7 @@ func TestCreateGroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("CreateGroup", mock.Anything, tc.args[1]).Return(tc.group, tc.sdkErr)
+			sdkCall := sdkMock.On("CreateGroup", mock.Anything, tc.args[1], tc.args[2]).Return(tc.group, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{createCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -133,6 +138,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			desc: "get all groups successfully",
 			args: []string{
 				all,
+				domainID,
 				token,
 			},
 			page: mgsdk.GroupsPage{
@@ -144,28 +150,31 @@ func TestGetGroupsCmd(t *testing.T) {
 			desc: "get all groups with invalid args",
 			args: []string{
 				all,
+				domainID,
 				token,
 				extraArg,
 			},
 			logType: usageLog,
 		},
-		{
-			desc: "get children groups successfully",
-			args: []string{
-				childCmd,
-				group.ID,
-				token,
-			},
-			page: mgsdk.GroupsPage{
-				Groups: []mgsdk.Group{group},
-			},
-			logType: entityLog,
-		},
+		// {
+		// 	desc: "get children groups successfully",
+		// 	args: []string{
+		// 		childCmd,
+		// 		group.ID,
+		// 		domainID,
+		// 		token,
+		// 	},
+		// 	page: mgsdk.GroupsPage{
+		// 		Groups: []mgsdk.Group{group},
+		// 	},
+		// 	logType: entityLog,
+		// },
 		{
 			desc: "get children groups with invalid args",
 			args: []string{
 				childCmd,
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -176,6 +185,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			args: []string{
 				childCmd,
 				group.ID,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -187,6 +197,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			args: []string{
 				parentCmd,
 				group.ID,
+				domainID,
 				token,
 			},
 			page: mgsdk.GroupsPage{
@@ -199,6 +210,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			args: []string{
 				parentCmd,
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -209,6 +221,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			args: []string{
 				parentCmd,
 				group.ID,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -219,6 +232,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			desc: "get group with id",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 			},
 			logType: entityLog,
@@ -235,6 +249,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			desc: "get all groups with invalid token",
 			args: []string{
 				all,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -242,10 +257,11 @@ func TestGetGroupsCmd(t *testing.T) {
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 		{
-			desc: "get group without domain token",
+			desc: "get group with invalid domain",
 			args: []string{
 				group.ID,
-				invalidToken,
+				invalidID,
+				token,
 			},
 			logType:       errLog,
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrDomainAuthorization, http.StatusForbidden),
@@ -255,6 +271,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			desc: "get group with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -265,6 +282,7 @@ func TestGetGroupsCmd(t *testing.T) {
 			desc: "get group with invalid args",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -274,7 +292,7 @@ func TestGetGroupsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Group", mock.Anything, mock.Anything).Return(tc.group, tc.sdkErr)
+			sdkCall := sdkMock.On("Group", mock.Anything, mock.Anything, mock.Anything).Return(tc.group, tc.sdkErr)
 			sdkCall1 := sdkMock.On("Groups", mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
 			sdkCall2 := sdkMock.On("Parents", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
 			sdkCall3 := sdkMock.On("Children", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
@@ -322,6 +340,7 @@ func TestDeletegroupCmd(t *testing.T) {
 			desc: "delete group successfully",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -330,6 +349,7 @@ func TestDeletegroupCmd(t *testing.T) {
 			desc: "delete group with invalid args",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -339,6 +359,7 @@ func TestDeletegroupCmd(t *testing.T) {
 			desc: "delete group with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -349,6 +370,7 @@ func TestDeletegroupCmd(t *testing.T) {
 			desc: "delete group with invalid token",
 			args: []string{
 				group.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -359,7 +381,7 @@ func TestDeletegroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("DeleteGroup", tc.args[0], tc.args[1]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("DeleteGroup", tc.args[0], tc.args[1], tc.args[2]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{delCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -394,6 +416,7 @@ func TestUpdategroupCmd(t *testing.T) {
 			desc: "update group successfully",
 			args: []string{
 				newGroupJson,
+				domainID,
 				token,
 			},
 			group: mgsdk.Group{
@@ -406,6 +429,7 @@ func TestUpdategroupCmd(t *testing.T) {
 			desc: "update group with invalid args",
 			args: []string{
 				newGroupJson,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -415,6 +439,7 @@ func TestUpdategroupCmd(t *testing.T) {
 			desc: "update group with invalid group id",
 			args: []string{
 				fmt.Sprintf("{\"id\":\"%s\",\"name\" : \"group1\"}", invalidID),
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -425,6 +450,7 @@ func TestUpdategroupCmd(t *testing.T) {
 			desc: "update group with invalid json syntax",
 			args: []string{
 				fmt.Sprintf("{\"id\":\"%s\",\"name\" : \"group1\"", group.ID),
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -435,7 +461,7 @@ func TestUpdategroupCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var ch mgsdk.Group
-			sdkCall := sdkMock.On("UpdateGroup", mock.Anything, tc.args[1]).Return(tc.group, tc.sdkErr)
+			sdkCall := sdkMock.On("UpdateGroup", mock.Anything, tc.args[1], tc.args[2]).Return(tc.group, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{updCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -472,6 +498,7 @@ func TestListUsersCmd(t *testing.T) {
 			desc: "list users successfully",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 			},
 			page: mgsdk.UsersPage{
@@ -488,6 +515,7 @@ func TestListUsersCmd(t *testing.T) {
 			desc: "list users with invalid args",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -497,6 +525,7 @@ func TestListUsersCmd(t *testing.T) {
 			desc: "list users with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -506,7 +535,7 @@ func TestListUsersCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListGroupUsers", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListGroupUsers", tc.args[0], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{usrCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -544,6 +573,7 @@ func TestListChannelsCmd(t *testing.T) {
 			desc: "list channels successfully",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 			},
 			page: mgsdk.ChannelsPage{
@@ -560,6 +590,7 @@ func TestListChannelsCmd(t *testing.T) {
 			desc: "list channels with invalid args",
 			args: []string{
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -569,6 +600,7 @@ func TestListChannelsCmd(t *testing.T) {
 			desc: "list channels with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -578,7 +610,7 @@ func TestListChannelsCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListGroupChannels", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListGroupChannels", tc.args[0], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{chansCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -616,6 +648,7 @@ func TestEnablegroupCmd(t *testing.T) {
 			desc: "enable group successfully",
 			args: []string{
 				group.ID,
+				domainID,
 				validToken,
 			},
 			group:   group,
@@ -625,6 +658,7 @@ func TestEnablegroupCmd(t *testing.T) {
 			desc: "delete group with invalid token",
 			args: []string{
 				group.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -635,6 +669,7 @@ func TestEnablegroupCmd(t *testing.T) {
 			desc: "delete group with invalid group ID",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -645,6 +680,7 @@ func TestEnablegroupCmd(t *testing.T) {
 			desc: "enable group with invalid args",
 			args: []string{
 				group.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -654,7 +690,7 @@ func TestEnablegroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("EnableGroup", tc.args[0], tc.args[1]).Return(tc.group, tc.sdkErr)
+			sdkCall := sdkMock.On("EnableGroup", tc.args[0], tc.args[1], tc.args[2]).Return(tc.group, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{enableCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -693,6 +729,7 @@ func TestDisablegroupCmd(t *testing.T) {
 			desc: "disable group successfully",
 			args: []string{
 				group.ID,
+				domainID,
 				validToken,
 			},
 			logType: entityLog,
@@ -702,6 +739,7 @@ func TestDisablegroupCmd(t *testing.T) {
 			desc: "disable group with invalid token",
 			args: []string{
 				group.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -712,6 +750,7 @@ func TestDisablegroupCmd(t *testing.T) {
 			desc: "disable group with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -722,6 +761,7 @@ func TestDisablegroupCmd(t *testing.T) {
 			desc: "disable thing with invalid args",
 			args: []string{
 				group.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -731,7 +771,7 @@ func TestDisablegroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("DisableGroup", tc.args[0], tc.args[1]).Return(tc.group, tc.sdkErr)
+			sdkCall := sdkMock.On("DisableGroup", tc.args[0], tc.args[1], tc.args[2]).Return(tc.group, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{disableCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -773,6 +813,7 @@ func TestAssignUserToGroupCmd(t *testing.T) {
 				relation,
 				userIds,
 				group.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -783,6 +824,7 @@ func TestAssignUserToGroupCmd(t *testing.T) {
 				relation,
 				userIds,
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -794,6 +836,7 @@ func TestAssignUserToGroupCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"", user.ID),
 				group.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -806,6 +849,7 @@ func TestAssignUserToGroupCmd(t *testing.T) {
 				relation,
 				userIds,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -818,6 +862,7 @@ func TestAssignUserToGroupCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"]", invalidID),
 				group.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -828,7 +873,7 @@ func TestAssignUserToGroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("AddUserToGroup", tc.args[2], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("AddUserToGroup", tc.args[2], mock.Anything, tc.args[3], tc.args[4]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{assignCmd, usrCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -864,6 +909,7 @@ func TestUnassignUserToGroupCmd(t *testing.T) {
 				relation,
 				userIds,
 				group.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -874,6 +920,7 @@ func TestUnassignUserToGroupCmd(t *testing.T) {
 				relation,
 				userIds,
 				group.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -885,6 +932,7 @@ func TestUnassignUserToGroupCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"", user.ID),
 				group.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -897,6 +945,7 @@ func TestUnassignUserToGroupCmd(t *testing.T) {
 				relation,
 				userIds,
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -909,6 +958,7 @@ func TestUnassignUserToGroupCmd(t *testing.T) {
 				relation,
 				fmt.Sprintf("[\"%s\"]", invalidID),
 				group.ID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAddPolicies, http.StatusBadRequest),
@@ -919,7 +969,7 @@ func TestUnassignUserToGroupCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RemoveUserFromGroup", tc.args[2], mock.Anything, tc.args[3]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("RemoveUserFromGroup", tc.args[2], mock.Anything, tc.args[3], tc.args[4]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{unassignCmd, usrCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:

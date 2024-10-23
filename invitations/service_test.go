@@ -108,15 +108,17 @@ func TestSendInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall1 := token.On("Issue", context.Background(), mock.Anything).Return(&magistrala.Token{AccessToken: tc.req.Token}, tc.issueErr)
-		repocall2 := repo.On("Create", context.Background(), mock.Anything).Return(tc.repoErr)
-		if tc.req.Resend {
-			repocall2 = repo.On("UpdateToken", context.Background(), mock.Anything).Return(tc.repoErr)
-		}
-		err := svc.SendInvitation(context.Background(), tc.session, tc.req)
-		assert.Equal(t, tc.err, err, tc.desc)
-		repocall1.Unset()
-		repocall2.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repocall1 := token.On("Issue", context.Background(), mock.Anything).Return(&magistrala.Token{AccessToken: tc.req.Token}, tc.issueErr)
+			repocall2 := repo.On("Create", context.Background(), mock.Anything).Return(tc.repoErr)
+			if tc.req.Resend {
+				repocall2 = repo.On("UpdateToken", context.Background(), mock.Anything).Return(tc.repoErr)
+			}
+			err := svc.SendInvitation(context.Background(), tc.session, tc.req)
+			assert.Equal(t, tc.err, err, tc.desc)
+			repocall1.Unset()
+			repocall2.Unset()
+		})
 	}
 }
 
@@ -194,11 +196,13 @@ func TestViewInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
-		inv, err := svc.ViewInvitation(context.Background(), tc.session, tc.userID, tc.domainID)
-		assert.Equal(t, tc.err, err, tc.desc)
-		assert.Equal(t, tc.resp, inv, tc.desc)
-		repocall1.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
+			inv, err := svc.ViewInvitation(context.Background(), tc.session, tc.userID, tc.domainID)
+			assert.Equal(t, tc.err, err, tc.desc)
+			assert.Equal(t, tc.resp, inv, tc.desc)
+			repocall1.Unset()
+		})
 	}
 }
 
@@ -248,7 +252,6 @@ func TestListInvitations(t *testing.T) {
 		{
 			desc:    "list invitations unsuccessful",
 			session: authn.Session{DomainUserID: validDomainUserID, DomainID: validDomainID, UserID: validUserID},
-			// page:    invitations.Page{DomainID: testsutil.GenerateUUID(t)},
 			page:    validPage,
 			err:     repoerr.ErrViewEntity,
 			resp:    invitations.InvitationPage{},
@@ -257,11 +260,13 @@ func TestListInvitations(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall1 := repo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.resp, tc.repoErr)
-		resp, err := svc.ListInvitations(context.Background(), tc.session, tc.page)
-		assert.Equal(t, tc.err, err, tc.desc)
-		assert.Equal(t, tc.resp, resp, tc.desc)
-		repocall1.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repocall1 := repo.On("RetrieveAll", context.Background(), mock.Anything).Return(tc.resp, tc.repoErr)
+			resp, err := svc.ListInvitations(context.Background(), tc.session, tc.page)
+			assert.Equal(t, tc.err, err, tc.desc)
+			assert.Equal(t, tc.resp, resp, tc.desc)
+			repocall1.Unset()
+		})
 	}
 }
 
@@ -368,14 +373,16 @@ func TestAcceptInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, tc.domainID).Return(tc.resp, tc.repoErr)
-		sdkcall := sdksvc.On("AddUserToDomain", mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
-		repocall2 := repo.On("UpdateConfirmation", context.Background(), mock.Anything).Return(tc.repoErr1)
-		err := svc.AcceptInvitation(context.Background(), tc.session, tc.domainID)
-		assert.Equal(t, tc.err, err, tc.desc)
-		repocall1.Unset()
-		sdkcall.Unset()
-		repocall2.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, tc.domainID).Return(tc.resp, tc.repoErr)
+			sdkcall := sdksvc.On("AddUserToDomain", mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			repocall2 := repo.On("UpdateConfirmation", context.Background(), mock.Anything).Return(tc.repoErr1)
+			err := svc.AcceptInvitation(context.Background(), tc.session, tc.domainID)
+			assert.Equal(t, tc.err, err, tc.desc)
+			repocall1.Unset()
+			sdkcall.Unset()
+			repocall2.Unset()
+		})
 	}
 }
 
@@ -431,12 +438,14 @@ func TestDeleteInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
-		repocall2 := repo.On("Delete", context.Background(), mock.Anything, mock.Anything).Return(tc.repoErr)
-		err := svc.DeleteInvitation(context.Background(), authn.Session{}, tc.userID, tc.domainID)
-		assert.Equal(t, tc.err, err, tc.desc)
-		repocall1.Unset()
-		repocall2.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
+			repocall2 := repo.On("Delete", context.Background(), mock.Anything, mock.Anything).Return(tc.repoErr)
+			err := svc.DeleteInvitation(context.Background(), authn.Session{}, tc.userID, tc.domainID)
+			assert.Equal(t, tc.err, err, tc.desc)
+			repocall1.Unset()
+			repocall2.Unset()
+		})
 	}
 }
 
@@ -494,11 +503,13 @@ func TestRejectInvitation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
-		repocall3 := repo.On("UpdateRejection", context.Background(), mock.Anything).Return(tc.repoErr1)
-		err := svc.RejectInvitation(context.Background(), tc.session, tc.domainID)
-		assert.Equal(t, tc.err, err, tc.desc)
-		repocall1.Unset()
-		repocall3.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repocall1 := repo.On("Retrieve", context.Background(), mock.Anything, mock.Anything).Return(tc.resp, tc.repoErr)
+			repocall3 := repo.On("UpdateRejection", context.Background(), mock.Anything).Return(tc.repoErr1)
+			err := svc.RejectInvitation(context.Background(), tc.session, tc.domainID)
+			assert.Equal(t, tc.err, err, tc.desc)
+			repocall1.Unset()
+			repocall3.Unset()
+		})
 	}
 }

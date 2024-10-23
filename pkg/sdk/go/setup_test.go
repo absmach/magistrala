@@ -24,7 +24,6 @@ const (
 	invalidIdentity = "invalididentity"
 	Identity        = "identity"
 	secret          = "strongsecret"
-	token           = "token"
 	invalidToken    = "invalid"
 	contentType     = "application/senml+json"
 	invalid         = "invalid"

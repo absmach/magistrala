@@ -75,7 +75,6 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 			opts...,
 		), "delete").ServeHTTP)
 	})
-
 	mux.Get("/health", magistrala.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 

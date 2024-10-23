@@ -48,6 +48,7 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 			desc: "create bootstrap config successfully",
 			args: []string{
 				jsonConfig,
+				domainID,
 				validToken,
 			},
 			logType:  createLog,
@@ -58,6 +59,7 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 			desc: "create bootstrap config with invald args",
 			args: []string{
 				jsonConfig,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -67,6 +69,7 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 			desc: "create bootstrap config with invald json",
 			args: []string{
 				invalidJson,
+				domainID,
 				validToken,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -77,6 +80,7 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 			desc: "create bootstrap config with invald token",
 			args: []string{
 				jsonConfig,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -87,7 +91,7 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("AddBootstrap", mock.Anything, mock.Anything).Return(tc.id, tc.sdkErr)
+			sdkCall := sdkMock.On("AddBootstrap", mock.Anything, mock.Anything, mock.Anything).Return(tc.id, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{createCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -125,6 +129,7 @@ func TestGetBootstrapConfigCmd(t *testing.T) {
 			desc: "get all bootstrap config successfully",
 			args: []string{
 				all,
+				domainID,
 				token,
 			},
 			page: mgsdk.BootstrapPage{
@@ -141,6 +146,7 @@ func TestGetBootstrapConfigCmd(t *testing.T) {
 			desc: "get bootstrap config with id",
 			args: []string{
 				channel.ID,
+				domainID,
 				token,
 			},
 			logType: entityLog,
@@ -150,6 +156,7 @@ func TestGetBootstrapConfigCmd(t *testing.T) {
 			desc: "get bootstrap config with invalid args",
 			args: []string{
 				all,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -159,6 +166,7 @@ func TestGetBootstrapConfigCmd(t *testing.T) {
 			desc: "get all bootstrap config with invalid token",
 			args: []string{
 				all,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -169,6 +177,7 @@ func TestGetBootstrapConfigCmd(t *testing.T) {
 			desc: "get bootstrap config with invalid id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -179,8 +188,8 @@ func TestGetBootstrapConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ViewBootstrap", tc.args[0], tc.args[1]).Return(tc.boot, tc.sdkErr)
-			sdkCall1 := sdkMock.On("Bootstraps", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ViewBootstrap", tc.args[0], tc.args[1], tc.args[2]).Return(tc.boot, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Bootstraps", mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 
@@ -223,6 +232,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 			desc: "remove bootstrap config successfully",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -231,6 +241,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 			desc: "remove bootstrap config with invalid args",
 			args: []string{
 				thing.ID,
+				domainID,
 				token,
 				extraArg,
 			},
@@ -240,6 +251,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 			desc: "remove bootstrap config with invalid thing id",
 			args: []string{
 				invalidID,
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -250,6 +262,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 			desc: "remove bootstrap config with invalid token",
 			args: []string{
 				thing.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -260,7 +273,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RemoveBootstrap", tc.args[0], tc.args[1]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("RemoveBootstrap", tc.args[0], tc.args[1], tc.args[2]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{rmCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -300,6 +313,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			args: []string{
 				config,
 				newConfigJson,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -309,6 +323,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			args: []string{
 				config,
 				newConfigJson,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -321,6 +336,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 				connection,
 				thing.ID,
 				chanIDsJson,
+				domainID,
 				token,
 			},
 			logType: okLog,
@@ -331,6 +347,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 				connection,
 				thing.ID,
 				fmt.Sprintf("[\"%s\"", thing.ID),
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -343,6 +360,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 				connection,
 				thing.ID,
 				chanIDsJson,
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -357,6 +375,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 				"client cert",
 				"client key",
 				"ca",
+				domainID,
 				token,
 			},
 			boot:    bootConfig,
@@ -370,6 +389,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 				"client cert",
 				"client key",
 				"ca",
+				domainID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -380,6 +400,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			desc: "update bootstrap config with invalid args",
 			args: []string{
 				newConfigJson,
+				domainID,
 				token,
 			},
 			logType: usageLog,
@@ -389,6 +410,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			args: []string{
 				config,
 				"{\"name\" : \"New Bootstrap\"",
+				domainID,
 				token,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -410,9 +432,9 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var boot mgsdk.BootstrapConfig
-			sdkCall := sdkMock.On("UpdateBootstrap", mock.Anything, mock.Anything).Return(tc.sdkErr)
-			sdkCall1 := sdkMock.On("UpdateBootstrapConnection", mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
-			sdkCall2 := sdkMock.On("UpdateBootstrapCerts", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
+			sdkCall := sdkMock.On("UpdateBootstrap", mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			sdkCall1 := sdkMock.On("UpdateBootstrapConnection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			sdkCall2 := sdkMock.On("UpdateBootstrapCerts", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{updCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -453,6 +475,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 			desc: "whitelist config successfully",
 			args: []string{
 				jsonConfig,
+				domainID,
 				validToken,
 			},
 			logType: okLog,
@@ -461,6 +484,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 			desc: "whitelist config with invalid args",
 			args: []string{
 				jsonConfig,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -470,6 +494,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 			desc: "whitelist config with invalid json",
 			args: []string{
 				fmt.Sprintf("{\"thing_id\": \"%s\", \"state\":%d", thing.ID, 1),
+				domainID,
 				validToken,
 			},
 			sdkErr:        errors.NewSDKError(errors.New("unexpected end of JSON input")),
@@ -480,6 +505,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 			desc: "whitelist config with invalid token",
 			args: []string{
 				jsonConfig,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -490,7 +516,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Whitelist", mock.Anything, mock.Anything, tc.args[1]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("Whitelist", mock.Anything, mock.Anything, tc.args[1], tc.args[2]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{whitelistCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:

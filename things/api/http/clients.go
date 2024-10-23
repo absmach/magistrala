@@ -25,11 +25,10 @@ func clientsHandler(svc things.Service, r *chi.Mux, authn mgauthn.Authentication
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-
 	r.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddleware(authn))
+		r.Use(api.AuthenticateMiddlewareDomain(authn))
 
-		r.Route("/things", func(r chi.Router) {
+		r.Route("/{domainID}/things", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				createClientEndpoint(svc),
 				decodeCreateClientReq,
@@ -127,21 +126,20 @@ func clientsHandler(svc things.Service, r *chi.Mux, authn mgauthn.Authentication
 		// SpiceDB provides list of thing ids present in given channel id
 		// and things service can access spiceDB and get the list of thing ids present in given channel id.
 		// Request to get list of things present in channelID ({groupID}) .
-		r.Get("/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/channels/{groupID}/things", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersEndpoint(svc),
 			decodeListMembersRequest,
 			api.EncodeResponse,
 			opts...,
 		), "list_things_by_channel_id").ServeHTTP)
 
-		r.Get("/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
+		r.Get("/{domainID}/users/{userID}/things", otelhttp.NewHandler(kithttp.NewServer(
 			listClientsEndpoint(svc),
 			decodeListClients,
 			api.EncodeResponse,
 			opts...,
 		), "list_user_things").ServeHTTP)
 	})
-
 	return r
 }
 

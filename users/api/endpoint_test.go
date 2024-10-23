@@ -50,6 +50,7 @@ var (
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 	passRegex    = regexp.MustCompile("^.{8,}$")
 	testReferer  = "http://localhost"
+	domainID     = testsutil.GenerateUUID(&testing.T{})
 )
 
 const contentType = "application/json"
@@ -219,28 +220,30 @@ func TestRegisterClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.client)
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/users/", us.URL),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.client)
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/users/", us.URL),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
+			}
 
-		svcCall := svc.On("RegisterClient", mock.Anything, mgauthn.Session{}, tc.client, true).Return(tc.client, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var errRes respBody
-		err = json.NewDecoder(res.Body).Decode(&errRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if errRes.Err != "" || errRes.Message != "" {
-			err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+			svcCall := svc.On("RegisterClient", mock.Anything, mgauthn.Session{}, tc.client, true).Return(tc.client, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -262,7 +265,7 @@ func TestViewClient(t *testing.T) {
 			token:    validToken,
 			id:       client.ID,
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -288,33 +291,35 @@ func TestViewClient(t *testing.T) {
 			token:    validToken,
 			id:       client.ID,
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/%s", us.URL, tc.id),
-			token:  tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/users/%s", us.URL, tc.id),
+				token:  tc.token,
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ViewClient", mock.Anything, tc.authnRes, tc.id).Return(mgclients.Client{}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var errRes respBody
-		err = json.NewDecoder(res.Body).Decode(&errRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if errRes.Err != "" || errRes.Message != "" {
-			err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ViewClient", mock.Anything, tc.authnRes, tc.id).Return(mgclients.Client{}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -336,7 +341,7 @@ func TestViewProfile(t *testing.T) {
 			token:    validToken,
 			id:       client.ID,
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -360,27 +365,29 @@ func TestViewProfile(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/profile", us.URL),
-			token:  tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/users/profile", us.URL),
+				token:  tc.token,
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ViewProfile", mock.Anything, tc.authnRes).Return(mgclients.Client{}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var errRes respBody
-		err = json.NewDecoder(res.Body).Decode(&errRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if errRes.Err != "" || errRes.Message != "" {
-			err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ViewProfile", mock.Anything, tc.authnRes).Return(mgclients.Client{}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -408,7 +415,7 @@ func TestListClients(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client},
 			},
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -439,7 +446,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "offset=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -447,7 +454,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "offset=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -462,7 +469,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "limit=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -470,7 +477,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "limit=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -478,7 +485,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    fmt.Sprintf("limit=%d", api.MaxLimitSize+1),
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -492,7 +499,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "name=clientname",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -500,7 +507,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "name=1&name=2",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -514,7 +521,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "status=enabled",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -522,7 +529,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "status=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -530,7 +537,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "status=enabled&status=disabled",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -544,7 +551,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "tag=tag1,tag2",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -552,7 +559,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "tag=tag1&tag=tag2",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -566,7 +573,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -574,7 +581,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "metadata=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -582,7 +589,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&metadata=%7B%22domain%22%3A%20%22example.com%22%7D",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -596,7 +603,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "permission=view",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -604,7 +611,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "permission=view&permission=view",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -618,7 +625,7 @@ func TestListClients(t *testing.T) {
 			},
 			query:    "list_perms=true",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -626,7 +633,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "list_perms=true&list_perms=true",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -642,7 +649,7 @@ func TestListClients(t *testing.T) {
 				},
 			},
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -650,7 +657,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "identity=1&identity=2",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -666,7 +673,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "order=name",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -674,7 +681,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "order=name&order=name",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -682,7 +689,7 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "dir=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -690,34 +697,36 @@ func TestListClients(t *testing.T) {
 			token:    validToken,
 			query:    "dir=asc&dir=asc",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodGet,
-			url:         us.URL + "/users?" + tc.query,
-			contentType: contentType,
-			token:       tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodGet,
+				url:         us.URL + "/users?" + tc.query,
+				contentType: contentType,
+				token:       tc.token,
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ListClients", mock.Anything, tc.authnRes, mock.Anything).Return(tc.listUsersResponse, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var bodyRes respBody
-		err = json.NewDecoder(res.Body).Decode(&bodyRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if bodyRes.Err != "" || bodyRes.Message != "" {
-			err = errors.Wrap(errors.New(bodyRes.Err), errors.New(bodyRes.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ListClients", mock.Anything, tc.authnRes, mock.Anything).Return(tc.listUsersResponse, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var bodyRes respBody
+			err = json.NewDecoder(res.Body).Decode(&bodyRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if bodyRes.Err != "" || bodyRes.Message != "" {
+				err = errors.Wrap(errors.New(bodyRes.Err), errors.New(bodyRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -823,25 +832,27 @@ func TestSearchUsers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/search?", us.URL) + tc.query,
-			token:  tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/users/search?", us.URL) + tc.query,
+				token:  tc.token,
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(mgauthn.Session{UserID: validID, DomainID: validID}, tc.authnErr)
-		svcCall := svc.On("SearchUsers", mock.Anything, mock.Anything).Return(
-			mgclients.ClientsPage{
-				Page:    tc.listUsersResponse.Page,
-				Clients: tc.listUsersResponse.Clients,
-			},
-			tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(mgauthn.Session{UserID: validID, DomainID: domainID}, tc.authnErr)
+			svcCall := svc.On("SearchUsers", mock.Anything, mock.Anything).Return(
+				mgclients.ClientsPage{
+					Page:    tc.listUsersResponse.Page,
+					Clients: tc.listUsersResponse.Clients,
+				},
+				tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -869,7 +880,7 @@ func TestUpdateClient(t *testing.T) {
 			id:          client.ID,
 			data:        fmt.Sprintf(`{"name":"%s","metadata":%s}`, newName, toJSON(newMetadata)),
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			clientResponse: mgclients.Client{
 				ID:       client.ID,
@@ -884,7 +895,7 @@ func TestUpdateClient(t *testing.T) {
 			id:          client.ID,
 			data:        fmt.Sprintf(`{"name":"%s","metadata":%s}`, newName, toJSON(newMetadata)),
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			clientResponse: mgclients.Client{
 				ID:       client.ID,
@@ -919,7 +930,7 @@ func TestUpdateClient(t *testing.T) {
 			id:          inValid,
 			data:        fmt.Sprintf(`{"name":"%s","metadata":%s}`, newName, toJSON(newMetadata)),
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			status:      http.StatusForbidden,
 			err:         svcerr.ErrAuthorization,
@@ -929,7 +940,7 @@ func TestUpdateClient(t *testing.T) {
 			id:          client.ID,
 			data:        fmt.Sprintf(`{"name":"%s","metadata":%s}`, newName, toJSON(newMetadata)),
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: "application/xml",
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrValidation,
@@ -939,7 +950,7 @@ func TestUpdateClient(t *testing.T) {
 			id:          client.ID,
 			data:        fmt.Sprintf(`{"name":%s}`, "invalid"),
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
@@ -949,7 +960,7 @@ func TestUpdateClient(t *testing.T) {
 			id:          " ",
 			data:        fmt.Sprintf(`{"name":"%s","metadata":%s}`, newName, toJSON(newMetadata)),
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
@@ -957,28 +968,30 @@ func TestUpdateClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/users/%s", us.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("UpdateClient", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var resBody respBody
-		err = json.NewDecoder(res.Body).Decode(&resBody)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if resBody.Err != "" || resBody.Message != "" {
-			err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/users/%s", us.URL, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.data),
+			}
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("UpdateClient", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var resBody respBody
+			err = json.NewDecoder(res.Body).Decode(&resBody)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if resBody.Err != "" || resBody.Message != "" {
+				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -1011,7 +1024,7 @@ func TestUpdateClientTags(t *testing.T) {
 				Tags: []string{newTag},
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusOK,
 			err:      nil,
 		},
@@ -1025,7 +1038,7 @@ func TestUpdateClientTags(t *testing.T) {
 				Tags: []string{newTag},
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusOK,
 			err:      nil,
 		},
@@ -1055,7 +1068,7 @@ func TestUpdateClientTags(t *testing.T) {
 			data:        fmt.Sprintf(`{"tags":["%s"]}`, newTag),
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusForbidden,
 			err:         svcerr.ErrAuthorization,
 		},
@@ -1065,7 +1078,7 @@ func TestUpdateClientTags(t *testing.T) {
 			data:        fmt.Sprintf(`{"tags":["%s"]}`, newTag),
 			contentType: "application/xml",
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrValidation,
 		},
@@ -1075,7 +1088,7 @@ func TestUpdateClientTags(t *testing.T) {
 			data:        fmt.Sprintf(`{"tags":["%s"]}`, newTag),
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
@@ -1085,39 +1098,41 @@ func TestUpdateClientTags(t *testing.T) {
 			data:        fmt.Sprintf(`{"tags":%s}`, newTag),
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/users/%s/tags", us.URL, tc.id),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/users/%s/tags", us.URL, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("UpdateClientTags", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var resBody respBody
-		err = json.NewDecoder(res.Body).Decode(&resBody)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if resBody.Err != "" || resBody.Message != "" {
-			err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
-		}
-		if err == nil {
-			assert.Equal(t, tc.clientResponse.Tags, resBody.Tags, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.clientResponse.Tags, resBody.Tags))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("UpdateClientTags", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var resBody respBody
+			err = json.NewDecoder(res.Body).Decode(&resBody)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if resBody.Err != "" || resBody.Message != "" {
+				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+			}
+			if err == nil {
+				assert.Equal(t, tc.clientResponse.Tags, resBody.Tags, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.clientResponse.Tags, resBody.Tags))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -1148,7 +1163,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusOK,
 			err:         nil,
 		},
@@ -1164,7 +1179,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusOK,
 			err:         nil,
 		},
@@ -1212,7 +1227,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrMissingID,
 		},
@@ -1228,7 +1243,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			contentType: "application/xml",
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrValidation,
 		},
@@ -1244,36 +1259,38 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/users/%s/identity", us.URL, tc.client.ID),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/users/%s/identity", us.URL, tc.client.ID),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("UpdateClientIdentity", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var resBody respBody
-		err = json.NewDecoder(res.Body).Decode(&resBody)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if resBody.Err != "" || resBody.Message != "" {
-			err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("UpdateClientIdentity", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var resBody respBody
+			err = json.NewDecoder(res.Body).Decode(&resBody)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if resBody.Err != "" || resBody.Message != "" {
+				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -1355,21 +1372,23 @@ func TestPasswordResetRequest(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/password/reset-request", us.URL),
-			contentType: tc.contentType,
-			referer:     tc.referer,
-			body:        strings.NewReader(tc.data),
-		}
-		svcCall := svc.On("GenerateResetToken", mock.Anything, mock.Anything, mock.Anything).Return(tc.generateErr)
-		svcCall1 := svc.On("SendPasswordReset", mock.Anything, mock.Anything, mock.Anything, mock.Anything, validToken).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		svcCall1.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/password/reset-request", us.URL),
+				contentType: tc.contentType,
+				referer:     tc.referer,
+				body:        strings.NewReader(tc.data),
+			}
+			svcCall := svc.On("GenerateResetToken", mock.Anything, mock.Anything, mock.Anything).Return(tc.generateErr)
+			svcCall1 := svc.On("SendPasswordReset", mock.Anything, mock.Anything, mock.Anything, mock.Anything, validToken).Return(tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			svcCall1.Unset()
+		})
 	}
 }
 
@@ -1449,22 +1468,24 @@ func TestPasswordReset(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/password/reset", us.URL),
-			contentType: tc.contentType,
-			referer:     testReferer,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ResetSecret", mock.Anything, tc.authnRes, mock.Anything).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/password/reset", us.URL),
+				contentType: tc.contentType,
+				referer:     testReferer,
+				token:       tc.token,
+				body:        strings.NewReader(tc.data),
+			}
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ResetSecret", mock.Anything, tc.authnRes, mock.Anything).Return(tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -1488,7 +1509,7 @@ func TestUpdateClientRole(t *testing.T) {
 			data:        fmt.Sprintf(`{"role": "%s"}`, "admin"),
 			clientID:    client.ID,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			status:      http.StatusOK,
 			err:         nil,
@@ -1498,7 +1519,7 @@ func TestUpdateClientRole(t *testing.T) {
 			data:        fmt.Sprintf(`{"role": "%s"}`, "admin"),
 			clientID:    client.ID,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			status:      http.StatusOK,
 			err:         nil,
@@ -1528,7 +1549,7 @@ func TestUpdateClientRole(t *testing.T) {
 			data:        fmt.Sprintf(`{"role": "%s"}`, "invalid"),
 			clientID:    client.ID,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrInvalidRole,
@@ -1538,7 +1559,7 @@ func TestUpdateClientRole(t *testing.T) {
 			data:        fmt.Sprintf(`{"role": "%s"}`, "admin"),
 			clientID:    client.ID,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: "application/xml",
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrValidation,
@@ -1548,7 +1569,7 @@ func TestUpdateClientRole(t *testing.T) {
 			data:        fmt.Sprintf(`{"role": %s}`, "admin"),
 			clientID:    client.ID,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
@@ -1556,29 +1577,31 @@ func TestUpdateClientRole(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/users/%s/role", us.URL, tc.clientID),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/users/%s/role", us.URL, tc.clientID),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("UpdateClientRole", mock.Anything, tc.authnRes, mock.Anything).Return(mgclients.Client{}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var resBody respBody
-		err = json.NewDecoder(res.Body).Decode(&resBody)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if resBody.Err != "" || resBody.Message != "" {
-			err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("UpdateClientRole", mock.Anything, tc.authnRes, mock.Anything).Return(mgclients.Client{}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var resBody respBody
+			err = json.NewDecoder(res.Body).Decode(&resBody)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if resBody.Err != "" || resBody.Message != "" {
+				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -1693,29 +1716,31 @@ func TestUpdateClientSecret(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/users/secret", us.URL),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/users/secret", us.URL),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(tc.data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("UpdateClientSecret", mock.Anything, tc.authnRes, mock.Anything, mock.Anything).Return(tc.client, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var resBody respBody
-		err = json.NewDecoder(res.Body).Decode(&resBody)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if resBody.Err != "" || resBody.Message != "" {
-			err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("UpdateClientSecret", mock.Anything, tc.authnRes, mock.Anything, mock.Anything).Return(tc.client, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var resBody respBody
+			err = json.NewDecoder(res.Body).Decode(&resBody)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if resBody.Err != "" || resBody.Message != "" {
+				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -1784,28 +1809,30 @@ func TestIssueToken(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/users/tokens/issue", us.URL),
-			contentType: tc.contentType,
-			body:        strings.NewReader(tc.data),
-		}
-
-		svcCall := svc.On("IssueToken", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		if tc.err != nil {
-			var resBody respBody
-			err = json.NewDecoder(res.Body).Decode(&resBody)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-			if resBody.Err != "" || resBody.Message != "" {
-				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/users/tokens/issue", us.URL),
+				contentType: tc.contentType,
+				body:        strings.NewReader(tc.data),
 			}
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+
+			svcCall := svc.On("IssueToken", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			if tc.err != nil {
+				var resBody respBody
+				err = json.NewDecoder(res.Body).Decode(&resBody)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+				if resBody.Err != "" || resBody.Message != "" {
+					err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+				}
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			}
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -1829,7 +1856,7 @@ func TestRefreshToken(t *testing.T) {
 			data:        fmt.Sprintf(`{"refresh_token": "%s", "domain_id": "%s"}`, validToken, validID),
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusCreated,
 			err:         nil,
 		},
@@ -1855,7 +1882,7 @@ func TestRefreshToken(t *testing.T) {
 			data:        fmt.Sprintf(`{"refresh_token": "%s", "domain_id": "%s"}`, validToken, "invalid"),
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusUnauthorized,
 			err:         svcerr.ErrAuthentication,
 		},
@@ -1864,7 +1891,7 @@ func TestRefreshToken(t *testing.T) {
 			data:        fmt.Sprintf(`{"refresh_token": %s, "domain_id": %s}`, validToken, validID),
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
@@ -1873,37 +1900,39 @@ func TestRefreshToken(t *testing.T) {
 			data:        fmt.Sprintf(`{"refresh_token": "%s", "domain_id": "%s"}`, validToken, validID),
 			contentType: "application/xml",
 			token:       validToken,
-			authnRes:    mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:    mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrValidation,
 		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/users/tokens/refresh", us.URL),
-			contentType: tc.contentType,
-			body:        strings.NewReader(tc.data),
-			token:       tc.token,
-		}
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("RefreshToken", mock.Anything, tc.authnRes, tc.token, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		if tc.err != nil {
-			var resBody respBody
-			err = json.NewDecoder(res.Body).Decode(&resBody)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-			if resBody.Err != "" || resBody.Message != "" {
-				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/users/tokens/refresh", us.URL),
+				contentType: tc.contentType,
+				body:        strings.NewReader(tc.data),
+				token:       tc.token,
 			}
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("RefreshToken", mock.Anything, tc.authnRes, tc.token, mock.Anything).Return(&magistrala.Token{AccessToken: validToken}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			if tc.err != nil {
+				var resBody respBody
+				err = json.NewDecoder(res.Body).Decode(&resBody)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+				if resBody.Err != "" || resBody.Message != "" {
+					err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+				}
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			}
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -1928,7 +1957,7 @@ func TestEnableClient(t *testing.T) {
 				Status: mgclients.EnabledStatus,
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusOK,
 			err:      nil,
 		},
@@ -1940,7 +1969,7 @@ func TestEnableClient(t *testing.T) {
 				Status: mgclients.EnabledStatus,
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusOK,
 			err:      nil,
 		},
@@ -1958,39 +1987,41 @@ func TestEnableClient(t *testing.T) {
 				ID: "",
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.client)
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/users/%s/enable", us.URL, tc.client.ID),
-			contentType: contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
-
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("EnableClient", mock.Anything, tc.authnRes, mock.Anything).Return(mgclients.Client{}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		if tc.err != nil {
-			var resBody respBody
-			err = json.NewDecoder(res.Body).Decode(&resBody)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-			if resBody.Err != "" || resBody.Message != "" {
-				err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.client)
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/users/%s/enable", us.URL, tc.client.ID),
+				contentType: contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
 			}
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("EnableClient", mock.Anything, tc.authnRes, mock.Anything).Return(mgclients.Client{}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			if tc.err != nil {
+				var resBody respBody
+				err = json.NewDecoder(res.Body).Decode(&resBody)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+				if resBody.Err != "" || resBody.Message != "" {
+					err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+				}
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			}
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -2016,7 +2047,7 @@ func TestDisableClient(t *testing.T) {
 				Status: mgclients.DisabledStatus,
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, SuperAdmin: true},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, SuperAdmin: true},
 			status:   http.StatusOK,
 			err:      nil,
 		},
@@ -2028,7 +2059,7 @@ func TestDisableClient(t *testing.T) {
 				Status: mgclients.DisabledStatus,
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusOK,
 			err:      nil,
 		},
@@ -2046,30 +2077,32 @@ func TestDisableClient(t *testing.T) {
 				ID: "",
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.client)
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/users/%s/disable", us.URL, tc.client.ID),
-			contentType: contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.client)
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/users/%s/disable", us.URL, tc.client.ID),
+				contentType: contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("DisableClient", mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("DisableClient", mock.Anything, mock.Anything, mock.Anything).Return(mgclients.Client{}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -2094,7 +2127,7 @@ func TestDeleteClient(t *testing.T) {
 				ID: client.ID,
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusNoContent,
 			err:      nil,
 		},
@@ -2112,29 +2145,31 @@ func TestDeleteClient(t *testing.T) {
 				ID: "",
 			},
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			status:   http.StatusMethodNotAllowed,
 			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.client)
-		req := testRequest{
-			client:      us.Client(),
-			method:      http.MethodDelete,
-			url:         fmt.Sprintf("%s/users/%s", us.URL, tc.client.ID),
-			contentType: contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		repoCall := svc.On("DeleteClient", mock.Anything, tc.authnRes, tc.client.ID).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		repoCall.Unset()
-		authnCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.client)
+			req := testRequest{
+				client:      us.Client(),
+				method:      http.MethodDelete,
+				url:         fmt.Sprintf("%s/users/%s", us.URL, tc.client.ID),
+				contentType: contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
+			}
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			repoCall := svc.On("DeleteClient", mock.Anything, tc.authnRes, tc.client.ID).Return(tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			repoCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -2146,6 +2181,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		desc              string
 		token             string
 		groupID           string
+		domainID          string
 		page              mgclients.Page
 		status            int
 		query             string
@@ -2155,17 +2191,18 @@ func TestListUsersByUserGroupId(t *testing.T) {
 		err               error
 	}{
 		{
-			desc:    "list users with valid token",
-			token:   validToken,
-			groupID: validID,
-			status:  http.StatusOK,
+			desc:     "list users with valid token",
+			token:    validToken,
+			groupID:  validID,
+			domainID: validID,
+			status:   http.StatusOK,
 			listUsersResponse: mgclients.ClientsPage{
 				Page: mgclients.Page{
 					Total: 1,
 				},
 				Clients: []mgclients.Client{client},
 			},
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2173,7 +2210,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			token:    validToken,
 			groupID:  "",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrMissingID,
 		},
 		{
@@ -2205,7 +2242,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			query:    "offset=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2229,7 +2266,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			query:    "limit=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2238,7 +2275,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID:  validID,
 			query:    "limit=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2247,7 +2284,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID:  validID,
 			query:    fmt.Sprintf("limit=%d", api.MaxLimitSize+1),
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2262,7 +2299,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			query:    "name=clientname",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2271,7 +2308,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID:  validID,
 			query:    "name=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2294,7 +2331,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			query:    "status=enabled",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2325,7 +2362,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			query:    "tag=tag1,tag2",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2334,7 +2371,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID:  validID,
 			query:    "tag=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2343,7 +2380,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID:  validID,
 			query:    "tag=tag1&tag=tag2",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -2358,7 +2395,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2389,7 +2426,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			},
 			query:    "permission=view",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2399,7 +2436,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			query:             "permission=view&permission=view",
 			status:            http.StatusBadRequest,
 			listUsersResponse: mgclients.ClientsPage{},
-			authnRes:          mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:          mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:               apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -2416,7 +2453,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 				},
 			},
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2425,7 +2462,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID:  validID,
 			query:    "identity=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2434,30 +2471,32 @@ func TestListUsersByUserGroupId(t *testing.T) {
 			groupID:  validID,
 			query:    "identity=1&identity=2",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/groups/%s/users?", us.URL, tc.groupID) + tc.query,
-			token:  tc.token,
-		}
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/%s/groups/%s/users?", us.URL, validID, tc.groupID) + tc.query,
+				token:  tc.token,
+			}
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+				mgclients.MembersPage{
+					Page:    tc.listUsersResponse.Page,
+					Members: tc.listUsersResponse.Clients,
+				},
+				tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -2488,7 +2527,7 @@ func TestListUsersByChannelID(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client},
 			},
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2520,7 +2559,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			},
 			query:    "offset=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2544,7 +2583,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			},
 			query:    "limit=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2553,7 +2592,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "limit=invalid",
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2562,7 +2601,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     fmt.Sprintf("limit=%d", api.MaxLimitSize+1),
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2577,7 +2616,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			},
 			query:    "name=clientname",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2586,7 +2625,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "name=invalid",
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2608,7 +2647,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			},
 			query:    "status=enabled",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2617,7 +2656,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "status=invalid",
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2639,7 +2678,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			},
 			query:    "tag=tag1,tag2",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2648,7 +2687,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "tag=invalid",
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2671,7 +2710,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			},
 			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2680,7 +2719,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "metadata=invalid",
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2702,7 +2741,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			},
 			query:    "permission=view",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2727,7 +2766,7 @@ func TestListUsersByChannelID(t *testing.T) {
 				},
 			},
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2736,7 +2775,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "identity=invalid",
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2753,7 +2792,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "list_perms=true",
 			status:    http.StatusOK,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       nil,
 		},
 		{
@@ -2762,7 +2801,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			channelID: validID,
 			query:     "list_perms=invalid",
 			status:    http.StatusBadRequest,
-			authnRes:  mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes:  mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:       apiutil.ErrValidation,
 		},
 		{
@@ -2775,25 +2814,27 @@ func TestListUsersByChannelID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/channels/%s/users?", us.URL, validID) + tc.query,
-			token:  tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/%s/channels/%s/users?", us.URL, validID, validID) + tc.query,
+				token:  tc.token,
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+				mgclients.MembersPage{
+					Page:    tc.listUsersResponse.Page,
+					Members: tc.listUsersResponse.Clients,
+				},
+				tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -2824,7 +2865,7 @@ func TestListUsersByDomainID(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client},
 			},
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2854,7 +2895,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "offset=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2863,7 +2904,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "offset=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2879,7 +2920,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "limit=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2888,7 +2929,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "limit=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2897,7 +2938,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    fmt.Sprintf("limit=%d", api.MaxLimitSize+1),
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2912,7 +2953,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "name=clientname",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2921,7 +2962,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "name=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2944,7 +2985,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "status=enabled",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2953,7 +2994,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "status=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -2975,7 +3016,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "tag=tag1,tag2",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -2984,7 +3025,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "tag=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3006,7 +3047,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3015,7 +3056,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "metadata=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3037,7 +3078,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "permission=membership",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3062,7 +3103,7 @@ func TestListUsersByDomainID(t *testing.T) {
 				},
 			},
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3071,7 +3112,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "identity=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3095,7 +3136,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			},
 			query:    "list_perms=true",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3104,7 +3145,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			domainID: validID,
 			query:    "list_perms=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3117,25 +3158,27 @@ func TestListUsersByDomainID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/domains/%s/users?", us.URL, validID) + tc.query,
-			token:  tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/%s/users?", us.URL, validID) + tc.query,
+				token:  tc.token,
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+				mgclients.MembersPage{
+					Page:    tc.listUsersResponse.Page,
+					Members: tc.listUsersResponse.Clients,
+				},
+				tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -3166,7 +3209,7 @@ func TestListUsersByThingID(t *testing.T) {
 				},
 				Clients: []mgclients.Client{client},
 			},
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3198,7 +3241,7 @@ func TestListUsersByThingID(t *testing.T) {
 			},
 			query:    "offset=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3207,7 +3250,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "offset=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3223,7 +3266,7 @@ func TestListUsersByThingID(t *testing.T) {
 			},
 			query:    "limit=1",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3232,7 +3275,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "limit=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3241,7 +3284,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    fmt.Sprintf("limit=%d", api.MaxLimitSize+1),
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3256,7 +3299,7 @@ func TestListUsersByThingID(t *testing.T) {
 			},
 			query:    "name=clientname",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3265,7 +3308,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "name=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3288,7 +3331,7 @@ func TestListUsersByThingID(t *testing.T) {
 			},
 			query:    "status=enabled",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3297,7 +3340,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "status=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3319,7 +3362,7 @@ func TestListUsersByThingID(t *testing.T) {
 			},
 			query:    "tag=tag1,tag2",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3328,7 +3371,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "tag=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3350,7 +3393,7 @@ func TestListUsersByThingID(t *testing.T) {
 			},
 			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3359,7 +3402,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "metadata=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3368,7 +3411,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&metadata=%7B%22domain%22%3A%20%22example.com%22%7D",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
@@ -3383,7 +3426,7 @@ func TestListUsersByThingID(t *testing.T) {
 			},
 			query:    "permission=view",
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3407,7 +3450,7 @@ func TestListUsersByThingID(t *testing.T) {
 				},
 			},
 			status:   http.StatusOK,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      nil,
 		},
 		{
@@ -3416,7 +3459,7 @@ func TestListUsersByThingID(t *testing.T) {
 			thingID:  validID,
 			query:    "identity=invalid",
 			status:   http.StatusBadRequest,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID},
 			err:      apiutil.ErrValidation,
 		},
 		{
@@ -3429,25 +3472,27 @@ func TestListUsersByThingID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/%s/users?", us.URL, validID) + tc.query,
-			token:  tc.token,
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/%s/things/%s/users?", us.URL, validID, validID) + tc.query,
+				token:  tc.token,
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID}, mock.Anything, mock.Anything, mock.Anything).Return(
-			mgclients.MembersPage{
-				Page:    tc.listUsersResponse.Page,
-				Members: tc.listUsersResponse.Clients,
-			},
-			tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+				mgclients.MembersPage{
+					Page:    tc.listUsersResponse.Page,
+					Members: tc.listUsersResponse.Clients,
+				},
+				tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -3457,6 +3502,7 @@ func TestAssignUsers(t *testing.T) {
 
 	cases := []struct {
 		desc     string
+		domainID string
 		token    string
 		groupID  string
 		reqBody  interface{}
@@ -3467,8 +3513,9 @@ func TestAssignUsers(t *testing.T) {
 	}{
 		{
 			desc:     "assign users to a group successfully",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3478,9 +3525,10 @@ func TestAssignUsers(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "assign users to a group with invalid token",
-			token:   inValidToken,
-			groupID: validID,
+			desc:     "assign users to a group with invalid token",
+			domainID: domainID,
+			token:    inValidToken,
+			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
 				UserIDs:  []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3490,9 +3538,10 @@ func TestAssignUsers(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:    "assign users to a group with empty token",
-			token:   "",
-			groupID: validID,
+			desc:     "assign users to a group with empty token",
+			domainID: domainID,
+			token:    "",
+			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
 				UserIDs:  []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3502,8 +3551,9 @@ func TestAssignUsers(t *testing.T) {
 		},
 		{
 			desc:     "assign users to a group with empty relation",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "",
@@ -3514,8 +3564,9 @@ func TestAssignUsers(t *testing.T) {
 		},
 		{
 			desc:     "assign users to a group with empty user ids",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3525,9 +3576,11 @@ func TestAssignUsers(t *testing.T) {
 			err:    apiutil.ErrValidation,
 		},
 		{
-			desc:    "assign users to a group with invalid request body",
-			token:   validToken,
-			groupID: validID,
+			desc:     "assign users to a group with invalid request body",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			groupID:  validID,
 			reqBody: map[string]interface{}{
 				"relation": make(chan int),
 			},
@@ -3537,21 +3590,23 @@ func TestAssignUsers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.reqBody)
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/users/assign", us.URL, tc.groupID),
-			token:  tc.token,
-			body:   strings.NewReader(data),
-		}
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := gsvc.On("Assign", mock.Anything, tc.authnRes, tc.groupID, mock.Anything, "users", mock.Anything).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.reqBody)
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/groups/%s/users/assign", us.URL, tc.domainID, tc.groupID),
+				token:  tc.token,
+				body:   strings.NewReader(data),
+			}
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := gsvc.On("Assign", mock.Anything, tc.authnRes, tc.groupID, mock.Anything, "users", mock.Anything).Return(tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -3561,6 +3616,7 @@ func TestUnassignUsers(t *testing.T) {
 
 	cases := []struct {
 		desc     string
+		domainID string
 		token    string
 		groupID  string
 		reqBody  interface{}
@@ -3571,8 +3627,9 @@ func TestUnassignUsers(t *testing.T) {
 	}{
 		{
 			desc:     "unassign users from a group successfully",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3582,9 +3639,10 @@ func TestUnassignUsers(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "unassign users from a group with invalid token",
-			token:   inValidToken,
-			groupID: validID,
+			desc:     "unassign users from a group with invalid token",
+			domainID: domainID,
+			token:    inValidToken,
+			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
 				UserIDs:  []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3594,9 +3652,10 @@ func TestUnassignUsers(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:    "unassign users from a group with empty token",
-			token:   "",
-			groupID: validID,
+			desc:     "unassign users from a group with empty token",
+			domainID: domainID,
+			token:    "",
+			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
 				UserIDs:  []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3606,8 +3665,9 @@ func TestUnassignUsers(t *testing.T) {
 		},
 		{
 			desc:     "unassign users from a group with empty relation",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "",
@@ -3618,8 +3678,9 @@ func TestUnassignUsers(t *testing.T) {
 		},
 		{
 			desc:     "unassign users from a group with empty user ids",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3629,9 +3690,11 @@ func TestUnassignUsers(t *testing.T) {
 			err:    apiutil.ErrValidation,
 		},
 		{
-			desc:    "unassign users from a group with invalid request body",
-			token:   validToken,
-			groupID: validID,
+			desc:     "unassign users from a group with invalid request body",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			groupID:  validID,
 			reqBody: map[string]interface{}{
 				"relation": make(chan int),
 			},
@@ -3640,22 +3703,24 @@ func TestUnassignUsers(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		data := toJSON(tc.reqBody)
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/users/unassign", us.URL, tc.groupID),
-			token:  tc.token,
-			body:   strings.NewReader(data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.reqBody)
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/groups/%s/users/unassign", us.URL, tc.domainID, tc.groupID),
+				token:  tc.token,
+				body:   strings.NewReader(data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := gsvc.On("Unassign", mock.Anything, tc.authnRes, tc.groupID, mock.Anything, "users", mock.Anything).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := gsvc.On("Unassign", mock.Anything, tc.authnRes, tc.groupID, mock.Anything, "users", mock.Anything).Return(tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -3665,6 +3730,7 @@ func TestAssignGroups(t *testing.T) {
 
 	cases := []struct {
 		desc     string
+		domainID string
 		token    string
 		groupID  string
 		reqBody  interface{}
@@ -3675,8 +3741,9 @@ func TestAssignGroups(t *testing.T) {
 	}{
 		{
 			desc:     "assign groups to a parent group successfully",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3685,9 +3752,10 @@ func TestAssignGroups(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "assign groups to a parent group with invalid token",
-			token:   inValidToken,
-			groupID: validID,
+			desc:     "assign groups to a parent group with invalid token",
+			domainID: domainID,
+			token:    inValidToken,
+			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
 			},
@@ -3696,9 +3764,10 @@ func TestAssignGroups(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:    "assign groups to a parent group with empty token",
-			token:   "",
-			groupID: validID,
+			desc:     "assign groups to a parent group with empty token",
+			domainID: domainID,
+			token:    "",
+			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
 			},
@@ -3707,8 +3776,9 @@ func TestAssignGroups(t *testing.T) {
 		},
 		{
 			desc:     "assign groups to a parent group with empty parent group id",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  "",
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3718,8 +3788,9 @@ func TestAssignGroups(t *testing.T) {
 		},
 		{
 			desc:     "assign groups to a parent group with empty group ids",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{},
@@ -3728,9 +3799,11 @@ func TestAssignGroups(t *testing.T) {
 			err:    apiutil.ErrValidation,
 		},
 		{
-			desc:    "assign groups to a parent group with invalid request body",
-			token:   validToken,
-			groupID: validID,
+			desc:     "assign groups to a parent group with invalid request body",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			groupID:  validID,
 			reqBody: map[string]interface{}{
 				"group_ids": make(chan int),
 			},
@@ -3739,22 +3812,24 @@ func TestAssignGroups(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		data := toJSON(tc.reqBody)
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/groups/assign", us.URL, tc.groupID),
-			token:  tc.token,
-			body:   strings.NewReader(data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.reqBody)
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/groups/%s/groups/assign", us.URL, tc.domainID, tc.groupID),
+				token:  tc.token,
+				body:   strings.NewReader(data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := gsvc.On("Assign", mock.Anything, tc.authnRes, tc.groupID, mock.Anything, "groups", mock.Anything).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := gsvc.On("Assign", mock.Anything, tc.authnRes, tc.groupID, mock.Anything, "groups", mock.Anything).Return(tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 
@@ -3765,6 +3840,7 @@ func TestUnassignGroups(t *testing.T) {
 	cases := []struct {
 		desc     string
 		token    string
+		domainID string
 		groupID  string
 		reqBody  interface{}
 		authnRes mgauthn.Session
@@ -3774,8 +3850,9 @@ func TestUnassignGroups(t *testing.T) {
 	}{
 		{
 			desc:     "unassign groups from a parent group successfully",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3784,9 +3861,10 @@ func TestUnassignGroups(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:    "unassign groups from a parent group with invalid token",
-			token:   inValidToken,
-			groupID: validID,
+			desc:     "unassign groups from a parent group with invalid token",
+			domainID: domainID,
+			token:    inValidToken,
+			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
 			},
@@ -3795,9 +3873,10 @@ func TestUnassignGroups(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:    "unassign groups from a parent group with empty token",
-			token:   "",
-			groupID: validID,
+			desc:     "unassign groups from a parent group with empty token",
+			domainID: domainID,
+			token:    "",
+			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
 			},
@@ -3806,8 +3885,9 @@ func TestUnassignGroups(t *testing.T) {
 		},
 		{
 			desc:     "unassign groups from a parent group with empty group id",
+			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
 			groupID:  "",
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3818,7 +3898,7 @@ func TestUnassignGroups(t *testing.T) {
 		{
 			desc:     "unassign groups from a parent group with empty group ids",
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{},
@@ -3838,22 +3918,24 @@ func TestUnassignGroups(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		data := toJSON(tc.reqBody)
-		req := testRequest{
-			client: us.Client(),
-			method: http.MethodPost,
-			url:    fmt.Sprintf("%s/groups/%s/groups/unassign", us.URL, tc.groupID),
-			token:  tc.token,
-			body:   strings.NewReader(data),
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.reqBody)
+			req := testRequest{
+				client: us.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/groups/%s/groups/unassign", us.URL, tc.domainID, tc.groupID),
+				token:  tc.token,
+				body:   strings.NewReader(data),
+			}
 
-		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-		svcCall := gsvc.On("Unassign", mock.Anything, mock.Anything, tc.groupID, mock.Anything, "groups", mock.Anything).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-		authnCall.Unset()
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := gsvc.On("Unassign", mock.Anything, mock.Anything, tc.groupID, mock.Anything, "groups", mock.Anything).Return(tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
 	}
 }
 

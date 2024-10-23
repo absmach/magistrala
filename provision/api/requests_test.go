@@ -23,6 +23,7 @@ func TestProvisioReq(t *testing.T) {
 			desc: "valid request",
 			req: provisionReq{
 				token:       "token",
+				domainID:    testsutil.GenerateUUID(t),
 				Name:        "name",
 				ExternalID:  testsutil.GenerateUUID(t),
 				ExternalKey: testsutil.GenerateUUID(t),
@@ -33,6 +34,7 @@ func TestProvisioReq(t *testing.T) {
 			desc: "empty external id",
 			req: provisionReq{
 				token:       "token",
+				domainID:    testsutil.GenerateUUID(t),
 				Name:        "name",
 				ExternalID:  "",
 				ExternalKey: testsutil.GenerateUUID(t),
@@ -40,9 +42,21 @@ func TestProvisioReq(t *testing.T) {
 			err: apiutil.ErrMissingID,
 		},
 		{
+			desc: "empty domain id",
+			req: provisionReq{
+				token:       "token",
+				domainID:    "",
+				Name:        "name",
+				ExternalID:  testsutil.GenerateUUID(t),
+				ExternalKey: testsutil.GenerateUUID(t),
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "empty external key",
 			req: provisionReq{
 				token:       "token",
+				domainID:    testsutil.GenerateUUID(t),
 				Name:        "name",
 				ExternalID:  testsutil.GenerateUUID(t),
 				ExternalKey: "",
@@ -66,16 +80,26 @@ func TestMappingReq(t *testing.T) {
 		{
 			desc: "valid request",
 			req: mappingReq{
-				token: "token",
+				token:    "token",
+				domainID: testsutil.GenerateUUID(t),
 			},
 			err: nil,
 		},
 		{
 			desc: "empty token",
 			req: mappingReq{
-				token: "",
+				token:    "",
+				domainID: testsutil.GenerateUUID(t),
 			},
 			err: apiutil.ErrBearerToken,
+		},
+		{
+			desc: "empty domain id",
+			req: mappingReq{
+				token:    "token",
+				domainID: "",
+			},
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 

@@ -192,7 +192,7 @@ func TestAdd(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = mgauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		sdkCall := tv.sdk.On("Thing", tc.config.ThingID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
+		sdkCall := tv.sdk.On("Thing", tc.config.ThingID, tc.domainID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
 		repoCall := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
 		repoCall1 := tv.boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
@@ -475,7 +475,7 @@ func TestUpdateConnections(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = mgauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		sdkCall := tv.sdk.On("Channel", mock.Anything, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
+		sdkCall := tv.sdk.On("Channel", mock.Anything, tc.domainID, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
 		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.configID).Return(config, tc.retrieveErr)
 		repoCall1 := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything, mock.Anything).Return(config.Channels, tc.listErr)
 		repoCall2 := tv.boot.On("UpdateConnections", context.Background(), tc.domainID, tc.configID, mock.Anything, tc.connections).Return(tc.updateErr)
@@ -1054,7 +1054,7 @@ func TestChangeState(t *testing.T) {
 	for _, tc := range cases {
 		tc.session = mgauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
 		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
-		sdkCall1 := tv.sdk.On("Connect", mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
+		sdkCall1 := tv.sdk.On("Connect", mock.Anything, mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
 		repoCall1 := tv.boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
 		err := tv.svc.ChangeState(context.Background(), tc.session, tc.token, tc.id, tc.state)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

@@ -83,6 +83,11 @@ jobs:
           PROTOC_GEN_VERSION=v1.34.2
           PROTOC_GRPC_VERSION=v1.4.0
 
+          # Export the variables so they are available in future steps
+          echo "PROTOC_VERSION=$PROTOC_VERSION" >> $GITHUB_ENV
+          echo "PROTOC_GEN_VERSION=$PROTOC_GEN_VERSION" >> $GITHUB_ENV
+          echo "PROTOC_GRPC_VERSION=$PROTOC_GRPC_VERSION" >> $GITHUB_ENV
+
           # Download and install protoc
           PROTOC_ZIP=protoc-$PROTOC_VERSION-linux-x86_64.zip
           curl -0L -o $PROTOC_ZIP https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/$PROTOC_ZIP
@@ -110,6 +115,8 @@ jobs:
           for p in $(find . -name "*.pb.go"); do
             if ! cmp -s $p $p.tmp; then
               echo "Error: Proto file and generated Go file $p are out of sync!"
+              echo "Here is the difference:"
+              diff $p $p.tmp || true
               echo "Please run 'make proto' with protoc version $PROTOC_VERSION, protoc-gen-go version $PROTOC_GEN_VERSION and protoc-gen-go-grpc version $PROTOC_GRPC_VERSION and commit the changes."
               exit 1
             fi

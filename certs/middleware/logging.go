@@ -20,8 +20,8 @@ type loggingMiddleware struct {
 	svc    certs.Service
 }
 
-// LoggingMiddleware adds logging facilities to the bootstrap service.
-func LoggingMiddleware(svc certs.Service, logger *slog.Logger) certs.Service {
+// Logging adds logging facilities to the bootstrap service.
+func Logging(svc certs.Service, logger *slog.Logger) certs.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

@@ -18,8 +18,8 @@ type tracingMiddleware struct {
 	svc    certs.Service
 }
 
-// TracingMiddleware returns a new certs service with tracing capabilities.
-func TracingMiddleware(svc certs.Service, tracer trace.Tracer) certs.Service {
+// Tracing returns a new certs service with tracing capabilities.
+func Tracing(svc certs.Service, tracer trace.Tracer) certs.Service {
 	return &tracingMiddleware{tracer, svc}
 }
 

@@ -19,8 +19,8 @@ type tracingMiddleware struct {
 	svc    bootstrap.Service
 }
 
-// TracingMiddleware returns a new bootstrap service with tracing capabilities.
-func TracingMiddleware(svc bootstrap.Service, tracer trace.Tracer) bootstrap.Service {
+// Tracing returns a new bootstrap service with tracing capabilities.
+func Tracing(svc bootstrap.Service, tracer trace.Tracer) bootstrap.Service {
 	return &tracingMiddleware{tracer, svc}
 }
 

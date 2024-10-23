@@ -257,18 +257,18 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 		return nil, nil, err
 	}
 
-	csvc = tmiddleware.AuthorizationMiddleware(csvc, authz)
-	gsvc = gmiddleware.AuthorizationMiddleware(gsvc, authz)
+	csvc = tmiddleware.Authorization(csvc, authz)
+	gsvc = gmiddleware.Authorization(gsvc, authz)
 
-	csvc = tmiddleware.TracingMiddleware(csvc, tracer)
-	csvc = tmiddleware.LoggingMiddleware(csvc, logger)
+	csvc = tmiddleware.Tracing(csvc, tracer)
+	csvc = tmiddleware.Logging(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	csvc = tmiddleware.MetricsMiddleware(csvc, counter, latency)
+	csvc = tmiddleware.Metrics(csvc, counter, latency)
 
-	gsvc = gmiddleware.TracingMiddleware(gsvc, tracer)
-	gsvc = gmiddleware.LoggingMiddleware(gsvc, logger)
+	gsvc = gmiddleware.Tracing(gsvc, tracer)
+	gsvc = gmiddleware.Logging(gsvc, logger)
 	counter, latency = prometheus.MakeMetrics(fmt.Sprintf("%s_groups", svcName), "api")
-	gsvc = gmiddleware.MetricsMiddleware(gsvc, counter, latency)
+	gsvc = gmiddleware.Metrics(gsvc, counter, latency)
 
 	return csvc, gsvc, err
 }

@@ -22,8 +22,8 @@ type metricsMiddleware struct {
 	svc     coap.Service
 }
 
-// MetricsMiddleware instruments adapter by tracking request count and latency.
-func MetricsMiddleware(svc coap.Service, counter metrics.Counter, latency metrics.Histogram) coap.Service {
+// Metrics instruments adapter by tracking request count and latency.
+func Metrics(svc coap.Service, counter metrics.Counter, latency metrics.Histogram) coap.Service {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,

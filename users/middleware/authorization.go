@@ -25,8 +25,8 @@ type authorizationMiddleware struct {
 	selfRegister bool
 }
 
-// AuthorizationMiddleware adds authorization to the clients service.
-func AuthorizationMiddleware(svc users.Service, authz mgauthz.Authorization, selfRegister bool) users.Service {
+// Authorization adds authorization to the clients service.
+func Authorization(svc users.Service, authz mgauthz.Authorization, selfRegister bool) users.Service {
 	return &authorizationMiddleware{
 		svc:          svc,
 		authz:        authz,

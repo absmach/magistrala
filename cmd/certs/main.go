@@ -159,10 +159,10 @@ func newService(tracer trace.Tracer, logger *slog.Logger, cfg config, pkiAgent p
 	}
 	sdk := mgsdk.NewSDK(config)
 	svc := certs.New(sdk, pkiAgent)
-	svc = middleware.LoggingMiddleware(svc, logger)
+	svc = middleware.Logging(svc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	svc = middleware.MetricsMiddleware(svc, counter, latency)
-	svc = middleware.TracingMiddleware(svc, tracer)
+	svc = middleware.Metrics(svc, counter, latency)
+	svc = middleware.Tracing(svc, tracer)
 
 	return svc
 }

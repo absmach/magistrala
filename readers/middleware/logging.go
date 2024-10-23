@@ -19,8 +19,8 @@ type loggingMiddleware struct {
 	svc    readers.MessageRepository
 }
 
-// LoggingMiddleware adds logging facilities to the core service.
-func LoggingMiddleware(svc readers.MessageRepository, logger *slog.Logger) readers.MessageRepository {
+// Logging adds logging facilities to the core service.
+func Logging(svc readers.MessageRepository, logger *slog.Logger) readers.MessageRepository {
 	return &loggingMiddleware{
 		logger: logger,
 		svc:    svc,

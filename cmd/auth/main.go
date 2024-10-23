@@ -223,10 +223,10 @@ func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, cfg confi
 		logger.Error(fmt.Sprintf("failed to init event store middleware : %s", err))
 		return nil
 	}
-	svc = middleware.LoggingMiddleware(svc, logger)
+	svc = middleware.Logging(svc, logger)
 	counter, latency := prometheus.MakeMetrics("groups", "api")
-	svc = middleware.MetricsMiddleware(svc, counter, latency)
-	svc = middleware.TracingMiddleware(svc, tracer)
+	svc = middleware.Metrics(svc, counter, latency)
+	svc = middleware.Tracing(svc, tracer)
 
 	return svc
 }

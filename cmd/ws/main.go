@@ -156,10 +156,10 @@ func main() {
 
 func newService(thingsClient magistrala.ThingsServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
 	svc := ws.New(thingsClient, nps)
-	svc = middleware.TracingMiddleware(tracer, svc)
-	svc = middleware.LoggingMiddleware(svc, logger)
+	svc = middleware.Tracing(tracer, svc)
+	svc = middleware.Logging(svc, logger)
 	counter, latency := prometheus.MakeMetrics("ws_adapter", "api")
-	svc = middleware.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.Metrics(svc, counter, latency)
 	return svc
 }
 

@@ -217,12 +217,12 @@ func newService(ctx context.Context, authz mgauthz.Authorization, policySvc poli
 		return nil, err
 	}
 
-	svc = middleware.AuthorizationMiddleware(svc, authz)
+	svc = middleware.Authorization(svc, authz)
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
-	svc = middleware.LoggingMiddleware(svc, logger)
+	svc = middleware.Logging(svc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	svc = middleware.MetricsMiddleware(svc, counter, latency)
-	svc = middleware.TracingMiddleware(svc, tracer)
+	svc = middleware.Metrics(svc, counter, latency)
+	svc = middleware.Tracing(svc, tracer)
 
 	return svc, nil
 }

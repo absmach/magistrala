@@ -277,18 +277,18 @@ func newService(ctx context.Context, authz mgauthz.Authorization, token magistra
 		return nil, nil, err
 	}
 
-	csvc = cmiddleware.AuthorizationMiddleware(csvc, authz, c.SelfRegister)
-	gsvc = gmiddleware.AuthorizationMiddleware(gsvc, authz)
+	csvc = cmiddleware.Authorization(csvc, authz, c.SelfRegister)
+	gsvc = gmiddleware.Authorization(gsvc, authz)
 
-	csvc = cmiddleware.TracingMiddleware(csvc, tracer)
-	csvc = cmiddleware.LoggingMiddleware(csvc, logger)
+	csvc = cmiddleware.Tracing(csvc, tracer)
+	csvc = cmiddleware.Logging(csvc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
-	csvc = cmiddleware.MetricsMiddleware(csvc, counter, latency)
+	csvc = cmiddleware.Metrics(csvc, counter, latency)
 
-	gsvc = gmiddleware.TracingMiddleware(gsvc, tracer)
-	gsvc = gmiddleware.LoggingMiddleware(gsvc, logger)
+	gsvc = gmiddleware.Tracing(gsvc, tracer)
+	gsvc = gmiddleware.Logging(gsvc, logger)
 	counter, latency = prometheus.MakeMetrics("groups", "api")
-	gsvc = gmiddleware.MetricsMiddleware(gsvc, counter, latency)
+	gsvc = gmiddleware.Metrics(gsvc, counter, latency)
 
 	clientID, err := createAdmin(ctx, c, cRepo, hsr, csvc)
 	if err != nil {

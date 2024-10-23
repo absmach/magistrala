@@ -21,7 +21,7 @@ type loggingMiddleware struct {
 	svc    things.Service
 }
 
-func LoggingMiddleware(svc things.Service, logger *slog.Logger) things.Service {
+func Logging(svc things.Service, logger *slog.Logger) things.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

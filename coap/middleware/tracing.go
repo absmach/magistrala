@@ -27,8 +27,8 @@ type tracingServiceMiddleware struct {
 	svc    coap.Service
 }
 
-// TracingMiddleware creates a new instance of TracingServiceMiddleware that wraps an existing CoAP service with tracing capabilities.
-func TracingMiddleware(tracer trace.Tracer, svc coap.Service) coap.Service {
+// Tracing creates a new instance of TracingServiceMiddleware that wraps an existing CoAP service with tracing capabilities.
+func Tracing(tracer trace.Tracer, svc coap.Service) coap.Service {
 	return &tracingServiceMiddleware{
 		tracer: tracer,
 		svc:    svc,

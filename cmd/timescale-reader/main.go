@@ -146,9 +146,9 @@ func main() {
 
 func newService(db *sqlx.DB, logger *slog.Logger) readers.MessageRepository {
 	svc := timescale.New(db)
-	svc = middleware.LoggingMiddleware(svc, logger)
+	svc = middleware.Logging(svc, logger)
 	counter, latency := prometheus.MakeMetrics("timescale", "message_reader")
-	svc = middleware.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.Metrics(svc, counter, latency)
 
 	return svc
 }

@@ -21,8 +21,8 @@ type metricsMiddleware struct {
 	svc     ws.Service
 }
 
-// MetricsMiddleware instruments adapter by tracking request count and latency.
-func MetricsMiddleware(svc ws.Service, counter metrics.Counter, latency metrics.Histogram) ws.Service {
+// Metrics instruments adapter by tracking request count and latency.
+func Metrics(svc ws.Service, counter metrics.Counter, latency metrics.Histogram) ws.Service {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,

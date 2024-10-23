@@ -22,8 +22,8 @@ type metricsMiddleware struct {
 	svc     bootstrap.Service
 }
 
-// MetricsMiddleware instruments core service by tracking request count and latency.
-func MetricsMiddleware(svc bootstrap.Service, counter metrics.Counter, latency metrics.Histogram) bootstrap.Service {
+// Metrics instruments core service by tracking request count and latency.
+func Metrics(svc bootstrap.Service, counter metrics.Counter, latency metrics.Histogram) bootstrap.Service {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,

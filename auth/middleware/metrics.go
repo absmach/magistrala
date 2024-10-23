@@ -22,8 +22,8 @@ type metricsMiddleware struct {
 	svc     auth.Service
 }
 
-// MetricsMiddleware instruments core service by tracking request count and latency.
-func MetricsMiddleware(svc auth.Service, counter metrics.Counter, latency metrics.Histogram) auth.Service {
+// Metrics instruments core service by tracking request count and latency.
+func Metrics(svc auth.Service, counter metrics.Counter, latency metrics.Histogram) auth.Service {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,

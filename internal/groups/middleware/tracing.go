@@ -19,8 +19,8 @@ type tracingMiddleware struct {
 	gsvc   groups.Service
 }
 
-// TracingMiddleware returns a new group service with tracing capabilities.
-func TracingMiddleware(gsvc groups.Service, tracer trace.Tracer) groups.Service {
+// Tracing returns a new group service with tracing capabilities.
+func Tracing(gsvc groups.Service, tracer trace.Tracer) groups.Service {
 	return &tracingMiddleware{tracer, gsvc}
 }
 

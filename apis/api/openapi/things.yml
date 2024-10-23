@@ -37,7 +37,7 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /things:
+  /{domainID}/things:
     post:
       operationId: createThing
       tags:
@@ -46,6 +46,8 @@ paths:
       description: |
         Adds new thing to the list of things owned by user identified using
         the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       requestBody:
         $ref: "#/components/requestBodies/ThingCreateReq"
       responses:
@@ -79,6 +81,7 @@ paths:
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
@@ -104,13 +107,15 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/bulk:
+  /{domainID}/things/bulk:
     post:
       operationId: bulkCreateThings
       summary: Bulk provisions new things
       description: |
         Adds new things to the list of things owned by user identified using
         the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       tags:
         - Things
       requestBody:
@@ -133,7 +138,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}:
+  /{domainID}/things/{thingID}:
     get:
       operationId: getThing
       summary: Retrieves thing info
@@ -142,12 +147,15 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       security:
         - bearerAuth: []
       responses:
         "200":
           $ref: "#/components/responses/ThingRes"
+        "400":
+          description: Failed due to malformed domain ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -169,6 +177,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ThingUpdateReq"
@@ -201,12 +210,15 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       security:
         - bearerAuth: []
       responses:
         "204":
           description: Thing deleted.
+        "400":
+          description: Failed due to malformed domain ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -215,7 +227,8 @@ paths:
           description: Missing thing.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/{thingID}/tags:
+
+  /{domainID}/things/{thingID}/tags:
     patch:
       operationId: updateThingTags
       summary: Updates tags the thing.
@@ -225,6 +238,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ThingUpdateTagsReq"
@@ -246,7 +260,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/secret:
+  /{domainID}/things/{thingID}/secret:
     patch:
       operationId: updateThingSecret
       summary: Updates Secret of the identified thing.
@@ -256,6 +270,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ThingUpdateSecretReq"
@@ -281,7 +296,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/disable:
+  /{domainID}/things/{thingID}/disable:
     post:
       operationId: disableThing
       summary: Disables a thing
@@ -290,6 +305,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       security:
         - bearerAuth: []
@@ -311,7 +327,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/enable:
+  /{domainID}/things/{thingID}/enable:
     post:
       operationId: enableThing
       summary: Enables a thing
@@ -320,6 +336,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       security:
         - bearerAuth: []
@@ -341,7 +358,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/share:
+  /{domainID}/things/{thingID}/share:
     post:
       operationId: shareThing
       summary: Shares a thing
@@ -350,6 +367,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ShareThingReq"
@@ -371,7 +389,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/unshare:
+  /{domainID}/things/{thingID}/unshare:
     post:
       operationId: unshareThing
       summary: Unshares a thing
@@ -380,6 +398,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ShareThingReq"
@@ -401,7 +420,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/things:
+  /{domainID}/channels/{chanID}/things:
     get:
       operationId: listThingsInaChannel
       summary: List of things connected to specified channel
@@ -411,6 +430,7 @@ paths:
       tags:
         - Things
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -431,7 +451,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels:
+  /{domainID}/channels:
     post:
       operationId: createChannel
       tags:
@@ -443,6 +463,8 @@ paths:
         $ref: "#/components/requestBodies/ChannelCreateReq"
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       responses:
         "201":
           $ref: "#/components/responses/ChannelCreateRes"
@@ -476,6 +498,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
@@ -496,7 +519,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}:
+  /{domainID}/channels/{chanID}:
     get:
       operationId: getChannel
       summary: Retrieves channel info.
@@ -505,6 +528,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -512,7 +536,7 @@ paths:
         "200":
           $ref: "#/components/responses/ChannelRes"
         "400":
-          description: Failed due to malformed channel's ID.
+          description: Failed due to malformed channel's or domain ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -534,6 +558,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -566,12 +591,15 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
       responses:
         "204":
           description: Channel deleted.
+        "400":
+          description: Failed due to malformed domain ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -581,7 +609,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/enable:
+  /{domainID}/channels/{chanID}/enable:
     post:
       operationId: enableChannel
       summary: Enables a channel
@@ -590,6 +618,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -611,7 +640,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/disable:
+  /{domainID}/channels/{chanID}/disable:
     post:
       operationId: disableChannel
       summary: Disables a channel
@@ -620,6 +649,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -641,7 +671,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/users/assign:
+  /{domainID}/channels/{chanID}/users/assign:
     post:
       operationId: assignUsersToChannel
       summary: Assigns a member to a channel
@@ -650,6 +680,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/AssignUserReq"
@@ -671,7 +702,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/users/unassign:
+  /{domainID}/channels/{chanID}/users/unassign:
     post:
       operationId: unassignUsersFromChannel
       summary: Unassigns a member from a channel
@@ -680,6 +711,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/AssignUserReq"
@@ -701,7 +733,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/groups/assign:
+  /{domainID}/channels/{chanID}/groups/assign:
     post:
       operationId: assignGroupsToChannel
       summary: Assigns a member to a channel
@@ -710,6 +742,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/AssignUsersReq"
@@ -731,7 +764,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/groups/unassign:
+  /{domainID}/channels/{chanID}/groups/unassign:
     post:
       operationId: unassignGroupsFromChannel
       summary: Unassigns a member from a channel
@@ -740,6 +773,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/AssignUsersReq"
@@ -761,7 +795,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /things/{thingID}/channels:
+  /{domainID}/things/{thingID}/channels:
     get:
       operationId: listChannelsConnectedToThing
       summary: List of channels connected to specified thing
@@ -771,6 +805,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ThingID"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -790,7 +825,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /users/{memberID}/channels:
+  /{domainID}/users/{memberID}/channels:
     get:
       operationId: listChannelsConnectedToUser
       summary: List of channels connected to specified user
@@ -800,6 +835,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/MemberID"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -819,7 +855,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{memberID}/channels:
+  /{domainID}/groups/{memberID}/channels:
     get:
       operationId: listChannelsConnectedToGroup
       summary: List of channels connected to specified group
@@ -829,6 +865,7 @@ paths:
       tags:
         - Channels
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/MemberID"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -848,13 +885,15 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /connect:
+  /{domainID}/connect:
     post:
       operationId: connectThingsAndChannels
       summary: Connects thing and channel.
       description: |
         Connect things specified by IDs to channels specified by IDs.
         Channel and thing are owned by user identified using the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       tags:
         - Policies
       requestBody:
@@ -879,13 +918,15 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /disconnect:
+  /{domainID}/disconnect:
     post:
       operationId: disconnectThingsAndChannels
       summary: Disconnect things and channels using lists of IDs.
       description: |
         Disconnect things from channels specified by lists of IDs.
         Channels and things are owned by user identified using the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       tags:
         - Policies
       requestBody:
@@ -908,7 +949,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/things/{thingID}/connect:
+  /{domainID}/channels/{chanID}/things/{thingID}/connect:
     post:
       operationId: connectThingToChannel
       summary: Connects a thing to a channel
@@ -917,6 +958,7 @@ paths:
       tags:
         - Policies
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
         - $ref: "#/components/parameters/ThingID"
       responses:
@@ -935,7 +977,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/things/{thingID}/disconnect:
+  /{domainID}/channels/{chanID}/things/{thingID}/disconnect:
     post:
       operationId: disconnectThingFromChannel
       summary: Disconnects a thing to a channel
@@ -944,6 +986,7 @@ paths:
       tags:
         - Policies
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/chanID"
         - $ref: "#/components/parameters/ThingID"
       responses:

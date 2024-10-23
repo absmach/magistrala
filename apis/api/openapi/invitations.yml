@@ -27,7 +27,7 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /invitations:
+  /{domainID}/invitations:
     post:
       operationId: sendInvitation
       tags:
@@ -35,6 +35,8 @@ paths:
       summary: Send invitation
       description: |
         Send invitation to user to join domain.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       requestBody:
         $ref: "#/components/requestBodies/SendInvitationReq"
       security:
@@ -70,7 +72,7 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/UserID"
         - $ref: "#/components/parameters/InvitedBy"
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Relation"
         - $ref: "#/components/parameters/State"
       security:
@@ -91,7 +93,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /invitations/accept:
+  /{domainID}/invitations/accept:
     post:
       operationId: acceptInvitation
       summary: Accept invitation
@@ -101,8 +103,8 @@ paths:
         - Invitations
       security:
         - bearerAuth: []
-      requestBody:
-        $ref: "#/components/requestBodies/AcceptInvitationReq"
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       responses:
         "204":
           description: Invitation accepted.
@@ -112,10 +114,12 @@ paths:
           description: Missing or invalid access token provided.
         "404":
           description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /invitations/reject:
+  /{domainID}/invitations/reject:
     post:
       operationId: rejectInvitation
       summary: Reject invitation
@@ -125,8 +129,8 @@ paths:
         - Invitations
       security:
         - bearerAuth: []
-      requestBody:
-        $ref: "#/components/requestBodies/AcceptInvitationReq"
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       responses:
         "204":
           description: Invitation rejected.
@@ -136,10 +140,12 @@ paths:
           description: Missing or invalid access token provided.
         "404":
           description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /invitations/{user_id}/{domain_id}:
+  /{domainID}/invitations/users/{user_id}:
     get:
       operationId: getInvitation
       summary: Retrieves a specific invitation
@@ -149,7 +155,7 @@ paths:
         - Invitations
       parameters:
         - $ref: "#/components/parameters/user_id"
-        - $ref: "#/components/parameters/domain_id"
+        - $ref: "auth.yml#/components/parameters/DomainID"
       security:
         - bearerAuth: []
       responses:
@@ -161,6 +167,8 @@ paths:
           description: Missing or invalid access token provided.
         "404":
           description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
         "422":
           description: Database can't process request.
         "500":
@@ -175,7 +183,7 @@ paths:
         - Invitations
       parameters:
         - $ref: "#/components/parameters/user_id"
-        - $ref: "#/components/parameters/domain_id"
+        - $ref: "auth.yml#/components/parameters/DomainID"
       security:
         - bearerAuth: []
       responses:
@@ -187,6 +195,8 @@ paths:
           description: Failed due to non existing user.
         "401":
           description: Missing or invalid access token provided.
+        "415":
+          description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -212,11 +222,6 @@ components:
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
           description: User unique identifier.
-        domain_id:
-          type: string
-          format: uuid
-          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Domain unique identifier.
         relation:
           type: string
           enum:
@@ -238,7 +243,6 @@ components:
           description: Resend invitation.
       required:
         - user_id
-        - domain_id
         - relation
 
     Invitation:
@@ -394,26 +398,6 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
-    DomainID:
-      name: domain_id
-      description: Unique identifier for a domain.
-      in: query
-      schema:
-        type: string
-        format: uuid
-      required: false
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
-    domain_id:
-      name: domain_id
-      description: Unique identifier for a domain.
-      in: path
-      schema:
-        type: string
-        format: uuid
-      required: true
-      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-
     InvitedBy:
       name: invited_by
       description: Unique identifier for a user that invited the user.
@@ -466,22 +450,6 @@ components:
           schema:
             $ref: "#/components/schemas/SendInvitationReqObj"
 
-    AcceptInvitationReq:
-      description: JSON-formatted document describing request for accepting invitation
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              domain_id:
-                type: string
-                format: uuid
-                example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-                description: Domain unique identifier.
-            required:
-              - domain_id
-
   responses:
     InvitationRes:
       description: Data retrieved.
@@ -494,7 +462,6 @@ components:
           operationId: deleteInvitation
           parameters:
             user_id: $response.body#/user_id
-            domain_id: $response.body#/domain_id
 
     InvitationPageRes:
       description: Data retrieved.

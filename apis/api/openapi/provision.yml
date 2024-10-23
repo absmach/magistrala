@@ -27,12 +27,14 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /mapping:
+  /{domainID}/mapping:
     post:
       summary: Adds new device to proxy
       description: Adds new device to proxy
       tags:
         - provision
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       requestBody:
         $ref: "#/components/requestBodies/ProvisionReq"
       responses:
@@ -55,6 +57,8 @@ paths:
         configuration created with provision service.
       tags:
         - provision
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
       responses:
         "200":
           $ref: "#/components/responses/ProvisionRes"

@@ -5,10 +5,9 @@
 package mocks
 
 import (
-	authn "github.com/absmach/magistrala/pkg/authn"
-	clients "github.com/absmach/magistrala/pkg/clients"
-
 	context "context"
+
+	authn "github.com/absmach/magistrala/pkg/authn"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -48,8 +47,8 @@ func (_m *Service) Authorize(ctx context.Context, req things.AuthzReq) (string, 
 	return r0, r1
 }
 
-// CreateThings provides a mock function with given fields: ctx, session, client
-func (_m *Service) CreateThings(ctx context.Context, session authn.Session, client ...clients.Client) ([]clients.Client, error) {
+// CreateClients provides a mock function with given fields: ctx, session, client
+func (_m *Service) CreateClients(ctx context.Context, session authn.Session, client ...things.Client) ([]things.Client, error) {
 	_va := make([]interface{}, len(client))
 	for _i := range client {
 		_va[_i] = client[_i]
@@ -60,23 +59,23 @@ func (_m *Service) CreateThings(ctx context.Context, session authn.Session, clie
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateThings")
+		panic("no return value specified for CreateClients")
 	}
 
-	var r0 []clients.Client
+	var r0 []things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, ...clients.Client) ([]clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, ...things.Client) ([]things.Client, error)); ok {
 		return rf(ctx, session, client...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, ...clients.Client) []clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, ...things.Client) []things.Client); ok {
 		r0 = rf(ctx, session, client...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]clients.Client)
+			r0 = ret.Get(0).([]things.Client)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, ...clients.Client) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, ...things.Client) error); ok {
 		r1 = rf(ctx, session, client...)
 	} else {
 		r1 = ret.Error(1)
@@ -85,12 +84,12 @@ func (_m *Service) CreateThings(ctx context.Context, session authn.Session, clie
 	return r0, r1
 }
 
-// DeleteClient provides a mock function with given fields: ctx, session, id
-func (_m *Service) DeleteClient(ctx context.Context, session authn.Session, id string) error {
+// Delete provides a mock function with given fields: ctx, session, id
+func (_m *Service) Delete(ctx context.Context, session authn.Session, id string) error {
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteClient")
+		panic("no return value specified for Delete")
 	}
 
 	var r0 error
@@ -103,23 +102,23 @@ func (_m *Service) DeleteClient(ctx context.Context, session authn.Session, id s
 	return r0
 }
 
-// DisableClient provides a mock function with given fields: ctx, session, id
-func (_m *Service) DisableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+// Disable provides a mock function with given fields: ctx, session, id
+func (_m *Service) Disable(ctx context.Context, session authn.Session, id string) (things.Client, error) {
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DisableClient")
+		panic("no return value specified for Disable")
 	}
 
-	var r0 clients.Client
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (things.Client, error)); ok {
 		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) things.Client); ok {
 		r0 = rf(ctx, session, id)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
@@ -131,23 +130,23 @@ func (_m *Service) DisableClient(ctx context.Context, session authn.Session, id 
 	return r0, r1
 }
 
-// EnableClient provides a mock function with given fields: ctx, session, id
-func (_m *Service) EnableClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+// Enable provides a mock function with given fields: ctx, session, id
+func (_m *Service) Enable(ctx context.Context, session authn.Session, id string) (things.Client, error) {
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for EnableClient")
+		panic("no return value specified for Enable")
 	}
 
-	var r0 clients.Client
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (things.Client, error)); ok {
 		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) things.Client); ok {
 		r0 = rf(ctx, session, id)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
@@ -188,25 +187,25 @@ func (_m *Service) Identify(ctx context.Context, key string) (string, error) {
 }
 
 // ListClients provides a mock function with given fields: ctx, session, reqUserID, pm
-func (_m *Service) ListClients(ctx context.Context, session authn.Session, reqUserID string, pm clients.Page) (clients.ClientsPage, error) {
+func (_m *Service) ListClients(ctx context.Context, session authn.Session, reqUserID string, pm things.Page) (things.ClientsPage, error) {
 	ret := _m.Called(ctx, session, reqUserID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListClients")
 	}
 
-	var r0 clients.ClientsPage
+	var r0 things.ClientsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) (clients.ClientsPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, things.Page) (things.ClientsPage, error)); ok {
 		return rf(ctx, session, reqUserID, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) clients.ClientsPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, things.Page) things.ClientsPage); ok {
 		r0 = rf(ctx, session, reqUserID, pm)
 	} else {
-		r0 = ret.Get(0).(clients.ClientsPage)
+		r0 = ret.Get(0).(things.ClientsPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, clients.Page) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, things.Page) error); ok {
 		r1 = rf(ctx, session, reqUserID, pm)
 	} else {
 		r1 = ret.Error(1)
@@ -216,25 +215,25 @@ func (_m *Service) ListClients(ctx context.Context, session authn.Session, reqUs
 }
 
 // ListClientsByGroup provides a mock function with given fields: ctx, session, groupID, pm
-func (_m *Service) ListClientsByGroup(ctx context.Context, session authn.Session, groupID string, pm clients.Page) (clients.MembersPage, error) {
+func (_m *Service) ListClientsByGroup(ctx context.Context, session authn.Session, groupID string, pm things.Page) (things.MembersPage, error) {
 	ret := _m.Called(ctx, session, groupID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListClientsByGroup")
 	}
 
-	var r0 clients.MembersPage
+	var r0 things.MembersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) (clients.MembersPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, things.Page) (things.MembersPage, error)); ok {
 		return rf(ctx, session, groupID, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, clients.Page) clients.MembersPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, things.Page) things.MembersPage); ok {
 		r0 = rf(ctx, session, groupID, pm)
 	} else {
-		r0 = ret.Get(0).(clients.MembersPage)
+		r0 = ret.Get(0).(things.MembersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, clients.Page) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, things.Page) error); ok {
 		r1 = rf(ctx, session, groupID, pm)
 	} else {
 		r1 = ret.Error(1)
@@ -293,26 +292,26 @@ func (_m *Service) Unshare(ctx context.Context, session authn.Session, id string
 	return r0
 }
 
-// UpdateClient provides a mock function with given fields: ctx, session, client
-func (_m *Service) UpdateClient(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+// Update provides a mock function with given fields: ctx, session, client
+func (_m *Service) Update(ctx context.Context, session authn.Session, client things.Client) (things.Client, error) {
 	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateClient")
+		panic("no return value specified for Update")
 	}
 
-	var r0 clients.Client
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) (clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, things.Client) (things.Client, error)); ok {
 		return rf(ctx, session, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, things.Client) things.Client); ok {
 		r0 = rf(ctx, session, client)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, things.Client) error); ok {
 		r1 = rf(ctx, session, client)
 	} else {
 		r1 = ret.Error(1)
@@ -321,23 +320,23 @@ func (_m *Service) UpdateClient(ctx context.Context, session authn.Session, clie
 	return r0, r1
 }
 
-// UpdateClientSecret provides a mock function with given fields: ctx, session, id, key
-func (_m *Service) UpdateClientSecret(ctx context.Context, session authn.Session, id string, key string) (clients.Client, error) {
+// UpdateSecret provides a mock function with given fields: ctx, session, id, key
+func (_m *Service) UpdateSecret(ctx context.Context, session authn.Session, id string, key string) (things.Client, error) {
 	ret := _m.Called(ctx, session, id, key)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateClientSecret")
+		panic("no return value specified for UpdateSecret")
 	}
 
-	var r0 clients.Client
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) (clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) (things.Client, error)); ok {
 		return rf(ctx, session, id, key)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) things.Client); ok {
 		r0 = rf(ctx, session, id, key)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, string) error); ok {
@@ -349,26 +348,26 @@ func (_m *Service) UpdateClientSecret(ctx context.Context, session authn.Session
 	return r0, r1
 }
 
-// UpdateClientTags provides a mock function with given fields: ctx, session, client
-func (_m *Service) UpdateClientTags(ctx context.Context, session authn.Session, client clients.Client) (clients.Client, error) {
+// UpdateTags provides a mock function with given fields: ctx, session, client
+func (_m *Service) UpdateTags(ctx context.Context, session authn.Session, client things.Client) (things.Client, error) {
 	ret := _m.Called(ctx, session, client)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateClientTags")
+		panic("no return value specified for UpdateTags")
 	}
 
-	var r0 clients.Client
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) (clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, things.Client) (things.Client, error)); ok {
 		return rf(ctx, session, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, clients.Client) clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, things.Client) things.Client); ok {
 		r0 = rf(ctx, session, client)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, clients.Client) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, things.Client) error); ok {
 		r1 = rf(ctx, session, client)
 	} else {
 		r1 = ret.Error(1)
@@ -377,23 +376,23 @@ func (_m *Service) UpdateClientTags(ctx context.Context, session authn.Session, 
 	return r0, r1
 }
 
-// ViewClient provides a mock function with given fields: ctx, session, id
-func (_m *Service) ViewClient(ctx context.Context, session authn.Session, id string) (clients.Client, error) {
+// View provides a mock function with given fields: ctx, session, id
+func (_m *Service) View(ctx context.Context, session authn.Session, id string) (things.Client, error) {
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ViewClient")
+		panic("no return value specified for View")
 	}
 
-	var r0 clients.Client
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) (things.Client, error)); ok {
 		return rf(ctx, session, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string) things.Client); ok {
 		r0 = rf(ctx, session, id)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(things.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
@@ -405,12 +404,12 @@ func (_m *Service) ViewClient(ctx context.Context, session authn.Session, id str
 	return r0, r1
 }
 
-// ViewClientPerms provides a mock function with given fields: ctx, session, id
-func (_m *Service) ViewClientPerms(ctx context.Context, session authn.Session, id string) ([]string, error) {
+// ViewPerms provides a mock function with given fields: ctx, session, id
+func (_m *Service) ViewPerms(ctx context.Context, session authn.Session, id string) ([]string, error) {
 	ret := _m.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ViewClientPerms")
+		panic("no return value specified for ViewPerms")
 	}
 
 	var r0 []string

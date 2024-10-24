@@ -11,9 +11,9 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/things"
 	"github.com/absmach/magistrala/things/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,10 +23,10 @@ const maxNameSize = 1024
 
 var (
 	invalidName     = strings.Repeat("m", maxNameSize+10)
-	clientIdentity  = "client-identity@example.com"
-	clientName      = "client name"
+	thingIdentity   = "thing-identity@example.com"
+	thingName       = "thing name"
 	invalidDomainID = strings.Repeat("m", maxNameSize+10)
-	namesgen        = namegenerator.NewGenerator()
+	namegen         = namegenerator.NewGenerator()
 )
 
 func TestClientsSave(t *testing.T) {
@@ -41,254 +41,254 @@ func TestClientsSave(t *testing.T) {
 	secret := testsutil.GenerateUUID(t)
 
 	cases := []struct {
-		desc    string
-		clients []clients.Client
-		err     error
+		desc   string
+		things []things.Client
+		err    error
 	}{
 		{
-			desc: "add new client successfully",
-			clients: []clients.Client{
+			desc: "add new thing successfully",
+			things: []things.Client{
 				{
 					ID:     uid,
 					Domain: domainID,
-					Name:   clientName,
-					Credentials: clients.Credentials{
-						Identity: clientIdentity,
+					Name:   thingName,
+					Credentials: things.Credentials{
+						Identity: thingIdentity,
 						Secret:   secret,
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: "add multiple clients successfully",
-			clients: []clients.Client{
+			desc: "add multiple things successfully",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: testsutil.GenerateUUID(t),
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
 						Secret: testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: testsutil.GenerateUUID(t),
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
 						Secret: testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: testsutil.GenerateUUID(t),
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
 						Secret: testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: "add new client with duplicate secret",
-			clients: []clients.Client{
+			desc: "add new thing with duplicate secret",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: domainID,
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
-						Identity: clientIdentity,
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
+						Identity: thingIdentity,
 						Secret:   secret,
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add multiple clients with one client having duplicate secret",
-			clients: []clients.Client{
+			desc: "add multiple things with one thing having duplicate secret",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: testsutil.GenerateUUID(t),
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
 						Secret: testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: domainID,
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
-						Identity: clientIdentity,
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
+						Identity: thingIdentity,
 						Secret:   secret,
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add new client without domain id",
-			clients: []clients.Client{
+			desc: "add new thing without domain id",
+			things: []things.Client{
 				{
 					ID:   testsutil.GenerateUUID(t),
-					Name: clientName,
-					Credentials: clients.Credentials{
-						Identity: "withoutdomain-client@example.com",
+					Name: thingName,
+					Credentials: things.Credentials{
+						Identity: "withoutdomain-thing@example.com",
 						Secret:   testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: "add client with invalid client id",
-			clients: []clients.Client{
+			desc: "add thing with invalid thing id",
+			things: []things.Client{
 				{
 					ID:     invalidName,
 					Domain: domainID,
-					Name:   clientName,
-					Credentials: clients.Credentials{
-						Identity: "invalidid-client@example.com",
+					Name:   thingName,
+					Credentials: things.Credentials{
+						Identity: "invalidid-thing@example.com",
 						Secret:   testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add multiple clients with one client having invalid client id",
-			clients: []clients.Client{
+			desc: "add multiple things with one thing having invalid thing id",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: testsutil.GenerateUUID(t),
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
 						Secret: testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 				{
 					ID:     invalidName,
 					Domain: testsutil.GenerateUUID(t),
-					Name:   namesgen.Generate(),
-					Credentials: clients.Credentials{
+					Name:   namegen.Generate(),
+					Credentials: things.Credentials{
 						Secret: testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add client with invalid client name",
-			clients: []clients.Client{
+			desc: "add thing with invalid thing name",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Name:   invalidName,
 					Domain: domainID,
-					Credentials: clients.Credentials{
-						Identity: "invalidname-client@example.com",
+					Credentials: things.Credentials{
+						Identity: "invalidname-thing@example.com",
 						Secret:   testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add client with invalid client domain id",
-			clients: []clients.Client{
+			desc: "add thing with invalid thing domain id",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: invalidDomainID,
-					Credentials: clients.Credentials{
-						Identity: "invaliddomainid-client@example.com",
+					Credentials: things.Credentials{
+						Identity: "invaliddomainid-thing@example.com",
 						Secret:   testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add client with invalid client identity",
-			clients: []clients.Client{
+			desc: "add thing with invalid thing identity",
+			things: []things.Client{
 				{
 					ID:   testsutil.GenerateUUID(t),
-					Name: clientName,
-					Credentials: clients.Credentials{
+					Name: thingName,
+					Credentials: things.Credentials{
 						Identity: invalidName,
 						Secret:   testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
-					Status:   clients.EnabledStatus,
+					Metadata: things.Metadata{},
+					Status:   things.EnabledStatus,
 				},
 			},
 			err: repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "add client with a missing client identity",
-			clients: []clients.Client{
+			desc: "add thing with a missing thing identity",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: testsutil.GenerateUUID(t),
-					Name:   "missing-client-identity",
-					Credentials: clients.Credentials{
+					Name:   "missing-thing-identity",
+					Credentials: things.Credentials{
 						Identity: "",
 						Secret:   testsutil.GenerateUUID(t),
 					},
-					Metadata: clients.Metadata{},
+					Metadata: things.Metadata{},
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: "add client with a missing client secret",
-			clients: []clients.Client{
+			desc: "add thing with a missing thing secret",
+			things: []things.Client{
 				{
 					ID:     testsutil.GenerateUUID(t),
 					Domain: testsutil.GenerateUUID(t),
-					Credentials: clients.Credentials{
-						Identity: "missing-client-secret@example.com",
+					Credentials: things.Credentials{
+						Identity: "missing-thing-secret@example.com",
 						Secret:   "",
 					},
-					Metadata: clients.Metadata{},
+					Metadata: things.Metadata{},
 				},
 			},
 			err: nil,
 		},
 		{
-			desc: "add a client with invalid metadata",
-			clients: []clients.Client{
+			desc: "add a thing with invalid metadata",
+			things: []things.Client{
 				{
 					ID:   testsutil.GenerateUUID(t),
-					Name: namesgen.Generate(),
-					Credentials: clients.Credentials{
-						Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
+					Name: namegen.Generate(),
+					Credentials: things.Credentials{
+						Identity: fmt.Sprintf("%s@example.com", namegen.Generate()),
 						Secret:   testsutil.GenerateUUID(t),
 					},
 					Metadata: map[string]interface{}{
@@ -300,60 +300,60 @@ func TestClientsSave(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		rClients, err := repo.Save(context.Background(), tc.clients...)
+		rThings, err := repo.Save(context.Background(), tc.things...)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			for i := range rClients {
-				tc.clients[i].Credentials.Secret = rClients[i].Credentials.Secret
+			for i := range rThings {
+				tc.things[i].Credentials.Secret = rThings[i].Credentials.Secret
 			}
-			assert.Equal(t, tc.clients, rClients, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.clients, rClients))
+			assert.Equal(t, tc.things, rThings, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.things, rThings))
 		}
 	}
 }
 
-func TestClientsRetrieveBySecret(t *testing.T) {
+func TestThingsRetrieveBySecret(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM clients")
 		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
 	})
 	repo := postgres.NewRepository(database)
 
-	client := clients.Client{
+	thing := things.Client{
 		ID:   testsutil.GenerateUUID(t),
-		Name: clientName,
-		Credentials: clients.Credentials{
-			Identity: clientIdentity,
+		Name: thingName,
+		Credentials: things.Credentials{
+			Identity: thingIdentity,
 			Secret:   testsutil.GenerateUUID(t),
 		},
-		Metadata: clients.Metadata{},
-		Status:   clients.EnabledStatus,
+		Metadata: things.Metadata{},
+		Status:   things.EnabledStatus,
 	}
 
-	_, err := repo.Save(context.Background(), client)
+	_, err := repo.Save(context.Background(), thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc     string
 		secret   string
-		response clients.Client
+		response things.Client
 		err      error
 	}{
 		{
-			desc:     "retrieve client by secret successfully",
-			secret:   client.Credentials.Secret,
-			response: client,
+			desc:     "retrieve thing by secret successfully",
+			secret:   thing.Credentials.Secret,
+			response: thing,
 			err:      nil,
 		},
 		{
-			desc:     "retrieve client by invalid secret",
+			desc:     "retrieve thing by invalid secret",
 			secret:   "non-existent-secret",
-			response: clients.Client{},
+			response: things.Client{},
 			err:      repoerr.ErrNotFound,
 		},
 		{
-			desc:     "retrieve client by empty secret",
+			desc:     "retrieve thing by empty secret",
 			secret:   "",
-			response: clients.Client{},
+			response: things.Client{},
 			err:      repoerr.ErrNotFound,
 		},
 	}
@@ -362,5 +362,67 @@ func TestClientsRetrieveBySecret(t *testing.T) {
 		res, err := repo.RetrieveBySecret(context.Background(), tc.secret)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, res, tc.response, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, res))
+	}
+}
+
+func TestRetrieveByID(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM clients")
+		require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))
+	})
+	repo := postgres.NewRepository(database)
+
+	thing := things.Client{
+		ID:   testsutil.GenerateUUID(t),
+		Name: thingName,
+		Credentials: things.Credentials{
+			Identity: thingIdentity,
+			Secret:   testsutil.GenerateUUID(t),
+		},
+		Metadata: things.Metadata{},
+		Status:   things.EnabledStatus,
+	}
+
+	_, err := repo.Save(context.Background(), thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	cases := []struct {
+		desc     string
+		id       string
+		response things.Client
+		err      error
+	}{
+		{
+			desc:     "successfully",
+			id:       thing.ID,
+			response: thing,
+			err:      nil,
+		},
+		{
+			desc:     "with invalid id",
+			id:       testsutil.GenerateUUID(t),
+			response: things.Client{},
+			err:      repoerr.ErrNotFound,
+		},
+		{
+			desc:     "with empty id",
+			id:       "",
+			response: things.Client{},
+			err:      repoerr.ErrNotFound,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			cli, err := repo.RetrieveByID(context.Background(), c.id)
+			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected %s got %s\n", c.err, err))
+			if err == nil {
+				assert.Equal(t, thing.ID, cli.ID)
+				assert.Equal(t, thing.Name, cli.Name)
+				assert.Equal(t, thing.Metadata, cli.Metadata)
+				assert.Equal(t, thing.Credentials.Identity, cli.Credentials.Identity)
+				assert.Equal(t, thing.Credentials.Secret, cli.Credentials.Secret)
+				assert.Equal(t, thing.Status, cli.Status)
+			}
+		})
 	}
 }

@@ -16,8 +16,8 @@ func authorizeEndpoint(svc things.Service) endpoint.Endpoint {
 
 		thingID, err := svc.Authorize(ctx, things.AuthzReq{
 			ChannelID:  req.ChannelID,
-			ThingID:    req.ThingID,
-			ThingKey:   req.ThingKey,
+			ClientID:   req.ThingID,
+			ClientKey:  req.ThingKey,
 			Permission: req.Permission,
 		})
 		if err != nil {

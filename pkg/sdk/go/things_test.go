@@ -2201,7 +2201,7 @@ func generateTestThing(t *testing.T) sdk.Thing {
 	return sdk.Thing{
 		ID:   testsutil.GenerateUUID(t),
 		Name: "clientname",
-		Credentials: sdk.Credentials{
+		Credentials: sdk.ClientCredentials{
 			Identity: "thing@example.com",
 			Secret:   generateUUID(t),
 		},

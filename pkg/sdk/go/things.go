@@ -27,7 +27,7 @@ const (
 type Thing struct {
 	ID          string                 `json:"id,omitempty"`
 	Name        string                 `json:"name,omitempty"`
-	Credentials Credentials            `json:"credentials"`
+	Credentials ClientCredentials      `json:"credentials"`
 	Tags        []string               `json:"tags,omitempty"`
 	DomainID    string                 `json:"domain_id,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
@@ -35,6 +35,11 @@ type Thing struct {
 	UpdatedAt   time.Time              `json:"updated_at,omitempty"`
 	Status      string                 `json:"status,omitempty"`
 	Permissions []string               `json:"permissions,omitempty"`
+}
+
+type ClientCredentials struct {
+	Identity string `json:"identity,omitempty"`
+	Secret   string `json:"secret,omitempty"`
 }
 
 func (sdk mgSDK) CreateThing(thing Thing, domainID, token string) (Thing, errors.SDKError) {

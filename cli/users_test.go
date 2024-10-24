@@ -22,11 +22,11 @@ import (
 )
 
 var user = mgsdk.User{
-	ID:   testsutil.GenerateUUID(&testing.T{}),
-	Name: "testuser",
+	ID:        testsutil.GenerateUUID(&testing.T{}),
+	FirstName: "testuser",
 	Credentials: mgsdk.Credentials{
 		Secret:   "testpassword",
-		Identity: "identity@example.com",
+		Username: "identity",
 	},
 	Status: mgclients.EnabledStatus.String(),
 }
@@ -57,8 +57,9 @@ func TestCreateUsersCmd(t *testing.T) {
 		{
 			desc: "create user successfully with token",
 			args: []string{
-				user.Name,
-				user.Credentials.Identity,
+				user.FirstName,
+				user.LastName,
+				user.Email,
 				user.Credentials.Secret,
 				validToken,
 			},
@@ -68,8 +69,9 @@ func TestCreateUsersCmd(t *testing.T) {
 		{
 			desc: "create user successfully without token",
 			args: []string{
-				user.Name,
-				user.Credentials.Identity,
+				user.FirstName,
+				user.LastName,
+				user.Email,
 				user.Credentials.Secret,
 			},
 			user:    user,
@@ -78,9 +80,11 @@ func TestCreateUsersCmd(t *testing.T) {
 		{
 			desc: "failed to create user",
 			args: []string{
-				user.Name,
-				user.Credentials.Identity,
+				user.FirstName,
+				user.LastName,
+				user.Email,
 				user.Credentials.Secret,
+				validToken,
 			},
 			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity).Error()),
@@ -88,7 +92,7 @@ func TestCreateUsersCmd(t *testing.T) {
 		},
 		{
 			desc:    "create user with invalid args",
-			args:    []string{user.Name, user.Credentials.Identity},
+			args:    []string{user.FirstName, user.Credentials.Username},
 			logType: usageLog,
 		},
 	}
@@ -96,12 +100,13 @@ func TestCreateUsersCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sdkCall := sdkMock.On("CreateUser", mock.Anything, mock.Anything).Return(tc.user, tc.sdkerr)
-			if len(tc.args) == 3 {
+			if len(tc.args) == 4 {
 				sdkUser := mgsdk.User{
-					Name: tc.args[0],
+					FirstName: tc.args[0],
+					LastName:  tc.args[1],
+					Email:     tc.args[2],
 					Credentials: mgsdk.Credentials{
-						Identity: tc.args[1],
-						Secret:   tc.args[2],
+						Secret: tc.args[3],
 					},
 				}
 				sdkCall = sdkMock.On("CreateUser", mock.Anything, sdkUser).Return(tc.user, tc.sdkerr)
@@ -298,7 +303,7 @@ func TestIssueTokenCmd(t *testing.T) {
 		{
 			desc: "issue token successfully without domain id",
 			args: []string{
-				user.Credentials.Identity,
+				user.Email,
 				user.Credentials.Secret,
 			},
 			sdkerr:  nil,
@@ -308,7 +313,7 @@ func TestIssueTokenCmd(t *testing.T) {
 		{
 			desc: "issue token successfully with domain id",
 			args: []string{
-				user.Credentials.Identity,
+				user.Email,
 				user.Credentials.Secret,
 				domainID,
 			},
@@ -319,7 +324,7 @@ func TestIssueTokenCmd(t *testing.T) {
 		{
 			desc: "issue token with failed authentication",
 			args: []string{
-				user.Credentials.Identity,
+				user.Email,
 				invalidPassword,
 			},
 			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -330,7 +335,7 @@ func TestIssueTokenCmd(t *testing.T) {
 		{
 			desc: "issue token with invalid args",
 			args: []string{
-				user.Credentials.Identity,
+				user.Credentials.Username,
 			},
 			logType: usageLog,
 		},
@@ -342,13 +347,13 @@ func TestIssueTokenCmd(t *testing.T) {
 			switch len(tc.args) {
 			case 2:
 				lg := mgsdk.Login{
-					Identity: tc.args[0],
-					Secret:   tc.args[1],
+					Email:  tc.args[0],
+					Secret: tc.args[1],
 				}
 				sdkCall = sdkMock.On("CreateToken", lg).Return(tc.token, tc.sdkerr)
 			case 3:
 				lg := mgsdk.Login{
-					Identity: tc.args[0],
+					Email:    tc.args[0],
 					Secret:   tc.args[1],
 					DomainID: tc.args[2],
 				}
@@ -380,7 +385,7 @@ func TestRefreshIssueTokenCmd(t *testing.T) {
 
 	var tkn mgsdk.Token
 	domainID := testsutil.GenerateUUID(t)
-	invalidIdentity := "invalidIdentity"
+	invalidUsername := "invalidUsername"
 
 	token := mgsdk.Token{
 		AccessToken:  testsutil.GenerateUUID(t),
@@ -398,7 +403,7 @@ func TestRefreshIssueTokenCmd(t *testing.T) {
 		{
 			desc: "issue refresh token successfully without domain id",
 			args: []string{
-				user.Credentials.Identity,
+				user.Credentials.Username,
 			},
 			sdkerr:  nil,
 			logType: entityLog,
@@ -407,7 +412,7 @@ func TestRefreshIssueTokenCmd(t *testing.T) {
 		{
 			desc: "issue refresh token successfully with domain id",
 			args: []string{
-				user.Credentials.Identity,
+				user.Credentials.Username,
 				domainID,
 			},
 			sdkerr:  nil,
@@ -417,16 +422,16 @@ func TestRefreshIssueTokenCmd(t *testing.T) {
 		{
 			desc: "issue refresh token with invalid args",
 			args: []string{
-				user.Credentials.Identity,
+				user.Credentials.Username,
 				domainID,
 				extraArg,
 			},
 			logType: usageLog,
 		},
 		{
-			desc: "issue refresh token with invalid identity",
+			desc: "issue refresh token with invalid Username",
 			args: []string{
-				invalidIdentity,
+				invalidUsername,
 			},
 			sdkerr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden).Error()),
@@ -441,12 +446,12 @@ func TestRefreshIssueTokenCmd(t *testing.T) {
 			switch len(tc.args) {
 			case 1:
 				lg := mgsdk.Login{
-					Identity: tc.args[0],
+					Email: tc.args[0],
 				}
 				sdkCall = sdkMock.On("RefreshToken", lg).Return(tc.token, tc.sdkerr)
 			case 2:
 				lg := mgsdk.Login{
-					Identity: tc.args[0],
+					Email:    tc.args[0],
 					DomainID: tc.args[1],
 				}
 				sdkCall = sdkMock.On("RefreshToken", lg).Return(tc.token, tc.sdkerr)
@@ -480,9 +485,9 @@ func TestUpdateUserCmd(t *testing.T) {
 	userID := testsutil.GenerateUUID(t)
 
 	tagUpdateType := "tags"
-	identityUpdateType := "identity"
+	emailUpdateType := "email"
 	roleUpdateType := "role"
-	newIdentity := "newidentity@example.com"
+	newEmail := "newemail@example.com"
 	newRole := "administrator"
 	newTagsJSON := "[\"tag1\", \"tag2\"]"
 	newNameMetadataJSON := "{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}"
@@ -532,22 +537,22 @@ func TestUpdateUserCmd(t *testing.T) {
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden)),
 		},
 		{
-			desc: "update user identity successfully",
+			desc: "update user email successfully",
 			args: []string{
-				identityUpdateType,
+				emailUpdateType,
 				userID,
-				newIdentity,
+				newEmail,
 				validToken,
 			},
 			logType: entityLog,
 			user:    user,
 		},
 		{
-			desc: "update user identity with invalid token",
+			desc: "update user email with invalid token",
 			args: []string{
-				identityUpdateType,
+				emailUpdateType,
 				userID,
-				newIdentity,
+				newEmail,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -635,19 +640,19 @@ func TestUpdateUserCmd(t *testing.T) {
 				u.ID = tc.args[1]
 
 				sdkCall1 = sdkMock.On("UpdateUserTags", u, tc.args[3]).Return(tc.user, tc.sdkerr)
-			case tc.args[0] == identityUpdateType:
+			case tc.args[0] == emailUpdateType:
 				var u mgsdk.User
-				u.Credentials.Identity = tc.args[2]
+				u.Email = tc.args[2]
 				u.ID = tc.args[1]
 
-				sdkCall2 = sdkMock.On("UpdateUserIdentity", u, tc.args[3]).Return(tc.user, tc.sdkerr)
+				sdkCall2 = sdkMock.On("UpdateUserEmail", u, tc.args[3]).Return(tc.user, tc.sdkerr)
 			case tc.args[0] == roleUpdateType && len(tc.args) == 4:
 				sdkCall3 = sdkMock.On("UpdateUserRole", mgsdk.User{
 					Role: tc.args[2],
 				}, tc.args[3]).Return(tc.user, tc.sdkerr)
 			case tc.args[0] == userID:
 				sdkCall = sdkMock.On("UpdateUser", mgsdk.User{
-					Name: "new name",
+					FirstName: "new name",
 					Metadata: mgsdk.Metadata{
 						"key": "value",
 					},

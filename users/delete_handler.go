@@ -15,16 +15,14 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/users/postgres"
 )
 
 const defLimit = uint64(100)
 
 type handler struct {
-	clients       postgres.Repository
+	users         Repository
 	domains       magistrala.DomainsServiceClient
 	policies      policies.Service
 	checkInterval time.Duration
@@ -32,9 +30,9 @@ type handler struct {
 	logger        *slog.Logger
 }
 
-func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
+func NewDeleteHandler(ctx context.Context, users Repository, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, defCheckInterval, deleteAfter time.Duration, logger *slog.Logger) {
 	handler := &handler{
-		clients:       clients,
+		users:         users,
 		domains:       domainsClient,
 		policies:      policyService,
 		checkInterval: defCheckInterval,
@@ -58,10 +56,10 @@ func NewDeleteHandler(ctx context.Context, clients postgres.Repository, policySe
 }
 
 func (h *handler) handle(ctx context.Context) {
-	pm := mgclients.Page{Limit: defLimit, Offset: 0, Status: mgclients.DeletedStatus}
+	pm := Page{Limit: defLimit, Offset: 0, Status: DeletedStatus}
 
 	for {
-		dbUsers, err := h.clients.RetrieveAll(ctx, pm)
+		dbUsers, err := h.users.RetrieveAll(ctx, pm)
 		if err != nil {
 			h.logger.Error("failed to retrieve users", slog.Any("error", err))
 			break
@@ -70,7 +68,7 @@ func (h *handler) handle(ctx context.Context) {
 			break
 		}
 
-		for _, u := range dbUsers.Clients {
+		for _, u := range dbUsers.Users {
 			if time.Since(u.UpdatedAt) < h.deleteAfter {
 				continue
 			}
@@ -96,14 +94,15 @@ func (h *handler) handle(ctx context.Context) {
 				continue
 			}
 
-			if err := h.clients.Delete(ctx, u.ID); err != nil {
+			if err := h.users.Delete(ctx, u.ID); err != nil {
 				h.logger.Error("failed to delete user", slog.Any("error", err))
 				continue
 			}
 
 			h.logger.Info("user deleted", slog.Group("user",
 				slog.String("id", u.ID),
-				slog.String("name", u.Name),
+				slog.String("first_name", u.FirstName),
+				slog.String("last_name", u.LastName),
 			))
 		}
 	}

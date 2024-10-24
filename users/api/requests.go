@@ -4,39 +4,51 @@
 package api
 
 import (
+	"net/url"
+
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/users"
 )
 
 const maxLimitSize = 100
 
-type createClientReq struct {
-	client mgclients.Client
+type createUserReq struct {
+	user users.User
 }
 
-func (req createClientReq) validate() error {
-	if len(req.client.Name) > api.MaxNameSize {
+func (req createUserReq) validate() error {
+	if len(req.user.FirstName) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
-	if req.client.Credentials.Identity == "" {
-		return apiutil.ErrMissingIdentity
+	if len(req.user.LastName) > api.MaxNameSize {
+		return apiutil.ErrNameSize
 	}
-	if req.client.Credentials.Secret == "" {
+	if req.user.Credentials.Username == "" {
+		return apiutil.ErrMissingUsername
+	}
+	if req.user.Email == "" {
+		return apiutil.ErrMissingEmail
+	}
+	if req.user.Credentials.Secret == "" {
 		return apiutil.ErrMissingPass
 	}
-	if !passRegex.MatchString(req.client.Credentials.Secret) {
+	if !passRegex.MatchString(req.user.Credentials.Secret) {
 		return apiutil.ErrPasswordFormat
 	}
+	if req.user.Status == users.AllStatus {
+		return svcerr.ErrInvalidStatus
+	}
 
-	return req.client.Validate()
+	return req.user.Validate()
 }
 
-type viewClientReq struct {
+type viewUserReq struct {
 	id string
 }
 
-func (req viewClientReq) validate() error {
+func (req viewUserReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -44,20 +56,22 @@ func (req viewClientReq) validate() error {
 	return nil
 }
 
-type listClientsReq struct {
-	status   mgclients.Status
-	offset   uint64
-	limit    uint64
-	name     string
-	tag      string
-	identity string
-	metadata mgclients.Metadata
-	order    string
-	dir      string
-	id       string
+type listUsersReq struct {
+	status    users.Status
+	offset    uint64
+	limit     uint64
+	userName  string
+	tag       string
+	firstName string
+	lastName  string
+	email     string
+	metadata  users.Metadata
+	order     string
+	dir       string
+	id        string
 }
 
-func (req listClientsReq) validate() error {
+func (req listUsersReq) validate() error {
 	if req.limit > maxLimitSize || req.limit < 1 {
 		return apiutil.ErrLimitSize
 	}
@@ -68,17 +82,19 @@ func (req listClientsReq) validate() error {
 	return nil
 }
 
-type searchClientsReq struct {
-	Offset uint64
-	Limit  uint64
-	Name   string
-	Id     string
-	Order  string
-	Dir    string
+type searchUsersReq struct {
+	Offset    uint64
+	Limit     uint64
+	Username  string
+	FirstName string
+	LastName  string
+	Id        string
+	Order     string
+	Dir       string
 }
 
-func (req searchClientsReq) validate() error {
-	if req.Name == "" && req.Id == "" {
+func (req searchUsersReq) validate() error {
+	if req.Username == "" && req.Id == "" {
 		return apiutil.ErrEmptySearchQuery
 	}
 
@@ -86,7 +102,7 @@ func (req searchClientsReq) validate() error {
 }
 
 type listMembersByObjectReq struct {
-	mgclients.Page
+	users.Page
 	objectKind string
 	objectID   string
 }
@@ -102,13 +118,16 @@ func (req listMembersByObjectReq) validate() error {
 	return nil
 }
 
-type updateClientReq struct {
-	id       string
-	Name     string             `json:"name,omitempty"`
-	Metadata mgclients.Metadata `json:"metadata,omitempty"`
+type updateUserReq struct {
+	id             string
+	FirstName      string         `json:"first_name,omitempty"`
+	LastName       string         `json:"last_name,omitempty"`
+	Username       string         `json:"username,omitempty"`
+	ProfilePicture url.URL        `json:"profile_picture,omitempty"` // URL of the picture
+	Metadata       users.Metadata `json:"metadata,omitempty"`
 }
 
-func (req updateClientReq) validate() error {
+func (req updateUserReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -116,12 +135,12 @@ func (req updateClientReq) validate() error {
 	return nil
 }
 
-type updateClientTagsReq struct {
+type updateUserTagsReq struct {
 	id   string
 	Tags []string `json:"tags,omitempty"`
 }
 
-func (req updateClientTagsReq) validate() error {
+func (req updateUserTagsReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -129,13 +148,13 @@ func (req updateClientTagsReq) validate() error {
 	return nil
 }
 
-type updateClientRoleReq struct {
+type updateUserRoleReq struct {
 	id   string
-	role mgclients.Role
+	role users.Role
 	Role string `json:"role,omitempty"`
 }
 
-func (req updateClientRoleReq) validate() error {
+func (req updateUserRoleReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -143,12 +162,12 @@ func (req updateClientRoleReq) validate() error {
 	return nil
 }
 
-type updateClientIdentityReq struct {
-	id       string
-	Identity string `json:"identity,omitempty"`
+type updateUserEmailReq struct {
+	id    string
+	Email string `json:"email,omitempty"`
 }
 
-func (req updateClientIdentityReq) validate() error {
+func (req updateUserEmailReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -156,12 +175,12 @@ func (req updateClientIdentityReq) validate() error {
 	return nil
 }
 
-type updateClientSecretReq struct {
+type updateUserSecretReq struct {
 	OldSecret string `json:"old_secret,omitempty"`
 	NewSecret string `json:"new_secret,omitempty"`
 }
 
-func (req updateClientSecretReq) validate() error {
+func (req updateUserSecretReq) validate() error {
 	if req.OldSecret == "" || req.NewSecret == "" {
 		return apiutil.ErrMissingPass
 	}
@@ -172,11 +191,28 @@ func (req updateClientSecretReq) validate() error {
 	return nil
 }
 
-type changeClientStatusReq struct {
-	id string
+type updateUsernameReq struct {
+	id       string
+	Username string
 }
 
-func (req changeClientStatusReq) validate() error {
+func (req updateUsernameReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+	if len(req.Username) > api.MaxNameSize {
+		return apiutil.ErrNameSize
+	}
+
+	return nil
+}
+
+type updateProfilePictureReq struct {
+	id             string
+	ProfilePicture url.URL `json:"profile_picture,omitempty"`
+}
+
+func (req updateProfilePictureReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -184,15 +220,27 @@ func (req changeClientStatusReq) validate() error {
 	return nil
 }
 
-type loginClientReq struct {
-	Identity string `json:"identity,omitempty"`
+type changeUserStatusReq struct {
+	id string
+}
+
+func (req changeUserStatusReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}
+
+type loginUserReq struct {
+	Email    string `json:"email,omitempty"`
 	Secret   string `json:"secret,omitempty"`
 	DomainID string `json:"domain_id,omitempty"`
 }
 
-func (req loginClientReq) validate() error {
-	if req.Identity == "" {
-		return apiutil.ErrMissingIdentity
+func (req loginUserReq) validate() error {
+	if req.Email == "" {
+		return apiutil.ErrMissingEmail
 	}
 	if req.Secret == "" {
 		return apiutil.ErrMissingPass

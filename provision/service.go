@@ -294,7 +294,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	}
 
 	u := sdk.Login{
-		Identity: ps.conf.Server.MgUser,
+		Email:    ps.conf.Server.MgUser,
 		Secret:   ps.conf.Server.MgPass,
 		DomainID: ps.conf.Server.MgDomainID,
 	}

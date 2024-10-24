@@ -188,4 +188,7 @@ var (
 
 	// ErrMissingDomainID indicates missing domainID.
 	ErrMissingDomainID = errors.New("missing domainID")
+
+	// ErrMissingUsername indicates missing user name.
+	ErrMissingUsername = errors.New("missing user name")
 )

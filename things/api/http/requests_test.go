@@ -10,7 +10,7 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/things"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +31,7 @@ func TestCreateThingReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: createClientReq{
-				client: mgclients.Client{
+				thing: things.Client{
 					ID:   validID,
 					Name: valid,
 				},
@@ -41,7 +41,7 @@ func TestCreateThingReqValidate(t *testing.T) {
 		{
 			desc: "name too long",
 			req: createClientReq{
-				client: mgclients.Client{
+				thing: things.Client{
 					ID:   validID,
 					Name: strings.Repeat("a", api.MaxNameSize+1),
 				},
@@ -51,7 +51,7 @@ func TestCreateThingReqValidate(t *testing.T) {
 		{
 			desc: "invalid id",
 			req: createClientReq{
-				client: mgclients.Client{
+				thing: things.Client{
 					ID:   invalid,
 					Name: valid,
 				},
@@ -76,7 +76,7 @@ func TestCreateThingsReqValidate(t *testing.T) {
 		{
 			desc: "valid request",
 			req: createClientsReq{
-				Clients: []mgclients.Client{
+				Things: []things.Client{
 					{
 						ID:   validID,
 						Name: valid,
@@ -88,14 +88,14 @@ func TestCreateThingsReqValidate(t *testing.T) {
 		{
 			desc: "empty list",
 			req: createClientsReq{
-				Clients: []mgclients.Client{},
+				Things: []things.Client{},
 			},
 			err: apiutil.ErrEmptyList,
 		},
 		{
 			desc: "name too long",
 			req: createClientsReq{
-				Clients: []mgclients.Client{
+				Things: []things.Client{
 					{
 						ID:   validID,
 						Name: strings.Repeat("a", api.MaxNameSize+1),
@@ -107,7 +107,7 @@ func TestCreateThingsReqValidate(t *testing.T) {
 		{
 			desc: "invalid id",
 			req: createClientsReq{
-				Clients: []mgclients.Client{
+				Things: []things.Client{
 					{
 						ID:   invalid,
 						Name: valid,

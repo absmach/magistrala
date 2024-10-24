@@ -16,27 +16,27 @@ type Repository struct {
 	mock.Mock
 }
 
-// ChangeStatus provides a mock function with given fields: ctx, thing
-func (_m *Repository) ChangeStatus(ctx context.Context, thing things.Thing) (things.Thing, error) {
-	ret := _m.Called(ctx, thing)
+// ChangeStatus provides a mock function with given fields: ctx, client
+func (_m *Repository) ChangeStatus(ctx context.Context, client things.Client) (things.Client, error) {
+	ret := _m.Called(ctx, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ChangeStatus")
 	}
 
-	var r0 things.Thing
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) (things.Thing, error)); ok {
-		return rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) (things.Client, error)); ok {
+		return rf(ctx, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) things.Thing); ok {
-		r0 = rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) things.Client); ok {
+		r0 = rf(ctx, client)
 	} else {
-		r0 = ret.Get(0).(things.Thing)
+		r0 = ret.Get(0).(things.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, things.Thing) error); ok {
-		r1 = rf(ctx, thing)
+	if rf, ok := ret.Get(1).(func(context.Context, things.Client) error); ok {
+		r1 = rf(ctx, client)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -63,22 +63,22 @@ func (_m *Repository) Delete(ctx context.Context, id string) error {
 }
 
 // RetrieveAll provides a mock function with given fields: ctx, pm
-func (_m *Repository) RetrieveAll(ctx context.Context, pm things.Page) (things.ThingsPage, error) {
+func (_m *Repository) RetrieveAll(ctx context.Context, pm things.Page) (things.ClientsPage, error) {
 	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
 	}
 
-	var r0 things.ThingsPage
+	var r0 things.ClientsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Page) (things.ThingsPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, things.Page) (things.ClientsPage, error)); ok {
 		return rf(ctx, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Page) things.ThingsPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, things.Page) things.ClientsPage); ok {
 		r0 = rf(ctx, pm)
 	} else {
-		r0 = ret.Get(0).(things.ThingsPage)
+		r0 = ret.Get(0).(things.ClientsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, things.Page) error); ok {
@@ -91,22 +91,22 @@ func (_m *Repository) RetrieveAll(ctx context.Context, pm things.Page) (things.T
 }
 
 // RetrieveAllByIDs provides a mock function with given fields: ctx, pm
-func (_m *Repository) RetrieveAllByIDs(ctx context.Context, pm things.Page) (things.ThingsPage, error) {
+func (_m *Repository) RetrieveAllByIDs(ctx context.Context, pm things.Page) (things.ClientsPage, error) {
 	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAllByIDs")
 	}
 
-	var r0 things.ThingsPage
+	var r0 things.ClientsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Page) (things.ThingsPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, things.Page) (things.ClientsPage, error)); ok {
 		return rf(ctx, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Page) things.ThingsPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, things.Page) things.ClientsPage); ok {
 		r0 = rf(ctx, pm)
 	} else {
-		r0 = ret.Get(0).(things.ThingsPage)
+		r0 = ret.Get(0).(things.ClientsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, things.Page) error); ok {
@@ -119,22 +119,22 @@ func (_m *Repository) RetrieveAllByIDs(ctx context.Context, pm things.Page) (thi
 }
 
 // RetrieveByID provides a mock function with given fields: ctx, id
-func (_m *Repository) RetrieveByID(ctx context.Context, id string) (things.Thing, error) {
+func (_m *Repository) RetrieveByID(ctx context.Context, id string) (things.Client, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveByID")
 	}
 
-	var r0 things.Thing
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (things.Thing, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (things.Client, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) things.Thing); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) things.Client); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Get(0).(things.Thing)
+		r0 = ret.Get(0).(things.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -147,22 +147,22 @@ func (_m *Repository) RetrieveByID(ctx context.Context, id string) (things.Thing
 }
 
 // RetrieveBySecret provides a mock function with given fields: ctx, key
-func (_m *Repository) RetrieveBySecret(ctx context.Context, key string) (things.Thing, error) {
+func (_m *Repository) RetrieveBySecret(ctx context.Context, key string) (things.Client, error) {
 	ret := _m.Called(ctx, key)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveBySecret")
 	}
 
-	var r0 things.Thing
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (things.Thing, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (things.Client, error)); ok {
 		return rf(ctx, key)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) things.Thing); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) things.Client); ok {
 		r0 = rf(ctx, key)
 	} else {
-		r0 = ret.Get(0).(things.Thing)
+		r0 = ret.Get(0).(things.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -174,11 +174,11 @@ func (_m *Repository) RetrieveBySecret(ctx context.Context, key string) (things.
 	return r0, r1
 }
 
-// Save provides a mock function with given fields: ctx, thing
-func (_m *Repository) Save(ctx context.Context, thing ...things.Thing) ([]things.Thing, error) {
-	_va := make([]interface{}, len(thing))
-	for _i := range thing {
-		_va[_i] = thing[_i]
+// Save provides a mock function with given fields: ctx, client
+func (_m *Repository) Save(ctx context.Context, client ...things.Client) ([]things.Client, error) {
+	_va := make([]interface{}, len(client))
+	for _i := range client {
+		_va[_i] = client[_i]
 	}
 	var _ca []interface{}
 	_ca = append(_ca, ctx)
@@ -189,21 +189,21 @@ func (_m *Repository) Save(ctx context.Context, thing ...things.Thing) ([]things
 		panic("no return value specified for Save")
 	}
 
-	var r0 []things.Thing
+	var r0 []things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, ...things.Thing) ([]things.Thing, error)); ok {
-		return rf(ctx, thing...)
+	if rf, ok := ret.Get(0).(func(context.Context, ...things.Client) ([]things.Client, error)); ok {
+		return rf(ctx, client...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, ...things.Thing) []things.Thing); ok {
-		r0 = rf(ctx, thing...)
+	if rf, ok := ret.Get(0).(func(context.Context, ...things.Client) []things.Client); ok {
+		r0 = rf(ctx, client...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]things.Thing)
+			r0 = ret.Get(0).([]things.Client)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, ...things.Thing) error); ok {
-		r1 = rf(ctx, thing...)
+	if rf, ok := ret.Get(1).(func(context.Context, ...things.Client) error); ok {
+		r1 = rf(ctx, client...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -211,23 +211,23 @@ func (_m *Repository) Save(ctx context.Context, thing ...things.Thing) ([]things
 	return r0, r1
 }
 
-// SearchThings provides a mock function with given fields: ctx, pm
-func (_m *Repository) SearchThings(ctx context.Context, pm things.Page) (things.ThingsPage, error) {
+// SearchClients provides a mock function with given fields: ctx, pm
+func (_m *Repository) SearchClients(ctx context.Context, pm things.Page) (things.ClientsPage, error) {
 	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SearchThings")
+		panic("no return value specified for SearchClients")
 	}
 
-	var r0 things.ThingsPage
+	var r0 things.ClientsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Page) (things.ThingsPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, things.Page) (things.ClientsPage, error)); ok {
 		return rf(ctx, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Page) things.ThingsPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, things.Page) things.ClientsPage); ok {
 		r0 = rf(ctx, pm)
 	} else {
-		r0 = ret.Get(0).(things.ThingsPage)
+		r0 = ret.Get(0).(things.ClientsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, things.Page) error); ok {
@@ -239,27 +239,27 @@ func (_m *Repository) SearchThings(ctx context.Context, pm things.Page) (things.
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: ctx, thing
-func (_m *Repository) Update(ctx context.Context, thing things.Thing) (things.Thing, error) {
-	ret := _m.Called(ctx, thing)
+// Update provides a mock function with given fields: ctx, client
+func (_m *Repository) Update(ctx context.Context, client things.Client) (things.Client, error) {
+	ret := _m.Called(ctx, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 things.Thing
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) (things.Thing, error)); ok {
-		return rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) (things.Client, error)); ok {
+		return rf(ctx, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) things.Thing); ok {
-		r0 = rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) things.Client); ok {
+		r0 = rf(ctx, client)
 	} else {
-		r0 = ret.Get(0).(things.Thing)
+		r0 = ret.Get(0).(things.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, things.Thing) error); ok {
-		r1 = rf(ctx, thing)
+	if rf, ok := ret.Get(1).(func(context.Context, things.Client) error); ok {
+		r1 = rf(ctx, client)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -267,27 +267,27 @@ func (_m *Repository) Update(ctx context.Context, thing things.Thing) (things.Th
 	return r0, r1
 }
 
-// UpdateIdentity provides a mock function with given fields: ctx, thing
-func (_m *Repository) UpdateIdentity(ctx context.Context, thing things.Thing) (things.Thing, error) {
-	ret := _m.Called(ctx, thing)
+// UpdateIdentity provides a mock function with given fields: ctx, client
+func (_m *Repository) UpdateIdentity(ctx context.Context, client things.Client) (things.Client, error) {
+	ret := _m.Called(ctx, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateIdentity")
 	}
 
-	var r0 things.Thing
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) (things.Thing, error)); ok {
-		return rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) (things.Client, error)); ok {
+		return rf(ctx, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) things.Thing); ok {
-		r0 = rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) things.Client); ok {
+		r0 = rf(ctx, client)
 	} else {
-		r0 = ret.Get(0).(things.Thing)
+		r0 = ret.Get(0).(things.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, things.Thing) error); ok {
-		r1 = rf(ctx, thing)
+	if rf, ok := ret.Get(1).(func(context.Context, things.Client) error); ok {
+		r1 = rf(ctx, client)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -295,27 +295,27 @@ func (_m *Repository) UpdateIdentity(ctx context.Context, thing things.Thing) (t
 	return r0, r1
 }
 
-// UpdateSecret provides a mock function with given fields: ctx, thing
-func (_m *Repository) UpdateSecret(ctx context.Context, thing things.Thing) (things.Thing, error) {
-	ret := _m.Called(ctx, thing)
+// UpdateSecret provides a mock function with given fields: ctx, client
+func (_m *Repository) UpdateSecret(ctx context.Context, client things.Client) (things.Client, error) {
+	ret := _m.Called(ctx, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSecret")
 	}
 
-	var r0 things.Thing
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) (things.Thing, error)); ok {
-		return rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) (things.Client, error)); ok {
+		return rf(ctx, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) things.Thing); ok {
-		r0 = rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) things.Client); ok {
+		r0 = rf(ctx, client)
 	} else {
-		r0 = ret.Get(0).(things.Thing)
+		r0 = ret.Get(0).(things.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, things.Thing) error); ok {
-		r1 = rf(ctx, thing)
+	if rf, ok := ret.Get(1).(func(context.Context, things.Client) error); ok {
+		r1 = rf(ctx, client)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -323,27 +323,27 @@ func (_m *Repository) UpdateSecret(ctx context.Context, thing things.Thing) (thi
 	return r0, r1
 }
 
-// UpdateTags provides a mock function with given fields: ctx, thing
-func (_m *Repository) UpdateTags(ctx context.Context, thing things.Thing) (things.Thing, error) {
-	ret := _m.Called(ctx, thing)
+// UpdateTags provides a mock function with given fields: ctx, client
+func (_m *Repository) UpdateTags(ctx context.Context, client things.Client) (things.Client, error) {
+	ret := _m.Called(ctx, client)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateTags")
 	}
 
-	var r0 things.Thing
+	var r0 things.Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) (things.Thing, error)); ok {
-		return rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) (things.Client, error)); ok {
+		return rf(ctx, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, things.Thing) things.Thing); ok {
-		r0 = rf(ctx, thing)
+	if rf, ok := ret.Get(0).(func(context.Context, things.Client) things.Client); ok {
+		r0 = rf(ctx, client)
 	} else {
-		r0 = ret.Get(0).(things.Thing)
+		r0 = ret.Get(0).(things.Client)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, things.Thing) error); ok {
-		r1 = rf(ctx, thing)
+	if rf, ok := ret.Get(1).(func(context.Context, things.Client) error); ok {
+		r1 = rf(ctx, client)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -10,21 +10,21 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
-// Status represents Thing status.
+// Status represents Client status.
 type Status uint8
 
-// Possible Thing status values.
+// Possible Client status values.
 const (
-	// EnabledStatus represents enabled Thing.
+	// EnabledStatus represents enabled Client.
 	EnabledStatus Status = iota
-	// DisabledStatus represents disabled Thing.
+	// DisabledStatus represents disabled Client.
 	DisabledStatus
 	// DeletedStatus represents a client that will be deleted.
 	DeletedStatus
 
 	// AllStatus is used for querying purposes to list clients irrespective
 	// of their status - both enabled and disabled. It is never stored in the
-	// database as the actual Thing status and should always be the largest
+	// database as the actual Client status and should always be the largest
 	// value in this enumeration.
 	AllStatus
 )
@@ -54,7 +54,7 @@ func (s Status) String() string {
 	}
 }
 
-// ToStatus converts string value to a valid Thing/Group status.
+// ToStatus converts string value to a valid Client status.
 func ToStatus(status string) (Status, error) {
 	switch status {
 	case "", Enabled:
@@ -69,23 +69,23 @@ func ToStatus(status string) (Status, error) {
 	return Status(0), svcerr.ErrInvalidStatus
 }
 
-// Custom Marshaller for Thing/Groups.
+// Custom Marshaller for Client.
 func (s Status) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 
-func (thing Thing) MarshalJSON() ([]byte, error) {
-	type Alias Thing
+func (client Client) MarshalJSON() ([]byte, error) {
+	type Alias Client
 	return json.Marshal(&struct {
 		Alias
 		Status string `json:"status,omitempty"`
 	}{
-		Alias:  (Alias)(thing),
-		Status: thing.Status.String(),
+		Alias:  (Alias)(client),
+		Status: client.Status.String(),
 	})
 }
 
-// Custom Unmarshaler for Thing/Groups.
+// Custom Unmarshaler for Client.
 func (s *Status) UnmarshalJSON(data []byte) error {
 	str := strings.Trim(string(data), "\"")
 	val, err := ToStatus(str)

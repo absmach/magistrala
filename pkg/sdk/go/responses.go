@@ -9,8 +9,8 @@ import (
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 )
 
-type createThingsRes struct {
-	Things []Thing `json:"things"`
+type createClientsRes struct {
+	Clients []Client `json:"clients"`
 }
 
 type PageRes struct {
@@ -19,9 +19,9 @@ type PageRes struct {
 	Limit  uint64 `json:"limit"`
 }
 
-// ThingsPage contains list of things in a page with proper metadata.
-type ThingsPage struct {
-	Things []Thing `json:"things"`
+// ClientsPage contains list of clients in a page with proper metadata.
+type ClientsPage struct {
+	Clients []Client `json:"clients"`
 	PageRes
 }
 

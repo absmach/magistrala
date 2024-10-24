@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc/auth"
+	grpcAuthV1 "github.com/absmach/magistrala/internal/grpc/auth/v1"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -28,7 +28,7 @@ const (
 	secret          = "secret"
 	email           = "test@example.com"
 	id              = "testID"
-	thingsType      = "things"
+	clientsType     = "clients"
 	usersType       = "users"
 	description     = "Description"
 	groupName       = "mgx"
@@ -52,7 +52,7 @@ var (
 func startGRPCServer(svc auth.Service, port int) *grpc.Server {
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
-	magistrala.RegisterAuthServiceServer(server, grpcapi.NewAuthServer(svc))
+	grpcAuthV1.RegisterAuthServiceServer(server, grpcapi.NewAuthServer(svc))
 	go func() {
 		err := server.Serve(listener)
 		assert.Nil(&testing.T{}, err, fmt.Sprintf(`"Unexpected error creating auth server %s"`, err))
@@ -69,34 +69,34 @@ func TestIdentify(t *testing.T) {
 	cases := []struct {
 		desc   string
 		token  string
-		idt    *magistrala.AuthNRes
+		idt    *grpcAuthV1.AuthNRes
 		svcErr error
 		err    error
 	}{
 		{
 			desc:  "authenticate user with valid user token",
 			token: validToken,
-			idt:   &magistrala.AuthNRes{Id: id, UserId: email, DomainId: domainID},
+			idt:   &grpcAuthV1.AuthNRes{Id: id, UserId: email, DomainId: domainID},
 			err:   nil,
 		},
 		{
 			desc:   "authenticate user with invalid user token",
 			token:  "invalid",
-			idt:    &magistrala.AuthNRes{},
+			idt:    &grpcAuthV1.AuthNRes{},
 			svcErr: svcerr.ErrAuthentication,
 			err:    svcerr.ErrAuthentication,
 		},
 		{
 			desc:  "authenticate user with empty token",
 			token: "",
-			idt:   &magistrala.AuthNRes{},
+			idt:   &grpcAuthV1.AuthNRes{},
 			err:   apiutil.ErrBearerToken,
 		},
 	}
 
 	for _, tc := range cases {
 		svcCall := svc.On("Identify", mock.Anything, mock.Anything, mock.Anything).Return(auth.Key{Subject: id, User: email, Domain: domainID}, tc.svcErr)
-		idt, err := grpcClient.Authenticate(context.Background(), &magistrala.AuthNReq{Token: tc.token})
+		idt, err := grpcClient.Authenticate(context.Background(), &grpcAuthV1.AuthNReq{Token: tc.token})
 		if idt != nil {
 			assert.Equal(t, tc.idt, idt, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.idt, idt))
 		}
@@ -113,14 +113,14 @@ func TestAuthorize(t *testing.T) {
 	cases := []struct {
 		desc         string
 		token        string
-		authRequest  *magistrala.AuthZReq
-		authResponse *magistrala.AuthZRes
+		authRequest  *grpcAuthV1.AuthZReq
+		authResponse *grpcAuthV1.AuthZRes
 		err          error
 	}{
 		{
 			desc:  "authorize user with authorized token",
 			token: validToken,
-			authRequest: &magistrala.AuthZReq{
+			authRequest: &grpcAuthV1.AuthZReq{
 				Subject:     id,
 				SubjectType: usersType,
 				Object:      authoritiesObj,
@@ -128,13 +128,13 @@ func TestAuthorize(t *testing.T) {
 				Relation:    memberRelation,
 				Permission:  adminpermission,
 			},
-			authResponse: &magistrala.AuthZRes{Authorized: true},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: true},
 			err:          nil,
 		},
 		{
 			desc:  "authorize user with unauthorized token",
 			token: inValidToken,
-			authRequest: &magistrala.AuthZReq{
+			authRequest: &grpcAuthV1.AuthZReq{
 				Subject:     id,
 				SubjectType: usersType,
 				Object:      authoritiesObj,
@@ -142,13 +142,13 @@ func TestAuthorize(t *testing.T) {
 				Relation:    memberRelation,
 				Permission:  adminpermission,
 			},
-			authResponse: &magistrala.AuthZRes{Authorized: false},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,
 		},
 		{
 			desc:  "authorize user with empty subject",
 			token: validToken,
-			authRequest: &magistrala.AuthZReq{
+			authRequest: &grpcAuthV1.AuthZReq{
 				Subject:     "",
 				SubjectType: usersType,
 				Object:      authoritiesObj,
@@ -156,13 +156,13 @@ func TestAuthorize(t *testing.T) {
 				Relation:    memberRelation,
 				Permission:  adminpermission,
 			},
-			authResponse: &magistrala.AuthZRes{Authorized: false},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicySub,
 		},
 		{
 			desc:  "authorize user with empty subject type",
 			token: validToken,
-			authRequest: &magistrala.AuthZReq{
+			authRequest: &grpcAuthV1.AuthZReq{
 				Subject:     id,
 				SubjectType: "",
 				Object:      authoritiesObj,
@@ -170,13 +170,13 @@ func TestAuthorize(t *testing.T) {
 				Relation:    memberRelation,
 				Permission:  adminpermission,
 			},
-			authResponse: &magistrala.AuthZRes{Authorized: false},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicySub,
 		},
 		{
 			desc:  "authorize user with empty object",
 			token: validToken,
-			authRequest: &magistrala.AuthZReq{
+			authRequest: &grpcAuthV1.AuthZReq{
 				Subject:     id,
 				SubjectType: usersType,
 				Object:      "",
@@ -184,13 +184,13 @@ func TestAuthorize(t *testing.T) {
 				Relation:    memberRelation,
 				Permission:  adminpermission,
 			},
-			authResponse: &magistrala.AuthZRes{Authorized: false},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicyObj,
 		},
 		{
 			desc:  "authorize user with empty object type",
 			token: validToken,
-			authRequest: &magistrala.AuthZReq{
+			authRequest: &grpcAuthV1.AuthZReq{
 				Subject:     id,
 				SubjectType: usersType,
 				Object:      authoritiesObj,
@@ -198,13 +198,13 @@ func TestAuthorize(t *testing.T) {
 				Relation:    memberRelation,
 				Permission:  adminpermission,
 			},
-			authResponse: &magistrala.AuthZRes{Authorized: false},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicyObj,
 		},
 		{
 			desc:  "authorize user with empty permission",
 			token: validToken,
-			authRequest: &magistrala.AuthZReq{
+			authRequest: &grpcAuthV1.AuthZReq{
 				Subject:     id,
 				SubjectType: usersType,
 				Object:      authoritiesObj,
@@ -212,7 +212,7 @@ func TestAuthorize(t *testing.T) {
 				Relation:    memberRelation,
 				Permission:  "",
 			},
-			authResponse: &magistrala.AuthZRes{Authorized: false},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMalformedPolicyPer,
 		},
 	}

@@ -19,31 +19,31 @@ import (
 )
 
 const (
-	configsEndpoint        = "things/configs"
-	bootstrapEndpoint      = "things/bootstrap"
-	whitelistEndpoint      = "things/state"
-	bootstrapCertsEndpoint = "things/configs/certs"
-	bootstrapConnEndpoint  = "things/configs/connections"
+	configsEndpoint        = "clients/configs"
+	bootstrapEndpoint      = "clients/bootstrap"
+	whitelistEndpoint      = "clients/state"
+	bootstrapCertsEndpoint = "clients/configs/certs"
+	bootstrapConnEndpoint  = "clients/configs/connections"
 	secureEndpoint         = "secure"
 )
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Magistrala entities.
-// MGThing represents corresponding Magistrala Thing ID.
-// MGKey is key of corresponding Magistrala Thing.
-// MGChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
+// MGClient represents corresponding Magistrala Client ID.
+// MGKey is key of corresponding Magistrala Client.
+// MGChannels is a list of Magistrala Channels corresponding Magistrala Client connects to.
 type BootstrapConfig struct {
-	Channels    interface{} `json:"channels,omitempty"`
-	ExternalID  string      `json:"external_id,omitempty"`
-	ExternalKey string      `json:"external_key,omitempty"`
-	ThingID     string      `json:"thing_id,omitempty"`
-	ThingKey    string      `json:"thing_key,omitempty"`
-	Name        string      `json:"name,omitempty"`
-	ClientCert  string      `json:"client_cert,omitempty"`
-	ClientKey   string      `json:"client_key,omitempty"`
-	CACert      string      `json:"ca_cert,omitempty"`
-	Content     string      `json:"content,omitempty"`
-	State       int         `json:"state,omitempty"`
+	Channels     interface{} `json:"channels,omitempty"`
+	ExternalID   string      `json:"external_id,omitempty"`
+	ExternalKey  string      `json:"external_key,omitempty"`
+	ClientID     string      `json:"client_id,omitempty"`
+	ClientSecret string      `json:"client_secret,omitempty"`
+	Name         string      `json:"name,omitempty"`
+	ClientCert   string      `json:"client_cert,omitempty"`
+	ClientKey    string      `json:"client_key,omitempty"`
+	CACert       string      `json:"ca_cert,omitempty"`
+	Content      string      `json:"content,omitempty"`
+	State        int         `json:"state,omitempty"`
 }
 
 func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {
@@ -67,27 +67,27 @@ func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &struct {
-		ExternalID  *string `json:"external_id,omitempty"`
-		ExternalKey *string `json:"external_key,omitempty"`
-		ThingID     *string `json:"thing_id,omitempty"`
-		ThingKey    *string `json:"thing_key,omitempty"`
-		Name        *string `json:"name,omitempty"`
-		ClientCert  *string `json:"client_cert,omitempty"`
-		ClientKey   *string `json:"client_key,omitempty"`
-		CACert      *string `json:"ca_cert,omitempty"`
-		Content     *string `json:"content,omitempty"`
-		State       *int    `json:"state,omitempty"`
+		ExternalID   *string `json:"external_id,omitempty"`
+		ExternalKey  *string `json:"external_key,omitempty"`
+		ClientID     *string `json:"client_id,omitempty"`
+		ClientSecret *string `json:"client_secret,omitempty"`
+		Name         *string `json:"name,omitempty"`
+		ClientCert   *string `json:"client_cert,omitempty"`
+		ClientKey    *string `json:"client_key,omitempty"`
+		CACert       *string `json:"ca_cert,omitempty"`
+		Content      *string `json:"content,omitempty"`
+		State        *int    `json:"state,omitempty"`
 	}{
-		ExternalID:  &ts.ExternalID,
-		ExternalKey: &ts.ExternalKey,
-		ThingID:     &ts.ThingID,
-		ThingKey:    &ts.ThingKey,
-		Name:        &ts.Name,
-		ClientCert:  &ts.ClientCert,
-		ClientKey:   &ts.ClientKey,
-		CACert:      &ts.CACert,
-		Content:     &ts.Content,
-		State:       &ts.State,
+		ExternalID:   &ts.ExternalID,
+		ExternalKey:  &ts.ExternalKey,
+		ClientID:     &ts.ClientID,
+		ClientSecret: &ts.ClientSecret,
+		Name:         &ts.Name,
+		ClientCert:   &ts.ClientCert,
+		ClientKey:    &ts.ClientKey,
+		CACert:       &ts.CACert,
+		Content:      &ts.Content,
+		State:        &ts.State,
 	}); err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (sdk mgSDK) AddBootstrap(cfg BootstrapConfig, domainID, token string) (stri
 		return "", sdkerr
 	}
 
-	id := strings.TrimPrefix(headers.Get("Location"), "/things/configs/")
+	id := strings.TrimPrefix(headers.Get("Location"), "/clients/configs/")
 
 	return id, nil
 }
@@ -133,8 +133,8 @@ func (sdk mgSDK) Bootstraps(pm PageMetadata, domainID, token string) (BootstrapP
 	return bb, nil
 }
 
-func (sdk mgSDK) Whitelist(thingID string, state int, domainID, token string) errors.SDKError {
-	if thingID == "" {
+func (sdk mgSDK) Whitelist(clientID string, state int, domainID, token string) errors.SDKError {
+	if clientID == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
@@ -143,7 +143,7 @@ func (sdk mgSDK) Whitelist(thingID string, state int, domainID, token string) er
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, whitelistEndpoint, thingID)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, whitelistEndpoint, clientID)
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, data, nil, http.StatusCreated, http.StatusOK)
 
@@ -170,10 +170,10 @@ func (sdk mgSDK) ViewBootstrap(id, domainID, token string) (BootstrapConfig, err
 }
 
 func (sdk mgSDK) UpdateBootstrap(cfg BootstrapConfig, domainID, token string) errors.SDKError {
-	if cfg.ThingID == "" {
+	if cfg.ClientID == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, configsEndpoint, cfg.ThingID)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, configsEndpoint, cfg.ClientID)
 
 	data, err := json.Marshal(cfg)
 	if err != nil {
@@ -247,7 +247,7 @@ func (sdk mgSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, err
 	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
 
-	_, body, err := sdk.processRequest(http.MethodGet, url, ThingPrefix+externalKey, nil, nil, http.StatusOK)
+	_, body, err := sdk.processRequest(http.MethodGet, url, ClientPrefix+externalKey, nil, nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err
 	}
@@ -271,7 +271,7 @@ func (sdk mgSDK) BootstrapSecure(externalID, externalKey, cryptoKey string) (Boo
 		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
-	_, body, sdkErr := sdk.processRequest(http.MethodGet, url, ThingPrefix+encExtKey, nil, nil, http.StatusOK)
+	_, body, sdkErr := sdk.processRequest(http.MethodGet, url, ClientPrefix+encExtKey, nil, nil, http.StatusOK)
 	if sdkErr != nil {
 		return BootstrapConfig{}, sdkErr
 	}

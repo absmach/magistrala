@@ -21,7 +21,7 @@ import (
 )
 
 var cert = mgsdk.Cert{
-	ThingID: thing.ID,
+	ClientID: client.ID,
 }
 
 func TestGetCertCmd(t *testing.T) {
@@ -45,8 +45,8 @@ func TestGetCertCmd(t *testing.T) {
 		{
 			desc: "get cert successfully",
 			args: []string{
-				"thing",
-				thing.ID,
+				"client",
+				client.ID,
 				domainID,
 				validToken,
 			},
@@ -63,7 +63,7 @@ func TestGetCertCmd(t *testing.T) {
 		{
 			desc: "get cert successfully by id",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				validToken,
 			},
@@ -73,8 +73,8 @@ func TestGetCertCmd(t *testing.T) {
 		{
 			desc: "get cert with invalid token",
 			args: []string{
-				"thing",
-				thing.ID,
+				"client",
+				client.ID,
 				domainID,
 				invalidToken,
 			},
@@ -85,7 +85,7 @@ func TestGetCertCmd(t *testing.T) {
 		{
 			desc: "get cert by id with invalid token",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				invalidToken,
 			},
@@ -96,7 +96,7 @@ func TestGetCertCmd(t *testing.T) {
 		{
 			desc: "get cert with invalid args",
 			args: []string{
-				thing.ID,
+				client.ID,
 			},
 			logType: usageLog,
 		},
@@ -104,12 +104,12 @@ func TestGetCertCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ViewCertByThing", mock.Anything, mock.Anything, mock.Anything).Return(tc.serials, tc.sdkErr)
+			sdkCall := sdkMock.On("ViewCertByClient", mock.Anything, mock.Anything, mock.Anything).Return(tc.serials, tc.sdkErr)
 			sdkCall1 := sdkMock.On("ViewCert", mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
-				if tc.args[1] == "thing" {
+				if tc.args[1] == "client" {
 					err := json.Unmarshal([]byte(out), &cts)
 					assert.Nil(t, err)
 					assert.Equal(t, tc.serials, cts, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.serials, cts))
@@ -150,7 +150,7 @@ func TestRevokeCertCmd(t *testing.T) {
 		{
 			desc: "revoke cert successfully",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				token,
 			},
@@ -161,7 +161,7 @@ func TestRevokeCertCmd(t *testing.T) {
 		{
 			desc: "revoke cert with invalid args",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				token,
 				extraArg,
@@ -171,7 +171,7 @@ func TestRevokeCertCmd(t *testing.T) {
 		{
 			desc: "revoke cert with invalid token",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				invalidToken,
 			},
@@ -221,7 +221,7 @@ func TestIssueCertCmd(t *testing.T) {
 		{
 			desc: "issue cert successfully",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				validToken,
 			},
@@ -231,7 +231,7 @@ func TestIssueCertCmd(t *testing.T) {
 		{
 			desc: "issue cert with invalid args",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				validToken,
 				extraArg,
@@ -241,7 +241,7 @@ func TestIssueCertCmd(t *testing.T) {
 		{
 			desc: "issue cert with invalid token",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				invalidToken,
 			},

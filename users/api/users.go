@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/absmach/magistrala"
 	mgauth "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/api"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -28,7 +28,7 @@ import (
 var passRegex = regexp.MustCompile("^.{8,}$")
 
 // usersHandler returns a HTTP handler for API endpoints.
-func usersHandler(svc users.Service, authn mgauthn.Authentication, tokenClient magistrala.TokenServiceClient, selfRegister bool, r *chi.Mux, logger *slog.Logger, pr *regexp.Regexp, providers ...oauth2.Provider) http.Handler {
+func usersHandler(svc users.Service, authn mgauthn.Authentication, tokenClient grpcTokenV1.TokenServiceClient, selfRegister bool, r *chi.Mux, logger *slog.Logger, pr *regexp.Regexp, providers ...oauth2.Provider) *chi.Mux {
 	passRegex = pr
 
 	opts := []kithttp.ServerOption{
@@ -188,7 +188,7 @@ func usersHandler(svc users.Service, authn mgauthn.Authentication, tokenClient m
 			opts...,
 		), "list_users_by_user_group_id").ServeHTTP)
 
-		// Ideal location: things service, channels endpoint.
+		// Ideal location: clients service, channels endpoint.
 		// Reason for placing here :
 		// SpiceDB provides list of user ids in given channel_id
 		// and users service can access spiceDB and get the user list with channel_id.
@@ -200,12 +200,12 @@ func usersHandler(svc users.Service, authn mgauthn.Authentication, tokenClient m
 			opts...,
 		), "list_users_by_channel_id").ServeHTTP)
 
-		r.Get("/{domainID}/things/{thingID}/users", otelhttp.NewHandler(kithttp.NewServer(
-			listMembersByThingEndpoint(svc),
-			decodeListMembersByThing,
+		r.Get("/{domainID}/clients/{clientID}/users", otelhttp.NewHandler(kithttp.NewServer(
+			listMembersByClientEndpoint(svc),
+			decodeListMembersByClient,
 			api.EncodeResponse,
 			opts...,
-		), "list_users_by_thing_id").ServeHTTP)
+		), "list_users_by_client_id").ServeHTTP)
 
 		r.Get("/{domainID}/users", otelhttp.NewHandler(kithttp.NewServer(
 			listMembersByDomainEndpoint(svc),
@@ -576,14 +576,14 @@ func decodeListMembersByChannel(_ context.Context, r *http.Request) (interface{}
 	return req, nil
 }
 
-func decodeListMembersByThing(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListMembersByClient(_ context.Context, r *http.Request) (interface{}, error) {
 	page, err := queryPageParams(r, api.DefPermission)
 	if err != nil {
 		return nil, err
 	}
 	req := listMembersByObjectReq{
 		Page:     page,
-		objectID: chi.URLParam(r, "thingID"),
+		objectID: chi.URLParam(r, "clientID"),
 	}
 
 	return req, nil
@@ -668,7 +668,7 @@ func queryPageParams(r *http.Request, defPermission string) (users.Page, error) 
 }
 
 // oauth2CallbackHandler is a http.HandlerFunc that handles OAuth2 callbacks.
-func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service, tokenClient magistrala.TokenServiceClient) http.HandlerFunc {
+func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service, tokenClient grpcTokenV1.TokenServiceClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !oauth.IsEnabled() {
 			http.Redirect(w, r, oauth.ErrorURL()+"?error=oauth%20provider%20is%20disabled", http.StatusSeeOther)
@@ -703,7 +703,7 @@ func oauth2CallbackHandler(oauth oauth2.Provider, svc users.Service, tokenClient
 				return
 			}
 
-			jwt, err := tokenClient.Issue(r.Context(), &magistrala.IssueReq{
+			jwt, err := tokenClient.Issue(r.Context(), &grpcTokenV1.IssueReq{
 				UserId: user.ID,
 				Type:   uint32(mgauth.AccessKey),
 			})

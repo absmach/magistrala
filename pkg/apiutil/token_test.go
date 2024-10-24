@@ -61,7 +61,7 @@ func TestExtractBearerToken(t *testing.T) {
 	}
 }
 
-func TestExtractThingKey(t *testing.T) {
+func TestExtractClientSecret(t *testing.T) {
 	cases := []struct {
 		desc    string
 		request *http.Request
@@ -71,7 +71,7 @@ func TestExtractThingKey(t *testing.T) {
 			desc: "valid bearer token",
 			request: &http.Request{
 				Header: map[string][]string{
-					"Authorization": {"Thing 123"},
+					"Authorization": {"Client 123"},
 				},
 			},
 			token: "123",
@@ -105,7 +105,7 @@ func TestExtractThingKey(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			token := apiutil.ExtractThingKey(c.request)
+			token := apiutil.ExtractClientSecret(c.request)
 			assert.Equal(t, c.token, token)
 		})
 	}

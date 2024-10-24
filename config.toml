@@ -18,6 +18,6 @@ user_token = ""
   http_adapter_url = "http://localhost:8008"
   invitations_url = "http://localhost:9020"
   reader_url = "http://localhost:9011"
-  things_url = "http://localhost:9000"
+  clients_url = "http://localhost:9000"
   tls_verification = false
   users_url = "http://localhost:9002"

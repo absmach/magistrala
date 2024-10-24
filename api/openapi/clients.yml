@@ -1,0 +1,2070 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.0.3
+info:
+  title: Magistrala Clients Service
+  description: |
+    This is the Clients Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform clients and channels. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    Some useful links:
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
+  contact:
+    email: info@abstractmachines.fr
+  license:
+    name: Apache 2.0
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:9000
+  - url: https://localhost:9000
+
+tags:
+  - name: Clients
+    description: Everyclient about your Clients
+    externalDocs:
+      description: Find out more about clients
+      url: https://docs.magistrala.abstractmachines.fr/
+  - name: Channels
+    description: Everyclient about your Channels
+    externalDocs:
+      description: Find out more about clients channels
+      url: https://docs.magistrala.abstractmachines.fr/
+  - name: Policies
+    description: Access to clients policies
+    externalDocs:
+      description: Find out more about clients policies
+      url: https://docs.magistrala.abstractmachines.fr/
+
+paths:
+  /{domainID}clients:
+    post:
+      operationId: createClient
+      tags:
+        - Clients
+      summary: Adds new client
+      description: |
+        Adds new client to the list of clients owned by user identified using
+        the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+      requestBody:
+        $ref: "#/components/requestBodies/ClientCreateReq"
+      responses:
+        "201":
+          $ref: "#/components/responses/ClientCreateRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+    get:
+      operationId: listClients
+      tags:
+        - Clients
+      summary: Retrieves clients
+      description: |
+        Retrieves a list of clients. Due to performance concerns, data
+        is retrieved in subsets. The API clients must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/ClientName"
+        - $ref: "#/components/parameters/Tags"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: |
+            Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/bulk:
+    post:
+      operationId: bulkCreateClients
+      summary: Bulk provisions new clients
+      description: |
+        Adds a list og new clients to the list of clients owned by user identified using
+        the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+      tags:
+        - Clients
+      requestBody:
+        $ref: "#/components/requestBodiesclientsCreateReq"
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientPageRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}:
+    get:
+      operationId: getClient
+      summary: Retrieves client info
+      description: |
+        Retrieves a specific client that is identifier by the client ID.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientRes"
+        "400":
+          description: Failed due to malformed domain ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+    patch:
+      operationId: updateClient
+      summary: Updates name and metadata of the client.
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the client's type and ID
+        cannot be changed.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      requestBody:
+        $ref: "#/components/requestBodies/ClientUpdateReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Failed due to non existing client.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete client for a client with the given id.
+      description: |
+        Delete client removes a client with the given id from repo
+        and removes all the policies related to this client.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Client deleted.
+        "400":
+          description: Failed due to malformed domain ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to client id.
+        "404":
+          description: Missing client.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}/tags:
+    patch:
+      operationId: updateClientTags
+      summary: Updates tags the client.
+      description: |
+        Updates tags of the client with provided ID. Tags is updated using
+        authorization token and the new tags received in request.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      requestBody:
+        $ref: "#/components/requestBodies/ClientUpdateTagsReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Failed due to non existing client.
+        "401":
+          description: Missing or invalid access token provided.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}/secret:
+    patch:
+      operationId: updateClientSecret
+      summary: Updates Secret of the identified client.
+      description: |
+        Updates secret of the identified in client. Secret is updated using
+        authorization token and the new received info. Update is performed by replacing current key with a new one.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      requestBody:
+        $ref: "#/components/requestBodies/ClientUpdateSecretReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Failed due to non existing client.
+        "409":
+          description: Specified key already exists.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}/disable:
+    post:
+      operationId: disableClient
+      summary: Disables a client
+      description: |
+        Disables a specific client that is identifier by the client ID.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientRes"
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to already disabled client.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}/enable:
+    post:
+      operationId: enableClient
+      summary: Enables a client
+      description: |
+        Enables a specific client that is identifier by the client ID.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientRes"
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to already enabled client.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}/share:
+    post:
+      operationId: shareClient
+      summary: Shares a client
+      description: |
+        Shares a specific client that is identifier by the client ID.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      requestBody:
+        $ref: "#/components/requestBodies/ShareClientReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Client shared.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}/unshare:
+    post:
+      operationId: unshareClient
+      summary: Unshares a client
+      description: |
+        Unshares a specific client that is identifier by the client ID.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+      requestBody:
+        $ref: "#/components/requestBodies/ShareClientReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Client unshared.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}clients:
+    get:
+      operationId: listClientsInaChannel
+      summary: List of clients connected to specified channel
+      description: |
+        Retrieves list of clients connected to specified channel with pagination
+        metadata.
+      tags:
+        - Clients
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Connected"
+      responses:
+        "200":
+          $ref: "#/components/responsesclientsPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels:
+    post:
+      operationId: createChannel
+      tags:
+        - Channels
+      summary: Creates new channel
+      description: |
+        Creates new channel in domain.
+      requestBody:
+        $ref: "#/components/requestBodies/ChannelCreateReq"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+      responses:
+        "201":
+          $ref: "#/components/responses/ChannelCreateRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+    get:
+      operationId: listChannels
+      summary: Lists channels.
+      description: |
+        Retrieves a list of channels. Due to performance concerns, data
+        is retrieved in subsets. The API clients must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - Channels
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/ChannelName"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Channel does not exist.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}:
+    get:
+      operationId: getChannel
+      summary: Retrieves channel info.
+      description: |
+        Gets info on a channel specified by id.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelRes"
+        "400":
+          description: Failed due to malformed channel's or domain ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Channel does not exist.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+    put:
+      operationId: updateChannel
+      summary: Updates channel data.
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the channel's ID will not be
+        affected.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/ChannelUpdateReq"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Channel does not exist.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete channel for given channel id.
+      description: |
+        Delete channel remove given channel id from repo
+        and removes all the policies related to channel.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Channel deleted.
+        "400":
+          description: Failed due to malformed domain ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to client id.
+        "404":
+          description: A non-existent entity request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}/enable:
+    post:
+      operationId: enableChannel
+      summary: Enables a channel
+      description: |
+        Enables a specific channel that is identifier by the channel ID.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to already enabled channel.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}/disable:
+    post:
+      operationId: disableChannel
+      summary: Disables a channel
+      description: |
+        Disables a specific channel that is identifier by the channel ID.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelRes"
+        "400":
+          description: Failed due to malformed channel's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to already disabled channel.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}/users/assign:
+    post:
+      operationId: assignUsersToChannel
+      summary: Assigns a member to a channel
+      description: |
+        Assigns a specific member to a channel that is identifier by the channel ID.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      requestBody:
+        $ref: "#/components/requestBodies/AssignUserReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Client shared.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}/users/unassign:
+    post:
+      operationId: unassignUsersFromChannel
+      summary: Unassigns a member from a channel
+      description: |
+        Unassigns a specific member from a channel that is identifier by the channel ID.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      requestBody:
+        $ref: "#/components/requestBodies/AssignUserReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Client unshared.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}/groups/assign:
+    post:
+      operationId: assignGroupsToChannel
+      summary: Assigns a member to a channel
+      description: |
+        Assigns a specific member to a channel that is identifier by the channel ID.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      requestBody:
+        $ref: "#/components/requestBodies/AssignUsersReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Client shared.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}/groups/unassign:
+    post:
+      operationId: unassignGroupsFromChannel
+      summary: Unassigns a member from a channel
+      description: |
+        Unassigns a specific member from a channel that is identifier by the channel ID.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+      requestBody:
+        $ref: "#/components/requestBodies/AssignUsersReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Client unshared.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}clients/{clientID}/channels:
+    get:
+      operationId: listChannelsConnectedToClient
+      summary: List of channels connected to specified client
+      description: |
+        Retrieves list of channels connected to specified client with pagination
+        metadata.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Client does not exist.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/users/{memberID}/channels:
+    get:
+      operationId: listChannelsConnectedToUser
+      summary: List of channels connected to specified user
+      description: |
+        Retrieves list of channels connected to specified user with pagination
+        metadata.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/MemberID"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Client does not exist.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/groups/{memberID}/channels:
+    get:
+      operationId: listChannelsConnectedToGroup
+      summary: List of channels connected to specified group
+      description: |
+        Retrieves list of channels connected to specified group with pagination
+        metadata.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/MemberID"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChannelPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Client does not exist.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/connect:
+    post:
+      operationId: connectClientsAndChannels
+      summary: Connects client and channel.
+      description: |
+        Connect clients specified by IDs to channels specified by IDs.
+        Channel and client are owned by user identified using the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+      tags:
+        - Policies
+      requestBody:
+        $ref: "#/components/requestBodies/ConnCreateReq"
+      responses:
+        "201":
+          $ref: "#/components/responses/ConnCreateRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Entity already exist.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/disconnect:
+    post:
+      operationId: disconnectClientsAndChannels
+      summary: Disconnect clients and channels using lists of IDs.
+      description: |
+        Disconnect clients from channels specified by lists of IDs.
+        Channels and clients are owned by user identified using the provided access token.
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+      tags:
+        - Policies
+      requestBody:
+        $ref: "#/components/requestBodies/DisconnReq"
+      responses:
+        "204":
+          $ref: "#/components/responses/DisconnRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}clients/{clientID}/connect:
+    post:
+      operationId: connectClientToChannel
+      summary: Connects a client to a channel
+      description: |
+        Connects a specific client to a channel that is identifier by the channel ID.
+      tags:
+        - Policies
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+        - $ref: "#/components/parameters/clientID"
+      responses:
+        "200":
+          description: Client connected.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/channels/{chanID}clients/{clientID}/disconnect:
+    post:
+      operationId: disconnectClientFromChannel
+      summary: Disconnects a client to a channel
+      description: |
+        Disconnects a specific client to a channel that is identifier by the channel ID.
+      tags:
+        - Policies
+      parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/chanID"
+        - $ref: "#/components/parameters/clientID"
+      responses:
+        "200":
+          description: Client connected.
+        "400":
+          description: Failed due to malformed client's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthRes"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  schemas:
+    ClientReqObj:
+      type: object
+      properties:
+        name:
+          type: string
+          example: clientName
+          description: Client name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["tag1", "tag2"]
+          description: Client tags.
+        credentials:
+          type: object
+          properties:
+            identity:
+              type: string
+              example: "clientIDentity"
+              description: Client's identity will be used as its unique identifier
+            secret:
+              type: string
+              format: password
+              example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+              minimum: 8
+              description: Free-form account secret used for acquiring auth token(s).
+        metadata:
+          type: object
+          example: { "model": "example" }
+          description: Arbitrary, object-encoded client's data.
+        status:
+          type: string
+          description: Client Status
+          format: string
+          example: enabled
+      required:
+        - credentials
+
+    ChannelReqObj:
+      type: object
+      properties:
+        name:
+          type: string
+          example: channelName
+          description: Free-form channel name. Channel name is unique on the given hierarchy level.
+        description:
+          type: string
+          example: long channel description
+          description: Channel description, free form text.
+        parent_id:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Id of parent channel, it must be existing channel.
+        metadata:
+          type: object
+          example: { "location": "example" }
+          description: Arbitrary, object-encoded channels's data.
+        status:
+          type: string
+          description: Channel Status
+          format: string
+          example: enabled
+      required:
+        - name
+
+    PolicyReqObj:
+      type: object
+      properties:
+        user_ids:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          description: User IDs
+          example:
+            [
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+            ]
+        relation:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["m_write", "g_add"]
+          description: Policy relations.
+      required:
+        - user_ids
+        - relation
+
+    AssignReqObj:
+      type: object
+      properties:
+        members:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          description: Members IDs
+          example:
+            [
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+            ]
+        relation:
+          type: string
+          example: "m_write"
+          description: Policy relations.
+        member_kind:
+          type: string
+          example: "user"
+          description: Member kind.
+      required:
+        - members
+        - relation
+        - member_kind
+
+    AssignUserReqObj:
+      type: object
+      properties:
+        users_ids:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          description: Users IDs
+          example:
+            [
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+            ]
+        relation:
+          type: string
+          example: "m_write"
+          description: Policy relations.
+      required:
+        - users_ids
+        - relation
+
+    AssignUsersReqObj:
+      type: object
+      properties:
+        group_ids:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          description: Group IDs
+          example:
+            [
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+              "bb7edb32-2eac-4aad-aebe-ed96fe073879",
+            ]
+      required:
+        - group_ids
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Client unique identifier.
+        name:
+          type: string
+          example: clientName
+          description: Client name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["tag1", "tag2"]
+          description: Client tags.
+        domain_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: ID of the domain to which client belongs.
+        credentials:
+          type: object
+          properties:
+            identity:
+              type: string
+              example: clientIDentity
+              description: Client Identity for example email address.
+            secret:
+              type: string
+              example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+              description: Client secret password.
+        metadata:
+          type: object
+          example: { "model": "example" }
+          description: Arbitrary, object-encoded client's data.
+        status:
+          type: string
+          description: Client Status
+          format: string
+          example: enabled
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+      xml:
+        name: client
+
+    ClientWithEmptySecret:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Client unique identifier.
+        name:
+          type: string
+          example: clientName
+          description: Client name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["tag1", "tag2"]
+          description: Client tags.
+        domain_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: ID of the domain to which client belongs.
+        credentials:
+          type: object
+          properties:
+            identity:
+              type: string
+              example: clientIDentity
+              description: Client Identity for example email address.
+            secret:
+              type: string
+              example: ""
+              description: Client secret password.
+        metadata:
+          type: object
+          example: { "model": "example" }
+          description: Arbitrary, object-encoded client's data.
+        status:
+          type: string
+          description: Client Status
+          format: string
+          example: enabled
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+      xml:
+        name: client
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Unique channel identifier generated by the service.
+        name:
+          type: string
+          example: channelName
+          description: Free-form channel name. Channel name is unique on the given hierarchy level.
+        domain_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: ID of the domain to which the group belongs.
+        parent_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Channel parent identifier.
+        description:
+          type: string
+          example: long channel description
+          description: Channel description, free form text.
+        metadata:
+          type: object
+          example: { "role": "general" }
+          description: Arbitrary, object-encoded channels's data.
+        path:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879.bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Hierarchy path, concatenated ids of channel ancestors.
+        level:
+          type: integer
+          description: Level in hierarchy, distance from the root channel.
+          format: int32
+          example: 2
+          maximum: 5
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Datetime when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Datetime when the channel was created.
+        status:
+          type: string
+          description: Channel Status
+          format: string
+          example: enabled
+      xml:
+        name: channel
+
+    Policy:
+      type: object
+      properties:
+        owner_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Policy owner identifier.
+        subject:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Policy subject identifier.
+        object:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Policy object identifier.
+        actions:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ["m_write", "g_add"]
+          description: Policy actions.
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the policy was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the policy was updated.
+      xml:
+        name: policy
+
+    ClientsPage:
+      type: object
+      properties:
+        clients:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/ClientWithEmptySecret"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - clients
+        - total
+        - offset
+
+    ChannelsPage:
+      type: object
+      properties:
+        channels:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Channel"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - channels
+        - total
+        - offset
+
+    PoliciesPage:
+      type: object
+      properties:
+        policies:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Policy"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - policies
+        - total
+        - offset
+
+    ClientUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: clientName
+          description: Client name.
+        metadata:
+          type: object
+          example: { "role": "general" }
+          description: Arbitrary, object-encoded client's data.
+      required:
+        - name
+        - metadata
+
+    ClientTags:
+      type: object
+      properties:
+        tags:
+          type: array
+          example: ["tag1", "tag2"]
+          description: Client tags.
+          minItems: 0
+          uniqueItems: true
+          items:
+            type: string
+
+    ClientSecret:
+      type: object
+      properties:
+        secret:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: New client secret.
+      required:
+        - secret
+
+    ChannelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: channelName
+          description: Free-form channel name. Channel name is unique on the given hierarchy level.
+        description:
+          type: string
+          example: long description but not too long
+          description: Channel description, free form text.
+        metadata:
+          type: object
+          example: { "role": "general" }
+          description: Arbitrary, object-encoded channels's data.
+      required:
+        - name
+        - metadata
+        - description
+
+    ConnectionReqSchema:
+      type: object
+      properties:
+        objects:
+          type: array
+          description: Channel IDs.
+          items:
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        subjects:
+          type: array
+          description: Client IDs
+          items:
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        permission:
+          type: array
+          description: policy actions
+          items:
+            example: publish
+
+    DisConnectionReqSchema:
+      type: object
+      properties:
+        objects:
+          type: array
+          description: Channel IDs.
+          items:
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        subjects:
+          type: array
+          description: Client IDs
+          items:
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      example: { "error": "malformed entity specification" }
+
+    HealthRes:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Service status.
+          enum:
+            - pass
+        version:
+          type: string
+          description: Service version.
+          example: 0.14.0
+        commit:
+          type: string
+          description: Service commit hash.
+          example: 7d6f4dc4f7f0c1fa3dc24eddfb18bb5073ff4f62
+        description:
+          type: string
+          description: Service description.
+          example: clients service
+        build_time:
+          type: string
+          description: Service build time.
+          example: 1970-01-01_00:00:00
+
+  parameters:
+    clientID:
+      name: clientID
+      description: Unique client identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    MemberID:
+      name: memberID
+      description: Unique member identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+        minLength: 36
+        maxLength: 36
+        pattern: "^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    ClientName:
+      name: name
+      description: Client's name.
+      in: query
+      schema:
+        type: string
+      required: false
+      example: "clientName"
+
+    Status:
+      name: status
+      description: Client account status.
+      in: query
+      schema:
+        type: string
+        default: enabled
+      required: false
+      example: enabled
+
+    Tags:
+      name: tags
+      description: Client tags.
+      in: query
+      schema:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          type: string
+      required: false
+      example: ["yello", "orange"]
+
+    ChannelName:
+      name: name
+      description: Channel's name.
+      in: query
+      schema:
+        type: string
+      required: false
+      example: "channelName"
+
+    ChannelDescription:
+      name: name
+      description: Channel's description.
+      in: query
+      schema:
+        type: string
+      required: false
+      example: "channel description"
+
+    chanID:
+      name: chanID
+      description: Unique channel identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    ParentId:
+      name: parentId
+      description: Unique parent identifier for a channel.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    Level:
+      name: level
+      description: Level of hierarchy up to which to retrieve channels from given channel id.
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 5
+      required: false
+
+    Tree:
+      name: tree
+      description: Specify type of response, JSON array or tree.
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+
+    Metadata:
+      name: metadata
+      description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+      in: query
+      schema:
+        type: string
+        minimum: 0
+      required: false
+
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+      example: "100"
+
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+      example: "0"
+
+    Connected:
+      name: connected
+      description: Connection state of the subset to retrieve.
+      in: query
+      schema:
+        type: boolean
+        default: true
+      required: false
+
+  requestBodies:
+    ClientCreateReq:
+      description: JSON-formatted document describing the new client to be registered
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ClientReqObj"
+
+    ClientUpdateReq:
+      description: JSON-formated document describing the metadata and name of client to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ClientUpdate"
+
+    ClientUpdateTagsReq:
+      description: JSON-formated document describing the tags of client to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ClientTags"
+
+    ClientUpdateSecretReq:
+      description: Secret change data. Client can change its secret.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemasclientsecret"
+
+    ShareClientReq:
+      description: JSON-formated document describing the policy related to sharing clients
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyReqObj"
+
+    AssignReq:
+      description: JSON-formated document describing the policy related to assigning members to a channel
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AssignReqObj"
+
+    AssignUserReq:
+      description: JSON-formated document describing the policy related to assigning members to a channel
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AssignUserReqObj"
+
+    AssignUsersReq:
+      description: JSON-formated document describing the policy related to assigning members to a channel
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AssignUsersReqObj"
+
+    ChannelCreateReq:
+      description: JSON-formatted document describing the new channel to be registered
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelReqObj"
+
+    ChannelUpdateReq:
+      description: JSON-formated document describing the metadata and name of channel to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelUpdate"
+
+    ClientsCreateReq:
+      description: JSON-formatted document describing the new clients.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ClientReqObj"
+
+    ConnCreateReq:
+      description: JSON-formatted document describing the new connection.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConnectionReqSchema"
+
+    DisconnReq:
+      description: JSON-formatted document describing the entities for disconnection.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DisConnectionReqSchema"
+
+  responses:
+    ClientCreateRes:
+      description: Registered new client.
+      headers:
+        Location:
+          schema:
+            type: string
+            format: url
+          description: Registered client relative URL in the format `clients/<client_id>`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Client"
+      links:
+        get:
+          operationId: getClient
+          parameters:
+            clientID: $response.body#/id
+        get_channels:
+          operationId: listChannelsConnectedToClient
+          parameters:
+            clientID: $response.body#/id
+        update:
+          operationId: updateClient
+          parameters:
+            clientID: $response.body#/id
+        update_tags:
+          operationId: updateClientTags
+          parameters:
+            clientID: $response.body#/id
+        update_secret:
+          operationId: updateClientSecret
+          parameters:
+            clientID: $response.body#/id
+        share:
+          operationId: shareClient
+          parameters:
+            clientID: $response.body#/id
+        unsahre:
+          operationId: unshareClient
+          parameters:
+            clientID: $response.body#/id
+        disable:
+          operationId: disableClient
+          parameters:
+            clientID: $response.body#/id
+        enable:
+          operationId: enableClient
+          parameters:
+            clientID: $response.body#/id
+
+    ClientRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Client"
+      links:
+        get_channels:
+          operationId: listChannelsConnectedToClient
+          parameters:
+            clientID: $response.body#/id
+        share:
+          operationId: shareClient
+          parameters:
+            clientID: $response.body#/id
+        unsahre:
+          operationId: unshareClient
+          parameters:
+            clientID: $response.body#/id
+
+    ClientPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemasclientsPage"
+
+    ClientsPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemasclientsPage"
+
+    ChannelCreateRes:
+      description: Registered new channel.
+      headers:
+        Location:
+          schema:
+            type: string
+            format: url
+          description: Registered channel relative URL in the format `/channels/<channel_id>`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Channel"
+      links:
+        get:
+          operationId: getChannel
+          parameters:
+            chanID: $response.body#/id
+        get_clients:
+          operationId: listClientsInaChannel
+          parameters:
+            chanID: $response.body#/id
+        get_users:
+          operationId: listChannelsConnectedToUser
+          parameters:
+            memberID: $response.body#/id
+        get_groups:
+          operationId: listChannelsConnectedToGroup
+          parameters:
+            memberID: $response.body#/id
+        update:
+          operationId: updateChannel
+          parameters:
+            chanID: $response.body#/id
+        disable:
+          operationId: disableChannel
+          parameters:
+            chanID: $response.body#/id
+        enable:
+          operationId: enableChannel
+          parameters:
+            chanID: $response.body#/id
+        assign_users:
+          operationId: assignUsersToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_users:
+          operationId: unassignUsersFromChannel
+          parameters:
+            chanID: $response.body#/id
+        assign_groups:
+          operationId: assignGroupsToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_groups:
+          operationId: unassignGroupsFromChannel
+          parameters:
+            chanID: $response.body#/id
+
+    ChannelRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Channel"
+      links:
+        get_clients:
+          operationId: listClientsInaChannel
+          parameters:
+            chanID: $response.body#/id
+        get_users:
+          operationId: listChannelsConnectedToUser
+          parameters:
+            memberID: $response.body#/id
+        get_groups:
+          operationId: listChannelsConnectedToGroup
+          parameters:
+            memberID: $response.body#/id
+        assign_users:
+          operationId: assignUsersToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_users:
+          operationId: unassignUsersFromChannel
+          parameters:
+            chanID: $response.body#/id
+        assign_groups:
+          operationId: assignGroupsToChannel
+          parameters:
+            chanID: $response.body#/id
+        unassign_groups:
+          operationId: unassignGroupsFromChannel
+          parameters:
+            chanID: $response.body#/id
+
+    ChannelPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelsPage"
+
+    ConnCreateRes:
+      description: Client registered.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PoliciesPage"
+
+    DisconnRes:
+      description: Clients disconnected.
+
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/health+json:
+          schema:
+            $ref: "#/components/schemas/HealthRes"
+
+    ServiceError:
+      description: Unexpected server-side error occurred.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Client access: "Authorization: Bearer <user_access_token>"
+
+security:
+  - bearerAuth: []

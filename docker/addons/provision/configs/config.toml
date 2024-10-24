@@ -19,13 +19,13 @@
     [bootstrap.content.agent.server]
       nats_url = "localhost:4222"
       port = "9000"
-  
+
     [bootstrap.content.agent.heartbeat]
       interval = "30s"
-  
+
     [bootstrap.content.agent.terminal]
       session_timeout = "30s"
-    
+
 
     [bootstrap.content.export.exp]
       log_level = "debug"
@@ -37,12 +37,12 @@
 
     [bootstrap.content.export.mqtt]
       ca_path = "ca.crt"
-      cert_path = "thing.crt"
+      cert_path = "client.crt"
       channel = ""
       host = "tcp://localhost:1883"
       mtls = false
       password = ""
-      priv_key_path = "thing.key"
+      priv_key_path = "client.key"
       qos = 0
       retain = false
       skip_tls_ver = false
@@ -55,10 +55,10 @@
       type = "plain"
       workers = 10
 
-[[things]]
-  name = "thing"
+[[clients]]
+  name = "client"
 
-  [things.metadata]
+  [clients.metadata]
     external_id = "xxxxxx"
 
 [[channels]]

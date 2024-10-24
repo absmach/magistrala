@@ -31,11 +31,11 @@ func MetricsMiddleware(svc ws.Service, counter metrics.Counter, latency metrics.
 }
 
 // Subscribe instruments Subscribe method with metrics.
-func (mm *metricsMiddleware) Subscribe(ctx context.Context, thingKey, chanID, subtopic string, c *ws.Client) error {
+func (mm *metricsMiddleware) Subscribe(ctx context.Context, clientKey, chanID, subtopic string, c *ws.Client) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "subscribe").Add(1)
 		mm.latency.With("method", "subscribe").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Subscribe(ctx, thingKey, chanID, subtopic, c)
+	return mm.svc.Subscribe(ctx, clientKey, chanID, subtopic, c)
 }

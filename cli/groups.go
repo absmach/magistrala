@@ -6,7 +6,7 @@ package cli
 import (
 	"encoding/json"
 
-	"github.com/absmach/magistrala/internal/groups"
+	"github.com/absmach/magistrala/groups"
 	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/spf13/cobra"
 )

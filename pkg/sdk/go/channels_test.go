@@ -12,6 +12,11 @@ import (
 	"time"
 
 	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/channels"
+	chmocks "github.com/absmach/magistrala/channels/mocks"
+	"github.com/absmach/magistrala/clients"
+	thapi "github.com/absmach/magistrala/clients/api/http"
+	climocks "github.com/absmach/magistrala/clients/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
@@ -19,13 +24,9 @@ import (
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/groups"
-	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
 	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
 	policies "github.com/absmach/magistrala/pkg/policies"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
-	thapi "github.com/absmach/magistrala/things/api/http"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	usapi "github.com/absmach/magistrala/users/api"
 	usmocks "github.com/absmach/magistrala/users/mocks"
 	"github.com/go-chi/chi/v5"
@@ -40,10 +41,10 @@ var (
 	channel        = generateTestChannel(&testing.T{})
 )
 
-func setupChannels() (*httptest.Server, *gmocks.Service, *authnmocks.Authentication) {
-	tsvc := new(thmocks.Service)
+func setupChannels() (*httptest.Server, *chmocks.Service, *authnmocks.Authentication) {
+	tsvc := new(climocks.Service)
 	usvc := new(usmocks.Service)
-	gsvc := new(gmocks.Service)
+	gsvc := new(chmocks.Service)
 	logger := mglog.NewMock()
 	provider := new(oauth2mocks.Provider)
 	provider.On("Name").Return("test")
@@ -52,7 +53,7 @@ func setupChannels() (*httptest.Server, *gmocks.Service, *authnmocks.Authenticat
 
 	mux := chi.NewRouter()
 
-	thapi.MakeHandler(tsvc, gsvc, authn, mux, logger, "")
+	thapi.MakeHandler(tsvc, authn, mux, logger, "")
 	usapi.MakeHandler(usvc, authn, token, true, gsvc, mux, logger, "", passRegex, provider)
 	return httptest.NewServer(mux), gsvc, authn
 }
@@ -61,17 +62,17 @@ func TestCreateChannel(t *testing.T) {
 	ts, gsvc, auth := setupChannels()
 	defer ts.Close()
 
-	group := convertChannel(channel)
-	createGroupReq := groups.Group{
+	channel := convertChannel(channel)
+	createGroupReq := channels.Channel{
 		Name:     channel.Name,
-		Metadata: groups.Metadata{"role": "client"},
-		Status:   groups.EnabledStatus,
+		Metadata: clients.Metadata{"role": "client"},
+		Status:   clients.EnabledStatus,
 	}
 
 	channelReq := sdk.Channel{
 		Name:     channel.Name,
 		Metadata: validMetadata,
-		Status:   groups.EnabledStatus.String(),
+		Status:   clients.EnabledStatus.String(),
 	}
 
 	channelKind := "new_channel"
@@ -82,12 +83,12 @@ func TestCreateChannel(t *testing.T) {
 	pChannel.ParentID = parentID
 
 	iGroup := group
-	iGroup.Metadata = groups.Metadata{
+	iGroup.Metadata = clients.Metadata{
 		"test": make(chan int),
 	}
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 	cases := []struct {
@@ -96,8 +97,8 @@ func TestCreateChannel(t *testing.T) {
 		domainID        string
 		token           string
 		session         mgauthn.Session
-		createGroupReq  groups.Group
-		svcRes          groups.Group
+		createGroupReq  channels.Channel
+		svcRes          channels.Channel
 		svcErr          error
 		authenticateRes mgauthn.Session
 		authenticateErr error
@@ -121,7 +122,7 @@ func TestCreateChannel(t *testing.T) {
 			domainID:       domainID,
 			token:          validToken,
 			createGroupReq: createGroupReq,
-			svcRes:         groups.Group{},
+			svcRes:         channels.Channel{},
 			svcErr:         svcerr.ErrCreateEntity,
 			response:       sdk.Channel{},
 			err:            errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
@@ -136,8 +137,8 @@ func TestCreateChannel(t *testing.T) {
 			},
 			domainID:       domainID,
 			token:          validToken,
-			createGroupReq: groups.Group{},
-			svcRes:         groups.Group{},
+			createGroupReq: channels.Channel{},
+			svcRes:         channels.Channel{},
 			svcErr:         nil,
 			response:       sdk.Channel{},
 			err:            errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -147,14 +148,14 @@ func TestCreateChannel(t *testing.T) {
 			channelReq: sdk.Channel{
 				Name:     channel.Name,
 				ParentID: parentID,
-				Status:   groups.EnabledStatus.String(),
+				Status:   clients.EnabledStatus.String(),
 			},
 			domainID: domainID,
 			token:    validToken,
-			createGroupReq: groups.Group{
+			createGroupReq: channels.Channel{
 				Name:   channel.Name,
 				Parent: parentID,
-				Status: groups.EnabledStatus,
+				Status: clients.EnabledStatus,
 			},
 			svcRes:   pGroup,
 			svcErr:   nil,
@@ -166,16 +167,16 @@ func TestCreateChannel(t *testing.T) {
 			channelReq: sdk.Channel{
 				Name:     channel.Name,
 				ParentID: wrongID,
-				Status:   groups.EnabledStatus.String(),
+				Status:   clients.EnabledStatus.String(),
 			},
 			domainID: domainID,
 			token:    validToken,
-			createGroupReq: groups.Group{
+			createGroupReq: channels.Channel{
 				Name:   channel.Name,
 				Parent: wrongID,
-				Status: groups.EnabledStatus,
+				Status: clients.EnabledStatus,
 			},
-			svcRes:   groups.Group{},
+			svcRes:   channels.Channel{},
 			svcErr:   svcerr.ErrCreateEntity,
 			response: sdk.Channel{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
@@ -183,12 +184,12 @@ func TestCreateChannel(t *testing.T) {
 		{
 			desc: "create channel with missing name",
 			channelReq: sdk.Channel{
-				Status: groups.EnabledStatus.String(),
+				Status: clients.EnabledStatus.String(),
 			},
 			domainID:       domainID,
 			token:          validToken,
-			createGroupReq: groups.Group{},
-			svcRes:         groups.Group{},
+			createGroupReq: channels.Channel{},
+			svcRes:         channels.Channel{},
 			svcErr:         nil,
 			response:       sdk.Channel{},
 			err:            errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
@@ -203,19 +204,19 @@ func TestCreateChannel(t *testing.T) {
 				Metadata:    validMetadata,
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
-				Status:      groups.EnabledStatus.String(),
+				Status:      clients.EnabledStatus.String(),
 			},
 			domainID: domainID,
 			token:    validToken,
-			createGroupReq: groups.Group{
+			createGroupReq: channels.Channel{
 				ID:          group.ID,
 				Parent:      parentID,
 				Name:        channel.Name,
 				Description: description,
-				Metadata:    groups.Metadata{"role": "client"},
+				Metadata:    clients.Metadata{"role": "client"},
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
-				Status:      groups.EnabledStatus,
+				Status:      clients.EnabledStatus,
 			},
 			svcRes:   pGroup,
 			svcErr:   nil,
@@ -260,7 +261,7 @@ func TestListChannels(t *testing.T) {
 
 	var chs []sdk.Channel
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -268,8 +269,8 @@ func TestListChannels(t *testing.T) {
 		gr := sdk.Channel{
 			ID:       generateUUID(t),
 			Name:     fmt.Sprintf("channel_%d", i),
-			Metadata: sdk.Metadata{"name": fmt.Sprintf("thing_%d", i)},
-			Status:   groups.EnabledStatus.String(),
+			Metadata: sdk.Metadata{"name": fmt.Sprintf("client_%d", i)},
+			Status:   clients.EnabledStatus.String(),
 		}
 		chs = append(chs, gr)
 	}
@@ -279,15 +280,15 @@ func TestListChannels(t *testing.T) {
 		domainID        string
 		token           string
 		session         mgauthn.Session
-		status          groups.Status
+		status          channels.Status
 		total           uint64
 		offset          uint64
 		limit           uint64
 		level           int
 		name            string
 		metadata        sdk.Metadata
-		groupsPageMeta  groups.Page
-		svcRes          groups.Page
+		groupsPageMeta  channels.Page
+		svcRes          channels.Page
 		svcErr          error
 		authenticateRes mgauthn.Session
 		authenticateErr error
@@ -301,16 +302,14 @@ func TestListChannels(t *testing.T) {
 			limit:    limit,
 			offset:   offset,
 			total:    total,
-			groupsPageMeta: groups.Page{
-				PageMeta: groups.PageMeta{
+			groupsPageMeta: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: offset,
 					Limit:  limit,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: uint64(len(chs[offset:limit])),
 				},
 				Groups: convertChannels(chs[offset:limit]),
@@ -329,15 +328,13 @@ func TestListChannels(t *testing.T) {
 			domainID: domainID,
 			offset:   offset,
 			limit:    limit,
-			groupsPageMeta: groups.Page{
-				PageMeta: groups.PageMeta{
+			groupsPageMeta: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: offset,
 					Limit:  limit,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes:          groups.Page{},
+			svcRes:          channels.Page{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.ChannelsPage{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -348,8 +345,8 @@ func TestListChannels(t *testing.T) {
 			domainID:       validID,
 			offset:         offset,
 			limit:          limit,
-			groupsPageMeta: groups.Page{},
-			svcRes:         groups.Page{},
+			groupsPageMeta: channels.Page{},
+			svcRes:         channels.Page{},
 			svcErr:         nil,
 			response:       sdk.ChannelsPage{},
 			err:            errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -360,16 +357,14 @@ func TestListChannels(t *testing.T) {
 			domainID: domainID,
 			offset:   offset,
 			limit:    0,
-			groupsPageMeta: groups.Page{
-				PageMeta: groups.PageMeta{
+			groupsPageMeta: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: offset,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: uint64(len(chs[offset:])),
 				},
 				Groups: convertChannels(chs[offset:limit]),
@@ -389,8 +384,8 @@ func TestListChannels(t *testing.T) {
 			domainID:       domainID,
 			offset:         offset,
 			limit:          110,
-			groupsPageMeta: groups.Page{},
-			svcRes:         groups.Page{},
+			groupsPageMeta: channels.Page{},
+			svcRes:         channels.Page{},
 			svcErr:         nil,
 			response:       sdk.ChannelsPage{},
 			err:            errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
@@ -402,17 +397,14 @@ func TestListChannels(t *testing.T) {
 			offset:   0,
 			limit:    1,
 			level:    1,
-			groupsPageMeta: groups.Page{
-				PageMeta: groups.PageMeta{
+			groupsPageMeta: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: offset,
 					Limit:  1,
 				},
-				Level:      1,
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
 				},
 				Groups: convertChannels(chs[0:1]),
@@ -432,18 +424,16 @@ func TestListChannels(t *testing.T) {
 			domainID: domainID,
 			offset:   0,
 			limit:    10,
-			metadata: sdk.Metadata{"name": "thing_89"},
-			groupsPageMeta: groups.Page{
-				PageMeta: groups.PageMeta{
+			metadata: sdk.Metadata{"name": "client_89"},
+			groupsPageMeta: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset:   offset,
 					Limit:    10,
-					Metadata: groups.Metadata{"name": "thing_89"},
+					Metadata: clients.Metadata{"name": "client_89"},
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
 				},
 				Groups: convertChannels([]sdk.Channel{chs[89]}),
@@ -466,8 +456,8 @@ func TestListChannels(t *testing.T) {
 			metadata: sdk.Metadata{
 				"test": make(chan int),
 			},
-			groupsPageMeta: groups.Page{},
-			svcRes:         groups.Page{},
+			groupsPageMeta: channels.Page{},
+			svcRes:         channels.Page{},
 			svcErr:         nil,
 			response:       sdk.ChannelsPage{},
 			err:            errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -478,21 +468,19 @@ func TestListChannels(t *testing.T) {
 			domainID: domainID,
 			offset:   0,
 			limit:    10,
-			groupsPageMeta: groups.Page{
-				PageMeta: groups.PageMeta{
+			groupsPageMeta: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
 				},
-				Groups: []groups.Group{{
+				Groups: []channels.Channel{{
 					ID: generateUUID(t),
-					Metadata: groups.Metadata{
+					Metadata: clients.Metadata{
 						"test": make(chan int),
 					},
 				}},
@@ -535,7 +523,7 @@ func TestViewChannel(t *testing.T) {
 
 	groupRes := convertChannel(channel)
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -545,7 +533,7 @@ func TestViewChannel(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		channelID       string
-		svcRes          groups.Group
+		svcRes          channels.Channel
 		svcErr          error
 		authenticateErr error
 		response        sdk.Channel
@@ -566,7 +554,7 @@ func TestViewChannel(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			channelID:       groupRes.ID,
-			svcRes:          groups.Group{},
+			svcRes:          channels.Channel{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.Channel{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -576,7 +564,7 @@ func TestViewChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     "",
 			channelID: groupRes.ID,
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    nil,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -586,7 +574,7 @@ func TestViewChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: wrongID,
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    svcerr.ErrViewEntity,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
@@ -596,7 +584,7 @@ func TestViewChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: "",
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    nil,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKError(apiutil.ErrMissingID),
@@ -606,9 +594,9 @@ func TestViewChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: groupRes.ID,
-			svcRes: groups.Group{
+			svcRes: channels.Channel{
 				ID: generateUUID(t),
-				Metadata: groups.Metadata{
+				Metadata: clients.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -643,7 +631,7 @@ func TestUpdateChannel(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -659,7 +647,7 @@ func TestUpdateChannel(t *testing.T) {
 	dChannel.Description = newDescription
 
 	mGroup := group
-	mGroup.Metadata = groups.Metadata{
+	mGroup.Metadata = clients.Metadata{
 		"field": "value2",
 	}
 	mChannel := channel
@@ -670,7 +658,7 @@ func TestUpdateChannel(t *testing.T) {
 	aGroup := group
 	aGroup.Name = newName
 	aGroup.Description = newDescription
-	aGroup.Metadata = groups.Metadata{"field": "value2"}
+	aGroup.Metadata = clients.Metadata{"field": "value2"}
 	aChannel := channel
 	aChannel.Name = newName
 	aChannel.Description = newDescription
@@ -682,8 +670,8 @@ func TestUpdateChannel(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		channelReq      sdk.Channel
-		updateGroupReq  groups.Group
-		svcRes          groups.Group
+		updateGroupReq  channels.Channel
+		svcRes          channels.Channel
 		svcErr          error
 		authenticateErr error
 		response        sdk.Channel
@@ -697,7 +685,7 @@ func TestUpdateChannel(t *testing.T) {
 				ID:   channel.ID,
 				Name: newName,
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:   group.ID,
 				Name: newName,
 			},
@@ -714,7 +702,7 @@ func TestUpdateChannel(t *testing.T) {
 				ID:          channel.ID,
 				Description: newDescription,
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:          group.ID,
 				Description: newDescription,
 			},
@@ -733,9 +721,9 @@ func TestUpdateChannel(t *testing.T) {
 					"field": "value2",
 				},
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:       group.ID,
-				Metadata: groups.Metadata{"field": "value2"},
+				Metadata: clients.Metadata{"field": "value2"},
 			},
 			svcRes:   mGroup,
 			svcErr:   nil,
@@ -752,11 +740,11 @@ func TestUpdateChannel(t *testing.T) {
 				Description: newDescription,
 				Metadata:    sdk.Metadata{"field": "value2"},
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:          group.ID,
 				Name:        newName,
 				Description: newDescription,
-				Metadata:    groups.Metadata{"field": "value2"},
+				Metadata:    clients.Metadata{"field": "value2"},
 			},
 			svcRes:   aGroup,
 			svcErr:   nil,
@@ -771,11 +759,11 @@ func TestUpdateChannel(t *testing.T) {
 				ID:   wrongID,
 				Name: newName,
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:   wrongID,
 				Name: newName,
 			},
-			svcRes:   groups.Group{},
+			svcRes:   channels.Channel{},
 			svcErr:   svcerr.ErrNotFound,
 			response: sdk.Channel{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
@@ -788,11 +776,11 @@ func TestUpdateChannel(t *testing.T) {
 				ID:          wrongID,
 				Description: newDescription,
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:          wrongID,
 				Description: newDescription,
 			},
-			svcRes:   groups.Group{},
+			svcRes:   channels.Channel{},
 			svcErr:   svcerr.ErrNotFound,
 			response: sdk.Channel{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
@@ -807,11 +795,11 @@ func TestUpdateChannel(t *testing.T) {
 					"field": "value2",
 				},
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:       wrongID,
-				Metadata: groups.Metadata{"field": "value2"},
+				Metadata: clients.Metadata{"field": "value2"},
 			},
-			svcRes:   groups.Group{},
+			svcRes:   channels.Channel{},
 			svcErr:   svcerr.ErrNotFound,
 			response: sdk.Channel{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
@@ -824,11 +812,11 @@ func TestUpdateChannel(t *testing.T) {
 				ID:   channel.ID,
 				Name: newName,
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:   group.ID,
 				Name: newName,
 			},
-			svcRes:          groups.Group{},
+			svcRes:          channels.Channel{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.Channel{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -841,11 +829,11 @@ func TestUpdateChannel(t *testing.T) {
 				ID:   channel.ID,
 				Name: newName,
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:   group.ID,
 				Name: newName,
 			},
-			svcRes:   groups.Group{},
+			svcRes:   channels.Channel{},
 			svcErr:   nil,
 			response: sdk.Channel{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -858,8 +846,8 @@ func TestUpdateChannel(t *testing.T) {
 				ID:   channel.ID,
 				Name: strings.Repeat("a", 1025),
 			},
-			updateGroupReq: groups.Group{},
-			svcRes:         groups.Group{},
+			updateGroupReq: channels.Channel{},
+			svcRes:         channels.Channel{},
 			svcErr:         nil,
 			response:       sdk.Channel{},
 			err:            errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
@@ -875,8 +863,8 @@ func TestUpdateChannel(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			updateGroupReq: groups.Group{},
-			svcRes:         groups.Group{},
+			updateGroupReq: channels.Channel{},
+			svcRes:         channels.Channel{},
 			svcErr:         nil,
 			response:       sdk.Channel{},
 			err:            errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -889,13 +877,13 @@ func TestUpdateChannel(t *testing.T) {
 				ID:   channel.ID,
 				Name: newName,
 			},
-			updateGroupReq: groups.Group{
+			updateGroupReq: channels.Channel{
 				ID:   group.ID,
 				Name: newName,
 			},
-			svcRes: groups.Group{
+			svcRes: channels.Channel{
 				ID: generateUUID(t),
-				Metadata: groups.Metadata{
+				Metadata: clients.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -910,8 +898,8 @@ func TestUpdateChannel(t *testing.T) {
 			channelReq: sdk.Channel{
 				Name: newName,
 			},
-			updateGroupReq: groups.Group{},
-			svcRes:         groups.Group{},
+			updateGroupReq: channels.Channel{},
+			svcRes:         channels.Channel{},
 			svcErr:         nil,
 			response:       sdk.Channel{},
 			err:            errors.NewSDKError(apiutil.ErrMissingID),
@@ -937,12 +925,12 @@ func TestUpdateChannel(t *testing.T) {
 	}
 }
 
-func TestListChannelsByThing(t *testing.T) {
+func TestListChannelsByClient(t *testing.T) {
 	ts, gsvc, auth := setupChannels()
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -954,7 +942,7 @@ func TestListChannelsByThing(t *testing.T) {
 			ID:       generateUUID(t),
 			Name:     fmt.Sprintf("membership_%d@example.com", i),
 			Metadata: sdk.Metadata{"role": "channel"},
-			Status:   groups.EnabledStatus.String(),
+			Status:   clients.EnabledStatus.String(),
 		}
 		aChannels = append(aChannels, channel)
 	}
@@ -964,10 +952,10 @@ func TestListChannelsByThing(t *testing.T) {
 		domainID        string
 		token           string
 		session         mgauthn.Session
-		thingID         string
+		ClientID        string
 		pageMeta        sdk.PageMetadata
-		listGroupsReq   groups.Page
-		svcRes          groups.Page
+		listGroupsReq   channels.Page
+		svcRes          channels.Page
 		svcErr          error
 		authenticateErr error
 		response        sdk.ChannelsPage
@@ -977,21 +965,19 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:     "list channels successfully",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  testsutil.GenerateUUID(t),
+			ClientID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: nChannels,
 				},
-				Groups: convertChannels(aChannels),
+				Channels: convertChannels(aChannels),
 			},
 			svcErr: nil,
 			response: sdk.ChannelsPage{
@@ -1006,24 +992,22 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:     "list channel with offset and limit",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  testsutil.GenerateUUID(t),
+			ClientID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
 				Offset: 6,
 				Limit:  nChannels,
 			},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 6,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: uint64(len(aChannels[6 : nChannels-1])),
 				},
-				Groups: convertChannels(aChannels[6 : nChannels-1]),
+				Channels: convertChannels(aChannels[6 : nChannels-1]),
 			},
 			svcErr: nil,
 			response: sdk.ChannelsPage{
@@ -1038,26 +1022,24 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:     "list channel with given name",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  testsutil.GenerateUUID(t),
+			ClientID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
 				Name:   "membership_8@example.com",
 				Offset: 0,
 				Limit:  nChannels,
 			},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Name:   "membership_8@example.com",
 					Offset: 0,
 					Limit:  nChannels,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
 				},
-				Groups: convertChannels([]sdk.Channel{aChannels[8]}),
+				Channels: convertChannels([]sdk.Channel{aChannels[8]}),
 			},
 			svcErr: nil,
 			response: sdk.ChannelsPage{
@@ -1072,17 +1054,15 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:     "list channels with invalid token",
 			domainID: domainID,
 			token:    invalidToken,
-			thingID:  testsutil.GenerateUUID(t),
+			ClientID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes:          groups.Page{},
+			svcRes:          channels.Page{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.ChannelsPage{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -1091,10 +1071,10 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:          "list channels with empty token",
 			domainID:      domainID,
 			token:         "",
-			thingID:       testsutil.GenerateUUID(t),
+			ClientID:      testsutil.GenerateUUID(t),
 			pageMeta:      sdk.PageMetadata{},
-			listGroupsReq: groups.Page{},
-			svcRes:        groups.Page{},
+			listGroupsReq: channels.Page{},
+			svcRes:        channels.Page{},
 			svcErr:        nil,
 			response:      sdk.ChannelsPage{},
 			err:           errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -1103,12 +1083,12 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:     "list channels with limit greater than max",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  testsutil.GenerateUUID(t),
+			ClientID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
 				Limit: 110,
 			},
-			listGroupsReq: groups.Page{},
-			svcRes:        groups.Page{},
+			listGroupsReq: channels.Page{},
+			svcRes:        channels.Page{},
 			svcErr:        nil,
 			response:      sdk.ChannelsPage{},
 			err:           errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
@@ -1117,14 +1097,14 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:     "list channels with invalid metadata",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  testsutil.GenerateUUID(t),
+			ClientID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
 				Metadata: sdk.Metadata{
 					"test": make(chan int),
 				},
 			},
-			listGroupsReq: groups.Page{},
-			svcRes:        groups.Page{},
+			listGroupsReq: channels.Page{},
+			svcRes:        channels.Page{},
 			svcErr:        nil,
 			response:      sdk.ChannelsPage{},
 			err:           errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -1133,26 +1113,24 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:     "list channels with service response that can't be unmarshalled",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  testsutil.GenerateUUID(t),
+			ClientID: testsutil.GenerateUUID(t),
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
 			},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
 				},
-				Groups: []groups.Group{{
+				Channels: []channels.Channel{{
 					ID: generateUUID(t),
-					Metadata: groups.Metadata{
+					Metadata: clients.Metadata{
 						"test": make(chan int),
 					},
 				}},
@@ -1168,12 +1146,12 @@ func TestListChannelsByThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.ThingsKind, tc.thingID, tc.listGroupsReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ChannelsByThing(tc.thingID, tc.pageMeta, tc.domainID, tc.token)
+			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.ClientsKind, tc.ClientID, tc.listGroupsReq).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.ChannelsByClient(tc.ClientID, tc.pageMeta, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.session, policies.ThingsKind, tc.thingID, tc.listGroupsReq)
+				ok := svcCall.Parent.AssertCalled(t, "ListGroups", mock.Anything, tc.session, policies.ClientsKind, tc.ClientID, tc.listGroupsReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1188,7 +1166,7 @@ func TestEnableChannel(t *testing.T) {
 
 	group := convertChannel(channel)
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -1198,7 +1176,7 @@ func TestEnableChannel(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		channelID       string
-		svcRes          groups.Group
+		svcRes          channels.Channel
 		svcErr          error
 		authenticateErr error
 		response        sdk.Channel
@@ -1219,7 +1197,7 @@ func TestEnableChannel(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			channelID:       channel.ID,
-			svcRes:          groups.Group{},
+			svcRes:          channels.Channel{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.Channel{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -1229,7 +1207,7 @@ func TestEnableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     "",
 			channelID: channel.ID,
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    nil,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -1239,7 +1217,7 @@ func TestEnableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: wrongID,
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    svcerr.ErrNotFound,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
@@ -1249,7 +1227,7 @@ func TestEnableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: "",
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    nil,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -1259,9 +1237,9 @@ func TestEnableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			svcRes: groups.Group{
+			svcRes: channels.Channel{
 				ID: generateUUID(t),
-				Metadata: groups.Metadata{
+				Metadata: clients.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1295,15 +1273,15 @@ func TestDisableChannel(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
 	group := convertChannel(channel)
 	dGroup := group
-	dGroup.Status = groups.DisabledStatus
+	dGroup.Status = clients.DisabledStatus
 	dChannel := channel
-	dChannel.Status = groups.DisabledStatus.String()
+	dChannel.Status = clients.DisabledStatus.String()
 
 	cases := []struct {
 		desc            string
@@ -1311,7 +1289,7 @@ func TestDisableChannel(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		channelID       string
-		svcRes          groups.Group
+		svcRes          channels.Channel
 		svcErr          error
 		authenticateErr error
 		response        sdk.Channel
@@ -1332,7 +1310,7 @@ func TestDisableChannel(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			channelID:       channel.ID,
-			svcRes:          groups.Group{},
+			svcRes:          channels.Channel{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.Channel{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -1342,7 +1320,7 @@ func TestDisableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     "",
 			channelID: channel.ID,
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    nil,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -1352,7 +1330,7 @@ func TestDisableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: wrongID,
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    svcerr.ErrNotFound,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
@@ -1362,7 +1340,7 @@ func TestDisableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: "",
-			svcRes:    groups.Group{},
+			svcRes:    channels.Channel{},
 			svcErr:    nil,
 			response:  sdk.Channel{},
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -1372,9 +1350,9 @@ func TestDisableChannel(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			svcRes: groups.Group{
+			svcRes: channels.Channel{
 				ID: generateUUID(t),
-				Metadata: groups.Metadata{
+				Metadata: clients.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1408,7 +1386,7 @@ func TestDeleteChannel(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -1487,7 +1465,7 @@ func TestChannelPermissions(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -1582,7 +1560,7 @@ func TestAddUserToChannel(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -1706,7 +1684,7 @@ func TestRemoveUserFromChannel(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -1818,7 +1796,7 @@ func TestAddUserGroupToChannel(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -1928,7 +1906,7 @@ func TestRemoveUserGroupFromChannel(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -2043,14 +2021,14 @@ func TestListChannelUserGroups(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	nGroups := uint64(10)
-	aGroups := []sdk.Group{}
+	aGroups := []sdk.Channel{}
 
 	for i := uint64(1); i < nGroups; i++ {
-		group := sdk.Group{
+		group := sdk.Channel{
 			ID:       generateUUID(t),
 			Name:     fmt.Sprintf("group_%d", i),
 			Metadata: sdk.Metadata{"role": "group"},
-			Status:   groups.EnabledStatus.String(),
+			Status:   clients.EnabledStatus.String(),
 		}
 		aGroups = append(aGroups, group)
 	}
@@ -2062,44 +2040,40 @@ func TestListChannelUserGroups(t *testing.T) {
 		session         mgauthn.Session
 		channelID       string
 		pageMeta        sdk.PageMetadata
-		listGroupsReq   groups.Page
-		svcRes          groups.Page
+		listGroupsReq   channels.Page
+		svcRes          channels.Page
 		svcErr          error
 		authenticateErr error
 		response        sdk.GroupsPage
 		err             errors.SDKError
 	}{
 		{
-			desc:      "list user groups successfully",
+			desc:      "list user channels successfully",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta:  sdk.PageMetadata{},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: nGroups,
 				},
-				Groups: convertGroups(aGroups),
 			},
 			svcErr: nil,
 			response: sdk.GroupsPage{
 				PageRes: sdk.PageRes{
 					Total: nGroups,
 				},
-				Groups: aGroups,
 			},
 			err: nil,
 		},
 		{
-			desc:      "list user groups with offset and limit",
+			desc:      "list user channels with offset and limit",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
@@ -2107,112 +2081,102 @@ func TestListChannelUserGroups(t *testing.T) {
 				Offset: 6,
 				Limit:  nGroups,
 			},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 6,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: uint64(len(aGroups[6 : nGroups-1])),
 				},
-				Groups: convertGroups(aGroups[6 : nGroups-1]),
 			},
 			svcErr: nil,
 			response: sdk.GroupsPage{
 				PageRes: sdk.PageRes{
 					Total: uint64(len(aGroups[6 : nGroups-1])),
 				},
-				Groups: aGroups[6 : nGroups-1],
 			},
 			err: nil,
 		},
 		{
-			desc:      "list user groups with invalid token",
+			desc:      "list user channels with invalid token",
 			domainID:  domainID,
 			token:     invalidToken,
 			channelID: channel.ID,
 			pageMeta:  sdk.PageMetadata{},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes:          groups.Page{},
+			svcRes:          channels.Page{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.GroupsPage{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:      "list user groups with empty token",
+			desc:      "list user channels with empty token",
 			domainID:  domainID,
 			token:     "",
 			channelID: channel.ID,
 			pageMeta:  sdk.PageMetadata{},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes:   groups.Page{},
+			svcRes:   channels.Page{},
 			svcErr:   nil,
 			response: sdk.GroupsPage{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:      "list user groups with limit greater than max",
+			desc:      "list user channels with limit greater than max",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta: sdk.PageMetadata{
 				Limit: 110,
 			},
-			listGroupsReq: groups.Page{},
-			svcRes:        groups.Page{},
+			listGroupsReq: channels.Page{},
+			svcRes:        channels.Page{},
 			svcErr:        nil,
 			response:      sdk.GroupsPage{},
 			err:           errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
 		},
 		{
-			desc:      "list user groups with invalid channel id",
+			desc:      "list user channels with invalid channel id",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: wrongID,
 			pageMeta: sdk.PageMetadata{
 				DomainID: domainID,
 			},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes:   groups.Page{},
+			svcRes:   channels.Page{},
 			svcErr:   svcerr.ErrAuthorization,
 			response: sdk.GroupsPage{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
-			desc:      "list users groups with level exceeding max",
+			desc:      "list users channels with level exceeding max",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta: sdk.PageMetadata{
 				Level: 10,
 			},
-			listGroupsReq: groups.Page{},
-			svcRes:        groups.Page{},
+			listGroupsReq: channels.Page{},
+			svcRes:        channels.Page{},
 			svcErr:        nil,
 			response:      sdk.GroupsPage{},
 			err:           errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidLevel), http.StatusBadRequest),
@@ -2229,35 +2193,27 @@ func TestListChannelUserGroups(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			listGroupsReq: groups.Page{},
-			svcRes:        groups.Page{},
+			listGroupsReq: channels.Page{},
+			svcRes:        channels.Page{},
 			svcErr:        nil,
 			response:      sdk.GroupsPage{},
 			err:           errors.NewSDKError(errors.New("json: unsupported type: chan int")),
 		},
 		{
-			desc:      "list user groups with service response that can't be unmarshalled",
+			desc:      "list user channels with service response that can't be unmarshalled",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta:  sdk.PageMetadata{},
-			listGroupsReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			listGroupsReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
-				},
-				Groups: []groups.Group{
-					{
-						ID:       generateUUID(t),
-						Metadata: groups.Metadata{"test": make(chan int)},
-					},
 				},
 			},
 			svcErr:   nil,
@@ -2290,11 +2246,11 @@ func TestConnect(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
-	thingID := generateUUID(t)
+	clientID := generateUUID(t)
 
 	cases := []struct {
 		desc            string
@@ -2313,7 +2269,7 @@ func TestConnect(t *testing.T) {
 			token:    validToken,
 			connection: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			svcErr: nil,
 			err:    nil,
@@ -2324,7 +2280,7 @@ func TestConnect(t *testing.T) {
 			token:    invalidToken,
 			connection: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			authenticateErr: svcerr.ErrAuthentication,
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -2335,7 +2291,7 @@ func TestConnect(t *testing.T) {
 			token:    "",
 			connection: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			err: errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
@@ -2345,7 +2301,7 @@ func TestConnect(t *testing.T) {
 			token:    validToken,
 			connection: sdk.Connection{
 				ChannelID: wrongID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			svcErr: svcerr.ErrAuthorization,
 			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -2356,18 +2312,18 @@ func TestConnect(t *testing.T) {
 			token:    validToken,
 			connection: sdk.Connection{
 				ChannelID: "",
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			svcErr: nil,
 			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:     "connect with empty thing id",
+			desc:     "connect with empty client id",
 			domainID: domainID,
 			token:    validToken,
 			connection: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   "",
+				ClientID:  "",
 			},
 			svcErr: nil,
 			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -2379,11 +2335,11 @@ func TestConnect(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.connection.ChannelID, policies.GroupRelation, policies.ThingsKind, []string{tc.connection.ThingID}).Return(tc.svcErr)
+			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.connection.ChannelID, policies.GroupRelation, policies.ClientsKind, []string{tc.connection.ClientID}).Return(tc.svcErr)
 			err := mgsdk.Connect(tc.connection, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Assign", mock.Anything, tc.session, tc.connection.ChannelID, policies.GroupRelation, policies.ThingsKind, []string{tc.connection.ThingID})
+				ok := svcCall.Parent.AssertCalled(t, "Assign", mock.Anything, tc.session, tc.connection.ChannelID, policies.GroupRelation, policies.ClientsKind, []string{tc.connection.ClientID})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -2397,11 +2353,11 @@ func TestDisconnect(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
-	thingID := generateUUID(t)
+	clientID := generateUUID(t)
 
 	cases := []struct {
 		desc            string
@@ -2420,7 +2376,7 @@ func TestDisconnect(t *testing.T) {
 			token:    validToken,
 			disconnect: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			svcErr: nil,
 			err:    nil,
@@ -2431,7 +2387,7 @@ func TestDisconnect(t *testing.T) {
 			token:    invalidToken,
 			disconnect: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			authenticateErr: svcerr.ErrAuthentication,
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -2442,7 +2398,7 @@ func TestDisconnect(t *testing.T) {
 			token:    "",
 			disconnect: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			err: errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
@@ -2452,7 +2408,7 @@ func TestDisconnect(t *testing.T) {
 			token:    validToken,
 			disconnect: sdk.Connection{
 				ChannelID: wrongID,
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			svcErr: svcerr.ErrAuthorization,
 			err:    errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -2463,18 +2419,18 @@ func TestDisconnect(t *testing.T) {
 			token:    validToken,
 			disconnect: sdk.Connection{
 				ChannelID: "",
-				ThingID:   thingID,
+				ClientID:  clientID,
 			},
 			svcErr: nil,
 			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:     "disconnect with empty thing id",
+			desc:     "disconnect with empty client id",
 			domainID: domainID,
 			token:    validToken,
 			disconnect: sdk.Connection{
 				ChannelID: channel.ID,
-				ThingID:   "",
+				ClientID:  "",
 			},
 			svcErr: nil,
 			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -2486,11 +2442,11 @@ func TestDisconnect(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.disconnect.ChannelID, policies.GroupRelation, policies.ThingsKind, []string{tc.disconnect.ThingID}).Return(tc.svcErr)
+			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.disconnect.ChannelID, policies.GroupRelation, policies.ClientsKind, []string{tc.disconnect.ClientID}).Return(tc.svcErr)
 			err := mgsdk.Disconnect(tc.disconnect, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Unassign", mock.Anything, tc.session, tc.disconnect.ChannelID, policies.GroupRelation, policies.ThingsKind, []string{tc.disconnect.ThingID})
+				ok := svcCall.Parent.AssertCalled(t, "Unassign", mock.Anything, tc.session, tc.disconnect.ChannelID, policies.GroupRelation, policies.ClientsKind, []string{tc.disconnect.ClientID})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -2499,16 +2455,16 @@ func TestDisconnect(t *testing.T) {
 	}
 }
 
-func TestConnectThing(t *testing.T) {
+func TestConnectClient(t *testing.T) {
 	ts, gsvc, auth := setupChannels()
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
-	thingID := generateUUID(t)
+	clientID := generateUUID(t)
 
 	cases := []struct {
 		desc            string
@@ -2516,7 +2472,7 @@ func TestConnectThing(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		channelID       string
-		thingID         string
+		clientID        string
 		svcErr          error
 		authenticateRes mgauthn.Session
 		authenticateErr error
@@ -2527,7 +2483,7 @@ func TestConnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			thingID:   thingID,
+			clientID:  clientID,
 			svcErr:    nil,
 			err:       nil,
 		},
@@ -2536,7 +2492,7 @@ func TestConnectThing(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			channelID:       channel.ID,
-			thingID:         thingID,
+			clientID:        clientID,
 			authenticateErr: svcerr.ErrAuthentication,
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
@@ -2545,7 +2501,7 @@ func TestConnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     "",
 			channelID: channel.ID,
-			thingID:   thingID,
+			clientID:  clientID,
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
@@ -2553,7 +2509,7 @@ func TestConnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: wrongID,
-			thingID:   thingID,
+			clientID:  clientID,
 			svcErr:    svcerr.ErrAuthorization,
 			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
@@ -2562,16 +2518,16 @@ func TestConnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: "",
-			thingID:   thingID,
+			clientID:  clientID,
 			svcErr:    nil,
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:      "connect with empty thing id",
+			desc:      "connect with empty client id",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			thingID:   "",
+			clientID:  "",
 			svcErr:    nil,
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
@@ -2582,11 +2538,11 @@ func TestConnectThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ThingsKind, []string{tc.thingID}).Return(tc.svcErr)
-			err := mgsdk.ConnectThing(tc.thingID, tc.channelID, tc.domainID, tc.token)
+			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ClientsKind, []string{tc.clientID}).Return(tc.svcErr)
+			err := mgsdk.ConnectClient(tc.clientID, tc.channelID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Assign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ThingsKind, []string{tc.thingID})
+				ok := svcCall.Parent.AssertCalled(t, "Assign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ClientsKind, []string{tc.clientID})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -2595,16 +2551,16 @@ func TestConnectThing(t *testing.T) {
 	}
 }
 
-func TestDisconnectThing(t *testing.T) {
+func TestDisconnectClient(t *testing.T) {
 	ts, gsvc, auth := setupChannels()
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
-	thingID := generateUUID(t)
+	clientID := generateUUID(t)
 
 	cases := []struct {
 		desc            string
@@ -2612,7 +2568,7 @@ func TestDisconnectThing(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		channelID       string
-		thingID         string
+		clientID        string
 		svcErr          error
 		authenticateErr error
 		err             errors.SDKError
@@ -2622,7 +2578,7 @@ func TestDisconnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			thingID:   thingID,
+			clientID:  clientID,
 			svcErr:    nil,
 			err:       nil,
 		},
@@ -2631,7 +2587,7 @@ func TestDisconnectThing(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			channelID:       channel.ID,
-			thingID:         thingID,
+			clientID:        clientID,
 			authenticateErr: svcerr.ErrAuthentication,
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
@@ -2640,7 +2596,7 @@ func TestDisconnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     "",
 			channelID: channel.ID,
-			thingID:   thingID,
+			clientID:  clientID,
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
@@ -2648,7 +2604,7 @@ func TestDisconnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: wrongID,
-			thingID:   thingID,
+			clientID:  clientID,
 			svcErr:    svcerr.ErrAuthorization,
 			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
@@ -2657,16 +2613,16 @@ func TestDisconnectThing(t *testing.T) {
 			domainID:  domainID,
 			token:     validToken,
 			channelID: "",
-			thingID:   thingID,
+			clientID:  clientID,
 			svcErr:    nil,
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:      "disconnect with empty thing id",
+			desc:      "disconnect with empty client id",
 			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			thingID:   "",
+			clientID:  "",
 			svcErr:    nil,
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
@@ -2677,11 +2633,11 @@ func TestDisconnectThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ThingsKind, []string{tc.thingID}).Return(tc.svcErr)
-			err := mgsdk.DisconnectThing(tc.thingID, tc.channelID, tc.domainID, tc.token)
+			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ClientsKind, []string{tc.clientID}).Return(tc.svcErr)
+			err := mgsdk.DisconnectClient(tc.clientID, tc.channelID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Unassign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ThingsKind, []string{tc.thingID})
+				ok := svcCall.Parent.AssertCalled(t, "Unassign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ClientsKind, []string{tc.clientID})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -2695,7 +2651,7 @@ func TestListGroupChannels(t *testing.T) {
 	defer ts.Close()
 
 	conf := sdk.Config{
-		ThingsURL: ts.URL,
+		ClientsURL: ts.URL,
 	}
 	mgsdk := sdk.NewSDK(conf)
 
@@ -2703,7 +2659,7 @@ func TestListGroupChannels(t *testing.T) {
 		ID:       testsutil.GenerateUUID(t),
 		Name:     "group_channel",
 		Metadata: sdk.Metadata{"role": "group"},
-		Status:   groups.EnabledStatus.String(),
+		Status:   clients.EnabledStatus.String(),
 	}
 
 	cases := []struct {
@@ -2713,8 +2669,8 @@ func TestListGroupChannels(t *testing.T) {
 		session         mgauthn.Session
 		groupID         string
 		pageMeta        sdk.PageMetadata
-		svcReq          groups.Page
-		svcRes          groups.Page
+		svcReq          channels.Page
+		svcRes          channels.Page
 		svcErr          error
 		authenticateErr error
 		response        sdk.ChannelsPage
@@ -2729,19 +2685,16 @@ func TestListGroupChannels(t *testing.T) {
 				Offset: 0,
 				Limit:  10,
 			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
 				},
-				Groups: []groups.Group{convertChannel(groupChannel)},
 			},
 			svcErr: nil,
 			response: sdk.ChannelsPage{
@@ -2761,15 +2714,13 @@ func TestListGroupChannels(t *testing.T) {
 				Offset: 0,
 				Limit:  10,
 			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes:          groups.Page{},
+			svcRes:          channels.Page{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.ChannelsPage{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -2783,8 +2734,8 @@ func TestListGroupChannels(t *testing.T) {
 				Offset: 0,
 				Limit:  10,
 			},
-			svcReq:   groups.Page{},
-			svcRes:   groups.Page{},
+			svcReq:   channels.Page{},
+			svcRes:   channels.Page{},
 			svcErr:   nil,
 			response: sdk.ChannelsPage{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -2798,15 +2749,13 @@ func TestListGroupChannels(t *testing.T) {
 				Offset: 0,
 				Limit:  10,
 			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes:   groups.Page{},
+			svcRes:   channels.Page{},
 			svcErr:   svcerr.ErrAuthorization,
 			response: sdk.ChannelsPage{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -2823,8 +2772,8 @@ func TestListGroupChannels(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			svcReq:   groups.Page{},
-			svcRes:   groups.Page{},
+			svcReq:   channels.Page{},
+			svcRes:   channels.Page{},
 			svcErr:   nil,
 			response: sdk.ChannelsPage{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -2838,23 +2787,15 @@ func TestListGroupChannels(t *testing.T) {
 				Offset: 0,
 				Limit:  10,
 			},
-			svcReq: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcReq: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Offset: 0,
 					Limit:  10,
 				},
-				Permission: "view",
-				Direction:  -1,
 			},
-			svcRes: groups.Page{
-				PageMeta: groups.PageMeta{
+			svcRes: channels.Page{
+				PageMetadata: channels.PageMetadata{
 					Total: 1,
-				},
-				Groups: []groups.Group{
-					{
-						ID:       generateUUID(t),
-						Metadata: groups.Metadata{"test": make(chan int)},
-					},
 				},
 			},
 			svcErr:   nil,
@@ -2894,7 +2835,7 @@ func generateTestChannel(t *testing.T) sdk.Channel {
 		Metadata:    sdk.Metadata{"role": "client"},
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
-		Status:      groups.EnabledStatus.String(),
+		Status:      clients.EnabledStatus.String(),
 	}
 	return ch
 }

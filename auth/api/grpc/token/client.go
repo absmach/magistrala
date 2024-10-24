@@ -7,15 +7,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"
 )
 
-const tokenSvcName = "magistrala.TokenService"
+const tokenSvcName = "token.v1.TokenService"
 
 type tokenGrpcClient struct {
 	issue   endpoint.Endpoint
@@ -23,10 +23,10 @@ type tokenGrpcClient struct {
 	timeout time.Duration
 }
 
-var _ magistrala.TokenServiceClient = (*tokenGrpcClient)(nil)
+var _ grpcTokenV1.TokenServiceClient = (*tokenGrpcClient)(nil)
 
 // NewAuthClient returns new auth gRPC client instance.
-func NewTokenClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.TokenServiceClient {
+func NewTokenClient(conn *grpc.ClientConn, timeout time.Duration) grpcTokenV1.TokenServiceClient {
 	return &tokenGrpcClient{
 		issue: kitgrpc.NewClient(
 			conn,
@@ -34,7 +34,7 @@ func NewTokenClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.Tok
 			"Issue",
 			encodeIssueRequest,
 			decodeIssueResponse,
-			magistrala.Token{},
+			grpcTokenV1.Token{},
 		).Endpoint(),
 		refresh: kitgrpc.NewClient(
 			conn,
@@ -42,13 +42,13 @@ func NewTokenClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.Tok
 			"Refresh",
 			encodeRefreshRequest,
 			decodeRefreshResponse,
-			magistrala.Token{},
+			grpcTokenV1.Token{},
 		).Endpoint(),
 		timeout: timeout,
 	}
 }
 
-func (client tokenGrpcClient) Issue(ctx context.Context, req *magistrala.IssueReq, _ ...grpc.CallOption) (*magistrala.Token, error) {
+func (client tokenGrpcClient) Issue(ctx context.Context, req *grpcTokenV1.IssueReq, _ ...grpc.CallOption) (*grpcTokenV1.Token, error) {
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
@@ -57,14 +57,14 @@ func (client tokenGrpcClient) Issue(ctx context.Context, req *magistrala.IssueRe
 		keyType: auth.KeyType(req.GetType()),
 	})
 	if err != nil {
-		return &magistrala.Token{}, grpcapi.DecodeError(err)
+		return &grpcTokenV1.Token{}, grpcapi.DecodeError(err)
 	}
-	return res.(*magistrala.Token), nil
+	return res.(*grpcTokenV1.Token), nil
 }
 
 func encodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(issueReq)
-	return &magistrala.IssueReq{
+	return &grpcTokenV1.IssueReq{
 		UserId: req.userID,
 		Type:   uint32(req.keyType),
 	}, nil
@@ -74,20 +74,20 @@ func decodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, e
 	return grpcRes, nil
 }
 
-func (client tokenGrpcClient) Refresh(ctx context.Context, req *magistrala.RefreshReq, _ ...grpc.CallOption) (*magistrala.Token, error) {
+func (client tokenGrpcClient) Refresh(ctx context.Context, req *grpcTokenV1.RefreshReq, _ ...grpc.CallOption) (*grpcTokenV1.Token, error) {
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
 	res, err := client.refresh(ctx, refreshReq{refreshToken: req.GetRefreshToken()})
 	if err != nil {
-		return &magistrala.Token{}, grpcapi.DecodeError(err)
+		return &grpcTokenV1.Token{}, grpcapi.DecodeError(err)
 	}
-	return res.(*magistrala.Token), nil
+	return res.(*grpcTokenV1.Token), nil
 }
 
 func encodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(refreshReq)
-	return &magistrala.RefreshReq{RefreshToken: req.refreshToken}, nil
+	return &grpcTokenV1.RefreshReq{RefreshToken: req.refreshToken}, nil
 }
 
 func decodeRefreshResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

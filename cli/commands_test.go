@@ -26,9 +26,9 @@ const (
 	domsCmd       = "domains"
 )
 
-// Things commands
+// Clients commands
 const (
-	thsCmd     = "things"
+	cliCmd     = "clients"
 	connsCmd   = "connections"
 	connCmd    = "connect"
 	disconnCmd = "disconnect"

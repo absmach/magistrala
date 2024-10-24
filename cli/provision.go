@@ -31,9 +31,9 @@ var (
 
 var cmdProvision = []cobra.Command{
 	{
-		Use:   "things <things_file> <domain_id> <user_token>",
-		Short: "Provision things",
-		Long:  `Bulk create things`,
+		Use:   "clients <clients_file> <domain_id> <user_token>",
+		Short: "Provision clients",
+		Long:  `Bulk create clients`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -45,19 +45,19 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			things, err := thingsFromFile(args[0])
+			clients, err := clientsFromFile(args[0])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			things, err = sdk.CreateThings(things, args[1], args[2])
+			clients, err = sdk.CreateClients(clients, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSONCmd(*cmd, things)
+			logJSONCmd(*cmd, clients)
 		},
 	},
 	{
@@ -93,7 +93,7 @@ var cmdProvision = []cobra.Command{
 	{
 		Use:   "connect <connections_file> <domain_id> <user_token>",
 		Short: "Provision connections",
-		Long:  `Bulk connect things to channels`,
+		Long:  `Bulk connect clients to channels`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -118,13 +118,13 @@ var cmdProvision = []cobra.Command{
 	{
 		Use:   "test",
 		Short: "test",
-		Long: `Provisions test setup: one test user, two things and two channels. \
-						Connect both things to one of the channels, \
-						and only on thing to other channel.`,
+		Long: `Provisions test setup: one test user, two clients and two channels. \
+						Connect both clients to one of the channels, \
+						and only on client to other channel.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			numThings := 2
+			numClients := 2
 			numChan := 2
-			things := []mgxsdk.Thing{}
+			clients := []mgxsdk.Client{}
 			channels := []mgxsdk.Channel{}
 
 			if len(args) != 0 {
@@ -172,16 +172,16 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			// Create things
-			for i := 0; i < numThings; i++ {
-				t := mgxsdk.Thing{
-					Name:   fmt.Sprintf("%s-thing-%d", name, i),
+			// Create clients
+			for i := 0; i < numClients; i++ {
+				t := mgxsdk.Client{
+					Name:   fmt.Sprintf("%s-client-%d", name, i),
 					Status: mgxsdk.EnabledStatus,
 				}
 
-				things = append(things, t)
+				clients = append(clients, t)
 			}
-			things, err = sdk.CreateThings(things, domain.ID, ut.AccessToken)
+			clients, err = sdk.CreateClients(clients, domain.ID, ut.AccessToken)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -202,10 +202,10 @@ var cmdProvision = []cobra.Command{
 				channels = append(channels, c)
 			}
 
-			// Connect things to channels - first thing to both channels, second only to first
+			// Connect clients to channels - first client to both channels, second only to first
 			conIDs := mgxsdk.Connection{
 				ChannelID: channels[0].ID,
-				ThingID:   things[0].ID,
+				ClientID:  clients[0].ID,
 			}
 			if err := sdk.Connect(conIDs, domain.ID, ut.AccessToken); err != nil {
 				logErrorCmd(*cmd, err)
@@ -214,7 +214,7 @@ var cmdProvision = []cobra.Command{
 
 			conIDs = mgxsdk.Connection{
 				ChannelID: channels[1].ID,
-				ThingID:   things[0].ID,
+				ClientID:  clients[0].ID,
 			}
 			if err := sdk.Connect(conIDs, domain.ID, ut.AccessToken); err != nil {
 				logErrorCmd(*cmd, err)
@@ -223,7 +223,7 @@ var cmdProvision = []cobra.Command{
 
 			conIDs = mgxsdk.Connection{
 				ChannelID: channels[0].ID,
-				ThingID:   things[1].ID,
+				ClientID:  clients[1].ID,
 			}
 			if err := sdk.Connect(conIDs, domain.ID, ut.AccessToken); err != nil {
 				logErrorCmd(*cmd, err)
@@ -231,20 +231,20 @@ var cmdProvision = []cobra.Command{
 			}
 
 			// send message to test connectivity
-			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[0].Credentials.Secret); err != nil {
+			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), clients[0].Credentials.Secret); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[1].Credentials.Secret); err != nil {
+			if err := sdk.SendMessage(channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), clients[1].Credentials.Secret); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(channels[1].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), things[0].Credentials.Secret); err != nil {
+			if err := sdk.SendMessage(channels[1].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), clients[0].Credentials.Secret); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSONCmd(*cmd, user, ut, things, channels)
+			logJSONCmd(*cmd, user, ut, clients, channels)
 		},
 	},
 }
@@ -252,9 +252,9 @@ var cmdProvision = []cobra.Command{
 // NewProvisionCmd returns provision command.
 func NewProvisionCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "provision [things | channels | connect | test]",
-		Short: "Provision things and channels from a config file",
-		Long:  `Provision things and channels: use json or csv file to bulk provision things and channels`,
+		Use:   "provision [clients | channels | connect | test]",
+		Short: "Provision clients and channels from a config file",
+		Long:  `Provision clients and channels: use json or csv file to bulk provision clients and channels`,
 	}
 
 	for i := range cmdProvision {
@@ -264,18 +264,18 @@ func NewProvisionCmd() *cobra.Command {
 	return &cmd
 }
 
-func thingsFromFile(path string) ([]mgxsdk.Thing, error) {
+func clientsFromFile(path string) ([]mgxsdk.Client, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return []mgxsdk.Thing{}, err
+		return []mgxsdk.Client{}, err
 	}
 
 	file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		return []mgxsdk.Thing{}, err
+		return []mgxsdk.Client{}, err
 	}
 	defer file.Close()
 
-	things := []mgxsdk.Thing{}
+	clients := []mgxsdk.Client{}
 	switch filepath.Ext(path) {
 	case csvExt:
 		reader := csv.NewReader(file)
@@ -286,29 +286,29 @@ func thingsFromFile(path string) ([]mgxsdk.Thing, error) {
 				break
 			}
 			if err != nil {
-				return []mgxsdk.Thing{}, err
+				return []mgxsdk.Client{}, err
 			}
 
 			if len(l) < 1 {
-				return []mgxsdk.Thing{}, errors.New("empty line found in file")
+				return []mgxsdk.Client{}, errors.New("empty line found in file")
 			}
 
-			thing := mgxsdk.Thing{
+			client := mgxsdk.Client{
 				Name: l[0],
 			}
 
-			things = append(things, thing)
+			clients = append(clients, client)
 		}
 	case jsonExt:
-		err := json.NewDecoder(file).Decode(&things)
+		err := json.NewDecoder(file).Decode(&clients)
 		if err != nil {
-			return []mgxsdk.Thing{}, err
+			return []mgxsdk.Client{}, err
 		}
 	default:
-		return []mgxsdk.Thing{}, err
+		return []mgxsdk.Client{}, err
 	}
 
-	return things, nil
+	return clients, nil
 }
 
 func channelsFromFile(path string) ([]mgxsdk.Channel, error) {
@@ -387,7 +387,7 @@ func connectionsFromFile(path string) ([]mgxsdk.Connection, error) {
 				return []mgxsdk.Connection{}, errors.New("empty line found in file")
 			}
 			connections = append(connections, mgxsdk.Connection{
-				ThingID:   l[0],
+				ClientID:  l[0],
 				ChannelID: l[1],
 			})
 		}

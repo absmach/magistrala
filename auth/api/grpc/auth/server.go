@@ -6,22 +6,22 @@ package auth
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	grpcAuthV1 "github.com/absmach/magistrala/internal/grpc/auth/v1"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 )
 
-var _ magistrala.AuthServiceServer = (*authGrpcServer)(nil)
+var _ grpcAuthV1.AuthServiceServer = (*authGrpcServer)(nil)
 
 type authGrpcServer struct {
-	magistrala.UnimplementedAuthServiceServer
+	grpcAuthV1.UnimplementedAuthServiceServer
 	authorize    kitgrpc.Handler
 	authenticate kitgrpc.Handler
 }
 
 // NewAuthServer returns new AuthnServiceServer instance.
-func NewAuthServer(svc auth.Service) magistrala.AuthServiceServer {
+func NewAuthServer(svc auth.Service) grpcAuthV1.AuthServiceServer {
 	return &authGrpcServer{
 		authorize: kitgrpc.NewServer(
 			(authorizeEndpoint(svc)),
@@ -37,34 +37,34 @@ func NewAuthServer(svc auth.Service) magistrala.AuthServiceServer {
 	}
 }
 
-func (s *authGrpcServer) Authenticate(ctx context.Context, req *magistrala.AuthNReq) (*magistrala.AuthNRes, error) {
+func (s *authGrpcServer) Authenticate(ctx context.Context, req *grpcAuthV1.AuthNReq) (*grpcAuthV1.AuthNRes, error) {
 	_, res, err := s.authenticate.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, grpcapi.EncodeError(err)
 	}
-	return res.(*magistrala.AuthNRes), nil
+	return res.(*grpcAuthV1.AuthNRes), nil
 }
 
-func (s *authGrpcServer) Authorize(ctx context.Context, req *magistrala.AuthZReq) (*magistrala.AuthZRes, error) {
+func (s *authGrpcServer) Authorize(ctx context.Context, req *grpcAuthV1.AuthZReq) (*grpcAuthV1.AuthZRes, error) {
 	_, res, err := s.authorize.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, grpcapi.EncodeError(err)
 	}
-	return res.(*magistrala.AuthZRes), nil
+	return res.(*grpcAuthV1.AuthZRes), nil
 }
 
 func decodeAuthenticateRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*magistrala.AuthNReq)
+	req := grpcReq.(*grpcAuthV1.AuthNReq)
 	return authenticateReq{token: req.GetToken()}, nil
 }
 
 func encodeAuthenticateResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(authenticateRes)
-	return &magistrala.AuthNRes{Id: res.id, UserId: res.userID, DomainId: res.domainID}, nil
+	return &grpcAuthV1.AuthNRes{Id: res.id, UserId: res.userID, DomainId: res.domainID}, nil
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*magistrala.AuthZReq)
+	req := grpcReq.(*grpcAuthV1.AuthZReq)
 	return authReq{
 		Domain:      req.GetDomain(),
 		SubjectType: req.GetSubjectType(),
@@ -79,5 +79,5 @@ func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}
 
 func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(authorizeRes)
-	return &magistrala.AuthZRes{Authorized: res.authorized, Id: res.id}, nil
+	return &grpcAuthV1.AuthZRes{Authorized: res.authorized, Id: res.id}, nil
 }

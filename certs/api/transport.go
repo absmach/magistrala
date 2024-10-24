@@ -62,7 +62,7 @@ func MakeHandler(svc certs.Service, authn mgauthn.Authentication, logger *slog.L
 					opts...,
 				), "revoke").ServeHTTP)
 			})
-			r.Get("/serials/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+			r.Get("/serials/{clientID}", otelhttp.NewHandler(kithttp.NewServer(
 				listSerials(svc),
 				decodeListCerts,
 				api.EncodeResponse,
@@ -91,7 +91,7 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := listReq{
-		thingID: chi.URLParam(r, "thingID"),
+		clientID: chi.URLParam(r, "clientID"),
 		pm: certs.PageMetadata{
 			Offset:  o,
 			Limit:   l,

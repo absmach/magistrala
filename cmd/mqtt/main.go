@@ -42,9 +42,10 @@ import (
 )
 
 const (
-	svcName         = "mqtt"
-	envPrefixThings = "MG_THINGS_AUTH_GRPC_"
-	wsPathPrefix    = "/mqtt"
+	svcName           = "mqtt"
+	envPrefixClients   = "MG_CLIENTS_AUTH_GRPC_"
+	envPrefixChannels = "MG_CHANNELS_GRPC_"
+	wsPathPrefix      = "/mqtt"
 )
 
 type config struct {
@@ -165,24 +166,39 @@ func main() {
 		return
 	}
 
-	thingsClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&thingsClientCfg, env.Options{Prefix: envPrefixThings}); err != nil {
+	clientsClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&clientsClientCfg, env.Options{Prefix: envPrefixClients}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
-	thingsClient, thingsHandler, err := grpcclient.SetupThingsClient(ctx, thingsClientCfg)
+	clientsClient, clientsHandler, err := grpcclient.SetupClientsClient(ctx, clientsClientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer thingsHandler.Close()
+	defer clientsHandler.Close()
+	logger.Info("Clients service gRPC client successfully connected to clients gRPC server " + clientsHandler.Secure())
 
-	logger.Info("Things service gRPC client successfully connected to things gRPC server " + thingsHandler.Secure())
+	channelsClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&channelsClientCfg, env.Options{Prefix: envPrefixChannels}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load channels gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
 
-	h := mqtt.NewHandler(np, es, logger, thingsClient)
+	channelsClient, channelsHandler, err := grpcclient.SetupChannelsClient(ctx, channelsClientCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer channelsHandler.Close()
+	logger.Info("Channels service gRPC client successfully connected to channels gRPC server " + channelsHandler.Secure())
+
+	h := mqtt.NewHandler(np, es, logger, clientsClient, channelsClient)
 	h = handler.NewTracing(tracer, h)
 
 	if cfg.SendTelemetry {

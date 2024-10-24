@@ -9,17 +9,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala"
-	domainsgrpcapi "github.com/absmach/magistrala/auth/api/grpc/domains"
 	tokengrpcapi "github.com/absmach/magistrala/auth/api/grpc/token"
 	"github.com/absmach/magistrala/auth/mocks"
+	clientsgrpcapi "github.com/absmach/magistrala/clients/api/grpc"
+	climocks "github.com/absmach/magistrala/clients/private/mocks"
+	domainsgrpcapi "github.com/absmach/magistrala/domains/api/grpc"
+	domainsMocks "github.com/absmach/magistrala/domains/mocks"
+	grpcClientsV1 "github.com/absmach/magistrala/internal/grpc/clients/v1"
+	grpcDomainsV1 "github.com/absmach/magistrala/internal/grpc/domains/v1"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/server"
 	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
-	thingsgrpcapi "github.com/absmach/magistrala/things/api/grpc"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
@@ -28,7 +31,7 @@ func TestSetupToken(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	registerAuthServiceServer := func(srv *grpc.Server) {
-		magistrala.RegisterTokenServiceServer(srv, tokengrpcapi.NewTokenServer(new(mocks.Service)))
+		grpcTokenV1.RegisterTokenServiceServer(srv, tokengrpcapi.NewTokenServer(new(mocks.Service)))
 	}
 	gs := grpcserver.NewServer(ctx, cancel, "auth", server.Config{Port: "12345"}, registerAuthServiceServer, mglog.NewMock())
 	go func() {
@@ -75,14 +78,14 @@ func TestSetupToken(t *testing.T) {
 	}
 }
 
-func TestSetupThingsClient(t *testing.T) {
+func TestSetupClientsClient(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	registerThingsServiceServer := func(srv *grpc.Server) {
-		magistrala.RegisterThingsServiceServer(srv, thingsgrpcapi.NewServer(new(thmocks.Service)))
+	registerClientsServiceServer := func(srv *grpc.Server) {
+		grpcClientsV1.RegisterClientsServiceServer(srv, clientsgrpcapi.NewServer(new(climocks.Service)))
 	}
-	gs := grpcserver.NewServer(ctx, cancel, "things", server.Config{Port: "12345"}, registerThingsServiceServer, mglog.NewMock())
+	gs := grpcserver.NewServer(ctx, cancel, "clients", server.Config{Port: "12345"}, registerClientsServiceServer, mglog.NewMock())
 	go func() {
 		err := gs.Start()
 		assert.Nil(t, err, fmt.Sprintf(`"Unexpected error creating server %s"`, err))
@@ -117,7 +120,7 @@ func TestSetupThingsClient(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			client, handler, err := grpcclient.SetupThingsClient(context.Background(), c.config)
+			client, handler, err := grpcclient.SetupClientsClient(context.Background(), c.config)
 			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected %s to contain %s", err, c.err))
 			if err == nil {
 				assert.NotNil(t, client)
@@ -131,7 +134,7 @@ func TestSetupDomainsClient(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	registerDomainsServiceServer := func(srv *grpc.Server) {
-		magistrala.RegisterDomainsServiceServer(srv, domainsgrpcapi.NewDomainsServer(new(mocks.Service)))
+		grpcDomainsV1.RegisterDomainsServiceServer(srv, domainsgrpcapi.NewDomainsServer(new(domainsMocks.Service)))
 	}
 	gs := grpcserver.NewServer(ctx, cancel, "auth", server.Config{Port: "12345"}, registerDomainsServiceServer, mglog.NewMock())
 	go func() {

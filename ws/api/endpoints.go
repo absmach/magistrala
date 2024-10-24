@@ -33,7 +33,7 @@ func handshake(ctx context.Context, svc ws.Service) http.HandlerFunc {
 		req.conn = conn
 		client := ws.NewClient(conn)
 
-		if err := svc.Subscribe(ctx, req.thingKey, req.chanID, req.subtopic, client); err != nil {
+		if err := svc.Subscribe(ctx, req.clientKey, req.chanID, req.subtopic, client); err != nil {
 			req.conn.Close()
 			return
 		}
@@ -56,7 +56,7 @@ func decodeRequest(r *http.Request) (connReq, error) {
 	chanID := chi.URLParam(r, "chanID")
 
 	req := connReq{
-		thingKey: authKey,
+		clientKey: authKey,
 		chanID:   chanID,
 	}
 

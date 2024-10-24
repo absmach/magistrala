@@ -14,7 +14,7 @@ type Cert struct {
 	Key          string    `json:"key,omitempty"`
 	Revoked      bool      `json:"revoked"`
 	ExpiryTime   time.Time `json:"expiry_time"`
-	ThingID      string    `json:"entity_id"`
+	ClientID     string    `json:"entity_id"`
 	DownloadUrl  string    `json:"-"`
 }
 
@@ -64,7 +64,7 @@ func (c sdkAgent) Issue(entityId, ttl string, ipAddrs []string) (Cert, error) {
 		Certificate:  cert.Certificate,
 		Revoked:      cert.Revoked,
 		ExpiryTime:   cert.ExpiryTime,
-		ThingID:      cert.EntityID,
+		ClientID:     cert.EntityID,
 	}, nil
 }
 
@@ -79,7 +79,7 @@ func (c sdkAgent) View(serial string) (Cert, error) {
 		Key:          cert.Key,
 		Revoked:      cert.Revoked,
 		ExpiryTime:   cert.ExpiryTime,
-		ThingID:      cert.EntityID,
+		ClientID:     cert.EntityID,
 	}, nil
 }
 
@@ -105,7 +105,7 @@ func (c sdkAgent) ListCerts(pm sdk.PageMetadata) (CertPage, error) {
 			Key:          c.Key,
 			Revoked:      c.Revoked,
 			ExpiryTime:   c.ExpiryTime,
-			ThingID:      c.EntityID,
+			ClientID:     c.EntityID,
 		})
 	}
 

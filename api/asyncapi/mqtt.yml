@@ -17,8 +17,8 @@ info:
   license:
     name: Apache 2.0
     url: 'https://github.com/absmach/magistrala/blob/main/LICENSE'
-  
-  
+
+
 defaultContentType: application/json
 
 servers:
@@ -33,7 +33,7 @@ servers:
         enum:
           - '1883'
           - '8883'
-    security: 
+    security:
       - user-password: []
 
 channels:
@@ -45,7 +45,7 @@ channels:
         required: true
       subtopic:
         $ref: '#/components/parameters/subtopic'
-        in: path 
+        in: path
         required: false
 
     publish:
@@ -88,7 +88,7 @@ components:
 
   parameters:
     channelID:
-      description: Channel ID connected to the Thing ID defined in the username.
+      description: Channel ID connected to the Client ID defined in the username.
       schema:
         type: string
         format: uuid
@@ -97,13 +97,13 @@ components:
       schema:
         type: string
         default: ''
-  
+
   securitySchemes:
     user-password:
       type: userPassword
       description: |
-        username is thing ID connected to the channel defined in the mqtt topic and 
-        password is thing key corresponding to the thing ID 
+        username is client ID connected to the channel defined in the mqtt topic and
+        password is client secret corresponding to the client ID
 
   operationTraits:
     mqtt:

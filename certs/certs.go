@@ -19,7 +19,7 @@ type Cert struct {
 	Key          string    `json:"key,omitempty"`
 	Revoked      bool      `json:"revoked"`
 	ExpiryTime   time.Time `json:"expiry_time"`
-	ThingID      string    `json:"entity_id"`
+	ClientID     string    `json:"entity_id"`
 }
 
 type CertPage struct {
@@ -33,7 +33,7 @@ type PageMetadata struct {
 	Total      uint64 `json:"total,omitempty"`
 	Offset     uint64 `json:"offset,omitempty"`
 	Limit      uint64 `json:"limit,omitempty"`
-	ThingID    string `json:"thing_id,omitempty"`
+	ClientID   string `json:"client_id,omitempty"`
 	Token      string `json:"token,omitempty"`
 	CommonName string `json:"common_name,omitempty"`
 	Revoked    string `json:"revoked,omitempty"`

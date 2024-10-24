@@ -6,8 +6,8 @@ package authsvc
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth/api/grpc/auth"
+	grpcAuthV1 "github.com/absmach/magistrala/internal/grpc/auth/v1"
 	"github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/grpcclient"
@@ -15,7 +15,7 @@ import (
 )
 
 type authorization struct {
-	authSvcClient magistrala.AuthServiceClient
+	authSvcClient grpcAuthV1.AuthServiceClient
 }
 
 var _ authz.Authorization = (*authorization)(nil)
@@ -38,7 +38,7 @@ func NewAuthorization(ctx context.Context, cfg grpcclient.Config) (authz.Authori
 }
 
 func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq) error {
-	req := magistrala.AuthZReq{
+	req := grpcAuthV1.AuthZReq{
 		Domain:          pr.Domain,
 		SubjectType:     pr.SubjectType,
 		SubjectKind:     pr.SubjectKind,
@@ -53,7 +53,7 @@ func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq) error 
 	if err != nil {
 		return errors.Wrap(errors.ErrAuthorization, err)
 	}
-	if !res.Authorized {
+	if !res.GetAuthorized() {
 		return errors.ErrAuthorization
 	}
 	return nil

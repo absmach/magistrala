@@ -10,13 +10,14 @@ import (
 	"testing"
 	"time"
 
+	mgchannels "github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/clients"
+	mggroups "github.com/absmach/magistrala/groups"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/invitations"
 	"github.com/absmach/magistrala/journal"
-	mggroups "github.com/absmach/magistrala/pkg/groups"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/uuid"
-	"github.com/absmach/magistrala/things"
 	"github.com/absmach/magistrala/users"
 	"github.com/stretchr/testify/assert"
 )
@@ -64,11 +65,11 @@ func convertUsers(cs []sdk.User) []users.User {
 	return ccs
 }
 
-func convertThings(cs ...sdk.Thing) []things.Client {
-	ccs := []things.Client{}
+func convertClients(cs ...sdk.Client) []clients.Client {
+	ccs := []clients.Client{}
 
 	for _, c := range cs {
-		ccs = append(ccs, convertThing(c))
+		ccs = append(ccs, convertClient(c))
 	}
 
 	return ccs
@@ -84,14 +85,14 @@ func convertGroups(cs []sdk.Group) []mggroups.Group {
 	return cgs
 }
 
-func convertChannels(cs []sdk.Channel) []mggroups.Group {
-	cgs := []mggroups.Group{}
+func convertChannels(cs []sdk.Channel) []mgchannels.Channel {
+	chs := []mgchannels.Channel{}
 
 	for _, c := range cs {
-		cgs = append(cgs, convertChannel(c))
+		chs = append(chs, convertChannel(c))
 	}
 
-	return cgs
+	return chs
 }
 
 func convertGroup(g sdk.Group) mggroups.Group {
@@ -162,44 +163,41 @@ func convertUser(c sdk.User) users.User {
 	}
 }
 
-func convertThing(c sdk.Thing) things.Client {
+func convertClient(c sdk.Client) clients.Client {
 	if c.Status == "" {
-		c.Status = things.EnabledStatus.String()
+		c.Status = clients.EnabledStatus.String()
 	}
-	status, err := things.ToStatus(c.Status)
+	status, err := clients.ToStatus(c.Status)
 	if err != nil {
-		return things.Client{}
+		return clients.Client{}
 	}
-	return things.Client{
+	return clients.Client{
 		ID:          c.ID,
 		Name:        c.Name,
 		Tags:        c.Tags,
 		Domain:      c.DomainID,
-		Credentials: things.Credentials(c.Credentials),
-		Metadata:    things.Metadata(c.Metadata),
+		Credentials: clients.Credentials(c.Credentials),
+		Metadata:    clients.Metadata(c.Metadata),
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 		Status:      status,
 	}
 }
 
-func convertChannel(g sdk.Channel) mggroups.Group {
+func convertChannel(g sdk.Channel) mgchannels.Channel {
 	if g.Status == "" {
-		g.Status = mggroups.EnabledStatus.String()
+		g.Status = clients.EnabledStatus.String()
 	}
-	status, err := mggroups.ToStatus(g.Status)
+	status, err := clients.ToStatus(g.Status)
 	if err != nil {
-		return mggroups.Group{}
+		return mgchannels.Channel{}
 	}
-	return mggroups.Group{
+	return mgchannels.Channel{
 		ID:          g.ID,
 		Domain:      g.DomainID,
-		Parent:      g.ParentID,
+		ParentGroup: g.ParentID,
 		Name:        g.Name,
-		Description: g.Description,
-		Metadata:    mggroups.Metadata(g.Metadata),
-		Level:       g.Level,
-		Path:        g.Path,
+		Metadata:    clients.Metadata(g.Metadata),
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
 		Status:      status,

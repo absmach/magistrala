@@ -30,7 +30,7 @@ const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
 var (
 	valid                = "valid"
-	thingID              = testsutil.GenerateUUID(&testing.T{})
+	clientID             = testsutil.GenerateUUID(&testing.T{})
 	OwnerID              = testsutil.GenerateUUID(&testing.T{})
 	serial               = testsutil.GenerateUUID(&testing.T{})
 	ttl                  = "10h"
@@ -44,13 +44,13 @@ func generateTestCerts(t *testing.T) (certs.Cert, sdk.Cert) {
 	expirationTime, err := time.Parse(time.RFC3339, "2032-01-01T00:00:00Z")
 	assert.Nil(t, err, fmt.Sprintf("failed to parse expiration time: %v", err))
 	c := certs.Cert{
-		ThingID:      thingID,
+		ClientID:     clientID,
 		SerialNumber: serial,
 		ExpiryTime:   expirationTime,
 		Certificate:  valid,
 	}
 	sc := sdk.Cert{
-		ThingID:      thingID,
+		ClientID:     clientID,
 		SerialNumber: serial,
 		Key:          valid,
 		Certificate:  valid,
@@ -83,7 +83,7 @@ func TestIssueCert(t *testing.T) {
 
 	cases := []struct {
 		desc            string
-		thingID         string
+		clientID        string
 		duration        string
 		domainID        string
 		token           string
@@ -94,8 +94,8 @@ func TestIssueCert(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:     "create new cert with thing id and duration",
-			thingID:  thingID,
+			desc:     "create new cert with client id and duration",
+			clientID: clientID,
 			duration: ttl,
 			domainID: validID,
 			token:    validToken,
@@ -104,8 +104,8 @@ func TestIssueCert(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "create new cert with empty thing id and duration",
-			thingID:  "",
+			desc:     "create new cert with empty client id and duration",
+			clientID: "",
 			duration: ttl,
 			domainID: validID,
 			token:    validToken,
@@ -114,8 +114,8 @@ func TestIssueCert(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:     "create new cert with invalid thing id and duration",
-			thingID:  invalid,
+			desc:     "create new cert with invalid client id and duration",
+			clientID: invalid,
 			duration: ttl,
 			domainID: validID,
 			token:    validToken,
@@ -124,8 +124,8 @@ func TestIssueCert(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, certs.ErrFailedCertCreation), http.StatusBadRequest),
 		},
 		{
-			desc:     "create new cert with thing id and empty duration",
-			thingID:  thingID,
+			desc:     "create new cert with client id and empty duration",
+			clientID: clientID,
 			duration: "",
 			domainID: validID,
 			token:    validToken,
@@ -134,8 +134,8 @@ func TestIssueCert(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingCertData), http.StatusBadRequest),
 		},
 		{
-			desc:     "create new cert with thing id and malformed duration",
-			thingID:  thingID,
+			desc:     "create new cert with client id and malformed duration",
+			clientID: clientID,
 			duration: invalid,
 			domainID: validID,
 			token:    validToken,
@@ -145,7 +145,7 @@ func TestIssueCert(t *testing.T) {
 		},
 		{
 			desc:     "create new cert with empty token",
-			thingID:  thingID,
+			clientID: clientID,
 			duration: ttl,
 			domainID: validID,
 			token:    "",
@@ -155,7 +155,7 @@ func TestIssueCert(t *testing.T) {
 		},
 		{
 			desc:            "create new cert with invalid token",
-			thingID:         thingID,
+			clientID:        clientID,
 			domainID:        domainID,
 			duration:        ttl,
 			token:           invalidToken,
@@ -165,7 +165,7 @@ func TestIssueCert(t *testing.T) {
 		},
 		{
 			desc:     "create new empty cert",
-			thingID:  "",
+			clientID: "",
 			duration: "",
 			domainID: validID,
 			token:    validToken,
@@ -181,12 +181,12 @@ func TestIssueCert(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := svc.On("IssueCert", mock.Anything, tc.domainID, tc.token, tc.thingID, tc.duration).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.IssueCert(tc.thingID, tc.duration, tc.domainID, tc.token)
+			svcCall := svc.On("IssueCert", mock.Anything, tc.domainID, tc.token, tc.clientID, tc.duration).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.IssueCert(tc.clientID, tc.duration, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				assert.Equal(t, tc.svcRes.SerialNumber, resp.SerialNumber)
-				ok := svcCall.Parent.AssertCalled(t, "IssueCert", mock.Anything, tc.domainID, tc.token, tc.thingID, tc.duration)
+				ok := svcCall.Parent.AssertCalled(t, "IssueCert", mock.Anything, tc.domainID, tc.token, tc.clientID, tc.duration)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -279,7 +279,7 @@ func TestViewCert(t *testing.T) {
 	}
 }
 
-func TestViewCertByThing(t *testing.T) {
+func TestViewCertByClient(t *testing.T) {
 	ts, svc, auth := setupCerts()
 	defer ts.Close()
 
@@ -291,14 +291,14 @@ func TestViewCertByThing(t *testing.T) {
 
 	mgsdk := sdk.NewSDK(sdkConf)
 
-	viewCertThingRes := sdk.CertSerials{
+	viewCertClientRes := sdk.CertSerials{
 		Certs: []sdk.Cert{{
 			SerialNumber: serial,
 		}},
 	}
 	cases := []struct {
 		desc            string
-		thingID         string
+		clientID        string
 		domainID        string
 		token           string
 		session         mgauthn.Session
@@ -309,7 +309,7 @@ func TestViewCertByThing(t *testing.T) {
 	}{
 		{
 			desc:     "view existing cert",
-			thingID:  thingID,
+			clientID: clientID,
 			domainID: domainID,
 			token:    validToken,
 			svcRes:   certs.CertPage{Certificates: []certs.Cert{{SerialNumber: serial}}},
@@ -318,7 +318,7 @@ func TestViewCertByThing(t *testing.T) {
 		},
 		{
 			desc:     "view non-existent cert",
-			thingID:  invalid,
+			clientID: invalid,
 			domainID: domainID,
 			token:    validToken,
 			svcRes:   certs.CertPage{Certificates: []certs.Cert{}},
@@ -327,7 +327,7 @@ func TestViewCertByThing(t *testing.T) {
 		},
 		{
 			desc:            "view cert with invalid token",
-			thingID:         thingID,
+			clientID:        clientID,
 			domainID:        domainID,
 			token:           invalidToken,
 			svcRes:          certs.CertPage{Certificates: []certs.Cert{}},
@@ -336,7 +336,7 @@ func TestViewCertByThing(t *testing.T) {
 		},
 		{
 			desc:     "view cert with empty token",
-			thingID:  thingID,
+			clientID: clientID,
 			domainID: domainID,
 			token:    "",
 			svcRes:   certs.CertPage{Certificates: []certs.Cert{}},
@@ -344,8 +344,8 @@ func TestViewCertByThing(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:     "view cert with empty thing id",
-			thingID:  "",
+			desc:     "view cert with empty client id",
+			clientID: "",
 			domainID: domainID,
 			token:    validToken,
 			svcRes:   certs.CertPage{Certificates: []certs.Cert{}},
@@ -359,12 +359,12 @@ func TestViewCertByThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := svc.On("ListSerials", mock.Anything, tc.thingID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit}).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ViewCertByThing(tc.thingID, tc.domainID, tc.token)
+			svcCall := svc.On("ListSerials", mock.Anything, tc.clientID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit}).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.ViewCertByClient(tc.clientID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				assert.Equal(t, viewCertThingRes, resp)
-				ok := svcCall.Parent.AssertCalled(t, "ListSerials", mock.Anything, tc.thingID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit})
+				assert.Equal(t, viewCertClientRes, resp)
+				ok := svcCall.Parent.AssertCalled(t, "ListSerials", mock.Anything, tc.clientID, certs.PageMetadata{Revoked: defRevoke, Offset: defOffset, Limit: defLimit})
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -387,7 +387,7 @@ func TestRevokeCert(t *testing.T) {
 
 	cases := []struct {
 		desc            string
-		thingID         string
+		clientID        string
 		domainID        string
 		token           string
 		session         mgauthn.Session
@@ -398,7 +398,7 @@ func TestRevokeCert(t *testing.T) {
 	}{
 		{
 			desc:     "revoke cert successfully",
-			thingID:  thingID,
+			clientID: clientID,
 			domainID: validID,
 			token:    validToken,
 			svcResp:  certs.Revoke{RevocationTime: time.Now()},
@@ -407,7 +407,7 @@ func TestRevokeCert(t *testing.T) {
 		},
 		{
 			desc:            "revoke cert with invalid token",
-			thingID:         thingID,
+			clientID:        clientID,
 			domainID:        validID,
 			token:           invalidToken,
 			svcResp:         certs.Revoke{},
@@ -416,7 +416,7 @@ func TestRevokeCert(t *testing.T) {
 		},
 		{
 			desc:     "revoke non-existing cert",
-			thingID:  invalid,
+			clientID: invalid,
 			domainID: validID,
 			token:    validToken,
 			svcResp:  certs.Revoke{},
@@ -425,7 +425,7 @@ func TestRevokeCert(t *testing.T) {
 		},
 		{
 			desc:     "revoke cert with empty token",
-			thingID:  thingID,
+			clientID: clientID,
 			domainID: validID,
 			token:    "",
 			svcResp:  certs.Revoke{},
@@ -434,7 +434,7 @@ func TestRevokeCert(t *testing.T) {
 		},
 		{
 			desc:     "revoke deleted cert",
-			thingID:  thingID,
+			clientID: clientID,
 			domainID: validID,
 			token:    validToken,
 			svcResp:  certs.Revoke{},
@@ -448,12 +448,12 @@ func TestRevokeCert(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := svc.On("RevokeCert", mock.Anything, tc.domainID, tc.token, tc.thingID).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.RevokeCert(tc.thingID, tc.domainID, tc.token)
+			svcCall := svc.On("RevokeCert", mock.Anything, tc.domainID, tc.token, tc.clientID).Return(tc.svcResp, tc.svcErr)
+			resp, err := mgsdk.RevokeCert(tc.clientID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.NotEmpty(t, resp)
-				ok := svcCall.Parent.AssertCalled(t, "RevokeCert", mock.Anything, tc.domainID, tc.token, tc.thingID)
+				ok := svcCall.Parent.AssertCalled(t, "RevokeCert", mock.Anything, tc.domainID, tc.token, tc.clientID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

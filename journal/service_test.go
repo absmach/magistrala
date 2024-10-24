@@ -78,7 +78,7 @@ func TestReadAll(t *testing.T) {
 		Offset:     0,
 		Limit:      10,
 		EntityID:   testsutil.GenerateUUID(t),
-		EntityType: journal.ThingEntity,
+		EntityType: journal.ClientEntity,
 	}
 
 	cases := []struct {

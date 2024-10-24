@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc/token"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -28,7 +28,7 @@ const (
 	secret          = "secret"
 	email           = "test@example.com"
 	id              = "testID"
-	thingsType      = "things"
+	clientsType     = "clients"
 	usersType       = "users"
 	description     = "Description"
 	groupName       = "mgx"
@@ -52,7 +52,7 @@ var (
 func startGRPCServer(svc auth.Service, port int) *grpc.Server {
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
-	magistrala.RegisterTokenServiceServer(server, grpcapi.NewTokenServer(svc))
+	grpcTokenV1.RegisterTokenServiceServer(server, grpcapi.NewTokenServer(svc))
 	go func() {
 		err := server.Serve(listener)
 		assert.Nil(&testing.T{}, err, fmt.Sprintf(`"Unexpected error creating auth server %s"`, err))
@@ -117,12 +117,10 @@ func TestIssue(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
-			_, err := grpcClient.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.userId, Type: uint32(tc.kind)})
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			svcCall.Unset()
-		})
+		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
+		_, err := grpcClient.Issue(context.Background(), &grpcTokenV1.IssueReq{UserId: tc.userId, Type: uint32(tc.kind)})
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		svcCall.Unset()
 	}
 }
 
@@ -161,11 +159,9 @@ func TestRefresh(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
-			_, err := grpcClient.Refresh(context.Background(), &magistrala.RefreshReq{RefreshToken: tc.token})
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			svcCall.Unset()
-		})
+		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
+		_, err := grpcClient.Refresh(context.Background(), &grpcTokenV1.RefreshReq{RefreshToken: tc.token})
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		svcCall.Unset()
 	}
 }

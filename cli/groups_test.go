@@ -758,7 +758,7 @@ func TestDisablegroupCmd(t *testing.T) {
 			logType:       errLog,
 		},
 		{
-			desc: "disable thing with invalid args",
+			desc: "disable client with invalid args",
 			args: []string{
 				group.ID,
 				domainID,

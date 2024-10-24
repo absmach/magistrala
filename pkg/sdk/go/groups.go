@@ -215,7 +215,7 @@ func (sdk mgSDK) ListGroupUsers(groupID string, pm PageMetadata, domainID, token
 }
 
 func (sdk mgSDK) ListGroupChannels(groupID string, pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s/%s", domainID, groupsEndpoint, groupID, channelsEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.clientsURL, fmt.Sprintf("%s/%s/%s/%s", domainID, groupsEndpoint, groupID, channelsEndpoint), pm)
 	if err != nil {
 		return ChannelsPage{}, errors.NewSDKError(err)
 	}

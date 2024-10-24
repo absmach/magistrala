@@ -19,7 +19,7 @@ on:
       - "journal/api/**"
       - "provision/api/**"
       - "readers/api/**"
-      - "things/api/**"
+      - "clients/api/**"
       - "users/api/**"
 
 env:
@@ -29,7 +29,7 @@ env:
   USER_SECRET: 12345678
   DOMAIN_NAME: demo-test
   USERS_URL: http://localhost:9002
-  THINGS_URL: http://localhost:9000
+  CLIENTS_URL: http://localhost:9000
   HTTP_ADAPTER_URL: http://localhost:8008
   INVITATIONS_URL: http://localhost:9020
   AUTH_URL: http://localhost:8189
@@ -65,8 +65,8 @@ jobs:
           export DOMAIN_ID=$(curl -sSX POST $DOMAINS_URL -H "Content-Type: application/json" -H "Authorization: Bearer $USER_TOKEN" -d "{\"name\":\"$DOMAIN_NAME\",\"alias\":\"$DOMAIN_NAME\"}" | jq -r .id)
           export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\",\"domain_id\": \"$DOMAIN_ID\"}" | jq -r .access_token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
-          export THING_SECRET=$(magistrala-cli provision test | /usr/bin/grep -Eo '"secret": "[^"]+"' | awk 'NR % 2 == 0' | sed 's/"secret": "\(.*\)"/\1/')
-          echo "THING_SECRET=$THING_SECRET" >> $GITHUB_ENV
+          export CLIENT_SECRET=$(magistrala-cli provision test | /usr/bin/grep -Eo '"secret": "[^"]+"' | awk 'NR % 2 == 0' | sed 's/"secret": "\(.*\)"/\1/')
+          echo "CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Check for changes in specific paths
         uses: dorny/paths-filter@v3
@@ -113,10 +113,10 @@ jobs:
               - "api/openapi/readers.yml"
               - "readers/api/**"
 
-            things:
+            clients:
               - ".github/workflows/api-tests.yml"
-              - "api/openapi/things.yml"
-              - "things/api/**"
+              - "api/openapi/clients.yml"
+              - "clients/api/**"
 
             users:
               - ".github/workflows/api-tests.yml"
@@ -133,12 +133,12 @@ jobs:
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
-      - name: Run Things API tests
-        if: steps.changes.outputs.things == 'true'
+      - name: Run Clients API tests
+        if: steps.changes.outputs.clients == 'true'
         uses: schemathesis/action@v1
         with:
-          schema: api/openapi/things.yml
-          base-url: ${{ env.THINGS_URL }}
+          schema: api/openapi/clients.yml
+          base-url: ${{ env.CLIENTS_URL }}
           checks: all
           report: false
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
@@ -151,7 +151,7 @@ jobs:
           base-url: ${{ env.HTTP_ADAPTER_URL }}
           checks: all
           report: false
-          args: '--header "Authorization: Thing ${{ env.THING_SECRET }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+          args: '--header "Authorization: Client ${{ env.CLIENT_SECRET }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
 
       - name: Run Invitations API tests
         if: steps.changes.outputs.invitations == 'true'

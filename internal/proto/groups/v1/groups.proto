@@ -1,0 +1,15 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package groups.v1;
+option go_package = "github.com/absmach/magistrala/internal/grpc/groups/v1";
+
+import "common/v1/common.proto";
+
+// GroupssService is a service that provides groups functionalities
+// for magistrala services.
+service GroupsService {
+  rpc RetrieveEntity(common.v1.RetrieveEntityReq) returns (common.v1.RetrieveEntityRes) {}
+}

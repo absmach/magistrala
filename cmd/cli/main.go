@@ -37,7 +37,7 @@ func main() {
 	healthCmd := cli.NewHealthCmd()
 	usersCmd := cli.NewUsersCmd()
 	domainsCmd := cli.NewDomainsCmd()
-	thingsCmd := cli.NewThingsCmd()
+	clientsCmd := cli.NewClientsCmd()
 	groupsCmd := cli.NewGroupsCmd()
 	channelsCmd := cli.NewChannelsCmd()
 	messagesCmd := cli.NewMessagesCmd()
@@ -54,7 +54,7 @@ func main() {
 	rootCmd.AddCommand(usersCmd)
 	rootCmd.AddCommand(domainsCmd)
 	rootCmd.AddCommand(groupsCmd)
-	rootCmd.AddCommand(thingsCmd)
+	rootCmd.AddCommand(clientsCmd)
 	rootCmd.AddCommand(channelsCmd)
 	rootCmd.AddCommand(messagesCmd)
 	rootCmd.AddCommand(provisionCmd)
@@ -83,11 +83,11 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&sdkConf.ThingsURL,
-		"things-url",
+		&sdkConf.ClientsURL,
+		"clients-url",
 		"t",
-		sdkConf.ThingsURL,
-		"Things service URL",
+		sdkConf.ClientsURL,
+		"Clients service URL",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

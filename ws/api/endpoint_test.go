@@ -12,10 +12,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala"
+	chmocks "github.com/absmach/magistrala/channels/mocks"
+	climocks "github.com/absmach/magistrala/clients/mocks"
+	grpcChannelsV1 "github.com/absmach/magistrala/internal/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/internal/grpc/clients/v1"
 	mglog "github.com/absmach/magistrala/logger"
+	authnMocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/messaging/mocks"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/absmach/magistrala/ws"
 	"github.com/absmach/magistrala/ws/api"
 	"github.com/absmach/mgate/pkg/session"
@@ -29,16 +32,16 @@ import (
 const (
 	chanID     = "30315311-56ba-484d-b500-c1e08305511f"
 	id         = "1"
-	thingKey   = "c02ff576-ccd5-40f6-ba5f-c85377aad529"
+	clientKey  = "c02ff576-ccd5-40f6-ba5f-c85377aad529"
 	protocol   = "ws"
 	instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var msg = []byte(`[{"n":"current","t":-1,"v":1.6}]`)
 
-func newService(things magistrala.ThingsServiceClient) (ws.Service, *mocks.PubSub) {
+func newService(clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) (ws.Service, *mocks.PubSub) {
 	pubsub := new(mocks.PubSub)
-	return ws.New(things, pubsub), pubsub
+	return ws.New(clients, channels, pubsub), pubsub
 }
 
 func newHTTPServer(svc ws.Service) *httptest.Server {
@@ -55,7 +58,7 @@ func newProxyHTPPServer(svc session.Handler, targetServer *httptest.Server) (*ht
 	return httptest.NewServer(http.HandlerFunc(mp.Handler)), nil
 }
 
-func makeURL(tsURL, chanID, subtopic, thingKey string, header bool) (string, error) {
+func makeURL(tsURL, chanID, subtopic, clientKey string, header bool) (string, error) {
 	u, _ := url.Parse(tsURL)
 	u.Scheme = protocol
 
@@ -63,7 +66,7 @@ func makeURL(tsURL, chanID, subtopic, thingKey string, header bool) (string, err
 		if header {
 			return fmt.Sprintf("%s/channels/%s/messages", u, chanID), fmt.Errorf("invalid channel id")
 		}
-		return fmt.Sprintf("%s/channels/%s/messages?authorization=%s", u, chanID, thingKey), fmt.Errorf("invalid channel id")
+		return fmt.Sprintf("%s/channels/%s/messages?authorization=%s", u, chanID, clientKey), fmt.Errorf("invalid channel id")
 	}
 
 	subtopicPart := ""
@@ -74,132 +77,131 @@ func makeURL(tsURL, chanID, subtopic, thingKey string, header bool) (string, err
 		return fmt.Sprintf("%s/channels/%s/messages%s", u, chanID, subtopicPart), nil
 	}
 
-	return fmt.Sprintf("%s/channels/%s/messages%s?authorization=%s", u, chanID, subtopicPart, thingKey), nil
+	return fmt.Sprintf("%s/channels/%s/messages%s?authorization=%s", u, chanID, subtopicPart, clientKey), nil
 }
 
-func handshake(tsURL, chanID, subtopic, thingKey string, addHeader bool) (*websocket.Conn, *http.Response, error) {
+func handshake(tsURL, chanID, subtopic, clientKey string, addHeader bool) (*websocket.Conn, *http.Response, error) {
 	header := http.Header{}
 	if addHeader {
-		header.Add("Authorization", thingKey)
+		header.Add("Authorization", clientKey)
 	}
 
-	turl, _ := makeURL(tsURL, chanID, subtopic, thingKey, addHeader)
+	turl, _ := makeURL(tsURL, chanID, subtopic, clientKey, addHeader)
 	conn, res, errRet := websocket.DefaultDialer.Dial(turl, header)
 
 	return conn, res, errRet
 }
 
 func TestHandshake(t *testing.T) {
-	things := new(thmocks.ThingsServiceClient)
-	svc, pubsub := newService(things)
+	clients := new(climocks.ClientsServiceClient)
+	channels := new(chmocks.ChannelsServiceClient)
+	authn := new(authnMocks.Authentication)
+	svc, pubsub := newService(clients, channels)
 	target := newHTTPServer(svc)
 	defer target.Close()
-	handler := ws.NewHandler(pubsub, mglog.NewMock(), things)
+	handler := ws.NewHandler(pubsub, mglog.NewMock(), authn, clients, channels)
 	ts, err := newProxyHTPPServer(handler, target)
 	require.Nil(t, err)
 	defer ts.Close()
-	things.On("Authorize", mock.Anything, &magistrala.ThingsAuthzReq{ThingKey: thingKey, ChannelId: id, Permission: "publish"}).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: "1"}, nil)
-	things.On("Authorize", mock.Anything, &magistrala.ThingsAuthzReq{ThingKey: thingKey, ChannelId: id, Permission: "subscribe"}).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: "2"}, nil)
-	things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.AuthZRes{Authorized: false, Id: "3"}, nil)
 	pubsub.On("Subscribe", mock.Anything, mock.Anything).Return(nil)
 	pubsub.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	cases := []struct {
-		desc     string
-		chanID   string
-		subtopic string
-		header   bool
-		thingKey string
-		status   int
-		err      error
-		msg      []byte
+		desc      string
+		chanID    string
+		subtopic  string
+		header    bool
+		clientKey string
+		status    int
+		err       error
+		msg       []byte
 	}{
 		{
-			desc:     "connect and send message",
-			chanID:   id,
-			subtopic: "",
-			header:   true,
-			thingKey: thingKey,
-			status:   http.StatusSwitchingProtocols,
-			msg:      msg,
+			desc:      "connect and send message",
+			chanID:    id,
+			subtopic:  "",
+			header:    true,
+			clientKey: clientKey,
+			status:    http.StatusSwitchingProtocols,
+			msg:       msg,
 		},
 		{
-			desc:     "connect and send message with thingKey as query parameter",
-			chanID:   id,
-			subtopic: "",
-			header:   false,
-			thingKey: thingKey,
-			status:   http.StatusSwitchingProtocols,
-			msg:      msg,
+			desc:      "connect and send message with clientKey as query parameter",
+			chanID:    id,
+			subtopic:  "",
+			header:    false,
+			clientKey: clientKey,
+			status:    http.StatusSwitchingProtocols,
+			msg:       msg,
 		},
 		{
-			desc:     "connect and send message that cannot be published",
-			chanID:   id,
-			subtopic: "",
-			header:   true,
-			thingKey: thingKey,
-			status:   http.StatusSwitchingProtocols,
-			msg:      []byte{},
+			desc:      "connect and send message that cannot be published",
+			chanID:    id,
+			subtopic:  "",
+			header:    true,
+			clientKey: clientKey,
+			status:    http.StatusSwitchingProtocols,
+			msg:       []byte{},
 		},
 		{
-			desc:     "connect and send message to subtopic",
-			chanID:   id,
-			subtopic: "subtopic",
-			header:   true,
-			thingKey: thingKey,
-			status:   http.StatusSwitchingProtocols,
-			msg:      msg,
+			desc:      "connect and send message to subtopic",
+			chanID:    id,
+			subtopic:  "subtopic",
+			header:    true,
+			clientKey: clientKey,
+			status:    http.StatusSwitchingProtocols,
+			msg:       msg,
 		},
 		{
-			desc:     "connect and send message to nested subtopic",
-			chanID:   id,
-			subtopic: "subtopic/nested",
-			header:   true,
-			thingKey: thingKey,
-			status:   http.StatusSwitchingProtocols,
-			msg:      msg,
+			desc:      "connect and send message to nested subtopic",
+			chanID:    id,
+			subtopic:  "subtopic/nested",
+			header:    true,
+			clientKey: clientKey,
+			status:    http.StatusSwitchingProtocols,
+			msg:       msg,
 		},
 		{
-			desc:     "connect and send message to all subtopics",
-			chanID:   id,
-			subtopic: ">",
-			header:   true,
-			thingKey: thingKey,
-			status:   http.StatusSwitchingProtocols,
-			msg:      msg,
+			desc:      "connect and send message to all subtopics",
+			chanID:    id,
+			subtopic:  ">",
+			header:    true,
+			clientKey: clientKey,
+			status:    http.StatusSwitchingProtocols,
+			msg:       msg,
 		},
 		{
-			desc:     "connect to empty channel",
-			chanID:   "",
-			subtopic: "",
-			header:   true,
-			thingKey: thingKey,
-			status:   http.StatusBadGateway,
-			msg:      []byte{},
+			desc:      "connect to empty channel",
+			chanID:    "",
+			subtopic:  "",
+			header:    true,
+			clientKey: clientKey,
+			status:    http.StatusBadGateway,
+			msg:       []byte{},
 		},
 		{
-			desc:     "connect with empty thingKey",
-			chanID:   id,
-			subtopic: "",
-			header:   true,
-			thingKey: "",
-			status:   http.StatusUnauthorized,
-			msg:      []byte{},
+			desc:      "connect with empty clientKey",
+			chanID:    id,
+			subtopic:  "",
+			header:    true,
+			clientKey: "",
+			status:    http.StatusUnauthorized,
+			msg:       []byte{},
 		},
 		{
-			desc:     "connect and send message to subtopic with invalid name",
-			chanID:   id,
-			subtopic: "sub/a*b/topic",
-			header:   true,
-			thingKey: thingKey,
-			status:   http.StatusBadGateway,
-			msg:      msg,
+			desc:      "connect and send message to subtopic with invalid name",
+			chanID:    id,
+			subtopic:  "sub/a*b/topic",
+			header:    true,
+			clientKey: clientKey,
+			status:    http.StatusBadGateway,
+			msg:       msg,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			conn, res, err := handshake(ts.URL, tc.chanID, tc.subtopic, tc.thingKey, tc.header)
+			conn, res, err := handshake(ts.URL, tc.chanID, tc.subtopic, tc.clientKey, tc.header)
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code '%d' got '%d'\n", tc.desc, tc.status, res.StatusCode))
 
 			if tc.status == http.StatusSwitchingProtocols {

@@ -72,55 +72,55 @@ magistrala-cli users disable <user_id> <user_token>
 
 ### System Provisioning
 
-#### Create Thing
+#### Create Client
 
 ```bash
-magistrala-cli things create '{"name":"myThing"}' <user_token>
+magistrala-cli clients create '{"name":"myClient"}' <user_token>
 ```
 
-#### Create Thing with metadata
+#### Create Client with metadata
 
 ```bash
-magistrala-cli things create '{"name":"myThing", "metadata": {"key1":"value1"}}' <user_token>
+magistrala-cli clients create '{"name":"myClient", "metadata": {"key1":"value1"}}' <user_token>
 ```
 
-#### Bulk Provision Things
+#### Bulk Provision Clients
 
 ```bash
-magistrala-cli provision things <file> <user_token>
+magistrala-cli provision clients <file> <user_token>
 ```
 
-- `file` - A CSV or JSON file containing thing names (must have extension `.csv` or `.json`)
+- `file` - A CSV or JSON file containing client names (must have extension `.csv` or `.json`)
 - `user_token` - A valid user auth token for the current system
 
 An example CSV file might be:
 
 ```csv
-thing1,
-thing2,
-thing3,
+client1,
+client2,
+client3,
 ```
 
-in which the first column is the thing's name.
+in which the first column is the client's name.
 
 A comparable JSON file would be
 
 ```json
 [
   {
-    "name": "<thing1_name>",
+    "name": "<client1_name>",
     "status": "enabled"
   },
   {
-    "name": "<thing2_name>",
+    "name": "<client2_name>",
     "status": "disabled"
   },
   {
-    "name": "<thing3_name>",
+    "name": "<client3_name>",
     "status": "enabled",
     "credentials": {
-      "identity": "<thing3_identity>",
-      "secret": "<thing3_secret>"
+      "identity": "<client3_identity>",
+      "secret": "<client3_secret>"
     }
   }
 ]
@@ -128,46 +128,46 @@ A comparable JSON file would be
 
 With JSON you can be able to specify more fields of the channels you want to create
 
-#### Update Thing
+#### Update Client
 
 ```bash
-magistrala-cli things update <thing_id> '{"name":"value1", "metadata":{"key1": "value2"}}' <user_token>
+magistrala-cli clients update <client_id> '{"name":"value1", "metadata":{"key1": "value2"}}' <user_token>
 ```
 
-#### Identify Thing
+#### Identify Client
 
 ```bash
-magistrala-cli things identify <thing_key>
+magistrala-cli clients identify <client_key>
 ```
 
-#### Enable Thing
+#### Enable Client
 
 ```bash
-magistrala-cli things enable <thing_id> <user_token>
+magistrala-cli clients enable <client_id> <user_token>
 ```
 
-#### Disable Thing
+#### Disable Client
 
 ```bash
-magistrala-cli things disable <thing_id> <user_token>
+magistrala-cli clients disable <client_id> <user_token>
 ```
 
-#### Get Thing
+#### Get Client
 
 ```bash
-magistrala-cli things get <thing_id> <user_token>
+magistrala-cli clients get <client_id> <user_token>
 ```
 
-#### Get Things
+#### Get Clients
 
 ```bash
-magistrala-cli things get all <user_token>
+magistrala-cli clients get all <user_token>
 ```
 
-#### Get a subset list of provisioned Things
+#### Get a subset list of provisioned Clients
 
 ```bash
-magistrala-cli things get all --offset=1 --limit=5 <user_token>
+magistrala-cli clients get all --offset=1 --limit=5 <user_token>
 ```
 
 #### Create Channel
@@ -257,52 +257,52 @@ magistrala-cli channels get all --offset=1 --limit=5 <user_token>
 
 ### Access control
 
-#### Connect Thing to Channel
+#### Connect Client to Channel
 
 ```bash
-magistrala-cli things connect <thing_id> <channel_id> <user_token>
+magistrala-cli clients connect <client_id> <channel_id> <user_token>
 ```
 
-#### Bulk Connect Things to Channels
+#### Bulk Connect Clients to Channels
 
 ```bash
 magistrala-cli provision connect <file> <user_token>
 ```
 
-- `file` - A CSV or JSON file containing thing and channel ids (must have extension `.csv` or `.json`)
+- `file` - A CSV or JSON file containing client and channel ids (must have extension `.csv` or `.json`)
 - `user_token` - A valid user auth token for the current system
 
 An example CSV file might be
 
 ```csv
-<thing_id1>,<channel_id1>
-<thing_id2>,<channel_id2>
+<client_id1>,<channel_id1>
+<client_id2>,<channel_id2>
 ```
 
-in which the first column is thing IDs and the second column is channel IDs. A connection will be created for each thing to each channel. This example would result in 4 connections being created.
+in which the first column is client IDs and the second column is channel IDs. A connection will be created for each client to each channel. This example would result in 4 connections being created.
 
 A comparable JSON file would be
 
 ```json
 {
-  "client_ids": ["<thing_id1>", "<thing_id2>"],
+  "client_ids": ["<client_id1>", "<client_id2>"],
   "group_ids": ["<channel_id1>", "<channel_id2>"]
 }
 ```
 
-#### Disconnect Thing from Channel
+#### Disconnect Client from Channel
 
 ```bash
-magistrala-cli things disconnect <thing_id> <channel_id> <user_token>
+magistrala-cli clients disconnect <client_id> <channel_id> <user_token>
 ```
 
-#### Get a subset list of Channels connected to Thing
+#### Get a subset list of Channels connected to Client
 
 ```bash
-magistrala-cli things connections <thing_id> <user_token>
+magistrala-cli clients connections <client_id> <user_token>
 ```
 
-#### Get a subset list of Things connected to Channel
+#### Get a subset list of Clients connected to Channel
 
 ```bash
 magistrala-cli channels connections <channel_id> <user_token>
@@ -313,7 +313,7 @@ magistrala-cli channels connections <channel_id> <user_token>
 #### Send a message over HTTP
 
 ```bash
-magistrala-cli messages send <channel_id> '[{"bn":"Dev1","n":"temp","v":20}, {"n":"hum","v":40}, {"bn":"Dev2", "n":"temp","v":20}, {"n":"hum","v":40}]' <thing_secret>
+magistrala-cli messages send <channel_id> '[{"bn":"Dev1","n":"temp","v":20}, {"n":"hum","v":40}, {"bn":"Dev2", "n":"temp","v":20}, {"n":"hum","v":40}]' <client_secret>
 ```
 
 #### Read messages over HTTP
@@ -333,19 +333,19 @@ magistrala-cli bootstrap create '{"external_id": "myExtID", "external_key": "myE
 #### View configuration
 
 ```bash
-magistrala-cli bootstrap get <thing_id> <user_token> -b <bootstrap-url>
+magistrala-cli bootstrap get <client_id> <user_token> -b <bootstrap-url>
 ```
 
 #### Update configuration
 
 ```bash
-magistrala-cli bootstrap update '{"thing_id":"<thing_id>", "name": "newName", "content": "newContent"}' <user_token> -b <bootstrap-url>
+magistrala-cli bootstrap update '{"client_id":"<client_id>", "name": "newName", "content": "newContent"}' <user_token> -b <bootstrap-url>
 ```
 
 #### Remove configuration
 
 ```bash
-magistrala-cli bootstrap remove <thing_id> <user_token> -b <bootstrap-url>
+magistrala-cli bootstrap remove <client_id> <user_token> -b <bootstrap-url>
 ```
 
 #### Bootstrap configuration

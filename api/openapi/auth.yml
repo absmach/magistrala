@@ -31,7 +31,7 @@ tags:
     externalDocs:
       description: Find out more about domains
       url: https://docs.magistrala.abstractmachines.fr/
-  
+
   - name: Health
     description: Service health check endpoint.
     externalDocs:
@@ -549,7 +549,7 @@ components:
         metadata:
           type: object
           example: { "domain": "example.com" }
-          description: Arbitrary, object-encoded thing's data.
+          description: Arbitrary, object-encoded client's data.
         alias:
           type: string
           example: domain alias

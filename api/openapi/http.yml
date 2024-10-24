@@ -169,13 +169,13 @@ components:
       scheme: bearer
       bearerFormat: uuid
       description: |
-        * Thing access: "Authorization: Thing <thing_key>"
+        * Client access: "Authorization: Client <client_key>"
 
     basicAuth:
       type: http
       scheme: basic
       description: |
-        * Things access: "Authorization: Basic <base64-encoded_credentials>"
+        * Clients access: "Authorization: Basic <base64-encoded_credentials>"
 
 security:
   - bearerAuth: []

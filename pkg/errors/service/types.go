@@ -75,4 +75,10 @@ var (
 
 	// ErrMissingUsername indicates that the user's names are missing.
 	ErrMissingUsername = errors.New("missing usernames")
+
+	// ErrEnableUser indicates error in enabling user.
+	ErrEnableUser = errors.New("failed to enable user")
+
+	// ErrDisableUser indicates error in disabling user.
+	ErrDisableUser = errors.New("failed to disable user")
 )

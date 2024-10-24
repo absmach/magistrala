@@ -57,6 +57,14 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE domains ALTER COLUMN alias SET NOT NULL`,
 				},
 			},
+			{
+				Id: "auth_3",
+				Up: []string{
+					`DROP TABLE IF EXISTS policies;
+                     DROP TABLE IF EXISTS domains;
+                    `,
+				},
+			},
 		},
 	}
 }

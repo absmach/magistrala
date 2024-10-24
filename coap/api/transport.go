@@ -132,18 +132,7 @@ func handleGet(m *mux.Message, w mux.ResponseWriter, msg *messaging.Message, key
 	if obs == startObserve {
 		c := coap.NewClient(w.Conn(), m.Token(), logger)
 		w.Conn().AddOnClose(func() {
-			err := service.Unsubscribe(context.Background(), key, msg.GetChannel(), msg.GetSubtopic(), c.Token())
-			args := []any{
-				slog.String("channel_id", msg.GetChannel()),
-				slog.String("subtopic", msg.GetSubtopic()),
-				slog.String("token", c.Token()),
-			}
-			if err != nil {
-				args = append(args, slog.Any("error", err))
-				logger.Warn("Unsubscribe idle client failed ", args...)
-				return
-			}
-			logger.Warn("Unsubscribe idle client completed successfully", args...)
+			_ = service.DisconnectHandler(context.Background(), msg.GetChannel(), msg.GetSubtopic(), c.Token())
 		})
 		return service.Subscribe(w.Conn().Context(), key, msg.GetChannel(), msg.GetSubtopic(), c)
 	}

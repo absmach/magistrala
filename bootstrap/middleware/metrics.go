@@ -62,13 +62,13 @@ func (mm *metricsMiddleware) Update(ctx context.Context, session mgauthn.Session
 }
 
 // UpdateCert instruments UpdateCert method with metrics.
-func (mm *metricsMiddleware) UpdateCert(ctx context.Context, session mgauthn.Session, thingKey, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
+func (mm *metricsMiddleware) UpdateCert(ctx context.Context, session mgauthn.Session, clientID, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_cert").Add(1)
 		mm.latency.With("method", "update_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateCert(ctx, session, thingKey, clientCert, clientKey, caCert)
+	return mm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 }
 
 // UpdateConnections instruments UpdateConnections method with metrics.
@@ -151,22 +151,22 @@ func (mm *metricsMiddleware) RemoveChannelHandler(ctx context.Context, id string
 	return mm.svc.RemoveChannelHandler(ctx, id)
 }
 
-// ConnectThingHandler instruments ConnectThingHandler method with metrics.
-func (mm *metricsMiddleware) ConnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
+// ConnectClientHandler instruments ConnectClientHandler method with metrics.
+func (mm *metricsMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "connect_thing_handler").Add(1)
-		mm.latency.With("method", "connect_thing_handler").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "connect_client_handler").Add(1)
+		mm.latency.With("method", "connect_client_handler").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ConnectThingHandler(ctx, channelID, thingID)
+	return mm.svc.ConnectClientHandler(ctx, channelID, clientID)
 }
 
-// DisconnectThingHandler instruments DisconnectThingHandler method with metrics.
-func (mm *metricsMiddleware) DisconnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
+// DisconnectClientHandler instruments DisconnectClientHandler method with metrics.
+func (mm *metricsMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "disconnect_thing_handler").Add(1)
-		mm.latency.With("method", "disconnect_thing_handler").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "disconnect_client_handler").Add(1)
+		mm.latency.With("method", "disconnect_client_handler").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.DisconnectThingHandler(ctx, channelID, thingID)
+	return mm.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }

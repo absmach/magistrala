@@ -23,11 +23,11 @@ const numConfigs = 10
 
 var (
 	config = bootstrap.Config{
-		ThingID:     "mg-thing",
-		ThingKey:    "mg-key",
-		ExternalID:  "external-id",
-		ExternalKey: "external-key",
-		DomainID:    testsutil.GenerateUUID(&testing.T{}),
+		ClientID:     "mg-client",
+		ClientSecret: "mg-key",
+		ExternalID:   "external-id",
+		ExternalKey:  "external-key",
+		DomainID:     testsutil.GenerateUUID(&testing.T{}),
 		Channels: []bootstrap.Channel{
 			{ID: "1", Name: "name 1", Metadata: map[string]interface{}{"meta": 1.0}},
 			{ID: "2", Name: "name 2", Metadata: map[string]interface{}{"meta": 2.0}},
@@ -46,20 +46,20 @@ func TestSave(t *testing.T) {
 
 	diff := "different"
 
-	duplicateThing := config
-	duplicateThing.ExternalID = diff
-	duplicateThing.ThingKey = diff
-	duplicateThing.Channels = []bootstrap.Channel{}
+	duplicateClient := config
+	duplicateClient.ExternalID = diff
+	duplicateClient.ClientSecret = diff
+	duplicateClient.Channels = []bootstrap.Channel{}
 
 	duplicateExternal := config
-	duplicateExternal.ThingID = diff
-	duplicateExternal.ThingKey = diff
+	duplicateExternal.ClientID = diff
+	duplicateExternal.ClientSecret = diff
 	duplicateExternal.Channels = []bootstrap.Channel{}
 
 	duplicateChannels := config
 	duplicateChannels.ExternalID = diff
-	duplicateChannels.ThingKey = diff
-	duplicateChannels.ThingID = diff
+	duplicateChannels.ClientSecret = diff
+	duplicateChannels.ClientID = diff
 
 	cases := []struct {
 		desc        string
@@ -74,8 +74,8 @@ func TestSave(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc:        "save config with same Thing ID",
-			config:      duplicateThing,
+			desc:        "save config with same Client ID",
+			config:      duplicateClient,
 			connections: nil,
 			err:         repoerr.ErrConflict,
 		},
@@ -96,7 +96,7 @@ func TestSave(t *testing.T) {
 		id, err := repo.Save(context.Background(), tc.config, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			assert.Equal(t, id, tc.config.ThingID, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.config.ThingID, id))
+			assert.Equal(t, id, tc.config.ClientID, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.config.ClientID, id))
 		}
 	}
 }
@@ -110,8 +110,8 @@ func TestRetrieveByID(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	id, err := repo.Save(context.Background(), c, channels)
@@ -162,7 +162,7 @@ func TestRetrieveAll(t *testing.T) {
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
 
-	thingIDs := make([]string, numConfigs)
+	clientIDs := make([]string, numConfigs)
 
 	for i := 0; i < numConfigs; i++ {
 		c := config
@@ -172,10 +172,10 @@ func TestRetrieveAll(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
 		c.ExternalID = uid.String()
 		c.Name = fmt.Sprintf("name %d", i)
-		c.ThingID = uid.String()
-		c.ThingKey = uid.String()
+		c.ClientID = uid.String()
+		c.ClientSecret = uid.String()
 
-		thingIDs[i] = c.ThingID
+		clientIDs[i] = c.ClientID
 
 		if i%2 == 0 {
 			c.State = bootstrap.Active
@@ -191,7 +191,7 @@ func TestRetrieveAll(t *testing.T) {
 	cases := []struct {
 		desc     string
 		domainID string
-		thingID  []string
+		clientID []string
 		offset   uint64
 		limit    uint64
 		filter   bootstrap.Filter
@@ -200,7 +200,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all configs",
 			domainID: config.DomainID,
-			thingID:  []string{},
+			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     numConfigs,
@@ -208,7 +208,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve a subset of configs",
 			domainID: config.DomainID,
-			thingID:  []string{},
+			clientID: []string{},
 			offset:   5,
 			limit:    uint64(numConfigs - 5),
 			size:     numConfigs - 5,
@@ -216,7 +216,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve with wrong domain ID ",
 			domainID: "2",
-			thingID:  []string{},
+			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     0,
@@ -224,7 +224,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all active configs ",
 			domainID: config.DomainID,
-			thingID:  []string{},
+			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
@@ -233,7 +233,7 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all with partial match filter",
 			domainID: config.DomainID,
-			thingID:  []string{},
+			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
@@ -242,31 +242,31 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve search by name",
 			domainID: config.DomainID,
-			thingID:  []string{},
+			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
 			size:     1,
 		},
 		{
-			desc:     "retrieve by valid thingIDs",
+			desc:     "retrieve by valid clientIDs",
 			domainID: config.DomainID,
-			thingID:  thingIDs,
+			clientID: clientIDs,
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     10,
 		},
 		{
-			desc:     "retrieve by non-existing thingID",
+			desc:     "retrieve by non-existing clientID",
 			domainID: config.DomainID,
-			thingID:  []string{"non-existing"},
+			clientID: []string{"non-existing"},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     0,
 		},
 	}
 	for _, tc := range cases {
-		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.thingID, tc.filter, tc.offset, tc.limit)
+		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.clientID, tc.filter, tc.offset, tc.limit)
 		size := len(ret.Configs)
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
 	}
@@ -281,8 +281,8 @@ func TestRetrieveByExternalID(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c, channels)
@@ -319,8 +319,8 @@ func TestUpdate(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c, channels)
@@ -364,8 +364,8 @@ func TestUpdateCert(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c, channels)
@@ -379,7 +379,7 @@ func TestUpdateCert(t *testing.T) {
 
 	cases := []struct {
 		desc           string
-		thingID        string
+		clientID       string
 		domainID       string
 		cert           string
 		certKey        string
@@ -389,7 +389,7 @@ func TestUpdateCert(t *testing.T) {
 	}{
 		{
 			desc:           "update with wrong domain ID ",
-			thingID:        "",
+			clientID:       "",
 			cert:           "cert",
 			certKey:        "certKey",
 			ca:             "",
@@ -399,13 +399,13 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:     "update a config",
-			thingID:  c.ThingID,
+			clientID: c.ClientID,
 			cert:     "cert",
 			certKey:  "certKey",
 			ca:       "ca",
 			domainID: c.DomainID,
 			expectedConfig: bootstrap.Config{
-				ThingID:    c.ThingID,
+				ClientID:   c.ClientID,
 				ClientCert: "cert",
 				CACert:     "ca",
 				ClientKey:  "certKey",
@@ -415,7 +415,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.thingID, tc.cert, tc.certKey, tc.ca)
+		cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.clientID, tc.cert, tc.certKey, tc.ca)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
 	}
@@ -430,8 +430,8 @@ func TestUpdateConnections(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c, channels)
@@ -439,8 +439,8 @@ func TestUpdateConnections(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err = uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	c.Channels = []bootstrap.Channel{}
@@ -466,7 +466,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections",
 			domainID:    config.DomainID,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			channels:    nil,
 			connections: []string{channels[1]},
 			err:         nil,
@@ -482,7 +482,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections no channels",
 			domainID:    config.DomainID,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			channels:    nil,
 			connections: nil,
 			err:         nil,
@@ -503,8 +503,8 @@ func TestRemove(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	id, err := repo.Save(context.Background(), c, channels)
@@ -530,8 +530,8 @@ func TestChangeState(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	saved, err := repo.Save(context.Background(), c, channels)
@@ -586,8 +586,8 @@ func TestListExisting(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c, channels)
@@ -628,7 +628,7 @@ func TestListExisting(t *testing.T) {
 	}
 }
 
-func TestRemoveThing(t *testing.T) {
+func TestRemoveClient(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
@@ -637,14 +637,14 @@ func TestRemoveThing(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	saved, err := repo.Save(context.Background(), c, channels)
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	for i := 0; i < 2; i++ {
-		err := repo.RemoveThing(context.Background(), saved)
+		err := repo.RemoveClient(context.Background(), saved)
 		assert.Nil(t, err, fmt.Sprintf("an unexpected error occurred: %s\n", err))
 	}
 }
@@ -658,8 +658,8 @@ func TestUpdateChannel(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c, channels)
@@ -674,7 +674,7 @@ func TestUpdateChannel(t *testing.T) {
 	err = repo.UpdateChannel(context.Background(), update)
 	assert.Nil(t, err, fmt.Sprintf("updating config expected to succeed: %s.\n", err))
 
-	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 	var retreved bootstrap.Channel
 	for _, c := range cfg.Channels {
@@ -695,8 +695,8 @@ func TestRemoveChannel(t *testing.T) {
 	c := config
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c, channels)
@@ -705,12 +705,12 @@ func TestRemoveChannel(t *testing.T) {
 	err = repo.RemoveChannel(context.Background(), c.Channels[0].ID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 
-	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 	assert.NotContains(t, cfg.Channels, c.Channels[0], fmt.Sprintf("expected to remove channel %s from %s", c.Channels[0], cfg.Channels))
 }
 
-func TestConnectThing(t *testing.T) {
+func TestConnectClient(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
@@ -719,8 +719,8 @@ func TestConnectThing(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	c.State = bootstrap.Inactive
@@ -729,14 +729,14 @@ func TestConnectThing(t *testing.T) {
 
 	wrongID := testsutil.GenerateUUID(&testing.T{})
 
-	connectedThing := c
+	connectedClient := c
 
-	randomThing := c
-	randomThingID, _ := uuid.NewV4()
-	randomThing.ThingID = randomThingID.String()
+	randomClient := c
+	randomClientID, _ := uuid.NewV4()
+	randomClient.ClientID = randomClientID.String()
 
-	emptyThing := c
-	emptyThing.ThingID = ""
+	emptyClient := c
+	emptyClient.ClientID = ""
 
 	cases := []struct {
 		desc        string
@@ -748,7 +748,7 @@ func TestConnectThing(t *testing.T) {
 		err         error
 	}{
 		{
-			desc:        "connect disconnected thing",
+			desc:        "connect disconnected client",
 			domainID:    c.DomainID,
 			id:          saved,
 			state:       bootstrap.Inactive,
@@ -757,16 +757,16 @@ func TestConnectThing(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc:        "connect already connected thing",
+			desc:        "connect already connected client",
 			domainID:    c.DomainID,
-			id:          connectedThing.ThingID,
-			state:       connectedThing.State,
+			id:          connectedClient.ClientID,
+			state:       connectedClient.State,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
 		},
 		{
-			desc:        "connect non-existent thing",
+			desc:        "connect non-existent client",
 			domainID:    c.DomainID,
 			id:          wrongID,
 			channels:    c.Channels,
@@ -774,17 +774,17 @@ func TestConnectThing(t *testing.T) {
 			err:         repoerr.ErrNotFound,
 		},
 		{
-			desc:        "connect random thing",
+			desc:        "connect random client",
 			domainID:    c.DomainID,
-			id:          randomThing.ThingID,
+			id:          randomClient.ClientID,
 			channels:    c.Channels,
 			connections: channels,
 			err:         repoerr.ErrNotFound,
 		},
 		{
-			desc:        "connect empty thing",
+			desc:        "connect empty client",
 			domainID:    c.DomainID,
-			id:          emptyThing.ThingID,
+			id:          emptyClient.ClientID,
 			channels:    c.Channels,
 			connections: channels,
 			err:         repoerr.ErrNotFound,
@@ -793,23 +793,23 @@ func TestConnectThing(t *testing.T) {
 	for _, tc := range cases {
 		for i, ch := range tc.channels {
 			if i == 0 {
-				err = repo.ConnectThing(context.Background(), ch.ID, tc.id)
+				err = repo.ConnectClient(context.Background(), ch.ID, tc.id)
 				assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
-				cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+				cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
 				assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 				assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
 			} else {
-				_ = repo.ConnectThing(context.Background(), ch.ID, tc.id)
+				_ = repo.ConnectClient(context.Background(), ch.ID, tc.id)
 			}
 		}
 
-		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
 		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 		assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
 	}
 }
 
-func TestDisconnectThing(t *testing.T) {
+func TestDisconnectClient(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
@@ -818,8 +818,8 @@ func TestDisconnectThing(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ThingKey = uid.String()
-	c.ThingID = uid.String()
+	c.ClientSecret = uid.String()
+	c.ClientID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	c.State = bootstrap.Inactive
@@ -828,14 +828,14 @@ func TestDisconnectThing(t *testing.T) {
 
 	wrongID := testsutil.GenerateUUID(&testing.T{})
 
-	connectedThing := c
+	connectedClient := c
 
-	randomThing := c
-	randomThingID, _ := uuid.NewV4()
-	randomThing.ThingID = randomThingID.String()
+	randomClient := c
+	randomClientID, _ := uuid.NewV4()
+	randomClient.ClientID = randomClientID.String()
 
-	emptyThing := c
-	emptyThing.ThingID = ""
+	emptyClient := c
+	emptyClient.ClientID = ""
 
 	cases := []struct {
 		desc        string
@@ -847,16 +847,16 @@ func TestDisconnectThing(t *testing.T) {
 		err         error
 	}{
 		{
-			desc:        "disconnect connected thing",
+			desc:        "disconnect connected client",
 			domainID:    c.DomainID,
-			id:          connectedThing.ThingID,
-			state:       connectedThing.State,
+			id:          connectedClient.ClientID,
+			state:       connectedClient.State,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
 		},
 		{
-			desc:        "disconnect already disconnected thing",
+			desc:        "disconnect already disconnected client",
 			domainID:    c.DomainID,
 			id:          saved,
 			state:       bootstrap.Inactive,
@@ -865,7 +865,7 @@ func TestDisconnectThing(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc:        "disconnect invalid thing",
+			desc:        "disconnect invalid client",
 			domainID:    c.DomainID,
 			id:          wrongID,
 			channels:    c.Channels,
@@ -873,17 +873,17 @@ func TestDisconnectThing(t *testing.T) {
 			err:         nil,
 		},
 		{
-			desc:        "disconnect random thing",
+			desc:        "disconnect random client",
 			domainID:    c.DomainID,
-			id:          randomThing.ThingID,
+			id:          randomClient.ClientID,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
 		},
 		{
-			desc:        "disconnect empty thing",
+			desc:        "disconnect empty client",
 			domainID:    c.DomainID,
-			id:          emptyThing.ThingID,
+			id:          emptyClient.ClientID,
 			channels:    c.Channels,
 			connections: channels,
 			err:         nil,
@@ -892,11 +892,11 @@ func TestDisconnectThing(t *testing.T) {
 
 	for _, tc := range cases {
 		for _, ch := range tc.channels {
-			err = repo.DisconnectThing(context.Background(), ch.ID, tc.id)
+			err = repo.DisconnectClient(context.Background(), ch.ID, tc.id)
 			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
 		}
 
-		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ThingID)
+		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
 		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 		assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
 	}

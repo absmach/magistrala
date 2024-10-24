@@ -32,8 +32,8 @@ import (
 var (
 	externalId      = testsutil.GenerateUUID(&testing.T{})
 	externalKey     = testsutil.GenerateUUID(&testing.T{})
-	thingId         = testsutil.GenerateUUID(&testing.T{})
-	thingKey        = testsutil.GenerateUUID(&testing.T{})
+	clientId        = testsutil.GenerateUUID(&testing.T{})
+	clientSecret    = testsutil.GenerateUUID(&testing.T{})
 	channel1Id      = testsutil.GenerateUUID(&testing.T{})
 	channel2Id      = testsutil.GenerateUUID(&testing.T{})
 	clientCert      = "newcert"
@@ -44,7 +44,7 @@ var (
 	bsName          = "test"
 	encKey          = []byte("1234567891011121")
 	bootstrapConfig = bootstrap.Config{
-		ThingID:    thingId,
+		ClientID:   clientId,
 		Name:       "test",
 		ClientCert: clientCert,
 		ClientKey:  clientKey,
@@ -63,21 +63,21 @@ var (
 		State:       bootstrap.Inactive,
 	}
 	sdkBootstrapConfig = sdk.BootstrapConfig{
-		Channels:    []string{channel1Id, channel2Id},
-		ExternalID:  externalId,
-		ExternalKey: externalKey,
-		ThingID:     thingId,
-		ThingKey:    thingKey,
-		Name:        bsName,
-		ClientCert:  clientCert,
-		ClientKey:   clientKey,
-		CACert:      caCert,
-		Content:     content,
-		State:       state,
+		Channels:     []string{channel1Id, channel2Id},
+		ExternalID:   externalId,
+		ExternalKey:  externalKey,
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+		Name:         bsName,
+		ClientCert:   clientCert,
+		ClientKey:    clientKey,
+		CACert:       caCert,
+		Content:      content,
+		State:        state,
 	}
 	sdkBootsrapConfigRes = sdk.BootstrapConfig{
-		ThingID:  thingId,
-		ThingKey: thingKey,
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		Channels: []sdk.Channel{
 			{
 				ID: channel1Id,
@@ -91,16 +91,16 @@ var (
 		CACert:     caCert,
 	}
 	readConfigResponse = struct {
-		ThingID    string             `json:"thing_id"`
-		ThingKey   string             `json:"thing_key"`
-		Channels   []readerChannelRes `json:"channels"`
-		Content    string             `json:"content,omitempty"`
-		ClientCert string             `json:"client_cert,omitempty"`
-		ClientKey  string             `json:"client_key,omitempty"`
-		CACert     string             `json:"ca_cert,omitempty"`
+		ClientID     string             `json:"client_id"`
+		ClientSecret string             `json:"client_secret"`
+		Channels     []readerChannelRes `json:"channels"`
+		Content      string             `json:"content,omitempty"`
+		ClientCert   string             `json:"client_cert,omitempty"`
+		ClientKey    string             `json:"client_key,omitempty"`
+		CACert       string             `json:"ca_cert,omitempty"`
 	}{
-		ThingID:  thingId,
-		ThingKey: thingKey,
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		Channels: []readerChannelRes{
 			{
 				ID: channel1Id,
@@ -146,10 +146,10 @@ func TestAddBootstrap(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	neID := sdkBootstrapConfig
-	neID.ThingID = "non-existent"
+	neID.ClientID = "non-existent"
 
 	neReqId := bootstrapConfig
-	neReqId.ThingID = "non-existent"
+	neReqId.ClientID = "non-existent"
 
 	cases := []struct {
 		desc            string
@@ -192,15 +192,15 @@ func TestAddBootstrap(t *testing.T) {
 				Channels: map[string]interface{}{
 					"channel1": make(chan int),
 				},
-				ExternalID:  externalId,
-				ExternalKey: externalKey,
-				ThingID:     thingId,
-				ThingKey:    thingKey,
-				Name:        bsName,
-				ClientCert:  clientCert,
-				ClientKey:   clientKey,
-				CACert:      caCert,
-				Content:     content,
+				ExternalID:   externalId,
+				ExternalKey:  externalKey,
+				ClientID:     clientId,
+				ClientSecret: clientSecret,
+				Name:         bsName,
+				ClientCert:   clientCert,
+				ClientKey:    clientKey,
+				CACert:       caCert,
+				Content:      content,
 			},
 			svcReq: bootstrap.Config{},
 			svcRes: bootstrap.Config{},
@@ -228,7 +228,7 @@ func TestAddBootstrap(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:     "add with non-existent thing Id",
+			desc:     "add with non-existent client Id",
 			domainID: domainID,
 			token:    validToken,
 			cfg:      neID,
@@ -249,7 +249,7 @@ func TestAddBootstrap(t *testing.T) {
 			resp, err := mgsdk.AddBootstrap(tc.cfg, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
-				assert.Equal(t, bootstrapConfig.ThingID, resp)
+				assert.Equal(t, bootstrapConfig.ClientID, resp)
 				ok := svcCall.Parent.AssertCalled(t, "Add", mock.Anything, tc.session, tc.token, tc.svcReq)
 				assert.True(t, ok)
 			}
@@ -277,7 +277,7 @@ func TestListBootstraps(t *testing.T) {
 				ID: channel2Id,
 			},
 		},
-		ThingID:     thingId,
+		ClientID:    clientId,
 		Name:        bsName,
 		ExternalID:  externalId,
 		ExternalKey: externalKey,
@@ -423,7 +423,7 @@ func TestWhiteList(t *testing.T) {
 		domainID        string
 		token           string
 		session         mgauthn.Session
-		thingID         string
+		clientID        string
 		state           int
 		svcReq          bootstrap.State
 		svcErr          error
@@ -434,7 +434,7 @@ func TestWhiteList(t *testing.T) {
 			desc:     "whitelist to active state successfully",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  thingId,
+			clientID: clientId,
 			state:    active,
 			svcReq:   bootstrap.Active,
 			svcErr:   nil,
@@ -444,7 +444,7 @@ func TestWhiteList(t *testing.T) {
 			desc:     "whitelist to inactive state successfully",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  thingId,
+			clientID: clientId,
 			state:    inactive,
 			svcReq:   bootstrap.Inactive,
 			svcErr:   nil,
@@ -454,7 +454,7 @@ func TestWhiteList(t *testing.T) {
 			desc:            "whitelist with invalid token",
 			domainID:        domainID,
 			token:           invalidToken,
-			thingID:         thingId,
+			clientID:        clientId,
 			state:           active,
 			svcReq:          bootstrap.Active,
 			authenticateErr: svcerr.ErrAuthentication,
@@ -464,7 +464,7 @@ func TestWhiteList(t *testing.T) {
 			desc:     "whitelist with empty token",
 			domainID: domainID,
 			token:    "",
-			thingID:  thingId,
+			clientID: clientId,
 			state:    active,
 			svcReq:   bootstrap.Active,
 			svcErr:   nil,
@@ -474,17 +474,17 @@ func TestWhiteList(t *testing.T) {
 			desc:     "whitelist with invalid state",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  thingId,
+			clientID: clientId,
 			state:    -1,
 			svcReq:   bootstrap.Active,
 			svcErr:   nil,
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBootstrapState), http.StatusBadRequest),
 		},
 		{
-			desc:     "whitelist with empty thing Id",
+			desc:     "whitelist with empty client Id",
 			domainID: domainID,
 			token:    validToken,
-			thingID:  "",
+			clientID: "",
 			state:    1,
 			svcReq:   bootstrap.Active,
 			svcErr:   nil,
@@ -497,11 +497,11 @@ func TestWhiteList(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("ChangeState", mock.Anything, tc.session, tc.token, tc.thingID, tc.svcReq).Return(tc.svcErr)
-			err := mgsdk.Whitelist(tc.thingID, tc.state, tc.domainID, tc.token)
+			svcCall := bsvc.On("ChangeState", mock.Anything, tc.session, tc.token, tc.clientID, tc.svcReq).Return(tc.svcErr)
+			err := mgsdk.Whitelist(tc.clientID, tc.state, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ChangeState", mock.Anything, tc.session, tc.token, tc.thingID, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "ChangeState", mock.Anything, tc.session, tc.token, tc.clientID, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -520,7 +520,7 @@ func TestViewBootstrap(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	viewBoostrapRes := sdk.BootstrapConfig{
-		ThingID:     thingId,
+		ClientID:    clientId,
 		Channels:    sdkBootsrapConfigRes.Channels,
 		ExternalID:  externalId,
 		ExternalKey: externalKey,
@@ -545,7 +545,7 @@ func TestViewBootstrap(t *testing.T) {
 			desc:     "view successfully",
 			domainID: domainID,
 			token:    validToken,
-			id:       thingId,
+			id:       clientId,
 			svcResp:  bootstrapConfig,
 			svcErr:   nil,
 			response: viewBoostrapRes,
@@ -555,7 +555,7 @@ func TestViewBootstrap(t *testing.T) {
 			desc:            "view with invalid token",
 			domainID:        domainID,
 			token:           invalidToken,
-			id:              thingId,
+			id:              clientId,
 			svcResp:         bootstrap.Config{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.BootstrapConfig{},
@@ -565,14 +565,14 @@ func TestViewBootstrap(t *testing.T) {
 			desc:     "view with empty token",
 			domainID: domainID,
 			token:    "",
-			id:       thingId,
+			id:       clientId,
 			svcResp:  bootstrap.Config{},
 			svcErr:   nil,
 			response: sdk.BootstrapConfig{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:     "view with non-existent thing Id",
+			desc:     "view with non-existent client Id",
 			domainID: domainID,
 			token:    validToken,
 			id:       invalid,
@@ -585,9 +585,9 @@ func TestViewBootstrap(t *testing.T) {
 			desc:     "view with response that cannot be unmarshalled",
 			domainID: domainID,
 			token:    validToken,
-			id:       thingId,
+			id:       clientId,
 			svcResp: bootstrap.Config{
-				ThingID: thingId,
+				ClientID: clientId,
 				Channels: []bootstrap.Channel{
 					{
 						ID: channel1Id,
@@ -602,7 +602,7 @@ func TestViewBootstrap(t *testing.T) {
 			err:      errors.NewSDKError(errJsonEOF),
 		},
 		{
-			desc:     "view with empty thing Id",
+			desc:     "view with empty client Id",
 			domainID: domainID,
 			token:    validToken,
 			id:       "",
@@ -658,9 +658,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			token:    validToken,
 			cfg:      sdkBootstrapConfig,
 			svcReq: bootstrap.Config{
-				ThingID: thingId,
-				Name:    bsName,
-				Content: content,
+				ClientID: clientId,
+				Name:     bsName,
+				Content:  content,
 			},
 			svcErr: nil,
 			err:    nil,
@@ -671,9 +671,9 @@ func TestUpdateBootstrap(t *testing.T) {
 			token:    invalidToken,
 			cfg:      sdkBootstrapConfig,
 			svcReq: bootstrap.Config{
-				ThingID: thingId,
-				Name:    bsName,
-				Content: content,
+				ClientID: clientId,
+				Name:     bsName,
+				Content:  content,
 			},
 			authenticationErr: svcerr.ErrAuthentication,
 			err:               errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -695,30 +695,30 @@ func TestUpdateBootstrap(t *testing.T) {
 				Channels: map[string]interface{}{
 					"channel1": make(chan int),
 				},
-				ExternalID:  externalId,
-				ExternalKey: externalKey,
-				ThingID:     thingId,
-				ThingKey:    thingKey,
-				Name:        bsName,
-				ClientCert:  clientCert,
-				ClientKey:   clientKey,
-				CACert:      caCert,
-				Content:     content,
+				ExternalID:   externalId,
+				ExternalKey:  externalKey,
+				ClientID:     clientId,
+				ClientSecret: clientSecret,
+				Name:         bsName,
+				ClientCert:   clientCert,
+				ClientKey:    clientKey,
+				CACert:       caCert,
+				Content:      content,
 			},
 			svcReq: bootstrap.Config{
-				ThingID: thingId,
-				Name:    bsName,
-				Content: content,
+				ClientID: clientId,
+				Name:     bsName,
+				Content:  content,
 			},
 			svcErr: nil,
 			err:    errors.NewSDKError(errMarshalChan),
 		},
 		{
-			desc:     "update with non-existent thing Id",
+			desc:     "update with non-existent client Id",
 			domainID: domainID,
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
-				ThingID: invalid,
+				ClientID: invalid,
 				Channels: []sdk.Channel{
 					{
 						ID: channel1Id,
@@ -730,19 +730,19 @@ func TestUpdateBootstrap(t *testing.T) {
 				Name:        bsName,
 			},
 			svcReq: bootstrap.Config{
-				ThingID: invalid,
-				Name:    bsName,
-				Content: content,
+				ClientID: invalid,
+				Name:     bsName,
+				Content:  content,
 			},
 			svcErr: svcerr.ErrNotFound,
 			err:    errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:     "update with empty thing Id",
+			desc:     "update with empty client Id",
 			domainID: domainID,
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
-				ThingID: "",
+				ClientID: "",
 				Channels: []sdk.Channel{
 					{
 						ID: channel1Id,
@@ -754,22 +754,22 @@ func TestUpdateBootstrap(t *testing.T) {
 				Name:        bsName,
 			},
 			svcReq: bootstrap.Config{
-				ThingID: "",
-				Name:    bsName,
-				Content: content,
+				ClientID: "",
+				Name:     bsName,
+				Content:  content,
 			},
 			svcErr: nil,
 			err:    errors.NewSDKError(apiutil.ErrMissingID),
 		},
 		{
-			desc:     "update with config with only thing Id",
+			desc:     "update with config with only client Id",
 			domainID: domainID,
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
-				ThingID: thingId,
+				ClientID: clientId,
 			},
 			svcReq: bootstrap.Config{
-				ThingID: thingId,
+				ClientID: clientId,
 			},
 			svcErr: nil,
 			err:    nil,
@@ -804,7 +804,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	updateconfigRes := sdk.BootstrapConfig{
-		ThingID:    thingId,
+		ClientID:   clientId,
 		ClientCert: clientCert,
 		CACert:     caCert,
 		ClientKey:  clientKey,
@@ -829,7 +829,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			desc:       "update certs successfully",
 			domainID:   domainID,
 			token:      validToken,
-			id:         thingId,
+			id:         clientId,
 			clientCert: clientCert,
 			clientKey:  clientKey,
 			caCert:     caCert,
@@ -842,7 +842,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			desc:            "update certs with invalid token",
 			domainID:        domainID,
 			token:           validToken,
-			id:              thingId,
+			id:              clientId,
 			clientCert:      clientCert,
 			clientKey:       clientKey,
 			caCert:          caCert,
@@ -854,7 +854,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			desc:       "update certs with empty token",
 			domainID:   domainID,
 			token:      "",
-			id:         thingId,
+			id:         clientId,
 			clientCert: clientCert,
 			clientKey:  clientKey,
 			caCert:     caCert,
@@ -863,7 +863,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			err:        errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:       "update certs with non-existent thing Id",
+			desc:       "update certs with non-existent client Id",
 			domainID:   domainID,
 			token:      validToken,
 			id:         invalid,
@@ -878,7 +878,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			desc:       "update certs with empty certs",
 			domainID:   domainID,
 			token:      validToken,
-			id:         thingId,
+			id:         clientId,
 			clientCert: "",
 			clientKey:  "",
 			caCert:     "",
@@ -942,7 +942,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			desc:     "update connection successfully",
 			domainID: domainID,
 			token:    validToken,
-			id:       thingId,
+			id:       clientId,
 			channels: []string{channel1Id, channel2Id},
 			svcErr:   nil,
 			err:      nil,
@@ -951,7 +951,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			desc:            "update connection with invalid token",
 			domainID:        domainID,
 			token:           invalidToken,
-			id:              thingId,
+			id:              clientId,
 			channels:        []string{channel1Id, channel2Id},
 			authenticateErr: svcerr.ErrAuthentication,
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -960,13 +960,13 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			desc:     "update connection with empty token",
 			domainID: domainID,
 			token:    "",
-			id:       thingId,
+			id:       clientId,
 			channels: []string{channel1Id, channel2Id},
 			svcErr:   nil,
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:     "update connection with non-existent thing Id",
+			desc:     "update connection with non-existent client Id",
 			domainID: domainID,
 			token:    validToken,
 			id:       invalid,
@@ -978,7 +978,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			desc:     "update connection with non-existent channel Id",
 			domainID: domainID,
 			token:    validToken,
-			id:       thingId,
+			id:       clientId,
 			channels: []string{invalid},
 			svcErr:   svcerr.ErrNotFound,
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
@@ -987,7 +987,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			desc:     "update connection with empty channels",
 			domainID: domainID,
 			token:    validToken,
-			id:       thingId,
+			id:       clientId,
 			channels: []string{},
 			svcErr:   svcerr.ErrUpdateEntity,
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
@@ -1044,7 +1044,7 @@ func TestRemoveBootstrap(t *testing.T) {
 			desc:     "remove successfully",
 			domainID: domainID,
 			token:    validToken,
-			id:       thingId,
+			id:       clientId,
 			svcErr:   nil,
 			err:      nil,
 		},
@@ -1052,12 +1052,12 @@ func TestRemoveBootstrap(t *testing.T) {
 			desc:            "remove with invalid token",
 			domainID:        domainID,
 			token:           invalidToken,
-			id:              thingId,
+			id:              clientId,
 			authenticateErr: svcerr.ErrAuthentication,
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "remove with non-existent thing Id",
+			desc:     "remove with non-existent client Id",
 			domainID: domainID,
 			token:    validToken,
 			id:       invalid,
@@ -1068,7 +1068,7 @@ func TestRemoveBootstrap(t *testing.T) {
 			desc:     "remove removed bootstrap",
 			domainID: domainID,
 			token:    validToken,
-			id:       thingId,
+			id:       clientId,
 			svcErr:   svcerr.ErrNotFound,
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
@@ -1076,7 +1076,7 @@ func TestRemoveBootstrap(t *testing.T) {
 			desc:     "remove with empty token",
 			domainID: domainID,
 			token:    "",
-			id:       thingId,
+			id:       clientId,
 			svcErr:   nil,
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},

@@ -43,7 +43,7 @@ var cmdChannels = []cobra.Command{
 		Short: "Get channel",
 		Long: `Get all channels or get channel by id. Channels can be filtered by name or metadata.
 		all - lists all channels
-		<channel_id> - shows thing with provided <channel_id>`,
+		<channel_id> - shows client with provided <channel_id>`,
 
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
@@ -127,7 +127,7 @@ var cmdChannels = []cobra.Command{
 	{
 		Use:   "connections <channel_id> <domain_id> <user_auth_token>",
 		Short: "Connections list",
-		Long:  `List of Things connected to a Channel`,
+		Long:  `List of Clients connected to a Channel`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -137,7 +137,7 @@ var cmdChannels = []cobra.Command{
 				Offset: Offset,
 				Limit:  Limit,
 			}
-			cl, err := sdk.ThingsByChannel(args[0], pm, args[1], args[2])
+			cl, err := sdk.ClientsByChannel(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -363,7 +363,7 @@ func NewChannelsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "channels [create | get | update | delete | connections | not-connected | assign | unassign | users | groups]",
 		Short: "Channels management",
-		Long:  `Channels management: create, get, update or delete Channel and get list of Things connected or not connected to a Channel`,
+		Long:  `Channels management: create, get, update or delete Channel and get list of Clients connected or not connected to a Channel`,
 	}
 
 	for i := range cmdChannels {

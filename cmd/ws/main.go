@@ -14,7 +14,10 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/internal/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/internal/grpc/clients/v1"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/authn/authsvc"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -35,12 +38,14 @@ import (
 )
 
 const (
-	svcName         = "ws-adapter"
-	envPrefixHTTP   = "MG_WS_ADAPTER_HTTP_"
-	envPrefixThings = "MG_THINGS_AUTH_GRPC_"
-	defSvcHTTPPort  = "8190"
-	targetWSPort    = "8191"
-	targetWSHost    = "localhost"
+	svcName           = "ws-adapter"
+	envPrefixHTTP     = "MG_WS_ADAPTER_HTTP_"
+	envPrefixClients  = "MG_CLIENTS_AUTH_GRPC_"
+	envPrefixChannels = "MG_CHANNELS_GRPC_"
+	envPrefixAuth     = "MG_AUTH_GRPC_"
+	defSvcHTTPPort    = "8190"
+	targetWSPort      = "8191"
+	targetWSHost      = "localhost"
 )
 
 type config struct {
@@ -89,22 +94,54 @@ func main() {
 		Host: targetWSHost,
 	}
 
-	thingsClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&thingsClientCfg, env.Options{Prefix: envPrefixThings}); err != nil {
+	clientsClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&clientsClientCfg, env.Options{Prefix: envPrefixClients}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
 
-	thingsClient, thingsHandler, err := grpcclient.SetupThingsClient(ctx, thingsClientCfg)
+	clientsClient, clientsHandler, err := grpcclient.SetupClientsClient(ctx, clientsClientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer thingsHandler.Close()
+	defer clientsHandler.Close()
 
-	logger.Info("Things service gRPC client successfully connected to things gRPC server " + thingsHandler.Secure())
+	logger.Info("Clients service gRPC client successfully connected to clients gRPC server " + clientsHandler.Secure())
+
+	channelsClientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&channelsClientCfg, env.Options{Prefix: envPrefixChannels}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load channels gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+
+	channelsClient, channelsHandler, err := grpcclient.SetupChannelsClient(ctx, channelsClientCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer channelsHandler.Close()
+	logger.Info("Channels service gRPC client successfully connected to channels gRPC server " + channelsHandler.Secure())
+
+	authnCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&authnCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+
+	authn, authnHandler, err := authsvc.NewAuthentication(ctx, authnCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authnHandler.Close()
+	logger.Info("authn successfully connected to auth gRPC server " + authnHandler.Secure())
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
@@ -128,7 +165,7 @@ func main() {
 	defer nps.Close()
 	nps = brokerstracing.NewPubSub(targetServerConfig, tracer, nps)
 
-	svc := newService(thingsClient, nps, logger, tracer)
+	svc := newService(clientsClient, channelsClient, nps, logger, tracer)
 
 	hs := httpserver.NewServer(ctx, cancel, svcName, targetServerConfig, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
 
@@ -141,7 +178,7 @@ func main() {
 		g.Go(func() error {
 			return hs.Start()
 		})
-		handler := ws.NewHandler(nps, logger, thingsClient)
+		handler := ws.NewHandler(nps, logger, authn, clientsClient, channelsClient)
 		return proxyWS(ctx, httpServerConfig, targetServerConfig, logger, handler)
 	})
 
@@ -154,8 +191,8 @@ func main() {
 	}
 }
 
-func newService(thingsClient magistrala.ThingsServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
-	svc := ws.New(thingsClient, nps)
+func newService(clientsClient grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, nps messaging.PubSub, logger *slog.Logger, tracer trace.Tracer) ws.Service {
+	svc := ws.New(clientsClient, channels, nps)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("ws_adapter", "api")

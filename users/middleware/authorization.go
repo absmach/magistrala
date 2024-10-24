@@ -6,8 +6,8 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
 	mgauth "github.com/absmach/magistrala/auth"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/authz"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
@@ -76,8 +76,8 @@ func (am *authorizationMiddleware) ListMembers(ctx context.Context, session auth
 		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.DomainType, objectID); err != nil {
 			return users.MembersPage{}, err
 		}
-	case policies.ThingsKind:
-		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.ThingType, objectID); err != nil {
+	case policies.ClientsKind:
+		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.UserID, mgauth.SwitchToPermission(pm.Permission), policies.ClientType, objectID); err != nil {
 			return users.MembersPage{}, err
 		}
 	default:
@@ -147,9 +147,10 @@ func (am *authorizationMiddleware) SendPasswordReset(ctx context.Context, host, 
 }
 
 func (am *authorizationMiddleware) UpdateRole(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
-		session.SuperAdmin = true
+	if err := am.checkSuperAdmin(ctx, session.UserID); err != nil {
+		return users.User{}, err
 	}
+	session.SuperAdmin = true
 	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, user.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err != nil {
 		return users.User{}, err
 	}
@@ -185,11 +186,11 @@ func (am *authorizationMiddleware) Identify(ctx context.Context, session authn.S
 	return am.svc.Identify(ctx, session)
 }
 
-func (am *authorizationMiddleware) IssueToken(ctx context.Context, username, secret string) (*magistrala.Token, error) {
+func (am *authorizationMiddleware) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
 	return am.svc.IssueToken(ctx, username, secret)
 }
 
-func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*magistrala.Token, error) {
+func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*grpcTokenV1.Token, error) {
 	return am.svc.RefreshToken(ctx, session, refreshToken)
 }
 

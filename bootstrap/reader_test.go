@@ -24,13 +24,13 @@ type readChan struct {
 }
 
 type readResp struct {
-	ThingID    string     `json:"thing_id"`
-	ThingKey   string     `json:"thing_key"`
-	Channels   []readChan `json:"channels"`
-	Content    string     `json:"content,omitempty"`
-	ClientCert string     `json:"client_cert,omitempty"`
-	ClientKey  string     `json:"client_key,omitempty"`
-	CACert     string     `json:"ca_cert,omitempty"`
+	ClientID     string     `json:"client_id"`
+	ClientSecret string     `json:"client_secret"`
+	Channels     []readChan `json:"channels"`
+	Content      string     `json:"content,omitempty"`
+	ClientCert   string     `json:"client_cert,omitempty"`
+	ClientKey    string     `json:"client_key,omitempty"`
+	CACert       string     `json:"ca_cert,omitempty"`
 }
 
 func dec(in []byte) ([]byte, error) {
@@ -50,11 +50,11 @@ func dec(in []byte) ([]byte, error) {
 
 func TestReadConfig(t *testing.T) {
 	cfg := bootstrap.Config{
-		ThingID:    "mg_id",
-		ClientCert: "client_cert",
-		ClientKey:  "client_key",
-		CACert:     "ca_cert",
-		ThingKey:   "mg_key",
+		ClientID:     "mg_id",
+		ClientCert:   "client_cert",
+		ClientKey:    "client_key",
+		CACert:       "ca_cert",
+		ClientSecret: "mg_key",
 		Channels: []bootstrap.Channel{
 			{
 				ID:       "mg_id",
@@ -65,8 +65,8 @@ func TestReadConfig(t *testing.T) {
 		Content: "content",
 	}
 	ret := readResp{
-		ThingID:  "mg_id",
-		ThingKey: "mg_key",
+		ClientID:     "mg_id",
+		ClientSecret: "mg_key",
 		Channels: []readChan{
 			{
 				ID:       "mg_id",

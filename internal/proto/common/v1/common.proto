@@ -1,0 +1,56 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package common.v1;
+option go_package = "github.com/absmach/magistrala/internal/grpc/common/v1";
+
+
+message RetrieveEntitiesReq {
+  repeated string ids = 1;
+}
+
+message RetrieveEntitiesRes {
+  uint64 total = 1;
+  uint64 limit = 2;
+  uint64 offset =3;
+  repeated EntityBasic entities = 4;
+}
+
+message RetrieveEntityReq{
+  string id = 1;
+}
+
+message RetrieveEntityRes {
+  EntityBasic entity = 1;
+}
+
+message EntityBasic {
+  string id = 1;
+  string domain_id = 2;
+  uint32 status = 3;
+}
+
+message AddConnectionsReq {
+  repeated Connection connections = 1;
+}
+
+message AddConnectionsRes {
+  bool ok = 1;
+}
+
+message RemoveConnectionsReq {
+  repeated Connection connections = 1;
+}
+
+message RemoveConnectionsRes {
+  bool ok = 1;
+}
+
+message Connection {
+  string client_id = 1;
+  string channel_id = 2;
+  string domain_id  = 3;
+  uint32 type = 4;
+}

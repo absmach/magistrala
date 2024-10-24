@@ -91,3 +91,26 @@ func (lm *loggingMiddleware) Unsubscribe(ctx context.Context, key, chanID, subto
 
 	return lm.svc.Unsubscribe(ctx, key, chanID, subtopic, token)
 }
+
+// DisconnectHandler logs the disconnect handler. It logs the channel ID, subtopic (if any) and the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) DisconnectHandler(ctx context.Context, chanID, subtopic, token string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("channel_id", chanID),
+			slog.String("token", token),
+		}
+		if subtopic != "" {
+			args = append(args, slog.String("subtopic", subtopic))
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Unsubscribe failed", args...)
+			return
+		}
+		lm.logger.Info("Unsubscribe completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.DisconnectHandler(ctx, chanID, subtopic, token)
+}

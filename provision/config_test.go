@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/provision"
-	"github.com/absmach/magistrala/things"
 	"github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,7 +31,7 @@ var (
 				"test": "test",
 			},
 		},
-		Things: []things.Client{
+		Clients: []clients.Client{
 			{
 				ID:   "1234567890",
 				Name: "test",
@@ -42,7 +42,7 @@ var (
 				Permissions: []string{"test"},
 			},
 		},
-		Channels: []groups.Group{
+		Channels: []channels.Channel{
 			{
 				ID:   "1234567890",
 				Name: "test",

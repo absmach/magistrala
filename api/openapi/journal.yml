@@ -197,13 +197,13 @@ components:
 
     entity_type:
       name: entityType
-      description: Type of entity, e.g. user, group, thing, etc.entityType
+      description: Type of entity, e.g. user, group, client, etc.entityType
       in: path
       schema:
         type: string
         enum:
           - group
-          - thing
+          - client
           - channel
       required: true
       example: group

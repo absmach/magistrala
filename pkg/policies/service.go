@@ -16,25 +16,28 @@ type Policy struct {
 	Subject string `json:"subject"`
 
 	// SubjectType contains the subject type. Supported subject types are
-	// platform, group, domain, thing, users.
+	// platform, group, domain, client, users.
 	SubjectType string `json:"subject_type"`
 
 	// SubjectKind contains the subject kind. Supported subject kinds are
-	// token, users, platform, things, channels, groups, domain.
+	// token, users, platform, clients,  channels, groups, domain.
 	SubjectKind string `json:"subject_kind"`
 
 	// SubjectRelation contains subject relations.
 	SubjectRelation string `json:"subject_relation,omitempty"`
 
+	// ObjectPrefix contains the Optional Object Prefix which is used for delete with filter.
+	ObjectPrefix string `json:"object_prefix"`
+
 	// Object contains the object ID.
 	Object string `json:"object"`
 
 	// ObjectKind contains the object kind. Supported object kinds are
-	// users, platform, things, channels, groups, domain.
+	// users, platform, clients,  channels, groups, domain.
 	ObjectKind string `json:"object_kind"`
 
 	// ObjectType contains the object type. Supported object types are
-	// platform, group, domain, thing, users.
+	// platform, group, domain, client, users.
 	ObjectType string `json:"object_type"`
 
 	// Relation contains the relation. Supported relations are administrator, editor, contributor, member, guest, parent_group,group,domain.
@@ -101,4 +104,11 @@ type Service interface {
 
 	// ListPermissions lists permission betweeen given subject and object .
 	ListPermissions(ctx context.Context, pr Policy, permissionsFilter []string) (Permissions, error)
+}
+
+func EncodeDomainUserID(domainID, userID string) string {
+	if domainID == "" || userID == "" {
+		return ""
+	}
+	return domainID + "_" + userID
 }

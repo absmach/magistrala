@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/users"
 	"github.com/go-kit/kit/metrics"
@@ -40,7 +40,7 @@ func (ms *metricsMiddleware) Register(ctx context.Context, session authn.Session
 }
 
 // IssueToken instruments IssueToken method with metrics.
-func (ms *metricsMiddleware) IssueToken(ctx context.Context, username, secret string) (*magistrala.Token, error) {
+func (ms *metricsMiddleware) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_token").Add(1)
 		ms.latency.With("method", "issue_token").Observe(time.Since(begin).Seconds())
@@ -49,7 +49,7 @@ func (ms *metricsMiddleware) IssueToken(ctx context.Context, username, secret st
 }
 
 // RefreshToken instruments RefreshToken method with metrics.
-func (ms *metricsMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (token *magistrala.Token, err error) {
+func (ms *metricsMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (token *grpcTokenV1.Token, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "refresh_token").Add(1)
 		ms.latency.With("method", "refresh_token").Observe(time.Since(begin).Seconds())

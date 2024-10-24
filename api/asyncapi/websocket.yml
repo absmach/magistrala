@@ -126,7 +126,7 @@ components:
         ```
   parameters:
     channelID:
-      description: Channel ID connected to the Thing ID defined in the username.
+      description: Channel ID connected to the Client ID defined in the username.
       schema:
         type: string
         format: uuid
@@ -141,4 +141,4 @@ components:
       scheme: bearer
       bearerFormat: uuid
       description: |
-        * Thing access: "Authorization: Thing <thing_key>"
+        * Client access: "Authorization: Client <client_key>"

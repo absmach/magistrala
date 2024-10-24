@@ -8,33 +8,33 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                            | Description                                   | Default                       |
-| ----------------------------------- | --------------------------------------------- | ----------------------------- |
-| MG_POSTGRES_READER_LOG_LEVEL        | Service log level                             | info                          |
-| MG_POSTGRES_READER_HTTP_HOST        | Service HTTP host                             | localhost                     |
-| MG_POSTGRES_READER_HTTP_PORT        | Service HTTP port                             | 9009                          |
-| MG_POSTGRES_READER_HTTP_SERVER_CERT | Service HTTP server cert                      | ""                            |
-| MG_POSTGRES_READER_HTTP_SERVER_KEY  | Service HTTP server key                       | ""                            |
-| MG_POSTGRES_HOST                    | Postgres DB host                              | localhost                     |
-| MG_POSTGRES_PORT                    | Postgres DB port                              | 5432                          |
-| MG_POSTGRES_USER                    | Postgres user                                 | magistrala                    |
-| MG_POSTGRES_PASS                    | Postgres password                             | magistrala                    |
-| MG_POSTGRES_NAME                    | Postgres database name                        | messages                      |
-| MG_POSTGRES_SSL_MODE                | Postgres SSL mode                             | disabled                      |
-| MG_POSTGRES_SSL_CERT                | Postgres SSL certificate path                 | ""                            |
-| MG_POSTGRES_SSL_KEY                 | Postgres SSL key                              | ""                            |
-| MG_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path            | ""                            |
-| MG_THINGS_AUTH_GRPC_URL             | Things service Auth gRPC URL                  | localhost:7000                |
-| MG_THINGS_AUTH_GRPC_TIMEOUT         | Things service Auth gRPC timeout in seconds   | 1s                            |
-| MG_THINGS_AUTH_GRPC_CLIENT_TLS      | Things service Auth gRPC TLS mode flag        | false                         |
-| MG_THINGS_AUTH_GRPC_CA_CERTS        | Things service Auth gRPC CA certificates      | ""                            |
-| MG_AUTH_GRPC_URL                    | Auth service gRPC URL                         | localhost:7001                |
-| MG_AUTH_GRPC_TIMEOUT                | Auth service gRPC request timeout in seconds  | 1s                            |
-| MG_AUTH_GRPC_CLIENT_TLS             | Auth service gRPC TLS mode flag               | false                         |
-| MG_AUTH_GRPC_CA_CERTS               | Auth service gRPC CA certificates             | ""                            |
+| Variable                            | Description                                   | Default                      |
+| ----------------------------------- | --------------------------------------------- | ---------------------------- |
+| MG_POSTGRES_READER_LOG_LEVEL        | Service log level                             | info                         |
+| MG_POSTGRES_READER_HTTP_HOST        | Service HTTP host                             | localhost                    |
+| MG_POSTGRES_READER_HTTP_PORT        | Service HTTP port                             | 9009                         |
+| MG_POSTGRES_READER_HTTP_SERVER_CERT | Service HTTP server cert                      | ""                           |
+| MG_POSTGRES_READER_HTTP_SERVER_KEY  | Service HTTP server key                       | ""                           |
+| MG_POSTGRES_HOST                    | Postgres DB host                              | localhost                    |
+| MG_POSTGRES_PORT                    | Postgres DB port                              | 5432                         |
+| MG_POSTGRES_USER                    | Postgres user                                 | magistrala                   |
+| MG_POSTGRES_PASS                    | Postgres password                             | magistrala                   |
+| MG_POSTGRES_NAME                    | Postgres database name                        | messages                     |
+| MG_POSTGRES_SSL_MODE                | Postgres SSL mode                             | disabled                     |
+| MG_POSTGRES_SSL_CERT                | Postgres SSL certificate path                 | ""                           |
+| MG_POSTGRES_SSL_KEY                 | Postgres SSL key                              | ""                           |
+| MG_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path            | ""                           |
+| MG_CLIENTS_AUTH_GRPC_URL            | Clients service Auth gRPC URL                 | localhost:7000               |
+| MG_CLIENTS_AUTH_GRPC_TIMEOUT        | Clients service Auth gRPC timeout in seconds  | 1s                           |
+| MG_CLIENTS_AUTH_GRPC_CLIENT_TLS     | Clients service Auth gRPC TLS mode flag       | false                        |
+| MG_CLIENTS_AUTH_GRPC_CA_CERTS       | Clients service Auth gRPC CA certificates     | ""                           |
+| MG_AUTH_GRPC_URL                    | Auth service gRPC URL                         | localhost:7001               |
+| MG_AUTH_GRPC_TIMEOUT                | Auth service gRPC request timeout in seconds  | 1s                           |
+| MG_AUTH_GRPC_CLIENT_TLS             | Auth service gRPC TLS mode flag               | false                        |
+| MG_AUTH_GRPC_CA_CERTS               | Auth service gRPC CA certificates             | ""                           |
 | MG_JAEGER_URL                       | Jaeger server URL                             | http://jaeger:4318/v1/traces |
-| MG_SEND_TELEMETRY                   | Send telemetry to magistrala call home server | true                          |
-| MG_POSTGRES_READER_INSTANCE_ID      | Postgres reader instance ID                   |                               |
+| MG_SEND_TELEMETRY                   | Send telemetry to magistrala call home server | true                         |
+| MG_POSTGRES_READER_INSTANCE_ID      | Postgres reader instance ID                   |                              |
 
 ## Deployment
 
@@ -70,10 +70,10 @@ MG_POSTGRES_SSL_MODE=[Postgres SSL mode] \
 MG_POSTGRES_SSL_CERT=[Postgres SSL cert] \
 MG_POSTGRES_SSL_KEY=[Postgres SSL key] \
 MG_POSTGRES_SSL_ROOT_CERT=[Postgres SSL Root cert] \
-MG_THINGS_AUTH_GRPC_URL=[Things service Auth GRPC URL] \
-MG_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
-MG_THINGS_AUTH_GRPC_CLIENT_TLS=[Things service Auth gRPC TLS mode flag] \
-MG_THINGS_AUTH_GRPC_CA_CERTS=[Things service Auth gRPC CA certificates] \
+MG_CLIENTS_AUTH_GRPC_URL=[Clients service Auth GRPC URL] \
+MG_CLIENTS_AUTH_GRPC_TIMEOUT=[Clients service Auth gRPC request timeout in seconds] \
+MG_CLIENTS_AUTH_GRPC_CLIENT_TLS=[Clients service Auth gRPC TLS mode flag] \
+MG_CLIENTS_AUTH_GRPC_CA_CERTS=[Clients service Auth gRPC CA certificates] \
 MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
 MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Auth service gRPC TLS mode flag] \

@@ -50,12 +50,12 @@ var (
 	}
 
 	config = bootstrap.Config{
-		ThingID:     testsutil.GenerateUUID(&testing.T{}),
-		ThingKey:    testsutil.GenerateUUID(&testing.T{}),
-		ExternalID:  testsutil.GenerateUUID(&testing.T{}),
-		ExternalKey: testsutil.GenerateUUID(&testing.T{}),
-		Channels:    []bootstrap.Channel{channel},
-		Content:     "config",
+		ClientID:     testsutil.GenerateUUID(&testing.T{}),
+		ClientSecret: testsutil.GenerateUUID(&testing.T{}),
+		ExternalID:   testsutil.GenerateUUID(&testing.T{}),
+		ExternalKey:  testsutil.GenerateUUID(&testing.T{}),
+		Channels:     []bootstrap.Channel{channel},
+		Content:      "config",
 	}
 )
 
@@ -92,7 +92,7 @@ func TestAdd(t *testing.T) {
 	svc := newService()
 
 	neID := config
-	neID.ThingID = "non-existent"
+	neID.ClientID = "non-existent"
 
 	wrongChannels := config
 	ch := channel
@@ -106,12 +106,12 @@ func TestAdd(t *testing.T) {
 		session         mgauthn.Session
 		userID          string
 		domainID        string
-		thingErr        error
-		createThingErr  error
+		clientErr        error
+		createClientErr  error
 		channelErr      error
 		listExistingErr error
 		saveErr         error
-		deleteThingErr  error
+		deleteClientErr  error
 		err             error
 	}{
 		{
@@ -128,7 +128,7 @@ func TestAdd(t *testing.T) {
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
-			thingErr: errors.NewSDKError(svcerr.ErrNotFound),
+			clientErr: errors.NewSDKError(svcerr.ErrNotFound),
 			err:      svcerr.ErrNotFound,
 		},
 		{
@@ -152,9 +152,9 @@ func TestAdd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-			repoCall := sdk.On("Thing", tc.config.ThingID, mock.Anything, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.ClientCredentials{Secret: tc.config.ThingKey}}, tc.thingErr)
-			repoCall1 := sdk.On("CreateThing", mock.Anything, tc.domainID, tc.token).Return(mgsdk.Thing{}, tc.createThingErr)
-			repoCall2 := sdk.On("DeleteThing", tc.config.ThingID, tc.domainID, tc.token).Return(tc.deleteThingErr)
+			repoCall := sdk.On("Client", tc.config.ClientID, mock.Anything, tc.token).Return(mgsdk.Client{ID: tc.config.ClientID, Credentials: mgsdk.ClientCredentials{Secret: tc.config.ClientSecret}}, tc.clientErr)
+			repoCall1 := sdk.On("CreateClient", mock.Anything, tc.domainID, tc.token).Return(mgsdk.Client{}, tc.createClientErr)
+			repoCall2 := sdk.On("DeleteClient", tc.config.ClientID, tc.domainID, tc.token).Return(tc.deleteClientErr)
 			repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
 			repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 			_, err := svc.Add(context.Background(), tc.session, tc.token, tc.config)
@@ -176,19 +176,19 @@ func TestView(t *testing.T) {
 		configID    string
 		userID      string
 		domain      string
-		thingDomain string
+		clientDomain string
 		token       string
 		session     mgauthn.Session
 		retrieveErr error
-		thingErr    error
+		clientErr    error
 		channelErr  error
 		err         error
 	}{
 		{
 			desc:        "view an existing config",
-			configID:    config.ThingID,
+			configID:    config.ClientID,
 			userID:      validID,
-			thingDomain: domainID,
+			clientDomain: domainID,
 			domain:      domainID,
 			token:       validToken,
 			err:         nil,
@@ -197,7 +197,7 @@ func TestView(t *testing.T) {
 			desc:        "view a non-existing config",
 			configID:    unknown,
 			userID:      validID,
-			thingDomain: domainID,
+			clientDomain: domainID,
 			domain:      domainID,
 			token:       validToken,
 			retrieveErr: svcerr.ErrNotFound,
@@ -205,9 +205,9 @@ func TestView(t *testing.T) {
 		},
 		{
 			desc:        "view a config with invalid domain",
-			configID:    config.ThingID,
+			configID:    config.ClientID,
 			userID:      validID,
-			thingDomain: invalidDomainID,
+			clientDomain: invalidDomainID,
 			domain:      invalidDomainID,
 			token:       validToken,
 			retrieveErr: svcerr.ErrNotFound,
@@ -218,7 +218,7 @@ func TestView(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domain, DomainUserID: validID}
-			repoCall := boot.On("RetrieveByID", context.Background(), tc.thingDomain, tc.configID).Return(config, tc.retrieveErr)
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.clientDomain, tc.configID).Return(config, tc.retrieveErr)
 			_, err := svc.View(context.Background(), tc.session, tc.configID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
@@ -239,7 +239,7 @@ func TestUpdate(t *testing.T) {
 	modifiedCreated.Name = "new name"
 
 	nonExisting := c
-	nonExisting.ThingID = unknown
+	nonExisting.ClientID = unknown
 
 	cases := []struct {
 		desc      string
@@ -304,7 +304,7 @@ func TestUpdateCert(t *testing.T) {
 		session         mgauthn.Session
 		userID          string
 		domainID        string
-		thingID         string
+		clientID         string
 		clientCert      string
 		clientKey       string
 		caCert          string
@@ -318,24 +318,24 @@ func TestUpdateCert(t *testing.T) {
 			desc:       "update certs for the valid config",
 			userID:     validID,
 			domainID:   domainID,
-			thingID:    c.ThingID,
+			clientID:    c.ClientID,
 			clientCert: "newCert",
 			clientKey:  "newKey",
 			caCert:     "newCert",
 			token:      validToken,
 			expectedConfig: bootstrap.Config{
-				Name:        c.Name,
-				ThingKey:    c.ThingKey,
-				Channels:    c.Channels,
-				ExternalID:  c.ExternalID,
-				ExternalKey: c.ExternalKey,
-				Content:     c.Content,
-				State:       c.State,
-				DomainID:    c.DomainID,
-				ThingID:     c.ThingID,
-				ClientCert:  "newCert",
-				CACert:      "newCert",
-				ClientKey:   "newKey",
+				Name:         c.Name,
+				ClientSecret: c.ClientSecret,
+				Channels:     c.Channels,
+				ExternalID:   c.ExternalID,
+				ExternalKey:  c.ExternalKey,
+				Content:      c.Content,
+				State:        c.State,
+				DomainID:     c.DomainID,
+				ClientID:     c.ClientID,
+				ClientCert:   "newCert",
+				CACert:       "newCert",
+				ClientKey:    "newKey",
 			},
 			err: nil,
 		},
@@ -343,7 +343,7 @@ func TestUpdateCert(t *testing.T) {
 			desc:           "update cert for a non-existing config",
 			userID:         validID,
 			domainID:       domainID,
-			thingID:        "empty",
+			clientID:        "empty",
 			clientCert:     "newCert",
 			clientKey:      "newKey",
 			caCert:         "newCert",
@@ -358,7 +358,7 @@ func TestUpdateCert(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			tc.session = mgauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
 			repoCall := boot.On("UpdateCert", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedConfig, tc.updateErr)
-			cfg, err := svc.UpdateCert(context.Background(), tc.session, tc.thingID, tc.clientCert, tc.clientKey, tc.caCert)
+			cfg, err := svc.UpdateCert(context.Background(), tc.session, tc.clientID, tc.clientCert, tc.clientKey, tc.caCert)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			sort.Slice(cfg.Channels, func(i, j int) bool {
 				return cfg.Channels[i].ID < cfg.Channels[j].ID
@@ -393,7 +393,7 @@ func TestUpdateConnections(t *testing.T) {
 		domainID    string
 		connections []string
 		updateErr   error
-		thingErr    error
+		clientErr    error
 		channelErr  error
 		retrieveErr error
 		listErr     error
@@ -404,7 +404,7 @@ func TestUpdateConnections(t *testing.T) {
 			token:       validToken,
 			userID:      validID,
 			domainID:    domainID,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			state:       c.State,
 			connections: []string{ch.ID},
 			err:         nil,
@@ -414,7 +414,7 @@ func TestUpdateConnections(t *testing.T) {
 			token:       validToken,
 			userID:      validID,
 			domainID:    domainID,
-			id:          activeConf.ThingID,
+			id:          activeConf.ClientID,
 			state:       activeConf.State,
 			connections: []string{ch.ID},
 			err:         nil,
@@ -424,7 +424,7 @@ func TestUpdateConnections(t *testing.T) {
 			token:       validToken,
 			userID:      validID,
 			domainID:    domainID,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			connections: []string{"wrong"},
 			channelErr:  errors.NewSDKError(svcerr.ErrNotFound),
 			err:         svcerr.ErrNotFound,
@@ -451,9 +451,9 @@ func TestUpdateConnections(t *testing.T) {
 func TestList(t *testing.T) {
 	svc := newService()
 
-	numThings := 101
+	numClients := 101
 	var saved []bootstrap.Config
-	for i := 0; i < numThings; i++ {
+	for i := 0; i < numClients; i++ {
 		c := config
 		c.ExternalID = testsutil.GenerateUUID(t)
 		c.ExternalKey = testsutil.GenerateUUID(t)
@@ -722,7 +722,7 @@ func TestList(t *testing.T) {
 				SubjectType: policysvc.UserType,
 				Subject:     tc.userID,
 				Permission:  policysvc.ViewPermission,
-				ObjectType:  policysvc.ThingType,
+				ObjectType:  policysvc.ClientType,
 			}).Return(tc.listObjectsResponse, tc.listObjectsErr)
 			repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 
@@ -752,7 +752,7 @@ func TestRemove(t *testing.T) {
 	}{
 		{
 			desc:     "remove an existing config",
-			id:       c.ThingID,
+			id:       c.ClientID,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
@@ -760,7 +760,7 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			desc:     "remove removed config",
-			id:       c.ThingID,
+			id:       c.ClientID,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
@@ -768,7 +768,7 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			desc:      "remove a config with failed remove",
-			id:        c.ThingID,
+			id:        c.ClientID,
 			token:     validToken,
 			userID:    validID,
 			domainID:  domainID,
@@ -889,7 +889,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:     "change state to Active",
 			state:    bootstrap.Active,
-			id:       c.ThingID,
+			id:       c.ClientID,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
@@ -898,7 +898,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:     "change state to current state",
 			state:    bootstrap.Active,
-			id:       c.ThingID,
+			id:       c.ClientID,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
@@ -907,7 +907,7 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:     "change state to Inactive",
 			state:    bootstrap.Inactive,
-			id:       c.ThingID,
+			id:       c.ClientID,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
@@ -916,17 +916,17 @@ func TestChangeState(t *testing.T) {
 		{
 			desc:       "change state with failed Connect",
 			state:      bootstrap.Active,
-			id:         c.ThingID,
+			id:         c.ClientID,
 			token:      validToken,
 			userID:     validID,
 			domainID:   domainID,
-			connectErr: errors.NewSDKError(bootstrap.ErrThings),
-			err:        bootstrap.ErrThings,
+			connectErr: errors.NewSDKError(bootstrap.ErrClients),
+			err:        bootstrap.ErrClients,
 		},
 		{
 			desc:     "change state with invalid state",
 			state:    bootstrap.State(2),
-			id:       c.ThingID,
+			id:       c.ClientID,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
@@ -1026,7 +1026,7 @@ func TestRemoveConfigHandler(t *testing.T) {
 	}{
 		{
 			desc: "remove an existing config",
-			id:   config.ThingID,
+			id:   config.ClientID,
 			err:  nil,
 		},
 		{
@@ -1038,7 +1038,7 @@ func TestRemoveConfigHandler(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := boot.On("RemoveThing", context.Background(), mock.Anything).Return(tc.err)
+			repoCall := boot.On("RemoveClient", context.Background(), mock.Anything).Return(tc.err)
 			err := svc.RemoveConfigHandler(context.Background(), tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
@@ -1046,66 +1046,66 @@ func TestRemoveConfigHandler(t *testing.T) {
 	}
 }
 
-func TestConnectThingsHandler(t *testing.T) {
+func TestConnectClientHandler(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
 		desc      string
-		thingID   string
+		clientID   string
 		channelID string
 		err       error
 	}{
 		{
 			desc:      "connect",
 			channelID: channel.ID,
-			thingID:   config.ThingID,
+			clientID:   config.ClientID,
 			err:       nil,
 		},
 		{
 			desc:      "connect connected",
 			channelID: channel.ID,
-			thingID:   config.ThingID,
+			clientID:   config.ClientID,
 			err:       svcerr.ErrAddPolicies,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := boot.On("ConnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-			err := svc.ConnectThingHandler(context.Background(), tc.channelID, tc.thingID)
+			repoCall := boot.On("ConnectClient", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+			err := svc.ConnectClientHandler(context.Background(), tc.channelID, tc.clientID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
 		})
 	}
 }
 
-func TestDisconnectThingsHandler(t *testing.T) {
+func TestDisconnectClientsHandler(t *testing.T) {
 	svc := newService()
 
 	cases := []struct {
 		desc      string
-		thingID   string
+		clientID   string
 		channelID string
 		err       error
 	}{
 		{
 			desc:      "disconnect",
 			channelID: channel.ID,
-			thingID:   config.ThingID,
+			clientID:   config.ClientID,
 			err:       nil,
 		},
 		{
 			desc:      "disconnect disconnected",
 			channelID: channel.ID,
-			thingID:   config.ThingID,
+			clientID:   config.ClientID,
 			err:       nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := boot.On("DisconnectThing", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
-			err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
+			repoCall := boot.On("DisconnectClient", context.Background(), mock.Anything, mock.Anything).Return(tc.err)
+			err := svc.DisconnectClientHandler(context.Background(), tc.channelID, tc.clientID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
 		})

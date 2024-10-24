@@ -20,7 +20,7 @@ import (
 )
 
 var bootConfig = mgsdk.BootstrapConfig{
-	ThingID:     thing.ID,
+	ClientID:    client.ID,
 	Channels:    []string{channel.ID},
 	Name:        "Test Bootstrap",
 	ExternalID:  "09:6:0:sb:sa",
@@ -33,8 +33,8 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 	bootCmd := cli.NewBootstrapCmd()
 	rootCmd := setFlags(bootCmd)
 
-	jsonConfig := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"thing_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]}", thing.ID, "Test Bootstrap", channel.ID)
-	invalidJson := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"thing_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]", thing.ID, "Test Bootdtrap", channel.ID)
+	jsonConfig := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"client_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]}", client.ID, "Test Bootstrap", channel.ID)
+	invalidJson := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"client_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]", client.ID, "Test Bootdtrap", channel.ID)
 	cases := []struct {
 		desc          string
 		args          []string
@@ -52,8 +52,8 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 				validToken,
 			},
 			logType:  createLog,
-			id:       thing.ID,
-			response: fmt.Sprintf("\ncreated: %s\n\n", thing.ID),
+			id:       client.ID,
+			response: fmt.Sprintf("\ncreated: %s\n\n", client.ID),
 		},
 		{
 			desc: "create bootstrap config with invald args",
@@ -231,7 +231,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 		{
 			desc: "remove bootstrap config successfully",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				token,
 			},
@@ -240,7 +240,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 		{
 			desc: "remove bootstrap config with invalid args",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				token,
 				extraArg,
@@ -248,7 +248,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 			logType: usageLog,
 		},
 		{
-			desc: "remove bootstrap config with invalid thing id",
+			desc: "remove bootstrap config with invalid client id",
 			args: []string{
 				invalidID,
 				domainID,
@@ -261,7 +261,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 		{
 			desc: "remove bootstrap config with invalid token",
 			args: []string{
-				thing.ID,
+				client.ID,
 				domainID,
 				invalidToken,
 			},
@@ -334,7 +334,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			desc: "update bootstrap connections successfully",
 			args: []string{
 				connection,
-				thing.ID,
+				client.ID,
 				chanIDsJson,
 				domainID,
 				token,
@@ -345,8 +345,8 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			desc: "update bootstrap connections with invalid json",
 			args: []string{
 				connection,
-				thing.ID,
-				fmt.Sprintf("[\"%s\"", thing.ID),
+				client.ID,
+				fmt.Sprintf("[\"%s\"", client.ID),
 				domainID,
 				token,
 			},
@@ -358,7 +358,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			desc: "update bootstrap connections with invalid token",
 			args: []string{
 				connection,
-				thing.ID,
+				client.ID,
 				chanIDsJson,
 				domainID,
 				invalidToken,
@@ -371,7 +371,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			desc: "update bootstrap certs successfully",
 			args: []string{
 				"certs",
-				thing.ID,
+				client.ID,
 				"client cert",
 				"client key",
 				"ca",
@@ -385,7 +385,7 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 			desc: "update bootstrap certs with invalid token",
 			args: []string{
 				"certs",
-				thing.ID,
+				client.ID,
 				"client cert",
 				"client key",
 				"ca",
@@ -462,7 +462,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 	bootCmd := cli.NewBootstrapCmd()
 	rootCmd := setFlags(bootCmd)
 
-	jsonConfig := fmt.Sprintf("{\"thing_id\": \"%s\", \"state\":%d}", thing.ID, 1)
+	jsonConfig := fmt.Sprintf("{\"client_id\": \"%s\", \"state\":%d}", client.ID, 1)
 
 	cases := []struct {
 		desc          string
@@ -493,7 +493,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 		{
 			desc: "whitelist config with invalid json",
 			args: []string{
-				fmt.Sprintf("{\"thing_id\": \"%s\", \"state\":%d", thing.ID, 1),
+				fmt.Sprintf("{\"client_id\": \"%s\", \"state\":%d", client.ID, 1),
 				domainID,
 				validToken,
 			},

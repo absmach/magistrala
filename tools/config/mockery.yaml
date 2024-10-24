@@ -6,23 +6,41 @@ filename: "{{.InterfaceName}}.go"
 outpkg: "mocks"
 boilerplate-file: "./tools/config/boilerplate.txt"
 packages:
-  github.com/absmach/magistrala:
+  github.com/absmach/magistrala/internal/grpc/clients/v1:
     interfaces:
-      ThingsServiceClient:
+      ClientsServiceClient:
         config:
-          dir: "./things/mocks"
-          mockname: "ThingsServiceClient"
-          filename: "things_client.go"
+          dir: "./clients/mocks"
+          mockname: "ClientsServiceClient"
+          filename: "clients_client.go"
+  github.com/absmach/magistrala/internal/grpc/domains/v1:
+    interfaces:
       DomainsServiceClient:
         config:
-          dir: "./auth/mocks"
+          dir: "./domains/mocks"
           mockname: "DomainsServiceClient"
           filename: "domains_client.go"
+  github.com/absmach/magistrala/internal/grpc/token/v1:
+    interfaces:
       TokenServiceClient:
         config:
           dir: "./auth/mocks"
           mockname: "TokenServiceClient"
           filename: "token_client.go"
+  github.com/absmach/magistrala/internal/grpc/channels/v1:
+    interfaces:
+      ChannelsServiceClient:
+        config:
+          dir: "./channels/mocks"
+          mockname: "ChannelsServiceClient"
+          filename: "channels_client.go"
+  github.com/absmach/magistrala/internal/grpc/groups/v1:
+    interfaces:
+      GroupsServiceClient:
+        config:
+          dir: "./groups/mocks"
+          mockname: "GroupsServiceClient"
+          filename: "groups_client.go"
 
   github.com/absmach/magistrala/certs/pki/amcerts:
     interfaces:

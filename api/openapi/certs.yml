@@ -30,8 +30,8 @@ paths:
   /{domainID}/certs:
     post:
       operationId: createCert
-      summary: Creates a certificate for thing
-      description: Creates a certificate for thing
+      summary: Creates a certificate for client
+      description: Creates a certificate for client
       tags:
         - certs
       parameters:
@@ -106,17 +106,17 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /{domainID}/serials/{thingID}:
+  /{domainID}/serials/{clientID}:
     get:
       operationId: getSerials
       summary: Retrieves certificates' serial IDs
       description: |
-        Retrieves a list of certificates' serial IDs for a given thing ID.
+        Retrieves a list of certificates' serial IDs for a given client ID.
       tags:
         - certs
       parameters:
         - $ref: "auth.yml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ThingID"
+        - $ref: "#/components/parameters/ClientID"
       responses:
         "200":
           $ref: "#/components/responses/SerialsPageRes"
@@ -147,9 +147,9 @@ paths:
 
 components:
   parameters:
-    ThingID:
-      name: thingID
-      description: Thing ID
+    ClientID:
+      name: clientID
+      description: Client ID
       in: path
       schema:
         type: string
@@ -168,10 +168,10 @@ components:
     Cert:
       type: object
       properties:
-        thing_id:
+        client_id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Thing ID.
+          description: Corresponding Magistrala Client ID.
         client_cert:
           type: string
           description: Client Certificate.
@@ -240,18 +240,18 @@ components:
   requestBodies:
     CertReq:
       description: |
-        Issues a certificate that is required for mTLS. To create a certificate for a thing
-        provide a thing id, data identifying particular thing will be embedded into the Certificate.
+        Issues a certificate that is required for mTLS. To create a certificate for a client
+        provide a client id, data identifying particular client will be embedded into the Certificate.
         x509 and ECC certificates are supported when using when Vault is used as PKI.
       content:
         application/json:
           schema:
             type: object
             required:
-              - thing_id
+              - client_id
               - ttl
             properties:
-              thing_id:
+              client_id:
                 type: string
                 format: uuid
               ttl:
@@ -271,7 +271,7 @@ components:
         serial:
           operationId: getSerials
           parameters:
-            thingID: $response.body#/thing_id
+            clientID: $response.body#/client_id
         delete:
           operationId: revokeCert
           parameters:

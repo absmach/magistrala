@@ -25,13 +25,13 @@ func LoggingMiddleware(svc certs.Service, logger *slog.Logger) certs.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-// IssueCert logs the issue_cert request. It logs the ttl, thing ID and the time it took to complete the request.
+// IssueCert logs the issue_cert request. It logs the ttl, client ID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) IssueCert(ctx context.Context, domainID, token, thingID, ttl string) (c certs.Cert, err error) {
+func (lm *loggingMiddleware) IssueCert(ctx context.Context, domainID, token, clientID, ttl string) (c certs.Cert, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 			slog.String("ttl", ttl),
 		}
 		if err != nil {
@@ -42,15 +42,15 @@ func (lm *loggingMiddleware) IssueCert(ctx context.Context, domainID, token, thi
 		lm.logger.Info("Issue certificate completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.IssueCert(ctx, domainID, token, thingID, ttl)
+	return lm.svc.IssueCert(ctx, domainID, token, clientID, ttl)
 }
 
-// ListCerts logs the list_certs request. It logs the thing ID and the time it took to complete the request.
-func (lm *loggingMiddleware) ListCerts(ctx context.Context, thingID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
+// ListCerts logs the list_certs request. It logs the client ID and the time it took to complete the request.
+func (lm *loggingMiddleware) ListCerts(ctx context.Context, clientID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 			slog.Group("page",
 				slog.Uint64("offset", cp.Offset),
 				slog.Uint64("limit", cp.Limit),
@@ -65,16 +65,16 @@ func (lm *loggingMiddleware) ListCerts(ctx context.Context, thingID string, pm c
 		lm.logger.Info("List certificates completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ListCerts(ctx, thingID, pm)
+	return lm.svc.ListCerts(ctx, clientID, pm)
 }
 
-// ListSerials logs the list_serials request. It logs the thing ID and the time it took to complete the request.
+// ListSerials logs the list_serials request. It logs the client ID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ListSerials(ctx context.Context, thingID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
+func (lm *loggingMiddleware) ListSerials(ctx context.Context, clientID string, pm certs.PageMetadata) (cp certs.CertPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 			slog.String("revoke", pm.Revoked),
 			slog.Group("page",
 				slog.Uint64("offset", cp.Offset),
@@ -90,7 +90,7 @@ func (lm *loggingMiddleware) ListSerials(ctx context.Context, thingID string, pm
 		lm.logger.Info("List certificates serials completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ListSerials(ctx, thingID, pm)
+	return lm.svc.ListSerials(ctx, clientID, pm)
 }
 
 // ViewCert logs the view_cert request. It logs the serial ID and the time it took to complete the request.
@@ -112,13 +112,13 @@ func (lm *loggingMiddleware) ViewCert(ctx context.Context, serialID string) (c c
 	return lm.svc.ViewCert(ctx, serialID)
 }
 
-// RevokeCert logs the revoke_cert request. It logs the thing ID and the time it took to complete the request.
+// RevokeCert logs the revoke_cert request. It logs the client ID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) RevokeCert(ctx context.Context, domainID, token, thingID string) (c certs.Revoke, err error) {
+func (lm *loggingMiddleware) RevokeCert(ctx context.Context, domainID, token, clientID string) (c certs.Revoke, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -128,5 +128,5 @@ func (lm *loggingMiddleware) RevokeCert(ctx context.Context, domainID, token, th
 		lm.logger.Info("Revoke certificate completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.RevokeCert(ctx, domainID, token, thingID)
+	return lm.svc.RevokeCert(ctx, domainID, token, clientID)
 }

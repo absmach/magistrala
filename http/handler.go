@@ -13,8 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/internal/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/internal/grpc/clients/v1"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -25,12 +28,20 @@ import (
 
 var _ session.Handler = (*handler)(nil)
 
-const protocol = "http"
+type ctxKey string
+
+const (
+	protocol                = "http"
+	clientIDCtxKey   ctxKey = "client_id"
+	clientTypeCtxKey ctxKey = "client_type"
+)
 
 // Log message formats.
 const (
-	logInfoConnected = "connected with thing_key %s"
-	logInfoPublished = "published with client_id %s to the topic %s"
+	logInfoConnected         = "connected with client_key %s"
+	logInfoPublished         = "published with client_type %s client_id %s to the topic %s"
+	logInfoFailedAuthNToken  = "failed to authenticate token for topic %s with error %s"
+	logInfoFailedAuthNClient = "failed to authenticate client key %s for topic %s with error %s"
 )
 
 // Error wrappers for MQTT errors.
@@ -49,16 +60,20 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 // Event implements events.Event interface.
 type handler struct {
 	publisher messaging.Publisher
-	things    magistrala.ThingsServiceClient
+	clients   grpcClientsV1.ClientsServiceClient
+	channels  grpcChannelsV1.ChannelsServiceClient
+	authn     mgauthn.Authentication
 	logger    *slog.Logger
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publisher messaging.Publisher, logger *slog.Logger, thingsClient magistrala.ThingsServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, authn mgauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, logger *slog.Logger) session.Handler {
 	return &handler{
-		logger:    logger,
 		publisher: publisher,
-		things:    thingsClient,
+		authn:     authn,
+		clients:   clients,
+		channels:  channels,
+		logger:    logger,
 	}
 }
 
@@ -74,8 +89,8 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 	switch {
 	case string(s.Password) == "":
 		return mgate.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey))
-	case strings.HasPrefix(string(s.Password), apiutil.ThingPrefix):
-		tok = strings.TrimPrefix(string(s.Password), apiutil.ThingPrefix)
+	case strings.HasPrefix(string(s.Password), apiutil.ClientPrefix):
+		tok = strings.TrimPrefix(string(s.Password), apiutil.ClientPrefix)
 	default:
 		tok = string(s.Password)
 	}
@@ -109,21 +124,38 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	if !ok {
 		return errors.Wrap(errFailedPublish, errClientNotInitialized)
 	}
-	h.logger.Info(fmt.Sprintf(logInfoPublished, s.ID, *topic))
-	// Topics are in the format:
-	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 
-	channelParts := channelRegExp.FindStringSubmatch(*topic)
-	if len(channelParts) < 2 {
-		return mgate.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(errFailedPublish, errMalformedTopic))
+	var clientID, clientType string
+	switch {
+	case strings.HasPrefix(string(s.Password), "Client"):
+		secret := strings.TrimPrefix(string(s.Password), apiutil.ClientPrefix)
+		authnRes, err := h.clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{ClientSecret: secret})
+		if err != nil {
+			h.logger.Info(fmt.Sprintf(logInfoFailedAuthNClient, secret, *topic, err))
+			return mgate.NewHTTPProxyError(http.StatusUnauthorized, svcerr.ErrAuthentication)
+		}
+		if !authnRes.Authenticated {
+			h.logger.Info(fmt.Sprintf(logInfoFailedAuthNClient, secret, *topic, svcerr.ErrAuthentication))
+			return mgate.NewHTTPProxyError(http.StatusUnauthorized, svcerr.ErrAuthentication)
+		}
+		clientType = policies.ClientType
+		clientID = authnRes.GetId()
+	case strings.HasPrefix(string(s.Password), apiutil.BearerPrefix):
+		token := strings.TrimPrefix(string(s.Password), apiutil.BearerPrefix)
+		authnSession, err := h.authn.Authenticate(ctx, token)
+		if err != nil {
+			h.logger.Info(fmt.Sprintf(logInfoFailedAuthNToken, *topic, err))
+			return mgate.NewHTTPProxyError(http.StatusUnauthorized, svcerr.ErrAuthentication)
+		}
+		clientType = policies.UserType
+		clientID = authnSession.DomainUserID
+	default:
+		return mgate.NewHTTPProxyError(http.StatusUnauthorized, svcerr.ErrAuthentication)
 	}
 
-	chanID := channelParts[1]
-	subtopic := channelParts[2]
-
-	subtopic, err := parseSubtopic(subtopic)
+	chanID, subtopic, err := parseTopic(*topic)
 	if err != nil {
-		return mgate.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(errFailedParseSubtopic, err))
+		return mgate.NewHTTPProxyError(http.StatusBadRequest, err)
 	}
 
 	msg := messaging.Message{
@@ -133,32 +165,30 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		Payload:  *payload,
 		Created:  time.Now().UnixNano(),
 	}
-	var tok string
-	switch {
-	case string(s.Password) == "":
-		return errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey)
-	case strings.HasPrefix(string(s.Password), apiutil.ThingPrefix):
-		tok = strings.TrimPrefix(string(s.Password), apiutil.ThingPrefix)
-	default:
-		tok = string(s.Password)
-	}
-	ar := &magistrala.ThingsAuthzReq{
-		ThingKey:   tok,
+
+	ar := &grpcChannelsV1.AuthzReq{
+		ClientId:   clientID,
+		ClientType: clientType,
 		ChannelId:  msg.Channel,
-		Permission: policies.PublishPermission,
+		Type:       uint32(connections.Publish),
 	}
-	res, err := h.things.Authorize(ctx, ar)
+	res, err := h.channels.Authorize(ctx, ar)
 	if err != nil {
 		return mgate.NewHTTPProxyError(http.StatusBadRequest, err)
 	}
 	if !res.GetAuthorized() {
 		return mgate.NewHTTPProxyError(http.StatusUnauthorized, svcerr.ErrAuthorization)
 	}
-	msg.Publisher = res.GetId()
+
+	if clientType == policies.ClientType {
+		msg.Publisher = clientID
+	}
 
 	if err := h.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
 		return errors.Wrap(errFailedPublishToMsgBroker, err)
 	}
+
+	h.logger.Info(fmt.Sprintf(logInfoPublished, clientType, clientID, *topic))
 
 	return nil
 }
@@ -176,6 +206,25 @@ func (h *handler) Unsubscribe(ctx context.Context, topics *[]string) error {
 // Disconnect - not used for HTTP.
 func (h *handler) Disconnect(ctx context.Context) error {
 	return nil
+}
+
+func parseTopic(topic string) (string, string, error) {
+	// Topics are in the format:
+	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
+	channelParts := channelRegExp.FindStringSubmatch(topic)
+	if len(channelParts) < 2 {
+		return "", "", errors.Wrap(errFailedPublish, errMalformedTopic)
+	}
+
+	chanID := channelParts[1]
+	subtopic := channelParts[2]
+
+	subtopic, err := parseSubtopic(subtopic)
+	if err != nil {
+		return "", "", errors.Wrap(errFailedParseSubtopic, err)
+	}
+
+	return chanID, subtopic, nil
 }
 
 func parseSubtopic(subtopic string) (string, error) {

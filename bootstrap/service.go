@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	// ErrThings indicates failure to communicate with Magistrala Things service.
+	// ErrClients indicates failure to communicate with Magistrala Clients service.
 	// It can be due to networking error or invalid/unauthenticated request.
-	ErrThings = errors.New("failed to receive response from Things service")
+	ErrClients = errors.New("failed to receive response from Clients service")
 
 	// ErrExternalKey indicates a non-existent bootstrap configuration for given external key.
 	ErrExternalKey = errors.New("failed to get bootstrap configuration for given external key")
@@ -44,12 +44,12 @@ var (
 	errUpdateChannel      = errors.New("failed to update channel")
 	errRemoveConfig       = errors.New("failed to remove bootstrap configuration")
 	errRemoveChannel      = errors.New("failed to remove channel")
-	errCreateThing        = errors.New("failed to create thing")
-	errConnectThing       = errors.New("failed to connect thing")
-	errDisconnectThing    = errors.New("failed to disconnect thing")
+	errCreateClient       = errors.New("failed to create client")
+	errConnectClient      = errors.New("failed to connect client")
+	errDisconnectClient   = errors.New("failed to disconnect client")
 	errCheckChannels      = errors.New("failed to check if channels exists")
 	errConnectionChannels = errors.New("failed to check channels connections")
-	errThingNotFound      = errors.New("failed to find thing")
+	errClientNotFound     = errors.New("failed to find client")
 	errUpdateCert         = errors.New("failed to update cert")
 )
 
@@ -60,10 +60,10 @@ var _ Service = (*bootstrapService)(nil)
 //
 //go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
-	// Add adds new Thing Config to the user identified by the provided token.
+	// Add adds new Client Config to the user identified by the provided token.
 	Add(ctx context.Context, session mgauthn.Session, token string, cfg Config) (Config, error)
 
-	// View returns Thing Config with given ID belonging to the user identified by the given token.
+	// View returns Client Config with given ID belonging to the user identified by the given token.
 	View(ctx context.Context, session mgauthn.Session, id string) (Config, error)
 
 	// Update updates editable fields of the provided Config.
@@ -71,7 +71,7 @@ type Service interface {
 
 	// UpdateCert updates an existing Config certificate and token.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(ctx context.Context, session mgauthn.Session, thingID, clientCert, clientKey, caCert string) (Config, error)
+	UpdateCert(ctx context.Context, session mgauthn.Session, clientID, clientCert, clientKey, caCert string) (Config, error)
 
 	// UpdateConnections updates list of Channels related to given Config.
 	UpdateConnections(ctx context.Context, session mgauthn.Session, token, id string, connections []string) error
@@ -83,10 +83,10 @@ type Service interface {
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	Remove(ctx context.Context, session mgauthn.Session, id string) error
 
-	// Bootstrap returns Config to the Thing with provided external ID using external key.
+	// Bootstrap returns Config to the Client with provided external ID using external key.
 	Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error)
 
-	// ChangeState changes state of the Thing with given thing ID and domain ID.
+	// ChangeState changes state of the Client with given client ID and domain ID.
 	ChangeState(ctx context.Context, session mgauthn.Session, token, id string, state State) error
 
 	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as
@@ -101,11 +101,11 @@ type Service interface {
 	// RemoveChannelHandler removes Channel with id received from an event.
 	RemoveChannelHandler(ctx context.Context, id string) error
 
-	// ConnectThingHandler changes state of the Config to active when connect event occurs.
-	ConnectThingHandler(ctx context.Context, channelID, ThingID string) error
+	// ConnectClientHandler changes state of the Config to active when connect event occurs.
+	ConnectClientHandler(ctx context.Context, channelID, clientID string) error
 
-	// DisconnectThingHandler changes state of the Config to inactive when disconnect event occurs.
-	DisconnectThingHandler(ctx context.Context, channelID, ThingID string) error
+	// DisconnectClientHandler changes state of the Config to inactive when disconnect event occurs.
+	DisconnectClientHandler(ctx context.Context, channelID, clientID string) error
 }
 
 // ConfigReader is used to parse Config into format which will be encoded
@@ -151,36 +151,36 @@ func (bs bootstrapService) Add(ctx context.Context, session mgauthn.Session, tok
 		return Config{}, errors.Wrap(errConnectionChannels, err)
 	}
 
-	id := cfg.ThingID
-	mgThing, err := bs.thing(session.DomainID, id, token)
+	id := cfg.ClientID
+	mgClient, err := bs.client(session.DomainID, id, token)
 	if err != nil {
-		return Config{}, errors.Wrap(errThingNotFound, err)
+		return Config{}, errors.Wrap(errClientNotFound, err)
 	}
 
 	for _, channel := range cfg.Channels {
-		if channel.DomainID != mgThing.DomainID {
+		if channel.DomainID != mgClient.DomainID {
 			return Config{}, errors.Wrap(svcerr.ErrMalformedEntity, errNotInSameDomain)
 		}
 	}
 
-	cfg.ThingID = mgThing.ID
+	cfg.ClientID = mgClient.ID
 	cfg.DomainID = session.DomainID
 	cfg.State = Inactive
-	cfg.ThingKey = mgThing.Credentials.Secret
+	cfg.ClientSecret = mgClient.Credentials.Secret
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
-		// If id is empty, then a new thing has been created function - bs.thing(id, token)
-		// So, on bootstrap config save error , delete the newly created thing.
+		// If id is empty, then a new client has been created function - bs.client(id, token)
+		// So, on bootstrap config save error , delete the newly created client.
 		if id == "" {
-			if errT := bs.sdk.DeleteThing(cfg.ThingID, cfg.DomainID, token); errT != nil {
+			if errT := bs.sdk.DeleteClient(cfg.ClientID, cfg.DomainID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
 		return Config{}, errors.Wrap(ErrAddBootstrap, err)
 	}
 
-	cfg.ThingID = saved
+	cfg.ClientID = saved
 	cfg.Channels = append(cfg.Channels, existing...)
 
 	return cfg, nil
@@ -202,8 +202,8 @@ func (bs bootstrapService) Update(ctx context.Context, session mgauthn.Session, 
 	return nil
 }
 
-func (bs bootstrapService) UpdateCert(ctx context.Context, session mgauthn.Session, thingID, clientCert, clientKey, caCert string) (Config, error) {
-	cfg, err := bs.configs.UpdateCert(ctx, session.DomainID, thingID, clientCert, clientKey, caCert)
+func (bs bootstrapService) UpdateCert(ctx context.Context, session mgauthn.Session, clientID, clientCert, clientKey, caCert string) (Config, error) {
+	cfg, err := bs.configs.UpdateCert(ctx, session.DomainID, clientID, clientCert, clientKey, caCert)
 	if err != nil {
 		return Config{}, errors.Wrap(errUpdateCert, err)
 	}
@@ -238,21 +238,21 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session mgauth
 	}
 
 	for _, c := range disconnect {
-		if err := bs.sdk.DisconnectThing(id, c, session.DomainID, token); err != nil {
+		if err := bs.sdk.DisconnectClient(id, c, session.DomainID, token); err != nil {
 			if errors.Contains(err, repoerr.ErrNotFound) {
 				continue
 			}
-			return ErrThings
+			return ErrClients
 		}
 	}
 
 	for _, c := range connect {
 		conIDs := mgsdk.Connection{
 			ChannelID: c,
-			ThingID:   id,
+			ClientID:  id,
 		}
 		if err := bs.sdk.Connect(conIDs, session.DomainID, token); err != nil {
-			return ErrThings
+			return ErrClients
 		}
 	}
 	if err := bs.configs.UpdateConnections(ctx, session.DomainID, id, channels, connections); err != nil {
@@ -266,7 +266,7 @@ func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]
 		SubjectType: policies.UserType,
 		Subject:     userID,
 		Permission:  policies.ViewPermission,
-		ObjectType:  policies.ThingType,
+		ObjectType:  policies.ClientType,
 	})
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrNotFound, err)
@@ -280,12 +280,12 @@ func (bs bootstrapService) List(ctx context.Context, session mgauthn.Session, fi
 	}
 
 	// Handle non-admin users
-	thingIDs, err := bs.listClientIDs(ctx, session.DomainUserID)
+	clientIDs, err := bs.listClientIDs(ctx, session.DomainUserID)
 	if err != nil {
 		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
 	}
 
-	if len(thingIDs) == 0 {
+	if len(clientIDs) == 0 {
 		return ConfigsPage{
 			Total:   0,
 			Offset:  offset,
@@ -294,7 +294,7 @@ func (bs bootstrapService) List(ctx context.Context, session mgauthn.Session, fi
 		}, nil
 	}
 
-	return bs.configs.RetrieveAll(ctx, session.DomainID, thingIDs, filter, offset, limit), nil
+	return bs.configs.RetrieveAll(ctx, session.DomainID, clientIDs, filter, offset, limit), nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, session mgauthn.Session, id string) error {
@@ -338,23 +338,23 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session mgauthn.Sess
 		for _, c := range cfg.Channels {
 			conIDs := mgsdk.Connection{
 				ChannelID: c.ID,
-				ThingID:   cfg.ThingID,
+				ClientID:  cfg.ClientID,
 			}
 			if err := bs.sdk.Connect(conIDs, session.DomainID, token); err != nil {
 				// Ignore conflict errors as they indicate the connection already exists.
 				if errors.Contains(err, svcerr.ErrConflict) {
 					continue
 				}
-				return ErrThings
+				return ErrClients
 			}
 		}
 	case Inactive:
 		for _, c := range cfg.Channels {
-			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, session.DomainID, token); err != nil {
+			if err := bs.sdk.DisconnectClient(cfg.ClientID, c.ID, session.DomainID, token); err != nil {
 				if errors.Contains(err, repoerr.ErrNotFound) {
 					continue
 				}
-				return ErrThings
+				return ErrClients
 			}
 		}
 	}
@@ -372,7 +372,7 @@ func (bs bootstrapService) UpdateChannelHandler(ctx context.Context, channel Cha
 }
 
 func (bs bootstrapService) RemoveConfigHandler(ctx context.Context, id string) error {
-	if err := bs.configs.RemoveThing(ctx, id); err != nil {
+	if err := bs.configs.RemoveClient(ctx, id); err != nil {
 		return errors.Wrap(errRemoveConfig, err)
 	}
 	return nil
@@ -385,41 +385,41 @@ func (bs bootstrapService) RemoveChannelHandler(ctx context.Context, id string) 
 	return nil
 }
 
-func (bs bootstrapService) ConnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := bs.configs.ConnectThing(ctx, channelID, thingID); err != nil {
-		return errors.Wrap(errConnectThing, err)
+func (bs bootstrapService) ConnectClientHandler(ctx context.Context, channelID, clientID string) error {
+	if err := bs.configs.ConnectClient(ctx, channelID, clientID); err != nil {
+		return errors.Wrap(errConnectClient, err)
 	}
 	return nil
 }
 
-func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := bs.configs.DisconnectThing(ctx, channelID, thingID); err != nil {
-		return errors.Wrap(errDisconnectThing, err)
+func (bs bootstrapService) DisconnectClientHandler(ctx context.Context, channelID, clientID string) error {
+	if err := bs.configs.DisconnectClient(ctx, channelID, clientID); err != nil {
+		return errors.Wrap(errDisconnectClient, err)
 	}
 	return nil
 }
 
-// Method thing retrieves Magistrala Thing creating one if an empty ID is passed.
-func (bs bootstrapService) thing(domainID, id, token string) (mgsdk.Thing, error) {
-	// If Thing ID is not provided, then create new thing.
+// Method client retrieves Magistrala Client creating one if an empty ID is passed.
+func (bs bootstrapService) client(domainID, id, token string) (mgsdk.Client, error) {
+	// If Client ID is not provided, then create new client.
 	if id == "" {
 		id, err := bs.idProvider.ID()
 		if err != nil {
-			return mgsdk.Thing{}, errors.Wrap(errCreateThing, err)
+			return mgsdk.Client{}, errors.Wrap(errCreateClient, err)
 		}
-		thing, sdkErr := bs.sdk.CreateThing(mgsdk.Thing{ID: id, Name: "Bootstrapped Thing " + id}, domainID, token)
+		client, sdkErr := bs.sdk.CreateClient(mgsdk.Client{ID: id, Name: "Bootstrapped Client " + id}, domainID, token)
 		if sdkErr != nil {
-			return mgsdk.Thing{}, errors.Wrap(errCreateThing, sdkErr)
+			return mgsdk.Client{}, errors.Wrap(errCreateClient, sdkErr)
 		}
-		return thing, nil
+		return client, nil
 	}
 
-	// If Thing ID is provided, then retrieve thing
-	thing, sdkErr := bs.sdk.Thing(id, domainID, token)
+	// If Client ID is provided, then retrieve client
+	client, sdkErr := bs.sdk.Client(id, domainID, token)
 	if sdkErr != nil {
-		return mgsdk.Thing{}, errors.Wrap(ErrThings, sdkErr)
+		return mgsdk.Client{}, errors.Wrap(ErrClients, sdkErr)
 	}
-	return thing, nil
+	return client, nil
 }
 
 func (bs bootstrapService) connectionChannels(channels, existing []string, domainID, token string) ([]Channel, error) {

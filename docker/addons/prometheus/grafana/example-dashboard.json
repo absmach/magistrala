@@ -398,7 +398,7 @@
       },
       "id": 35,
       "panels": [],
-      "title": "Things-Service",
+      "title": "Clients-Service",
       "type": "row"
     },
     {
@@ -452,14 +452,14 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "things_api_request_count{}",
+          "expr": "clients_api_request_count{}",
           "instant": false,
           "interval": "",
           "legendFormat": "{{method}}",
           "refId": "A"
         }
       ],
-      "title": "Things Request Count",
+      "title": "Clients Request Count",
       "type": "gauge"
     },
     {
@@ -559,7 +559,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "label_replace(label_replace(label_replace(things_api_request_latency_microseconds, \"quantile\", \"50th percentile\", \"quantile\", \"0.5\"), \"quantile\", \"90th percentile\", \"quantile\", \"0.9\"), \"quantile\", \"99th percentile\", \"quantile\", \"0.99\")",
+          "expr": "label_replace(label_replace(label_replace(clients_api_request_latency_microseconds, \"quantile\", \"50th percentile\", \"quantile\", \"0.5\"), \"quantile\", \"90th percentile\", \"quantile\", \"0.9\"), \"quantile\", \"99th percentile\", \"quantile\", \"0.99\")",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -569,7 +569,7 @@
           "refId": "A"
         }
       ],
-      "title": "Things Latency Quantiles",
+      "title": "Clients Latency Quantiles",
       "type": "timeseries"
     },
     {

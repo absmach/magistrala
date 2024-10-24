@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/clients"
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/pkg/groups"
-	"github.com/absmach/magistrala/things"
 	"github.com/pelletier/go-toml"
 )
 
@@ -22,7 +22,7 @@ type ServiceConf struct {
 	TLS        bool   `toml:"tls"           env:"MG_PROVISION_ENV_CLIENTS_TLS"      envDefault:"false"`
 	ServerCert string `toml:"server_cert"   env:"MG_PROVISION_SERVER_CERT"          envDefault:""`
 	ServerKey  string `toml:"server_key"    env:"MG_PROVISION_SERVER_KEY"           envDefault:""`
-	ThingsURL  string `toml:"things_url"    env:"MG_PROVISION_THINGS_LOCATION"      envDefault:"http://localhost"`
+	ClientsURL string `toml:"clients_url"    env:"MG_PROVISION_CLIENTS_LOCATION"      envDefault:"http://localhost"`
 	UsersURL   string `toml:"users_url"     env:"MG_PROVISION_USERS_LOCATION"       envDefault:"http://localhost"`
 	HTTPPort   string `toml:"http_port"     env:"MG_PROVISION_HTTP_PORT"            envDefault:"9016"`
 	MgEmail    string `toml:"mg_email"      env:"MG_PROVISION_EMAIL"                envDefault:"test@example.com"`
@@ -60,15 +60,15 @@ type Cert struct {
 
 // Config struct of Provision.
 type Config struct {
-	File          string          `toml:"file"      env:"MG_PROVISION_CONFIG_FILE" envDefault:"config.toml"`
-	Server        ServiceConf     `toml:"server"    mapstructure:"server"`
-	Bootstrap     Bootstrap       `toml:"bootstrap" mapstructure:"bootstrap"`
-	Things        []things.Client `toml:"things"    mapstructure:"things"`
-	Channels      []groups.Group  `toml:"channels"  mapstructure:"channels"`
-	Cert          Cert            `toml:"cert"      mapstructure:"cert"`
-	BSContent     string          `env:"MG_PROVISION_BS_CONTENT" envDefault:""`
-	SendTelemetry bool            `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID    string          `env:"MG_MQTT_ADAPTER_INSTANCE_ID" envDefault:""`
+	File          string             `toml:"file"      env:"MG_PROVISION_CONFIG_FILE" envDefault:"config.toml"`
+	Server        ServiceConf        `toml:"server"    mapstructure:"server"`
+	Bootstrap     Bootstrap          `toml:"bootstrap" mapstructure:"bootstrap"`
+	Clients       []clients.Client   `toml:"clients"   mapstructure:"clients"`
+	Channels      []channels.Channel `toml:"channels"  mapstructure:"channels"`
+	Cert          Cert               `toml:"cert"      mapstructure:"cert"`
+	BSContent     string             `env:"MG_PROVISION_BS_CONTENT" envDefault:""`
+	SendTelemetry bool               `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
+	InstanceID    string             `env:"MG_MQTT_ADAPTER_INSTANCE_ID" envDefault:""`
 }
 
 // Save - store config in a file.

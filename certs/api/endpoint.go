@@ -18,14 +18,14 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		res, err := svc.IssueCert(ctx, req.domainID, req.token, req.ThingID, req.TTL)
+		res, err := svc.IssueCert(ctx, req.domainID, req.token, req.ClientID, req.TTL)
 		if err != nil {
 			return certsRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		return certsRes{
 			SerialNumber: res.SerialNumber,
-			ThingID:      res.ThingID,
+			ClientID:     res.ClientID,
 			Certificate:  res.Certificate,
 			ExpiryTime:   res.ExpiryTime,
 			Revoked:      res.Revoked,
@@ -41,7 +41,7 @@ func listSerials(svc certs.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		page, err := svc.ListSerials(ctx, req.thingID, req.pm)
+		page, err := svc.ListSerials(ctx, req.clientID, req.pm)
 		if err != nil {
 			return certsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
@@ -59,7 +59,7 @@ func listSerials(svc certs.Service) endpoint.Endpoint {
 				SerialNumber: cert.SerialNumber,
 				ExpiryTime:   cert.ExpiryTime,
 				Revoked:      cert.Revoked,
-				ThingID:      cert.ThingID,
+				ClientID:     cert.ClientID,
 			}
 			res.Certs = append(res.Certs, cr)
 		}
@@ -80,7 +80,7 @@ func viewCert(svc certs.Service) endpoint.Endpoint {
 		}
 
 		return certsRes{
-			ThingID:      cert.ThingID,
+			ClientID:     cert.ClientID,
 			Certificate:  cert.Certificate,
 			Key:          cert.Key,
 			SerialNumber: cert.SerialNumber,

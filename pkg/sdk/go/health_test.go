@@ -11,20 +11,20 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap/api"
 	bmocks "github.com/absmach/magistrala/bootstrap/mocks"
+	chmocks "github.com/absmach/magistrala/channels/mocks"
+	climocks "github.com/absmach/magistrala/clients/mocks"
 	mglog "github.com/absmach/magistrala/logger"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	authzmocks "github.com/absmach/magistrala/pkg/authz/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	readersapi "github.com/absmach/magistrala/readers/api"
 	readersmocks "github.com/absmach/magistrala/readers/mocks"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHealth(t *testing.T) {
-	thingsTs, _, _ := setupThings()
-	defer thingsTs.Close()
+	clientsTs, _, _ := setupClients()
+	defer clientsTs.Close()
 
 	usersTs, _, _ := setupUsers()
 	defer usersTs.Close()
@@ -42,7 +42,7 @@ func TestHealth(t *testing.T) {
 	defer httpAdapterTs.Close()
 
 	sdkConf := sdk.Config{
-		ThingsURL:       thingsTs.URL,
+		ClientsURL:      clientsTs.URL,
 		UsersURL:        usersTs.URL,
 		CertsURL:        certsTs.URL,
 		BootstrapURL:    bootstrapTs.URL,
@@ -62,11 +62,11 @@ func TestHealth(t *testing.T) {
 		err         errors.SDKError
 	}{
 		{
-			desc:        "get things service health check",
-			service:     "things",
+			desc:        "get clients service health check",
+			service:     "clients",
 			empty:       false,
 			err:         nil,
-			description: "things service",
+			description: "clients service",
 			status:      "pass",
 		},
 		{
@@ -135,10 +135,10 @@ func setupMinimalBootstrap() *httptest.Server {
 
 func setupMinimalReader() *httptest.Server {
 	repo := new(readersmocks.MessageRepository)
-	authz := new(authzmocks.Authorization)
+	channels := new(chmocks.ChannelsServiceClient)
 	authn := new(authnmocks.Authentication)
-	things := new(thmocks.ThingsServiceClient)
+	clients := new(climocks.ClientsServiceClient)
 
-	mux := readersapi.MakeHandler(repo, authn, authz, things, "test", "")
+	mux := readersapi.MakeHandler(repo, authn, clients, channels, "test", "")
 	return httptest.NewServer(mux)
 }

@@ -40,7 +40,7 @@ func TestSendMesageCmd(t *testing.T) {
 			args: []string{
 				channel.ID,
 				message,
-				thing.Credentials.Secret,
+				client.Credentials.Secret,
 			},
 			logType: okLog,
 		},
@@ -49,13 +49,13 @@ func TestSendMesageCmd(t *testing.T) {
 			args: []string{
 				channel.ID,
 				message,
-				thing.Credentials.Secret,
+				client.Credentials.Secret,
 				extraArg,
 			},
 			logType: usageLog,
 		},
 		{
-			desc: "send message with invalid thing secret",
+			desc: "send message with invalid client secret",
 			args: []string{
 				channel.ID,
 				message,

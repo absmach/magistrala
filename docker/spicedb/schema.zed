@@ -1,73 +1,508 @@
 definition user {}
 
-definition thing {
-	relation administrator: user
-	relation group: group
-	relation domain: domain
 
-	permission admin = administrator + group->admin + domain->admin
-	permission delete = admin
-	permission edit = admin + group->edit + domain->edit
-	permission view = edit + group->view  + domain->view
-	permission share = edit
-	permission publish = group
-	permission subscribe = group
+definition role {
+	relation entity: domain | group | channel | client
+	relation member: user
+	relation built_in_role: domain | group | channel | client
 
-	// These permission are made for only list purpose. It helps to list users have only particular permission excluding other higher and lower permission.
-	permission admin_only = admin
-	permission edit_only = edit - admin
-	permission view_only = view
+	permission delete = entity->manage_role_permission - built_in_role->manage_role_permission
+	permission update = entity->manage_role_permission - built_in_role->manage_role_permission
+	permission read = entity->manage_role_permission - built_in_role->manage_role_permission
 
-	// These permission are made for only list purpose. It helps to list users from external, users who are not in group but have permission on the group through parent group
-	permission ext_admin = admin - administrator // For list of external admin , not having direct relation with group, but have indirect relation from parent group
+	permission add_user = entity->add_role_users_permission
+	permission remove_user = entity->remove_role_users_permission
+	permission view_user = entity->view_role_users_permission
+}
+
+definition client {
+	relation domain: domain // This can't be clubbed with parent_group, but if parent_group is unassigned then we could not track belongs to which domain, so it safe to add domain
+	relation parent_group: group
+
+	relation update: role#member
+	relation read: role#member
+	relation delete: role#member
+	relation set_parent_group: role#member
+	relation connect_to_channel: role#member
+
+	relation manage_role: role#member
+	relation add_role_users: role#member
+	relation remove_role_users: role#member
+	relation view_role_users: role#member
+
+	permission update_permission = update + parent_group->client_update_permission + domain->client_update_permission
+	permission read_permission = read + parent_group->client_read_permission + domain->client_read_permission
+	permission delete_permission = delete + parent_group->client_delete_permission + domain->client_delete_permission
+	permission set_parent_group_permission = set_parent_group + parent_group->client_set_parent_group_permission + domain->client_set_parent_group_permission
+	permission connect_to_channel_permission  =  connect_to_channel + parent_group->client_connect_to_channel + domain->client_connect_to_channel_permission
+
+	permission manage_role_permission = manage_role + parent_group->client_manage_role_permission + domain->client_manage_role_permission
+	permission add_role_users_permission = add_role_users + parent_group->client_add_role_users_permission + domain->client_add_role_users_permission
+	permission remove_role_users_permission = remove_role_users + parent_group->client_remove_role_users_permission + domain->client_remove_role_users_permission
+	permission view_role_users_permission = view_role_users + parent_group->client_view_role_users_permission + domain->client_view_role_users_permission
+}
+
+definition channel {
+	relation domain: domain // This can't be clubbed with parent_group, but if parent_group is unassigned then we could not track belongs to which domain, so it safe to add domain
+	relation parent_group: group
+
+	relation update: role#member
+	relation read: role#member
+	relation delete: role#member
+	relation set_parent_group: role#member
+	relation connect_to_client: role#member
+	relation publish: role#member | client
+	relation subscribe: role#member | client
+
+	relation manage_role: role#member
+	relation add_role_users: role#member
+	relation remove_role_users: role#member
+	relation view_role_users: role#member
+
+	permission update_permission = update + parent_group->channel_update_permission + domain->channel_update_permission
+	permission read_permission = read + parent_group->channel_read_permission + domain->channel_read_permission
+	permission delete_permission = delete + parent_group->channel_delete_permission + domain->channel_delete_permission
+	permission set_parent_group_permission = set_parent_group + parent_group->channel_set_parent_group_permission + domain->channel_set_parent_group_permission
+	permission connect_to_client_permission = connect_to_client + parent_group->channel_connect_to_client_permission + domain->channel_connect_to_client
+	permission publish_permission = publish + parent_group->channel_publish_permission + domain->channel_publish_permission
+	permission subscribe_permission = subscribe + parent_group->channel_subscribe_permission + domain->channel_subscribe_permission
+
+	permission manage_role_permission = manage_role + parent_group->channel_manage_role_permission + domain->channel_manage_role_permission
+	permission add_role_users_permission = add_role_users + parent_group->channel_add_role_users_permission + domain->channel_add_role_users_permission
+	permission remove_role_users_permission = remove_role_users + parent_group->channel_remove_role_users_permission + domain->channel_remove_role_users_permission
+	permission view_role_users_permission = view_role_users + parent_group->channel_view_role_users_permission + domain->channel_view_role_users_permission
 }
 
 definition group {
-	relation administrator: user
-	relation editor: user
-	relation contributor: user
-	relation member: user
-	relation guest: user
-
+	relation domain: domain // This can't be clubbed with parent_group, but if parent_group is unassigned then we could not track belongs to which domain, so it is safe to add domain
 	relation parent_group: group
-	relation domain: domain
 
-	permission admin =  administrator + parent_group->admin + domain->admin
-	permission delete = admin
-	permission edit = admin + editor + parent_group->edit  + domain->edit
-	permission share = edit
-	permission view = contributor + edit + parent_group->view + domain->view + guest
-	permission membership = view + member
-	permission create = membership - guest
+	relation update: role#member
+	relation read: role#member
+	relation membership: role#member
+	relation delete: role#member
+	relation set_child: role#member
+	relation set_parent: role#member
 
-	// These permissions are made for listing purposes. They enable listing users who have only particular permission excluding higher-level permissions users.
-	permission admin_only = admin
-	permission edit_only = edit - admin
-	permission view_only = view
-	permission membership_only = membership - view
+	relation manage_role: role#member
+	relation add_role_users: role#member
+	relation remove_role_users: role#member
+	relation view_role_users: role#member
 
-	// These permission are made for only list purpose. They enable listing users who have only particular permission from parent group excluding higher-level permissions.
-	permission ext_admin = admin - administrator  // For list of external admin , not having direct relation with group, but have indirect relation from parent group
-	permission ext_edit = edit - editor  // For list of external edit , not having direct relation with group, but have indirect relation from parent group
-	permission ext_view = view - contributor  // For list of external view , not having direct relation with group, but have indirect relation from parent group
+	relation client_create: role#member
+	relation channel_create: role#member
+	// this allows to add parent for group during the new group creation
+	relation subgroup_create: role#member
+	relation subgroup_client_create: role#member
+	relation subgroup_channel_create: role#member
+
+	relation client_update: role#member
+	relation client_read: role#member
+	relation client_delete: role#member
+	relation client_set_parent_group: role#member
+	relation client_connect_to_channel: role#member
+
+	relation client_manage_role: role#member
+	relation client_add_role_users: role#member
+	relation client_remove_role_users: role#member
+	relation client_view_role_users: role#member
+
+	relation channel_update: role#member
+	relation channel_read: role#member
+	relation channel_delete: role#member
+	relation channel_set_parent_group: role#member
+	relation channel_connect_to_client: role#member
+	relation channel_publish: role#member
+	relation channel_subscribe: role#member
+
+	relation channel_manage_role: role#member
+	relation channel_add_role_users: role#member
+	relation channel_remove_role_users: role#member
+	relation channel_view_role_users: role#member
+
+	relation subgroup_update: role#member
+	relation subgroup_read: role#member
+	relation subgroup_membership: role#member
+	relation subgroup_delete: role#member
+	relation subgroup_set_child: role#member
+	relation subgroup_set_parent: role#member
+
+	relation subgroup_manage_role: role#member
+	relation subgroup_add_role_users: role#member
+	relation subgroup_remove_role_users: role#member
+	relation subgroup_view_role_users: role#member
+
+	relation subgroup_client_update: role#member
+	relation subgroup_client_read: role#member
+	relation subgroup_client_delete: role#member
+	relation subgroup_client_set_parent_group: role#member
+	relation subgroup_client_connect_to_channel: role#member
+
+	relation subgroup_client_manage_role: role#member
+	relation subgroup_client_add_role_users: role#member
+	relation subgroup_client_remove_role_users: role#member
+	relation subgroup_client_view_role_users: role#member
+
+	relation subgroup_channel_update: role#member
+	relation subgroup_channel_read: role#member
+	relation subgroup_channel_delete: role#member
+	relation subgroup_channel_set_parent_group: role#member
+	relation subgroup_channel_connect_to_client: role#member
+	relation subgroup_channel_publish: role#member
+	relation subgroup_channel_subscribe: role#member
+
+	relation subgroup_channel_manage_role: role#member
+	relation subgroup_channel_add_role_users: role#member
+	relation subgroup_channel_remove_role_users: role#member
+	relation subgroup_channel_view_role_users: role#member
+
+	// Subgroup permission
+	permission subgroup_create_permission = subgroup_create + parent_group->subgroup_create_permission
+	permission subgroup_client_create_permission = subgroup_client_create + parent_group->subgroup_client_create_permission
+	permission subgroup_channel_create_permission = subgroup_channel_create + parent_group->subgroup_channel_create_permission
+
+	permission subgroup_update_permission = subgroup_update + parent_group->subgroup_update_permission
+	permission subgroup_membership_permission = subgroup_membership + parent_group->subgroup_membership_permission
+	permission subgroup_read_permission = subgroup_read + parent_group->subgroup_read_permission
+	permission subgroup_delete_permission = subgroup_delete + parent_group->subgroup_delete_permission
+	permission subgroup_set_child_permission = subgroup_set_child + parent_group->subgroup_set_child_permission
+	permission subgroup_set_parent_permission = subgroup_set_parent + parent_group->subgroup_set_parent_permission
+
+	permission subgroup_manage_role_permission = subgroup_manage_role + parent_group->subgroup_manage_role_permission
+	permission subgroup_add_role_users_permission = subgroup_add_role_users + parent_group->subgroup_add_role_users_permission
+	permission subgroup_remove_role_users_permission = subgroup_remove_role_users + parent_group->subgroup_remove_role_users_permission
+	permission subgroup_view_role_users_permission = subgroup_view_role_users + parent_group->subgroup_view_role_users_permission
+
+	// Group permission
+	permission update_permission = update + parent_group->subgroup_create_permission + domain->group_update_permission
+	permission membership_permission = membership + parent_group->subgroup_membership_permission + domain->group_membership_permission
+	permission read_permission = read + parent_group->subgroup_read_permission + domain->group_read_permission
+	permission delete_permission = delete + parent_group->subgroup_delete_permission + domain->group_delete_permission
+	permission set_child_permission =	set_child + parent_group->subgroup_set_child_permission + domain->group_set_child
+	permission set_parent_permission = set_parent + parent_group->subgroup_set_parent_permission + domain->group_set_parent
+
+	permission manage_role_permission = manage_role + parent_group->subgroup_manage_role_permission + domain->group_manage_role_permission
+	permission add_role_users_permission = add_role_users + parent_group->subgroup_add_role_users_permission + domain->group_add_role_users_permission
+	permission remove_role_users_permission = remove_role_users + parent_group->subgroup_remove_role_users_permission + domain->group_remove_role_users_permission
+	permission view_role_users_permission = view_role_users + parent_group->subgroup_view_role_users_permission + domain->group_view_role_users_permission
+
+	// Subgroup clients permisssion
+	permission subgroup_client_update_permission = subgroup_client_update + parent_group->subgroup_client_update_permission
+	permission subgroup_client_read_permission = subgroup_client_read + parent_group->subgroup_client_read_permission
+	permission subgroup_client_delete_permission = subgroup_client_delete + parent_group->subgroup_client_delete_permission
+	permission subgroup_client_set_parent_group_permission = subgroup_client_set_parent_group + parent_group->subgroup_client_set_parent_group_permission
+	permission subgroup_client_connect_to_channel_permission = subgroup_client_connect_to_channel + parent_group->subgroup_client_connect_to_channel_permission
+
+	permission subgroup_client_manage_role_permission = subgroup_client_manage_role + parent_group->subgroup_client_manage_role_permission
+	permission subgroup_client_add_role_users_permission = subgroup_client_add_role_users + parent_group->subgroup_client_add_role_users_permission
+	permission subgroup_client_remove_role_users_permission = subgroup_client_remove_role_users + parent_group->subgroup_client_remove_role_users_permission
+	permission subgroup_client_view_role_users_permission = subgroup_client_view_role_users + parent_group->subgroup_client_view_role_users_permission
+
+	// Group clients permisssion
+	permission client_create_permission = client_create + parent_group->subgroup_client_create + domain->client_create_permission
+	permission client_update_permission = client_update + parent_group->subgroup_client_update + domain->client_update_permission
+	permission client_read_permission = client_read + parent_group->subgroup_client_read + domain->client_read_permission
+	permission client_delete_permission = client_delete + parent_group->subgroup_client_delete + domain->client_delete_permission
+	permission client_set_parent_group_permission = client_set_parent_group + parent_group->subgroup_client_set_parent_group + domain->client_set_parent_group_permission
+	permission client_connect_to_channel_permission = client_connect_to_channel + parent_group->subgroup_client_connect_to_channel + domain->client_connect_to_channel_permission
+
+	permission client_manage_role_permission = client_manage_role + parent_group->subgroup_client_manage_role + domain->client_manage_role_permission
+	permission client_add_role_users_permission = client_add_role_users + parent_group->subgroup_client_add_role_users + domain->client_add_role_users_permission
+	permission client_remove_role_users_permission = client_remove_role_users + parent_group->subgroup_client_remove_role_users + domain->client_remove_role_users_permission
+	permission client_view_role_users_permission = client_view_role_users + parent_group->subgroup_client_view_role_users + domain->client_view_role_users_permission
+
+	// Subgroup channels permisssion
+	permission subgroup_channel_update_permission = subgroup_channel_update + parent_group->subgroup_channel_update_permission
+	permission subgroup_channel_read_permission = subgroup_channel_read + parent_group->subgroup_channel_read_permission
+	permission subgroup_channel_delete_permission =  subgroup_channel_delete + parent_group->subgroup_channel_delete_permission
+	permission subgroup_channel_set_parent_group_permission = subgroup_channel_set_parent_group + parent_group->subgroup_channel_set_parent_group_permission
+	permission subgroup_channel_connect_to_client_permission = subgroup_channel_connect_to_client + parent_group->subgroup_channel_connect_to_client_permission
+	permission subgroup_channel_publish_permission = subgroup_channel_publish + parent_group->subgroup_channel_publish_permission
+	permission subgroup_channel_subscribe_permission = subgroup_channel_subscribe + parent_group->subgroup_channel_subscribe_permission
+
+	permission subgroup_channel_manage_role_permission = subgroup_channel_manage_role + parent_group->subgroup_channel_manage_role_permission
+	permission subgroup_channel_add_role_users_permission = subgroup_channel_add_role_users + parent_group->subgroup_channel_add_role_users_permission
+	permission subgroup_channel_remove_role_users_permission = subgroup_channel_remove_role_users + parent_group->subgroup_channel_remove_role_users_permission
+	permission subgroup_channel_view_role_users_permission = subgroup_channel_view_role_users + parent_group->subgroup_channel_view_role_users_permission
+
+	// Group channels permisssion
+	permission channel_create_permission = channel_create + parent_group->subgroup_channel_create_permission + domain->channel_create_permission
+	permission channel_update_permission = channel_update + parent_group->subgroup_channel_update + domain->channel_update_permission
+	permission channel_read_permission = channel_read + parent_group->subgroup_channel_read + domain->channel_read_permission
+	permission channel_delete_permission = channel_delete + parent_group->subgroup_channel_delete_permission + domain->channel_delete_permission
+	permission channel_set_parent_group_permission = channel_set_parent_group + parent_group->subgroup_channel_set_parent_group + domain->channel_set_parent_group_permission
+	permission channel_connect_to_client_permission = channel_connect_to_client + parent_group->subgroup_channel_connect_to_client + domain->channel_connect_to_client_permission
+	permission channel_publish_permission = channel_publish + parent_group->subgroup_channel_publish + domain->channel_publish_permission
+	permission channel_subscribe_permission = channel_subscribe + parent_group->subgroup_channel_subscribe + domain->channel_subscribe_permission
+
+	permission channel_manage_role_permission = channel_manage_role + parent_group->subgroup_channel_manage_role + domain->channel_manage_role_permission
+	permission channel_add_role_users_permission = channel_add_role_users + parent_group->subgroup_channel_add_role_users + domain->channel_add_role_users_permission
+	permission channel_remove_role_users_permission = channel_remove_role_users + parent_group->subgroup_channel_remove_role_users + domain->channel_remove_role_users_permission
+	permission channel_view_role_users_permission = channel_view_role_users + parent_group->subgroup_channel_view_role_users + domain->channel_view_role_users_permission
+
+
 }
 
 definition domain {
-	relation administrator: user // combination domain + user id
-	relation editor: user
-	relation contributor: user
-	relation member: user
-	relation guest: user
+	//Replace platoform with organization in future
+	relation organization: platform
+	relation team: team
 
-	relation platform: platform
+	relation update: role#member | team#member
+	relation enable: role#member | team#member
+	relation disable: role#member | team#member
+	relation membership: role#member | team#member
+	relation read: role#member | team#member
+	relation delete: role#member | team#member
 
-	permission admin = administrator + platform->admin
-	permission edit =  admin + editor
-	permission share = edit
-	permission view = edit + contributor + guest
-	permission membership = view + member 
-	permission create = membership - guest
+	relation manage_role: role#member | team#member
+	relation add_role_users: role#member | team#member
+	relation remove_role_users: role#member | team#member
+	relation view_role_users: role#member | team#member
+
+	relation client_create: role#member | team#member
+	relation channel_create: role#member | team#member
+	relation group_create: role#member | team#member
+
+	relation client_update: role#member | team#member
+	relation client_read: role#member | team#member
+	relation client_delete: role#member | team#member
+	relation client_set_parent_group: role#member | team#member
+	relation client_connect_to_channel: role#member | team#member
+
+	relation client_manage_role: role#member | team#member
+	relation client_add_role_users: role#member | team#member
+	relation client_remove_role_users: role#member | team#member
+	relation client_view_role_users: role#member | team#member
+
+	relation channel_update: role#member | team#member
+	relation channel_read: role#member | team#member
+	relation channel_delete: role#member | team#member
+	relation channel_set_parent_group: role#member | team#member
+	relation channel_connect_to_client: role#member | team#member
+	relation channel_publish: role#member | team#member
+	relation channel_subscribe: role#member | team#member
+
+	relation channel_manage_role: role#member | team#member
+	relation channel_add_role_users: role#member | team#member
+	relation channel_remove_role_users: role#member | team#member
+	relation channel_view_role_users: role#member | team#member
+
+	relation group_update: role#member | team#member
+	relation group_membership: role#member | team#member
+	relation group_read: role#member | team#member
+	relation group_delete: role#member | team#member
+	relation group_set_child: role#member | team#member
+	relation group_set_parent: role#member | team#member
+
+	relation group_manage_role: role#member | team#member
+	relation group_add_role_users: role#member | team#member
+	relation group_remove_role_users: role#member | team#member
+	relation group_view_role_users: role#member | team#member
+
+	permission update_permission = update + team->domain_update + organization->admin
+	permission read_permission = read + team->domain_read + organization->admin
+	permission enable_permission = enable + team->domain_update + organization->admin
+	permission disable_permission = disable + team->domain_update + organization->admin
+	permission membership_permission = membership + team->domain_membership + organization->admin
+	permission delete_permission = delete + team->domain_delete + organization->admin
+
+	permission manage_role_permission = manage_role + team->domain_manage_role + organization->admin
+	permission add_role_users_permission = add_role_users + team->domain_add_role_users + organization->admin
+	permission remove_role_users_permission = remove_role_users + team->domain_remove_role_users + organization->admin
+	permission view_role_users_permission = view_role_users + team->domain_view_role_users + organization->admin
+
+	permission client_create_permission = client_create + team->client_create + organization->admin
+	permission channel_create_permission = channel_create + team->channel_create + organization->admin
+	permission group_create_permission = group_create + team->group_create + organization->admin
+
+	permission client_update_permission = client_update + team->client_update + organization->admin
+	permission client_read_permission = client_read + team->client_read + organization->admin
+	permission client_delete_permission = client_delete + team->client_delete + organization->admin
+	permission client_set_parent_group_permission = client_set_parent_group + team->client_set_parent_group + organization->admin
+	permission client_connect_to_channel_permission = client_connect_to_channel + team->client_connect_to_channel + organization->admin
+
+	permission client_manage_role_permission = client_manage_role + team->client_manage_role + organization->admin
+	permission client_add_role_users_permission = client_add_role_users + team->client_add_role_users + organization->admin
+	permission client_remove_role_users_permission = client_remove_role_users + team->client_remove_role_users + organization->admin
+	permission client_view_role_users_permission = client_view_role_users + team->client_view_role_users + organization->admin
+
+	permission channel_update_permission = channel_update + team->channel_update + organization->admin
+	permission channel_read_permission = channel_read + team->channel_read + organization->admin
+	permission channel_delete_permission = channel_delete + team->channel_delete + organization->admin
+	permission channel_set_parent_group_permission = channel_set_parent_group + team->channel_set_parent_group + organization->admin
+	permission channel_connect_to_client_permission = channel_connect_to_client + team->channel_connect_to_client + organization->admin
+	permission channel_publish_permission = channel_publish + team->channel_publish + organization->admin
+	permission channel_subscribe_permission = channel_subscribe + team->channel_subscribe + organization->admin
+
+	permission channel_manage_role_permission = channel_manage_role + team->channel_manage_role + organization->admin
+	permission channel_add_role_users_permission = channel_add_role_users + team->channel_add_role_users + organization->admin
+	permission channel_remove_role_users_permission = channel_remove_role_users + team->channel_remove_role_users + organization->admin
+	permission channel_view_role_users_permission = channel_view_role_users + team->channel_view_role_users + organization->admin
+
+	permission group_update_permission = group_update + team->group_update + organization->admin
+	permission group_membership_permission = group_membership + team->group_membership + organization->admin
+	permission group_read_permission = group_read + team->group_read + organization->admin
+	permission group_delete_permission = group_delete + team->group_delete + organization->admin
+	permission group_set_child_permission = group_set_child + team->group_set_child + organization->admin
+	permission group_set_parent_permission = group_set_parent + team->group_set_parent + organization->admin
+
+	permission group_manage_role_permission = group_manage_role + team->group_manage_role + organization->admin
+	permission group_add_role_users_permission = group_add_role_users + team->group_add_role_users + organization->admin
+	permission group_remove_role_users_permission = group_remove_role_users + team->group_remove_role_users + organization->admin
+	permission group_view_role_users_permission = group_view_role_users + team->group_view_role_users + organization->admin
+
 }
+
+// Add this realtion and permission in future while adding orgnaization
+definition team {
+	relation organization: organization
+	relation parent_team: team
+
+	relation delete: role#member
+	relation enable: role#member | team#member
+	relation disable: role#member | team#member
+	relation update: role#member
+	relation read: role#member
+
+	relation set_parent: role#member
+	relation set_child: role#member
+
+	relation member: role#member
+
+	relation manage_role: role#member
+	relation add_role_users: role#member
+	relation remove_role_users: role#member
+	relation view_role_users: role#member
+
+	relation subteam_delete: role#member
+	relation subteam_update: role#member
+	relation subteam_read: role#member
+
+	relation subteam_member: role#member
+
+	relation subteam_set_child: role#member
+	relation subteam_set_parent: role#member
+
+	relation subteam_manage_role: role#member
+	relation subteam_add_role_users: role#member
+	relation subteam_remove_role_users: role#member
+	relation subteam_view_role_users: role#member
+
+    // Domain related permission
+
+	relation domain_update: role#member | team#member
+	relation domain_read: role#member | team#member
+	relation domain_membership: role#member | team#member
+	relation domain_delete: role#member | team#member
+
+	relation domain_manage_role: role#member | team#member
+	relation domain_add_role_users: role#member | team#member
+	relation domain_remove_role_users: role#member | team#member
+	relation domain_view_role_users: role#member | team#member
+
+	relation client_create: role#member | team#member
+	relation channel_create: role#member | team#member
+	relation group_create: role#member | team#member
+
+	relation client_update: role#member | team#member
+	relation client_read: role#member | team#member
+	relation client_delete: role#member | team#member
+	relation client_set_parent_group: role#member | team#member
+	relation client_connect_to_channel: role#member | team#member
+
+	relation client_manage_role: role#member | team#member
+	relation client_add_role_users: role#member | team#member
+	relation client_remove_role_users: role#member | team#member
+	relation client_view_role_users: role#member | team#member
+
+	relation channel_update: role#member | team#member
+	relation channel_read: role#member | team#member
+	relation channel_delete: role#member | team#member
+	relation channel_set_parent_group: role#member | team#member
+	relation channel_connect_to_client: role#member | team#member
+	relation channel_publish: role#member | team#member
+	relation channel_subscribe: role#member | team#member
+
+	relation channel_manage_role: role#member | team#member
+	relation channel_add_role_users: role#member | team#member
+	relation channel_remove_role_users: role#member | team#member
+	relation channel_view_role_users: role#member | team#member
+
+	relation group_update: role#member | team#member
+	relation group_membership: role#member | team#member
+	relation group_read: role#member | team#member
+	relation group_delete: role#member | team#member
+	relation group_set_child: role#member | team#member
+	relation group_set_parent: role#member | team#member
+
+	relation group_manage_role: role#member | team#member
+	relation group_add_role_users: role#member | team#member
+	relation group_remove_role_users: role#member | team#member
+	relation group_view_role_users: role#member | team#member
+
+	permission delete_permission = delete + organization->team_delete + parent_team->subteam_delete + organization->admin
+	permission update_permission = update + organization->team_update + parent_team->subteam_update + organization->admin
+	permission read_permission = read + organization->team_read + parent_team->subteam_read + organization->admin
+
+	permission set_parent_permission = set_parent + organization->team_set_parent + parent_team->subteam_set_parent + organization->admin
+	permission set_child_permisssion = set_child + organization->team_set_child + parent_team->subteam_set_child + organization->admin
+
+    permission membership = member + organization->team_member + parent_team->subteam_member + organization->admin
+
+	permission manage_role_permission = manage_role + organization->team_manage_role + parent_team->subteam_manage_role + organization->admin
+	permission add_role_users_permission = add_role_users + organization->team_add_role_users + parent_team->subteam_add_role_users + organization->admin
+	permission remove_role_users_permission = remove_role_users + organization->team_remove_role_users + parent_team->subteam_remove_role_users + organization->admin
+	permission view_role_users_permission = view_role_users + organization->team_view_role_users + parent_team->subteam_view_role_users + organization->admin
+}
+
+
+definition organization {
+	relation platform: platform
+	relation administrator: user
+
+	relation delete: role#member
+	relation update: role#member
+	relation read: role#member
+
+	relation member: role#member
+
+	relation manage_role: role#member
+	relation add_role_users: role#member
+	relation remove_role_users: role#member
+	relation view_role_users: role#member
+
+	relation team_create: role#member
+
+	relation team_delete: role#member
+	relation team_update: role#member
+	relation team_read: role#member
+
+	relation team_member: role#member  // Will be member of all the teams in the organization
+
+	relation team_set_child: role#member
+	relation team_set_parent: role#member
+
+	relation team_manage_role: role#member
+	relation team_add_role_users: role#member
+	relation team_remove_role_users: role#member
+	relation team_view_role_users: role#member
+
+	permission admin = administrator + platform->administrator
+	permission delete_permission = admin + delete->member
+	permission update_permission = admin + update->member
+	permission read_permission = admin + read->member
+
+	permission membership = admin + member->member
+
+	permission team_create_permission = admin + team_create->member
+
+	permission manage_role_permission = admin + manage_role
+	permission add_role_users_permisson = admin + add_role_users
+	permission remove_role_users_permission = admin + remove_role_users
+	permission view_role_users_permission = admin + view_role_users
+}
+
 
 definition platform {
   relation administrator: user

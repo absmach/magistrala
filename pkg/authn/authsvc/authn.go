@@ -6,8 +6,8 @@ package authsvc
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth/api/grpc/auth"
+	grpcAuthV1 "github.com/absmach/magistrala/internal/grpc/auth/v1"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/grpcclient"
@@ -15,7 +15,7 @@ import (
 )
 
 type authentication struct {
-	authSvcClient magistrala.AuthServiceClient
+	authSvcClient grpcAuthV1.AuthServiceClient
 }
 
 var _ authn.Authentication = (*authentication)(nil)
@@ -38,7 +38,7 @@ func NewAuthentication(ctx context.Context, cfg grpcclient.Config) (authn.Authen
 }
 
 func (a authentication) Authenticate(ctx context.Context, token string) (authn.Session, error) {
-	res, err := a.authSvcClient.Authenticate(ctx, &magistrala.AuthNReq{Token: token})
+	res, err := a.authSvcClient.Authenticate(ctx, &grpcAuthV1.AuthNReq{Token: token})
 	if err != nil {
 		return authn.Session{}, errors.Wrap(errors.ErrAuthentication, err)
 	}

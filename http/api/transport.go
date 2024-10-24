@@ -64,7 +64,7 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	case ok:
 		req.token = pass
 	case !ok:
-		req.token = apiutil.ExtractThingKey(r)
+		req.token = apiutil.ExtractClientSecret(r)
 	}
 
 	payload, err := io.ReadAll(r.Body)

@@ -72,16 +72,16 @@ func Benchmark(cfg Config) error {
 		go func(i int) {
 			defer wg.Done()
 			mgChan := mg.Channels[i%n]
-			mgThing := mg.Things[i%n]
+			mgCli := mg.Clients[i%n]
 
 			if cfg.MQTT.TLS.MTLS {
-				cert, err = tls.X509KeyPair([]byte(mgThing.MTLSCert), []byte(mgThing.MTLSKey))
+				cert, err = tls.X509KeyPair([]byte(mgCli.MTLSCert), []byte(mgCli.MTLSKey))
 				if err != nil {
 					errorChan <- err
 					return
 				}
 			}
-			c, err := makeClient(i, cfg, mgChan, mgThing, startStamp, caByte, cert)
+			c, err := makeClient(i, cfg, mgChan, mgCli, startStamp, caByte, cert)
 			if err != nil {
 				errorChan <- fmt.Errorf("unable to create message payload %s", err.Error())
 				return
@@ -171,12 +171,12 @@ func getBytePayload(size int, m message) (handler, error) {
 	return ret, nil
 }
 
-func makeClient(i int, cfg Config, mgChan mgChannel, mgThing mgThing, start time.Time, caCert []byte, clientCert tls.Certificate) (*Client, error) {
+func makeClient(i int, cfg Config, mgChan mgChannel, cli mgClient, start time.Time, caCert []byte, clientCert tls.Certificate) (*Client, error) {
 	c := &Client{
 		ID:         strconv.Itoa(i),
 		BrokerURL:  cfg.MQTT.Broker.URL,
-		BrokerUser: mgThing.ThingID,
-		BrokerPass: mgThing.ThingKey,
+		BrokerUser: cli.ClientID,
+		BrokerPass: cli.ClientSecret,
 		MsgTopic:   fmt.Sprintf("channels/%s/messages/%d/test", mgChan.ChannelID, start.UnixNano()),
 		MsgSize:    cfg.MQTT.Message.Size,
 		MsgCount:   cfg.Test.Count,

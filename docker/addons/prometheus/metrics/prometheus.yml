@@ -15,7 +15,7 @@ scrape_configs:
     enable_http2: true
     static_configs:
     - targets: 
-      - magistrala-things:9000
+      - magistrala-clients:9000
       - magistrala-users:9002
       - magistrala-http:8008
       - magistrala-ws:8186

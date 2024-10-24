@@ -7,30 +7,30 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala/things"
+	"github.com/absmach/magistrala/clients"
 )
 
 // Config represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Magistrala entities.
-// MGThing represents corresponding Magistrala Thing ID.
-// MGKey is key of corresponding Magistrala Thing.
-// MGChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
+// MGClient represents corresponding Magistrala Client ID.
+// MGKey is key of corresponding Magistrala Client.
+// MGChannels is a list of Magistrala Channels corresponding Magistrala Client connects to.
 type Config struct {
-	ThingID     string    `json:"thing_id"`
-	DomainID    string    `json:"domain_id,omitempty"`
-	Name        string    `json:"name,omitempty"`
-	ClientCert  string    `json:"client_cert,omitempty"`
-	ClientKey   string    `json:"client_key,omitempty"`
-	CACert      string    `json:"ca_cert,omitempty"`
-	ThingKey    string    `json:"thing_key"`
-	Channels    []Channel `json:"channels,omitempty"`
-	ExternalID  string    `json:"external_id"`
-	ExternalKey string    `json:"external_key"`
-	Content     string    `json:"content,omitempty"`
-	State       State     `json:"state"`
+	ClientID     string    `json:"client_id"`
+	ClientSecret string    `json:"client_secret"`
+	DomainID     string    `json:"domain_id,omitempty"`
+	Name         string    `json:"name,omitempty"`
+	ClientCert   string    `json:"client_cert,omitempty"`
+	ClientKey    string    `json:"client_key,omitempty"`
+	CACert       string    `json:"ca_cert,omitempty"`
+	Channels     []Channel `json:"channels,omitempty"`
+	ExternalID   string    `json:"external_id"`
+	ExternalKey  string    `json:"external_key"`
+	Content      string    `json:"content,omitempty"`
+	State        State     `json:"state"`
 }
 
-// Channel represents Magistrala channel corresponding Magistrala Thing is connected to.
+// Channel represents Magistrala channel corresponding Magistrala Client is connected to.
 type Channel struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name,omitempty"`
@@ -41,7 +41,7 @@ type Channel struct {
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at,omitempty"`
 	UpdatedBy   string                 `json:"updated_by,omitempty"`
-	Status      things.Status          `json:"status"`
+	Status      clients.Status         `json:"status"`
 }
 
 // Filter is used for the search filters.
@@ -73,7 +73,7 @@ type ConfigRepository interface {
 
 	// RetrieveAll retrieves a subset of Configs that are owned
 	// by the specific user, with given filter parameters.
-	RetrieveAll(ctx context.Context, domainID string, thingIDs []string, filter Filter, offset, limit uint64) ConfigsPage
+	RetrieveAll(ctx context.Context, domainID string, clientIDs []string, filter Filter, offset, limit uint64) ConfigsPage
 
 	// RetrieveByExternalID returns Config for given external ID.
 	RetrieveByExternalID(ctx context.Context, externalID string) (Config, error)
@@ -84,7 +84,7 @@ type ConfigRepository interface {
 
 	// UpdateCerts updates and returns an existing Config certificate and domainID.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(ctx context.Context, domainID, thingID, clientCert, clientKey, caCert string) (Config, error)
+	UpdateCert(ctx context.Context, domainID, clientID, clientCert, clientKey, caCert string) (Config, error)
 
 	// UpdateConnections updates a list of Channels the Config is connected to
 	// adding new Channels if needed.
@@ -100,11 +100,11 @@ type ConfigRepository interface {
 	// ListExisting retrieves those channels from the given list that exist in DB.
 	ListExisting(ctx context.Context, domainID string, ids []string) ([]Channel, error)
 
-	// Methods RemoveThing, UpdateChannel, and RemoveChannel are related to
+	// Methods RemoveClient, UpdateChannel, and RemoveChannel are related to
 	// event sourcing. That's why these methods surpass ownership check.
 
-	// RemoveThing removes Config of the Thing with the given ID.
-	RemoveThing(ctx context.Context, id string) error
+	// RemoveClient removes Config of the Client with the given ID.
+	RemoveClient(ctx context.Context, id string) error
 
 	// UpdateChannel updates channel with the given ID.
 	UpdateChannel(ctx context.Context, c Channel) error
@@ -112,9 +112,9 @@ type ConfigRepository interface {
 	// RemoveChannel removes channel with the given ID.
 	RemoveChannel(ctx context.Context, id string) error
 
-	// ConnectThing changes state of the Config when the corresponding Thing is connected to the Channel.
-	ConnectThing(ctx context.Context, channelID, thingID string) error
+	// ConnectClient changes state of the Config when the corresponding Client is connected to the Channel.
+	ConnectClient(ctx context.Context, channelID, clientID string) error
 
-	// DisconnectThing changes state of the Config when the corresponding Thing is disconnected from the Channel.
-	DisconnectThing(ctx context.Context, channelID, thingID string) error
+	// DisconnectClient changes state of the Config when the corresponding Client is disconnected from the Channel.
+	DisconnectClient(ctx context.Context, channelID, clientID string) error
 }

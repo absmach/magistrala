@@ -2,10 +2,10 @@
 
 A simple MQTT benchmarking tool for Magistrala platform.
 
-It connects Magistrala things as subscribers over a number of channels and
-uses other Magistrala things to publish messages and create MQTT load.
+It connects Magistrala clients as subscribers over a number of channels and
+uses other Magistrala clients to publish messages and create MQTT load.
 
-Magistrala things used must be pre-provisioned first, and Magistrala `provision` tool can be used for this purpose.
+Magistrala clients used must be pre-provisioned first, and Magistrala `provision` tool can be used for this purpose.
 
 ## Installation
 
@@ -46,7 +46,7 @@ Flags:
 
 Two output formats supported: human-readable plain text and JSON.
 
-Before use you need a `mgconn.toml` - a TOML file that describes Magistrala connection data (channels, thingIDs, thingKeys, certs).
+Before use you need a `mgconn.toml` - a TOML file that describes Magistrala connection data (channels, clientIDs, clientKeys, certs).
 You can use `provision` tool (in tools/provision) to create this TOML config file.
 
 ```bash

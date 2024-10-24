@@ -92,17 +92,17 @@ func (_m *Service) ChangeState(ctx context.Context, session authn.Session, token
 	return r0
 }
 
-// ConnectThingHandler provides a mock function with given fields: ctx, channelID, ThingID
-func (_m *Service) ConnectThingHandler(ctx context.Context, channelID string, ThingID string) error {
-	ret := _m.Called(ctx, channelID, ThingID)
+// ConnectClientHandler provides a mock function with given fields: ctx, channelID, clientID
+func (_m *Service) ConnectClientHandler(ctx context.Context, channelID string, clientID string) error {
+	ret := _m.Called(ctx, channelID, clientID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ConnectThingHandler")
+		panic("no return value specified for ConnectClientHandler")
 	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, channelID, ThingID)
+		r0 = rf(ctx, channelID, clientID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -110,17 +110,17 @@ func (_m *Service) ConnectThingHandler(ctx context.Context, channelID string, Th
 	return r0
 }
 
-// DisconnectThingHandler provides a mock function with given fields: ctx, channelID, ThingID
-func (_m *Service) DisconnectThingHandler(ctx context.Context, channelID string, ThingID string) error {
-	ret := _m.Called(ctx, channelID, ThingID)
+// DisconnectClientHandler provides a mock function with given fields: ctx, channelID, clientID
+func (_m *Service) DisconnectClientHandler(ctx context.Context, channelID string, clientID string) error {
+	ret := _m.Called(ctx, channelID, clientID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DisconnectThingHandler")
+		panic("no return value specified for DisconnectClientHandler")
 	}
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, channelID, ThingID)
+		r0 = rf(ctx, channelID, clientID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -228,9 +228,9 @@ func (_m *Service) Update(ctx context.Context, session authn.Session, cfg bootst
 	return r0
 }
 
-// UpdateCert provides a mock function with given fields: ctx, session, thingID, clientCert, clientKey, caCert
-func (_m *Service) UpdateCert(ctx context.Context, session authn.Session, thingID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
-	ret := _m.Called(ctx, session, thingID, clientCert, clientKey, caCert)
+// UpdateCert provides a mock function with given fields: ctx, session, clientID, clientCert, clientKey, caCert
+func (_m *Service) UpdateCert(ctx context.Context, session authn.Session, clientID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
+	ret := _m.Called(ctx, session, clientID, clientCert, clientKey, caCert)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCert")
@@ -239,16 +239,16 @@ func (_m *Service) UpdateCert(ctx context.Context, session authn.Session, thingI
 	var r0 bootstrap.Config
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, string, string) (bootstrap.Config, error)); ok {
-		return rf(ctx, session, thingID, clientCert, clientKey, caCert)
+		return rf(ctx, session, clientID, clientCert, clientKey, caCert)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, string, string) bootstrap.Config); ok {
-		r0 = rf(ctx, session, thingID, clientCert, clientKey, caCert)
+		r0 = rf(ctx, session, clientID, clientCert, clientKey, caCert)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, string, string) error); ok {
-		r1 = rf(ctx, session, thingID, clientCert, clientKey, caCert)
+		r1 = rf(ctx, session, clientID, clientCert, clientKey, caCert)
 	} else {
 		r1 = ret.Error(1)
 	}

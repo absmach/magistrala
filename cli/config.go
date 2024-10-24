@@ -20,7 +20,7 @@ import (
 const (
 	defURL             string = "http://localhost"
 	defUsersURL        string = defURL + ":9002"
-	defThingsURL       string = defURL + ":9000"
+	defCLientsURL      string = defURL + ":9000"
 	defReaderURL       string = defURL + ":9011"
 	defBootstrapURL    string = defURL + ":9013"
 	defDomainsURL      string = defURL + ":8189"
@@ -36,7 +36,7 @@ const (
 )
 
 type remotes struct {
-	ThingsURL       string `toml:"things_url"`
+	ClientsURL      string `toml:"clients_url"`
 	UsersURL        string `toml:"users_url"`
 	ReaderURL       string `toml:"reader_url"`
 	DomainsURL      string `toml:"domains_url"`
@@ -107,7 +107,7 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 	case os.IsNotExist(err):
 		defaultConfig := config{
 			Remotes: remotes{
-				ThingsURL:       defThingsURL,
+				ClientsURL:      defCLientsURL,
 				UsersURL:        defUsersURL,
 				ReaderURL:       defReaderURL,
 				DomainsURL:      defDomainsURL,
@@ -171,8 +171,8 @@ func ParseConfig(sdkConf mgxsdk.Config) (mgxsdk.Config, error) {
 		RawOutput = rawOutput || RawOutput
 	}
 
-	if sdkConf.ThingsURL == "" && config.Remotes.ThingsURL != "" {
-		sdkConf.ThingsURL = config.Remotes.ThingsURL
+	if sdkConf.ClientsURL == "" && config.Remotes.ClientsURL != "" {
+		sdkConf.ClientsURL = config.Remotes.ClientsURL
 	}
 
 	if sdkConf.UsersURL == "" && config.Remotes.UsersURL != "" {
@@ -258,7 +258,7 @@ func setConfigValue(key, value string) error {
 	}
 
 	configKeyToField := map[string]interface{}{
-		"things_url":       &config.Remotes.ThingsURL,
+		"clients_url":      &config.Remotes.ClientsURL,
 		"users_url":        &config.Remotes.UsersURL,
 		"reader_url":       &config.Remotes.ReaderURL,
 		"http_adapter_url": &config.Remotes.HTTPAdapterURL,

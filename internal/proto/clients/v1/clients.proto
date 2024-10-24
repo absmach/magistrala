@@ -1,0 +1,45 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package clients.v1;
+option go_package = "github.com/absmach/magistrala/internal/grpc/clients/v1";
+
+import "common/v1/common.proto";
+
+// ClientsService is a service that provides clients authorization functionalities
+// for magistrala services.
+service ClientsService {
+  // Authorize checks if the client is authorized to perform
+  rpc Authenticate(AuthnReq) returns (AuthnRes) {}
+  rpc RetrieveEntity(common.v1.RetrieveEntityReq) returns (common.v1.RetrieveEntityRes) {}
+  rpc RetrieveEntities(common.v1.RetrieveEntitiesReq) returns (common.v1.RetrieveEntitiesRes) {}
+  rpc AddConnections(common.v1.AddConnectionsReq)returns(common.v1.AddConnectionsRes) {}
+  rpc RemoveConnections(common.v1.RemoveConnectionsReq)returns(common.v1.RemoveConnectionsRes) {}
+  rpc RemoveChannelConnections(RemoveChannelConnectionsReq)returns(RemoveChannelConnectionsRes) {}
+  rpc UnsetParentGroupFromClient(UnsetParentGroupFromClientReq)returns(UnsetParentGroupFromClientRes){}
+}
+
+
+message AuthnReq {
+  string client_id = 1;
+  string client_secret = 2;
+}
+
+message AuthnRes {
+  bool authenticated = 1;
+  string id = 2;
+}
+
+message RemoveChannelConnectionsReq {
+  string channel_id = 1;
+}
+
+message RemoveChannelConnectionsRes {}
+
+message UnsetParentGroupFromClientReq {
+  string parent_group_id = 1;
+}
+
+message UnsetParentGroupFromClientRes {}

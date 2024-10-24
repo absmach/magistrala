@@ -9,18 +9,21 @@ networks:
 
 volumes:
   magistrala-users-db-volume:
-  magistrala-things-db-volume:
-  magistrala-things-redis-volume:
+  magistrala-groups-db-volume:
+  magistrala-clients-db-volume:
+  magistrala-channels-db-volume:
+  magistrala-clients-redis-volume:
   magistrala-broker-volume:
   magistrala-mqtt-broker-volume:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
+  magistrala-domains-db-volume:
   magistrala-invitations-db-volume:
   magistrala-ui-db-volume:
 
 services:
   spicedb:
-    image: "authzed/spicedb:v1.30.0"
+    image: "authzed/spicedb:v1.37.0"
     container_name: magistrala-spicedb
     command: "serve"
     restart: "always"
@@ -38,7 +41,7 @@ services:
       - spicedb-migrate
 
   spicedb-migrate:
-    image: "authzed/spicedb:v1.30.0"
+    image: "authzed/spicedb:v1.37.0"
     container_name: magistrala-spicedb-migrate
     command: "migrate head"
     restart: "on-failure"
@@ -69,7 +72,7 @@ services:
     container_name: magistrala-auth-db
     restart: on-failure
     ports:
-      - 6004:5432
+      - 6001:5432
     environment:
       POSTGRES_USER: ${MG_AUTH_DB_USER}
       POSTGRES_PASSWORD: ${MG_AUTH_DB_PASS}
@@ -151,6 +154,111 @@ services:
       - type: bind
         source: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
         target: /auth-grpc-client-ca${MG_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  domains-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-domains-db
+    restart: on-failure
+    ports:
+      - 6003:5432
+    environment:
+      POSTGRES_USER: ${MG_DOMAINS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_DOMAINS_DB_PASS}
+      POSTGRES_DB: ${MG_DOMAINS_DB_NAME}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-domains-db-volume:/var/lib/postgresql/data
+
+  domains:
+    image: magistrala/domains:${MG_RELEASE_TAG}
+    container_name: magistrala-domains
+    depends_on:
+      - domains-db
+      - spicedb
+    expose:
+      - ${MG_DOMAINS_GRPC_PORT}
+    restart: on-failure
+    environment:
+      MG_DOMAINS_LOG_LEVEL: ${MG_DOMAINS_LOG_LEVEL}
+      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      MG_DOMAINS_HTTP_HOST: ${MG_DOMAINS_HTTP_HOST}
+      MG_DOMAINS_HTTP_PORT: ${MG_DOMAINS_HTTP_PORT}
+      MG_DOMAINS_HTTP_SERVER_CERT: ${MG_DOMAINS_HTTP_SERVER_CERT}
+      MG_DOMAINS_HTTP_SERVER_KEY: ${MG_DOMAINS_HTTP_SERVER_KEY}
+      MG_DOMAINS_GRPC_HOST: ${MG_DOMAINS_GRPC_HOST}
+      MG_DOMAINS_GRPC_PORT: ${MG_DOMAINS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      MG_DOMAINS_GRPC_SERVER_CERT: ${MG_DOMAINS_GRPC_SERVER_CERT:+/auth-grpc-server.crt}
+      MG_DOMAINS_GRPC_SERVER_KEY: ${MG_DOMAINS_GRPC_SERVER_KEY:+/auth-grpc-server.key}
+      MG_DOMAINS_GRPC_SERVER_CA_CERTS: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_DOMAINS_GRPC_CLIENT_CA_CERTS: ${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:+/auth-grpc-client-ca.crt}
+      MG_DOMAINS_DB_HOST: ${MG_DOMAINS_DB_HOST}
+      MG_DOMAINS_DB_PORT: ${MG_DOMAINS_DB_PORT}
+      MG_DOMAINS_DB_USER: ${MG_DOMAINS_DB_USER}
+      MG_DOMAINS_DB_PASS: ${MG_DOMAINS_DB_PASS}
+      MG_DOMAINS_DB_NAME: ${MG_DOMAINS_DB_NAME}
+      MG_DOMAINS_DB_SSL_MODE: ${MG_DOMAINS_DB_SSL_MODE}
+      MG_DOMAINS_DB_SSL_CERT: ${MG_DOMAINS_DB_SSL_CERT}
+      MG_DOMAINS_DB_SSL_KEY: ${MG_DOMAINS_DB_SSL_KEY}
+      MG_DOMAINS_DB_SSL_ROOT_CERT: ${MG_DOMAINS_DB_SSL_ROOT_CERT}
+      MG_DOMAINS_INSTANCE_ID: ${MG_DOMAINS_INSTANCE_ID}
+      MG_ES_URL: ${MG_ES_URL}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_GROUPS_GRPC_URL: ${MG_GROUPS_GRPC_URL}
+      MG_GROUPS_GRPC_TIMEOUT: ${MG_GROUPS_GRPC_TIMEOUT}
+      MG_GROUPS_GRPC_CLIENT_CERT: ${MG_GROUPS_GRPC_CLIENT_CERT:+/groups-grpc-client.crt}
+      MG_GROUPS_GRPC_CLIENT_KEY: ${MG_GROUPS_GRPC_CLIENT_KEY:+/groups-grpc-client.key}
+      MG_GROUPS_GRPC_SERVER_CA_CERTS: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
+      MG_CHANNELS_URL: ${MG_CHANNELS_URL}
+      MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${MG_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_URL: ${MG_CLIENTS_AUTH_GRPC_URL}
+      MG_CLIENTS_AUTH_GRPC_TIMEOUT: ${MG_CLIENTS_AUTH_GRPC_TIMEOUT}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+    ports:
+      - ${MG_DOMAINS_HTTP_PORT}:${MG_DOMAINS_HTTP_PORT}
+      - ${MG_DOMAINS_GRPC_PORT}:${MG_DOMAINS_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      # Auth gRPC mTLS server certificates
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /auth-grpc-server${MG_DOMAINS_GRPC_SERVER_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /auth-grpc-server${MG_DOMAINS_GRPC_SERVER_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /auth-grpc-server-ca${MG_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /auth-grpc-client-ca${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -258,80 +366,92 @@ services:
       - .env
     depends_on:
       - auth
-      - things
+      - clients
       - users
       - mqtt-adapter
       - http-adapter
       - ws-adapter
       - coap-adapter
 
-  things-db:
+  clients-db:
     image: postgres:16.2-alpine
-    container_name: magistrala-things-db
+    container_name: magistrala-clients-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MG_THINGS_DB_USER}
-      POSTGRES_PASSWORD: ${MG_THINGS_DB_PASS}
-      POSTGRES_DB: ${MG_THINGS_DB_NAME}
+      POSTGRES_USER: ${MG_CLIENTS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_CLIENTS_DB_PASS}
+      POSTGRES_DB: ${MG_CLIENTS_DB_NAME}
       MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
     networks:
       - magistrala-base-net
     ports:
       - 6006:5432
     volumes:
-      - magistrala-things-db-volume:/var/lib/postgresql/data
+      - magistrala-clients-db-volume:/var/lib/postgresql/data
 
-  things-redis:
+  clients-redis:
     image: redis:7.2.4-alpine
-    container_name: magistrala-things-redis
+    container_name: magistrala-clients-redis
     restart: on-failure
     networks:
       - magistrala-base-net
     volumes:
-      - magistrala-things-redis-volume:/data
+      - magistrala-clients-redis-volume:/data
 
-  things:
-    image: magistrala/things:${MG_RELEASE_TAG}
-    container_name: magistrala-things
+  clients:
+    image: magistrala/clients:${MG_RELEASE_TAG}
+    container_name: magistrala-clients
     depends_on:
-      - things-db
+      - clients-db
       - users
       - auth
       - nats
     restart: on-failure
     environment:
-      MG_THINGS_LOG_LEVEL: ${MG_THINGS_LOG_LEVEL}
-      MG_THINGS_STANDALONE_ID: ${MG_THINGS_STANDALONE_ID}
-      MG_THINGS_STANDALONE_TOKEN: ${MG_THINGS_STANDALONE_TOKEN}
-      MG_THINGS_CACHE_KEY_DURATION: ${MG_THINGS_CACHE_KEY_DURATION}
-      MG_THINGS_HTTP_HOST: ${MG_THINGS_HTTP_HOST}
-      MG_THINGS_HTTP_PORT: ${MG_THINGS_HTTP_PORT}
-      MG_THINGS_AUTH_GRPC_HOST: ${MG_THINGS_AUTH_GRPC_HOST}
-      MG_THINGS_AUTH_GRPC_PORT: ${MG_THINGS_AUTH_GRPC_PORT}
+      MG_CLIENTS_LOG_LEVEL: ${MG_CLIENTS_LOG_LEVEL}
+      MG_CLIENTS_STANDALONE_ID: ${MG_CLIENTS_STANDALONE_ID}
+      MG_CLIENTS_STANDALONE_TOKEN: ${MG_CLIENTS_STANDALONE_TOKEN}
+      MG_CLIENTS_CACHE_KEY_DURATION: ${MG_CLIENTS_CACHE_KEY_DURATION}
+      MG_CLIENTS_HTTP_HOST: ${MG_CLIENTS_HTTP_HOST}
+      MG_CLIENTS_HTTP_PORT: ${MG_CLIENTS_HTTP_PORT}
+      MG_CLIENTS_AUTH_GRPC_HOST: ${MG_CLIENTS_AUTH_GRPC_HOST}
+      MG_CLIENTS_AUTH_GRPC_PORT: ${MG_CLIENTS_AUTH_GRPC_PORT}
       ## Compose supports parameter expansion in environment,
       ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
       ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
-      MG_THINGS_AUTH_GRPC_SERVER_CERT: ${MG_THINGS_AUTH_GRPC_SERVER_CERT:+/things-grpc-server.crt}
-      MG_THINGS_AUTH_GRPC_SERVER_KEY: ${MG_THINGS_AUTH_GRPC_SERVER_KEY:+/things-grpc-server.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS: ${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+/things-grpc-client-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CERT: ${MG_CLIENTS_AUTH_GRPC_SERVER_CERT:+/clients-grpc-server.crt}
+      MG_CLIENTS_AUTH_GRPC_SERVER_KEY: ${MG_CLIENTS_AUTH_GRPC_SERVER_KEY:+/clients-grpc-server.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS:+/clients-grpc-client-ca.crt}
       MG_ES_URL: ${MG_ES_URL}
-      MG_THINGS_CACHE_URL: ${MG_THINGS_CACHE_URL}
-      MG_THINGS_DB_HOST: ${MG_THINGS_DB_HOST}
-      MG_THINGS_DB_PORT: ${MG_THINGS_DB_PORT}
-      MG_THINGS_DB_USER: ${MG_THINGS_DB_USER}
-      MG_THINGS_DB_PASS: ${MG_THINGS_DB_PASS}
-      MG_THINGS_DB_NAME: ${MG_THINGS_DB_NAME}
-      MG_THINGS_DB_SSL_MODE: ${MG_THINGS_DB_SSL_MODE}
-      MG_THINGS_DB_SSL_CERT: ${MG_THINGS_DB_SSL_CERT}
-      MG_THINGS_DB_SSL_KEY: ${MG_THINGS_DB_SSL_KEY}
-      MG_THINGS_DB_SSL_ROOT_CERT: ${MG_THINGS_DB_SSL_ROOT_CERT}
+      MG_CLIENTS_CACHE_URL: ${MG_CLIENTS_CACHE_URL}
+      MG_CLIENTS_DB_HOST: ${MG_CLIENTS_DB_HOST}
+      MG_CLIENTS_DB_PORT: ${MG_CLIENTS_DB_PORT}
+      MG_CLIENTS_DB_USER: ${MG_CLIENTS_DB_USER}
+      MG_CLIENTS_DB_PASS: ${MG_CLIENTS_DB_PASS}
+      MG_CLIENTS_DB_NAME: ${MG_CLIENTS_DB_NAME}
+      MG_CLIENTS_DB_SSL_MODE: ${MG_CLIENTS_DB_SSL_MODE}
+      MG_CLIENTS_DB_SSL_CERT: ${MG_CLIENTS_DB_SSL_CERT}
+      MG_CLIENTS_DB_SSL_KEY: ${MG_CLIENTS_DB_SSL_KEY}
+      MG_CLIENTS_DB_SSL_ROOT_CERT: ${MG_CLIENTS_DB_SSL_ROOT_CERT}
       MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
       MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
       MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_CHANNELS_URL: ${MG_CHANNELS_URL}
+      MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${MG_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_GROUPS_URL: ${MG_GROUPS_URL}
+      MG_GROUPS_GRPC_URL: ${MG_GROUPS_GRPC_URL}
+      MG_GROUPS_GRPC_TIMEOUT: ${MG_GROUPS_GRPC_TIMEOUT}
+      MG_GROUPS_GRPC_CLIENT_CERT: ${MG_GROUPS_GRPC_CLIENT_CERT:+/groups-grpc-client.crt}
+      MG_GROUPS_GRPC_CLIENT_KEY: ${MG_GROUPS_GRPC_CLIENT_KEY:+/groups-grpc-client.key}
+      MG_GROUPS_GRPC_SERVER_CA_CERTS: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
@@ -339,32 +459,142 @@ services:
       MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
       MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
     ports:
-      - ${MG_THINGS_HTTP_PORT}:${MG_THINGS_HTTP_PORT}
-      - ${MG_THINGS_AUTH_GRPC_PORT}:${MG_THINGS_AUTH_GRPC_PORT}
+      - ${MG_CLIENTS_HTTP_PORT}:${MG_CLIENTS_HTTP_PORT}
+      - ${MG_CLIENTS_AUTH_GRPC_PORT}:${MG_CLIENTS_AUTH_GRPC_PORT}
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC server certificates
+      # Clients gRPC server certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /things-grpc-server${MG_THINGS_AUTH_GRPC_SERVER_CERT:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /clients-grpc-server${MG_CLIENTS_AUTH_GRPC_SERVER_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /things-grpc-server${MG_THINGS_AUTH_GRPC_SERVER_KEY:+.key}
+        source: ${MG_CLIENTS_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /clients-grpc-server${MG_CLIENTS_AUTH_GRPC_SERVER_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /clients-grpc-server-ca${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /things-grpc-client-ca${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /clients-grpc-client-ca${MG_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+      # Auth gRPC client certificates
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channel gRPC client certificates
+      - type: bind
+        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${MG_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${MG_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  channels-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-channels-db
+    restart: on-failure
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_CHANNELS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_CHANNELS_DB_PASS}
+      POSTGRES_DB: ${MG_CHANNELS_DB_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+    networks:
+      - magistrala-base-net
+    ports:
+      - 6005:5432
+    volumes:
+      - magistrala-channels-db-volume:/var/lib/postgresql/data
+
+  channels:
+    image: magistrala/channels:${MG_RELEASE_TAG}
+    container_name: magistrala-channels
+    depends_on:
+      - channels-db
+      - users
+      - auth
+      - nats
+    restart: on-failure
+    environment:
+      MG_CHANNELS_LOG_LEVEL: ${MG_CHANNELS_LOG_LEVEL}
+      MG_CHANNELS_INSTANCE_ID: ${MG_CHANNELS_INSTANCE_ID}
+      MG_CHANNELS_HTTP_HOST: ${MG_CHANNELS_HTTP_HOST}
+      MG_CHANNELS_HTTP_PORT: ${MG_CHANNELS_HTTP_PORT}
+      MG_CHANNELS_GRPC_HOST: ${MG_CHANNELS_GRPC_HOST}
+      MG_CHANNELS_GRPC_PORT: ${MG_CHANNELS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      MG_CHANNELS_GRPC_SERVER_CERT: ${MG_CHANNELS_GRPC_SERVER_CERT:+/channels-grpc-server.crt}
+      MG_CHANNELS_GRPC_SERVER_KEY: ${MG_CHANNELS_GRPC_SERVER_KEY:+/channels-grpc-server.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_CHANNELS_GRPC_CLIENT_CA_CERTS: ${MG_CHANNELS_GRPC_CLIENT_CA_CERTS:+/channels-grpc-client-ca.crt}
+      MG_CHANNELS_DB_HOST: ${MG_CHANNELS_DB_HOST}
+      MG_CHANNELS_DB_PORT: ${MG_CHANNELS_DB_PORT}
+      MG_CHANNELS_DB_USER: ${MG_CHANNELS_DB_USER}
+      MG_CHANNELS_DB_PASS: ${MG_CHANNELS_DB_PASS}
+      MG_CHANNELS_DB_NAME: ${MG_CHANNELS_DB_NAME}
+      MG_CHANNELS_DB_SSL_MODE: ${MG_CHANNELS_DB_SSL_MODE}
+      MG_CHANNELS_DB_SSL_CERT: ${MG_CHANNELS_DB_SSL_CERT}
+      MG_CHANNELS_DB_SSL_KEY: ${MG_CHANNELS_DB_SSL_KEY}
+      MG_CHANNELS_DB_SSL_ROOT_CERT: ${MG_CHANNELS_DB_SSL_ROOT_CERT}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_URL: ${MG_CLIENTS_AUTH_GRPC_URL}
+      MG_CLIENTS_AUTH_GRPC_TIMEOUT: ${MG_CLIENTS_AUTH_GRPC_TIMEOUT}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_GROUPS_GRPC_URL: ${MG_GROUPS_GRPC_URL}
+      MG_GROUPS_GRPC_TIMEOUT: ${MG_GROUPS_GRPC_TIMEOUT}
+      MG_GROUPS_GRPC_CLIENT_CERT: ${MG_GROUPS_GRPC_CLIENT_CERT:+/groups-grpc-client.crt}
+      MG_GROUPS_GRPC_CLIENT_KEY: ${MG_GROUPS_GRPC_CLIENT_KEY:+/groups-grpc-client.key}
+      MG_GROUPS_GRPC_SERVER_CA_CERTS: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
+      MG_ES_URL: ${MG_ES_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+    ports:
+      - ${MG_CHANNELS_HTTP_PORT}:${MG_CHANNELS_HTTP_PORT}
+      - ${MG_CHANNELS_GRPC_PORT}:${MG_CHANNELS_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
       # Auth gRPC client certificates
       - type: bind
         source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
@@ -393,7 +623,7 @@ services:
       POSTGRES_DB: ${MG_USERS_DB_NAME}
       MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
     ports:
-      - 6000:5432
+      - 6002:5432
     networks:
       - magistrala-base-net
     volumes:
@@ -449,6 +679,11 @@ services:
       MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_DOMAINS_GRPC_URL: ${MG_DOMAINS_GRPC_URL}
+      MG_DOMAINS_GRPC_TIMEOUT: ${MG_DOMAINS_GRPC_TIMEOUT}
+      MG_DOMAINS_GRPC_CLIENT_CERT: ${MG_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      MG_DOMAINS_GRPC_CLIENT_KEY: ${MG_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      MG_DOMAINS_GRPC_SERVER_CA_CERTS: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
       MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
       MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
       MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
@@ -483,6 +718,103 @@ services:
         bind:
           create_host_path: true
 
+
+  groups-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-groups-db
+    restart: on-failure
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_GROUPS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_GROUPS_DB_PASS}
+      POSTGRES_DB: ${MG_GROUPS_DB_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+    ports:
+      - 6004:5432
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-groups-db-volume:/var/lib/postgresql/data
+
+  groups:
+    image: magistrala/groups:${MG_RELEASE_TAG}
+    container_name: magistrala-groups
+    depends_on:
+      - groups-db
+      - auth
+      - nats
+    restart: on-failure
+    environment:
+      MG_GROUPS_LOG_LEVEL: ${MG_GROUPS_LOG_LEVEL}
+      MG_GROUPS_HTTP_HOST: ${MG_GROUPS_HTTP_HOST}
+      MG_GROUPS_HTTP_PORT: ${MG_GROUPS_HTTP_PORT}
+      MG_GROUPS_HTTP_SERVER_CERT: ${MG_GROUPS_HTTP_SERVER_CERT}
+      MG_GROUPS_HTTP_SERVER_KEY: ${MG_GROUPS_HTTP_SERVER_KEY}
+      MG_GROUPS_GRPC_HOST: ${MG_GROUPS_GRPC_HOST}
+      MG_GROUPS_GRPC_PORT: ${MG_GROUPS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      MG_GROUPS_GRPC_SERVER_CERT: ${MG_GROUPS_GRPC_SERVER_CERT:+/groups-grpc-server.crt}
+      MG_GROUPS_GRPC_SERVER_KEY: ${MG_GROUPS_GRPC_SERVER_KEY:+/groups-grpc-server.key}
+      MG_GROUPS_GRPC_SERVER_CA_CERTS: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
+      MG_GROUPS_GRPC_CLIENT_CA_CERTS: ${MG_GROUPS_GRPC_CLIENT_CA_CERTS:+/groups-grpc-client-ca.crt}
+      MG_GROUPS_DB_HOST: ${MG_GROUPS_DB_HOST}
+      MG_GROUPS_DB_PORT: ${MG_GROUPS_DB_PORT}
+      MG_GROUPS_DB_USER: ${MG_GROUPS_DB_USER}
+      MG_GROUPS_DB_PASS: ${MG_GROUPS_DB_PASS}
+      MG_GROUPS_DB_NAME: ${MG_GROUPS_DB_NAME}
+      MG_GROUPS_DB_SSL_MODE: ${MG_GROUPS_DB_SSL_MODE}
+      MG_GROUPS_DB_SSL_CERT: ${MG_GROUPS_DB_SSL_CERT}
+      MG_GROUPS_DB_SSL_KEY: ${MG_GROUPS_DB_SSL_KEY}
+      MG_GROUPS_DB_SSL_ROOT_CERT: ${MG_GROUPS_DB_SSL_ROOT_CERT}
+      MG_CHANNELS_URL: ${MG_CHANNELS_URL}
+      MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${MG_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_URL: ${MG_CLIENTS_AUTH_GRPC_URL}
+      MG_CLIENTS_AUTH_GRPC_TIMEOUT: ${MG_CLIENTS_AUTH_GRPC_TIMEOUT}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_ES_URL: ${MG_ES_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+    ports:
+      - ${MG_GROUPS_HTTP_PORT}:${MG_GROUPS_HTTP_PORT}
+      - ${MG_GROUPS_GRPC_PORT}:${MG_GROUPS_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      # Auth gRPC client certificates
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+
   jaeger:
     image: jaegertracing/all-in-one:1.60
     container_name: magistrala-jaeger
@@ -499,7 +831,7 @@ services:
     image: magistrala/mqtt:${MG_RELEASE_TAG}
     container_name: magistrala-mqtt
     depends_on:
-      - things
+      - clients
       - vernemq
       - nats
     restart: on-failure
@@ -518,11 +850,16 @@ services:
       MG_MQTT_ADAPTER_WS_TARGET_PATH: ${MG_MQTT_ADAPTER_WS_TARGET_PATH}
       MG_MQTT_ADAPTER_INSTANCE: ${MG_MQTT_ADAPTER_INSTANCE}
       MG_ES_URL: ${MG_ES_URL}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_URL: ${MG_CLIENTS_AUTH_GRPC_URL}
+      MG_CLIENTS_AUTH_GRPC_TIMEOUT: ${MG_CLIENTS_AUTH_GRPC_TIMEOUT}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${MG_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
@@ -530,20 +867,36 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -551,7 +904,7 @@ services:
     image: magistrala/http:${MG_RELEASE_TAG}
     container_name: magistrala-http
     depends_on:
-      - things
+      - clients
       - nats
     restart: on-failure
     environment:
@@ -560,11 +913,21 @@ services:
       MG_HTTP_ADAPTER_PORT: ${MG_HTTP_ADAPTER_PORT}
       MG_HTTP_ADAPTER_SERVER_CERT: ${MG_HTTP_ADAPTER_SERVER_CERT}
       MG_HTTP_ADAPTER_SERVER_KEY: ${MG_HTTP_ADAPTER_SERVER_KEY}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_URL: ${MG_CLIENTS_AUTH_GRPC_URL}
+      MG_CLIENTS_AUTH_GRPC_TIMEOUT: ${MG_CLIENTS_AUTH_GRPC_TIMEOUT}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${MG_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
       MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
@@ -575,20 +938,52 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Auth gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -596,7 +991,7 @@ services:
     image: magistrala/coap:${MG_RELEASE_TAG}
     container_name: magistrala-coap
     depends_on:
-      - things
+      - clients
       - nats
     restart: on-failure
     environment:
@@ -609,11 +1004,16 @@ services:
       MG_COAP_ADAPTER_HTTP_PORT: ${MG_COAP_ADAPTER_HTTP_PORT}
       MG_COAP_ADAPTER_HTTP_SERVER_CERT: ${MG_COAP_ADAPTER_HTTP_SERVER_CERT}
       MG_COAP_ADAPTER_HTTP_SERVER_KEY: ${MG_COAP_ADAPTER_HTTP_SERVER_KEY}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_URL: ${MG_CLIENTS_AUTH_GRPC_URL}
+      MG_CLIENTS_AUTH_GRPC_TIMEOUT: ${MG_CLIENTS_AUTH_GRPC_TIMEOUT}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${MG_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
       MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
@@ -625,20 +1025,36 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -646,7 +1062,7 @@ services:
     image: magistrala/ws:${MG_RELEASE_TAG}
     container_name: magistrala-ws
     depends_on:
-      - things
+      - clients
       - nats
     restart: on-failure
     environment:
@@ -655,11 +1071,21 @@ services:
       MG_WS_ADAPTER_HTTP_PORT: ${MG_WS_ADAPTER_HTTP_PORT}
       MG_WS_ADAPTER_HTTP_SERVER_CERT: ${MG_WS_ADAPTER_HTTP_SERVER_CERT}
       MG_WS_ADAPTER_HTTP_SERVER_KEY: ${MG_WS_ADAPTER_HTTP_SERVER_KEY}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_CLIENTS_AUTH_GRPC_URL: ${MG_CLIENTS_AUTH_GRPC_URL}
+      MG_CLIENTS_AUTH_GRPC_TIMEOUT: ${MG_CLIENTS_AUTH_GRPC_TIMEOUT}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${MG_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
       MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
@@ -670,20 +1096,52 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${MG_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${MG_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${MG_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${MG_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Auth gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -726,7 +1184,7 @@ services:
       MG_UI_PORT: ${MG_UI_PORT}
       MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
       MG_READER_URL: ${MG_READER_URL}
-      MG_THINGS_URL: ${MG_THINGS_URL}
+      MG_CLIENTS_URL: ${MG_CLIENTS_URL}
       MG_USERS_URL: ${MG_USERS_URL}
       MG_INVITATIONS_URL: ${MG_INVITATIONS_URL}
       MG_DOMAINS_URL: ${MG_DOMAINS_URL}

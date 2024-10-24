@@ -1,6 +1,6 @@
-# Magistrala Users Groups Things and Channels E2E Testing Tool
+# Magistrala Users Groups Clients and Channels E2E Testing Tool
 
-A simple utility to create a list of groups and users connected to these groups and channels and things connected to these channels.
+A simple utility to create a list of groups and users connected to these groups and channels and clients connected to these channels.
 
 ## Installation
 
@@ -14,9 +14,9 @@ make
 ```bash
 ./e2e --help
 Tool for testing end-to-end flow of Magistrala by doing a couple of operations namely:
-1. Creating, viewing, updating and changing status of users, groups, things and channels.
-2. Connecting users and groups to each other and things and channels to each other.
-3. Sending messages from things to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).
+1. Creating, viewing, updating and changing status of users, groups, clients and channels.
+2. Connecting users and groups to each other and clients and channels to each other.
+3. Sending messages from clients to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).
 Complete documentation is available at https://docs.magistrala.abstractmachines.fr
 
 
@@ -39,9 +39,9 @@ Flags:
 
   -h, --help                   help for e2e
   -H, --host string            address for a running Magistrala instance (default "localhost")
-  -n, --num uint               number of users, groups, channels and things to create and connect (default 10)
+  -n, --num uint               number of users, groups, channels and clients to create and connect (default 10)
   -N, --num_of_messages uint   number of messages to send (default 10)
-  -p, --prefix string          name prefix for users, groups, things and channels
+  -p, --prefix string          name prefix for users, groups, clients and channels
 ```
 
 To use `-H` option, you can specify the address for the Magistrala instance as an argument when running the program. For example, if the Magistrala instance is running on another computer with the IP address 192.168.0.1, you could use the following command:
@@ -74,7 +74,7 @@ c8fe4d9d-3ad6-4687-83c0-171356f3e4f6
 513f7295-0923-4e21-b41a-3cfd1cb7b9b9
 54bd71ea-3c22-401e-89ea-d58162b983c0
 ae91b327-4c40-4e68-91fe-cd6223ee4e99
-created things of ids:
+created clients of ids:
 5909a907-7413-47d4-b793-e1eb36988a5f
 f9b6bc18-1862-4a24-8973-adde11cb3303
 c2bd6eed-6f38-464c-989c-fe8ec8c084ba
@@ -86,8 +86,8 @@ d654948d-d6c1-4eae-b69a-29c853282c3d
 2c2a5496-89cf-47e6-9d38-5fd5542337bd
 7ab3319d-269c-4b07-9dc5-f9906693e894
 5d8fa139-10e7-4683-94f3-4e881b4db041
-created policies for users, groups, things and channels
-viewed users, groups, things and channels
-updated users, groups, things and channels
+created policies for users, groups, clients and channels
+viewed users, groups, clients and channels
+updated users, groups, clients and channels
 sent messages to channels
 ```

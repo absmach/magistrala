@@ -6,7 +6,7 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
@@ -290,7 +290,7 @@ func (es *eventStore) GenerateResetToken(ctx context.Context, email, host string
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) IssueToken(ctx context.Context, username, secret string) (*magistrala.Token, error) {
+func (es *eventStore) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
 	token, err := es.svc.IssueToken(ctx, username, secret)
 	if err != nil {
 		return token, err
@@ -307,7 +307,7 @@ func (es *eventStore) IssueToken(ctx context.Context, username, secret string) (
 	return token, nil
 }
 
-func (es *eventStore) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*magistrala.Token, error) {
+func (es *eventStore) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*grpcTokenV1.Token, error) {
 	token, err := es.svc.RefreshToken(ctx, session, refreshToken)
 	if err != nil {
 		return token, err

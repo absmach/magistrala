@@ -15,7 +15,7 @@ const maxLimitSize = 100
 type addCertsReq struct {
 	token    string
 	domainID string
-	ThingID  string `json:"thing_id"`
+	ClientID string `json:"client_id"`
 	TTL      string `json:"ttl"`
 }
 
@@ -28,7 +28,7 @@ func (req addCertsReq) validate() error {
 		return apiutil.ErrMissingDomainID
 	}
 
-	if req.ThingID == "" {
+	if req.ClientID == "" {
 		return apiutil.ErrMissingID
 	}
 
@@ -44,8 +44,8 @@ func (req addCertsReq) validate() error {
 }
 
 type listReq struct {
-	thingID string
-	pm      certs.PageMetadata
+	clientID string
+	pm       certs.PageMetadata
 }
 
 func (req *listReq) validate() error {

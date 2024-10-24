@@ -14,7 +14,7 @@ import (
 var _ magistrala.Response = (*provisionRes)(nil)
 
 type provisionRes struct {
-	Things      []sdk.Thing       `json:"things"`
+	Clients     []sdk.Client      `json:"clients"`
 	Channels    []sdk.Channel     `json:"channels"`
 	ClientCert  map[string]string `json:"client_cert,omitempty"`
 	ClientKey   map[string]string `json:"client_key,omitempty"`

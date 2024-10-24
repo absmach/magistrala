@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/magistrala"
+	chmocks "github.com/absmach/magistrala/channels/mocks"
+	climocks "github.com/absmach/magistrala/clients/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/mocks"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/absmach/magistrala/ws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,7 +24,7 @@ const (
 	invalidID  = "invalidID"
 	invalidKey = "invalidKey"
 	id         = "1"
-	thingKey   = "thing_key"
+	clientKey   = "client_key"
 	subTopic   = "subtopic"
 	protocol   = "ws"
 )
@@ -37,70 +37,71 @@ var msg = messaging.Message{
 	Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
 }
 
-func newService() (ws.Service, *mocks.PubSub, *thmocks.ThingsServiceClient) {
+func newService() (ws.Service, *mocks.PubSub, *climocks.ClientsServiceClient, *chmocks.ChannelsServiceClient) {
 	pubsub := new(mocks.PubSub)
-	things := new(thmocks.ThingsServiceClient)
+	clients := new(climocks.ClientsServiceClient)
+	channels := new(chmocks.ChannelsServiceClient)
 
-	return ws.New(things, pubsub), pubsub, things
+	return ws.New(clients, channels, pubsub), pubsub, clients, channels
 }
 
 func TestSubscribe(t *testing.T) {
-	svc, pubsub, things := newService()
+	svc, pubsub, _, _ := newService()
 
 	c := ws.NewClient(nil)
 
 	cases := []struct {
 		desc     string
-		thingKey string
+		clientKey string
 		chanID   string
 		subtopic string
 		err      error
 	}{
 		{
-			desc:     "subscribe to channel with valid thingKey, chanID, subtopic",
-			thingKey: thingKey,
+			desc:     "subscribe to channel with valid clientKey, chanID, subtopic",
+			clientKey: clientKey,
 			chanID:   chanID,
 			subtopic: subTopic,
 			err:      nil,
 		},
 		{
-			desc:     "subscribe again to channel with valid thingKey, chanID, subtopic",
-			thingKey: thingKey,
+			desc:     "subscribe again to channel with valid clientKey, chanID, subtopic",
+			clientKey: clientKey,
 			chanID:   chanID,
 			subtopic: subTopic,
 			err:      nil,
 		},
 		{
 			desc:     "subscribe to channel with subscribe set to fail",
-			thingKey: thingKey,
+			clientKey: clientKey,
 			chanID:   chanID,
 			subtopic: subTopic,
 			err:      ws.ErrFailedSubscription,
 		},
 		{
-			desc:     "subscribe to channel with invalid chanID and invalid thingKey",
-			thingKey: invalidKey,
+			desc:     "subscribe to channel with invalid chanID and invalid clientKey",
+			clientKey: invalidKey,
 			chanID:   invalidID,
 			subtopic: subTopic,
 			err:      ws.ErrFailedSubscription,
 		},
 		{
 			desc:     "subscribe to channel with empty channel",
-			thingKey: thingKey,
+			clientKey: clientKey,
 			chanID:   "",
 			subtopic: subTopic,
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:     "subscribe to channel with empty thingKey",
-			thingKey: "",
+			desc:     "subscribe to channel with empty clientKey",
+			clientKey: "",
 			chanID:   chanID,
 			subtopic: subTopic,
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:     "subscribe to channel with empty thingKey and empty channel",
-			thingKey: "",
+			desc:     "subscribe to channel with empty clientKey and empty channel",
+			clientKey: "",
 			chanID:   "",
 			subtopic: subTopic,
 			err:      svcerr.ErrAuthentication,
@@ -108,18 +109,15 @@ func TestSubscribe(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		thingID := testsutil.GenerateUUID(t)
+		clientID := testsutil.GenerateUUID(t)
 		subConfig := messaging.SubscriberConfig{
-			ID:      thingID,
+			ID:      clientID,
 			Topic:   "channels." + tc.chanID + "." + subTopic,
 			Handler: c,
 		}
 		repocall := pubsub.On("Subscribe", mock.Anything, subConfig).Return(tc.err)
-		repocall1 := things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: thingID}, nil)
-		err := svc.Subscribe(context.Background(), tc.thingKey, tc.chanID, tc.subtopic, c)
+		err := svc.Subscribe(context.Background(), tc.clientKey, tc.chanID, tc.subtopic, c)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repocall1.Parent.AssertCalled(t, "Authorize", mock.Anything, mock.Anything)
 		repocall.Unset()
-		repocall1.Unset()
 	}
 }

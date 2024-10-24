@@ -1218,41 +1218,41 @@ func TestListUserChannelsCmd(t *testing.T) {
 	}
 }
 
-func TestListUserThingsCmd(t *testing.T) {
+func TestListUserClientsCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)
 	usersCmd := cli.NewUsersCmd()
 	rootCmd := setFlags(usersCmd)
-	th := mgsdk.Thing{
+	th := mgsdk.Client{
 		ID:   testsutil.GenerateUUID(t),
-		Name: "testthing",
+		Name: "testclient",
 	}
 
-	var pg mgsdk.ThingsPage
+	var pg mgsdk.ClientsPage
 
 	cases := []struct {
 		desc          string
 		args          []string
 		sdkerr        errors.SDKError
 		errLogMessage string
-		thing         mgsdk.Thing
-		page          mgsdk.ThingsPage
+		client        mgsdk.Client
+		page          mgsdk.ClientsPage
 		logType       outputLog
 	}{
 		{
-			desc: "list user things successfully",
+			desc: "list user clients successfully",
 			args: []string{
 				user.ID,
 				validToken,
 			},
 			sdkerr:  nil,
 			logType: entityLog,
-			page: mgsdk.ThingsPage{
-				Things: []mgsdk.Thing{th},
+			page: mgsdk.ClientsPage{
+				Clients: []mgsdk.Client{th},
 			},
 		},
 		{
-			desc: "list user things with invalid args",
+			desc: "list user clients with invalid args",
 			args: []string{
 				user.ID,
 				validToken,
@@ -1261,7 +1261,7 @@ func TestListUserThingsCmd(t *testing.T) {
 			logType: usageLog,
 		},
 		{
-			desc: "list user things with invalid token",
+			desc: "list user clients with invalid token",
 			args: []string{
 				user.ID,
 				invalidToken,
@@ -1274,8 +1274,8 @@ func TestListUserThingsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListUserThings", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
-			out := executeCommand(t, rootCmd, append([]string{thsCmd}, tc.args...)...)
+			sdkCall := sdkMock.On("ListUserClients", tc.args[0], mock.Anything, tc.args[1]).Return(tc.page, tc.sdkerr)
+			out := executeCommand(t, rootCmd, append([]string{cliCmd}, tc.args...)...)
 
 			switch tc.logType {
 			case errLog:

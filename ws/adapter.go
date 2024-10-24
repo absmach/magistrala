@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/internal/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/internal/grpc/clients/v1"
+	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -26,44 +28,46 @@ var (
 	// errFailedUnsubscribe indicates that client couldn't unsubscribe from specified channel.
 	errFailedUnsubscribe = errors.New("failed to unsubscribe from a channel")
 
-	// ErrEmptyTopic indicate absence of thingKey in the request.
+	// ErrEmptyTopic indicate absence of clientKey in the request.
 	ErrEmptyTopic = errors.New("empty topic")
 )
 
 // Service specifies web socket service API.
 type Service interface {
-	// Subscribe subscribes message from the broker using the thingKey for authorization,
+	// Subscribe subscribes message from the broker using the clientKey for authorization,
 	// and the channelID for subscription. Subtopic is optional.
 	// If the subscription is successful, nil is returned otherwise error is returned.
-	Subscribe(ctx context.Context, thingKey, chanID, subtopic string, client *Client) error
+	Subscribe(ctx context.Context, clientKey, chanID, subtopic string, client *Client) error
 }
 
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	things magistrala.ThingsServiceClient
-	pubsub messaging.PubSub
+	clients  grpcClientsV1.ClientsServiceClient
+	channels grpcChannelsV1.ChannelsServiceClient
+	pubsub   messaging.PubSub
 }
 
 // New instantiates the WS adapter implementation.
-func New(thingsClient magistrala.ThingsServiceClient, pubsub messaging.PubSub) Service {
+func New(clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, pubsub messaging.PubSub) Service {
 	return &adapterService{
-		things: thingsClient,
-		pubsub: pubsub,
+		clients:  clients,
+		channels: channels,
+		pubsub:   pubsub,
 	}
 }
 
-func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subtopic string, c *Client) error {
-	if chanID == "" || thingKey == "" {
+func (svc *adapterService) Subscribe(ctx context.Context, clientKey, chanID, subtopic string, c *Client) error {
+	if chanID == "" || clientKey == "" {
 		return svcerr.ErrAuthentication
 	}
 
-	thingID, err := svc.authorize(ctx, thingKey, chanID, policies.SubscribePermission)
+	clientID, err := svc.authorize(ctx, clientKey, chanID, connections.Subscribe)
 	if err != nil {
 		return svcerr.ErrAuthorization
 	}
 
-	c.id = thingID
+	c.id = clientID
 
 	subject := fmt.Sprintf("%s.%s", chansPrefix, chanID)
 	if subtopic != "" {
@@ -71,7 +75,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 	}
 
 	subCfg := messaging.SubscriberConfig{
-		ID:      thingID,
+		ID:      clientID,
 		Topic:   subject,
 		Handler: c,
 	}
@@ -82,21 +86,33 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 	return nil
 }
 
-// authorize checks if the thingKey is authorized to access the channel
-// and returns the thingID if it is.
-func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, action string) (string, error) {
-	ar := &magistrala.ThingsAuthzReq{
-		Permission: action,
-		ThingKey:   thingKey,
+// authorize checks if the clientKey is authorized to access the channel
+// and returns the clientID if it is.
+func (svc *adapterService) authorize(ctx context.Context, clientKey, chanID string, msgType connections.ConnType) (string, error) {
+	authnReq := &grpcClientsV1.AuthnReq{
+		ClientSecret: clientKey,
+	}
+	authnRes, err := svc.clients.Authenticate(ctx, authnReq)
+	if err != nil {
+		return "", errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+	if !authnRes.GetAuthenticated() {
+		return "", errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+
+	authzReq := &grpcChannelsV1.AuthzReq{
+		ClientType: policies.ClientType,
+		ClientId:   authnRes.GetId(),
+		Type:       uint32(msgType),
 		ChannelId:  chanID,
 	}
-	res, err := svc.things.Authorize(ctx, ar)
+	authzRes, err := svc.channels.Authorize(ctx, authzReq)
 	if err != nil {
 		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
-	if !res.GetAuthorized() {
+	if !authzRes.GetAuthorized() {
 		return "", errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
-	return res.GetId(), nil
+	return authnRes.GetId(), nil
 }

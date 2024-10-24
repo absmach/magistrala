@@ -13,15 +13,15 @@ import (
 )
 
 const (
-	thingRemove     = "thing.remove"
-	thingConnect    = "group.assign"
-	thingDisconnect = "group.unassign"
+	clientRemove     = "client.remove"
+	clientConnect    = "group.assign"
+	clientDisconnect = "group.unassign"
 
-	channelPrefix = "group."
+	channelPrefix = "channels."
 	channelUpdate = channelPrefix + "update"
 	channelRemove = channelPrefix + "remove"
 
-	memberKind = "things"
+	memberKind = "client"
 	relation   = "group"
 )
 
@@ -43,35 +43,35 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	}
 
 	switch msg["operation"] {
-	case thingRemove:
-		rte := decodeRemoveThing(msg)
+	case clientRemove:
+		rte := decodeRemoveClient(msg)
 		err = es.svc.RemoveConfigHandler(ctx, rte.id)
-	case thingConnect:
-		cte := decodeConnectThing(msg)
-		if cte.channelID == "" || len(cte.thingIDs) == 0 {
+	case clientConnect:
+		cte := decodeConnectClient(msg)
+		if cte.channelID == "" || len(cte.clientIDs) == 0 {
 			return svcerr.ErrMalformedEntity
 		}
-		for _, thingID := range cte.thingIDs {
-			if thingID == "" {
+		for _, clientID := range cte.clientIDs {
+			if clientID == "" {
 				return svcerr.ErrMalformedEntity
 			}
-			if err := es.svc.ConnectThingHandler(ctx, cte.channelID, thingID); err != nil {
+			if err := es.svc.ConnectClientHandler(ctx, cte.channelID, clientID); err != nil {
 				return err
 			}
 		}
-	case thingDisconnect:
-		dte := decodeDisconnectThing(msg)
-		if dte.channelID == "" || len(dte.thingIDs) == 0 {
+	case clientDisconnect:
+		dte := decodeDisconnectClient(msg)
+		if dte.channelID == "" || len(dte.clientIDs) == 0 {
 			return svcerr.ErrMalformedEntity
 		}
-		for _, thingID := range dte.thingIDs {
-			if thingID == "" {
+		for _, clientID := range dte.clientIDs {
+			if clientID == "" {
 				return svcerr.ErrMalformedEntity
 			}
 		}
 
-		for _, thingID := range dte.thingIDs {
-			if err = es.svc.DisconnectThingHandler(ctx, dte.channelID, thingID); err != nil {
+		for _, c := range dte.clientIDs {
+			if err = es.svc.DisconnectClientHandler(ctx, dte.channelID, c); err != nil {
 				return err
 			}
 		}
@@ -89,7 +89,7 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	return nil
 }
 
-func decodeRemoveThing(event map[string]interface{}) removeEvent {
+func decodeRemoveClient(event map[string]interface{}) removeEvent {
 	return removeEvent{
 		id: events.Read(event, "id", ""),
 	}
@@ -113,25 +113,25 @@ func decodeRemoveChannel(event map[string]interface{}) removeEvent {
 	}
 }
 
-func decodeConnectThing(event map[string]interface{}) connectionEvent {
+func decodeConnectClient(event map[string]interface{}) connectionEvent {
 	if events.Read(event, "memberKind", "") != memberKind && events.Read(event, "relation", "") != relation {
 		return connectionEvent{}
 	}
 
 	return connectionEvent{
 		channelID: events.Read(event, "group_id", ""),
-		thingIDs:  events.ReadStringSlice(event, "member_ids"),
+		clientIDs: events.ReadStringSlice(event, "member_ids"),
 	}
 }
 
-func decodeDisconnectThing(event map[string]interface{}) connectionEvent {
+func decodeDisconnectClient(event map[string]interface{}) connectionEvent {
 	if events.Read(event, "memberKind", "") != memberKind && events.Read(event, "relation", "") != relation {
 		return connectionEvent{}
 	}
 
 	return connectionEvent{
 		channelID: events.Read(event, "group_id", ""),
-		thingIDs:  events.ReadStringSlice(event, "member_ids"),
+		clientIDs: events.ReadStringSlice(event, "member_ids"),
 	}
 }
 

@@ -6,22 +6,22 @@ package token
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 )
 
-var _ magistrala.TokenServiceServer = (*tokenGrpcServer)(nil)
+var _ grpcTokenV1.TokenServiceServer = (*tokenGrpcServer)(nil)
 
 type tokenGrpcServer struct {
-	magistrala.UnimplementedTokenServiceServer
+	grpcTokenV1.UnimplementedTokenServiceServer
 	issue   kitgrpc.Handler
 	refresh kitgrpc.Handler
 }
 
 // NewAuthServer returns new AuthnServiceServer instance.
-func NewTokenServer(svc auth.Service) magistrala.TokenServiceServer {
+func NewTokenServer(svc auth.Service) grpcTokenV1.TokenServiceServer {
 	return &tokenGrpcServer{
 		issue: kitgrpc.NewServer(
 			(issueEndpoint(svc)),
@@ -36,24 +36,24 @@ func NewTokenServer(svc auth.Service) magistrala.TokenServiceServer {
 	}
 }
 
-func (s *tokenGrpcServer) Issue(ctx context.Context, req *magistrala.IssueReq) (*magistrala.Token, error) {
+func (s *tokenGrpcServer) Issue(ctx context.Context, req *grpcTokenV1.IssueReq) (*grpcTokenV1.Token, error) {
 	_, res, err := s.issue.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, grpcapi.EncodeError(err)
 	}
-	return res.(*magistrala.Token), nil
+	return res.(*grpcTokenV1.Token), nil
 }
 
-func (s *tokenGrpcServer) Refresh(ctx context.Context, req *magistrala.RefreshReq) (*magistrala.Token, error) {
+func (s *tokenGrpcServer) Refresh(ctx context.Context, req *grpcTokenV1.RefreshReq) (*grpcTokenV1.Token, error) {
 	_, res, err := s.refresh.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, grpcapi.EncodeError(err)
 	}
-	return res.(*magistrala.Token), nil
+	return res.(*grpcTokenV1.Token), nil
 }
 
 func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*magistrala.IssueReq)
+	req := grpcReq.(*grpcTokenV1.IssueReq)
 	return issueReq{
 		userID:  req.GetUserId(),
 		keyType: auth.KeyType(req.GetType()),
@@ -61,14 +61,14 @@ func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, er
 }
 
 func decodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*magistrala.RefreshReq)
+	req := grpcReq.(*grpcTokenV1.RefreshReq)
 	return refreshReq{refreshToken: req.GetRefreshToken()}, nil
 }
 
 func encodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(issueRes)
 
-	return &magistrala.Token{
+	return &grpcTokenV1.Token{
 		AccessToken:  res.accessToken,
 		RefreshToken: &res.refreshToken,
 		AccessType:   res.accessType,

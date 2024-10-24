@@ -1,0 +1,20 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package domains.v1;
+option go_package = "github.com/absmach/magistrala/internal/grpc/domains/v1";
+
+
+// DomainsService is a service that provides access to domains
+// functionalities for magistrala services.
+service DomainsService {
+  rpc DeleteUserFromDomains(DeleteUserReq) returns (DeleteUserRes) {}
+}
+
+message DeleteUserRes { bool deleted = 1; }
+
+message DeleteUserReq{
+  string id          = 1;
+}

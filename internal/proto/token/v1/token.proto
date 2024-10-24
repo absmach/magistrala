@@ -1,0 +1,30 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package token.v1;
+option go_package = "github.com/absmach/magistrala/internal/grpc/token/v1";
+
+service TokenService {
+  rpc Issue(IssueReq) returns (Token) {}
+  rpc Refresh(RefreshReq) returns (Token) {}
+}
+
+message IssueReq {
+  string user_id = 1;
+  uint32 type = 3;
+}
+
+message RefreshReq {
+  string refresh_token = 1;
+}
+
+// If a token is not carrying any information itself, the type
+// field can be used to determine how to validate the token.
+// Also, different tokens can be encoded in different ways.
+message Token {
+    string accessToken = 1;
+    optional string refreshToken = 2;
+    string accessType = 3;
+}

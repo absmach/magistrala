@@ -111,7 +111,7 @@ jobs:
               - "cmd/coap/**"
               - "auth.pb.go"
               - "auth_grpc.pb.go"
-              - "things/**"
+              - "clients/**"
               - "pkg/messaging/**"
 
             consumers:
@@ -140,7 +140,7 @@ jobs:
               - "cmd/http/**"
               - "auth.pb.go"
               - "auth_grpc.pb.go"
-              - "things/**"
+              - "clients/**"
               - "pkg/messaging/**"
               - "logger/**"
 
@@ -163,7 +163,7 @@ jobs:
               - "cmd/mqtt/**"
               - "auth.pb.go"
               - "auth_grpc.pb.go"
-              - "things/**"
+              - "clients/**"
               - "pkg/messaging/**"
               - "logger/**"
               - "pkg/events/**"
@@ -197,7 +197,7 @@ jobs:
               - "invitations/**"
               - "provision/**"
               - "readers/**"
-              - "things/**"
+              - "clients/**"
               - "users/**"
 
             pkg-transformers:
@@ -221,12 +221,12 @@ jobs:
               - "cmd/timescale-reader/**"
               - "auth.pb.go"
               - "auth_grpc.pb.go"
-              - "things/**"
+              - "clients/**"
               - "auth/**"
 
-            things:
-              - "things/**"
-              - "cmd/things/**"
+            clients:
+              - "clients/**"
+              - "cmd/clients/**"
               - "auth.pb.go"
               - "auth_grpc.pb.go"
               - "auth/**"
@@ -249,7 +249,7 @@ jobs:
               - "cmd/ws/**"
               - "auth.pb.go"
               - "auth_grpc.pb.go"
-              - "things/**"
+              - "clients/**"
               - "pkg/messaging/**"
 
       - name: Create coverage directory
@@ -366,10 +366,10 @@ jobs:
         run: |
           go test --race -v -count=1 -coverprofile=coverage/readers.out ./readers/...
 
-      - name: Run things tests
-        if: steps.changes.outputs.things == 'true' || steps.changes.outputs.workflow == 'true'
+      - name: Run clients tests
+        if: steps.changes.outputs.clients == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
-          go test --race -v -count=1 -coverprofile=coverage/things.out ./things/...
+          go test --race -v -count=1 -coverprofile=coverage/clients.out ./clients/...
 
       - name: Run users tests
         if: steps.changes.outputs.users == 'true' || steps.changes.outputs.workflow == 'true'

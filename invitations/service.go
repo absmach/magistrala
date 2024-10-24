@@ -7,20 +7,20 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/pkg/authn"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
 type service struct {
-	token magistrala.TokenServiceClient
+	token grpcTokenV1.TokenServiceClient
 	repo  Repository
 	sdk   mgsdk.SDK
 }
 
-func NewService(token magistrala.TokenServiceClient, repo Repository, sdk mgsdk.SDK) Service {
+func NewService(token grpcTokenV1.TokenServiceClient, repo Repository, sdk mgsdk.SDK) Service {
 	return &service{
 		token: token,
 		repo:  repo,
@@ -35,7 +35,7 @@ func (svc *service) SendInvitation(ctx context.Context, session authn.Session, i
 
 	invitation.InvitedBy = session.UserID
 
-	joinToken, err := svc.token.Issue(ctx, &magistrala.IssueReq{UserId: session.UserID, Type: uint32(auth.InvitationKey)})
+	joinToken, err := svc.token.Issue(ctx, &grpcTokenV1.IssueReq{UserId: session.UserID, Type: uint32(auth.InvitationKey)})
 	if err != nil {
 		return err
 	}

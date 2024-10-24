@@ -20,7 +20,7 @@ type resetPasswordReq struct {
 	ConfPass string `json:"confirm_password"`
 }
 
-type updateThingSecretReq struct {
+type updateClientSecretReq struct {
 	Secret string `json:"secret,omitempty"`
 }
 
@@ -37,9 +37,9 @@ type UserPasswordReq struct {
 	Password    string `json:"password,omitempty"`
 }
 
-// Connection contains thing and channel ID that are connected.
+// Connection contains client and channel ID that are connected.
 type Connection struct {
-	ThingID   string `json:"thing_id,omitempty"`
+	ClientID  string `json:"client_id,omitempty"`
 	ChannelID string `json:"channel_id,omitempty"`
 }
 

@@ -43,11 +43,11 @@ type magistralaFile struct {
 	ConnFile string `toml:"connections_file" mapstructure:"connections_file"`
 }
 
-type mgThing struct {
-	ThingID  string `toml:"thing_id" mapstructure:"thing_id"`
-	ThingKey string `toml:"thing_key" mapstructure:"thing_key"`
-	MTLSCert string `toml:"mtls_cert" mapstructure:"mtls_cert"`
-	MTLSKey  string `toml:"mtls_key" mapstructure:"mtls_key"`
+type mgClient struct {
+	ClientID     string `toml:"client_id" mapstructure:"client_id"`
+	ClientSecret string `toml:"client_secret" mapstructure:"client_secret"`
+	MTLSCert     string `toml:"mtls_cert" mapstructure:"mtls_cert"`
+	MTLSKey      string `toml:"mtls_key" mapstructure:"mtls_key"`
 }
 
 type mgChannel struct {
@@ -55,7 +55,7 @@ type mgChannel struct {
 }
 
 type magistrala struct {
-	Things   []mgThing   `toml:"things" mapstructure:"things"`
+	Clients  []mgClient  `toml:"clients" mapstructure:"clients"`
 	Channels []mgChannel `toml:"channels" mapstructure:"channels"`
 }
 

@@ -9,7 +9,7 @@ import (
 
 var cmdCerts = []cobra.Command{
 	{
-		Use:   "get [<cert_serial> | thing <thing_id> ] <domain_id> <user_auth_token>",
+		Use:   "get [<cert_serial> | client <client_id> ] <domain_id> <user_auth_token>",
 		Short: "Get certificate",
 		Long:  `Gets a certificate for a given cert ID.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -17,8 +17,8 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			if args[0] == "thing" {
-				cert, err := sdk.ViewCertByThing(args[1], args[2], args[3])
+			if args[0] == "client" {
+				cert, err := sdk.ViewCertByClient(args[1], args[2], args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -35,9 +35,9 @@ var cmdCerts = []cobra.Command{
 		},
 	},
 	{
-		Use:   "revoke <thing_id> <domain_id> <user_auth_token>",
+		Use:   "revoke <client_id> <domain_id> <user_auth_token>",
 		Short: "Revoke certificate",
-		Long:  `Revokes a certificate for a given thing ID.`,
+		Long:  `Revokes a certificate for a given client ID.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -58,18 +58,18 @@ func NewCertsCmd() *cobra.Command {
 	var ttl string
 
 	issueCmd := cobra.Command{
-		Use:   "issue <thing_id> <domain_id> <user_auth_token> [--ttl=8760h]",
+		Use:   "issue <client_id> <domain_id> <user_auth_token> [--ttl=8760h]",
 		Short: "Issue certificate",
-		Long:  `Issues new certificate for a thing`,
+		Long:  `Issues new certificate for a client`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			thingID := args[0]
+			clientID := args[0]
 
-			c, err := sdk.IssueCert(thingID, ttl, args[1], args[2])
+			c, err := sdk.IssueCert(clientID, ttl, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -83,7 +83,7 @@ func NewCertsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "certs [issue | get | revoke ]",
 		Short: "Certificates management",
-		Long:  `Certificates management: issue, get or revoke certificates for things"`,
+		Long:  `Certificates management: issue, get or revoke certificates for clients"`,
 	}
 
 	cmdCerts = append(cmdCerts, issueCmd)

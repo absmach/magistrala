@@ -49,28 +49,28 @@ const (
 )
 
 var (
-	encKey         = []byte("1234567891011121")
-	metadata       = map[string]interface{}{"meta": "data"}
-	addExternalID  = testsutil.GenerateUUID(&testing.T{})
-	addExternalKey = testsutil.GenerateUUID(&testing.T{})
-	addThingID     = testsutil.GenerateUUID(&testing.T{})
-	addThingKey    = testsutil.GenerateUUID(&testing.T{})
-	addReq         = struct {
-		ThingID     string   `json:"thing_id"`
-		ThingKey    string   `json:"thing_key"`
-		ExternalID  string   `json:"external_id"`
-		ExternalKey string   `json:"external_key"`
-		Channels    []string `json:"channels"`
-		Name        string   `json:"name"`
-		Content     string   `json:"content"`
+	encKey          = []byte("1234567891011121")
+	metadata        = map[string]interface{}{"meta": "data"}
+	addExternalID   = testsutil.GenerateUUID(&testing.T{})
+	addExternalKey  = testsutil.GenerateUUID(&testing.T{})
+	addClientID     = testsutil.GenerateUUID(&testing.T{})
+	addClientSecret = testsutil.GenerateUUID(&testing.T{})
+	addReq          = struct {
+		ClientID     string   `json:"client_id"`
+		ClinetSecret string   `json:"client_secret"`
+		ExternalID   string   `json:"external_id"`
+		ExternalKey  string   `json:"external_key"`
+		Channels     []string `json:"channels"`
+		Name         string   `json:"name"`
+		Content      string   `json:"content"`
 	}{
-		ThingID:     addThingID,
-		ThingKey:    addThingKey,
-		ExternalID:  addExternalID,
-		ExternalKey: addExternalKey,
-		Channels:    []string{"1"},
-		Name:        "name",
-		Content:     "config",
+		ClientID:     addClientID,
+		ClinetSecret: addClientSecret,
+		ExternalID:   addExternalID,
+		ExternalKey:  addExternalKey,
+		Channels:     []string{"1"},
+		Name:         "name",
+		Content:      "config",
 	}
 
 	updateReq = struct {
@@ -78,7 +78,7 @@ var (
 		Content    string          `json:"content,omitempty"`
 		State      bootstrap.State `json:"state,omitempty"`
 		ClientCert string          `json:"client_cert,omitempty"`
-		ClientKey  string          `json:"client_key,omitempty"`
+		ClientKey  string          `json:"client_secret,omitempty"`
 		CACert     string          `json:"ca_cert,omitempty"`
 	}{
 		Channels:   []string{"1"},
@@ -108,10 +108,10 @@ type testRequest struct {
 
 func newConfig() bootstrap.Config {
 	return bootstrap.Config{
-		ThingID:     addThingID,
-		ThingKey:    addThingKey,
-		ExternalID:  addExternalID,
-		ExternalKey: addExternalKey,
+		ClientID:     addClientID,
+		ClientSecret: addClientSecret,
+		ExternalID:   addExternalID,
+		ExternalKey:  addExternalKey,
 		Channels: []bootstrap.Channel{
 			{
 				ID:       "1",
@@ -136,7 +136,7 @@ func (tr testRequest) make() (*http.Response, error) {
 		req.Header.Set("Authorization", apiutil.BearerPrefix+tr.token)
 	}
 	if tr.key != "" {
-		req.Header.Set("Authorization", apiutil.ThingPrefix+tr.key)
+		req.Header.Set("Authorization", apiutil.ClientPrefix+tr.key)
 	}
 
 	if tr.contentType != "" {
@@ -200,7 +200,7 @@ func TestAdd(t *testing.T) {
 	data := toJSON(addReq)
 
 	neID := addReq
-	neID.ThingID = testsutil.GenerateUUID(t)
+	neID.ClientID = testsutil.GenerateUUID(t)
 	neData := toJSON(neID)
 
 	invalidChannels := addReq
@@ -237,7 +237,7 @@ func TestAdd(t *testing.T) {
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
-			location:    "/things/configs/" + c.ThingID,
+			location:    "/clients/configs/" + c.ClientID,
 			err:         nil,
 		},
 		{
@@ -332,7 +332,7 @@ func TestAdd(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/things/configs", bs.URL, tc.domainID),
+				url:         fmt.Sprintf("%s/%s/clients/configs", bs.URL, tc.domainID),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -359,14 +359,14 @@ func TestView(t *testing.T) {
 	}
 
 	data := config{
-		ThingID:     c.ThingID,
-		ThingKey:    c.ThingKey,
-		State:       c.State,
-		Channels:    channels,
-		ExternalID:  c.ExternalID,
-		ExternalKey: c.ExternalKey,
-		Name:        c.Name,
-		Content:     c.Content,
+		ClientID:     c.ClientID,
+		ClientSecret: c.ClientSecret,
+		State:        c.State,
+		Channels:     channels,
+		ExternalID:   c.ExternalID,
+		ExternalKey:  c.ExternalKey,
+		Name:         c.Name,
+		Content:      c.Content,
 	}
 
 	cases := []struct {
@@ -382,7 +382,7 @@ func TestView(t *testing.T) {
 		{
 			desc:            "view a config with invalid token",
 			token:           invalidToken,
-			id:              c.ThingID,
+			id:              c.ClientID,
 			status:          http.StatusUnauthorized,
 			res:             config{},
 			authenticateErr: svcerr.ErrAuthentication,
@@ -391,7 +391,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view a config",
 			token:  validToken,
-			id:     c.ThingID,
+			id:     c.ClientID,
 			status: http.StatusOK,
 			res:    data,
 			err:    nil,
@@ -407,7 +407,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view a config with an empty token",
 			token:  "",
-			id:     c.ThingID,
+			id:     c.ClientID,
 			status: http.StatusUnauthorized,
 			res:    config{},
 			err:    apiutil.ErrBearerToken,
@@ -415,7 +415,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view config without authorization",
 			token:  validToken,
-			id:     c.ThingID,
+			id:     c.ClientID,
 			status: http.StatusForbidden,
 			res:    config{},
 			err:    svcerr.ErrAuthorization,
@@ -432,7 +432,7 @@ func TestView(t *testing.T) {
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodGet,
-				url:    fmt.Sprintf("%s/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -476,7 +476,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:            "update with invalid token",
 			req:             data,
-			id:              c.ThingID,
+			id:              c.ClientID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -486,7 +486,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update with an empty token",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -495,7 +495,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a valid config",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -504,7 +504,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a config with wrong content type",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -522,7 +522,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -530,7 +530,7 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			req:         "",
 			token:       validToken,
 			contentType: contentType,
@@ -549,7 +549,7 @@ func TestUpdate(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPut,
-				url:         fmt.Sprintf("%s/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				url:         fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -584,7 +584,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:            "update with invalid token",
 			req:             data,
-			id:              c.ThingID,
+			id:              c.ClientID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -594,7 +594,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update with an empty token",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -603,7 +603,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a valid config",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -612,7 +612,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with wrong content type",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -630,7 +630,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          c.ThingKey,
+			id:          c.ClientSecret,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -638,7 +638,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			req:         "",
 			token:       validToken,
 			contentType: contentType,
@@ -657,7 +657,7 @@ func TestUpdateCert(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPatch,
-				url:         fmt.Sprintf("%s/%s/things/configs/certs/%s", bs.URL, domainID, tc.id),
+				url:         fmt.Sprintf("%s/%s/clients/configs/certs/%s", bs.URL, domainID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -696,7 +696,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:            "update connections with invalid token",
 			req:             data,
-			id:              c.ThingID,
+			id:              c.ClientID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -706,7 +706,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections with an empty token",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -715,7 +715,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections valid config",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -724,7 +724,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections with wrong content type",
 			req:         data,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -742,7 +742,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update connections with invalid channels",
 			req:         wrongData,
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusNotFound,
@@ -751,7 +751,7 @@ func TestUpdateConnections(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -759,7 +759,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			req:         "",
 			token:       validToken,
 			contentType: contentType,
@@ -778,7 +778,7 @@ func TestUpdateConnections(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPut,
-				url:         fmt.Sprintf("%s/%s/things/configs/connections/%s", bs.URL, domainID, tc.id),
+				url:         fmt.Sprintf("%s/%s/clients/configs/connections/%s", bs.URL, domainID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(tc.req),
@@ -800,13 +800,13 @@ func TestList(t *testing.T) {
 
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
-	path := fmt.Sprintf("%s/%s/%s", bs.URL, domainID, "things/configs")
+	path := fmt.Sprintf("%s/%s/%s", bs.URL, domainID, "clients/configs")
 
 	c := newConfig()
 
 	for i := 0; i < configNum; i++ {
 		c.ExternalID = strconv.Itoa(i)
-		c.ThingKey = c.ExternalID
+		c.ClientSecret = c.ExternalID
 		c.Name = fmt.Sprintf("%s-%d", addName, i)
 		c.ExternalKey = fmt.Sprintf("%s%s", addExternalKey, strconv.Itoa(i))
 
@@ -815,14 +815,14 @@ func TestList(t *testing.T) {
 			channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
 		}
 		s := config{
-			ThingID:     c.ThingID,
-			ThingKey:    c.ThingKey,
-			Channels:    channels,
-			ExternalID:  c.ExternalID,
-			ExternalKey: c.ExternalKey,
-			Name:        c.Name,
-			Content:     c.Content,
-			State:       c.State,
+			ClientID:     c.ClientID,
+			ClientSecret: c.ClientSecret,
+			Channels:     channels,
+			ExternalID:   c.ExternalID,
+			ExternalKey:  c.ExternalKey,
+			Name:         c.Name,
+			Content:      c.Content,
+			State:        c.State,
 		}
 		list[i] = s
 	}
@@ -833,7 +833,7 @@ func TestList(t *testing.T) {
 			state = bootstrap.Inactive
 		}
 		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		err := svc.ChangeState(context.Background(), mgauthn.Session{}, validToken, list[i].ThingID, state)
+		err := svc.ChangeState(context.Background(), mgauthn.Session{}, validToken, list[i].ClientID, state)
 		assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
 
 		svcCall.Unset()
@@ -1084,7 +1084,7 @@ func TestRemove(t *testing.T) {
 	}{
 		{
 			desc:            "remove with invalid token",
-			id:              c.ThingID,
+			id:              c.ClientID,
 			token:           invalidToken,
 			status:          http.StatusUnauthorized,
 			authenticateErr: svcerr.ErrAuthentication,
@@ -1092,7 +1092,7 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			desc:   "remove with an empty token",
-			id:     c.ThingID,
+			id:     c.ClientID,
 			token:  "",
 			status: http.StatusUnauthorized,
 			err:    apiutil.ErrBearerToken,
@@ -1106,7 +1106,7 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			desc:   "remove config",
-			id:     c.ThingID,
+			id:     c.ClientID,
 			token:  validToken,
 			status: http.StatusNoContent,
 			err:    nil,
@@ -1130,7 +1130,7 @@ func TestRemove(t *testing.T) {
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodDelete,
-				url:    fmt.Sprintf("%s/%s/things/configs/%s", bs.URL, domainID, tc.id),
+				url:    fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
 				token:  tc.token,
 			}
 			res, err := req.make()
@@ -1156,21 +1156,21 @@ func TestBootstrap(t *testing.T) {
 	}
 
 	s := struct {
-		ThingID    string    `json:"thing_id"`
-		ThingKey   string    `json:"thing_key"`
-		Channels   []channel `json:"channels"`
-		Content    string    `json:"content"`
-		ClientCert string    `json:"client_cert"`
-		ClientKey  string    `json:"client_key"`
-		CACert     string    `json:"ca_cert"`
+		ClientID     string    `json:"client_id"`
+		ClientSecret string    `json:"client_secret"`
+		Channels     []channel `json:"channels"`
+		Content      string    `json:"content"`
+		ClientCert   string    `json:"client_cert"`
+		ClientKey    string    `json:"client_key"`
+		CACert       string    `json:"ca_cert"`
 	}{
-		ThingID:    c.ThingID,
-		ThingKey:   c.ThingKey,
-		Channels:   channels,
-		Content:    c.Content,
-		ClientCert: c.ClientCert,
-		ClientKey:  c.ClientKey,
-		CACert:     c.CACert,
+		ClientID:     c.ClientID,
+		ClientSecret: c.ClientSecret,
+		Channels:     channels,
+		Content:      c.Content,
+		ClientCert:   c.ClientCert,
+		ClientKey:    c.ClientKey,
+		CACert:       c.CACert,
 	}
 
 	data := toJSON(s)
@@ -1185,7 +1185,7 @@ func TestBootstrap(t *testing.T) {
 		err         error
 	}{
 		{
-			desc:        "bootstrap a Thing with unknown ID",
+			desc:        "bootstrap a Client with unknown ID",
 			externalID:  unknown,
 			externalKey: c.ExternalKey,
 			status:      http.StatusNotFound,
@@ -1194,7 +1194,7 @@ func TestBootstrap(t *testing.T) {
 			err:         bootstrap.ErrBootstrap,
 		},
 		{
-			desc:        "bootstrap a Thing with an empty ID",
+			desc:        "bootstrap a Client with an empty ID",
 			externalID:  "",
 			externalKey: c.ExternalKey,
 			status:      http.StatusBadRequest,
@@ -1203,7 +1203,7 @@ func TestBootstrap(t *testing.T) {
 			err:         errors.Wrap(bootstrap.ErrBootstrap, svcerr.ErrMalformedEntity),
 		},
 		{
-			desc:        "bootstrap a Thing with unknown key",
+			desc:        "bootstrap a Client with unknown key",
 			externalID:  c.ExternalID,
 			externalKey: unknown,
 			status:      http.StatusForbidden,
@@ -1212,7 +1212,7 @@ func TestBootstrap(t *testing.T) {
 			err:         errors.Wrap(bootstrap.ErrExternalKey, errors.New("")),
 		},
 		{
-			desc:        "bootstrap a Thing with an empty key",
+			desc:        "bootstrap a Client with an empty key",
 			externalID:  c.ExternalID,
 			externalKey: "",
 			status:      http.StatusBadRequest,
@@ -1221,7 +1221,7 @@ func TestBootstrap(t *testing.T) {
 			err:         errors.Wrap(bootstrap.ErrBootstrap, svcerr.ErrAuthentication),
 		},
 		{
-			desc:        "bootstrap known Thing",
+			desc:        "bootstrap known Client",
 			externalID:  c.ExternalID,
 			externalKey: c.ExternalKey,
 			status:      http.StatusOK,
@@ -1255,7 +1255,7 @@ func TestBootstrap(t *testing.T) {
 			req := testRequest{
 				client: bs.Client(),
 				method: http.MethodGet,
-				url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.externalID),
+				url:    fmt.Sprintf("%s/clients/bootstrap/%s", bs.URL, tc.externalID),
 				key:    tc.externalKey,
 			}
 			res, err := req.make()
@@ -1296,7 +1296,7 @@ func TestChangeState(t *testing.T) {
 	}{
 		{
 			desc:            "change state with invalid token",
-			id:              c.ThingID,
+			id:              c.ClientID,
 			token:           invalidToken,
 			state:           active,
 			contentType:     contentType,
@@ -1306,7 +1306,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state with an empty token",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       "",
 			state:       active,
 			contentType: contentType,
@@ -1315,7 +1315,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state with invalid content type",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			state:       active,
 			contentType: "",
@@ -1324,7 +1324,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state to active",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			state:       active,
 			contentType: contentType,
@@ -1333,7 +1333,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state to inactive",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			state:       inactive,
 			contentType: contentType,
@@ -1351,7 +1351,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state to invalid value",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			state:       fmt.Sprintf("{\"state\": %d}", -3),
 			contentType: contentType,
@@ -1360,7 +1360,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:        "change state with invalid data",
-			id:          c.ThingID,
+			id:          c.ClientID,
 			token:       validToken,
 			state:       "",
 			contentType: contentType,
@@ -1379,7 +1379,7 @@ func TestChangeState(t *testing.T) {
 			req := testRequest{
 				client:      bs.Client(),
 				method:      http.MethodPut,
-				url:         fmt.Sprintf("%s/%s/things/state/%s", bs.URL, domainID, tc.id),
+				url:         fmt.Sprintf("%s/%s/clients/state/%s", bs.URL, domainID, tc.id),
 				token:       tc.token,
 				contentType: tc.contentType,
 				body:        strings.NewReader(tc.state),
@@ -1400,14 +1400,14 @@ type channel struct {
 }
 
 type config struct {
-	ThingID     string          `json:"thing_id,omitempty"`
-	ThingKey    string          `json:"thing_key,omitempty"`
-	Channels    []channel       `json:"channels,omitempty"`
-	ExternalID  string          `json:"external_id"`
-	ExternalKey string          `json:"external_key,omitempty"`
-	Content     string          `json:"content,omitempty"`
-	Name        string          `json:"name"`
-	State       bootstrap.State `json:"state"`
+	ClientID     string          `json:"client_id,omitempty"`
+	ClientSecret string          `json:"client_secret,omitempty"`
+	Channels     []channel       `json:"channels,omitempty"`
+	ExternalID   string          `json:"external_id"`
+	ExternalKey  string          `json:"external_key,omitempty"`
+	Content      string          `json:"content,omitempty"`
+	Name         string          `json:"name"`
+	State        bootstrap.State `json:"state"`
 }
 
 type configPage struct {

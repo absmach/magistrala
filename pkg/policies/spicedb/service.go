@@ -33,7 +33,7 @@ var (
 )
 
 var (
-	defThingsFilterPermissions = []string{
+	defClientsFilterPermissions = []string{
 		policies.AdminPermission,
 		policies.DeletePermission,
 		policies.EditPermission,
@@ -142,8 +142,9 @@ func (ps *policyService) AddPolicies(ctx context.Context, prs []policies.Policy)
 func (ps *policyService) DeletePolicyFilter(ctx context.Context, pr policies.Policy) error {
 	req := &v1.DeleteRelationshipsRequest{
 		RelationshipFilter: &v1.RelationshipFilter{
-			ResourceType:       pr.ObjectType,
-			OptionalResourceId: pr.Object,
+			ResourceType:             pr.ObjectType,
+			OptionalResourceId:       pr.Object,
+			OptionalResourceIdPrefix: pr.ObjectPrefix,
 		},
 	}
 
@@ -297,8 +298,8 @@ func (ps *policyService) CountSubjects(ctx context.Context, pr policies.Policy) 
 func (ps *policyService) ListPermissions(ctx context.Context, pr policies.Policy, permissionsFilter []string) (policies.Permissions, error) {
 	if len(permissionsFilter) == 0 {
 		switch pr.ObjectType {
-		case policies.ThingType:
-			permissionsFilter = defThingsFilterPermissions
+		case policies.ClientType:
+			permissionsFilter = defClientsFilterPermissions
 		case policies.GroupType:
 			permissionsFilter = defGroupsFilterPermissions
 		case policies.PlatformType:
@@ -328,9 +329,9 @@ func (ps *policyService) policyValidation(pr policies.Policy) error {
 func (ps *policyService) addPolicyPreCondition(ctx context.Context, pr policies.Policy) ([]*v1.Precondition, error) {
 	// Checks are required for following  ( -> means adding)
 	// 1.) user -> group (both user groups and channels)
-	// 2.) user -> thing
+	// 2.) user -> client
 	// 3.) group -> group (both for adding parent_group and channels)
-	// 4.) group (channel) -> thing
+	// 4.) group (channel) -> client
 	// 5.) user -> domain
 
 	switch {
@@ -341,12 +342,12 @@ func (ps *policyService) addPolicyPreCondition(ctx context.Context, pr policies.
 	case pr.SubjectType == policies.UserType && pr.ObjectType == policies.GroupType:
 		return ps.userGroupPreConditions(ctx, pr)
 
-	// 2.) user -> thing
+	// 2.) user -> client
 	// Checks :
 	// - USER with ANY RELATION to DOMAIN
-	// - THING with DOMAIN RELATION to DOMAIN
-	case pr.SubjectType == policies.UserType && pr.ObjectType == policies.ThingType:
-		return ps.userThingPreConditions(ctx, pr)
+	// - CLIENT with DOMAIN RELATION to DOMAIN
+	case pr.SubjectType == policies.UserType && pr.ObjectType == policies.ClientType:
+		return ps.userClientPreConditions(ctx, pr)
 
 	// 3.) group -> group (both for adding parent_group and channels)
 	// Checks :
@@ -354,13 +355,13 @@ func (ps *policyService) addPolicyPreCondition(ctx context.Context, pr policies.
 	case pr.SubjectType == policies.GroupType && pr.ObjectType == policies.GroupType:
 		return groupPreConditions(pr)
 
-	// 4.) group (channel) -> thing
+	// 4.) group (channel) -> client
 	// Checks :
 	// - GROUP (channel) with DOMAIN RELATION to DOMAIN
 	// - NO GROUP should not have PARENT_GROUP RELATION with GROUP (channel)
-	// - THING with DOMAIN RELATION to DOMAIN
-	case pr.SubjectType == policies.GroupType && pr.ObjectType == policies.ThingType:
-		return channelThingPreCondition(pr)
+	// - CLIENT with DOMAIN RELATION to DOMAIN
+	// case pr.SubjectType == policies.GroupType && pr.ObjectType == policies.ClientType:
+	// 	return channelClientPreCondition(pr)
 
 	// 5.) user -> domain
 	// Checks :
@@ -368,8 +369,8 @@ func (ps *policyService) addPolicyPreCondition(ctx context.Context, pr policies.
 	case pr.SubjectType == policies.UserType && pr.ObjectType == policies.DomainType:
 		return ps.userDomainPreConditions(ctx, pr)
 
-	// Check thing and group not belongs to other domain before adding to domain
-	case pr.SubjectType == policies.DomainType && pr.Relation == policies.DomainRelation && (pr.ObjectType == policies.ThingType || pr.ObjectType == policies.GroupType):
+	// Check client and group not belongs to other domain before adding to domain
+	case pr.SubjectType == policies.DomainType && pr.Relation == policies.DomainRelation && (pr.ObjectType == policies.ClientType || pr.ObjectType == policies.GroupType):
 		preconds := []*v1.Precondition{
 			{
 				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
@@ -463,14 +464,14 @@ func (ps *policyService) userGroupPreConditions(ctx context.Context, pr policies
 	return preconds, nil
 }
 
-func (ps *policyService) userThingPreConditions(ctx context.Context, pr policies.Policy) ([]*v1.Precondition, error) {
+func (ps *policyService) userClientPreConditions(ctx context.Context, pr policies.Policy) ([]*v1.Precondition, error) {
 	var preconds []*v1.Precondition
 
-	// user should not have any relation with thing
+	// user should not have any relation with client
 	preconds = append(preconds, &v1.Precondition{
 		Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 		Filter: &v1.RelationshipFilter{
-			ResourceType:       policies.ThingType,
+			ResourceType:       policies.ClientType,
 			OptionalResourceId: pr.Object,
 			OptionalSubjectFilter: &v1.SubjectFilter{
 				SubjectType:       policies.UserType,
@@ -504,14 +505,14 @@ func (ps *policyService) userThingPreConditions(ctx context.Context, pr policies
 		})
 	}
 	switch {
-	// For New thing
-	// - THING without DOMAIN RELATION to ANY DOMAIN
-	case pr.ObjectKind == policies.NewThingKind:
+	// For New client
+	// - CLIENT without DOMAIN RELATION to ANY DOMAIN
+	case pr.ObjectKind == policies.NewClientKind:
 		preconds = append(preconds,
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_NOT_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policies.ThingType,
+					ResourceType:       policies.ClientType,
 					OptionalResourceId: pr.Object,
 					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
@@ -521,13 +522,13 @@ func (ps *policyService) userThingPreConditions(ctx context.Context, pr policies
 			},
 		)
 	default:
-		// For existing thing
-		// - THING without DOMAIN RELATION to ANY DOMAIN
+		// For existing client
+		// - CLIENT without DOMAIN RELATION to ANY DOMAIN
 		preconds = append(preconds,
 			&v1.Precondition{
 				Operation: v1.Precondition_OPERATION_MUST_MATCH,
 				Filter: &v1.RelationshipFilter{
-					ResourceType:       policies.ThingType,
+					ResourceType:       policies.ClientType,
 					OptionalResourceId: pr.Object,
 					OptionalRelation:   policies.DomainRelation,
 					OptionalSubjectFilter: &v1.SubjectFilter{
@@ -847,7 +848,7 @@ func groupPreConditions(pr policies.Policy) ([]*v1.Precondition, error) {
 	return precond, nil
 }
 
-func channelThingPreCondition(pr policies.Policy) ([]*v1.Precondition, error) {
+func channelClientPreCondition(pr policies.Policy) ([]*v1.Precondition, error) {
 	if pr.SubjectKind != policies.ChannelsKind {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, errInvalidSubject)
 	}
@@ -878,7 +879,7 @@ func channelThingPreCondition(pr policies.Policy) ([]*v1.Precondition, error) {
 		{
 			Operation: v1.Precondition_OPERATION_MUST_MATCH,
 			Filter: &v1.RelationshipFilter{
-				ResourceType:       policies.ThingType,
+				ResourceType:       policies.ClientType,
 				OptionalResourceId: pr.Object,
 				OptionalRelation:   policies.DomainRelation,
 				OptionalSubjectFilter: &v1.SubjectFilter{

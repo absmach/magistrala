@@ -33,11 +33,11 @@ var namesgenerator = namegenerator.NewGenerator()
 
 // MgConn - structure describing Magistrala connection set.
 type MgConn struct {
-	ChannelID string
-	ThingID   string
-	ThingKey  string
-	MTLSCert  string
-	MTLSKey   string
+	ClientID     string
+	ClinetSecret string
+	ChannelID    string
+	MTLSCert     string
+	MTLSKey      string
 }
 
 // Config - provisioning configuration.
@@ -62,7 +62,7 @@ func Provision(conf Config) error {
 
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
-		ThingsURL:       conf.Host,
+		ClientsURL:      conf.Host,
 		UsersURL:        conf.Host,
 		ReaderURL:       defReaderURL,
 		HTTPAdapterURL:  fmt.Sprintf("%s/http", conf.Host),
@@ -146,22 +146,22 @@ func Provision(conf Config) error {
 		}
 	}
 
-	//  Create things and channels
-	things := make([]sdk.Thing, conf.Num)
+	//  Create clients and channels
+	clients := make([]sdk.Client, conf.Num)
 	channels := make([]sdk.Channel, conf.Num)
 	cIDs := []string{}
 	tIDs := []string{}
 
-	fmt.Println("# List of things that can be connected to MQTT broker")
+	fmt.Println("# List of clients that can be connected to MQTT broker")
 
 	for i := 0; i < conf.Num; i++ {
-		things[i] = sdk.Thing{Name: fmt.Sprintf("%s-thing-%d", conf.Prefix, i)}
+		clients[i] = sdk.Client{Name: fmt.Sprintf("%s-client-%d", conf.Prefix, i)}
 		channels[i] = sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
-	things, err = s.CreateThings(things, domain.ID, token.AccessToken)
+	clients, err = s.CreateClients(clients, domain.ID, token.AccessToken)
 	if err != nil {
-		return fmt.Errorf("failed to create the things: %s", err.Error())
+		return fmt.Errorf("failed to create the clients: %s", err.Error())
 	}
 
 	var chs []sdk.Channel
@@ -174,7 +174,7 @@ func Provision(conf Config) error {
 	}
 	channels = chs
 
-	for _, t := range things {
+	for _, t := range clients {
 		tIDs = append(tIDs, t.ID)
 	}
 
@@ -207,7 +207,7 @@ func Provision(conf Config) error {
 				SerialNumber: serialNumber,
 				Subject: pkix.Name{
 					Organization:       []string{"Magistrala"},
-					CommonName:         things[i].Credentials.Secret,
+					CommonName:         clients[i].Credentials.Secret,
 					OrganizationalUnit: []string{"magistrala"},
 				},
 				NotBefore: notBefore,
@@ -241,7 +241,7 @@ func Provision(conf Config) error {
 		}
 
 		// Print output
-		fmt.Printf("[[things]]\nthing_id = \"%s\"\nthing_key = \"%s\"\n", things[i].ID, things[i].Credentials.Secret)
+		fmt.Printf("[[clients]]\nclient_id = \"%s\"\nclient_key = \"%s\"\n", clients[i].ID, clients[i].Credentials.Secret)
 		if conf.SSL {
 			fmt.Printf("mtls_cert = \"\"\"%s\"\"\"\n", cert)
 			fmt.Printf("mtls_key = \"\"\"%s\"\"\"\n", key)
@@ -249,8 +249,8 @@ func Provision(conf Config) error {
 		fmt.Println("")
 	}
 
-	fmt.Printf("# List of channels that things can publish to\n" +
-		"# each channel is connected to each thing from things list\n")
+	fmt.Printf("# List of channels that clients can publish to\n" +
+		"# each channel is connected to each client from clients list\n")
 	for i := 0; i < conf.Num; i++ {
 		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", cIDs[i])
 	}
@@ -258,11 +258,11 @@ func Provision(conf Config) error {
 	for _, cID := range cIDs {
 		for _, tID := range tIDs {
 			conIDs := sdk.Connection{
-				ThingID:   tID,
+				ClientID:  tID,
 				ChannelID: cID,
 			}
 			if err := s.Connect(conIDs, domain.ID, token.AccessToken); err != nil {
-				log.Fatalf("Failed to connect things %s to channels %s: %s", tID, cID, err)
+				log.Fatalf("Failed to connect clients %s to channels %s: %s", tID, cID, err)
 			}
 		}
 	}

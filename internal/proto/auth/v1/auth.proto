@@ -1,0 +1,42 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package auth.v1;
+option go_package = "github.com/absmach/magistrala/internal/grpc/auth/v1";
+
+// AuthService is a service that provides authentication and authorization
+// functionalities for magistrala services.
+service AuthService {
+  rpc Authorize(AuthZReq) returns (AuthZRes) {}
+  rpc Authenticate(AuthNReq) returns (AuthNRes) {}
+}
+
+
+message AuthNReq {
+    string token = 1;
+}
+
+message AuthNRes {
+    string id    = 1; // IMPROVEMENT NOTE: change name from "id" to "subject" , sub in jwt = user id  + domain id //
+    string user_id = 2; // user id
+    string domain_id = 3; // domain id
+}
+
+message AuthZReq {
+  string domain = 1;           // Domain
+  string subject_type = 2;     // Client or User
+  string subject_kind = 3;     // ID or Token
+  string subject_relation = 4; // Subject relation
+  string subject = 5;          // Subject value (id or token, depending on kind)
+  string relation = 6;         // Relation to filter
+  string permission = 7;       // Action
+  string object = 8;           // Object ID
+  string object_type = 9;      // Client, User, Group
+}
+
+message AuthZRes {
+  bool authorized = 1;
+  string id = 2;
+}

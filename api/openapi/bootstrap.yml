@@ -5,7 +5,7 @@ openapi: 3.0.1
 info:
   title: Magistrala Bootstrap service
   description: |
-    HTTP API for managing platform things configuration.
+    HTTP API for managing platform clients configuration.
     Some useful links:
     - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
@@ -27,7 +27,7 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /{domainID}/things/configs:
+  /{domainID}/clients/configs:
     post:
       operationId: createConfig
       summary: Adds new config
@@ -60,7 +60,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
         "503":
-          description: Failed to receive response from the things service.
+          description: Failed to receive response from the clients service.
     get:
       operationId: getConfigs
       summary: Retrieves managed configs
@@ -88,7 +88,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /{domainID}/things/configs/{configId}:
+  /{domainID}/clients/configs/{configId}:
     get:
       operationId: getConfig
       summary: Retrieves config info (with channels).
@@ -118,7 +118,7 @@ paths:
       description: |
         Update is performed by replacing the current resource data with values
         provided in a request payload. Note that the owner, ID, external ID,
-        external key, Magistrala Thing ID and key cannot be changed.
+        external key, Magistrala Client ID and key cannot be changed.
       tags:
         - configs
       parameters:
@@ -167,7 +167,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /{domainID}/things/configs/certs/{configId}:
+  /{domainID}/clients/configs/certs/{configId}:
     patch:
       operationId: updateConfigCerts
       summary: Updates certs
@@ -199,13 +199,13 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /{domainID}/things/configs/connections/{configId}:
+  /{domainID}/clients/configs/connections/{configId}:
     put:
       operationId: updateConfigConnections
-      summary: Updates channels the thing is connected to
+      summary: Updates channels the client is connected to
       description: |
         Update connections performs update of the channel list corresponding
-        Thing is connected to.
+        Client is connected to.
       tags:
         - configs
       parameters:
@@ -230,7 +230,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/bootstrap/{externalId}:
+  /clients/bootstrap/{externalId}:
     get:
       operationId: getBootstrapConfig
       summary: Retrieves configuration.
@@ -255,7 +255,7 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /things/bootstrap/secure/{externalId}:
+  /clients/bootstrap/secure/{externalId}:
     get:
       operationId: getSecureBootstrapConfig
       summary: Retrieves configuration.
@@ -281,13 +281,13 @@ paths:
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-  /{domainID}/things/state/{configId}:
+  /{domainID}/clients/state/{configId}:
     put:
       operationId: updateConfigState
       summary: Updates Config state.
       description: |
         Updating state represents enabling/disabling Config, i.e. connecting
-        and disconnecting corresponding Magistrala Thing to the list of Channels.
+        and disconnecting corresponding Magistrala Client to the list of Channels.
       tags:
         - configs
       parameters:
@@ -330,14 +330,14 @@ components:
     Config:
       type: object
       properties:
-        thing_id:
+        client_id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Thing ID.
-        magistrala_key:
+          description: Corresponding Magistrala Client ID.
+        magistrala_secret:
           type: string
           format: uuid
-          description: Corresponding Magistrala Thing key.
+          description: Corresponding Magistrala Client key.
         channels:
           type: array
           minItems: 0
@@ -402,14 +402,14 @@ components:
     BootstrapConfig:
       type: object
       properties:
-        thing_id:
+        client_id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Thing ID.
-        thing_key:
+          description: Corresponding Magistrala Client ID.
+        client_key:
           type: string
           format: uuid
-          description: Corresponding Magistrala Thing key.
+          description: Corresponding Magistrala Client key.
         channels:
           type: array
           minItems: 0
@@ -428,17 +428,17 @@ components:
           type: string
           description: Issuing CA certificate.
       required:
-        - thing_id
-        - thing_key
+        - client_id
+        - client_key
         - channels
         - content
     ConfigUpdateCerts:
       type: object
       properties:
-        thing_id:
+        client_id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Thing ID.
+          description: Corresponding Magistrala Client ID.
         client_cert:
           type: string
           description: Client certificate.
@@ -449,15 +449,15 @@ components:
           type: string
           description: Issuing CA certificate.
       required:
-        - thing_id
-        - thing_key
+        - client_id
+        - client_key
         - channels
         - content
 
   parameters:
     ConfigId:
       name: configId
-      description: Unique Config identifier. It's the ID of the corresponding Thing.
+      description: Unique Config identifier. It's the ID of the corresponding Client.
       in: path
       schema:
         type: string
@@ -519,10 +519,10 @@ components:
               external_key:
                 type: string
                 description: External key.
-              thing_id:
+              client_id:
                 type: string
                 format: uuid
-                description: ID of the corresponding Magistrala Thing.
+                description: ID of the corresponding Magistrala Client.
               channels:
                 type: array
                 minItems: 0
@@ -535,17 +535,17 @@ components:
                 type: string
               client_cert:
                 type: string
-                description: Thing Certificate.
+                description: Client Certificate.
               client_key:
                 type: string
-                description: Thing Private Key.
+                description: Client Private Key.
               ca_cert:
                 type: string
             required:
               - external_id
               - external_key
     ConfigUpdateReq:
-      description: JSON-formatted document describing the updated thing.
+      description: JSON-formatted document describing the updated client.
       content:
         application/json:
           schema:
@@ -559,7 +559,7 @@ components:
               - content
               - name
     ConfigCertUpdateReq:
-      description: JSON-formatted document describing the updated thing.
+      description: JSON-formatted document describing the updated client.
       content:
         application/json:
           schema:
@@ -572,7 +572,7 @@ components:
               ca_cert:
                 type: string
     ConfigConnUpdateReq:
-      description: Array if IDs the thing is be connected to.
+      description: Array if IDs the client is be connected to.
       content:
         application/json:
           schema:
@@ -603,7 +603,7 @@ components:
             text/plain:
               schema:
                 type: string
-                description: Created configuration's relative URL (i.e. /things/configs/{configId}).
+                description: Created configuration's relative URL (i.e. /clients/configs/{configId}).
     ConfigListRes:
       description: Data retrieved. Configs from this list don't contain channels.
       content:
@@ -673,14 +673,14 @@ components:
       scheme: bearer
       bearerFormat: string
       description: |
-        * Things access: "Authorization: Thing <external_key>"
+        * Clients access: "Authorization: Client <external_key>"
 
     bootstrapEncAuth:
       type: http
       scheme: bearer
       bearerFormat: aes-sha256-uuid
       description: |
-        * Things access: "Authorization: Thing <external_enc_key>"
+        * Clients access: "Authorization: Client <external_enc_key>"
         Hex-encoded configuration external key encrypted using
         the AES algorithm and SHA256 sum of the external key
         itself as an encryption key.

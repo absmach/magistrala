@@ -14,16 +14,16 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/clients"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
-	mggroups "github.com/absmach/magistrala/pkg/groups"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/magistrala/provision/api"
-	"github.com/absmach/magistrala/things"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -75,7 +75,7 @@ func main() {
 
 	SDKCfg := mgsdk.Config{
 		UsersURL:        cfg.Server.UsersURL,
-		ThingsURL:       cfg.Server.ThingsURL,
+		ClientsURL:      cfg.Server.ClientsURL,
 		BootstrapURL:    cfg.Server.MgBSURL,
 		CertsURL:        cfg.Server.MgCertsURL,
 		MsgContentType:  contentType,
@@ -138,7 +138,7 @@ func loadConfig() (provision.Config, error) {
 
 	cfg.Bootstrap.Content = content
 	// This is default conf for provision if there is no config file
-	cfg.Channels = []mggroups.Group{
+	cfg.Channels = []channels.Channel{
 		{
 			Name:     "control-channel",
 			Metadata: map[string]interface{}{"type": "control"},
@@ -147,9 +147,9 @@ func loadConfig() (provision.Config, error) {
 			Metadata: map[string]interface{}{"type": "data"},
 		},
 	}
-	cfg.Things = []things.Client{
+	cfg.Clients = []clients.Client{
 		{
-			Name:     "thing",
+			Name:     "client",
 			Metadata: map[string]interface{}{"external_id": "xxxxxx"},
 		},
 	}

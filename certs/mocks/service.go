@@ -17,9 +17,9 @@ type Service struct {
 	mock.Mock
 }
 
-// IssueCert provides a mock function with given fields: ctx, domainID, token, thingID, ttl
-func (_m *Service) IssueCert(ctx context.Context, domainID string, token string, thingID string, ttl string) (certs.Cert, error) {
-	ret := _m.Called(ctx, domainID, token, thingID, ttl)
+// IssueCert provides a mock function with given fields: ctx, domainID, token, clientID, ttl
+func (_m *Service) IssueCert(ctx context.Context, domainID string, token string, clientID string, ttl string) (certs.Cert, error) {
+	ret := _m.Called(ctx, domainID, token, clientID, ttl)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IssueCert")
@@ -28,16 +28,16 @@ func (_m *Service) IssueCert(ctx context.Context, domainID string, token string,
 	var r0 certs.Cert
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (certs.Cert, error)); ok {
-		return rf(ctx, domainID, token, thingID, ttl)
+		return rf(ctx, domainID, token, clientID, ttl)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) certs.Cert); ok {
-		r0 = rf(ctx, domainID, token, thingID, ttl)
+		r0 = rf(ctx, domainID, token, clientID, ttl)
 	} else {
 		r0 = ret.Get(0).(certs.Cert)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = rf(ctx, domainID, token, thingID, ttl)
+		r1 = rf(ctx, domainID, token, clientID, ttl)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -45,9 +45,9 @@ func (_m *Service) IssueCert(ctx context.Context, domainID string, token string,
 	return r0, r1
 }
 
-// ListCerts provides a mock function with given fields: ctx, thingID, pm
-func (_m *Service) ListCerts(ctx context.Context, thingID string, pm certs.PageMetadata) (certs.CertPage, error) {
-	ret := _m.Called(ctx, thingID, pm)
+// ListCerts provides a mock function with given fields: ctx, clientID, pm
+func (_m *Service) ListCerts(ctx context.Context, clientID string, pm certs.PageMetadata) (certs.CertPage, error) {
+	ret := _m.Called(ctx, clientID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCerts")
@@ -56,16 +56,16 @@ func (_m *Service) ListCerts(ctx context.Context, thingID string, pm certs.PageM
 	var r0 certs.CertPage
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, certs.PageMetadata) (certs.CertPage, error)); ok {
-		return rf(ctx, thingID, pm)
+		return rf(ctx, clientID, pm)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, certs.PageMetadata) certs.CertPage); ok {
-		r0 = rf(ctx, thingID, pm)
+		r0 = rf(ctx, clientID, pm)
 	} else {
 		r0 = ret.Get(0).(certs.CertPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, certs.PageMetadata) error); ok {
-		r1 = rf(ctx, thingID, pm)
+		r1 = rf(ctx, clientID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -73,9 +73,9 @@ func (_m *Service) ListCerts(ctx context.Context, thingID string, pm certs.PageM
 	return r0, r1
 }
 
-// ListSerials provides a mock function with given fields: ctx, thingID, pm
-func (_m *Service) ListSerials(ctx context.Context, thingID string, pm certs.PageMetadata) (certs.CertPage, error) {
-	ret := _m.Called(ctx, thingID, pm)
+// ListSerials provides a mock function with given fields: ctx, clientID, pm
+func (_m *Service) ListSerials(ctx context.Context, clientID string, pm certs.PageMetadata) (certs.CertPage, error) {
+	ret := _m.Called(ctx, clientID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListSerials")
@@ -84,16 +84,16 @@ func (_m *Service) ListSerials(ctx context.Context, thingID string, pm certs.Pag
 	var r0 certs.CertPage
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, certs.PageMetadata) (certs.CertPage, error)); ok {
-		return rf(ctx, thingID, pm)
+		return rf(ctx, clientID, pm)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, certs.PageMetadata) certs.CertPage); ok {
-		r0 = rf(ctx, thingID, pm)
+		r0 = rf(ctx, clientID, pm)
 	} else {
 		r0 = ret.Get(0).(certs.CertPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, certs.PageMetadata) error); ok {
-		r1 = rf(ctx, thingID, pm)
+		r1 = rf(ctx, clientID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -101,9 +101,9 @@ func (_m *Service) ListSerials(ctx context.Context, thingID string, pm certs.Pag
 	return r0, r1
 }
 
-// RevokeCert provides a mock function with given fields: ctx, domainID, token, thingID
-func (_m *Service) RevokeCert(ctx context.Context, domainID string, token string, thingID string) (certs.Revoke, error) {
-	ret := _m.Called(ctx, domainID, token, thingID)
+// RevokeCert provides a mock function with given fields: ctx, domainID, token, clientID
+func (_m *Service) RevokeCert(ctx context.Context, domainID string, token string, clientID string) (certs.Revoke, error) {
+	ret := _m.Called(ctx, domainID, token, clientID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RevokeCert")
@@ -112,16 +112,16 @@ func (_m *Service) RevokeCert(ctx context.Context, domainID string, token string
 	var r0 certs.Revoke
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (certs.Revoke, error)); ok {
-		return rf(ctx, domainID, token, thingID)
+		return rf(ctx, domainID, token, clientID)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) certs.Revoke); ok {
-		r0 = rf(ctx, domainID, token, thingID)
+		r0 = rf(ctx, domainID, token, clientID)
 	} else {
 		r0 = ret.Get(0).(certs.Revoke)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, domainID, token, thingID)
+		r1 = rf(ctx, domainID, token, clientID)
 	} else {
 		r1 = ret.Error(1)
 	}

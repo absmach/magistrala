@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala"
 	mgauth "github.com/absmach/magistrala/auth"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -779,7 +779,7 @@ func TestUpdateSecret(t *testing.T) {
 		retrieveByIDResponse    users.User
 		retrieveByEmailResponse users.User
 		updateSecretResponse    users.User
-		issueResponse           *magistrala.Token
+		issueResponse           *grpcTokenV1.Token
 		response                users.User
 		retrieveByIDErr         error
 		retrieveByEmailErr      error
@@ -795,7 +795,7 @@ func TestUpdateSecret(t *testing.T) {
 			retrieveByEmailResponse: rUser,
 			retrieveByIDResponse:    user,
 			updateSecretResponse:    responseUser,
-			issueResponse:           &magistrala.Token{AccessToken: validToken},
+			issueResponse:           &grpcTokenV1.Token{AccessToken: validToken},
 			response:                responseUser,
 			err:                     nil,
 		},
@@ -1355,9 +1355,9 @@ func TestListMembers(t *testing.T) {
 		err                     error
 	}{
 		{
-			desc:                    "list members with no policies successfully of the things kind",
+			desc:                    "list members with no policies successfully of the clients kind",
 			groupID:                 validID,
-			objectKind:              policysvc.ThingsKind,
+			objectKind:              policysvc.ClientsKind,
 			objectID:                validID,
 			page:                    users.Page{Offset: 0, Limit: 100, Permission: "read"},
 			listAllSubjectsResponse: policysvc.PolicyPage{},
@@ -1365,7 +1365,7 @@ func TestListMembers(t *testing.T) {
 				SubjectType: policysvc.UserType,
 				Permission:  "read",
 				Object:      validID,
-				ObjectType:  policysvc.ThingType,
+				ObjectType:  policysvc.ClientType,
 			},
 			response: users.MembersPage{
 				Page: users.Page{
@@ -1377,16 +1377,16 @@ func TestListMembers(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:       "list members with policies successsfully of the things kind",
+			desc:       "list members with policies successsfully of the clients kind",
 			groupID:    validID,
-			objectKind: policysvc.ThingsKind,
+			objectKind: policysvc.ClientsKind,
 			objectID:   validID,
 			page:       users.Page{Offset: 0, Limit: 100, Permission: "read"},
 			listAllSubjectsReq: policysvc.Policy{
 				SubjectType: policysvc.UserType,
 				Permission:  "read",
 				Object:      validID,
-				ObjectType:  policysvc.ThingType,
+				ObjectType:  policysvc.ClientType,
 			},
 			listAllSubjectsResponse: policysvc.PolicyPage{Policies: []string{validPolicy}},
 			retrieveAllResponse: users.UsersPage{
@@ -1408,16 +1408,16 @@ func TestListMembers(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:       "list members with policies successsfully of the things kind with permissions",
+			desc:       "list members with policies successsfully of the clients kind with permissions",
 			groupID:    validID,
-			objectKind: policysvc.ThingsKind,
+			objectKind: policysvc.ClientsKind,
 			objectID:   validID,
 			page:       users.Page{Offset: 0, Limit: 100, Permission: "read", ListPerms: true},
 			listAllSubjectsReq: policysvc.Policy{
 				SubjectType: policysvc.UserType,
 				Permission:  "read",
 				Object:      validID,
-				ObjectType:  policysvc.ThingType,
+				ObjectType:  policysvc.ClientType,
 			},
 			listAllSubjectsResponse: policysvc.PolicyPage{Policies: []string{validPolicy}},
 			retrieveAllResponse: users.UsersPage{
@@ -1440,16 +1440,16 @@ func TestListMembers(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:       "list members with policies of the things kind with permissionswith failed list permissions",
+			desc:       "list members with policies of the clients kind with permissionswith failed list permissions",
 			groupID:    validID,
-			objectKind: policysvc.ThingsKind,
+			objectKind: policysvc.ClientsKind,
 			objectID:   validID,
 			page:       users.Page{Offset: 0, Limit: 100, Permission: "read", ListPerms: true},
 			listAllSubjectsReq: policysvc.Policy{
 				SubjectType: policysvc.UserType,
 				Permission:  "read",
 				Object:      validID,
-				ObjectType:  policysvc.ThingType,
+				ObjectType:  policysvc.ClientType,
 			},
 			listAllSubjectsResponse: policysvc.PolicyPage{Policies: []string{validPolicy}},
 			retrieveAllResponse: users.UsersPage{
@@ -1466,32 +1466,32 @@ func TestListMembers(t *testing.T) {
 			err:                     svcerr.ErrNotFound,
 		},
 		{
-			desc:       "list members with of the things kind with failed to list all subjects",
+			desc:       "list members with of the clients kind with failed to list all subjects",
 			groupID:    validID,
-			objectKind: policysvc.ThingsKind,
+			objectKind: policysvc.ClientsKind,
 			objectID:   validID,
 			page:       users.Page{Offset: 0, Limit: 100, Permission: "read"},
 			listAllSubjectsReq: policysvc.Policy{
 				SubjectType: policysvc.UserType,
 				Permission:  "read",
 				Object:      validID,
-				ObjectType:  policysvc.ThingType,
+				ObjectType:  policysvc.ClientType,
 			},
 			listAllSubjectsErr:      repoerr.ErrNotFound,
 			listAllSubjectsResponse: policysvc.PolicyPage{},
 			err:                     repoerr.ErrNotFound,
 		},
 		{
-			desc:       "list members with of the things kind with failed to retrieve all",
+			desc:       "list members with of the clients kind with failed to retrieve all",
 			groupID:    validID,
-			objectKind: policysvc.ThingsKind,
+			objectKind: policysvc.ClientsKind,
 			objectID:   validID,
 			page:       users.Page{Offset: 0, Limit: 100, Permission: "read"},
 			listAllSubjectsReq: policysvc.Policy{
 				SubjectType: policysvc.UserType,
 				Permission:  "read",
 				Object:      validID,
-				ObjectType:  policysvc.ThingType,
+				ObjectType:  policysvc.ClientType,
 			},
 			listAllSubjectsResponse: policysvc.PolicyPage{Policies: []string{validPolicy}},
 			retrieveAllResponse:     users.UsersPage{},
@@ -1635,7 +1635,7 @@ func TestIssueToken(t *testing.T) {
 		desc                       string
 		user                       users.User
 		retrieveByUsernameResponse users.User
-		issueResponse              *magistrala.Token
+		issueResponse              *grpcTokenV1.Token
 		retrieveByUsernameErr      error
 		issueErr                   error
 		err                        error
@@ -1644,14 +1644,14 @@ func TestIssueToken(t *testing.T) {
 			desc:                       "issue token for an existing user",
 			user:                       user,
 			retrieveByUsernameResponse: rUser,
-			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			issueResponse:              &grpcTokenV1.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                        nil,
 		},
 		{
 			desc:                       "issue token for non-empty domain id",
 			user:                       user,
 			retrieveByUsernameResponse: rUser,
-			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			issueResponse:              &grpcTokenV1.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                        nil,
 		},
 		{
@@ -1671,7 +1671,7 @@ func TestIssueToken(t *testing.T) {
 			desc:                       "issue token with empty domain id",
 			user:                       user,
 			retrieveByUsernameResponse: rUser,
-			issueResponse:              &magistrala.Token{},
+			issueResponse:              &grpcTokenV1.Token{},
 			issueErr:                   svcerr.ErrAuthentication,
 			err:                        svcerr.ErrAuthentication,
 		},
@@ -1679,29 +1679,27 @@ func TestIssueToken(t *testing.T) {
 			desc:                       "issue token with grpc error",
 			user:                       user,
 			retrieveByUsernameResponse: rUser,
-			issueResponse:              &magistrala.Token{},
+			issueResponse:              &grpcTokenV1.Token{},
 			issueErr:                   svcerr.ErrAuthentication,
 			err:                        svcerr.ErrAuthentication,
 		},
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := cRepo.On("RetrieveByUsername", context.Background(), tc.user.Credentials.Username).Return(tc.retrieveByUsernameResponse, tc.retrieveByUsernameErr)
-			authCall := auth.On("Issue", context.Background(), &magistrala.IssueReq{UserId: tc.user.ID, Type: uint32(mgauth.AccessKey)}).Return(tc.issueResponse, tc.issueErr)
-			token, err := svc.IssueToken(context.Background(), tc.user.Credentials.Username, tc.user.Credentials.Secret)
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			if err == nil {
-				assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
-				assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
-				ok := repoCall.Parent.AssertCalled(t, "RetrieveByUsername", context.Background(), tc.user.Credentials.Username)
-				assert.True(t, ok, fmt.Sprintf("RetrieveByUsername was not called on %s", tc.desc))
-				ok = authCall.Parent.AssertCalled(t, "Issue", context.Background(), &magistrala.IssueReq{UserId: tc.user.ID, Type: uint32(mgauth.AccessKey)})
-				assert.True(t, ok, fmt.Sprintf("Issue was not called on %s", tc.desc))
-			}
-			authCall.Unset()
-			repoCall.Unset()
-		})
+		repoCall := cRepo.On("RetrieveByUsername", context.Background(), tc.user.Credentials.Username).Return(tc.retrieveByUsernameResponse, tc.retrieveByUsernameErr)
+		authCall := auth.On("Issue", context.Background(), &grpcTokenV1.IssueReq{UserId: tc.user.ID, Type: uint32(mgauth.AccessKey)}).Return(tc.issueResponse, tc.issueErr)
+		token, err := svc.IssueToken(context.Background(), tc.user.Credentials.Username, tc.user.Credentials.Secret)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		if err == nil {
+			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
+			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
+			ok := repoCall.Parent.AssertCalled(t, "RetrieveByUsername", context.Background(), tc.user.Credentials.Username)
+			assert.True(t, ok, fmt.Sprintf("RetrieveByUsername was not called on %s", tc.desc))
+			ok = authCall.Parent.AssertCalled(t, "Issue", context.Background(), &grpcTokenV1.IssueReq{UserId: tc.user.ID, Type: uint32(mgauth.AccessKey)})
+			assert.True(t, ok, fmt.Sprintf("Issue was not called on %s", tc.desc))
+		}
+		authCall.Unset()
+		repoCall.Unset()
 	}
 }
 
@@ -1714,7 +1712,7 @@ func TestRefreshToken(t *testing.T) {
 	cases := []struct {
 		desc        string
 		session     authn.Session
-		refreshResp *magistrala.Token
+		refreshResp *grpcTokenV1.Token
 		refresErr   error
 		repoResp    users.User
 		repoErr     error
@@ -1723,14 +1721,21 @@ func TestRefreshToken(t *testing.T) {
 		{
 			desc:        "refresh token with refresh token for an existing user",
 			session:     authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
-			refreshResp: &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			refreshResp: &grpcTokenV1.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			repoResp:    rUser,
+			err:         nil,
+		},
+		{
+			desc:        "refresh token with refresh token for empty domain id",
+			session:     authn.Session{UserID: validID},
+			refreshResp: &grpcTokenV1.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			repoResp:    rUser,
 			err:         nil,
 		},
 		{
 			desc:        "refresh token with access token for an existing user",
 			session:     authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
-			refreshResp: &magistrala.Token{},
+			refreshResp: &grpcTokenV1.Token{},
 			refresErr:   svcerr.ErrAuthentication,
 			repoResp:    rUser,
 			err:         svcerr.ErrAuthentication,
@@ -1750,7 +1755,7 @@ func TestRefreshToken(t *testing.T) {
 		{
 			desc:        "refresh token with empty domain id",
 			session:     authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
-			refreshResp: &magistrala.Token{},
+			refreshResp: &grpcTokenV1.Token{},
 			refresErr:   svcerr.ErrAuthentication,
 			repoResp:    rUser,
 			err:         svcerr.ErrAuthentication,
@@ -1758,22 +1763,20 @@ func TestRefreshToken(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			authCall := authsvc.On("Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken}).Return(tc.refreshResp, tc.refresErr)
-			repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
-			token, err := svc.RefreshToken(context.Background(), tc.session, validToken)
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			if err == nil {
-				assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
-				assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
-				ok := authCall.Parent.AssertCalled(t, "Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken})
-				assert.True(t, ok, fmt.Sprintf("Refresh was not called on %s", tc.desc))
-				ok = repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
-				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
-			}
-			authCall.Unset()
-			repoCall.Unset()
-		})
+		authCall := authsvc.On("Refresh", context.Background(), &grpcTokenV1.RefreshReq{RefreshToken: validToken}).Return(tc.refreshResp, tc.refresErr)
+		repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
+		token, err := svc.RefreshToken(context.Background(), tc.session, validToken)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		if err == nil {
+			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
+			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
+			ok := authCall.Parent.AssertCalled(t, "Refresh", context.Background(), &grpcTokenV1.RefreshReq{RefreshToken: validToken})
+			assert.True(t, ok, fmt.Sprintf("Refresh was not called on %s", tc.desc))
+			ok = repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
+			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
+		}
+		authCall.Unset()
+		repoCall.Unset()
 	}
 }
 
@@ -1785,7 +1788,7 @@ func TestGenerateResetToken(t *testing.T) {
 		email                   string
 		host                    string
 		retrieveByEmailResponse users.User
-		issueResponse           *magistrala.Token
+		issueResponse           *grpcTokenV1.Token
 		retrieveByEmailErr      error
 		issueErr                error
 		err                     error
@@ -1795,7 +1798,7 @@ func TestGenerateResetToken(t *testing.T) {
 			email:                   "existingemail@example.com",
 			host:                    "examplehost",
 			retrieveByEmailResponse: user,
-			issueResponse:           &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
+			issueResponse:           &grpcTokenV1.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			err:                     nil,
 		},
 		{
@@ -1814,7 +1817,7 @@ func TestGenerateResetToken(t *testing.T) {
 			email:                   "existingemail@example.com",
 			host:                    "examplehost",
 			retrieveByEmailResponse: user,
-			issueResponse:           &magistrala.Token{},
+			issueResponse:           &grpcTokenV1.Token{},
 			issueErr:                svcerr.ErrAuthorization,
 			err:                     svcerr.ErrAuthorization,
 		},

@@ -13,16 +13,18 @@ const (
 	NewGroupKind   = "new_group"
 	ChannelsKind   = "channels"
 	NewChannelKind = "new_channel"
-	ThingsKind     = "things"
-	NewThingKind   = "new_thing"
+	ClientsKind    = "clients"
+	NewClientKind  = "new_client"
 	UsersKind      = "users"
 	DomainsKind    = "domains"
 	PlatformKind   = "platform"
 )
 
 const (
+	RoleType     = "role"
 	GroupType    = "group"
-	ThingType    = "thing"
+	ClientType   = "client"
+	ChannelType  = "channel"
 	UserType     = "user"
 	DomainType   = "domain"
 	PlatformType = "platform"

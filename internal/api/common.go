@@ -11,11 +11,11 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/certs"
-	"github.com/absmach/magistrala/internal/groups"
+	"github.com/absmach/magistrala/clients"
+	"github.com/absmach/magistrala/groups"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/things"
 	"github.com/absmach/magistrala/users"
 	"github.com/gofrs/uuid/v5"
 )
@@ -50,7 +50,7 @@ const (
 	EmailKey         = "email"
 	SharedByKey      = "shared_by"
 	TokenKey         = "token"
-	DefPermission    = "view"
+	DefPermission    = "read_permission"
 	DefTotal         = uint64(100)
 	DefOffset        = 0
 	DefOrder         = "updated_at"
@@ -58,7 +58,7 @@ const (
 	DefLimit         = 10
 	DefLevel         = 0
 	DefStatus        = "enabled"
-	DefClientStatus  = things.Enabled
+	DefClientStatus  = clients.Enabled
 	DefUserStatus    = users.Enabled
 	DefGroupStatus   = groups.Enabled
 	DefListPerms     = false
@@ -71,6 +71,7 @@ const (
 	// MaxNameSize limits name size to prevent making them too complex.
 	MaxLimitSize = 100
 	MaxNameSize  = 1024
+	MaxIDSize    = 36
 	NameOrder    = "name"
 	IDOrder      = "id"
 	AscDir       = "asc"
@@ -184,7 +185,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Contains(err, svcerr.ErrCreateEntity),
 		errors.Contains(err, svcerr.ErrUpdateEntity),
 		errors.Contains(err, svcerr.ErrRemoveEntity),
-		errors.Contains(err, svcerr.ErrEnableClient):
+		errors.Contains(err, svcerr.ErrEnableClient),
+		errors.Contains(err, svcerr.ErrEnableUser),
+		errors.Contains(err, svcerr.ErrDisableUser):
 		err = unwrap(err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 

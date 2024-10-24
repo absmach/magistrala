@@ -11,13 +11,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala"
+	chmocks "github.com/absmach/magistrala/channels/mocks"
+	climocks "github.com/absmach/magistrala/clients/mocks"
 	server "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
+	grpcChannelsV1 "github.com/absmach/magistrala/internal/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/internal/grpc/clients/v1"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnMocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	pubsub "github.com/absmach/magistrala/pkg/messaging/mocks"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/absmach/mgate"
 	proxy "github.com/absmach/mgate/pkg/http"
 	"github.com/absmach/mgate/pkg/session"
@@ -30,9 +34,9 @@ const (
 	invalidValue = "invalid"
 )
 
-func newService(things magistrala.ThingsServiceClient) (session.Handler, *pubsub.PubSub) {
+func newService(authn mgauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) (session.Handler, *pubsub.PubSub) {
 	pub := new(pubsub.PubSub)
-	return server.NewHandler(pub, mglog.NewMock(), things), pub
+	return server.NewHandler(pub, authn, clients, channels, mglog.NewMock()), pub
 }
 
 func newTargetHTTPServer() *httptest.Server {
@@ -69,7 +73,7 @@ func (tr testRequest) make() (*http.Response, error) {
 	}
 
 	if tr.token != "" {
-		req.Header.Set("Authorization", apiutil.ThingPrefix+tr.token)
+		req.Header.Set("Authorization", apiutil.ClientPrefix+tr.token)
 	}
 	if tr.basicAuth && tr.token != "" {
 		req.SetBasicAuth("", tr.token)
@@ -81,26 +85,25 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func TestPublish(t *testing.T) {
-	things := new(thmocks.ThingsServiceClient)
+	clients := new(climocks.ClientsServiceClient)
+	authn := new(authnMocks.Authentication)
+	channels := new(chmocks.ChannelsServiceClient)
 	chanID := "1"
 	ctSenmlJSON := "application/senml+json"
 	ctSenmlCBOR := "application/senml+cbor"
 	ctJSON := "application/json"
-	thingKey := "thing_key"
+	clientKey := "client_key"
 	invalidKey := invalidValue
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	msgJSON := `{"field1":"val1","field2":"val2"}`
 	msgCBOR := `81A3616E6763757272656E746174206176FB3FF999999999999A`
-	svc, pub := newService(things)
+	svc, pub := newService(authn, clients, channels)
 	target := newTargetHTTPServer()
 	defer target.Close()
 	ts, err := newProxyHTPPServer(svc, target)
 	assert.Nil(t, err, fmt.Sprintf("failed to create proxy server with err: %v", err))
 
 	defer ts.Close()
-
-	things.On("Authorize", mock.Anything, &magistrala.ThingsAuthzReq{ThingKey: thingKey, ChannelId: chanID, Permission: "publish"}).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: ""}, nil)
-	things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.ThingsAuthzRes{Authorized: false, Id: ""}, nil)
 
 	cases := map[string]struct {
 		chanID      string
@@ -114,21 +117,21 @@ func TestPublish(t *testing.T) {
 			chanID:      chanID,
 			msg:         msg,
 			contentType: ctSenmlJSON,
-			key:         thingKey,
+			key:         clientKey,
 			status:      http.StatusAccepted,
 		},
 		"publish message with application/senml+cbor content-type": {
 			chanID:      chanID,
 			msg:         msgCBOR,
 			contentType: ctSenmlCBOR,
-			key:         thingKey,
+			key:         clientKey,
 			status:      http.StatusAccepted,
 		},
 		"publish message with application/json content-type": {
 			chanID:      chanID,
 			msg:         msgJSON,
 			contentType: ctJSON,
-			key:         thingKey,
+			key:         clientKey,
 			status:      http.StatusAccepted,
 		},
 		"publish message with empty key": {
@@ -142,7 +145,7 @@ func TestPublish(t *testing.T) {
 			chanID:      chanID,
 			msg:         msg,
 			contentType: ctSenmlJSON,
-			key:         thingKey,
+			key:         clientKey,
 			basicAuth:   true,
 			status:      http.StatusAccepted,
 		},
@@ -165,14 +168,14 @@ func TestPublish(t *testing.T) {
 			chanID:      chanID,
 			msg:         msg,
 			contentType: "",
-			key:         thingKey,
+			key:         clientKey,
 			status:      http.StatusUnsupportedMediaType,
 		},
 		"publish message to invalid channel": {
 			chanID:      "",
 			msg:         msg,
 			contentType: ctSenmlJSON,
-			key:         thingKey,
+			key:         clientKey,
 			status:      http.StatusBadRequest,
 		},
 	}

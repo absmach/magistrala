@@ -21,6 +21,27 @@ var (
 	// ErrMissingID indicates missing entity ID.
 	ErrMissingID = errors.New("missing entity id")
 
+	// ErrMissingClientID indicates missing client ID.
+	ErrMissingClientID = errors.New("missing cient id")
+
+	// ErrMissingChannelID indicates missing client ID.
+	ErrMissingChannelID = errors.New("missing channel id")
+
+	// ErrMissingConnectionType indicates missing connection tpye.
+	ErrMissingConnectionType = errors.New("missing connection type")
+
+	// ErrMissingParentGroupID indicates missing parent group ID.
+	ErrMissingParentGroupID = errors.New("missing parent group id")
+
+	// ErrMissingChildrenGroupIDs indicates missing children group IDs.
+	ErrMissingChildrenGroupIDs = errors.New("missing children group ids")
+
+	// ErrSelfParentingNotAllowed indicates child id is same as parent id.
+	ErrSelfParentingNotAllowed = errors.New("self parenting not allowed")
+
+	// ErrInvalidChildGroupID indicates invalid child group ID.
+	ErrInvalidChildGroupID = errors.New("invalid child group id")
+
 	// ErrInvalidAuthKey indicates invalid auth key.
 	ErrInvalidAuthKey = errors.New("invalid auth key")
 
@@ -39,6 +60,9 @@ var (
 	// ErrLimitSize indicates that an invalid limit.
 	ErrLimitSize = errors.New("invalid limit size")
 
+	// ErrLevel indicates that an invalid level.
+	ErrLevel = errors.New("invalid level")
+
 	// ErrOffsetSize indicates an invalid offset.
 	ErrOffsetSize = errors.New("invalid offset size")
 
@@ -53,6 +77,15 @@ var (
 
 	// ErrEmptyList indicates that entity data is empty.
 	ErrEmptyList = errors.New("empty list provided")
+
+	// ErrMissingRoleName indicates that role name are empty
+	ErrMissingRoleName = errors.New("empty role name")
+
+	// ErrMissingRoleOperations indicates that role operations are empty
+	ErrMissingRoleOperations = errors.New("empty role operations")
+
+	// ErrMissingRoleMembers indicates that role members are empty
+	ErrMissingRoleMembers = errors.New("empty role members")
 
 	// ErrMalformedPolicy indicates that policies are malformed.
 	ErrMalformedPolicy = errors.New("malformed policy")

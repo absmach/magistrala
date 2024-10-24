@@ -14,9 +14,9 @@ type Service struct {
 	mock.Mock
 }
 
-// Cert provides a mock function with given fields: domainID, token, thingID, duration
-func (_m *Service) Cert(domainID string, token string, thingID string, duration string) (string, string, error) {
-	ret := _m.Called(domainID, token, thingID, duration)
+// Cert provides a mock function with given fields: domainID, token, clientID, duration
+func (_m *Service) Cert(domainID string, token string, clientID string, duration string) (string, string, error) {
+	ret := _m.Called(domainID, token, clientID, duration)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Cert")
@@ -26,22 +26,22 @@ func (_m *Service) Cert(domainID string, token string, thingID string, duration 
 	var r1 string
 	var r2 error
 	if rf, ok := ret.Get(0).(func(string, string, string, string) (string, string, error)); ok {
-		return rf(domainID, token, thingID, duration)
+		return rf(domainID, token, clientID, duration)
 	}
 	if rf, ok := ret.Get(0).(func(string, string, string, string) string); ok {
-		r0 = rf(domainID, token, thingID, duration)
+		r0 = rf(domainID, token, clientID, duration)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string, string) string); ok {
-		r1 = rf(domainID, token, thingID, duration)
+		r1 = rf(domainID, token, clientID, duration)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
 	if rf, ok := ret.Get(2).(func(string, string, string, string) error); ok {
-		r2 = rf(domainID, token, thingID, duration)
+		r2 = rf(domainID, token, clientID, duration)
 	} else {
 		r2 = ret.Error(2)
 	}

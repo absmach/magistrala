@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/absmach/magistrala"
 	mgauth "github.com/absmach/magistrala/auth"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -33,7 +33,7 @@ func TestIssueToken(t *testing.T) {
 	cases := []struct {
 		desc     string
 		login    sdk.Login
-		svcRes   *magistrala.Token
+		svcRes   *grpcTokenV1.Token
 		svcErr   error
 		response sdk.Token
 		err      errors.SDKError
@@ -44,7 +44,7 @@ func TestIssueToken(t *testing.T) {
 				Identity: client.Credentials.Username,
 				Secret:   client.Credentials.Secret,
 			},
-			svcRes: &magistrala.Token{
+			svcRes: &grpcTokenV1.Token{
 				AccessToken:  token.AccessToken,
 				RefreshToken: &token.RefreshToken,
 				AccessType:   mgauth.AccessKey.String(),
@@ -59,7 +59,7 @@ func TestIssueToken(t *testing.T) {
 				Identity: invalidIdentity,
 				Secret:   client.Credentials.Secret,
 			},
-			svcRes:   &magistrala.Token{},
+			svcRes:   &grpcTokenV1.Token{},
 			svcErr:   svcerr.ErrAuthentication,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -70,7 +70,7 @@ func TestIssueToken(t *testing.T) {
 				Identity: client.Credentials.Username,
 				Secret:   "invalid",
 			},
-			svcRes:   &magistrala.Token{},
+			svcRes:   &grpcTokenV1.Token{},
 			svcErr:   svcerr.ErrLogin,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrLogin, http.StatusUnauthorized),
@@ -81,7 +81,7 @@ func TestIssueToken(t *testing.T) {
 				Identity: "",
 				Secret:   client.Credentials.Secret,
 			},
-			svcRes:   &magistrala.Token{},
+			svcRes:   &grpcTokenV1.Token{},
 			svcErr:   nil,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
@@ -92,7 +92,7 @@ func TestIssueToken(t *testing.T) {
 				Identity: client.Credentials.Username,
 				Secret:   "",
 			},
-			svcRes:   &magistrala.Token{},
+			svcRes:   &grpcTokenV1.Token{},
 			svcErr:   nil,
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingPass), http.StatusBadRequest),
@@ -127,7 +127,7 @@ func TestRefreshToken(t *testing.T) {
 	cases := []struct {
 		desc        string
 		token       string
-		svcRes      *magistrala.Token
+		svcRes      *grpcTokenV1.Token
 		svcErr      error
 		identifyErr error
 		response    sdk.Token
@@ -136,7 +136,7 @@ func TestRefreshToken(t *testing.T) {
 		{
 			desc:  "refresh token successfully",
 			token: token.RefreshToken,
-			svcRes: &magistrala.Token{
+			svcRes: &grpcTokenV1.Token{
 				AccessToken:  token.AccessToken,
 				RefreshToken: &token.RefreshToken,
 				AccessType:   token.AccessType,

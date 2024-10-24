@@ -6,7 +6,7 @@ package tracing
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
+	grpcTokenV1 "github.com/absmach/magistrala/internal/grpc/token/v1"
 	"github.com/absmach/magistrala/pkg/authn"
 	users "github.com/absmach/magistrala/users"
 	"go.opentelemetry.io/otel/attribute"
@@ -34,7 +34,7 @@ func (tm *tracingMiddleware) Register(ctx context.Context, session authn.Session
 }
 
 // IssueToken traces the "IssueToken" operation of the wrapped users.Service.
-func (tm *tracingMiddleware) IssueToken(ctx context.Context, username, secret string) (*magistrala.Token, error) {
+func (tm *tracingMiddleware) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_issue_token", trace.WithAttributes(attribute.String("username", username)))
 	defer span.End()
 
@@ -42,7 +42,7 @@ func (tm *tracingMiddleware) IssueToken(ctx context.Context, username, secret st
 }
 
 // RefreshToken traces the "RefreshToken" operation of the wrapped users.Service.
-func (tm *tracingMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*magistrala.Token, error) {
+func (tm *tracingMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*grpcTokenV1.Token, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_refresh_token", trace.WithAttributes(attribute.String("refresh_token", refreshToken)))
 	defer span.End()
 

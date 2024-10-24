@@ -326,27 +326,27 @@ func (_m *SDK) Channels(pm sdk.PageMetadata, domainID string, token string) (sdk
 	return r0, r1
 }
 
-// ChannelsByThing provides a mock function with given fields: thingID, pm, domainID, token
-func (_m *SDK) ChannelsByThing(thingID string, pm sdk.PageMetadata, domainID string, token string) (sdk.ChannelsPage, errors.SDKError) {
-	ret := _m.Called(thingID, pm, domainID, token)
+// ChannelsByClient provides a mock function with given fields: clientID, pm, domainID, token
+func (_m *SDK) ChannelsByClient(clientID string, pm sdk.PageMetadata, domainID string, token string) (sdk.ChannelsPage, errors.SDKError) {
+	ret := _m.Called(clientID, pm, domainID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ChannelsByThing")
+		panic("no return value specified for ChannelsByClient")
 	}
 
 	var r0 sdk.ChannelsPage
 	var r1 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) (sdk.ChannelsPage, errors.SDKError)); ok {
-		return rf(thingID, pm, domainID, token)
+		return rf(clientID, pm, domainID, token)
 	}
 	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) sdk.ChannelsPage); ok {
-		r0 = rf(thingID, pm, domainID, token)
+		r0 = rf(clientID, pm, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ChannelsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = rf(thingID, pm, domainID, token)
+		r1 = rf(clientID, pm, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -386,6 +386,126 @@ func (_m *SDK) Children(id string, pm sdk.PageMetadata, domainID string, token s
 	return r0, r1
 }
 
+// Client provides a mock function with given fields: id, domainID, token
+func (_m *SDK) Client(id string, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Client")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(id, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Client); ok {
+		r0 = rf(id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// ClientPermissions provides a mock function with given fields: id, domainID, token
+func (_m *SDK) ClientPermissions(id string, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClientPermissions")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(id, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Client); ok {
+		r0 = rf(id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// Clients provides a mock function with given fields: pm, domainID, token
+func (_m *SDK) Clients(pm sdk.PageMetadata, domainID string, token string) (sdk.ClientsPage, errors.SDKError) {
+	ret := _m.Called(pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Clients")
+	}
+
+	var r0 sdk.ClientsPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) (sdk.ClientsPage, errors.SDKError)); ok {
+		return rf(pm, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) sdk.ClientsPage); ok {
+		r0 = rf(pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ClientsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = rf(pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// ClientsByChannel provides a mock function with given fields: chanID, pm, domainID, token
+func (_m *SDK) ClientsByChannel(chanID string, pm sdk.PageMetadata, domainID string, token string) (sdk.ClientsPage, errors.SDKError) {
+	ret := _m.Called(chanID, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClientsByChannel")
+	}
+
+	var r0 sdk.ClientsPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) (sdk.ClientsPage, errors.SDKError)); ok {
+		return rf(chanID, pm, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) sdk.ClientsPage); ok {
+		r0 = rf(chanID, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ClientsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = rf(chanID, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
 // Connect provides a mock function with given fields: conns, domainID, token
 func (_m *SDK) Connect(conns sdk.Connection, domainID string, token string) errors.SDKError {
 	ret := _m.Called(conns, domainID, token)
@@ -406,17 +526,17 @@ func (_m *SDK) Connect(conns sdk.Connection, domainID string, token string) erro
 	return r0
 }
 
-// ConnectThing provides a mock function with given fields: thingID, chanID, domainID, token
-func (_m *SDK) ConnectThing(thingID string, chanID string, domainID string, token string) errors.SDKError {
-	ret := _m.Called(thingID, chanID, domainID, token)
+// ConnectClient provides a mock function with given fields: clientID, chanID, domainID, token
+func (_m *SDK) ConnectClient(clientID string, chanID string, domainID string, token string) errors.SDKError {
+	ret := _m.Called(clientID, chanID, domainID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ConnectThing")
+		panic("no return value specified for ConnectClient")
 	}
 
 	var r0 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, string, string, string) errors.SDKError); ok {
-		r0 = rf(thingID, chanID, domainID, token)
+		r0 = rf(clientID, chanID, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -447,6 +567,68 @@ func (_m *SDK) CreateChannel(channel sdk.Channel, domainID string, token string)
 
 	if rf, ok := ret.Get(1).(func(sdk.Channel, string, string) errors.SDKError); ok {
 		r1 = rf(channel, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// CreateClient provides a mock function with given fields: client, domainID, token
+func (_m *SDK) CreateClient(client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(client, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateClient")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.Client, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(client, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.Client, string, string) sdk.Client); ok {
+		r0 = rf(client, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.Client, string, string) errors.SDKError); ok {
+		r1 = rf(client, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// CreateClients provides a mock function with given fields: client, domainID, token
+func (_m *SDK) CreateClients(client []sdk.Client, domainID string, token string) ([]sdk.Client, errors.SDKError) {
+	ret := _m.Called(client, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateClients")
+	}
+
+	var r0 []sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func([]sdk.Client, string, string) ([]sdk.Client, errors.SDKError)); ok {
+		return rf(client, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func([]sdk.Client, string, string) []sdk.Client); ok {
+		r0 = rf(client, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]sdk.Client)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]sdk.Client, string, string) errors.SDKError); ok {
+		r1 = rf(client, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -546,68 +728,6 @@ func (_m *SDK) CreateSubscription(topic string, contact string, token string) (s
 	return r0, r1
 }
 
-// CreateThing provides a mock function with given fields: thing, domainID, token
-func (_m *SDK) CreateThing(thing sdk.Thing, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(thing, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateThing")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.Thing, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(thing, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(sdk.Thing, string, string) sdk.Thing); ok {
-		r0 = rf(thing, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
-	}
-
-	if rf, ok := ret.Get(1).(func(sdk.Thing, string, string) errors.SDKError); ok {
-		r1 = rf(thing, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// CreateThings provides a mock function with given fields: things, domainID, token
-func (_m *SDK) CreateThings(things []sdk.Thing, domainID string, token string) ([]sdk.Thing, errors.SDKError) {
-	ret := _m.Called(things, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateThings")
-	}
-
-	var r0 []sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func([]sdk.Thing, string, string) ([]sdk.Thing, errors.SDKError)); ok {
-		return rf(things, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func([]sdk.Thing, string, string) []sdk.Thing); ok {
-		r0 = rf(things, domainID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]sdk.Thing)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func([]sdk.Thing, string, string) errors.SDKError); ok {
-		r1 = rf(things, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
 // CreateToken provides a mock function with given fields: lt
 func (_m *SDK) CreateToken(lt sdk.Login) (sdk.Token, errors.SDKError) {
 	ret := _m.Called(lt)
@@ -688,6 +808,26 @@ func (_m *SDK) DeleteChannel(id string, domainID string, token string) errors.SD
 	return r0
 }
 
+// DeleteClient provides a mock function with given fields: id, domainID, token
+func (_m *SDK) DeleteClient(id string, domainID string, token string) errors.SDKError {
+	ret := _m.Called(id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteClient")
+	}
+
+	var r0 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string, string) errors.SDKError); ok {
+		r0 = rf(id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+
+	return r0
+}
+
 // DeleteGroup provides a mock function with given fields: id, domainID, token
 func (_m *SDK) DeleteGroup(id string, domainID string, token string) errors.SDKError {
 	ret := _m.Called(id, domainID, token)
@@ -746,26 +886,6 @@ func (_m *SDK) DeleteSubscription(id string, token string) errors.SDKError {
 	return r0
 }
 
-// DeleteThing provides a mock function with given fields: id, domainID, token
-func (_m *SDK) DeleteThing(id string, domainID string, token string) errors.SDKError {
-	ret := _m.Called(id, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteThing")
-	}
-
-	var r0 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string) errors.SDKError); ok {
-		r0 = rf(id, domainID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-
-	return r0
-}
-
 // DeleteUser provides a mock function with given fields: id, token
 func (_m *SDK) DeleteUser(id string, token string) errors.SDKError {
 	ret := _m.Called(id, token)
@@ -803,6 +923,36 @@ func (_m *SDK) DisableChannel(id string, domainID string, token string) (sdk.Cha
 		r0 = rf(id, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Channel)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// DisableClient provides a mock function with given fields: id, domainID, token
+func (_m *SDK) DisableClient(id string, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableClient")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(id, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Client); ok {
+		r0 = rf(id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
@@ -866,36 +1016,6 @@ func (_m *SDK) DisableGroup(id string, domainID string, token string) (sdk.Group
 	return r0, r1
 }
 
-// DisableThing provides a mock function with given fields: id, domainID, token
-func (_m *SDK) DisableThing(id string, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(id, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DisableThing")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(id, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Thing); ok {
-		r0 = rf(id, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
-		r1 = rf(id, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
 // DisableUser provides a mock function with given fields: id, token
 func (_m *SDK) DisableUser(id string, token string) (sdk.User, errors.SDKError) {
 	ret := _m.Called(id, token)
@@ -946,17 +1066,17 @@ func (_m *SDK) Disconnect(connIDs sdk.Connection, domainID string, token string)
 	return r0
 }
 
-// DisconnectThing provides a mock function with given fields: thingID, chanID, domainID, token
-func (_m *SDK) DisconnectThing(thingID string, chanID string, domainID string, token string) errors.SDKError {
-	ret := _m.Called(thingID, chanID, domainID, token)
+// DisconnectClient provides a mock function with given fields: clientID, chanID, domainID, token
+func (_m *SDK) DisconnectClient(clientID string, chanID string, domainID string, token string) errors.SDKError {
+	ret := _m.Called(clientID, chanID, domainID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DisconnectThing")
+		panic("no return value specified for DisconnectClient")
 	}
 
 	var r0 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, string, string, string) errors.SDKError); ok {
-		r0 = rf(thingID, chanID, domainID, token)
+		r0 = rf(clientID, chanID, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -1086,6 +1206,36 @@ func (_m *SDK) EnableChannel(id string, domainID string, token string) (sdk.Chan
 	return r0, r1
 }
 
+// EnableClient provides a mock function with given fields: id, domainID, token
+func (_m *SDK) EnableClient(id string, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnableClient")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(id, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Client); ok {
+		r0 = rf(id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
+		r1 = rf(id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
 // EnableDomain provides a mock function with given fields: domainID, token
 func (_m *SDK) EnableDomain(domainID string, token string) errors.SDKError {
 	ret := _m.Called(domainID, token)
@@ -1123,36 +1273,6 @@ func (_m *SDK) EnableGroup(id string, domainID string, token string) (sdk.Group,
 		r0 = rf(id, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
-		r1 = rf(id, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// EnableThing provides a mock function with given fields: id, domainID, token
-func (_m *SDK) EnableThing(id string, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(id, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnableThing")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(id, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Thing); ok {
-		r0 = rf(id, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
@@ -1372,9 +1492,9 @@ func (_m *SDK) Invitations(pm sdk.PageMetadata, token string) (sdk.InvitationPag
 	return r0, r1
 }
 
-// IssueCert provides a mock function with given fields: thingID, validity, domainID, token
-func (_m *SDK) IssueCert(thingID string, validity string, domainID string, token string) (sdk.Cert, errors.SDKError) {
-	ret := _m.Called(thingID, validity, domainID, token)
+// IssueCert provides a mock function with given fields: clientID, validity, domainID, token
+func (_m *SDK) IssueCert(clientID string, validity string, domainID string, token string) (sdk.Cert, errors.SDKError) {
+	ret := _m.Called(clientID, validity, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IssueCert")
@@ -1383,16 +1503,16 @@ func (_m *SDK) IssueCert(thingID string, validity string, domainID string, token
 	var r0 sdk.Cert
 	var r1 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, string, string, string) (sdk.Cert, errors.SDKError)); ok {
-		return rf(thingID, validity, domainID, token)
+		return rf(clientID, validity, domainID, token)
 	}
 	if rf, ok := ret.Get(0).(func(string, string, string, string) sdk.Cert); ok {
-		r0 = rf(thingID, validity, domainID, token)
+		r0 = rf(clientID, validity, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Cert)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string, string) errors.SDKError); ok {
-		r1 = rf(thingID, validity, domainID, token)
+		r1 = rf(clientID, validity, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1481,6 +1601,36 @@ func (_m *SDK) ListChannelUsers(channelID string, pm sdk.PageMetadata, domainID 
 
 	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string, string) errors.SDKError); ok {
 		r1 = rf(channelID, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// ListClientUsers provides a mock function with given fields: id, pm, domainID, token
+func (_m *SDK) ListClientUsers(id string, pm sdk.PageMetadata, domainID string, token string) (sdk.UsersPage, errors.SDKError) {
+	ret := _m.Called(id, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListClientUsers")
+	}
+
+	var r0 sdk.UsersPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) (sdk.UsersPage, errors.SDKError)); ok {
+		return rf(id, pm, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) sdk.UsersPage); ok {
+		r0 = rf(id, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.UsersPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = rf(id, pm, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1610,36 +1760,6 @@ func (_m *SDK) ListSubscriptions(pm sdk.PageMetadata, token string) (sdk.Subscri
 	return r0, r1
 }
 
-// ListThingUsers provides a mock function with given fields: thingID, pm, domainID, token
-func (_m *SDK) ListThingUsers(thingID string, pm sdk.PageMetadata, domainID string, token string) (sdk.UsersPage, errors.SDKError) {
-	ret := _m.Called(thingID, pm, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListThingUsers")
-	}
-
-	var r0 sdk.UsersPage
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) (sdk.UsersPage, errors.SDKError)); ok {
-		return rf(thingID, pm, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) sdk.UsersPage); ok {
-		r0 = rf(thingID, pm, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.UsersPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = rf(thingID, pm, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
 // ListUserChannels provides a mock function with given fields: userID, pm, token
 func (_m *SDK) ListUserChannels(userID string, pm sdk.PageMetadata, token string) (sdk.ChannelsPage, errors.SDKError) {
 	ret := _m.Called(userID, pm, token)
@@ -1657,6 +1777,36 @@ func (_m *SDK) ListUserChannels(userID string, pm sdk.PageMetadata, token string
 		r0 = rf(userID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ChannelsPage)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = rf(userID, pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// ListUserClients provides a mock function with given fields: userID, pm, token
+func (_m *SDK) ListUserClients(userID string, pm sdk.PageMetadata, token string) (sdk.ClientsPage, errors.SDKError) {
+	ret := _m.Called(userID, pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUserClients")
+	}
+
+	var r0 sdk.ClientsPage
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) (sdk.ClientsPage, errors.SDKError)); ok {
+		return rf(userID, pm, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) sdk.ClientsPage); ok {
+		r0 = rf(userID, pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ClientsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string) errors.SDKError); ok {
@@ -1717,36 +1867,6 @@ func (_m *SDK) ListUserGroups(userID string, pm sdk.PageMetadata, token string) 
 		r0 = rf(userID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.GroupsPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = rf(userID, pm, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// ListUserThings provides a mock function with given fields: userID, pm, token
-func (_m *SDK) ListUserThings(userID string, pm sdk.PageMetadata, token string) (sdk.ThingsPage, errors.SDKError) {
-	ret := _m.Called(userID, pm, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListUserThings")
-	}
-
-	var r0 sdk.ThingsPage
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) (sdk.ThingsPage, errors.SDKError)); ok {
-		return rf(userID, pm, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string) sdk.ThingsPage); ok {
-		r0 = rf(userID, pm, token)
-	} else {
-		r0 = ret.Get(0).(sdk.ThingsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string) errors.SDKError); ok {
@@ -2038,9 +2158,9 @@ func (_m *SDK) ResetPasswordRequest(email string) errors.SDKError {
 	return r0
 }
 
-// RevokeCert provides a mock function with given fields: thingID, domainID, token
-func (_m *SDK) RevokeCert(thingID string, domainID string, token string) (time.Time, errors.SDKError) {
-	ret := _m.Called(thingID, domainID, token)
+// RevokeCert provides a mock function with given fields: clientID, domainID, token
+func (_m *SDK) RevokeCert(clientID string, domainID string, token string) (time.Time, errors.SDKError) {
+	ret := _m.Called(clientID, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RevokeCert")
@@ -2049,16 +2169,16 @@ func (_m *SDK) RevokeCert(thingID string, domainID string, token string) (time.T
 	var r0 time.Time
 	var r1 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, string, string) (time.Time, errors.SDKError)); ok {
-		return rf(thingID, domainID, token)
+		return rf(clientID, domainID, token)
 	}
 	if rf, ok := ret.Get(0).(func(string, string, string) time.Time); ok {
-		r0 = rf(thingID, domainID, token)
+		r0 = rf(clientID, domainID, token)
 	} else {
 		r0 = ret.Get(0).(time.Time)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
-		r1 = rf(thingID, domainID, token)
+		r1 = rf(clientID, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2156,17 +2276,17 @@ func (_m *SDK) SetContentType(ct sdk.ContentType) errors.SDKError {
 	return r0
 }
 
-// ShareThing provides a mock function with given fields: thingID, req, domainID, token
-func (_m *SDK) ShareThing(thingID string, req sdk.UsersRelationRequest, domainID string, token string) errors.SDKError {
-	ret := _m.Called(thingID, req, domainID, token)
+// ShareClient provides a mock function with given fields: id, req, domainID, token
+func (_m *SDK) ShareClient(id string, req sdk.UsersRelationRequest, domainID string, token string) errors.SDKError {
+	ret := _m.Called(id, req, domainID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ShareThing")
+		panic("no return value specified for ShareClient")
 	}
 
 	var r0 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, sdk.UsersRelationRequest, string, string) errors.SDKError); ok {
-		r0 = rf(thingID, req, domainID, token)
+		r0 = rf(id, req, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2176,137 +2296,17 @@ func (_m *SDK) ShareThing(thingID string, req sdk.UsersRelationRequest, domainID
 	return r0
 }
 
-// Thing provides a mock function with given fields: id, domainID, token
-func (_m *SDK) Thing(id string, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(id, domainID, token)
+// UnshareClient provides a mock function with given fields: id, req, domainID, token
+func (_m *SDK) UnshareClient(id string, req sdk.UsersRelationRequest, domainID string, token string) errors.SDKError {
+	ret := _m.Called(id, req, domainID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Thing")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(id, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Thing); ok {
-		r0 = rf(id, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
-		r1 = rf(id, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// ThingPermissions provides a mock function with given fields: id, domainID, token
-func (_m *SDK) ThingPermissions(id string, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(id, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ThingPermissions")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(id, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string) sdk.Thing); ok {
-		r0 = rf(id, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
-		r1 = rf(id, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// Things provides a mock function with given fields: pm, domainID, token
-func (_m *SDK) Things(pm sdk.PageMetadata, domainID string, token string) (sdk.ThingsPage, errors.SDKError) {
-	ret := _m.Called(pm, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Things")
-	}
-
-	var r0 sdk.ThingsPage
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) (sdk.ThingsPage, errors.SDKError)); ok {
-		return rf(pm, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) sdk.ThingsPage); ok {
-		r0 = rf(pm, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.ThingsPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = rf(pm, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// ThingsByChannel provides a mock function with given fields: chanID, pm, domainID, token
-func (_m *SDK) ThingsByChannel(chanID string, pm sdk.PageMetadata, domainID string, token string) (sdk.ThingsPage, errors.SDKError) {
-	ret := _m.Called(chanID, pm, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ThingsByChannel")
-	}
-
-	var r0 sdk.ThingsPage
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) (sdk.ThingsPage, errors.SDKError)); ok {
-		return rf(chanID, pm, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, sdk.PageMetadata, string, string) sdk.ThingsPage); ok {
-		r0 = rf(chanID, pm, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.ThingsPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = rf(chanID, pm, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// UnshareThing provides a mock function with given fields: thingID, req, domainID, token
-func (_m *SDK) UnshareThing(thingID string, req sdk.UsersRelationRequest, domainID string, token string) errors.SDKError {
-	ret := _m.Called(thingID, req, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UnshareThing")
+		panic("no return value specified for UnshareClient")
 	}
 
 	var r0 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, sdk.UsersRelationRequest, string, string) errors.SDKError); ok {
-		r0 = rf(thingID, req, domainID, token)
+		r0 = rf(id, req, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2407,6 +2407,96 @@ func (_m *SDK) UpdateChannel(channel sdk.Channel, domainID string, token string)
 
 	if rf, ok := ret.Get(1).(func(sdk.Channel, string, string) errors.SDKError); ok {
 		r1 = rf(channel, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// UpdateClient provides a mock function with given fields: client, domainID, token
+func (_m *SDK) UpdateClient(client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(client, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateClient")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.Client, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(client, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.Client, string, string) sdk.Client); ok {
+		r0 = rf(client, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.Client, string, string) errors.SDKError); ok {
+		r1 = rf(client, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// UpdateClientSecret provides a mock function with given fields: id, secret, domainID, token
+func (_m *SDK) UpdateClientSecret(id string, secret string, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(id, secret, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateClientSecret")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(id, secret, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string) sdk.Client); ok {
+		r0 = rf(id, secret, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string) errors.SDKError); ok {
+		r1 = rf(id, secret, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+
+	return r0, r1
+}
+
+// UpdateClientTags provides a mock function with given fields: client, domainID, token
+func (_m *SDK) UpdateClientTags(client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _m.Called(client, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateClientTags")
+	}
+
+	var r0 sdk.Client
+	var r1 errors.SDKError
+	if rf, ok := ret.Get(0).(func(sdk.Client, string, string) (sdk.Client, errors.SDKError)); ok {
+		return rf(client, domainID, token)
+	}
+	if rf, ok := ret.Get(0).(func(sdk.Client, string, string) sdk.Client); ok {
+		r0 = rf(client, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Client)
+	}
+
+	if rf, ok := ret.Get(1).(func(sdk.Client, string, string) errors.SDKError); ok {
+		r1 = rf(client, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2527,96 +2617,6 @@ func (_m *SDK) UpdateProfilePicture(user sdk.User, token string) (sdk.User, erro
 
 	if rf, ok := ret.Get(1).(func(sdk.User, string) errors.SDKError); ok {
 		r1 = rf(user, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// UpdateThing provides a mock function with given fields: thing, domainID, token
-func (_m *SDK) UpdateThing(thing sdk.Thing, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(thing, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateThing")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.Thing, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(thing, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(sdk.Thing, string, string) sdk.Thing); ok {
-		r0 = rf(thing, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
-	}
-
-	if rf, ok := ret.Get(1).(func(sdk.Thing, string, string) errors.SDKError); ok {
-		r1 = rf(thing, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// UpdateThingSecret provides a mock function with given fields: id, secret, domainID, token
-func (_m *SDK) UpdateThingSecret(id string, secret string, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(id, secret, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateThingSecret")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(id, secret, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) sdk.Thing); ok {
-		r0 = rf(id, secret, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string, string) errors.SDKError); ok {
-		r1 = rf(id, secret, domainID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-
-	return r0, r1
-}
-
-// UpdateThingTags provides a mock function with given fields: thing, domainID, token
-func (_m *SDK) UpdateThingTags(thing sdk.Thing, domainID string, token string) (sdk.Thing, errors.SDKError) {
-	ret := _m.Called(thing, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateThingTags")
-	}
-
-	var r0 sdk.Thing
-	var r1 errors.SDKError
-	if rf, ok := ret.Get(0).(func(sdk.Thing, string, string) (sdk.Thing, errors.SDKError)); ok {
-		return rf(thing, domainID, token)
-	}
-	if rf, ok := ret.Get(0).(func(sdk.Thing, string, string) sdk.Thing); ok {
-		r0 = rf(thing, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Thing)
-	}
-
-	if rf, ok := ret.Get(1).(func(sdk.Thing, string, string) errors.SDKError); ok {
-		r1 = rf(thing, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2926,27 +2926,27 @@ func (_m *SDK) ViewCert(certID string, domainID string, token string) (sdk.Cert,
 	return r0, r1
 }
 
-// ViewCertByThing provides a mock function with given fields: thingID, domainID, token
-func (_m *SDK) ViewCertByThing(thingID string, domainID string, token string) (sdk.CertSerials, errors.SDKError) {
-	ret := _m.Called(thingID, domainID, token)
+// ViewCertByClient provides a mock function with given fields: clientID, domainID, token
+func (_m *SDK) ViewCertByClient(clientID string, domainID string, token string) (sdk.CertSerials, errors.SDKError) {
+	ret := _m.Called(clientID, domainID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ViewCertByThing")
+		panic("no return value specified for ViewCertByClient")
 	}
 
 	var r0 sdk.CertSerials
 	var r1 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, string, string) (sdk.CertSerials, errors.SDKError)); ok {
-		return rf(thingID, domainID, token)
+		return rf(clientID, domainID, token)
 	}
 	if rf, ok := ret.Get(0).(func(string, string, string) sdk.CertSerials); ok {
-		r0 = rf(thingID, domainID, token)
+		r0 = rf(clientID, domainID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.CertSerials)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string) errors.SDKError); ok {
-		r1 = rf(thingID, domainID, token)
+		r1 = rf(clientID, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2986,9 +2986,9 @@ func (_m *SDK) ViewSubscription(id string, token string) (sdk.Subscription, erro
 	return r0, r1
 }
 
-// Whitelist provides a mock function with given fields: thingID, state, domainID, token
-func (_m *SDK) Whitelist(thingID string, state int, domainID string, token string) errors.SDKError {
-	ret := _m.Called(thingID, state, domainID, token)
+// Whitelist provides a mock function with given fields: clientID, state, domainID, token
+func (_m *SDK) Whitelist(clientID string, state int, domainID string, token string) errors.SDKError {
+	ret := _m.Called(clientID, state, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Whitelist")
@@ -2996,7 +2996,7 @@ func (_m *SDK) Whitelist(thingID string, state int, domainID string, token strin
 
 	var r0 errors.SDKError
 	if rf, ok := ret.Get(0).(func(string, int, string, string) errors.SDKError); ok {
-		r0 = rf(thingID, state, domainID, token)
+		r0 = rf(clientID, state, domainID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)

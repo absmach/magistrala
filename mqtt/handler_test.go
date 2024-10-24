@@ -10,22 +10,19 @@ import (
 	"log"
 	"testing"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/internal/testsutil"
+	chmocks "github.com/absmach/magistrala/channels/mocks"
+	climocks "github.com/absmach/magistrala/clients/mocks"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/mqtt"
 	"github.com/absmach/magistrala/mqtt/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/absmach/mgate/pkg/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 const (
-	thingID               = "513d02d2-16c1-4f23-98be-9e12f8fee898"
-	thingID1              = "513d02d2-16c1-4f23-98be-9e12f8fee899"
 	password              = "password"
 	password1             = "password1"
 	chanID                = "123e4567-e89b-12d3-a456-000000000001"
@@ -49,15 +46,15 @@ var (
 	logBuffer     = bytes.Buffer{}
 	sessionClient = session.Session{
 		ID:       clientID,
-		Username: thingID,
+		Username: clientID,
 		Password: []byte(password),
 	}
 	sessionClientSub = session.Session{
 		ID:       clientID1,
-		Username: thingID1,
+		Username: clientID1,
 		Password: []byte(password1),
 	}
-	invalidThingSessionClient = session.Session{
+	invalidClientSessionClient = session.Session{
 		ID:       clientID,
 		Username: invalidID,
 		Password: []byte(password),
@@ -65,7 +62,7 @@ var (
 )
 
 func TestAuthConnect(t *testing.T) {
-	handler, _, eventStore := newHandler()
+	handler, _, _, eventStore := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -82,7 +79,7 @@ func TestAuthConnect(t *testing.T) {
 			err:  mqtt.ErrMissingClientID,
 			session: &session.Session{
 				ID:       "",
-				Username: thingID,
+				Username: clientID,
 				Password: []byte(password),
 			},
 		},
@@ -91,14 +88,14 @@ func TestAuthConnect(t *testing.T) {
 			err:  nil,
 			session: &session.Session{
 				ID:       clientID,
-				Username: thingID,
+				Username: clientID,
 				Password: []byte(""),
 			},
 		},
 		{
 			desc:    "connect with valid password and invalid username",
 			err:     nil,
-			session: &invalidThingSessionClient,
+			session: &invalidClientSessionClient,
 		},
 		{
 			desc:    "connect with valid username and password",
@@ -121,7 +118,7 @@ func TestAuthConnect(t *testing.T) {
 }
 
 func TestAuthPublish(t *testing.T) {
-	handler, things, _ := newHandler()
+	handler, _, _, _ := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -161,19 +158,17 @@ func TestAuthPublish(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, tc.err)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
 		}
 		err := handler.AuthPublish(ctx, tc.topic, &tc.payload)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
 	}
 }
 
 func TestAuthSubscribe(t *testing.T) {
-	handler, things, _ := newHandler()
+	handler, _, _, _ := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -214,19 +209,17 @@ func TestAuthSubscribe(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repocall := things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, tc.err)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
 		}
 		err := handler.AuthSubscribe(ctx, tc.topic)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repocall.Unset()
 	}
 }
 
 func TestConnect(t *testing.T) {
-	handler, _, _ := newHandler()
+	handler, _, _, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -260,7 +253,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	handler, _, _ := newHandler()
+	handler, _, _, _ := newHandler()
 	logBuffer.Reset()
 
 	malformedSubtopics := topic + "/" + subtopic + "%"
@@ -339,7 +332,7 @@ func TestPublish(t *testing.T) {
 }
 
 func TestSubscribe(t *testing.T) {
-	handler, _, _ := newHandler()
+	handler, _, _, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -375,7 +368,7 @@ func TestSubscribe(t *testing.T) {
 }
 
 func TestUnsubscribe(t *testing.T) {
-	handler, _, _ := newHandler()
+	handler, _, _, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -411,7 +404,7 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 func TestDisconnect(t *testing.T) {
-	handler, _, eventStore := newHandler()
+	handler, _, _, eventStore := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -450,12 +443,13 @@ func TestDisconnect(t *testing.T) {
 	}
 }
 
-func newHandler() (session.Handler, *thmocks.ThingsServiceClient, *mocks.EventStore) {
+func newHandler() (session.Handler, *climocks.ClientsServiceClient, *chmocks.ChannelsServiceClient, *mocks.EventStore) {
 	logger, err := mglog.New(&logBuffer, "debug")
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}
-	things := new(thmocks.ThingsServiceClient)
+	clients := new(climocks.ClientsServiceClient)
+	channels := new(chmocks.ChannelsServiceClient)
 	eventStore := new(mocks.EventStore)
-	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, things), things, eventStore
+	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, clients, channels), clients, channels, eventStore
 }

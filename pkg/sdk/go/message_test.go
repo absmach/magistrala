@@ -9,14 +9,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/absmach/magistrala"
+	chmocks "github.com/absmach/magistrala/channels/mocks"
+	climocks "github.com/absmach/magistrala/clients/mocks"
 	adapter "github.com/absmach/magistrala/http"
 	"github.com/absmach/magistrala/http/api"
+	grpcClientsV1 "github.com/absmach/magistrala/internal/grpc/clients/v1"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	authzmocks "github.com/absmach/magistrala/pkg/authz/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	pubsub "github.com/absmach/magistrala/pkg/messaging/mocks"
@@ -25,17 +26,18 @@ import (
 	"github.com/absmach/magistrala/readers"
 	readersapi "github.com/absmach/magistrala/readers/api"
 	readersmocks "github.com/absmach/magistrala/readers/mocks"
-	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/absmach/mgate"
 	proxy "github.com/absmach/mgate/pkg/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func setupMessages() (*httptest.Server, *thmocks.ThingsServiceClient, *pubsub.PubSub) {
-	things := new(thmocks.ThingsServiceClient)
+func setupMessages() (*httptest.Server, *climocks.ClientsServiceClient, *pubsub.PubSub) {
+	clients := new(climocks.ClientsServiceClient)
+	channels := new(chmocks.ChannelsServiceClient)
 	pub := new(pubsub.PubSub)
-	handler := adapter.NewHandler(pub, mglog.NewMock(), things)
+	authn := new(authnmocks.Authentication)
+	handler := adapter.NewHandler(pub, authn, clients, channels, mglog.NewMock())
 
 	mux := api.MakeHandler(mglog.NewMock(), "")
 	target := httptest.NewServer(mux)
@@ -49,25 +51,25 @@ func setupMessages() (*httptest.Server, *thmocks.ThingsServiceClient, *pubsub.Pu
 		return nil, nil, nil
 	}
 
-	return httptest.NewServer(http.HandlerFunc(mp.ServeHTTP)), things, pub
+	return httptest.NewServer(http.HandlerFunc(mp.ServeHTTP)), clients, pub
 }
 
-func setupReader() (*httptest.Server, *authzmocks.Authorization, *authnmocks.Authentication, *readersmocks.MessageRepository) {
+func setupReader() (*httptest.Server, *authnmocks.Authentication, *readersmocks.MessageRepository) {
 	repo := new(readersmocks.MessageRepository)
-	authz := new(authzmocks.Authorization)
 	authn := new(authnmocks.Authentication)
-	things := new(thmocks.ThingsServiceClient)
+	clients := new(climocks.ClientsServiceClient)
+	channels := new(chmocks.ChannelsServiceClient)
 
-	mux := readersapi.MakeHandler(repo, authn, authz, things, "test", "")
-	return httptest.NewServer(mux), authz, authn, repo
+	mux := readersapi.MakeHandler(repo, authn, clients, channels, "test", "")
+	return httptest.NewServer(mux), authn, repo
 }
 
 func TestSendMessage(t *testing.T) {
-	ts, things, pub := setupMessages()
+	ts, clients, pub := setupMessages()
 	defer ts.Close()
 
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
-	thingKey := "thingKey"
+	clientKey := "clientKey"
 	channelID := "channelID"
 
 	sdkConf := sdk.Config{
@@ -79,81 +81,81 @@ func TestSendMessage(t *testing.T) {
 	mgsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
-		desc     string
-		chanName string
-		msg      string
-		thingKey string
-		authRes  *magistrala.ThingsAuthzRes
-		authErr  error
-		svcErr   error
-		err      errors.SDKError
+		desc      string
+		chanName  string
+		msg       string
+		clientKey string
+		authRes   *grpcClientsV1.AuthnRes
+		authErr   error
+		svcErr    error
+		err       errors.SDKError
 	}{
 		{
-			desc:     "publish message successfully",
-			chanName: channelID,
-			msg:      msg,
-			thingKey: thingKey,
-			authRes:  &magistrala.ThingsAuthzRes{Authorized: true, Id: ""},
-			authErr:  nil,
-			svcErr:   nil,
-			err:      nil,
+			desc:      "publish message successfully",
+			chanName:  channelID,
+			msg:       msg,
+			clientKey: clientKey,
+			authRes:   &grpcClientsV1.AuthnRes{Authenticated: true, Id: ""},
+			authErr:   nil,
+			svcErr:    nil,
+			err:       nil,
 		},
 		{
-			desc:     "publish message with empty thing key",
-			chanName: channelID,
-			msg:      msg,
-			thingKey: "",
-			authRes:  &magistrala.ThingsAuthzRes{Authorized: false, Id: ""},
-			authErr:  svcerr.ErrAuthorization,
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusBadRequest),
+			desc:      "publish message with empty client key",
+			chanName:  channelID,
+			msg:       msg,
+			clientKey: "",
+			authRes:   &grpcClientsV1.AuthnRes{Authenticated: false, Id: ""},
+			authErr:   svcerr.ErrAuthorization,
+			svcErr:    nil,
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusBadRequest),
 		},
 		{
-			desc:     "publish message with invalid thing key",
-			chanName: channelID,
-			msg:      msg,
-			thingKey: "invalid",
-			authRes:  &magistrala.ThingsAuthzRes{Authorized: false, Id: ""},
-			authErr:  svcerr.ErrAuthorization,
-			svcErr:   svcerr.ErrAuthorization,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusBadRequest),
+			desc:      "publish message with invalid client key",
+			chanName:  channelID,
+			msg:       msg,
+			clientKey: "invalid",
+			authRes:   &grpcClientsV1.AuthnRes{Authenticated: false, Id: ""},
+			authErr:   svcerr.ErrAuthorization,
+			svcErr:    svcerr.ErrAuthorization,
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusBadRequest),
 		},
 		{
-			desc:     "publish message with invalid channel ID",
-			chanName: wrongID,
-			msg:      msg,
-			thingKey: thingKey,
-			authRes:  &magistrala.ThingsAuthzRes{Authorized: false, Id: ""},
-			authErr:  svcerr.ErrAuthorization,
-			svcErr:   svcerr.ErrAuthorization,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusBadRequest),
+			desc:      "publish message with invalid channel ID",
+			chanName:  wrongID,
+			msg:       msg,
+			clientKey: clientKey,
+			authRes:   &grpcClientsV1.AuthnRes{Authenticated: false, Id: ""},
+			authErr:   svcerr.ErrAuthorization,
+			svcErr:    svcerr.ErrAuthorization,
+			err:       errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusBadRequest),
 		},
 		{
-			desc:     "publish message with empty message body",
-			chanName: channelID,
-			msg:      "",
-			thingKey: thingKey,
-			authRes:  &magistrala.ThingsAuthzRes{Authorized: true, Id: ""},
-			authErr:  nil,
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrEmptyMessage), http.StatusBadRequest),
+			desc:      "publish message with empty message body",
+			chanName:  channelID,
+			msg:       "",
+			clientKey: clientKey,
+			authRes:   &grpcClientsV1.AuthnRes{Authenticated: true, Id: ""},
+			authErr:   nil,
+			svcErr:    nil,
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrEmptyMessage), http.StatusBadRequest),
 		},
 		{
-			desc:     "publish message with channel subtopic",
-			chanName: channelID + ".subtopic",
-			msg:      msg,
-			thingKey: thingKey,
-			authRes:  &magistrala.ThingsAuthzRes{Authorized: true, Id: ""},
-			authErr:  nil,
-			svcErr:   nil,
-			err:      nil,
+			desc:      "publish message with channel subtopic",
+			chanName:  channelID + ".subtopic",
+			msg:       msg,
+			clientKey: clientKey,
+			authRes:   &grpcClientsV1.AuthnRes{Authenticated: true, Id: ""},
+			authErr:   nil,
+			svcErr:    nil,
+			err:       nil,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authCall := things.On("Authorize", mock.Anything, mock.Anything).Return(tc.authRes, tc.authErr)
+			authCall := clients.On("Authorize", mock.Anything, mock.Anything).Return(tc.authRes, tc.authErr)
 			svcCall := pub.On("Publish", mock.Anything, channelID, mock.Anything).Return(tc.svcErr)
-			err := mgsdk.SendMessage(tc.chanName, tc.msg, tc.thingKey)
+			err := mgsdk.SendMessage(tc.chanName, tc.msg, tc.clientKey)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Publish", mock.Anything, channelID, mock.Anything)

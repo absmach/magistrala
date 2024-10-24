@@ -43,7 +43,7 @@ const (
 
 type config struct {
 	LogLevel      string  `env:"MG_CERTS_LOG_LEVEL"        envDefault:"info"`
-	ThingsURL     string  `env:"MG_THINGS_URL"             envDefault:"http://localhost:9000"`
+	ClientsURL    string  `env:"MG_CLIENTS_URL"            envDefault:"http://localhost:9000"`
 	JaegerURL     url.URL `env:"MG_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"         envDefault:"true"`
 	InstanceID    string  `env:"MG_CERTS_INSTANCE_ID"      envDefault:""`
@@ -155,7 +155,7 @@ func main() {
 
 func newService(tracer trace.Tracer, logger *slog.Logger, cfg config, pkiAgent pki.Agent) certs.Service {
 	config := mgsdk.Config{
-		ThingsURL: cfg.ThingsURL,
+		ClientsURL: cfg.ClientsURL,
 	}
 	sdk := mgsdk.NewSDK(config)
 	svc := certs.New(sdk, pkiAgent)

@@ -221,7 +221,6 @@ func TestCert(t *testing.T) {
 			login := sdk.Login{
 				Identity: c.config.Server.MgUser,
 				Secret:   c.config.Server.MgPass,
-				DomainID: c.config.Server.MgDomainID,
 			}
 			mgsdk.On("CreateToken", login).Return(sdk.Token{AccessToken: validToken}, c.sdkTokenErr)
 			cert, key, err := svc.Cert(c.domainID, c.token, c.thingID, c.ttl)

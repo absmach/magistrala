@@ -25,9 +25,6 @@ func (req *sendInvitationReq) validate() error {
 	if req.UserID == "" {
 		return apiutil.ErrMissingID
 	}
-	if req.DomainID == "" {
-		return apiutil.ErrMissingDomainID
-	}
 	if err := invitations.CheckRelation(req.Relation); err != nil {
 		return err
 	}
@@ -43,9 +40,6 @@ type listInvitationsReq struct {
 func (req *listInvitationsReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
-	}
-	if req.Page.DomainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	if req.Page.Limit > maxLimitSize || req.Page.Limit < 1 {
@@ -64,9 +58,6 @@ func (req *acceptInvitationReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
-	}
 
 	return nil
 }
@@ -83,9 +74,6 @@ func (req *invitationReq) validate() error {
 	}
 	if req.userID == "" {
 		return apiutil.ErrMissingID
-	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	return nil

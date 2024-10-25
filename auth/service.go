@@ -613,10 +613,15 @@ func (svc service) ListDomains(ctx context.Context, token string, p Page) (Domai
 }
 
 func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []string, relation string) error {
+	res, err := svc.Identify(ctx, token)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     token,
+		Subject:     res.User,
 		SubjectType: policies.UserType,
-		SubjectKind: policies.TokenKind,
+		SubjectKind: policies.UsersKind,
 		Object:      id,
 		ObjectType:  policies.DomainType,
 		Permission:  policies.SharePermission,
@@ -625,9 +630,9 @@ func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []
 	}
 
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     token,
+		Subject:     res.User,
 		SubjectType: policies.UserType,
-		SubjectKind: policies.TokenKind,
+		SubjectKind: policies.UsersKind,
 		Object:      id,
 		ObjectType:  policies.DomainType,
 		Permission:  SwitchToPermission(relation),
@@ -651,10 +656,15 @@ func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []
 }
 
 func (svc service) UnassignUser(ctx context.Context, token, id, userID string) error {
+	res, err := svc.Identify(ctx, token)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+
 	pr := policies.Policy{
-		Subject:     token,
+		Subject:     res.User,
 		SubjectType: policies.UserType,
-		SubjectKind: policies.TokenKind,
+		SubjectKind: policies.UsersKind,
 		Object:      id,
 		ObjectType:  policies.DomainType,
 		Permission:  policies.SharePermission,

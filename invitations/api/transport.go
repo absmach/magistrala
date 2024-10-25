@@ -38,7 +38,7 @@ func MakeHandler(svc invitations.Service, logger *slog.Logger, authn mgauthn.Aut
 	mux := chi.NewRouter()
 
 	mux.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddleware(authn))
+		r.Use(api.AuthenticateMiddleware(authn, true))
 
 		r.Route("/{domainID}/invitations", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
@@ -94,7 +94,6 @@ func decodeSendInvitationReq(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	var req sendInvitationReq
-	req.DomainID = chi.URLParam(r, "domainID")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
@@ -141,7 +140,6 @@ func decodeListInvitationsReq(_ context.Context, r *http.Request) (interface{}, 
 			InvitedBy: invitedBy,
 			UserID:    userID,
 			Relation:  relation,
-			DomainID:  chi.URLParam(r, "domainID"),
 			State:     state,
 		},
 	}
@@ -155,16 +153,14 @@ func decodeAcceptInvitationReq(_ context.Context, r *http.Request) (interface{},
 	}
 
 	return acceptInvitationReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
+		token: apiutil.ExtractBearerToken(r),
 	}, nil
 }
 
 func decodeInvitationReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := invitationReq{
-		token:    apiutil.ExtractBearerToken(r),
-		userID:   chi.URLParam(r, "user_id"),
-		domainID: chi.URLParam(r, "domainID"),
+		token:  apiutil.ExtractBearerToken(r),
+		userID: chi.URLParam(r, "user_id"),
 	}
 
 	return req, nil

@@ -238,7 +238,7 @@ func TestCreateChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("CreateGroup", mock.Anything, tc.session, channelKind, tc.createGroupReq).Return(tc.svcRes, tc.svcErr)
@@ -511,14 +511,13 @@ func TestListChannels(t *testing.T) {
 				Limit:    tc.limit,
 				Level:    uint64(tc.level),
 				Metadata: tc.metadata,
-				DomainID: tc.domainID,
 			}
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.UsersKind, "", tc.groupsPageMeta).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.Channels(pm, tc.token)
+			resp, err := mgsdk.Channels(pm, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -623,7 +622,7 @@ func TestViewChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("ViewGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
@@ -922,7 +921,7 @@ func TestUpdateChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("UpdateGroup", mock.Anything, tc.session, tc.updateGroupReq).Return(tc.svcRes, tc.svcErr)
@@ -1167,7 +1166,7 @@ func TestListChannelsByThing(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.ThingsKind, tc.thingID, tc.listGroupsReq).Return(tc.svcRes, tc.svcErr)
@@ -1275,7 +1274,7 @@ func TestEnableChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("EnableGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
@@ -1388,7 +1387,7 @@ func TestDisableChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("DisableGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
@@ -1468,7 +1467,7 @@ func TestDeleteChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("DeleteGroup", mock.Anything, tc.session, tc.channelID).Return(tc.svcErr)
@@ -1562,7 +1561,7 @@ func TestChannelPermissions(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("ViewGroupPerms", mock.Anything, tc.session, tc.channelID).Return(tc.svcRes, tc.svcErr)
@@ -1687,7 +1686,7 @@ func TestAddUserToChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.channelID, tc.addUserReq.Relation, policies.UsersKind, tc.addUserReq.UserIDs).Return(tc.svcErr)
@@ -1799,7 +1798,7 @@ func TestRemoveUserFromChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.channelID, tc.removeUserReq.Relation, policies.UsersKind, tc.removeUserReq.UserIDs).Return(tc.svcErr)
@@ -1909,7 +1908,7 @@ func TestAddUserGroupToChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.channelID, relation, policies.ChannelsKind, tc.addUserGroupReq.UserGroupIDs).Return(tc.svcErr)
@@ -2019,7 +2018,7 @@ func TestRemoveUserGroupFromChannel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.channelID, relation, policies.ChannelsKind, tc.removeUserGroupReq.UserGroupIDs).Return(tc.svcErr)
@@ -2060,6 +2059,7 @@ func TestListChannelUserGroups(t *testing.T) {
 	cases := []struct {
 		desc            string
 		token           string
+		domainID        string
 		session         mgauthn.Session
 		channelID       string
 		pageMeta        sdk.PageMetadata
@@ -2072,11 +2072,10 @@ func TestListChannelUserGroups(t *testing.T) {
 	}{
 		{
 			desc:      "list user groups successfully",
+			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			pageMeta: sdk.PageMetadata{
-				DomainID: domainID,
-			},
+			pageMeta:  sdk.PageMetadata{},
 			listGroupsReq: groups.Page{
 				PageMeta: groups.PageMeta{
 					Offset: 0,
@@ -2102,12 +2101,12 @@ func TestListChannelUserGroups(t *testing.T) {
 		},
 		{
 			desc:      "list user groups with offset and limit",
+			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset:   6,
-				Limit:    nGroups,
-				DomainID: domainID,
+				Offset: 6,
+				Limit:  nGroups,
 			},
 			listGroupsReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2134,11 +2133,10 @@ func TestListChannelUserGroups(t *testing.T) {
 		},
 		{
 			desc:      "list user groups with invalid token",
+			domainID:  domainID,
 			token:     invalidToken,
 			channelID: channel.ID,
-			pageMeta: sdk.PageMetadata{
-				DomainID: domainID,
-			},
+			pageMeta:  sdk.PageMetadata{},
 			listGroupsReq: groups.Page{
 				PageMeta: groups.PageMeta{
 					Offset: 0,
@@ -2154,11 +2152,10 @@ func TestListChannelUserGroups(t *testing.T) {
 		},
 		{
 			desc:      "list user groups with empty token",
+			domainID:  domainID,
 			token:     "",
 			channelID: channel.ID,
-			pageMeta: sdk.PageMetadata{
-				DomainID: domainID,
-			},
+			pageMeta:  sdk.PageMetadata{},
 			listGroupsReq: groups.Page{
 				PageMeta: groups.PageMeta{
 					Offset: 0,
@@ -2174,11 +2171,11 @@ func TestListChannelUserGroups(t *testing.T) {
 		},
 		{
 			desc:      "list user groups with limit greater than max",
+			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta: sdk.PageMetadata{
-				Limit:    110,
-				DomainID: domainID,
+				Limit: 110,
 			},
 			listGroupsReq: groups.Page{},
 			svcRes:        groups.Page{},
@@ -2188,6 +2185,7 @@ func TestListChannelUserGroups(t *testing.T) {
 		},
 		{
 			desc:      "list user groups with invalid channel id",
+			domainID:  domainID,
 			token:     validToken,
 			channelID: wrongID,
 			pageMeta: sdk.PageMetadata{
@@ -2208,11 +2206,11 @@ func TestListChannelUserGroups(t *testing.T) {
 		},
 		{
 			desc:      "list users groups with level exceeding max",
+			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
 			pageMeta: sdk.PageMetadata{
-				Level:    10,
-				DomainID: domainID,
+				Level: 10,
 			},
 			listGroupsReq: groups.Page{},
 			svcRes:        groups.Page{},
@@ -2240,11 +2238,10 @@ func TestListChannelUserGroups(t *testing.T) {
 		},
 		{
 			desc:      "list user groups with service response that can't be unmarshalled",
+			domainID:  domainID,
 			token:     validToken,
 			channelID: channel.ID,
-			pageMeta: sdk.PageMetadata{
-				DomainID: domainID,
-			},
+			pageMeta:  sdk.PageMetadata{},
 			listGroupsReq: groups.Page{
 				PageMeta: groups.PageMeta{
 					Offset: 0,
@@ -2272,11 +2269,11 @@ func TestListChannelUserGroups(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.ChannelsKind, tc.channelID, tc.listGroupsReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ListChannelUserGroups(tc.channelID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ListChannelUserGroups(tc.channelID, tc.pageMeta, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
@@ -2380,7 +2377,7 @@ func TestConnect(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.connection.ChannelID, policies.GroupRelation, policies.ThingsKind, []string{tc.connection.ThingID}).Return(tc.svcErr)
@@ -2487,7 +2484,7 @@ func TestDisconnect(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.disconnect.ChannelID, policies.GroupRelation, policies.ThingsKind, []string{tc.disconnect.ThingID}).Return(tc.svcErr)
@@ -2583,7 +2580,7 @@ func TestConnectThing(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Assign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ThingsKind, []string{tc.thingID}).Return(tc.svcErr)
@@ -2678,7 +2675,7 @@ func TestDisconnectThing(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("Unassign", mock.Anything, tc.session, tc.channelID, policies.GroupRelation, policies.ThingsKind, []string{tc.thingID}).Return(tc.svcErr)
@@ -2712,6 +2709,7 @@ func TestListGroupChannels(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		groupID         string
@@ -2724,13 +2722,13 @@ func TestListGroupChannels(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:    "list group channels successfully",
-			token:   validToken,
-			groupID: group.ID,
+			desc:     "list group channels successfully",
+			domainID: domainID,
+			token:    validToken,
+			groupID:  group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2756,13 +2754,13 @@ func TestListGroupChannels(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:    "list group channels with invalid token",
-			token:   invalidToken,
-			groupID: group.ID,
+			desc:     "list group channels with invalid token",
+			domainID: domainID,
+			token:    invalidToken,
+			groupID:  group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2778,13 +2776,13 @@ func TestListGroupChannels(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:    "list group channels with empty token",
-			token:   "",
-			groupID: group.ID,
+			desc:     "list group channels with empty token",
+			domainID: domainID,
+			token:    "",
+			groupID:  group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcReq:   groups.Page{},
 			svcRes:   groups.Page{},
@@ -2793,13 +2791,13 @@ func TestListGroupChannels(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:    "list group channels with invalid group id",
-			token:   validToken,
-			groupID: wrongID,
+			desc:     "list group channels with invalid group id",
+			domainID: domainID,
+			token:    validToken,
+			groupID:  wrongID,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2815,13 +2813,13 @@ func TestListGroupChannels(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
-			desc:    "list group channels with invalid page metadata",
-			token:   validToken,
-			groupID: group.ID,
+			desc:     "list group channels with invalid page metadata",
+			domainID: domainID,
+			token:    validToken,
+			groupID:  group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 				Metadata: sdk.Metadata{
 					"test": make(chan int),
 				},
@@ -2833,13 +2831,13 @@ func TestListGroupChannels(t *testing.T) {
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
 		},
 		{
-			desc:    "list group channels with service response that can't be unmarshalled",
-			token:   validToken,
-			groupID: group.ID,
+			desc:     "list group channels with service response that can't be unmarshalled",
+			domainID: domainID,
+			token:    validToken,
+			groupID:  group.ID,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcReq: groups.Page{
 				PageMeta: groups.PageMeta{
@@ -2868,11 +2866,11 @@ func TestListGroupChannels(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := gsvc.On("ListGroups", mock.Anything, tc.session, policies.GroupsKind, tc.groupID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.ListGroupChannels(tc.groupID, tc.pageMeta, tc.token)
+			resp, err := mgsdk.ListGroupChannels(tc.groupID, tc.pageMeta, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {

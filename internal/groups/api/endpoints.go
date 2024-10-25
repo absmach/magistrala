@@ -49,6 +49,7 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 		if !ok {
 			return viewGroupRes{}, svcerr.ErrAuthorization
 		}
+
 		group, err := svc.ViewGroup(ctx, session, req.id)
 		if err != nil {
 			return viewGroupRes{}, err
@@ -278,6 +279,7 @@ func DeleteGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 		if !ok {
 			return deleteGroupRes{}, svcerr.ErrAuthorization
 		}
+
 		if err := svc.DeleteGroup(ctx, session, req.id); err != nil {
 			return deleteGroupRes{}, err
 		}

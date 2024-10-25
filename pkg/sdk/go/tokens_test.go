@@ -43,7 +43,6 @@ func TestIssueToken(t *testing.T) {
 			login: sdk.Login{
 				Identity: client.Credentials.Identity,
 				Secret:   client.Credentials.Secret,
-				DomainID: validID,
 			},
 			svcRes: &magistrala.Token{
 				AccessToken:  token.AccessToken,
@@ -59,7 +58,6 @@ func TestIssueToken(t *testing.T) {
 			login: sdk.Login{
 				Identity: invalidIdentity,
 				Secret:   client.Credentials.Secret,
-				DomainID: validID,
 			},
 			svcRes:   &magistrala.Token{},
 			svcErr:   svcerr.ErrAuthentication,
@@ -71,7 +69,6 @@ func TestIssueToken(t *testing.T) {
 			login: sdk.Login{
 				Identity: client.Credentials.Identity,
 				Secret:   "invalid",
-				DomainID: validID,
 			},
 			svcRes:   &magistrala.Token{},
 			svcErr:   svcerr.ErrLogin,
@@ -83,7 +80,6 @@ func TestIssueToken(t *testing.T) {
 			login: sdk.Login{
 				Identity: "",
 				Secret:   client.Credentials.Secret,
-				DomainID: validID,
 			},
 			svcRes:   &magistrala.Token{},
 			svcErr:   nil,
@@ -95,7 +91,6 @@ func TestIssueToken(t *testing.T) {
 			login: sdk.Login{
 				Identity: client.Credentials.Identity,
 				Secret:   "",
-				DomainID: validID,
 			},
 			svcRes:   &magistrala.Token{},
 			svcErr:   nil,
@@ -105,12 +100,12 @@ func TestIssueToken(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("IssueToken", mock.Anything, tc.login.Identity, tc.login.Secret, tc.login.DomainID).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("IssueToken", mock.Anything, tc.login.Identity, tc.login.Secret).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.CreateToken(tc.login)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "IssueToken", mock.Anything, tc.login.Identity, tc.login.Secret, tc.login.DomainID)
+				ok := svcCall.Parent.AssertCalled(t, "IssueToken", mock.Anything, tc.login.Identity, tc.login.Secret)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -132,7 +127,6 @@ func TestRefreshToken(t *testing.T) {
 	cases := []struct {
 		desc        string
 		token       string
-		login       sdk.Login
 		svcRes      *magistrala.Token
 		svcErr      error
 		identifyErr error
@@ -142,9 +136,6 @@ func TestRefreshToken(t *testing.T) {
 		{
 			desc:  "refresh token successfully",
 			token: token.RefreshToken,
-			login: sdk.Login{
-				DomainID: validID,
-			},
 			svcRes: &magistrala.Token{
 				AccessToken:  token.AccessToken,
 				RefreshToken: &token.RefreshToken,
@@ -154,22 +145,16 @@ func TestRefreshToken(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:  "refresh token with invalid token",
-			token: invalidToken,
-			login: sdk.Login{
-				DomainID: validID,
-			},
+			desc:        "refresh token with invalid token",
+			token:       invalidToken,
 			svcRes:      nil,
 			identifyErr: svcerr.ErrAuthentication,
 			response:    sdk.Token{},
 			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:  "refresh token with empty token",
-			token: "",
-			login: sdk.Login{
-				DomainID: validID,
-			},
+			desc:     "refresh token with empty token",
+			token:    "",
 			response: sdk.Token{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
@@ -177,12 +162,12 @@ func TestRefreshToken(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.identifyErr)
-			svcCall := svc.On("RefreshToken", mock.Anything, mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.token, tc.login.DomainID).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.RefreshToken(tc.login, tc.token)
+			svcCall := svc.On("RefreshToken", mock.Anything, mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.token).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.RefreshToken(tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "RefreshToken", mock.Anything, mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.token, tc.login.DomainID)
+				ok := svcCall.Parent.AssertCalled(t, "RefreshToken", mock.Anything, mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID}, tc.token)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

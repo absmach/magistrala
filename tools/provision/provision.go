@@ -114,7 +114,6 @@ func Provision(conf Config) error {
 	token, err = s.CreateToken(sdk.Login{
 		Identity: user.Credentials.Identity,
 		Secret:   user.Credentials.Secret,
-		DomainID: domain.ID,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to login user: %w", err)

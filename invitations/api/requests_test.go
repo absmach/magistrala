@@ -55,17 +55,6 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			err: apiutil.ErrMissingID,
 		},
 		{
-			desc: "empty domain_id",
-			req: sendInvitationReq{
-				token:    valid,
-				UserID:   valid,
-				DomainID: "",
-				Relation: policies.DomainRelation,
-				Resend:   true,
-			},
-			err: apiutil.ErrMissingDomainID,
-		},
-		{
 			desc: "missing relation",
 			req: sendInvitationReq{
 				token:    valid,
@@ -113,14 +102,6 @@ func TestListInvitationsReq(t *testing.T) {
 				},
 			},
 			err: nil,
-		},
-		{
-			desc: "empty domainID",
-			req: listInvitationsReq{
-				token: valid,
-				Page:  invitations.Page{Limit: 1},
-			},
-			err: apiutil.ErrMissingDomainID,
 		},
 		{
 			desc: "empty token",
@@ -175,14 +156,6 @@ func TestAcceptInvitationReq(t *testing.T) {
 			},
 			err: apiutil.ErrBearerToken,
 		},
-		{
-			desc: "empty domain_id",
-			req: acceptInvitationReq{
-				token:    valid,
-				domainID: "",
-			},
-			err: apiutil.ErrMissingDomainID,
-		},
 	}
 
 	for _, tc := range cases {
@@ -225,15 +198,6 @@ func TestInvitationReqValidation(t *testing.T) {
 				domainID: valid,
 			},
 			err: apiutil.ErrMissingID,
-		},
-		{
-			desc: "empty domain",
-			req: invitationReq{
-				token:    valid,
-				userID:   valid,
-				domainID: "",
-			},
-			err: apiutil.ErrMissingDomainID,
 		},
 	}
 

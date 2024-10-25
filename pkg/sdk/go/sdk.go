@@ -293,13 +293,9 @@ type SDK interface {
 	// RefreshToken receives credentials and returns user token.
 	//
 	// example:
-	//  lt := sdk.Login{
-	//      DomainID:   "domain_id",
-	//  }
-	// example:
-	//  token, _ := sdk.RefreshToken(lt,"refresh_token")
+	//  token, _ := sdk.RefreshToken("refresh_token")
 	//  fmt.Println(token)
-	RefreshToken(lt Login, token string) (Token, errors.SDKError)
+	RefreshToken(token string) (Token, errors.SDKError)
 
 	// ListUserChannels list all channels belongs a particular user id.
 	//
@@ -391,9 +387,9 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Thing",
 	//  }
-	//  things, _ := sdk.Things(pm, "token")
+	//  things, _ := sdk.Things(pm, "domainID", "token")
 	//  fmt.Println(things)
-	Things(pm PageMetadata, token string) (ThingsPage, errors.SDKError)
+	Things(pm PageMetadata, domainID, token string) (ThingsPage, errors.SDKError)
 
 	// ThingsByChannel returns page of things that are connected to specified channel.
 	//
@@ -403,9 +399,9 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Thing",
 	//  }
-	//  things, _ := sdk.ThingsByChannel("channelID", pm, "token")
+	//  things, _ := sdk.ThingsByChannel("channelID", pm, "domainID", "token")
 	//  fmt.Println(things)
-	ThingsByChannel(chanID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError)
+	ThingsByChannel(chanID string, pm PageMetadata, domainID, token string) (ThingsPage, errors.SDKError)
 
 	// Thing returns thing object by id.
 	//
@@ -497,9 +493,9 @@ type SDK interface {
 	//		Limit:  10,
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
-	//  users, _ := sdk.ListThingUsers("thing_id", pm, "token")
+	//  users, _ := sdk.ListThingUsers("thing_id", pm, "domainID", "token")
 	//  fmt.Println(users)
-	ListThingUsers(thingID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
+	ListThingUsers(thingID string, pm PageMetadata, domainID, token string) (UsersPage, errors.SDKError)
 
 	// DeleteThing deletes a thing with the given id.
 	//
@@ -529,9 +525,9 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Group",
 	//  }
-	//  groups, _ := sdk.Groups(pm, "token")
+	//  groups, _ := sdk.Groups(pm, "domainID", "token")
 	//  fmt.Println(groups)
-	Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+	Groups(pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError)
 
 	// Parents returns page of users groups.
 	//
@@ -541,9 +537,9 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Group",
 	//  }
-	//  groups, _ := sdk.Parents("groupID", pm, "token")
+	//  groups, _ := sdk.Parents("groupID", pm, "domainID", "token")
 	//  fmt.Println(groups)
-	Parents(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+	Parents(id string, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError)
 
 	// Children returns page of users groups.
 	//
@@ -553,9 +549,9 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Group",
 	//  }
-	//  groups, _ := sdk.Children("groupID", pm, "token")
+	//  groups, _ := sdk.Children("groupID", pm, "domainID", "token")
 	//  fmt.Println(groups)
-	Children(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+	Children(id string, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError)
 
 	// Group returns users group object by id.
 	//
@@ -629,9 +625,9 @@ type SDK interface {
 	//		Limit:  10,
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
-	//  groups, _ := sdk.ListGroupUsers("groupID", pm, "token")
+	//  groups, _ := sdk.ListGroupUsers("groupID", pm, "domainID", "token")
 	//  fmt.Println(groups)
-	ListGroupUsers(groupID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
+	ListGroupUsers(groupID string, pm PageMetadata, domainID, token string) (UsersPage, errors.SDKError)
 
 	// ListGroupChannels list all channels in the group id .
 	//
@@ -639,12 +635,11 @@ type SDK interface {
 	//	pm := sdk.PageMetadata{
 	//		Offset: 0,
 	//		Limit:  10,
-	//		DomainID: "domain"
 	//		Permission: "edit", // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
-	//  groups, _ := sdk.ListGroupChannels("groupID", pm, "token")
+	//  groups, _ := sdk.ListGroupChannels("groupID", pm, "domainID", "token")
 	//  fmt.Println(groups)
-	ListGroupChannels(groupID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
+	ListGroupChannels(groupID string, pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError)
 
 	// DeleteGroup delete given group id.
 	//
@@ -673,11 +668,10 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//    Name:   "My Channel",
-	//	  Domain: "domainID"
 	//  }
-	//  channels, _ := sdk.Channels(pm, "token")
+	//  channels, _ := sdk.Channels(pm, "domainID", "token")
 	//  fmt.Println(channels)
-	Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
+	Channels(pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError)
 
 	// ChannelsByThing returns page of channels that are connected to specified thing.
 	//
@@ -763,9 +757,9 @@ type SDK interface {
 	//		Limit:  10,
 	//		Permission: "edit",  // available Options:  "administrator", "administrator", "delete", edit", "view", "share", "owner", "owner", "admin", "editor", "contributor", "editor", "viewer", "guest", "create"
 	//	}
-	//  users, _ := sdk.ListChannelUsers("channel_id", pm, "token")
+	//  users, _ := sdk.ListChannelUsers("channel_id", pm, "domainID", "token")
 	//  fmt.Println(users)
-	ListChannelUsers(channelID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
+	ListChannelUsers(channelID string, pm PageMetadata, domainID, token string) (UsersPage, errors.SDKError)
 
 	// AddUserGroupToChannel add user group to a channel.
 	//
@@ -795,9 +789,9 @@ type SDK interface {
 	//		Limit:  10,
 	//		Permission: "view",
 	//	}
-	//  groups, _ := sdk.ListChannelUserGroups("channel_id_1", pm, "token")
+	//  groups, _ := sdk.ListChannelUserGroups("channel_id_1", pm, "domainID", "token")
 	//  fmt.Println(groups)
-	ListChannelUserGroups(channelID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+	ListChannelUserGroups(channelID string, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError)
 
 	// DeleteChannel delete given group id.
 	//
@@ -956,9 +950,9 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  bootstraps, _ := sdk.Bootstraps(pm, "token")
+	//  bootstraps, _ := sdk.Bootstraps(pm, "domainID", "token")
 	//  fmt.Println(bootstraps)
-	Bootstraps(pm PageMetadata, token string) (BootstrapPage, errors.SDKError)
+	Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	//
@@ -1159,9 +1153,9 @@ type SDK interface {
 	// Invitations returns a list of invitations.
 	//
 	// For example:
-	//  invitations, _ := sdk.Invitations(PageMetadata{Offset: 0, Limit: 10, Domain: "domainID"}, "token")
+	//  invitations, _ := sdk.Invitations(PageMetadata{Offset: 0, Limit: 10}, "domainID", "token")
 	//  fmt.Println(invitations)
-	Invitations(pm PageMetadata, token string) (invitations InvitationPage, err error)
+	Invitations(pm PageMetadata, domainID, token string) (invitations InvitationPage, err error)
 
 	// AcceptInvitation accepts an invitation by adding the user to the domain that they were invited to.
 	//

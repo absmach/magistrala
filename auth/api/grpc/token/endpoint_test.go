@@ -46,7 +46,6 @@ const (
 
 var (
 	validID  = testsutil.GenerateUUID(&testing.T{})
-	domainID = testsutil.GenerateUUID(&testing.T{})
 	authAddr = fmt.Sprintf("localhost:%d", port)
 )
 
@@ -70,16 +69,14 @@ func TestIssue(t *testing.T) {
 	cases := []struct {
 		desc          string
 		userId        string
-		domainID      string
 		kind          auth.KeyType
 		issueResponse auth.Token
 		err           error
 	}{
 		{
-			desc:     "issue for user with valid token",
-			userId:   validID,
-			domainID: domainID,
-			kind:     auth.AccessKey,
+			desc:   "issue for user with valid token",
+			userId: validID,
+			kind:   auth.AccessKey,
 			issueResponse: auth.Token{
 				AccessToken:  validToken,
 				RefreshToken: validToken,
@@ -87,10 +84,9 @@ func TestIssue(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:     "issue recovery key",
-			userId:   validID,
-			domainID: domainID,
-			kind:     auth.RecoveryKey,
+			desc:   "issue recovery key",
+			userId: validID,
+			kind:   auth.RecoveryKey,
 			issueResponse: auth.Token{
 				AccessToken:  validToken,
 				RefreshToken: validToken,
@@ -100,7 +96,6 @@ func TestIssue(t *testing.T) {
 		{
 			desc:          "issue API key unauthenticated",
 			userId:        validID,
-			domainID:      domainID,
 			kind:          auth.APIKey,
 			issueResponse: auth.Token{},
 			err:           svcerr.ErrAuthentication,
@@ -108,7 +103,6 @@ func TestIssue(t *testing.T) {
 		{
 			desc:          "issue for invalid key type",
 			userId:        validID,
-			domainID:      domainID,
 			kind:          32,
 			issueResponse: auth.Token{},
 			err:           errors.ErrMalformedEntity,
@@ -116,7 +110,6 @@ func TestIssue(t *testing.T) {
 		{
 			desc:          "issue for user that does notexist",
 			userId:        "",
-			domainID:      "",
 			kind:          auth.APIKey,
 			issueResponse: auth.Token{},
 			err:           svcerr.ErrAuthentication,
@@ -124,10 +117,12 @@ func TestIssue(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
-		_, err := grpcClient.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.userId, DomainId: &tc.domainID, Type: uint32(tc.kind)})
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
+			_, err := grpcClient.Issue(context.Background(), &magistrala.IssueReq{UserId: tc.userId, Type: uint32(tc.kind)})
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -139,14 +134,12 @@ func TestRefresh(t *testing.T) {
 	cases := []struct {
 		desc          string
 		token         string
-		domainID      string
 		issueResponse auth.Token
 		err           error
 	}{
 		{
-			desc:     "refresh token with valid token",
-			token:    validToken,
-			domainID: domainID,
+			desc:  "refresh token with valid token",
+			token: validToken,
 			issueResponse: auth.Token{
 				AccessToken:  validToken,
 				RefreshToken: validToken,
@@ -156,23 +149,23 @@ func TestRefresh(t *testing.T) {
 		{
 			desc:          "refresh token with invalid token",
 			token:         inValidToken,
-			domainID:      domainID,
 			issueResponse: auth.Token{},
 			err:           svcerr.ErrAuthentication,
 		},
 		{
 			desc:          "refresh token with empty token",
 			token:         "",
-			domainID:      domainID,
 			issueResponse: auth.Token{},
 			err:           apiutil.ErrMissingSecret,
 		},
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
-		_, err := grpcClient.Refresh(context.Background(), &magistrala.RefreshReq{DomainId: &tc.domainID, RefreshToken: tc.token})
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
+			_, err := grpcClient.Refresh(context.Background(), &magistrala.RefreshReq{RefreshToken: tc.token})
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			svcCall.Unset()
+		})
 	}
 }

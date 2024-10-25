@@ -84,11 +84,10 @@ var cmdGroups = []cobra.Command{
 					return
 				}
 				pm := mgxsdk.PageMetadata{
-					Offset:   Offset,
-					Limit:    Limit,
-					DomainID: args[1],
+					Offset: Offset,
+					Limit:  Limit,
 				}
-				l, err := sdk.Groups(pm, args[2])
+				l, err := sdk.Groups(pm, args[1], args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -106,7 +105,7 @@ var cmdGroups = []cobra.Command{
 					Limit:    Limit,
 					DomainID: args[2],
 				}
-				l, err := sdk.Children(args[1], pm, args[3])
+				l, err := sdk.Children(args[1], pm, args[2], args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -120,11 +119,10 @@ var cmdGroups = []cobra.Command{
 					return
 				}
 				pm := mgxsdk.PageMetadata{
-					Offset:   Offset,
-					Limit:    Limit,
-					DomainID: args[2],
+					Offset: Offset,
+					Limit:  Limit,
 				}
-				l, err := sdk.Parents(args[1], pm, args[3])
+				l, err := sdk.Parents(args[1], pm, args[2], args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -174,12 +172,11 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset:   Offset,
-				Limit:    Limit,
-				Status:   Status,
-				DomainID: args[1],
+				Offset: Offset,
+				Limit:  Limit,
+				Status: Status,
 			}
-			users, err := sdk.ListGroupUsers(args[0], pm, args[2])
+			users, err := sdk.ListGroupUsers(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -199,12 +196,11 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset:   Offset,
-				Limit:    Limit,
-				Status:   Status,
-				DomainID: args[1],
+				Offset: Offset,
+				Limit:  Limit,
+				Status: Status,
 			}
-			channels, err := sdk.ListGroupChannels(args[0], pm, args[2])
+			channels, err := sdk.ListGroupChannels(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

@@ -66,8 +66,8 @@ func (sdk mgSDK) Invitation(userID, domainID, token string) (invitation Invitati
 	return invitation, nil
 }
 
-func (sdk mgSDK) Invitations(pm PageMetadata, token string) (invitations InvitationPage, err error) {
-	endpoint := fmt.Sprintf("%s/%s", pm.DomainID, invitationsEndpoint)
+func (sdk mgSDK) Invitations(pm PageMetadata, domainID, token string) (invitations InvitationPage, err error) {
+	endpoint := fmt.Sprintf("%s/%s", domainID, invitationsEndpoint)
 
 	url, err := sdk.withQueryParams(sdk.invitationsURL, endpoint, pm)
 	if err != nil {

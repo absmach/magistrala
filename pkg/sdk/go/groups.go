@@ -59,8 +59,8 @@ func (sdk mgSDK) CreateGroup(g Group, domainID, token string) (Group, errors.SDK
 	return g, nil
 }
 
-func (sdk mgSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", pm.DomainID, groupsEndpoint)
+func (sdk mgSDK) Groups(pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", domainID, groupsEndpoint)
 	url, err := sdk.withQueryParams(sdk.usersURL, endpoint, pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -69,9 +69,9 @@ func (sdk mgSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKEr
 	return sdk.getGroups(url, token)
 }
 
-func (sdk mgSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+func (sdk mgSDK) Parents(id string, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError) {
 	pm.Level = MaxLevel
-	endpoint := fmt.Sprintf("%s/%s", pm.DomainID, groupsEndpoint)
+	endpoint := fmt.Sprintf("%s/%s", domainID, groupsEndpoint)
 	url, err := sdk.withQueryParams(fmt.Sprintf("%s/%s/%s", sdk.usersURL, endpoint, id), "parents", pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -80,9 +80,9 @@ func (sdk mgSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, 
 	return sdk.getGroups(url, token)
 }
 
-func (sdk mgSDK) Children(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+func (sdk mgSDK) Children(id string, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError) {
 	pm.Level = MaxLevel
-	endpoint := fmt.Sprintf("%s/%s", pm.DomainID, groupsEndpoint)
+	endpoint := fmt.Sprintf("%s/%s", domainID, groupsEndpoint)
 	url, err := sdk.withQueryParams(fmt.Sprintf("%s/%s/%s", sdk.usersURL, endpoint, id), "children", pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -197,8 +197,8 @@ func (sdk mgSDK) RemoveUserFromGroup(groupID string, req UsersRelationRequest, d
 	return sdkerr
 }
 
-func (sdk mgSDK) ListGroupUsers(groupID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, groupsEndpoint, groupID, usersEndpoint), pm)
+func (sdk mgSDK) ListGroupUsers(groupID string, pm PageMetadata, domainID, token string) (UsersPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", domainID, groupsEndpoint, groupID, usersEndpoint), pm)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}
@@ -214,8 +214,8 @@ func (sdk mgSDK) ListGroupUsers(groupID string, pm PageMetadata, token string) (
 	return up, nil
 }
 
-func (sdk mgSDK) ListGroupChannels(groupID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, groupsEndpoint, groupID, channelsEndpoint), pm)
+func (sdk mgSDK) ListGroupChannels(groupID string, pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s/%s", domainID, groupsEndpoint, groupID, channelsEndpoint), pm)
 	if err != nil {
 		return ChannelsPage{}, errors.NewSDKError(err)
 	}

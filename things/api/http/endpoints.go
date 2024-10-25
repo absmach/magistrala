@@ -523,6 +523,7 @@ func deleteClientEndpoint(svc things.Service) endpoint.Endpoint {
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
+
 		if err := svc.DeleteClient(ctx, session, req.id); err != nil {
 			return nil, err
 		}

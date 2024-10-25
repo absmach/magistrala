@@ -220,7 +220,7 @@ func TestGetThingsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Things", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("Things", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
 			sdkCall1 := sdkMock.On("Thing", mock.Anything, mock.Anything, mock.Anything).Return(tc.thing, tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
@@ -779,7 +779,7 @@ func TestUsersThingCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListThingUsers", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListThingUsers", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{usrCmd}, tc.args...)...)
 
 			switch tc.logType {

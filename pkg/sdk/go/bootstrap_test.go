@@ -175,14 +175,14 @@ func TestAddBootstrap(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "add with invalid token",
-			domainID: domainID,
-			token:    invalidToken,
-			cfg:      sdkBootstrapConfig,
-			svcReq:   bootstrapConfig,
-			svcRes:   bootstrap.Config{},
-			svcErr:   svcerr.ErrAuthentication,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:            "add with invalid token",
+			domainID:        domainID,
+			token:           invalidToken,
+			cfg:             sdkBootstrapConfig,
+			svcReq:          bootstrapConfig,
+			svcRes:          bootstrap.Config{},
+			authenticateErr: svcerr.ErrAuthentication,
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "add with config that cannot be marshalled",
@@ -242,7 +242,7 @@ func TestAddBootstrap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("Add", mock.Anything, tc.session, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
@@ -295,6 +295,7 @@ func TestListBootstraps(t *testing.T) {
 
 	cases := []struct {
 		desc            string
+		domainID        string
 		token           string
 		session         mgauthn.Session
 		pageMeta        sdk.PageMetadata
@@ -305,12 +306,12 @@ func TestListBootstraps(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:  "list successfully",
-			token: validToken,
+			desc:     "list successfully",
+			domainID: domainID,
+			token:    validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcResp: bootstrap.ConfigsPage{
 				Total:   1,
@@ -326,25 +327,25 @@ func TestListBootstraps(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:  "list with invalid token",
-			token: invalidToken,
+			desc:     "list with invalid token",
+			domainID: domainID,
+			token:    invalidToken,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
-			svcResp:  bootstrap.ConfigsPage{},
-			svcErr:   svcerr.ErrAuthentication,
-			response: sdk.BootstrapPage{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			svcResp:         bootstrap.ConfigsPage{},
+			authenticateErr: svcerr.ErrAuthentication,
+			response:        sdk.BootstrapPage{},
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:  "list with empty token",
-			token: "",
+			desc:     "list with empty token",
+			domainID: domainID,
+			token:    "",
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcResp:  bootstrap.ConfigsPage{},
 			svcErr:   nil,
@@ -352,12 +353,12 @@ func TestListBootstraps(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:  "list with invalid query params",
-			token: validToken,
+			desc:     "list with invalid query params",
+			domainID: domainID,
+			token:    validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset:   1,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 1,
+				Limit:  10,
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
 				},
@@ -368,12 +369,12 @@ func TestListBootstraps(t *testing.T) {
 			err:      errors.NewSDKError(errMarshalChan),
 		},
 		{
-			desc:  "list with response that cannot be unmarshalled",
-			token: validToken,
+			desc:     "list with response that cannot be unmarshalled",
+			domainID: domainID,
+			token:    validToken,
 			pageMeta: sdk.PageMetadata{
-				Offset:   0,
-				Limit:    10,
-				DomainID: domainID,
+				Offset: 0,
+				Limit:  10,
 			},
 			svcResp: bootstrap.ConfigsPage{
 				Total:   1,
@@ -388,11 +389,11 @@ func TestListBootstraps(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("List", mock.Anything, tc.session, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.Bootstraps(tc.pageMeta, tc.token)
+			resp, err := mgsdk.Bootstraps(tc.pageMeta, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if err == nil {
@@ -493,7 +494,7 @@ func TestWhiteList(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("ChangeState", mock.Anything, tc.session, tc.token, tc.thingID, tc.svcReq).Return(tc.svcErr)
@@ -614,7 +615,7 @@ func TestViewBootstrap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("View", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
@@ -777,7 +778,7 @@ func TestUpdateBootstrap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticationErr)
 			svcCall := bsvc.On("Update", mock.Anything, tc.session, tc.svcReq).Return(tc.svcErr)
@@ -899,18 +900,20 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		if tc.token == validToken {
-			tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
-		}
-		authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-		svcCall := bsvc.On("UpdateCert", mock.Anything, tc.session, tc.id, tc.clientCert, tc.clientKey, tc.caCert).Return(tc.svcResp, tc.svcErr)
-		resp, err := mgsdk.UpdateBootstrapCerts(tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.domainID, tc.token)
-		assert.Equal(t, tc.err, err)
-		if err == nil {
-			assert.Equal(t, tc.response, resp)
-		}
-		svcCall.Unset()
-		authCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := bsvc.On("UpdateCert", mock.Anything, tc.session, tc.id, tc.clientCert, tc.clientKey, tc.caCert).Return(tc.svcResp, tc.svcErr)
+			resp, err := mgsdk.UpdateBootstrapCerts(tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.domainID, tc.token)
+			assert.Equal(t, tc.err, err)
+			if err == nil {
+				assert.Equal(t, tc.response, resp)
+			}
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
@@ -1002,7 +1005,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels).Return(tc.svcErr)
@@ -1089,7 +1092,7 @@ func TestRemoveBootstrap(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if tc.token == validToken {
-				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("Remove", mock.Anything, tc.session, tc.id).Return(tc.svcErr)

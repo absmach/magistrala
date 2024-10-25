@@ -55,15 +55,14 @@ func (s *tokenGrpcServer) Refresh(ctx context.Context, req *magistrala.RefreshRe
 func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.IssueReq)
 	return issueReq{
-		userID:   req.GetUserId(),
-		domainID: req.GetDomainId(),
-		keyType:  auth.KeyType(req.GetType()),
+		userID:  req.GetUserId(),
+		keyType: auth.KeyType(req.GetType()),
 	}, nil
 }
 
 func decodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*magistrala.RefreshReq)
-	return refreshReq{refreshToken: req.GetRefreshToken(), domainID: req.GetDomainId()}, nil
+	return refreshReq{refreshToken: req.GetRefreshToken()}, nil
 }
 
 func encodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

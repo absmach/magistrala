@@ -52,8 +52,8 @@ func (sdk mgSDK) CreateChannel(c Channel, domainID, token string) (Channel, erro
 	return c, nil
 }
 
-func (sdk mgSDK) Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", pm.DomainID, channelsEndpoint)
+func (sdk mgSDK) Channels(pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", domainID, channelsEndpoint)
 	url, err := sdk.withQueryParams(sdk.thingsURL, endpoint, pm)
 	if err != nil {
 		return ChannelsPage{}, errors.NewSDKError(err)
@@ -174,8 +174,8 @@ func (sdk mgSDK) RemoveUserFromChannel(channelID string, req UsersRelationReques
 	return sdkerr
 }
 
-func (sdk mgSDK) ListChannelUsers(channelID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, channelsEndpoint, channelID, usersEndpoint), pm)
+func (sdk mgSDK) ListChannelUsers(channelID string, pm PageMetadata, domainID, token string) (UsersPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", domainID, channelsEndpoint, channelID, usersEndpoint), pm)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}
@@ -215,8 +215,8 @@ func (sdk mgSDK) RemoveUserGroupFromChannel(channelID string, req UserGroupsRequ
 	return sdkerr
 }
 
-func (sdk mgSDK) ListChannelUserGroups(channelID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, channelsEndpoint, channelID, groupsEndpoint), pm)
+func (sdk mgSDK) ListChannelUserGroups(channelID string, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", domainID, channelsEndpoint, channelID, groupsEndpoint), pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
 	}

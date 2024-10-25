@@ -119,11 +119,13 @@ func TestIssue(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		tkn, err := tokenizer.Issue(tc.key)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
-		if err != nil {
-			assert.NotEmpty(t, tkn, fmt.Sprintf("%s expected token, got empty string", tc.desc))
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			tkn, err := tokenizer.Issue(tc.key)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
+			if err != nil {
+				assert.NotEmpty(t, tkn, fmt.Sprintf("%s expected token, got empty string", tc.desc))
+			}
+		})
 	}
 }
 
@@ -225,11 +227,13 @@ func TestParse(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		key, err := tokenizer.Parse(tc.token)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
-		if err == nil {
-			assert.Equal(t, tc.key, key, fmt.Sprintf("%s expected %v, got %v", tc.desc, tc.key, key))
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			key, err := tokenizer.Parse(tc.token)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.key, key, fmt.Sprintf("%s expected %v, got %v", tc.desc, tc.key, key))
+			}
+		})
 	}
 }
 

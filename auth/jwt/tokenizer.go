@@ -32,7 +32,6 @@ const (
 	issuerName             = "magistrala.auth"
 	tokenType              = "type"
 	userField              = "user"
-	domainField            = "domain"
 	oauthProviderField     = "oauth_provider"
 	oauthAccessTokenField  = "access_token"
 	oauthRefreshTokenField = "refresh_token"
@@ -59,9 +58,6 @@ func (tok *tokenizer) Issue(key auth.Key) (string, error) {
 		Claim(tokenType, key.Type).
 		Expiration(key.ExpiresAt)
 	builder.Claim(userField, key.User)
-	if key.Domain != "" {
-		builder.Claim(domainField, key.Domain)
-	}
 	if key.Subject != "" {
 		builder.Subject(key.Subject)
 	}

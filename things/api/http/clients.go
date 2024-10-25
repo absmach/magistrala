@@ -26,7 +26,7 @@ func clientsHandler(svc things.Service, r *chi.Mux, authn mgauthn.Authentication
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 	r.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddlewareDomain(authn))
+		r.Use(api.AuthenticateMiddleware(authn, true))
 
 		r.Route("/{domainID}/things", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(

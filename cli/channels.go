@@ -63,7 +63,7 @@ var cmdChannels = []cobra.Command{
 			}
 
 			if args[0] == all {
-				l, err := sdk.Channels(pageMetadata, args[2])
+				l, err := sdk.Channels(pageMetadata, args[1], args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -134,11 +134,10 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset:   Offset,
-				Limit:    Limit,
-				DomainID: args[1],
+				Offset: Offset,
+				Limit:  Limit,
 			}
-			cl, err := sdk.ThingsByChannel(args[0], pm, args[2])
+			cl, err := sdk.ThingsByChannel(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -197,11 +196,10 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset:   Offset,
-				Limit:    Limit,
-				DomainID: args[1],
+				Offset: Offset,
+				Limit:  Limit,
 			}
-			ul, err := sdk.ListChannelUsers(args[0], pm, args[2])
+			ul, err := sdk.ListChannelUsers(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -222,11 +220,10 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset:   Offset,
-				Limit:    Limit,
-				DomainID: args[1],
+				Offset: Offset,
+				Limit:  Limit,
 			}
-			ul, err := sdk.ListChannelUserGroups(args[0], pm, args[2])
+			ul, err := sdk.ListChannelUserGroups(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

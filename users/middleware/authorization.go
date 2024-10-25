@@ -70,15 +70,15 @@ func (am *authorizationMiddleware) ListMembers(ctx context.Context, session auth
 	}
 	switch objectKind {
 	case policies.GroupsKind:
-		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.GroupType, objectID); err != nil {
+		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.UserID, mgauth.SwitchToPermission(pm.Permission), policies.GroupType, objectID); err != nil {
 			return clients.MembersPage{}, err
 		}
 	case policies.DomainsKind:
-		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.DomainType, objectID); err != nil {
+		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.UserID, mgauth.SwitchToPermission(pm.Permission), policies.DomainType, objectID); err != nil {
 			return clients.MembersPage{}, err
 		}
 	case policies.ThingsKind:
-		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.ThingType, objectID); err != nil {
+		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.UserID, mgauth.SwitchToPermission(pm.Permission), policies.ThingType, objectID); err != nil {
 			return clients.MembersPage{}, err
 		}
 	default:
@@ -171,12 +171,12 @@ func (am *authorizationMiddleware) Identify(ctx context.Context, session authn.S
 	return am.svc.Identify(ctx, session)
 }
 
-func (am *authorizationMiddleware) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
-	return am.svc.IssueToken(ctx, identity, secret, domainID)
+func (am *authorizationMiddleware) IssueToken(ctx context.Context, identity, secret string) (*magistrala.Token, error) {
+	return am.svc.IssueToken(ctx, identity, secret)
 }
 
-func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken, domainID string) (*magistrala.Token, error) {
-	return am.svc.RefreshToken(ctx, session, refreshToken, domainID)
+func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*magistrala.Token, error) {
+	return am.svc.RefreshToken(ctx, session, refreshToken)
 }
 
 func (am *authorizationMiddleware) OAuthCallback(ctx context.Context, client clients.Client) (clients.Client, error) {

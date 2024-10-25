@@ -257,15 +257,14 @@ func (es *eventStore) GenerateResetToken(ctx context.Context, email, host string
 	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) IssueToken(ctx context.Context, identity, secret, domainID string) (*magistrala.Token, error) {
-	token, err := es.svc.IssueToken(ctx, identity, secret, domainID)
+func (es *eventStore) IssueToken(ctx context.Context, identity, secret string) (*magistrala.Token, error) {
+	token, err := es.svc.IssueToken(ctx, identity, secret)
 	if err != nil {
 		return token, err
 	}
 
 	event := issueTokenEvent{
 		identity: identity,
-		domainID: domainID,
 	}
 
 	if err := es.Publish(ctx, event); err != nil {
@@ -275,13 +274,13 @@ func (es *eventStore) IssueToken(ctx context.Context, identity, secret, domainID
 	return token, nil
 }
 
-func (es *eventStore) RefreshToken(ctx context.Context, session authn.Session, refreshToken, domainID string) (*magistrala.Token, error) {
-	token, err := es.svc.RefreshToken(ctx, session, refreshToken, domainID)
+func (es *eventStore) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*magistrala.Token, error) {
+	token, err := es.svc.RefreshToken(ctx, session, refreshToken)
 	if err != nil {
 		return token, err
 	}
 
-	event := refreshTokenEvent{domainID: domainID}
+	event := refreshTokenEvent{}
 
 	if err := es.Publish(ctx, event); err != nil {
 		return token, err

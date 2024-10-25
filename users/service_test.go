@@ -1489,7 +1489,6 @@ func TestIssueToken(t *testing.T) {
 
 	cases := []struct {
 		desc                       string
-		domainID                   string
 		client                     mgclients.Client
 		retrieveByIdentityResponse mgclients.Client
 		issueResponse              *magistrala.Token
@@ -1506,7 +1505,6 @@ func TestIssueToken(t *testing.T) {
 		},
 		{
 			desc:                       "issue token for non-empty domain id",
-			domainID:                   validID,
 			client:                     client,
 			retrieveByIdentityResponse: rClient,
 			issueResponse:              &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
@@ -1544,20 +1542,22 @@ func TestIssueToken(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
-		authCall := auth.On("Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, DomainId: &tc.domainID, Type: uint32(mgauth.AccessKey)}).Return(tc.issueResponse, tc.issueErr)
-		token, err := svc.IssueToken(context.Background(), tc.client.Credentials.Identity, tc.client.Credentials.Secret, tc.domainID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		if err == nil {
-			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
-			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
-			ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
-			assert.True(t, ok, fmt.Sprintf("RetrieveByIdentity was not called on %s", tc.desc))
-			ok = authCall.Parent.AssertCalled(t, "Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, DomainId: &tc.domainID, Type: uint32(mgauth.AccessKey)})
-			assert.True(t, ok, fmt.Sprintf("Issue was not called on %s", tc.desc))
-		}
-		authCall.Unset()
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
+			authCall := auth.On("Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, Type: uint32(mgauth.AccessKey)}).Return(tc.issueResponse, tc.issueErr)
+			token, err := svc.IssueToken(context.Background(), tc.client.Credentials.Identity, tc.client.Credentials.Secret)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
+				assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
+				ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
+				assert.True(t, ok, fmt.Sprintf("RetrieveByIdentity was not called on %s", tc.desc))
+				ok = authCall.Parent.AssertCalled(t, "Issue", context.Background(), &magistrala.IssueReq{UserId: tc.client.ID, Type: uint32(mgauth.AccessKey)})
+				assert.True(t, ok, fmt.Sprintf("Issue was not called on %s", tc.desc))
+			}
+			authCall.Unset()
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -1570,7 +1570,6 @@ func TestRefreshToken(t *testing.T) {
 	cases := []struct {
 		desc        string
 		session     authn.Session
-		domainID    string
 		refreshResp *magistrala.Token
 		refresErr   error
 		repoResp    mgclients.Client
@@ -1580,14 +1579,6 @@ func TestRefreshToken(t *testing.T) {
 		{
 			desc:        "refresh token with refresh token for an existing client",
 			session:     authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
-			domainID:    validID,
-			refreshResp: &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
-			repoResp:    rClient,
-			err:         nil,
-		},
-		{
-			desc:        "refresh token with refresh token for empty domain id",
-			session:     authn.Session{UserID: validID},
 			refreshResp: &magistrala.Token{AccessToken: validToken, RefreshToken: &validToken, AccessType: "3"},
 			repoResp:    rClient,
 			err:         nil,
@@ -1595,23 +1586,20 @@ func TestRefreshToken(t *testing.T) {
 		{
 			desc:        "refresh token with access token for an existing client",
 			session:     authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
-			domainID:    validID,
 			refreshResp: &magistrala.Token{},
 			refresErr:   svcerr.ErrAuthentication,
 			repoResp:    rClient,
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc:     "refresh token with refresh token for a non-existing client",
-			session:  authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
-			domainID: validID,
-			repoErr:  repoerr.ErrNotFound,
-			err:      repoerr.ErrNotFound,
+			desc:    "refresh token with refresh token for a non-existing client",
+			session: authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			repoErr: repoerr.ErrNotFound,
+			err:     repoerr.ErrNotFound,
 		},
 		{
 			desc:     "refresh token with refresh token for a disable client",
 			session:  authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
-			domainID: validID,
 			repoResp: mgclients.Client{Status: mgclients.DisabledStatus},
 			err:      svcerr.ErrAuthentication,
 		},
@@ -1626,20 +1614,22 @@ func TestRefreshToken(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		authCall := authsvc.On("Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken, DomainId: &tc.domainID}).Return(tc.refreshResp, tc.refresErr)
-		repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
-		token, err := svc.RefreshToken(context.Background(), tc.session, validToken, tc.domainID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		if err == nil {
-			assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
-			assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
-			ok := authCall.Parent.AssertCalled(t, "Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken, DomainId: &tc.domainID})
-			assert.True(t, ok, fmt.Sprintf("Refresh was not called on %s", tc.desc))
-			ok = repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
-			assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
-		}
-		authCall.Unset()
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			authCall := authsvc.On("Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken}).Return(tc.refreshResp, tc.refresErr)
+			repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
+			token, err := svc.RefreshToken(context.Background(), tc.session, validToken)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
+				assert.NotEmpty(t, token.GetRefreshToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetRefreshToken()))
+				ok := authCall.Parent.AssertCalled(t, "Refresh", context.Background(), &magistrala.RefreshReq{RefreshToken: validToken})
+				assert.True(t, ok, fmt.Sprintf("Refresh was not called on %s", tc.desc))
+				ok = repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
+				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
+			}
+			authCall.Unset()
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -1689,15 +1679,17 @@ func TestGenerateResetToken(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.email).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
-		authCall := auth.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
-		svcCall := e.On("SendPasswordReset", []string{tc.email}, tc.host, client.Name, validToken).Return(tc.err)
-		err := svc.GenerateResetToken(context.Background(), tc.email, tc.host)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.email)
-		repoCall.Unset()
-		authCall.Unset()
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.email).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
+			authCall := auth.On("Issue", context.Background(), mock.Anything).Return(tc.issueResponse, tc.issueErr)
+			svcCall := e.On("SendPasswordReset", []string{tc.email}, tc.host, client.Name, validToken).Return(tc.err)
+			err := svc.GenerateResetToken(context.Background(), tc.email, tc.host)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.email)
+			repoCall.Unset()
+			authCall.Unset()
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -1775,16 +1767,18 @@ func TestResetSecret(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.retrieveByIDResponse, tc.retrieveByIDErr)
-		repoCall1 := cRepo.On("UpdateSecret", context.Background(), mock.Anything).Return(tc.updateSecretResponse, tc.updateSecretErr)
-		err := svc.ResetSecret(context.Background(), tc.session, tc.newSecret)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		if tc.err == nil {
-			repoCall1.Parent.AssertCalled(t, "UpdateSecret", context.Background(), mock.Anything)
-			repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), validID)
-		}
-		repoCall1.Unset()
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.retrieveByIDResponse, tc.retrieveByIDErr)
+			repoCall1 := cRepo.On("UpdateSecret", context.Background(), mock.Anything).Return(tc.updateSecretResponse, tc.updateSecretErr)
+			err := svc.ResetSecret(context.Background(), tc.session, tc.newSecret)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if tc.err == nil {
+				repoCall1.Parent.AssertCalled(t, "UpdateSecret", context.Background(), mock.Anything)
+				repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), validID)
+			}
+			repoCall1.Unset()
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -1824,11 +1818,13 @@ func TestViewProfile(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.retrieveByIDResponse, tc.retrieveByIDErr)
-		_, err := svc.ViewProfile(context.Background(), tc.session)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), mock.Anything)
-		repoCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.retrieveByIDResponse, tc.retrieveByIDErr)
+			_, err := svc.ViewProfile(context.Background(), tc.session)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), mock.Anything)
+			repoCall.Unset()
+		})
 	}
 }
 
@@ -1909,14 +1905,16 @@ func TestOAuthCallback(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
-		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.saveResponse, tc.saveErr)
-		policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
-		_, err := svc.OAuthCallback(context.Background(), tc.client)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
-		repoCall.Unset()
-		repoCall1.Unset()
-		policyCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := cRepo.On("RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity).Return(tc.retrieveByIdentityResponse, tc.retrieveByIdentityErr)
+			repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.saveResponse, tc.saveErr)
+			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
+			_, err := svc.OAuthCallback(context.Background(), tc.client)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", context.Background(), tc.client.Credentials.Identity)
+			repoCall.Unset()
+			repoCall1.Unset()
+			policyCall.Unset()
+		})
 	}
 }

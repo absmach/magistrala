@@ -170,7 +170,6 @@ func createUser(s sdk.SDK, conf Config) (string, string, error) {
 	login = sdk.Login{
 		Identity: user.Credentials.Identity,
 		Secret:   user.Credentials.Secret,
-		DomainID: domain.ID,
 	}
 	token, err = s.CreateToken(login)
 	if err != nil {
@@ -333,7 +332,7 @@ func read(s sdk.SDK, conf Config, domainID, token string, users []sdk.User, grou
 			return fmt.Errorf("failed to get group %w", err)
 		}
 	}
-	gp, err := s.Groups(sdk.PageMetadata{}, token)
+	gp, err := s.Groups(sdk.PageMetadata{}, domainID, token)
 	if err != nil {
 		return fmt.Errorf("failed to get groups %w", err)
 	}
@@ -345,7 +344,7 @@ func read(s sdk.SDK, conf Config, domainID, token string, users []sdk.User, grou
 			return fmt.Errorf("failed to get thing %w", err)
 		}
 	}
-	tp, err := s.Things(sdk.PageMetadata{}, token)
+	tp, err := s.Things(sdk.PageMetadata{}, domainID, token)
 	if err != nil {
 		return fmt.Errorf("failed to get things %w", err)
 	}
@@ -357,9 +356,7 @@ func read(s sdk.SDK, conf Config, domainID, token string, users []sdk.User, grou
 			return fmt.Errorf("failed to get channel %w", err)
 		}
 	}
-	cp, err := s.Channels(sdk.PageMetadata{
-		DomainID: domainID,
-	}, token)
+	cp, err := s.Channels(sdk.PageMetadata{}, domainID, token)
 	if err != nil {
 		return fmt.Errorf("failed to get channels %w", err)
 	}

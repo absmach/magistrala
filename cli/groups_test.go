@@ -156,19 +156,19 @@ func TestGetGroupsCmd(t *testing.T) {
 			},
 			logType: usageLog,
 		},
-		// {
-		// 	desc: "get children groups successfully",
-		// 	args: []string{
-		// 		childCmd,
-		// 		group.ID,
-		// 		domainID,
-		// 		token,
-		// 	},
-		// 	page: mgsdk.GroupsPage{
-		// 		Groups: []mgsdk.Group{group},
-		// 	},
-		// 	logType: entityLog,
-		// },
+		{
+			desc: "get children groups successfully",
+			args: []string{
+				childCmd,
+				group.ID,
+				domainID,
+				token,
+			},
+			page: mgsdk.GroupsPage{
+				Groups: []mgsdk.Group{group},
+			},
+			logType: entityLog,
+		},
 		{
 			desc: "get children groups with invalid args",
 			args: []string{
@@ -293,9 +293,9 @@ func TestGetGroupsCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sdkCall := sdkMock.On("Group", mock.Anything, mock.Anything, mock.Anything).Return(tc.group, tc.sdkErr)
-			sdkCall1 := sdkMock.On("Groups", mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
-			sdkCall2 := sdkMock.On("Parents", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
-			sdkCall3 := sdkMock.On("Children", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Groups", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall2 := sdkMock.On("Parents", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall3 := sdkMock.On("Children", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 
@@ -535,7 +535,7 @@ func TestListUsersCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListGroupUsers", tc.args[0], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListGroupUsers", tc.args[0], mock.Anything, tc.args[1], tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{usrCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -610,7 +610,7 @@ func TestListChannelsCmd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListGroupChannels", tc.args[0], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListGroupChannels", tc.args[0], mock.Anything, tc.args[1], tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{chansCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:

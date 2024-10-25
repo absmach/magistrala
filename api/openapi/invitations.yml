@@ -48,6 +48,8 @@ paths:
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to the domain ID.
         "404":
           description: A non-existent entity request.
         "409":
@@ -86,6 +88,8 @@ paths:
           description: |
             Missing or invalid access token provided.
             This endpoint is available only for administrators.
+        "403":
+          description: Unauthorized access to the domain ID.
         "404":
           description: A non-existent entity request.
         "422":
@@ -165,6 +169,8 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access to the domain ID.
         "404":
           description: A non-existent entity request.
         "415":
@@ -191,6 +197,8 @@ paths:
           description: Invitation deleted.
         "400":
           description: Failed due to malformed JSON.
+        "403":
+          description: Unauthorized access to the domain ID.
         "404":
           description: Failed due to non existing user.
         "401":

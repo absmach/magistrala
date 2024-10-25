@@ -22,7 +22,6 @@ type Token struct {
 type Login struct {
 	Identity string `json:"identity"`
 	Secret   string `json:"secret"`
-	DomainID string `json:"domain_id,omitempty"`
 }
 
 func (sdk mgSDK) CreateToken(lt Login) (Token, errors.SDKError) {
@@ -45,14 +44,10 @@ func (sdk mgSDK) CreateToken(lt Login) (Token, errors.SDKError) {
 	return token, nil
 }
 
-func (sdk mgSDK) RefreshToken(lt Login, token string) (Token, errors.SDKError) {
-	data, err := json.Marshal(lt)
-	if err != nil {
-		return Token{}, errors.NewSDKError(err)
-	}
+func (sdk mgSDK) RefreshToken(token string) (Token, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, refreshTokenEndpoint)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusCreated)
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusCreated)
 	if sdkerr != nil {
 		return Token{}, sdkerr
 	}

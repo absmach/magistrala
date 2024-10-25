@@ -339,7 +339,7 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 	if _, err = crepo.Save(ctx, client); err != nil {
 		return "", err
 	}
-	if _, err = svc.IssueToken(ctx, c.AdminEmail, c.AdminPassword, ""); err != nil {
+	if _, err = svc.IssueToken(ctx, c.AdminEmail, c.AdminPassword); err != nil {
 		return "", err
 	}
 	return client.ID, nil

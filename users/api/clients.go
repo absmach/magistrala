@@ -46,7 +46,7 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 				opts...,
 			), "register_client").ServeHTTP)
 		default:
-			r.With(api.AuthenticateMiddleware(authn)).Post("/", otelhttp.NewHandler(kithttp.NewServer(
+			r.With(api.AuthenticateMiddleware(authn, false)).Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				registrationEndpoint(svc, selfRegister),
 				decodeCreateClientReq,
 				api.EncodeResponse,
@@ -55,7 +55,7 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 		}
 
 		r.Group(func(r chi.Router) {
-			r.Use(api.AuthenticateMiddleware(authn))
+			r.Use(api.AuthenticateMiddleware(authn, false))
 
 			r.Get("/profile", otelhttp.NewHandler(kithttp.NewServer(
 				viewProfileEndpoint(svc),
@@ -158,13 +158,17 @@ func clientsHandler(svc users.Service, authn mgauthn.Authentication, tokenClient
 	})
 
 	r.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddleware(authn))
+		r.Use(api.AuthenticateMiddleware(authn, false))
 		r.Put("/password/reset", otelhttp.NewHandler(kithttp.NewServer(
 			passwordResetEndpoint(svc),
 			decodePasswordReset,
 			api.EncodeResponse,
 			opts...,
 		), "password_reset").ServeHTTP)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(api.AuthenticateMiddleware(authn, true))
 
 		// Ideal location: users service, groups endpoint.
 		// Reason for placing here :
@@ -465,9 +469,6 @@ func decodeRefreshToken(_ context.Context, r *http.Request) (interface{}, error)
 	}
 	req := tokenReq{RefreshToken: apiutil.ExtractBearerToken(r)}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
-	}
 	return req, nil
 }
 

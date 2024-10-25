@@ -91,13 +91,13 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "token <username> <password> [<domainID>]",
+		Use:   "token <username> <password>",
 		Short: "Get token",
 		Long: "Generate new token from username and password\n" +
 			"For example:\n" +
 			"\tmagistrala-cli users token user@example.com 12345678\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 && len(args) != 2 {
+			if len(args) != 2 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -105,9 +105,6 @@ var cmdUsers = []cobra.Command{
 			lg := mgxsdk.Login{
 				Identity: args[0],
 				Secret:   args[1],
-			}
-			if len(args) == 3 {
-				lg.DomainID = args[2]
 			}
 
 			token, err := sdk.CreateToken(lg)
@@ -120,22 +117,18 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "refreshtoken <token> [<domainID>]",
+		Use:   "refreshtoken <token>",
 		Short: "Get token",
 		Long: "Generate new token from refresh token\n" +
 			"For example:\n" +
 			"\tmagistrala-cli users refreshtoken <refresh_token>\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 && len(args) != 1 {
+			if len(args) != 1 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			lg := mgxsdk.Login{}
-			if len(args) == 2 {
-				lg.DomainID = args[1]
-			}
-			token, err := sdk.RefreshToken(lg, args[0])
+			token, err := sdk.RefreshToken(args[0])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

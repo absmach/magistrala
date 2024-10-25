@@ -46,7 +46,7 @@ var cmdThings = []cobra.Command{
 			"Usage:\n" +
 			"\tmagistrala-cli things get all $DOMAINID $USERTOKEN - lists all things\n" +
 			"\tmagistrala-cli things get all $DOMAINID $USERTOKEN --offset=10 --limit=10 - lists all things with offset and limit\n" +
-			"\tmagistrala-cli things get <thing_id> $USERTOKEN - shows thing with provided <thing_id>\n",
+			"\tmagistrala-cli things get <thing_id> $DOMAINID $USERTOKEN - shows thing with provided <thing_id>\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -64,7 +64,7 @@ var cmdThings = []cobra.Command{
 				Metadata: metadata,
 			}
 			if args[0] == all {
-				l, err := sdk.Things(pageMetadata, args[1])
+				l, err := sdk.Things(pageMetadata, args[1], args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -329,11 +329,10 @@ var cmdThings = []cobra.Command{
 				return
 			}
 			pm := mgxsdk.PageMetadata{
-				Offset:   Offset,
-				Limit:    Limit,
-				DomainID: args[1],
+				Offset: Offset,
+				Limit:  Limit,
 			}
-			ul, err := sdk.ListThingUsers(args[0], pm, args[2])
+			ul, err := sdk.ListThingUsers(args[0], pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

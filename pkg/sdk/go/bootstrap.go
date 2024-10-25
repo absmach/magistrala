@@ -113,8 +113,8 @@ func (sdk mgSDK) AddBootstrap(cfg BootstrapConfig, domainID, token string) (stri
 	return id, nil
 }
 
-func (sdk mgSDK) Bootstraps(pm PageMetadata, token string) (BootstrapPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", pm.DomainID, configsEndpoint)
+func (sdk mgSDK) Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", domainID, configsEndpoint)
 	url, err := sdk.withQueryParams(sdk.bootstrapURL, endpoint, pm)
 	if err != nil {
 		return BootstrapPage{}, errors.NewSDKError(err)

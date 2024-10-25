@@ -58,7 +58,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		{
 			desc:    "successfully with groups kind",
 			kind:    policies.NewGroupKind,
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
 				Group: groups.Group{
 					Name: valid,
@@ -72,7 +72,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		{
 			desc:    "successfully with channels kind",
 			kind:    policies.NewChannelKind,
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
 				Group: groups.Group{
 					Name: valid,
@@ -98,7 +98,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		{
 			desc:    "unsuccessfully with invalid request",
 			kind:    policies.NewGroupKind,
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
 				Group: groups.Group{},
 			},
@@ -108,7 +108,7 @@ func TestCreateGroupEndpoint(t *testing.T) {
 		{
 			desc:    "unsuccessfully with repo error",
 			kind:    policies.NewGroupKind,
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req: createGroupReq{
 				Group: groups.Group{
 					Name: valid,
@@ -122,22 +122,24 @@ func TestCreateGroupEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		svcCall := svc.On("CreateGroup", ctx, tc.session, tc.kind, tc.req.Group).Return(tc.svcResp, tc.svcErr)
-		resp, err := CreateGroupEndpoint(svc, tc.kind)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(createGroupRes)
-		switch err {
-		case nil:
-			assert.Equal(t, response.Code(), http.StatusCreated)
-			assert.Equal(t, response.Headers()["Location"], fmt.Sprintf("/groups/%s", response.ID))
-		default:
-			assert.Equal(t, response.Code(), http.StatusOK)
-			assert.Empty(t, response.Headers())
-		}
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			svcCall := svc.On("CreateGroup", ctx, tc.session, tc.kind, tc.req.Group).Return(tc.svcResp, tc.svcErr)
+			resp, err := CreateGroupEndpoint(svc, tc.kind)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(createGroupRes)
+			switch err {
+			case nil:
+				assert.Equal(t, response.Code(), http.StatusCreated)
+				assert.Equal(t, response.Headers()["Location"], fmt.Sprintf("/groups/%s", response.ID))
+			default:
+				assert.Equal(t, response.Code(), http.StatusOK)
+				assert.Empty(t, response.Headers())
+			}
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -154,7 +156,7 @@ func TestViewGroupEndpoint(t *testing.T) {
 	}{
 		{
 			desc:    "successfully",
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req: groupReq{
 				id: testsutil.GenerateUUID(t),
 			},
@@ -175,7 +177,7 @@ func TestViewGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc:    "unsuccessfully with invalid request",
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req:     groupReq{},
 			svcResp: groups.Group{},
 			svcErr:  nil,
@@ -184,7 +186,7 @@ func TestViewGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc:    "unsuccessfully with repo error",
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req: groupReq{
 				id: testsutil.GenerateUUID(t),
 			},
@@ -196,16 +198,18 @@ func TestViewGroupEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		svcCall := svc.On("ViewGroup", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := ViewGroupEndpoint(svc)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(viewGroupRes)
-		assert.Equal(t, response.Code(), http.StatusOK)
-		assert.Empty(t, response.Headers())
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			svcCall := svc.On("ViewGroup", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
+			resp, err := ViewGroupEndpoint(svc)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(viewGroupRes)
+			assert.Equal(t, response.Code(), http.StatusOK)
+			assert.Empty(t, response.Headers())
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -225,7 +229,7 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 			req: groupPermsReq{
 				id: testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: []string{
 				valid,
 			},
@@ -244,13 +248,13 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 		{
 			desc:    "unsuccessfully with invalid request",
 			req:     groupPermsReq{},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:    viewGroupPermsRes{},
 			err:     apiutil.ErrValidation,
 		},
 		{
 			desc:    "unsuccessfully with repo error",
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req: groupPermsReq{
 				id: testsutil.GenerateUUID(t),
 			},
@@ -262,16 +266,18 @@ func TestViewGroupPermsEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		svcCall := svc.On("ViewGroupPerms", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := ViewGroupPermsEndpoint(svc)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(viewGroupPermsRes)
-		assert.Equal(t, response.Code(), http.StatusOK)
-		assert.Empty(t, response.Headers())
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			svcCall := svc.On("ViewGroupPerms", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
+			resp, err := ViewGroupPermsEndpoint(svc)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(viewGroupPermsRes)
+			assert.Equal(t, response.Code(), http.StatusOK)
+			assert.Empty(t, response.Headers())
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -291,7 +297,7 @@ func TestEnableGroupEndpoint(t *testing.T) {
 			req: changeGroupStatusReq{
 				id: testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
 			svcErr:  nil,
 			resp:    changeStatusRes{Group: validGroupResp},
@@ -307,7 +313,7 @@ func TestEnableGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc:    "unsuccessfully with invalid request",
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req:     changeGroupStatusReq{},
 			resp:    changeStatusRes{},
 			err:     apiutil.ErrValidation,
@@ -317,7 +323,7 @@ func TestEnableGroupEndpoint(t *testing.T) {
 			req: changeGroupStatusReq{
 				id: testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    changeStatusRes{},
@@ -326,16 +332,18 @@ func TestEnableGroupEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		svcCall := svc.On("EnableGroup", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := EnableGroupEndpoint(svc)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(changeStatusRes)
-		assert.Equal(t, response.Code(), http.StatusOK)
-		assert.Empty(t, response.Headers())
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			svcCall := svc.On("EnableGroup", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
+			resp, err := EnableGroupEndpoint(svc)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(changeStatusRes)
+			assert.Equal(t, response.Code(), http.StatusOK)
+			assert.Empty(t, response.Headers())
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -355,7 +363,7 @@ func TestDisableGroupEndpoint(t *testing.T) {
 			req: changeGroupStatusReq{
 				id: testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
 			svcErr:  nil,
 			resp:    changeStatusRes{Group: validGroupResp},
@@ -371,7 +379,7 @@ func TestDisableGroupEndpoint(t *testing.T) {
 		},
 		{
 			desc:    "unsuccessfully with invalid request",
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req:     changeGroupStatusReq{},
 			resp:    changeStatusRes{},
 			err:     apiutil.ErrValidation,
@@ -381,7 +389,7 @@ func TestDisableGroupEndpoint(t *testing.T) {
 			req: changeGroupStatusReq{
 				id: testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    changeStatusRes{},
@@ -390,16 +398,18 @@ func TestDisableGroupEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		svcCall := svc.On("DisableGroup", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
-		resp, err := DisableGroupEndpoint(svc)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(changeStatusRes)
-		assert.Equal(t, response.Code(), http.StatusOK)
-		assert.Empty(t, response.Headers())
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			svcCall := svc.On("DisableGroup", ctx, tc.session, tc.req.id).Return(tc.svcResp, tc.svcErr)
+			resp, err := DisableGroupEndpoint(svc)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(changeStatusRes)
+			assert.Equal(t, response.Code(), http.StatusOK)
+			assert.Empty(t, response.Headers())
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -418,7 +428,7 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 			req: groupReq{
 				id: testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
 			resp:    deleteGroupRes{deleted: true},
 			err:     nil,
@@ -434,7 +444,7 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 		{
 			desc:    "unsuccessfully with invalid request",
 			req:     groupReq{},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:    deleteGroupRes{},
 			err:     apiutil.ErrValidation,
 		},
@@ -443,7 +453,7 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 			req: groupReq{
 				id: testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    deleteGroupRes{},
 			err:     svcerr.ErrAuthorization,
@@ -451,21 +461,23 @@ func TestDeleteGroupEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		svcCall := svc.On("DeleteGroup", ctx, tc.session, tc.req.id).Return(tc.svcErr)
-		resp, err := DeleteGroupEndpoint(svc)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(deleteGroupRes)
-		switch err {
-		case nil:
-			assert.Equal(t, response.Code(), http.StatusNoContent)
-		default:
-			assert.Equal(t, response.Code(), http.StatusBadRequest)
-		}
-		assert.Empty(t, response.Headers())
-		assert.True(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			svcCall := svc.On("DeleteGroup", ctx, tc.session, tc.req.id).Return(tc.svcErr)
+			resp, err := DeleteGroupEndpoint(svc)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(deleteGroupRes)
+			switch err {
+			case nil:
+				assert.Equal(t, response.Code(), http.StatusNoContent)
+			default:
+				assert.Equal(t, response.Code(), http.StatusBadRequest)
+			}
+			assert.Empty(t, response.Headers())
+			assert.True(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -486,7 +498,7 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 				id:   testsutil.GenerateUUID(t),
 				Name: valid,
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: validGroupResp,
 			svcErr:  nil,
 			resp:    updateGroupRes{Group: validGroupResp},
@@ -504,7 +516,7 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 		{
 			desc:    "unsuccessfully with invalid request",
 			req:     updateGroupReq{},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:    updateGroupRes{},
 			err:     apiutil.ErrValidation,
 		},
@@ -514,7 +526,7 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 				id:   testsutil.GenerateUUID(t),
 				Name: valid,
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Group{},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    updateGroupRes{},
@@ -523,22 +535,24 @@ func TestUpdateGroupEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		group := groups.Group{
-			ID:          tc.req.id,
-			Name:        tc.req.Name,
-			Description: tc.req.Description,
-			Metadata:    tc.req.Metadata,
-		}
-		svcCall := svc.On("UpdateGroup", ctx, tc.session, group).Return(tc.svcResp, tc.svcErr)
-		resp, err := UpdateGroupEndpoint(svc)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(updateGroupRes)
-		assert.Equal(t, response.Code(), http.StatusOK)
-		assert.Empty(t, response.Headers())
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			group := groups.Group{
+				ID:          tc.req.id,
+				Name:        tc.req.Name,
+				Description: tc.req.Description,
+				Metadata:    tc.req.Metadata,
+			}
+			svcCall := svc.On("UpdateGroup", ctx, tc.session, group).Return(tc.svcResp, tc.svcErr)
+			resp, err := UpdateGroupEndpoint(svc)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(updateGroupRes)
+			assert.Equal(t, response.Code(), http.StatusOK)
+			assert.Empty(t, response.Headers())
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -601,7 +615,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
 				Groups: []groups.Group{validGroupResp},
 			},
@@ -626,7 +640,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
 				Groups: []groups.Group{validGroupResp},
 			},
@@ -653,7 +667,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
 				Groups: []groups.Group{validGroupResp, childGroup},
 			},
@@ -682,7 +696,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
 				Groups: []groups.Group{validGroupResp, childGroup},
 			},
@@ -711,7 +725,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberKind: policies.UsersKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{
 				Groups: []groups.Group{parentGroup, validGroupResp},
 			},
@@ -728,7 +742,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 		{
 			desc:       "unsuccessfully with invalid request",
 			memberKind: policies.ThingsKind,
-			session:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session:    mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			req:        listGroupsReq{},
 			resp:       groupPageRes{},
 			err:        apiutil.ErrValidation,
@@ -745,7 +759,7 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberKind: policies.ThingsKind,
 				memberID:   testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.Page{},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    groupPageRes{},
@@ -777,26 +791,28 @@ func TestListGroupsEndpoint(t *testing.T) {
 				memberKind: "",
 				memberID:   testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:    groupPageRes{},
 			err:     apiutil.ErrValidation,
 		},
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		if tc.memberKind != "" {
-			tc.req.memberKind = tc.memberKind
-		}
-		svcCall := svc.On("ListGroups", ctx, tc.session, tc.req.memberKind, tc.req.memberID, tc.req.Page).Return(tc.svcResp, tc.svcErr)
-		resp, err := ListGroupsEndpoint(svc, mock.Anything, tc.memberKind)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(groupPageRes)
-		assert.Equal(t, response.Code(), http.StatusOK)
-		assert.Empty(t, response.Headers())
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			if tc.memberKind != "" {
+				tc.req.memberKind = tc.memberKind
+			}
+			svcCall := svc.On("ListGroups", ctx, tc.session, tc.req.memberKind, tc.req.memberID, tc.req.Page).Return(tc.svcResp, tc.svcErr)
+			resp, err := ListGroupsEndpoint(svc, mock.Anything, tc.memberKind)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(groupPageRes)
+			assert.Equal(t, response.Code(), http.StatusOK)
+			assert.Empty(t, response.Headers())
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -819,7 +835,7 @@ func TestListMembersEndpoint(t *testing.T) {
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.MembersPage{
 				Members: []groups.Member{
 					{
@@ -845,7 +861,7 @@ func TestListMembersEndpoint(t *testing.T) {
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.MembersPage{
 				Members: []groups.Member{
 					{
@@ -869,7 +885,7 @@ func TestListMembersEndpoint(t *testing.T) {
 			desc:       "unsuccessfully with invalid request",
 			memberKind: policies.ThingsKind,
 			req:        listMembersReq{},
-			session:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session:    mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:       listMembersRes{},
 			err:        apiutil.ErrValidation,
 		},
@@ -880,7 +896,7 @@ func TestListMembersEndpoint(t *testing.T) {
 				memberKind: policies.ThingsKind,
 				groupID:    testsutil.GenerateUUID(t),
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcResp: groups.MembersPage{},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    listMembersRes{},
@@ -899,19 +915,21 @@ func TestListMembersEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		if tc.memberKind != "" {
-			tc.req.memberKind = tc.memberKind
-		}
-		svcCall := svc.On("ListMembers", ctx, tc.session, tc.req.groupID, tc.req.permission, tc.req.memberKind).Return(tc.svcResp, tc.svcErr)
-		resp, err := ListMembersEndpoint(svc, tc.memberKind)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(listMembersRes)
-		assert.Equal(t, response.Code(), http.StatusOK)
-		assert.Empty(t, response.Headers())
-		assert.False(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			if tc.memberKind != "" {
+				tc.req.memberKind = tc.memberKind
+			}
+			svcCall := svc.On("ListMembers", ctx, tc.session, tc.req.groupID, tc.req.permission, tc.req.memberKind).Return(tc.svcResp, tc.svcErr)
+			resp, err := ListMembersEndpoint(svc, tc.memberKind)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(listMembersRes)
+			assert.Equal(t, response.Code(), http.StatusOK)
+			assert.Empty(t, response.Headers())
+			assert.False(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -939,7 +957,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
 			resp:    assignRes{assigned: true},
 			err:     nil,
@@ -955,7 +973,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
 			resp:    assignRes{assigned: true},
 			err:     nil,
@@ -971,7 +989,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
 			resp:    assignRes{assigned: true},
 			err:     nil,
@@ -981,7 +999,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req:        assignReq{},
-			session:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session:    mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:       assignRes{},
 			err:        apiutil.ErrValidation,
 		},
@@ -997,7 +1015,7 @@ func TestAssignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    assignRes{},
 			err:     svcerr.ErrAuthorization,
@@ -1020,27 +1038,29 @@ func TestAssignMembersEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		if tc.memberKind != "" {
-			tc.req.MemberKind = tc.memberKind
-		}
-		if tc.relation != "" {
-			tc.req.Relation = tc.relation
-		}
-		svcCall := svc.On("Assign", ctx, tc.session, tc.req.groupID, tc.req.Relation, tc.req.MemberKind, tc.req.Members).Return(tc.svcErr)
-		resp, err := AssignMembersEndpoint(svc, tc.relation, tc.memberKind)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(assignRes)
-		switch err {
-		case nil:
-			assert.Equal(t, response.Code(), http.StatusCreated)
-		default:
-			assert.Equal(t, response.Code(), http.StatusBadRequest)
-		}
-		assert.Empty(t, response.Headers())
-		assert.True(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			if tc.memberKind != "" {
+				tc.req.MemberKind = tc.memberKind
+			}
+			if tc.relation != "" {
+				tc.req.Relation = tc.relation
+			}
+			svcCall := svc.On("Assign", ctx, tc.session, tc.req.groupID, tc.req.Relation, tc.req.MemberKind, tc.req.Members).Return(tc.svcErr)
+			resp, err := AssignMembersEndpoint(svc, tc.relation, tc.memberKind)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(assignRes)
+			switch err {
+			case nil:
+				assert.Equal(t, response.Code(), http.StatusCreated)
+			default:
+				assert.Equal(t, response.Code(), http.StatusBadRequest)
+			}
+			assert.Empty(t, response.Headers())
+			assert.True(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }
 
@@ -1068,7 +1088,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
 			resp:    unassignRes{unassigned: true},
 			err:     nil,
@@ -1084,7 +1104,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  nil,
 			resp:    unassignRes{unassigned: true},
 			err:     nil,
@@ -1101,7 +1121,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 				},
 			},
 			svcErr:  nil,
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:    unassignRes{unassigned: true},
 			err:     nil,
 		},
@@ -1110,7 +1130,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 			relation:   policies.ContributorRelation,
 			memberKind: policies.ThingsKind,
 			req:        unassignReq{},
-			session:    mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session:    mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			resp:       unassignRes{},
 			err:        apiutil.ErrValidation,
 		},
@@ -1126,7 +1146,7 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 					testsutil.GenerateUUID(t),
 				},
 			},
-			session: mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			session: mgauthn.Session{DomainUserID: validID + "_" + validID, UserID: validID, DomainID: validID},
 			svcErr:  svcerr.ErrAuthorization,
 			resp:    unassignRes{},
 			err:     svcerr.ErrAuthorization,
@@ -1149,26 +1169,28 @@ func TestUnassignMembersEndpoint(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
-		if tc.memberKind != "" {
-			tc.req.MemberKind = tc.memberKind
-		}
-		if tc.relation != "" {
-			tc.req.Relation = tc.relation
-		}
-		svcCall := svc.On("Unassign", ctx, tc.session, tc.req.groupID, tc.req.Relation, tc.req.MemberKind, tc.req.Members).Return(tc.svcErr)
-		resp, err := UnassignMembersEndpoint(svc, tc.relation, tc.memberKind)(ctx, tc.req)
-		assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
-		response := resp.(unassignRes)
-		switch err {
-		case nil:
-			assert.Equal(t, response.Code(), http.StatusCreated)
-		default:
-			assert.Equal(t, response.Code(), http.StatusBadRequest)
-		}
-		assert.Empty(t, response.Headers())
-		assert.True(t, response.Empty())
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), api.SessionKey, tc.session)
+			if tc.memberKind != "" {
+				tc.req.MemberKind = tc.memberKind
+			}
+			if tc.relation != "" {
+				tc.req.Relation = tc.relation
+			}
+			svcCall := svc.On("Unassign", ctx, tc.session, tc.req.groupID, tc.req.Relation, tc.req.MemberKind, tc.req.Members).Return(tc.svcErr)
+			resp, err := UnassignMembersEndpoint(svc, tc.relation, tc.memberKind)(ctx, tc.req)
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			response := resp.(unassignRes)
+			switch err {
+			case nil:
+				assert.Equal(t, response.Code(), http.StatusCreated)
+			default:
+				assert.Equal(t, response.Code(), http.StatusBadRequest)
+			}
+			assert.Empty(t, response.Headers())
+			assert.True(t, response.Empty())
+			svcCall.Unset()
+		})
 	}
 }

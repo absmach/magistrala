@@ -2485,7 +2485,7 @@ func TestListUsersByUserGroupId(t *testing.T) {
 				token:  tc.token,
 			}
 			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID + "_" + validID}, mock.Anything, mock.Anything, mock.Anything).Return(
 				mgclients.MembersPage{
 					Page:    tc.listUsersResponse.Page,
 					Members: tc.listUsersResponse.Clients,
@@ -2823,7 +2823,7 @@ func TestListUsersByChannelID(t *testing.T) {
 			}
 
 			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID + "_" + validID}, mock.Anything, mock.Anything, mock.Anything).Return(
 				mgclients.MembersPage{
 					Page:    tc.listUsersResponse.Page,
 					Members: tc.listUsersResponse.Clients,
@@ -3167,7 +3167,7 @@ func TestListUsersByDomainID(t *testing.T) {
 			}
 
 			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID + "_" + validID}, mock.Anything, mock.Anything, mock.Anything).Return(
 				mgclients.MembersPage{
 					Page:    tc.listUsersResponse.Page,
 					Members: tc.listUsersResponse.Clients,
@@ -3481,7 +3481,7 @@ func TestListUsersByThingID(t *testing.T) {
 			}
 
 			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: domainID}, mock.Anything, mock.Anything, mock.Anything).Return(
+			svcCall := svc.On("ListMembers", mock.Anything, mgauthn.Session{UserID: validID, DomainID: validID, DomainUserID: validID + "_" + validID}, mock.Anything, mock.Anything, mock.Anything).Return(
 				mgclients.MembersPage{
 					Page:    tc.listUsersResponse.Page,
 					Members: tc.listUsersResponse.Clients,
@@ -3515,7 +3515,7 @@ func TestAssignUsers(t *testing.T) {
 			desc:     "assign users to a group successfully",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3553,7 +3553,7 @@ func TestAssignUsers(t *testing.T) {
 			desc:     "assign users to a group with empty relation",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "",
@@ -3566,7 +3566,7 @@ func TestAssignUsers(t *testing.T) {
 			desc:     "assign users to a group with empty user ids",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3579,7 +3579,7 @@ func TestAssignUsers(t *testing.T) {
 			desc:     "assign users to a group with invalid request body",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: map[string]interface{}{
 				"relation": make(chan int),
@@ -3629,7 +3629,7 @@ func TestUnassignUsers(t *testing.T) {
 			desc:     "unassign users from a group successfully",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3667,7 +3667,7 @@ func TestUnassignUsers(t *testing.T) {
 			desc:     "unassign users from a group with empty relation",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "",
@@ -3680,7 +3680,7 @@ func TestUnassignUsers(t *testing.T) {
 			desc:     "unassign users from a group with empty user ids",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				Relation: "member",
@@ -3693,7 +3693,7 @@ func TestUnassignUsers(t *testing.T) {
 			desc:     "unassign users from a group with invalid request body",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: map[string]interface{}{
 				"relation": make(chan int),
@@ -3743,7 +3743,7 @@ func TestAssignGroups(t *testing.T) {
 			desc:     "assign groups to a parent group successfully",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3778,7 +3778,7 @@ func TestAssignGroups(t *testing.T) {
 			desc:     "assign groups to a parent group with empty parent group id",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  "",
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3790,7 +3790,7 @@ func TestAssignGroups(t *testing.T) {
 			desc:     "assign groups to a parent group with empty group ids",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{},
@@ -3802,7 +3802,7 @@ func TestAssignGroups(t *testing.T) {
 			desc:     "assign groups to a parent group with invalid request body",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: map[string]interface{}{
 				"group_ids": make(chan int),
@@ -3852,7 +3852,7 @@ func TestUnassignGroups(t *testing.T) {
 			desc:     "unassign groups from a parent group successfully",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  validID,
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
@@ -3887,7 +3887,7 @@ func TestUnassignGroups(t *testing.T) {
 			desc:     "unassign groups from a parent group with empty group id",
 			domainID: domainID,
 			token:    validToken,
-			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID},
+			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID},
 			groupID:  "",
 			reqBody: groupReqBody{
 				GroupIDs: []string{testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},

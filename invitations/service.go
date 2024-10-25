@@ -35,7 +35,7 @@ func (svc *service) SendInvitation(ctx context.Context, session authn.Session, i
 
 	invitation.InvitedBy = session.UserID
 
-	joinToken, err := svc.token.Issue(ctx, &magistrala.IssueReq{UserId: session.UserID, DomainId: &invitation.DomainID, Type: uint32(auth.InvitationKey)})
+	joinToken, err := svc.token.Issue(ctx, &magistrala.IssueReq{UserId: session.UserID, Type: uint32(auth.InvitationKey)})
 	if err != nil {
 		return err
 	}

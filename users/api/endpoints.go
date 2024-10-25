@@ -424,7 +424,7 @@ func issueTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		token, err := svc.IssueToken(ctx, req.Identity, req.Secret, req.DomainID)
+		token, err := svc.IssueToken(ctx, req.Identity, req.Secret)
 		if err != nil {
 			return nil, err
 		}
@@ -449,7 +449,7 @@ func refreshTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		token, err := svc.RefreshToken(ctx, session, req.RefreshToken, req.DomainID)
+		token, err := svc.RefreshToken(ctx, session, req.RefreshToken)
 		if err != nil {
 			return nil, err
 		}

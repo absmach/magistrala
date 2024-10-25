@@ -79,8 +79,8 @@ func (sdk mgSDK) CreateThings(things []Thing, domainID, token string) ([]Thing, 
 	return ctr.Things, nil
 }
 
-func (sdk mgSDK) Things(pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", pm.DomainID, thingsEndpoint)
+func (sdk mgSDK) Things(pm PageMetadata, domainID, token string) (ThingsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", domainID, thingsEndpoint)
 	url, err := sdk.withQueryParams(sdk.thingsURL, endpoint, pm)
 	if err != nil {
 		return ThingsPage{}, errors.NewSDKError(err)
@@ -99,8 +99,8 @@ func (sdk mgSDK) Things(pm PageMetadata, token string) (ThingsPage, errors.SDKEr
 	return cp, nil
 }
 
-func (sdk mgSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/channels/%s/%s", pm.DomainID, chanID, thingsEndpoint), pm)
+func (sdk mgSDK) ThingsByChannel(chanID string, pm PageMetadata, domainID, token string) (ThingsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/channels/%s/%s", domainID, chanID, thingsEndpoint), pm)
 	if err != nil {
 		return ThingsPage{}, errors.NewSDKError(err)
 	}
@@ -269,8 +269,8 @@ func (sdk mgSDK) UnshareThing(thingID string, req UsersRelationRequest, domainID
 	return sdkerr
 }
 
-func (sdk mgSDK) ListThingUsers(thingID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", pm.DomainID, thingsEndpoint, thingID, usersEndpoint), pm)
+func (sdk mgSDK) ListThingUsers(thingID string, pm PageMetadata, domainID, token string) (UsersPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s/%s", domainID, thingsEndpoint, thingID, usersEndpoint), pm)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}

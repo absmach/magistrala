@@ -517,7 +517,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 	}
 
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     res.Subject,
+		Subject:     res.User,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,
@@ -529,7 +529,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 
 	lp, err := svc.policysvc.ListPermissions(ctx, policies.Policy{
 		SubjectType: policies.UserType,
-		Subject:     res.Subject,
+		Subject:     res.User,
 		Object:      id,
 		ObjectType:  policies.DomainType,
 	}, []string{policies.AdminPermission, policies.EditPermission, policies.ViewPermission, policies.MembershipPermission, policies.CreatePermission})
@@ -545,7 +545,7 @@ func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainR
 		return Domain{}, err
 	}
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     key.Subject,
+		Subject:     key.User,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,
@@ -568,7 +568,7 @@ func (svc service) ChangeDomainStatus(ctx context.Context, token, id string, d D
 		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     key.Subject,
+		Subject:     key.User,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,

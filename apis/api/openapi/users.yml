@@ -76,8 +76,10 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/Status"
-        - $ref: "#/components/parameters/UserName"
-        - $ref: "#/components/parameters/UserIdentity"
+        - $ref: "#/components/parameters/FirstName"
+        - $ref: "#/components/parameters/LastName"
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Email"
         - $ref: "#/components/parameters/Tags"
       security:
         - bearerAuth: []
@@ -204,9 +206,44 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+  /users/{userID}/username:
+    patch:
+      operationId: updateUsername
+      summary: Updates user's username.
+      description: |
+        Updates username of the user with provided ID. Username is
+        updated using authorization token and the new received username.
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateUsernameReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/UserRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Failed due to non existing user.
+        "401":
+          description: Missing or invalid access token provided.
+        "409":
+          description: Failed due to using an existing username.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
   /users/{userID}/tags:
     patch:
-      operationId: updateUserTags
+      operationId: updateTags
       summary: Updates tags the user.
       description: |
         Updates tags of the user with provided ID. Tags is updated using
@@ -237,19 +274,52 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /users/{userID}/identity:
+  /users/{userID}/picture:
     patch:
-      operationId: updateUserIdentity
-      summary: Updates Identity of the user.
+      operationId: updateProfilePicture
+      summary: Updates the user's profile picture.
       description: |
-        Updates identity of the user with provided ID. Identity is
-        updated using authorization token and the new received identity.
+        Updates the user's profile picture with provided ID. Profile picture is
+        updated using authorization token and the new received picture.
       tags:
         - Users
       parameters:
         - $ref: "#/components/parameters/UserID"
       requestBody:
-        $ref: "#/components/requestBodies/UserUpdateIdentityReq"
+        $ref: "#/components/requestBodies/UserUpdateProfilePictureReq"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/UserRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Failed due to non existing user.
+        "401":
+          description: Missing or invalid access token provided.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /users/{userID}/email:
+    patch:
+      operationId: updateEmail
+      summary: Updates email of the user.
+      description: |
+        Updates email of the user with provided ID. Email is
+        updated using authorization token and the new received email.
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/UserID"
+      requestBody:
+        $ref: "#/components/requestBodies/UserUpdateEmailReq"
       security:
         - bearerAuth: []
       responses:
@@ -264,7 +334,7 @@ paths:
         "401":
           description: Missing or invalid access token provided.
         "409":
-          description: Failed due to using an existing identity.
+          description: Failed due to using an existing email.
         "415":
           description: Missing or invalid content type.
         "422":
@@ -274,7 +344,7 @@ paths:
 
   /users/{userID}/role:
     patch:
-      operationId: updateUserRole
+      operationId: updateRole
       summary: Updates the user role.
       description: |
         Updates role for the user with provided ID.
@@ -370,7 +440,7 @@ paths:
 
   /users/secret:
     patch:
-      operationId: updateUserSecret
+      operationId: updateSecret
       summary: Updates Secret of currently logged in user.
       description: |
         Updates secret of currently logged in user. Secret is updated using
@@ -408,8 +478,10 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/UserName"
-        - $ref: "#/components/parameters/UserIdentity"
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/FirstName"
+        - $ref: "#/components/parameters/LastName"
+        - $ref: "#/components/parameters/Email"
         - $ref: "#/components/parameters/UserID"
       security:
         - bearerAuth: []
@@ -1092,10 +1164,18 @@ components:
     UserReqObj:
       type: object
       properties:
-        name:
+        first_name:
           type: string
-          example: userName
-          description: User name.
+          example: firstName
+          description: User's first name.
+        last_name:
+          type: string
+          example: lastName
+          description: User's last name.
+        email:
+          type: string
+          example: "admin@example.com"
+          description: User's email address will be used as its unique identifier.
         tags:
           type: array
           minItems: 0
@@ -1106,10 +1186,10 @@ components:
         credentials:
           type: object
           properties:
-            identity:
+            username:
               type: string
-              example: "admin@example.com"
-              description: User's identity for example email address will be used as its unique identifier
+              example: "admin"
+              description: User's username for example 'admin' will be used as its unique identifier.
             secret:
               type: string
               format: password
@@ -1120,6 +1200,10 @@ components:
           type: object
           example: { "domain": "example.com" }
           description: Arbitrary, object-encoded user's data.
+        profile_picture:
+          type: string
+          example: "https://example.com/profile.jpg"
+          description: User's profile picture URL that is represented as a string.
         status:
           type: string
           description: User Status
@@ -1163,10 +1247,14 @@ components:
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
           description: User unique identifier.
-        name:
+        first_name:
           type: string
-          example: userName
-          description: User name.
+          example: John
+          description: User's first name.
+        last_name:
+          type: string
+          example: Doe
+          description: User's last name.
         tags:
           type: array
           minItems: 0
@@ -1174,17 +1262,25 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: User tags.
+        email:
+          type: string
+          example: "john.doe@magistrala.com"
+          description: User email for example email address.
         credentials:
           type: object
           properties:
-            identity:
+            username:
               type: string
-              example: admin@magistrala.com
-              description: User Identity for example email address.
+              example: john_doe
+              description: User's username for example john_doe for Mr John Doe.
         metadata:
           type: object
           example: { "address": "example" }
           description: Arbitrary, object-encoded user's data.
+        profile_picture:
+          type: string
+          example: "https://example.com/profile.jpg"
+          description: User's profile picture URL that is represented as a string.
         status:
           type: string
           description: User Status
@@ -1269,10 +1365,18 @@ components:
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
           description: User unique identifier.
-        name:
+        first_name:
           type: string
-          example: userName
-          description: User name.
+          example: John
+          description: User's first name.
+        last_name:
+          type: string
+          example: Doe
+          description: User's last name.
+        email:
+          type: string
+          example: user@magistrala.com
+          description: User's email address.
         tags:
           type: array
           minItems: 0
@@ -1283,10 +1387,10 @@ components:
         credentials:
           type: object
           properties:
-            identity:
+            username:
               type: string
-              example: user@magistrala.com
-              description: User Identity for example email address.
+              example: john_doe
+              description: User's username.
             secret:
               type: string
               example: password
@@ -1392,16 +1496,21 @@ components:
     UserUpdate:
       type: object
       properties:
-        name:
+        first_name:
           type: string
-          example: userName
-          description: User name.
+          example: firstName
+          description: User's first name.
+        last_name:
+          type: string
+          example: lastName
+          description: User's last name.
         metadata:
           type: object
           example: { "role": "general" }
           description: Arbitrary, object-encoded user's data.
       required:
-        - name
+        - first_name
+        - last_name
         - metadata
 
     UserTags:
@@ -1416,15 +1525,25 @@ components:
           items:
             type: string
 
-    UserIdentity:
+    UserProfilePicture:
       type: object
       properties:
-        identity:
+        profile_picture:
+          type: string
+          example: "https://example.com/profile.jpg"
+          description: User's profile picture URL that is represented as a string.
+      required:
+        - profile_picture
+
+    Email:
+      type: object
+      properties:
+        email:
           type: string
           example: user@magistrala.com
-          description: User Identity for example email address.
+          description: User email address.
       required:
-        - identity
+        - email
 
     UserSecret:
       type: object
@@ -1453,6 +1572,16 @@ components:
           description: User role example.
       required:
         - role
+
+    Username:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+          description: User's username for example 'admin' will be used as its unique identifier.
+      required:
+        - username
 
     GroupUpdate:
       type: object
@@ -1529,7 +1658,7 @@ components:
         identity:
           type: string
           example: user@magistrala.com
-          description: User Identity for example email address.
+          description: User identity - email address.
         secret:
           type: string
           example: password
@@ -1594,22 +1723,40 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
-    UserName:
-      name: name
-      description: User's name.
+    Username:
+      name: username
+      description: User's username.
       in: query
       schema:
         type: string
       required: false
-      example: "userName"
+      example: "username"
 
-    UserIdentity:
-      name: identity
-      description: User's identity.
+    FirstName:
+      name: first_name
+      description: User's first name.
       in: query
       schema:
         type: string
-        pattern: "^[^\u0000-\u001F]*$"
+      required: false
+      example: "Jane"
+
+    LastName:
+      name: last_name
+      description: User's last name.
+      in: query
+      schema:
+        type: string
+      required: false
+      example: "Doe"
+
+    Email:
+      name: email
+      description: User's email address.
+      in: query
+      schema:
+        type: string
+        format: email
       required: false
       example: "admin@example.com"
 
@@ -1788,13 +1935,21 @@ components:
           schema:
             $ref: "#/components/schemas/UserTags"
 
-    UserUpdateIdentityReq:
-      description: Identity change data. User can change its identity.
+    UserUpdateProfilePictureReq:
+      description: JSON-formated document describing the profile picture of user to be update
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UserIdentity"
+            $ref: "#/components/schemas/UserProfilePicture"
+
+    UserUpdateEmailReq:
+      description: Email change data. User can change its email.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Email"
 
     UserUpdateSecretReq:
       description: Secret change data. User can change its secret.
@@ -1811,6 +1966,14 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UserRole"
+
+    UpdateUsernameReq:
+      description: JSON-formated document describing the username of the user to be updated
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Username"
 
     GroupCreateReq:
       description: JSON-formatted document describing the new group to be registered
@@ -1942,16 +2105,24 @@ components:
           operationId: updateUser
           parameters:
             userID: $response.body#/id
-        update_tags:
-          operationId: updateUserTags
+        update_username:
+          operationId: updateUsername
           parameters:
             userID: $response.body#/id
-        update_identity:
-          operationId: updateUserIdentity
+        update_tags:
+          operationId: updateTags
+          parameters:
+            userID: $response.body#/id
+        update_profile_picture:
+          operationId: updateProfilePicture
+          parameters:
+            userID: $response.body#/id
+        update_email:
+          operationId: updateEmail
           parameters:
             userID: $response.body#/id
         update_role:
-          operationId: updateUserRole
+          operationId: updateRole
           parameters:
             userID: $response.body#/id
         disable:

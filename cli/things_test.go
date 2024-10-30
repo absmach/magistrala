@@ -33,7 +33,7 @@ var (
 var thing = sdk.Thing{
 	ID:   testsutil.GenerateUUID(&testing.T{}),
 	Name: "testthing",
-	Credentials: sdk.Credentials{
+	Credentials: sdk.ClientCredentials{
 		Secret: "secret",
 	},
 	DomainID: testsutil.GenerateUUID(&testing.T{}),
@@ -385,7 +385,7 @@ func TestUpdateThingCmd(t *testing.T) {
 				ID:       thing.ID,
 				DomainID: thing.DomainID,
 				Status:   thing.Status,
-				Credentials: sdk.Credentials{
+				Credentials: sdk.ClientCredentials{
 					Secret: newSecret,
 				},
 			},

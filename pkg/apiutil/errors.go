@@ -87,6 +87,9 @@ var (
 	// ErrMissingEmail indicates missing email.
 	ErrMissingEmail = errors.New("missing email")
 
+	// ErrInvalidEmail indicates missing email.
+	ErrInvalidEmail = errors.New("invalid email")
+
 	// ErrMissingHost indicates missing host.
 	ErrMissingHost = errors.New("missing host")
 
@@ -188,4 +191,19 @@ var (
 
 	// ErrMissingDomainID indicates missing domainID.
 	ErrMissingDomainID = errors.New("missing domainID")
+
+	// ErrMissingUsername indicates missing user name.
+	ErrMissingUsername = errors.New("missing username")
+
+	// ErrInvalidUsername indicates missing user name.
+	ErrInvalidUsername = errors.New("invalid username")
+
+	// ErrMissingFirstName indicates missing first name.
+	ErrMissingFirstName = errors.New("missing first name")
+
+	// ErrMissingLastName indicates missing last name.
+	ErrMissingLastName = errors.New("missing last name")
+
+	// ErrInvalidProfilePictureURL indicates that the profile picture url is invalid.
+	ErrInvalidProfilePictureURL = errors.New("invalid profile picture url")
 )

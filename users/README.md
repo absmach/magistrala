@@ -1,4 +1,4 @@
-# Clients
+# Users
 
 Users service provides an HTTP API for managing users. Through this API clients are able to do the following actions:
 

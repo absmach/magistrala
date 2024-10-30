@@ -9,36 +9,38 @@ import (
 	"net/url"
 	"strconv"
 
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/magistrala/users"
 	"github.com/spf13/cobra"
 )
 
 var cmdUsers = []cobra.Command{
 	{
-		Use:   "create <name> <username> <password> <user_auth_token>",
+		Use:   "create <first_name> <last_name> <email> <username> <password> <user_auth_token>",
 		Short: "Create user",
-		Long: "Create user with provided name, username and password. Token is optional\n" +
+		Long: "Create user with provided firstname, lastname, email, username and password. Token is optional\n" +
 			"For example:\n" +
-			"\tmagistrala-cli users create user user@example.com 12345678 $USER_AUTH_TOKEN\n",
+			"\tmagistrala-cli users create jane doe janedoe@example.com jane_doe 12345678 $USER_AUTH_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) < 3 || len(args) > 4 {
+			if len(args) < 5 || len(args) > 6 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			if len(args) == 3 {
+			if len(args) == 5 {
 				args = append(args, "")
 			}
 
 			user := mgxsdk.User{
-				Name: args[0],
+				FirstName: args[0],
+				LastName:  args[1],
+				Email:     args[2],
 				Credentials: mgxsdk.Credentials{
-					Identity: args[1],
-					Secret:   args[2],
+					Username: args[3],
+					Secret:   args[4],
 				},
-				Status: mgclients.EnabledStatus.String(),
+				Status: users.EnabledStatus.String(),
 			}
-			user, err := sdk.CreateUser(user, args[3])
+			user, err := sdk.CreateUser(user, args[5])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -66,6 +68,7 @@ var cmdUsers = []cobra.Command{
 				return
 			}
 			pageMetadata := mgxsdk.PageMetadata{
+				Username: Username,
 				Identity: Identity,
 				Offset:   Offset,
 				Limit:    Limit,
@@ -93,21 +96,21 @@ var cmdUsers = []cobra.Command{
 	{
 		Use:   "token <username> <password>",
 		Short: "Get token",
-		Long: "Generate new token from username and password\n" +
+		Long: "Generate a new token with username and password\n" +
 			"For example:\n" +
-			"\tmagistrala-cli users token user@example.com 12345678\n",
+			"\tmagistrala-cli users token jane.doe 12345678\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
 
-			lg := mgxsdk.Login{
-				Identity: args[0],
+			loginReq := mgxsdk.Login{
+				Username: args[0],
 				Secret:   args[1],
 			}
 
-			token, err := sdk.CreateToken(lg)
+			token, err := sdk.CreateToken(loginReq)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -116,6 +119,7 @@ var cmdUsers = []cobra.Command{
 			logJSONCmd(*cmd, token)
 		},
 	},
+
 	{
 		Use:   "refreshtoken <token>",
 		Short: "Get token",
@@ -138,13 +142,15 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update [<user_id> <JSON_string> | tags <user_id> <tags> | identity <user_id> <identity> ] <user_auth_token>",
+		Use:   "update [<user_id> <JSON_string> | tags <user_id> <tags> | username <user_id> <username> | email <user_id> <email>] <user_auth_token>",
 		Short: "Update user",
-		Long: "Updates either user name and metadata or user tags or user identity\n" +
+		Long: "Updates either user name and metadata or user tags or user email\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli users update <user_id> '{\"name\":\"new name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN - updates user name and metadata\n" +
+			"\tmagistrala-cli users update <user_id> '{\"first_name\":\"new first_name\", \"metadata\":{\"key\": \"value\"}}' $USERTOKEN - updates user first and lastname and metadata\n" +
 			"\tmagistrala-cli users update tags <user_id> '[\"tag1\", \"tag2\"]' $USERTOKEN - updates user tags\n" +
-			"\tmagistrala-cli users update identity <user_id> newidentity@example.com $USERTOKEN - updates user identity\n",
+			"\tmagistrala-cli users update username <user_id> newusername $USERTOKEN - updates user name\n" +
+			"\tmagistrala-cli users update email <user_id> newemail@example.com $USERTOKEN - updates user email\n",
+
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 && len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -168,10 +174,22 @@ var cmdUsers = []cobra.Command{
 				return
 			}
 
-			if args[0] == "identity" {
+			if args[0] == "email" {
 				user.ID = args[1]
-				user.Credentials.Identity = args[2]
-				user, err := sdk.UpdateUserIdentity(user, args[3])
+				user.Email = args[2]
+				user, err := sdk.UpdateUserEmail(user, args[3])
+				if err != nil {
+					logErrorCmd(*cmd, err)
+					return
+				}
+				logJSONCmd(*cmd, user)
+				return
+			}
+
+			if args[0] == "username" {
+				user.ID = args[1]
+				user.Credentials.Username = args[2]
+				user, err := sdk.UpdateUser(user, args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return

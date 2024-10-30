@@ -111,7 +111,7 @@ func TestCert(t *testing.T) {
 			desc: "empty token with username and password",
 			config: provision.Config{
 				Server: provision.ServiceConf{
-					MgUser:     "test@example.com",
+					MgUsername: "testUsername",
 					MgPass:     "12345678",
 					MgDomainID: testsutil.GenerateUUID(t),
 				},
@@ -132,7 +132,7 @@ func TestCert(t *testing.T) {
 			desc: "empty token with username and invalid password",
 			config: provision.Config{
 				Server: provision.ServiceConf{
-					MgUser:     "test@example.com",
+					MgUsername: "testUsername",
 					MgPass:     "12345678",
 					MgDomainID: testsutil.GenerateUUID(t),
 				},
@@ -219,7 +219,7 @@ func TestCert(t *testing.T) {
 			mgsdk.On("IssueCert", c.thingID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(sdk.Cert{SerialNumber: c.serial}, c.sdkCertErr)
 			mgsdk.On("ViewCert", c.serial, mock.Anything, mock.Anything).Return(sdk.Cert{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
 			login := sdk.Login{
-				Identity: c.config.Server.MgUser,
+				Username: c.config.Server.MgUsername,
 				Secret:   c.config.Server.MgPass,
 			}
 			mgsdk.On("CreateToken", login).Return(sdk.Token{AccessToken: validToken}, c.sdkTokenErr)

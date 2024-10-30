@@ -392,7 +392,6 @@ func ToDBClient(c clients.Client) (DBClient, error) {
 		UpdatedAt: updatedAt,
 		UpdatedBy: updatedBy,
 		Status:    c.Status,
-		Role:      &c.Role,
 	}, nil
 }
 
@@ -430,9 +429,6 @@ func ToClient(c DBClient) (clients.Client, error) {
 		UpdatedAt: updatedAt,
 		UpdatedBy: updatedBy,
 		Status:    c.Status,
-	}
-	if c.Role != nil {
-		cli.Role = *c.Role
 	}
 	return cli, nil
 }
@@ -490,9 +486,6 @@ func PageQuery(pm clients.Page) (string, error) {
 	}
 	if pm.Tag != "" {
 		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
-	}
-	if pm.Role != clients.AllRole {
-		query = append(query, "c.role = :role")
 	}
 	// If there are search params presents, use search and ignore other options.
 	// Always combine role with search params, so len(query) > 1.

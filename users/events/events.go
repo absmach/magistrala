@@ -6,107 +6,121 @@ package events
 import (
 	"time"
 
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/users"
 )
 
 const (
-	clientPrefix       = "user."
-	clientCreate       = clientPrefix + "create"
-	clientUpdate       = clientPrefix + "update"
-	clientRemove       = clientPrefix + "remove"
-	clientView         = clientPrefix + "view"
-	profileView        = clientPrefix + "view_profile"
-	clientList         = clientPrefix + "list"
-	clientSearch       = clientPrefix + "search"
-	clientListByGroup  = clientPrefix + "list_by_group"
-	clientIdentify     = clientPrefix + "identify"
-	generateResetToken = clientPrefix + "generate_reset_token"
-	issueToken         = clientPrefix + "issue_token"
-	refreshToken       = clientPrefix + "refresh_token"
-	resetSecret        = clientPrefix + "reset_secret"
-	sendPasswordReset  = clientPrefix + "send_password_reset"
-	oauthCallback      = clientPrefix + "oauth_callback"
-	deleteClient       = clientPrefix + "delete"
-	addClientPolicy    = clientPrefix + "add_policy"
+	userPrefix               = "user."
+	userCreate               = userPrefix + "create"
+	userUpdate               = userPrefix + "update"
+	userRemove               = userPrefix + "remove"
+	userView                 = userPrefix + "view"
+	profileView              = userPrefix + "view_profile"
+	userList                 = userPrefix + "list"
+	userSearch               = userPrefix + "search"
+	userListByGroup          = userPrefix + "list_by_group"
+	userIdentify             = userPrefix + "identify"
+	generateResetToken       = userPrefix + "generate_reset_token"
+	issueToken               = userPrefix + "issue_token"
+	refreshToken             = userPrefix + "refresh_token"
+	resetSecret              = userPrefix + "reset_secret"
+	sendPasswordReset        = userPrefix + "send_password_reset"
+	oauthCallback            = userPrefix + "oauth_callback"
+	addClientPolicy          = userPrefix + "add_policy"
+	deleteUser               = userPrefix + "delete"
+	userUpdateUsername       = userPrefix + "update_username"
+	userUpdateProfilePicture = userPrefix + "update_profile_picture"
 )
 
 var (
-	_ events.Event = (*createClientEvent)(nil)
-	_ events.Event = (*updateClientEvent)(nil)
-	_ events.Event = (*removeClientEvent)(nil)
-	_ events.Event = (*viewClientEvent)(nil)
+	_ events.Event = (*createUserEvent)(nil)
+	_ events.Event = (*updateUserEvent)(nil)
+	_ events.Event = (*updateProfilePictureEvent)(nil)
+	_ events.Event = (*updateUsernameEvent)(nil)
+	_ events.Event = (*removeUserEvent)(nil)
+	_ events.Event = (*viewUserEvent)(nil)
 	_ events.Event = (*viewProfileEvent)(nil)
-	_ events.Event = (*listClientEvent)(nil)
-	_ events.Event = (*listClientByGroupEvent)(nil)
-	_ events.Event = (*searchClientEvent)(nil)
-	_ events.Event = (*identifyClientEvent)(nil)
+	_ events.Event = (*listUserEvent)(nil)
+	_ events.Event = (*listUserByGroupEvent)(nil)
+	_ events.Event = (*searchUserEvent)(nil)
+	_ events.Event = (*identifyUserEvent)(nil)
 	_ events.Event = (*generateResetTokenEvent)(nil)
 	_ events.Event = (*issueTokenEvent)(nil)
 	_ events.Event = (*refreshTokenEvent)(nil)
 	_ events.Event = (*resetSecretEvent)(nil)
 	_ events.Event = (*sendPasswordResetEvent)(nil)
 	_ events.Event = (*oauthCallbackEvent)(nil)
-	_ events.Event = (*deleteClientEvent)(nil)
+	_ events.Event = (*deleteUserEvent)(nil)
+	_ events.Event = (*addUserPolicyEvent)(nil)
 )
 
-type createClientEvent struct {
-	mgclients.Client
+type createUserEvent struct {
+	users.User
 }
 
-func (cce createClientEvent) Encode() (map[string]interface{}, error) {
+func (uce createUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":  clientCreate,
-		"id":         cce.ID,
-		"status":     cce.Status.String(),
-		"created_at": cce.CreatedAt,
+		"operation":  userCreate,
+		"id":         uce.ID,
+		"status":     uce.Status.String(),
+		"created_at": uce.CreatedAt,
 	}
 
-	if cce.Name != "" {
-		val["name"] = cce.Name
+	if uce.FirstName != "" {
+		val["first_name"] = uce.FirstName
 	}
-	if len(cce.Tags) > 0 {
-		val["tags"] = cce.Tags
+	if uce.LastName != "" {
+		val["last_name"] = uce.LastName
 	}
-	if cce.Domain != "" {
-		val["domain"] = cce.Domain
+	if len(uce.Tags) > 0 {
+		val["tags"] = uce.Tags
 	}
-	if cce.Metadata != nil {
-		val["metadata"] = cce.Metadata
+	if uce.Metadata != nil {
+		val["metadata"] = uce.Metadata
 	}
-	if cce.Credentials.Identity != "" {
-		val["identity"] = cce.Credentials.Identity
+	if uce.Credentials.Username != "" {
+		val["username"] = uce.Credentials.Username
+	}
+	if uce.Email != "" {
+		val["email"] = uce.Email
 	}
 
 	return val, nil
 }
 
-type updateClientEvent struct {
-	mgclients.Client
+type updateUserEvent struct {
+	users.User
 	operation string
 }
 
-func (uce updateClientEvent) Encode() (map[string]interface{}, error) {
+func (uce updateUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":  clientUpdate,
+		"operation":  userUpdate,
 		"updated_at": uce.UpdatedAt,
 		"updated_by": uce.UpdatedBy,
 	}
 	if uce.operation != "" {
-		val["operation"] = clientUpdate + "_" + uce.operation
+		val["operation"] = userUpdate + "_" + uce.operation
 	}
 
 	if uce.ID != "" {
 		val["id"] = uce.ID
 	}
-	if uce.Name != "" {
-		val["name"] = uce.Name
+	if uce.FirstName != "" {
+		val["first_name"] = uce.FirstName
+	}
+	if uce.LastName != "" {
+		val["last_name"] = uce.LastName
 	}
 	if len(uce.Tags) > 0 {
 		val["tags"] = uce.Tags
 	}
-	if uce.Credentials.Identity != "" {
-		val["identity"] = uce.Credentials.Identity
+	if uce.Credentials.Username != "" {
+		val["username"] = uce.Credentials.Username
+	}
+	if uce.Email != "" {
+		val["email"] = uce.Email
 	}
 	if uce.Metadata != nil {
 		val["metadata"] = uce.Metadata
@@ -121,16 +135,64 @@ func (uce updateClientEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
-type removeClientEvent struct {
+type updateUsernameEvent struct {
+	users.User
+}
+
+func (une updateUsernameEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation":  userUpdateUsername,
+		"updated_at": une.UpdatedAt,
+		"updated_by": une.UpdatedBy,
+	}
+
+	if une.ID != "" {
+		val["id"] = une.ID
+	}
+	if une.FirstName != "" {
+		val["first_name"] = une.FirstName
+	}
+	if une.LastName != "" {
+		val["last_name"] = une.LastName
+	}
+	if une.Credentials.Username != "" {
+		val["username"] = une.Credentials.Username
+	}
+
+	return val, nil
+}
+
+type updateProfilePictureEvent struct {
+	users.User
+}
+
+func (uppe updateProfilePictureEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation":  userUpdateProfilePicture,
+		"updated_at": uppe.UpdatedAt,
+		"updated_by": uppe.UpdatedBy,
+	}
+
+	if uppe.ID != "" {
+		val["id"] = uppe.ID
+	}
+	if uppe.ProfilePicture != "" {
+		val["profile_picture"] = uppe.ProfilePicture
+	}
+
+	return val, nil
+}
+
+type removeUserEvent struct {
 	id        string
 	status    string
 	updatedAt time.Time
 	updatedBy string
 }
 
-func (rce removeClientEvent) Encode() (map[string]interface{}, error) {
+func (rce removeUserEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation":  clientRemove,
+		"operation":  userRemove,
 		"id":         rce.id,
 		"status":     rce.status,
 		"updated_at": rce.updatedAt,
@@ -138,49 +200,52 @@ func (rce removeClientEvent) Encode() (map[string]interface{}, error) {
 	}, nil
 }
 
-type viewClientEvent struct {
-	mgclients.Client
+type viewUserEvent struct {
+	users.User
 }
 
-func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
+func (vue viewUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": clientView,
-		"id":        vce.ID,
+		"operation": userView,
+		"id":        vue.ID,
 	}
 
-	if vce.Name != "" {
-		val["name"] = vce.Name
+	if vue.LastName != "" {
+		val["last_name"] = vue.LastName
 	}
-	if len(vce.Tags) > 0 {
-		val["tags"] = vce.Tags
+	if vue.FirstName != "" {
+		val["first_name"] = vue.FirstName
 	}
-	if vce.Domain != "" {
-		val["domain"] = vce.Domain
+	if len(vue.Tags) > 0 {
+		val["tags"] = vue.Tags
 	}
-	if vce.Credentials.Identity != "" {
-		val["identity"] = vce.Credentials.Identity
+	if vue.Email != "" {
+		val["email"] = vue.Email
 	}
-	if vce.Metadata != nil {
-		val["metadata"] = vce.Metadata
+	if vue.Credentials.Username != "" {
+		val["email"] = vue.Credentials.Username
 	}
-	if !vce.CreatedAt.IsZero() {
-		val["created_at"] = vce.CreatedAt
+	if vue.Metadata != nil {
+		val["metadata"] = vue.Metadata
 	}
-	if !vce.UpdatedAt.IsZero() {
-		val["updated_at"] = vce.UpdatedAt
+	if !vue.CreatedAt.IsZero() {
+		val["created_at"] = vue.CreatedAt
 	}
-	if vce.UpdatedBy != "" {
-		val["updated_by"] = vce.UpdatedBy
+	if !vue.UpdatedAt.IsZero() {
+		val["updated_at"] = vue.UpdatedAt
 	}
-	if vce.Status.String() != "" {
-		val["status"] = vce.Status.String()
+	if vue.UpdatedBy != "" {
+		val["updated_by"] = vue.UpdatedBy
+	}
+	if vue.Status.String() != "" {
+		val["status"] = vue.Status.String()
 	}
 
 	return val, nil
 }
 
 type viewProfileEvent struct {
-	mgclients.Client
+	users.User
 }
 
 func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
@@ -189,17 +254,14 @@ func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
 		"id":        vpe.ID,
 	}
 
-	if vpe.Name != "" {
-		val["name"] = vpe.Name
+	if vpe.FirstName != "" {
+		val["first_name"] = vpe.FirstName
 	}
 	if len(vpe.Tags) > 0 {
 		val["tags"] = vpe.Tags
 	}
-	if vpe.Domain != "" {
-		val["domain"] = vpe.Domain
-	}
-	if vpe.Credentials.Identity != "" {
-		val["identity"] = vpe.Credentials.Identity
+	if vpe.Credentials.Username != "" {
+		val["username"] = vpe.Credentials.Username
 	}
 	if vpe.Metadata != nil {
 		val["metadata"] = vpe.Metadata
@@ -216,62 +278,71 @@ func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
 	if vpe.Status.String() != "" {
 		val["status"] = vpe.Status.String()
 	}
+	if vpe.Email != "" {
+		val["email"] = vpe.Email
+	}
 
 	return val, nil
 }
 
-type listClientEvent struct {
-	mgclients.Page
+type listUserEvent struct {
+	users.Page
 }
 
-func (lce listClientEvent) Encode() (map[string]interface{}, error) {
+func (lue listUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": clientList,
-		"total":     lce.Total,
-		"offset":    lce.Offset,
-		"limit":     lce.Limit,
+		"operation": userList,
+		"total":     lue.Total,
+		"offset":    lue.Offset,
+		"limit":     lue.Limit,
 	}
 
-	if lce.Name != "" {
-		val["name"] = lce.Name
+	if lue.FirstName != "" {
+		val["first_name"] = lue.FirstName
 	}
-	if lce.Order != "" {
-		val["order"] = lce.Order
+	if lue.LastName != "" {
+		val["last_name"] = lue.LastName
 	}
-	if lce.Dir != "" {
-		val["dir"] = lce.Dir
+	if lue.Order != "" {
+		val["order"] = lue.Order
 	}
-	if lce.Metadata != nil {
-		val["metadata"] = lce.Metadata
+	if lue.Dir != "" {
+		val["dir"] = lue.Dir
 	}
-	if lce.Domain != "" {
-		val["domain"] = lce.Domain
+	if lue.Metadata != nil {
+		val["metadata"] = lue.Metadata
 	}
-	if lce.Tag != "" {
-		val["tag"] = lce.Tag
+	if lue.Domain != "" {
+		val["domain"] = lue.Domain
 	}
-	if lce.Permission != "" {
-		val["permission"] = lce.Permission
+	if lue.Tag != "" {
+		val["tag"] = lue.Tag
 	}
-	if lce.Status.String() != "" {
-		val["status"] = lce.Status.String()
+	if lue.Permission != "" {
+		val["permission"] = lue.Permission
 	}
-	if lce.Identity != "" {
-		val["identity"] = lce.Identity
+	if lue.Status.String() != "" {
+		val["status"] = lue.Status.String()
+	}
+	if lue.Username != "" {
+		val["username"] = lue.Username
+	}
+	if lue.Email != "" {
+		val["email"] = lue.Email
 	}
 
 	return val, nil
 }
 
-type listClientByGroupEvent struct {
-	mgclients.Page
+type listUserByGroupEvent struct {
+	users.Page
 	objectKind string
 	objectID   string
 }
 
-func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
+func (lcge listUserByGroupEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":   clientListByGroup,
+		"operation":   userListByGroup,
 		"total":       lcge.Total,
 		"offset":      lcge.Offset,
 		"limit":       lcge.Limit,
@@ -279,8 +350,8 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 		"object_id":   lcge.objectID,
 	}
 
-	if lcge.Name != "" {
-		val["name"] = lcge.Name
+	if lcge.Username != "" {
+		val["username"] = lcge.Username
 	}
 	if lcge.Order != "" {
 		val["order"] = lcge.Order
@@ -303,29 +374,41 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 	if lcge.Status.String() != "" {
 		val["status"] = lcge.Status.String()
 	}
-	if lcge.Identity != "" {
-		val["identity"] = lcge.Identity
+	if lcge.FirstName != "" {
+		val["first_name"] = lcge.FirstName
+	}
+	if lcge.LastName != "" {
+		val["last_name"] = lcge.LastName
+	}
+	if lcge.Email != "" {
+		val["email"] = lcge.Email
 	}
 
 	return val, nil
 }
 
-type searchClientEvent struct {
-	mgclients.Page
+type searchUserEvent struct {
+	users.Page
 }
 
-func (sce searchClientEvent) Encode() (map[string]interface{}, error) {
+func (sce searchUserEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": clientSearch,
+		"operation": userSearch,
 		"total":     sce.Total,
 		"offset":    sce.Offset,
 		"limit":     sce.Limit,
 	}
-	if sce.Name != "" {
-		val["name"] = sce.Name
+	if sce.Username != "" {
+		val["username"] = sce.Username
 	}
-	if sce.Identity != "" {
-		val["identity"] = sce.Identity
+	if sce.FirstName != "" {
+		val["first_name"] = sce.FirstName
+	}
+	if sce.LastName != "" {
+		val["last_name"] = sce.LastName
+	}
+	if sce.Email != "" {
+		val["email"] = sce.Email
 	}
 	if sce.Id != "" {
 		val["id"] = sce.Id
@@ -334,14 +417,14 @@ func (sce searchClientEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
-type identifyClientEvent struct {
+type identifyUserEvent struct {
 	userID string
 }
 
-func (ice identifyClientEvent) Encode() (map[string]interface{}, error) {
+func (ise identifyUserEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation": clientIdentify,
-		"id":        ice.userID,
+		"operation": userIdentify,
+		"id":        ise.userID,
 	}, nil
 }
 
@@ -359,13 +442,13 @@ func (grte generateResetTokenEvent) Encode() (map[string]interface{}, error) {
 }
 
 type issueTokenEvent struct {
-	identity string
+	username string
 }
 
 func (ite issueTokenEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": issueToken,
-		"identity":  ite.identity,
+		"username":  ite.username,
 	}, nil
 }
 
@@ -401,33 +484,33 @@ func (spre sendPasswordResetEvent) Encode() (map[string]interface{}, error) {
 }
 
 type oauthCallbackEvent struct {
-	clientID string
+	userID string
 }
 
 func (oce oauthCallbackEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": oauthCallback,
-		"client_id": oce.clientID,
+		"user_id":   oce.userID,
 	}, nil
 }
 
-type deleteClientEvent struct {
+type deleteUserEvent struct {
 	id string
 }
 
-func (dce deleteClientEvent) Encode() (map[string]interface{}, error) {
+func (dce deleteUserEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation": deleteClient,
+		"operation": deleteUser,
 		"id":        dce.id,
 	}, nil
 }
 
-type addClientPolicyEvent struct {
+type addUserPolicyEvent struct {
 	id   string
 	role string
 }
 
-func (acpe addClientPolicyEvent) Encode() (map[string]interface{}, error) {
+func (acpe addUserPolicyEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": addClientPolicy,
 		"id":        acpe.id,

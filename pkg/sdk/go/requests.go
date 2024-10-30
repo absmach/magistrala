@@ -3,8 +3,8 @@
 
 package sdk
 
-// updateClientSecretReq is used to update the client secret.
-type updateClientSecretReq struct {
+// updateUserSecretReq is used to update the user secret.
+type updateUserSecretReq struct {
 	OldSecret string `json:"old_secret,omitempty"`
 	NewSecret string `json:"new_secret,omitempty"`
 }
@@ -24,11 +24,11 @@ type updateThingSecretReq struct {
 	Secret string `json:"secret,omitempty"`
 }
 
-// updateClientIdentityReq is used to update the client identity.
-type updateClientIdentityReq struct {
-	token    string
-	id       string
-	Identity string `json:"identity,omitempty"`
+// updateUserEmailReq is used to update the user email.
+type updateUserEmailReq struct {
+	token string
+	id    string
+	Email string `json:"email,omitempty"`
 }
 
 // UserPasswordReq contains old and new passwords.
@@ -50,4 +50,9 @@ type UsersRelationRequest struct {
 
 type UserGroupsRequest struct {
 	UserGroupIDs []string `json:"group_ids"`
+}
+
+type UpdateUsernameReq struct {
+	id       string
+	Username string `json:"username"`
 }

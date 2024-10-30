@@ -26,7 +26,7 @@ func New(svc bootstrap.Service, tracer trace.Tracer) bootstrap.Service {
 
 // Add traces the "Add" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) Add(ctx context.Context, session mgauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_register_client", trace.WithAttributes(
+	ctx, span := tm.tracer.Start(ctx, "svc_register_user", trace.WithAttributes(
 		attribute.String("thing_id", cfg.ThingID),
 		attribute.String("domain_id ", cfg.DomainID),
 		attribute.String("name", cfg.Name),
@@ -41,7 +41,7 @@ func (tm *tracingMiddleware) Add(ctx context.Context, session mgauthn.Session, t
 
 // View traces the "View" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) View(ctx context.Context, session mgauthn.Session, id string) (bootstrap.Config, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_view_client", trace.WithAttributes(
+	ctx, span := tm.tracer.Start(ctx, "svc_view_user", trace.WithAttributes(
 		attribute.String("id", id),
 	))
 	defer span.End()
@@ -51,7 +51,7 @@ func (tm *tracingMiddleware) View(ctx context.Context, session mgauthn.Session, 
 
 // Update traces the "Update" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) Update(ctx context.Context, session mgauthn.Session, cfg bootstrap.Config) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_update_client", trace.WithAttributes(
+	ctx, span := tm.tracer.Start(ctx, "svc_update_user", trace.WithAttributes(
 		attribute.String("name", cfg.Name),
 		attribute.String("content", cfg.Content),
 		attribute.String("thing_id", cfg.ThingID),
@@ -85,7 +85,7 @@ func (tm *tracingMiddleware) UpdateConnections(ctx context.Context, session mgau
 
 // List traces the "List" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) List(ctx context.Context, session mgauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_list_clients", trace.WithAttributes(
+	ctx, span := tm.tracer.Start(ctx, "svc_list_users", trace.WithAttributes(
 		attribute.Int64("offset", int64(offset)),
 		attribute.Int64("limit", int64(limit)),
 	))
@@ -96,7 +96,7 @@ func (tm *tracingMiddleware) List(ctx context.Context, session mgauthn.Session, 
 
 // Remove traces the "Remove" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) Remove(ctx context.Context, session mgauthn.Session, id string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_remove_client", trace.WithAttributes(
+	ctx, span := tm.tracer.Start(ctx, "svc_remove_user", trace.WithAttributes(
 		attribute.String("id", id),
 	))
 	defer span.End()
@@ -106,7 +106,7 @@ func (tm *tracingMiddleware) Remove(ctx context.Context, session mgauthn.Session
 
 // Bootstrap traces the "Bootstrap" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (bootstrap.Config, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_bootstrap_client", trace.WithAttributes(
+	ctx, span := tm.tracer.Start(ctx, "svc_bootstrap_user", trace.WithAttributes(
 		attribute.String("external_key", externalKey),
 		attribute.String("external_id", externalID),
 		attribute.Bool("secure", secure),

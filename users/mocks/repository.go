@@ -7,8 +7,7 @@ package mocks
 import (
 	context "context"
 
-	clients "github.com/absmach/magistrala/pkg/clients"
-
+	users "github.com/absmach/magistrala/users"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -17,27 +16,27 @@ type Repository struct {
 	mock.Mock
 }
 
-// ChangeStatus provides a mock function with given fields: ctx, client
-func (_m *Repository) ChangeStatus(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
+// ChangeStatus provides a mock function with given fields: ctx, user
+func (_m *Repository) ChangeStatus(ctx context.Context, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ChangeStatus")
 	}
 
-	var r0 clients.Client
+	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
+		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+		r0 = rf(ctx, user)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -82,25 +81,25 @@ func (_m *Repository) Delete(ctx context.Context, id string) error {
 }
 
 // RetrieveAll provides a mock function with given fields: ctx, pm
-func (_m *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+func (_m *Repository) RetrieveAll(ctx context.Context, pm users.Page) (users.UsersPage, error) {
 	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
 	}
 
-	var r0 clients.ClientsPage
+	var r0 users.UsersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) (clients.ClientsPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, users.Page) (users.UsersPage, error)); ok {
 		return rf(ctx, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) clients.ClientsPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, users.Page) users.UsersPage); ok {
 		r0 = rf(ctx, pm)
 	} else {
-		r0 = ret.Get(0).(clients.ClientsPage)
+		r0 = ret.Get(0).(users.UsersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Page) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, users.Page) error); ok {
 		r1 = rf(ctx, pm)
 	} else {
 		r1 = ret.Error(1)
@@ -110,25 +109,25 @@ func (_m *Repository) RetrieveAll(ctx context.Context, pm clients.Page) (clients
 }
 
 // RetrieveAllByIDs provides a mock function with given fields: ctx, pm
-func (_m *Repository) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+func (_m *Repository) RetrieveAllByIDs(ctx context.Context, pm users.Page) (users.UsersPage, error) {
 	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAllByIDs")
 	}
 
-	var r0 clients.ClientsPage
+	var r0 users.UsersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) (clients.ClientsPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, users.Page) (users.UsersPage, error)); ok {
 		return rf(ctx, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) clients.ClientsPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, users.Page) users.UsersPage); ok {
 		r0 = rf(ctx, pm)
 	} else {
-		r0 = ret.Get(0).(clients.ClientsPage)
+		r0 = ret.Get(0).(users.UsersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Page) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, users.Page) error); ok {
 		r1 = rf(ctx, pm)
 	} else {
 		r1 = ret.Error(1)
@@ -137,23 +136,51 @@ func (_m *Repository) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (cl
 	return r0, r1
 }
 
+// RetrieveByEmail provides a mock function with given fields: ctx, email
+func (_m *Repository) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
+	ret := _m.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveByEmail")
+	}
+
+	var r0 users.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (users.User, error)); ok {
+		return rf(ctx, email)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) users.User); ok {
+		r0 = rf(ctx, email)
+	} else {
+		r0 = ret.Get(0).(users.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RetrieveByID provides a mock function with given fields: ctx, id
-func (_m *Repository) RetrieveByID(ctx context.Context, id string) (clients.Client, error) {
+func (_m *Repository) RetrieveByID(ctx context.Context, id string) (users.User, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveByID")
 	}
 
-	var r0 clients.Client
+	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (clients.Client, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (users.User, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) clients.Client); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) users.User); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(users.User)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -165,27 +192,27 @@ func (_m *Repository) RetrieveByID(ctx context.Context, id string) (clients.Clie
 	return r0, r1
 }
 
-// RetrieveByIdentity provides a mock function with given fields: ctx, identity
-func (_m *Repository) RetrieveByIdentity(ctx context.Context, identity string) (clients.Client, error) {
-	ret := _m.Called(ctx, identity)
+// RetrieveByUsername provides a mock function with given fields: ctx, username
+func (_m *Repository) RetrieveByUsername(ctx context.Context, username string) (users.User, error) {
+	ret := _m.Called(ctx, username)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RetrieveByIdentity")
+		panic("no return value specified for RetrieveByUsername")
 	}
 
-	var r0 clients.Client
+	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (clients.Client, error)); ok {
-		return rf(ctx, identity)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (users.User, error)); ok {
+		return rf(ctx, username)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) clients.Client); ok {
-		r0 = rf(ctx, identity)
+	if rf, ok := ret.Get(0).(func(context.Context, string) users.User); ok {
+		r0 = rf(ctx, username)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(users.User)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, identity)
+		r1 = rf(ctx, username)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -193,27 +220,27 @@ func (_m *Repository) RetrieveByIdentity(ctx context.Context, identity string) (
 	return r0, r1
 }
 
-// Save provides a mock function with given fields: ctx, client
-func (_m *Repository) Save(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
+// Save provides a mock function with given fields: ctx, user
+func (_m *Repository) Save(ctx context.Context, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
 	}
 
-	var r0 clients.Client
+	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
+		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+		r0 = rf(ctx, user)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -221,26 +248,26 @@ func (_m *Repository) Save(ctx context.Context, client clients.Client) (clients.
 	return r0, r1
 }
 
-// SearchClients provides a mock function with given fields: ctx, pm
-func (_m *Repository) SearchClients(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+// SearchUsers provides a mock function with given fields: ctx, pm
+func (_m *Repository) SearchUsers(ctx context.Context, pm users.Page) (users.UsersPage, error) {
 	ret := _m.Called(ctx, pm)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SearchClients")
+		panic("no return value specified for SearchUsers")
 	}
 
-	var r0 clients.ClientsPage
+	var r0 users.UsersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) (clients.ClientsPage, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, users.Page) (users.UsersPage, error)); ok {
 		return rf(ctx, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Page) clients.ClientsPage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, users.Page) users.UsersPage); ok {
 		r0 = rf(ctx, pm)
 	} else {
-		r0 = ret.Get(0).(clients.ClientsPage)
+		r0 = ret.Get(0).(users.UsersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Page) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, users.Page) error); ok {
 		r1 = rf(ctx, pm)
 	} else {
 		r1 = ret.Error(1)
@@ -249,27 +276,27 @@ func (_m *Repository) SearchClients(ctx context.Context, pm clients.Page) (clien
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: ctx, client
-func (_m *Repository) Update(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
+// Update provides a mock function with given fields: ctx, user
+func (_m *Repository) Update(ctx context.Context, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 clients.Client
+	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
+		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+		r0 = rf(ctx, user)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -277,83 +304,27 @@ func (_m *Repository) Update(ctx context.Context, client clients.Client) (client
 	return r0, r1
 }
 
-// UpdateIdentity provides a mock function with given fields: ctx, client
-func (_m *Repository) UpdateIdentity(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateIdentity")
-	}
-
-	var r0 clients.Client
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
-	} else {
-		r0 = ret.Get(0).(clients.Client)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateRole provides a mock function with given fields: ctx, client
-func (_m *Repository) UpdateRole(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateRole")
-	}
-
-	var r0 clients.Client
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
-	} else {
-		r0 = ret.Get(0).(clients.Client)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateSecret provides a mock function with given fields: ctx, client
-func (_m *Repository) UpdateSecret(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
+// UpdateSecret provides a mock function with given fields: ctx, user
+func (_m *Repository) UpdateSecret(ctx context.Context, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSecret")
 	}
 
-	var r0 clients.Client
+	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
+		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+		r0 = rf(ctx, user)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -361,27 +332,27 @@ func (_m *Repository) UpdateSecret(ctx context.Context, client clients.Client) (
 	return r0, r1
 }
 
-// UpdateTags provides a mock function with given fields: ctx, client
-func (_m *Repository) UpdateTags(ctx context.Context, client clients.Client) (clients.Client, error) {
-	ret := _m.Called(ctx, client)
+// UpdateUsername provides a mock function with given fields: ctx, user
+func (_m *Repository) UpdateUsername(ctx context.Context, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateTags")
+		panic("no return value specified for UpdateUsername")
 	}
 
-	var r0 clients.Client
+	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) (clients.Client, error)); ok {
-		return rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
+		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) clients.Client); ok {
-		r0 = rf(ctx, client)
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+		r0 = rf(ctx, user)
 	} else {
-		r0 = ret.Get(0).(clients.Client)
+		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, clients.Client) error); ok {
-		r1 = rf(ctx, client)
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}

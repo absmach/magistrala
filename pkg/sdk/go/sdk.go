@@ -95,6 +95,10 @@ type PageMetadata struct {
 	Direction       string   `json:"direction,omitempty"`
 	Level           uint64   `json:"level,omitempty"`
 	Identity        string   `json:"identity,omitempty"`
+	Email           string   `json:"email,omitempty"`
+	Username        string   `json:"username,omitempty"`
+	LastName        string   `json:"last_name,omitempty"`
+	FirstName       string   `json:"first_name,omitempty"`
 	Name            string   `json:"name,omitempty"`
 	Type            string   `json:"type,omitempty"`
 	Metadata        Metadata `json:"metadata,omitempty"`
@@ -125,10 +129,10 @@ type PageMetadata struct {
 }
 
 // Credentials represent client credentials: it contains
-// "identity" which can be a username, email, generated name;
+// "username" which can be a username, generated name;
 // and "secret" which can be a password or access token.
 type Credentials struct {
-	Identity string `json:"identity,omitempty"` // username or generated login ID
+	Username string `json:"username,omitempty"` // username or generated login ID
 	Secret   string `json:"secret,omitempty"`   // password or token
 }
 
@@ -141,8 +145,9 @@ type SDK interface {
 	// example:
 	//  user := sdk.User{
 	//    Name:	 "John Doe",
+	// 	  Email: "john.doe@example",
 	//    Credentials: sdk.Credentials{
-	//      Identity: "john.doe@example",
+	//      Username: "john.doe",
 	//      Secret:   "12345678",
 	//    },
 	//  }
@@ -202,6 +207,19 @@ type SDK interface {
 	//  fmt.Println(user)
 	UpdateUser(user User, token string) (User, errors.SDKError)
 
+	// UpdateUserEmail updates the user's email
+	//
+	// example:
+	//  user := sdk.User{
+	//    ID:   "userID",
+	//    Credentials: sdk.Credentials{
+	//      Email: "john.doe@example",
+	//    },
+	//  }
+	//  user, _ := sdk.UpdateUserEmail(user, "token")
+	//  fmt.Println(user)
+	UpdateUserEmail(user User, token string) (User, errors.SDKError)
+
 	// UpdateUserTags updates the user's tags.
 	//
 	// example:
@@ -213,18 +231,29 @@ type SDK interface {
 	//  fmt.Println(user)
 	UpdateUserTags(user User, token string) (User, errors.SDKError)
 
-	// UpdateUserIdentity updates the user's identity
+	// UpdateUsername updates the user's Username.
 	//
 	// example:
 	//  user := sdk.User{
 	//    ID:   "userID",
 	//    Credentials: sdk.Credentials{
-	//      Identity: "john.doe@example",
-	//    },
+	//	  	Username: "john.doe",
+	//		},
 	//  }
-	//  user, _ := sdk.UpdateUserIdentity(user, "token")
+	//  user, _ := sdk.UpdateUsername(user, "token")
 	//  fmt.Println(user)
-	UpdateUserIdentity(user User, token string) (User, errors.SDKError)
+	UpdateUsername(user User, token string) (User, errors.SDKError)
+
+	// UpdateProfilePicture updates the user's profile picture.
+	//
+	// example:
+	//  user := sdk.User{
+	//    ID:            "userID",
+	//    ProfilePicture: "https://cloudstorage.example.com/bucket-name/user-images/profile-picture.jpg",
+	//  }
+	//  user, _ := sdk.UpdateProfilePicture(user, "token")
+	//  fmt.Println(user)
+	UpdateProfilePicture(user User, token string) (User, errors.SDKError)
 
 	// UpdateUserRole updates the user's role.
 	//
@@ -283,7 +312,7 @@ type SDK interface {
 	//
 	// example:
 	//  lt := sdk.Login{
-	//      Identity: "john.doe@example",
+	//      Email: "john.doe@example",
 	//      Secret:   "12345678",
 	//  }
 	//  token, _ := sdk.CreateToken(lt)
@@ -1326,8 +1355,20 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.Level != 0 {
 		q.Add("level", strconv.FormatUint(pm.Level, 10))
 	}
+	if pm.Email != "" {
+		q.Add("email", pm.Email)
+	}
 	if pm.Identity != "" {
 		q.Add("identity", pm.Identity)
+	}
+	if pm.Username != "" {
+		q.Add("username", pm.Username)
+	}
+	if pm.FirstName != "" {
+		q.Add("first_name", pm.FirstName)
+	}
+	if pm.LastName != "" {
+		q.Add("last_name", pm.LastName)
 	}
 	if pm.Name != "" {
 		q.Add("name", pm.Name)

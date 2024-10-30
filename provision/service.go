@@ -289,12 +289,13 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	}
 
 	// If no API key use username and password provided to create access token.
-	if ps.conf.Server.MgUser == "" || ps.conf.Server.MgPass == "" {
+	if ps.conf.Server.MgUsername == "" || ps.conf.Server.MgPass == "" {
 		return token, ErrMissingCredentials
 	}
 
 	u := sdk.Login{
-		Identity: ps.conf.Server.MgUser,
+		Email:    ps.conf.Server.MgEmail,
+		Username: ps.conf.Server.MgUsername,
 		Secret:   ps.conf.Server.MgPass,
 	}
 	tkn, err := ps.sdk.CreateToken(u)

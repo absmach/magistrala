@@ -30,11 +30,13 @@ const (
 	ParentKey        = "parent_id"
 	OwnerKey         = "owner_id"
 	ClientKey        = "client"
-	IdentityKey      = "identity"
+	UsernameKey      = "username"
+	NameKey          = "name"
 	GroupKey         = "group"
 	ActionKey        = "action"
 	TagKey           = "tag"
-	NameKey          = "name"
+	FirstNameKey     = "first_name"
+	LastNameKey      = "last_name"
 	TotalKey         = "total"
 	SubjectKey       = "subject"
 	ObjectKey        = "object"
@@ -43,6 +45,7 @@ const (
 	DirKey           = "dir"
 	ListPerms        = "list_perms"
 	VisibilityKey    = "visibility"
+	EmailKey         = "email"
 	SharedByKey      = "shared_by"
 	TokenKey         = "token"
 	DefPermission    = "view"
@@ -127,6 +130,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingName),
 		errors.Contains(err, apiutil.ErrMissingAlias),
 		errors.Contains(err, apiutil.ErrMissingEmail),
+		errors.Contains(err, apiutil.ErrInvalidEmail),
 		errors.Contains(err, apiutil.ErrMissingHost),
 		errors.Contains(err, apiutil.ErrInvalidResetPass),
 		errors.Contains(err, apiutil.ErrEmptyList),
@@ -140,7 +144,6 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidQueryParams),
 		errors.Contains(err, apiutil.ErrMissingRelation),
 		errors.Contains(err, apiutil.ErrValidation),
-		errors.Contains(err, apiutil.ErrMissingIdentity),
 		errors.Contains(err, apiutil.ErrMissingPass),
 		errors.Contains(err, apiutil.ErrMissingConfPass),
 		errors.Contains(err, apiutil.ErrPasswordFormat),
@@ -165,7 +168,11 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrEmptySearchQuery),
 		errors.Contains(err, apiutil.ErrLenSearchQuery),
 		errors.Contains(err, apiutil.ErrMissingDomainID),
-		errors.Contains(err, certs.ErrFailedReadFromPKI):
+		errors.Contains(err, certs.ErrFailedReadFromPKI),
+		errors.Contains(err, apiutil.ErrMissingUsername),
+		errors.Contains(err, apiutil.ErrMissingFirstName),
+		errors.Contains(err, apiutil.ErrMissingLastName),
+		errors.Contains(err, apiutil.ErrInvalidUsername):
 		err = unwrap(err)
 		w.WriteHeader(http.StatusBadRequest)
 

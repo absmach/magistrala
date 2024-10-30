@@ -45,6 +45,47 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 				Down: []string{},
 			},
+			{
+				Id: "clients_03",
+				Up: []string{
+					`ALTER TABLE clients
+                        ADD COLUMN username VARCHAR(254) UNIQUE,
+                        ADD COLUMN first_name VARCHAR(254) NOT NULL DEFAULT '', 
+                        ADD COLUMN last_name VARCHAR(254) NOT NULL DEFAULT '', 
+                        ADD COLUMN profile_picture TEXT`,
+					`ALTER TABLE clients RENAME COLUMN identity TO email`,
+					`ALTER TABLE clients DROP COLUMN name`,
+				},
+				Down: []string{
+					`ALTER TABLE clients
+                        DROP COLUMN username,
+                        DROP COLUMN first_name,
+                        DROP COLUMN last_name,
+                        DROP COLUMN profile_picture`,
+					`ALTER TABLE clients RENAME COLUMN email TO identity`,
+					`ALTER TABLE clients ADD COLUMN name VARCHAR(254) NOT NULL UNIQUE`,
+				},
+			},
+			{
+				Id: "clients_04",
+				Up: []string{
+					`ALTER TABLE IF EXISTS clients RENAME TO users`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS users RENAME TO clients`,
+				},
+			},
+			{
+				Id: "clients_05",
+				Up: []string{
+					`ALTER TABLE users ALTER COLUMN first_name DROP DEFAULT`,
+					`ALTER TABLE users ALTER COLUMN last_name DROP DEFAULT`,
+				},
+				Down: []string{
+					`ALTER TABLE users ALTER COLUMN first_name SET DEFAULT ''`,
+					`ALTER TABLE users ALTER COLUMN last_name SET DEFAULT ''`,
+				},
+			},
 		},
 	}
 }

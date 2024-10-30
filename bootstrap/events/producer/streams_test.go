@@ -192,7 +192,7 @@ func TestAdd(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = mgauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		sdkCall := tv.sdk.On("Thing", tc.config.ThingID, tc.domainID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.Credentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
+		sdkCall := tv.sdk.On("Thing", tc.config.ThingID, tc.domainID, tc.token).Return(mgsdk.Thing{ID: tc.config.ThingID, Credentials: mgsdk.ClientCredentials{Secret: tc.config.ThingKey}}, errors.NewSDKError(tc.thingErr))
 		repoCall := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
 		repoCall1 := tv.boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 

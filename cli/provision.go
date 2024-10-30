@@ -135,9 +135,10 @@ var cmdProvision = []cobra.Command{
 			// Create test user
 			name := namesgenerator.Generate()
 			user := mgxsdk.User{
-				Name: name,
+				FirstName: name,
+				Email:     fmt.Sprintf("%s@email.com", name),
 				Credentials: mgxsdk.Credentials{
-					Identity: fmt.Sprintf("%s@email.com", name),
+					Username: name,
 					Secret:   "12345678",
 				},
 				Status: mgxsdk.EnabledStatus,
@@ -148,8 +149,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			user.Credentials.Secret = "12345678"
-			ut, err := sdk.CreateToken(mgxsdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret})
+			ut, err := sdk.CreateToken(mgxsdk.Login{Username: user.Username, Secret: user.Credentials.Secret})
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -166,7 +166,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			ut, err = sdk.CreateToken(mgxsdk.Login{Identity: user.Credentials.Identity, Secret: user.Credentials.Secret})
+			ut, err = sdk.CreateToken(mgxsdk.Login{Email: user.Email, Secret: user.Credentials.Secret})
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

@@ -26,7 +26,6 @@ import (
 	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
 	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
@@ -75,6 +74,9 @@ type config struct {
 	LogLevel            string        `env:"MG_USERS_LOG_LEVEL"           envDefault:"info"`
 	AdminEmail          string        `env:"MG_USERS_ADMIN_EMAIL"         envDefault:"admin@example.com"`
 	AdminPassword       string        `env:"MG_USERS_ADMIN_PASSWORD"      envDefault:"12345678"`
+	AdminUsername       string        `env:"MG_USERS_ADMIN_USERNAME"      envDefault:"admin"`
+	AdminFirstName      string        `env:"MG_USERS_ADMIN_FIRST_NAME"    envDefault:"super"`
+	AdminLastName       string        `env:"MG_USERS_ADMIN_LAST_NAME"     envDefault:"admin"`
 	PassRegexText       string        `env:"MG_USERS_PASS_REGEX"          envDefault:"^.{8,}$"`
 	ResetURL            string        `env:"MG_TOKEN_RESET_ENDPOINT"      envDefault:"/reset-request"`
 	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
@@ -256,6 +258,7 @@ func main() {
 
 func newService(ctx context.Context, authz mgauthz.Authorization, token magistrala.TokenServiceClient, policyService policies.Service, domainsClient magistrala.DomainsServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger *slog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
+
 	cRepo := clientspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
 
@@ -292,11 +295,11 @@ func newService(ctx context.Context, authz mgauthz.Authorization, token magistra
 	counter, latency = prometheus.MakeMetrics("groups", "api")
 	gsvc = gmiddleware.MetricsMiddleware(gsvc, counter, latency)
 
-	clientID, err := createAdmin(ctx, c, cRepo, hsr, csvc)
+	userID, err := createAdmin(ctx, c, cRepo, hsr, csvc)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-	if err := createAdminPolicy(ctx, clientID, authz, policyService); err != nil {
+	if err := createAdminPolicy(ctx, userID, authz, policyService); err != nil {
 		return nil, nil, err
 	}
 
@@ -305,7 +308,7 @@ func newService(ctx context.Context, authz mgauthz.Authorization, token magistra
 	return csvc, gsvc, err
 }
 
-func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr users.Hasher, svc users.Service) (string, error) {
+func createAdmin(ctx context.Context, c config, urepo users.Repository, hsr users.Hasher, svc users.Service) (string, error) {
 	id, err := uuid.New().ID()
 	if err != nil {
 		return "", err
@@ -315,47 +318,49 @@ func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr 
 		return "", err
 	}
 
-	client := mgclients.Client{
-		ID:   id,
-		Name: "admin",
-		Credentials: mgclients.Credentials{
-			Identity: c.AdminEmail,
+	user := users.User{
+		ID:        id,
+		Email:     c.AdminEmail,
+		FirstName: c.AdminFirstName,
+		LastName:  c.AdminLastName,
+		Credentials: users.Credentials{
+			Username: "admin",
 			Secret:   hash,
 		},
-		Metadata: mgclients.Metadata{
+		Metadata: users.Metadata{
 			"role": "admin",
 		},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Role:      mgclients.AdminRole,
-		Status:    mgclients.EnabledStatus,
+		Role:      users.AdminRole,
+		Status:    users.EnabledStatus,
 	}
 
-	if c, err := crepo.RetrieveByIdentity(ctx, client.Credentials.Identity); err == nil {
-		return c.ID, nil
+	if u, err := urepo.RetrieveByEmail(ctx, user.Email); err == nil {
+		return u.ID, nil
 	}
 
 	// Create an admin
-	if _, err = crepo.Save(ctx, client); err != nil {
+	if _, err = urepo.Save(ctx, user); err != nil {
 		return "", err
 	}
-	if _, err = svc.IssueToken(ctx, c.AdminEmail, c.AdminPassword); err != nil {
+	if _, err = svc.IssueToken(ctx, c.AdminUsername, c.AdminPassword); err != nil {
 		return "", err
 	}
-	return client.ID, nil
+	return user.ID, nil
 }
 
-func createAdminPolicy(ctx context.Context, clientID string, authz mgauthz.Authorization, policyService policies.Service) error {
+func createAdminPolicy(ctx context.Context, userID string, authz mgauthz.Authorization, policyService policies.Service) error {
 	if err := authz.Authorize(ctx, mgauthz.PolicyReq{
 		SubjectType: policies.UserType,
-		Subject:     clientID,
+		Subject:     userID,
 		Permission:  policies.AdministratorRelation,
 		Object:      policies.MagistralaObject,
 		ObjectType:  policies.PlatformType,
 	}); err != nil {
 		err := policyService.AddPolicy(ctx, policies.Policy{
 			SubjectType: policies.UserType,
-			Subject:     clientID,
+			Subject:     userID,
 			Relation:    policies.AdministratorRelation,
 			Object:      policies.MagistralaObject,
 			ObjectType:  policies.PlatformType,

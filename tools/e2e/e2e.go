@@ -133,9 +133,11 @@ func errExit(err error) {
 
 func createUser(s sdk.SDK, conf Config) (string, string, error) {
 	user := sdk.User{
-		Name: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+		FirstName: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+		LastName:  fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+		Email:     fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
 		Credentials: sdk.Credentials{
-			Identity: fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
+			Username: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
 			Secret:   defPass,
 		},
 		Status: sdk.EnabledStatus,
@@ -147,7 +149,7 @@ func createUser(s sdk.SDK, conf Config) (string, string, error) {
 	}
 
 	login := sdk.Login{
-		Identity: user.Credentials.Identity,
+		Username: user.Credentials.Username,
 		Secret:   user.Credentials.Secret,
 	}
 	token, err := s.CreateToken(login)
@@ -168,7 +170,7 @@ func createUser(s sdk.SDK, conf Config) (string, string, error) {
 	}
 
 	login = sdk.Login{
-		Identity: user.Credentials.Identity,
+		Username: user.Credentials.Username,
 		Secret:   user.Credentials.Secret,
 	}
 	token, err = s.CreateToken(login)
@@ -185,9 +187,11 @@ func createUsers(s sdk.SDK, conf Config, token string) ([]sdk.User, error) {
 
 	for i := uint64(0); i < conf.Num; i++ {
 		user := sdk.User{
-			Name: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+			FirstName: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+			LastName:  fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
+			Email:     fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
 			Credentials: sdk.Credentials{
-				Identity: fmt.Sprintf("%s%s@email.com", conf.Prefix, namesgenerator.Generate()),
+				Username: fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate()),
 				Secret:   defPass,
 			},
 			Status: sdk.EnabledStatus,
@@ -249,19 +253,19 @@ func createThings(s sdk.SDK, conf Config, domainID, token string) ([]sdk.Thing, 
 		for i := 0; i < batches; i++ {
 			ths, err := createThingsInBatch(s, conf, domainID, token, batchSize)
 			if err != nil {
-				return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+				return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 			}
 			things = append(things, ths...)
 		}
 		ths, err := createThingsInBatch(s, conf, domainID, token, conf.Num%uint64(batchSize))
 		if err != nil {
-			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+			return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 		}
 		things = append(things, ths...)
 	} else {
 		ths, err := createThingsInBatch(s, conf, domainID, token, conf.Num)
 		if err != nil {
-			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+			return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 		}
 		things = append(things, ths...)
 	}
@@ -294,19 +298,19 @@ func createChannels(s sdk.SDK, conf Config, domainID, token string) ([]sdk.Chann
 		for i := 0; i < batches; i++ {
 			chs, err := createChannelsInBatch(s, conf, token, domainID, batchSize)
 			if err != nil {
-				return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+				return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 			}
 			channels = append(channels, chs...)
 		}
 		chs, err := createChannelsInBatch(s, conf, domainID, token, conf.Num%uint64(batchSize))
 		if err != nil {
-			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
 		channels = append(channels, chs...)
 	} else {
 		chs, err := createChannelsInBatch(s, conf, domainID, token, conf.Num)
 		if err != nil {
-			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
 		channels = append(channels, chs...)
 	}
@@ -369,26 +373,34 @@ func read(s sdk.SDK, conf Config, domainID, token string, users []sdk.User, grou
 
 func update(s sdk.SDK, domainID, token string, users []sdk.User, groups []sdk.Group, things []sdk.Thing, channels []sdk.Channel) error {
 	for _, user := range users {
-		user.Name = namesgenerator.Generate()
+		user.FirstName = namesgenerator.Generate()
 		user.Metadata = sdk.Metadata{"Update": namesgenerator.Generate()}
 		rUser, err := s.UpdateUser(user, token)
 		if err != nil {
 			return fmt.Errorf("failed to update user %w", err)
 		}
-		if rUser.Name != user.Name {
-			return fmt.Errorf("failed to update user name before %s after %s", user.Name, rUser.Name)
+		if rUser.FirstName != user.FirstName {
+			return fmt.Errorf("failed to update user name before %s after %s", user.FirstName, rUser.FirstName)
 		}
 		if rUser.Metadata["Update"] != user.Metadata["Update"] {
 			return fmt.Errorf("failed to update user metadata before %s after %s", user.Metadata["Update"], rUser.Metadata["Update"])
 		}
 		user = rUser
-		user.Credentials.Identity = namesgenerator.Generate()
-		rUser, err = s.UpdateUserIdentity(user, token)
+		user.Credentials.Username = namesgenerator.Generate()
+		rUser, err = s.UpdateUsername(user, token)
+		if err != nil {
+			return fmt.Errorf("failed to update username %w", err)
+		}
+		if rUser.Credentials.Username != user.Credentials.Username {
+			return fmt.Errorf("failed to update user name before %s after %s", user.Credentials.Username, rUser.Credentials.Username)
+		}
+		user = rUser
+		rUser, err = s.UpdateUserEmail(user, token)
 		if err != nil {
 			return fmt.Errorf("failed to update user identity %w", err)
 		}
-		if rUser.Credentials.Identity != user.Credentials.Identity {
-			return fmt.Errorf("failed to update user identity before %s after %s", user.Credentials.Identity, rUser.Credentials.Identity)
+		if rUser.Email != user.Email {
+			return fmt.Errorf("failed to update user identity before %s after %s", user.Email, rUser.Email)
 		}
 		user = rUser
 		user.Tags = []string{namesgenerator.Generate()}

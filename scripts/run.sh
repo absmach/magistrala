@@ -38,7 +38,7 @@ done
 ###
 # Users
 ###
-MG_USERS_LOG_LEVEL=info MG_USERS_HTTP_PORT=9002 MG_USERS_GRPC_PORT=7001 MG_USERS_ADMIN_EMAIL=admin@magistrala.com MG_USERS_ADMIN_PASSWORD=12345678 MG_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/magistrala-users &
+MG_USERS_LOG_LEVEL=info MG_USERS_HTTP_PORT=9002 MG_USERS_GRPC_PORT=7001 MG_USERS_ADMIN_EMAIL=admin@magistrala.com MG_USERS_ADMIN_PASSWORD=12345678 MG_USERS_ADMIN_USERNAME=admin MG_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/magistrala-users &
 
 ###
 # Things

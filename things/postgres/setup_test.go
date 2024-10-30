@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	cpostgres "github.com/absmach/magistrala/things/postgres"
 	"github.com/jmoiron/sqlx"
@@ -22,7 +21,7 @@ import (
 
 var (
 	db       *sqlx.DB
-	database postgres.Database
+	database pgclient.Database
 	tracer   = otel.Tracer("repo_tests")
 )
 
@@ -84,7 +83,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 
-	database = postgres.NewDatabase(db, dbConfig, tracer)
+	database = pgclient.NewDatabase(db, dbConfig, tracer)
 
 	code := m.Run()
 

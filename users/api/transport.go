@@ -19,7 +19,7 @@ import (
 
 // MakeHandler returns a HTTP handler for Users and Groups API endpoints.
 func MakeHandler(cls users.Service, authn mgauthn.Authentication, tokenClient magistrala.TokenServiceClient, selfRegister bool, grps groups.Service, mux *chi.Mux, logger *slog.Logger, instanceID string, pr *regexp.Regexp, providers ...oauth2.Provider) http.Handler {
-	clientsHandler(cls, authn, tokenClient, selfRegister, mux, logger, pr, providers...)
+	usersHandler(cls, authn, tokenClient, selfRegister, mux, logger, pr, providers...)
 	groupsHandler(grps, authn, mux, logger)
 
 	mux.Get("/health", magistrala.Health("users", instanceID))

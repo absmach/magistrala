@@ -25,7 +25,8 @@ type ServiceConf struct {
 	ThingsURL  string `toml:"things_url"    env:"MG_PROVISION_THINGS_LOCATION"      envDefault:"http://localhost"`
 	UsersURL   string `toml:"users_url"     env:"MG_PROVISION_USERS_LOCATION"       envDefault:"http://localhost"`
 	HTTPPort   string `toml:"http_port"     env:"MG_PROVISION_HTTP_PORT"            envDefault:"9016"`
-	MgUser     string `toml:"mg_user"       env:"MG_PROVISION_USER"                 envDefault:"test@example.com"`
+	MgEmail    string `toml:"mg_email"      env:"MG_PROVISION_EMAIL"                envDefault:"test@example.com"`
+	MgUsername string `toml:"mg_username"   env:"MG_PROVISION_USERNAME"             envDefault:"user"`
 	MgPass     string `toml:"mg_pass"       env:"MG_PROVISION_PASS"                 envDefault:"test"`
 	MgDomainID string `toml:"mg_domain_id"  env:"MG_PROVISION_DOMAIN_ID"            envDefault:""`
 	MgAPIKey   string `toml:"mg_api_key"    env:"MG_PROVISION_API_KEY"              envDefault:""`

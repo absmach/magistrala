@@ -25,8 +25,8 @@ github.com/absmach/mproxy v0.4.3-0.20240712131952-28f88581126a h1:3JtJSekVHb02U3
 github.com/absmach/mproxy v0.4.3-0.20240712131952-28f88581126a/go.mod h1:Nevip6o8u5Zx7l3LTtN8BwlCI5h5KpsnI9YnAxF5RT8=
 github.com/absmach/senml v1.0.5 h1:zNPRYpGr2Wsb8brAusz8DIfFqemy1a2dNbmMnegY3GE=
 github.com/absmach/senml v1.0.5/go.mod h1:NDEjk3O4V4YYu9Bs2/+t/AZ/F+0wu05ikgecp+/FsSU=
-github.com/authzed/authzed-go v1.0.0 h1:4wPZapjV9y3n3MXepKSvt70Gkj2MUEL+bXEeVm0QOyA=
-github.com/authzed/authzed-go v1.0.0/go.mod h1:Cx1DQKMX38u2fFVLZiGUuZnbTo2J7LCZEXmVak+TMak=
+github.com/authzed/authzed-go v1.1.0 h1:aFy5mIwe9HzaRss0KmDXBhwAAN2LWIEoRNcPXTaLv8Y=
+github.com/authzed/authzed-go v1.1.0/go.mod h1:Dxn8INsNSyeBZbWQ9CdQZfIdUyREhBmFNk95ys+ZFQs=
 github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b h1:wbh8IK+aMLTCey9sZasO7b6BWLAJnHHvb79fvWCXwxw=
 github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b/go.mod h1:s3qC7V7XIbiNWERv7Lfljy/Lx25/V1Qlexb0WJuA8uQ=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=

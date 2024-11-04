@@ -169,7 +169,7 @@ type Service interface {
 	// UpdateUsername updates the user's username.
 	UpdateUsername(ctx context.Context, session authn.Session, id, username string) (User, error)
 
-	// UpdateProfile updates the user's profile picture.
+	// UpdateProfilePicture updates the user's profile picture.
 	UpdateProfilePicture(ctx context.Context, session authn.Session, user User) (User, error)
 
 	// GenerateResetToken email where mail will be sent.

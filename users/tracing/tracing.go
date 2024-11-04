@@ -142,7 +142,7 @@ func (tm *tracingMiddleware) UpdateProfilePicture(ctx context.Context, session a
 	ctx, span := tm.tracer.Start(ctx, "svc_update_profile_picture", trace.WithAttributes(attribute.String("id", usr.ID)))
 	defer span.End()
 
-	return tm.svc.Update(ctx, session, usr)
+	return tm.svc.UpdateProfilePicture(ctx, session, usr)
 }
 
 // GenerateResetToken traces the "GenerateResetToken" operation of the wrapped users.Service.

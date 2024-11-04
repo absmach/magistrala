@@ -172,7 +172,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingUsername),
 		errors.Contains(err, apiutil.ErrMissingFirstName),
 		errors.Contains(err, apiutil.ErrMissingLastName),
-		errors.Contains(err, apiutil.ErrInvalidUsername):
+		errors.Contains(err, apiutil.ErrInvalidUsername),
+		errors.Contains(err, apiutil.ErrMissingIdentity),
+		errors.Contains(err, apiutil.ErrInvalidProfilePictureURL):
 		err = unwrap(err)
 		w.WriteHeader(http.StatusBadRequest)
 

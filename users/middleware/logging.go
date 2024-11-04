@@ -286,7 +286,8 @@ func (lm *loggingMiddleware) UpdateProfilePicture(ctx context.Context, session a
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.Group("user",
-				slog.String("id", u.ID),
+				slog.String("id", user.ID),
+				slog.String("profile_picture", user.ProfilePicture),
 			),
 		}
 		if err != nil {
@@ -296,7 +297,7 @@ func (lm *loggingMiddleware) UpdateProfilePicture(ctx context.Context, session a
 		}
 		lm.logger.Info("Update profile picture completed successfully", args...)
 	}(time.Now())
-	return lm.svc.Update(ctx, session, user)
+	return lm.svc.UpdateProfilePicture(ctx, session, user)
 }
 
 // GenerateResetToken logs the generate_reset_token request. It logs the time it took to complete the request.

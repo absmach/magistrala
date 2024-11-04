@@ -312,7 +312,7 @@ type SDK interface {
 	//
 	// example:
 	//  lt := sdk.Login{
-	//      Email: "john.doe@example",
+	//      Identity: "email"/"username",
 	//      Secret:   "12345678",
 	//  }
 	//  token, _ := sdk.CreateToken(lt)

@@ -148,7 +148,7 @@ paths:
 
     patch:
       operationId: updateUser
-      summary: Updates name and metadata of the user.
+      summary: Updates first, last name and metadata of the user.
       description: |
         Updates name and metadata of the user with provided ID. Name and metadata
         is updated using authorization token and the new received info.
@@ -244,7 +244,7 @@ paths:
   /users/{userID}/tags:
     patch:
       operationId: updateTags
-      summary: Updates tags the user.
+      summary: Updates tags of the user.
       description: |
         Updates tags of the user with provided ID. Tags is updated using
         authorization token and the new tags received in request.
@@ -345,7 +345,7 @@ paths:
   /users/{userID}/role:
     patch:
       operationId: updateRole
-      summary: Updates the user role.
+      summary: Updates the user's role.
       description: |
         Updates role for the user with provided ID.
       tags:
@@ -441,7 +441,7 @@ paths:
   /users/secret:
     patch:
       operationId: updateSecret
-      summary: Updates Secret of currently logged in user.
+      summary: Updates secret of currently logged in user.
       description: |
         Updates secret of currently logged in user. Secret is updated using
         authorization token and the new received info.

@@ -149,7 +149,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			ut, err := sdk.CreateToken(mgxsdk.Login{Username: user.Username, Secret: user.Credentials.Secret})
+			ut, err := sdk.CreateToken(mgxsdk.Login{Identity: user.Credentials.Username, Secret: user.Credentials.Secret})
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -166,7 +166,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			ut, err = sdk.CreateToken(mgxsdk.Login{Email: user.Email, Secret: user.Credentials.Secret})
+			ut, err = sdk.CreateToken(mgxsdk.Login{Identity: user.Email, Secret: user.Credentials.Secret})
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

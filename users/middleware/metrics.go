@@ -144,7 +144,7 @@ func (ms *metricsMiddleware) UpdateProfilePicture(ctx context.Context, session a
 		ms.counter.With("method", "update_profile_picture").Add(1)
 		ms.latency.With("method", "update_profile_picture").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.Update(ctx, session, user)
+	return ms.svc.UpdateProfilePicture(ctx, session, user)
 }
 
 // GenerateResetToken instruments GenerateResetToken method with metrics.

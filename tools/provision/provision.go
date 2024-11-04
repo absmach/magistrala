@@ -95,7 +95,7 @@ func Provision(conf Config) error {
 	var err error
 
 	// Login user
-	token, err := s.CreateToken(sdk.Login{Username: user.Credentials.Username, Secret: user.Credentials.Secret})
+	token, err := s.CreateToken(sdk.Login{Identity: user.Credentials.Username, Secret: user.Credentials.Secret})
 	if err != nil {
 		return fmt.Errorf("unable to login user: %s", err.Error())
 	}
@@ -114,7 +114,7 @@ func Provision(conf Config) error {
 	}
 	// Login to domain
 	token, err = s.CreateToken(sdk.Login{
-		Username: user.Credentials.Username,
+		Identity: user.Credentials.Username,
 		Secret:   user.Credentials.Secret,
 	})
 	if err != nil {

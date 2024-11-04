@@ -106,7 +106,7 @@ var cmdUsers = []cobra.Command{
 			}
 
 			loginReq := mgxsdk.Login{
-				Username: args[0],
+				Identity: args[0],
 				Secret:   args[1],
 			}
 
@@ -189,7 +189,7 @@ var cmdUsers = []cobra.Command{
 			if args[0] == "username" {
 				user.ID = args[1]
 				user.Credentials.Username = args[2]
-				user, err := sdk.UpdateUser(user, args[3])
+				user, err := sdk.UpdateUsername(user, args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return

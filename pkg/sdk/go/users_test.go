@@ -59,7 +59,6 @@ func TestCreateUser(t *testing.T) {
 	createSdkUserReq := sdk.User{
 		FirstName:   user.FirstName,
 		LastName:    user.LastName,
-		Username:    user.Username,
 		Email:       user.Email,
 		Tags:        user.Tags,
 		Credentials: user.Credentials,
@@ -1236,7 +1235,7 @@ func TestUpdateUserEmail(t *testing.T) {
 		err             errors.SDKError
 	}{
 		{
-			desc:  "update user Email with valid token",
+			desc:  "update email with valid token",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID:    user.ID,
@@ -1252,7 +1251,7 @@ func TestUpdateUserEmail(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:  "update user Email with invalid token",
+			desc:  "update email with invalid token",
 			token: invalidToken,
 			updateUserReq: sdk.User{
 				ID:    user.ID,
@@ -1268,7 +1267,7 @@ func TestUpdateUserEmail(t *testing.T) {
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update user Email with empty token",
+			desc:  "update email with empty token",
 			token: "",
 			updateUserReq: sdk.User{
 				ID:    user.ID,
@@ -1284,7 +1283,7 @@ func TestUpdateUserEmail(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
-			desc:  "update user Email with invalid id",
+			desc:  "update email with invalid id",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID:    wrongID,
@@ -1300,7 +1299,7 @@ func TestUpdateUserEmail(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
 		},
 		{
-			desc:  "update user Email with empty id",
+			desc:  "update email with empty id",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID:    "",
@@ -1316,7 +1315,7 @@ func TestUpdateUserEmail(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
 		},
 		{
-			desc:  "update user Email with response that can't be unmarshalled",
+			desc:  "update email with response that can't be unmarshalled",
 			token: validToken,
 			updateUserReq: sdk.User{
 				ID:    user.ID,
@@ -1665,7 +1664,9 @@ func TestUpdateUserRole(t *testing.T) {
 	}
 	mgsdk := sdk.NewSDK(conf)
 
+	updatedUser := user
 	updatedRole := users.AdminRole.String()
+	updatedUser.Role = updatedRole
 
 	cases := []struct {
 		desc            string
@@ -1679,23 +1680,23 @@ func TestUpdateUserRole(t *testing.T) {
 		response        sdk.User
 		err             errors.SDKError
 	}{
-		// {
-		// 	desc:  "update user role with valid token",
-		// 	token: validToken,
-		// 	updateUserReq: sdk.User{
-		// 		ID:    user.ID,
-		// 		Role:  updatedRole,
-		// 		Email: user.Email,
-		// 	},
-		// 	svcReq: users.User{
-		// 		ID:   user.ID,
-		// 		Role: users.AdminRole,
-		// 	},
-		// 	svcRes:   convertUser(updatedUser),
-		// 	svcErr:   nil,
-		// 	response: updatedUser,
-		// 	err:      nil,
-		// },
+		{
+			desc:  "update user role with valid token",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID:    user.ID,
+				Role:  updatedRole,
+				Email: user.Email,
+			},
+			svcReq: users.User{
+				ID:   user.ID,
+				Role: users.AdminRole,
+			},
+			svcRes:   convertUser(updatedUser),
+			svcErr:   nil,
+			response: updatedUser,
+			err:      nil,
+		},
 		{
 			desc:  "update user role with invalid token",
 			token: invalidToken,
@@ -1725,22 +1726,22 @@ func TestUpdateUserRole(t *testing.T) {
 			response: sdk.User{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
-		// {
-		// 	desc:  "update user role with invalid id",
-		// 	token: validToken,
-		// 	updateUserReq: sdk.User{
-		// 		ID:   wrongID,
-		// 		Role: updatedRole,
-		// 	},
-		// 	svcReq: users.User{
-		// 		ID:   wrongID,
-		// 		Role: users.AdminRole,
-		// 	},
-		// 	svcRes:   users.User{},
-		// 	svcErr:   svcerr.ErrUpdateEntity,
-		// 	response: sdk.User{},
-		// 	err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
-		// },
+		{
+			desc:  "update user role with invalid id",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID:   wrongID,
+				Role: updatedRole,
+			},
+			svcReq: users.User{
+				ID:   wrongID,
+				Role: users.AdminRole,
+			},
+			svcRes:   users.User{},
+			svcErr:   svcerr.ErrUpdateEntity,
+			response: sdk.User{},
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
+		},
 		{
 			desc:  "update user role with empty id",
 			token: validToken,
@@ -1769,28 +1770,28 @@ func TestUpdateUserRole(t *testing.T) {
 			response: sdk.User{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
 		},
-		// {
-		// 	desc:  "update user role with response that can't be unmarshalled",
-		// 	token: validToken,
-		// 	updateUserReq: sdk.User{
-		// 		ID:   user.ID,
-		// 		Role: updatedRole,
-		// 	},
-		// 	svcReq: users.User{
-		// 		ID:   user.ID,
-		// 		Role: users.AdminRole,
-		// 	},
-		// 	svcRes: users.User{
-		// 		ID:   id,
-		// 		Role: users.AdminRole,
-		// 		Metadata: users.Metadata{
-		// 			"key": make(chan int),
-		// 		},
-		// 	},
-		// 	svcErr:   nil,
-		// 	response: sdk.User{},
-		// 	err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
-		// },
+		{
+			desc:  "update user role with response that can't be unmarshalled",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID:   user.ID,
+				Role: updatedRole,
+			},
+			svcReq: users.User{
+				ID:   user.ID,
+				Role: users.AdminRole,
+			},
+			svcRes: users.User{
+				ID:   id,
+				Role: users.AdminRole,
+				Metadata: users.Metadata{
+					"key": make(chan int),
+				},
+			},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -1798,12 +1799,338 @@ func TestUpdateUserRole(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := svc.On("UpdateRole", mock.Anything, tc.session, tc.updateUserReq.ID, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("UpdateRole", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.UpdateUserRole(tc.updateUserReq, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "UpdateRole", mock.Anything, tc.session, tc.updateUserReq.ID, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "UpdateRole", mock.Anything, tc.session, tc.svcReq)
+				assert.True(t, ok)
+			}
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestUpdateUsername(t *testing.T) {
+	ts, svc, auth := setupUsers()
+	defer ts.Close()
+
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	updatedUser := user
+	updatedUsername := "updatedUsername"
+	updatedUser.Credentials.Username = updatedUsername
+
+	cases := []struct {
+		desc            string
+		token           string
+		session         mgauthn.Session
+		updateUserReq   sdk.User
+		svcReq          users.User
+		svcRes          users.User
+		svcErr          error
+		authenticateErr error
+		response        sdk.User
+		err             errors.SDKError
+	}{
+		{
+			desc:  "update username with valid token",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID: user.ID,
+				Credentials: sdk.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcReq: users.User{
+				ID: user.ID,
+				Credentials: users.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcRes:   convertUser(updatedUser),
+			svcErr:   nil,
+			response: updatedUser,
+			err:      nil,
+		},
+		{
+			desc:  "update username with invalid token",
+			token: invalidToken,
+			updateUserReq: sdk.User{
+				ID: user.ID,
+				Credentials: sdk.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcReq: users.User{
+				ID: user.ID,
+				Credentials: users.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcRes:          users.User{},
+			authenticateErr: svcerr.ErrAuthentication,
+			response:        sdk.User{},
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:  "update username with empty token",
+			token: "",
+			updateUserReq: sdk.User{
+				ID: user.ID,
+				Credentials: sdk.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcReq:   users.User{},
+			svcRes:   users.User{},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+		},
+		{
+			desc:  "update username with invalid id",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID: wrongID,
+				Credentials: sdk.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcReq: users.User{
+				ID: wrongID,
+				Credentials: users.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcRes:   users.User{},
+			svcErr:   svcerr.ErrUpdateEntity,
+			response: sdk.User{},
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
+		},
+		{
+			desc:  "update username with empty id",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID: "",
+				Credentials: sdk.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcReq:   users.User{},
+			svcRes:   users.User{},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
+		},
+		{
+			desc:  "update username with response that can't be unmarshalled",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID: user.ID,
+				Credentials: sdk.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcReq: users.User{
+				ID: user.ID,
+				Credentials: users.Credentials{
+					Username: updatedUsername,
+				},
+			},
+			svcRes: users.User{
+				ID: id,
+				Credentials: users.Credentials{
+					Username: updatedUsername,
+				},
+				Metadata: users.Metadata{
+					"key": make(chan int),
+				},
+			},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("UpdateUsername", mock.Anything, tc.session, tc.svcReq.ID, tc.svcReq.Credentials.Username).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.UpdateUsername(tc.updateUserReq, tc.token)
+			assert.Equal(t, tc.err, err)
+			assert.Equal(t, tc.response, resp)
+			if tc.err == nil {
+				ok := svcCall.Parent.AssertCalled(t, "UpdateUsername", mock.Anything, tc.session, tc.svcReq.ID, tc.svcReq.Credentials.Username)
+				assert.True(t, ok)
+			}
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestUpdateProfilePicture(t *testing.T) {
+	ts, svc, auth := setupUsers()
+	defer ts.Close()
+
+	conf := sdk.Config{
+		UsersURL: ts.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	updatedProfilePicture := "http://updated.com/profile.jpg"
+	updatedUser := user
+	updatedUser.Email = updatedProfilePicture
+
+	cases := []struct {
+		desc            string
+		token           string
+		session         mgauthn.Session
+		updateUserReq   sdk.User
+		svcReq          users.User
+		svcRes          users.User
+		svcErr          error
+		authenticateErr error
+		response        sdk.User
+		err             errors.SDKError
+	}{
+		{
+			desc:  "update profile picture with valid token",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcReq: users.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcRes:   convertUser(updatedUser),
+			svcErr:   nil,
+			response: updatedUser,
+			err:      nil,
+		},
+		{
+			desc:  "update profile picture with invalid token",
+			token: invalidToken,
+			updateUserReq: sdk.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcReq: users.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcRes:          users.User{},
+			authenticateErr: svcerr.ErrAuthentication,
+			response:        sdk.User{},
+			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:  "update profile picture with empty token",
+			token: "",
+			updateUserReq: sdk.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcReq: users.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcRes:   users.User{},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+		},
+		{
+			desc:  "update profile picture with invalid id",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID:             wrongID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcReq: users.User{
+				ID:             wrongID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcRes:   users.User{},
+			svcErr:   svcerr.ErrUpdateEntity,
+			response: sdk.User{},
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
+		},
+		{
+			desc:  "update profile picture with empty id",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID:             "",
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcReq: users.User{
+				ID:             "",
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcRes:   users.User{},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
+		},
+		{
+			desc:  "update profile picture with request that can't be marshalled",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID: generateUUID(t),
+				Metadata: map[string]interface{}{
+					"test": make(chan int),
+				},
+			},
+			svcReq:   users.User{},
+			svcRes:   users.User{},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
+		},
+		{
+			desc:  "update profile picture with response that can't be unmarshalled",
+			token: validToken,
+			updateUserReq: sdk.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcReq: users.User{
+				ID:             user.ID,
+				ProfilePicture: updatedProfilePicture,
+			},
+			svcRes: users.User{
+				ID: id,
+				Metadata: users.Metadata{
+					"key": make(chan int),
+				},
+			},
+			svcErr:   nil,
+			response: sdk.User{},
+			err:      errors.NewSDKError(errors.New("unexpected end of JSON input")),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("UpdateProfilePicture", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.UpdateProfilePicture(tc.updateUserReq, tc.token)
+			assert.Equal(t, tc.err, err)
+			assert.Equal(t, tc.response, resp)
+			if tc.err == nil {
+				ok := svcCall.Parent.AssertCalled(t, "UpdateProfilePicture", mock.Anything, tc.session, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

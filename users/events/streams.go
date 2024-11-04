@@ -107,7 +107,7 @@ func (es *eventStore) UpdateUsername(ctx context.Context, session authn.Session,
 }
 
 func (es *eventStore) UpdateProfilePicture(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
-	user, err := es.svc.Update(ctx, session, user)
+	user, err := es.svc.UpdateProfilePicture(ctx, session, user)
 	if err != nil {
 		return user, err
 	}
@@ -120,7 +120,7 @@ func (es *eventStore) UpdateProfilePicture(ctx context.Context, session authn.Se
 		return user, err
 	}
 
-	return es.update(ctx, "profile_picture", user)
+	return user, nil
 }
 
 func (es *eventStore) UpdateEmail(ctx context.Context, session authn.Session, id, email string) (users.User, error) {

@@ -214,7 +214,7 @@ func (req updateUserSecretReq) validate() error {
 
 type updateUsernameReq struct {
 	id       string
-	Username string
+	Username string `json:"username,omitempty"`
 }
 
 func (req updateUsernameReq) validate() error {
@@ -223,6 +223,9 @@ func (req updateUsernameReq) validate() error {
 	}
 	if len(req.Username) > api.MaxNameSize {
 		return apiutil.ErrNameSize
+	}
+	if req.Username == "" {
+		return apiutil.ErrMissingUsername
 	}
 
 	return nil
@@ -256,13 +259,13 @@ func (req changeUserStatusReq) validate() error {
 }
 
 type loginUserReq struct {
-	Username string `json:"username,omitempty"`
+	Identity string `json:"identity,omitempty"`
 	Secret   string `json:"secret,omitempty"`
 }
 
 func (req loginUserReq) validate() error {
-	if req.Username == "" {
-		return apiutil.ErrMissingUsername
+	if req.Identity == "" {
+		return apiutil.ErrMissingIdentity
 	}
 	if req.Secret == "" {
 		return apiutil.ErrMissingPass

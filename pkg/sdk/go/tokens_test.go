@@ -41,7 +41,7 @@ func TestIssueToken(t *testing.T) {
 		{
 			desc: "issue token successfully",
 			login: sdk.Login{
-				Username: client.Credentials.Username,
+				Identity: client.Credentials.Username,
 				Secret:   client.Credentials.Secret,
 			},
 			svcRes: &magistrala.Token{
@@ -54,9 +54,9 @@ func TestIssueToken(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc: "issue token with invalid username",
+			desc: "issue token with invalid identity",
 			login: sdk.Login{
-				Username: invalidIdentity,
+				Identity: invalidIdentity,
 				Secret:   client.Credentials.Secret,
 			},
 			svcRes:   &magistrala.Token{},
@@ -67,7 +67,7 @@ func TestIssueToken(t *testing.T) {
 		{
 			desc: "issue token with invalid secret",
 			login: sdk.Login{
-				Username: client.Credentials.Username,
+				Identity: client.Credentials.Username,
 				Secret:   "invalid",
 			},
 			svcRes:   &magistrala.Token{},
@@ -76,20 +76,20 @@ func TestIssueToken(t *testing.T) {
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrLogin, http.StatusUnauthorized),
 		},
 		{
-			desc: "issue token with empty username",
+			desc: "issue token with empty identity",
 			login: sdk.Login{
-				Username: "",
+				Identity: "",
 				Secret:   client.Credentials.Secret,
 			},
 			svcRes:   &magistrala.Token{},
 			svcErr:   nil,
 			response: sdk.Token{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingUsername), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingIdentity), http.StatusBadRequest),
 		},
 		{
 			desc: "issue token with empty secret",
 			login: sdk.Login{
-				Username: client.Credentials.Username,
+				Identity: client.Credentials.Username,
 				Secret:   "",
 			},
 			svcRes:   &magistrala.Token{},
@@ -100,12 +100,12 @@ func TestIssueToken(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("IssueToken", mock.Anything, tc.login.Username, tc.login.Secret).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("IssueToken", mock.Anything, tc.login.Identity, tc.login.Secret).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.CreateToken(tc.login)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "IssueToken", mock.Anything, tc.login.Username, tc.login.Secret)
+				ok := svcCall.Parent.AssertCalled(t, "IssueToken", mock.Anything, tc.login.Identity, tc.login.Secret)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()

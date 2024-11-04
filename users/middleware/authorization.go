@@ -124,6 +124,9 @@ func (am *authorizationMiddleware) UpdateUsername(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) UpdateProfilePicture(ctx context.Context, session authn.Session, user users.User) (users.User, error) {
+	if err := am.checkSuperAdmin(ctx, session.UserID); err == nil {
+		session.SuperAdmin = true
+	}
 	return am.svc.UpdateProfilePicture(ctx, session, user)
 }
 

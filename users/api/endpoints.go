@@ -433,7 +433,7 @@ func updateProfilePictureEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		user, err := svc.Update(ctx, session, user)
+		user, err := svc.UpdateProfilePicture(ctx, session, user)
 		if err != nil {
 			return nil, err
 		}
@@ -475,7 +475,7 @@ func issueTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		token, err := svc.IssueToken(ctx, req.Username, req.Secret)
+		token, err := svc.IssueToken(ctx, req.Identity, req.Secret)
 		if err != nil {
 			return nil, err
 		}

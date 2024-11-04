@@ -20,8 +20,7 @@ type Token struct {
 }
 
 type Login struct {
-	Email    string `json:"email"`
-	Username string `json:"username,omitempty"`
+	Identity string `json:"identity"`
 	Secret   string `json:"secret"`
 }
 

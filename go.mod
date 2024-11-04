@@ -8,7 +8,7 @@ require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
 	github.com/absmach/certs v0.0.0-20241014135535-3f118b801054
-	github.com/absmach/mproxy v0.4.3-0.20240712131952-28f88581126a
+	github.com/absmach/mgate v0.4.5
 	github.com/absmach/senml v1.0.5
 	github.com/authzed/authzed-go v1.1.0
 	github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b

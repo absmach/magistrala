@@ -18,9 +18,9 @@ import (
 	"github.com/absmach/magistrala/pkg/apiutil"
 	pubsub "github.com/absmach/magistrala/pkg/messaging/mocks"
 	thmocks "github.com/absmach/magistrala/things/mocks"
-	"github.com/absmach/mproxy"
-	mproxyhttp "github.com/absmach/mproxy/pkg/http"
-	"github.com/absmach/mproxy/pkg/session"
+	"github.com/absmach/mgate"
+	proxy "github.com/absmach/mgate/pkg/http"
+	"github.com/absmach/mgate/pkg/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -41,11 +41,11 @@ func newTargetHTTPServer() *httptest.Server {
 }
 
 func newProxyHTPPServer(svc session.Handler, targetServer *httptest.Server) (*httptest.Server, error) {
-	config := mproxy.Config{
+	config := mgate.Config{
 		Address: "",
 		Target:  targetServer.URL,
 	}
-	mp, err := mproxyhttp.NewProxy(config, svc, mglog.NewMock())
+	mp, err := proxy.NewProxy(config, svc, mglog.NewMock())
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func TestPublish(t *testing.T) {
 			msg:         msg,
 			contentType: ctSenmlJSON,
 			key:         invalidKey,
-			status:      http.StatusBadRequest,
+			status:      http.StatusUnauthorized,
 		},
 		"publish message with invalid basic auth": {
 			chanID:      chanID,
@@ -159,7 +159,7 @@ func TestPublish(t *testing.T) {
 			contentType: ctSenmlJSON,
 			key:         invalidKey,
 			basicAuth:   true,
-			status:      http.StatusBadRequest,
+			status:      http.StatusUnauthorized,
 		},
 		"publish message without content type": {
 			chanID:      chanID,

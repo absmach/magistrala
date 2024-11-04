@@ -18,7 +18,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	thmocks "github.com/absmach/magistrala/things/mocks"
-	"github.com/absmach/mproxy/pkg/session"
+	"github.com/absmach/mgate/pkg/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

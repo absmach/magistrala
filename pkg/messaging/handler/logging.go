@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/mproxy/pkg/session"
+	"github.com/absmach/mgate/pkg/session"
 )
 
 var _ session.Handler = (*loggingMiddleware)(nil)

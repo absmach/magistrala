@@ -32,10 +32,10 @@ import (
 	mqttpub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	"github.com/absmach/magistrala/pkg/server"
 	"github.com/absmach/magistrala/pkg/uuid"
-	"github.com/absmach/mproxy"
-	mproxymqtt "github.com/absmach/mproxy/pkg/mqtt"
-	"github.com/absmach/mproxy/pkg/mqtt/websocket"
-	"github.com/absmach/mproxy/pkg/session"
+	mgate "github.com/absmach/mgate"
+	mgatemqtt "github.com/absmach/mgate/pkg/mqtt"
+	"github.com/absmach/mgate/pkg/mqtt/websocket"
+	"github.com/absmach/mgate/pkg/session"
 	"github.com/caarlos0/env/v11"
 	"github.com/cenkalti/backoff/v4"
 	"golang.org/x/sync/errgroup"
@@ -211,11 +211,11 @@ func main() {
 }
 
 func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
-	config := mproxy.Config{
+	config := mgate.Config{
 		Address: fmt.Sprintf(":%s", cfg.MQTTPort),
 		Target:  fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort),
 	}
-	mproxy := mproxymqtt.New(config, sessionHandler, interceptor, logger)
+	mproxy := mgatemqtt.New(config, sessionHandler, interceptor, logger)
 
 	errCh := make(chan error)
 	go func() {
@@ -232,7 +232,7 @@ func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHand
 }
 
 func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
-	config := mproxy.Config{
+	config := mgate.Config{
 		Address:    fmt.Sprintf("%s:%s", "", cfg.HTTPPort),
 		Target:     fmt.Sprintf("ws://%s:%s%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort, wsPathPrefix),
 		PathPrefix: wsPathPrefix,

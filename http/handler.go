@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -18,7 +19,8 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/mproxy/pkg/session"
+	mgate "github.com/absmach/mgate/pkg/http"
+	"github.com/absmach/mgate/pkg/session"
 )
 
 var _ session.Handler = (*handler)(nil)
@@ -33,13 +35,13 @@ const (
 
 // Error wrappers for MQTT errors.
 var (
-	errMalformedSubtopic        = errors.New("malformed subtopic")
 	errClientNotInitialized     = errors.New("client is not initialized")
-	errMalformedTopic           = errors.New("malformed topic")
-	errMissingTopicPub          = errors.New("failed to publish due to missing topic")
 	errFailedPublish            = errors.New("failed to publish")
-	errFailedParseSubtopic      = errors.New("failed to parse subtopic")
 	errFailedPublishToMsgBroker = errors.New("failed to publish to magistrala message broker")
+	errMalformedSubtopic        = mgate.NewHTTPProxyError(http.StatusBadRequest, errors.New("malformed subtopic"))
+	errMalformedTopic           = mgate.NewHTTPProxyError(http.StatusBadRequest, errors.New("malformed topic"))
+	errMissingTopicPub          = mgate.NewHTTPProxyError(http.StatusBadRequest, errors.New("failed to publish due to missing topic"))
+	errFailedParseSubtopic      = mgate.NewHTTPProxyError(http.StatusBadRequest, errors.New("failed to parse subtopic"))
 )
 
 var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
@@ -71,9 +73,9 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 	var tok string
 	switch {
 	case string(s.Password) == "":
-		return errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey)
-	case strings.HasPrefix(string(s.Password), "Thing"):
-		tok = extractThingKey(string(s.Password))
+		return mgate.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey))
+	case strings.HasPrefix(string(s.Password), apiutil.ThingPrefix):
+		tok = strings.TrimPrefix(string(s.Password), apiutil.ThingPrefix)
 	default:
 		tok = string(s.Password)
 	}
@@ -113,7 +115,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 
 	channelParts := channelRegExp.FindStringSubmatch(*topic)
 	if len(channelParts) < 2 {
-		return errors.Wrap(errFailedPublish, errMalformedTopic)
+		return mgate.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(errFailedPublish, errMalformedTopic))
 	}
 
 	chanID := channelParts[1]
@@ -121,7 +123,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
-		return errors.Wrap(errFailedParseSubtopic, err)
+		return mgate.NewHTTPProxyError(http.StatusBadRequest, errors.Wrap(errFailedParseSubtopic, err))
 	}
 
 	msg := messaging.Message{
@@ -135,8 +137,8 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	switch {
 	case string(s.Password) == "":
 		return errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey)
-	case strings.HasPrefix(string(s.Password), "Thing"):
-		tok = extractThingKey(string(s.Password))
+	case strings.HasPrefix(string(s.Password), apiutil.ThingPrefix):
+		tok = strings.TrimPrefix(string(s.Password), apiutil.ThingPrefix)
 	default:
 		tok = string(s.Password)
 	}
@@ -147,10 +149,10 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	}
 	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {
-		return err
+		return mgate.NewHTTPProxyError(http.StatusBadRequest, err)
 	}
 	if !res.GetAuthorized() {
-		return svcerr.ErrAuthorization
+		return mgate.NewHTTPProxyError(http.StatusUnauthorized, svcerr.ErrAuthorization)
 	}
 	msg.Publisher = res.GetId()
 
@@ -183,7 +185,7 @@ func parseSubtopic(subtopic string) (string, error) {
 
 	subtopic, err := url.QueryUnescape(subtopic)
 	if err != nil {
-		return "", errMalformedSubtopic
+		return "", mgate.NewHTTPProxyError(http.StatusBadRequest, errMalformedSubtopic)
 	}
 	subtopic = strings.ReplaceAll(subtopic, "/", ".")
 
@@ -195,7 +197,7 @@ func parseSubtopic(subtopic string) (string, error) {
 		}
 
 		if len(elem) > 1 && (strings.Contains(elem, "*") || strings.Contains(elem, ">")) {
-			return "", errMalformedSubtopic
+			return "", mgate.NewHTTPProxyError(http.StatusBadRequest, errMalformedSubtopic)
 		}
 
 		filteredElems = append(filteredElems, elem)
@@ -203,13 +205,4 @@ func parseSubtopic(subtopic string) (string, error) {
 
 	subtopic = strings.Join(filteredElems, ".")
 	return subtopic, nil
-}
-
-// extractThingKey returns value of the thing key. If there is no thing key - an empty value is returned.
-func extractThingKey(topic string) string {
-	if !strings.HasPrefix(topic, apiutil.ThingPrefix) {
-		return ""
-	}
-
-	return strings.TrimPrefix(topic, apiutil.ThingPrefix)
 }

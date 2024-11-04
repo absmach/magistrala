@@ -12,7 +12,6 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/auth/postgres"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/policies"
@@ -813,7 +812,7 @@ func TestUpdate(t *testing.T) {
 	})
 
 	updatedName := "test1"
-	updatedMetadata := clients.Metadata{
+	updatedMetadata := auth.Metadata{
 		"test1": "test1",
 	}
 	updatedTags := []string{"test1"}
@@ -917,7 +916,7 @@ func TestUpdate(t *testing.T) {
 			domainID: domainID,
 			d: auth.DomainReq{
 				Name:     &updatedName,
-				Metadata: &clients.Metadata{"key": make(chan int)},
+				Metadata: &auth.Metadata{"key": make(chan int)},
 			},
 			response: auth.Domain{},
 			err:      repoerr.ErrUpdateEntity,

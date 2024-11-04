@@ -6,39 +6,39 @@ package http
 import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/things"
 )
 
 type createClientReq struct {
-	client mgclients.Client
+	thing things.Client
 }
 
 func (req createClientReq) validate() error {
-	if len(req.client.Name) > api.MaxNameSize {
+	if len(req.thing.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
 	}
-	if req.client.ID != "" {
-		return api.ValidateUUID(req.client.ID)
+	if req.thing.ID != "" {
+		return api.ValidateUUID(req.thing.ID)
 	}
 
 	return nil
 }
 
 type createClientsReq struct {
-	Clients []mgclients.Client
+	Things []things.Client
 }
 
 func (req createClientsReq) validate() error {
-	if len(req.Clients) == 0 {
+	if len(req.Things) == 0 {
 		return apiutil.ErrEmptyList
 	}
-	for _, client := range req.Clients {
-		if client.ID != "" {
-			if err := api.ValidateUUID(client.ID); err != nil {
+	for _, thing := range req.Things {
+		if thing.ID != "" {
+			if err := api.ValidateUUID(thing.ID); err != nil {
 				return err
 			}
 		}
-		if len(client.Name) > api.MaxNameSize {
+		if len(thing.Name) > api.MaxNameSize {
 			return apiutil.ErrNameSize
 		}
 	}
@@ -71,7 +71,7 @@ func (req viewClientPermsReq) validate() error {
 }
 
 type listClientsReq struct {
-	status     mgclients.Status
+	status     things.Status
 	offset     uint64
 	limit      uint64
 	name       string
@@ -80,7 +80,7 @@ type listClientsReq struct {
 	visibility string
 	userID     string
 	listPerms  bool
-	metadata   mgclients.Metadata
+	metadata   things.Metadata
 	id         string
 }
 
@@ -102,7 +102,7 @@ func (req listClientsReq) validate() error {
 }
 
 type listMembersReq struct {
-	mgclients.Page
+	things.Page
 	groupID string
 }
 

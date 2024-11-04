@@ -13,11 +13,11 @@ import (
 	"github.com/absmach/magistrala/cli"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/things"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -37,7 +37,7 @@ var thing = sdk.Thing{
 		Secret: "secret",
 	},
 	DomainID: testsutil.GenerateUUID(&testing.T{}),
-	Status:   mgclients.EnabledStatus.String(),
+	Status:   things.EnabledStatus.String(),
 }
 
 func TestCreateThingsCmd(t *testing.T) {

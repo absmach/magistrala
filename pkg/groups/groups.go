@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/clients"
 )
 
 // MaxLevel represents the maximum group hierarchy level.
@@ -19,20 +18,20 @@ const MaxLevel = uint64(5)
 // Path in a tree consisting of group IDs
 // Paths are unique per domain.
 type Group struct {
-	ID          string           `json:"id"`
-	Domain      string           `json:"domain_id,omitempty"`
-	Parent      string           `json:"parent_id,omitempty"`
-	Name        string           `json:"name"`
-	Description string           `json:"description,omitempty"`
-	Metadata    clients.Metadata `json:"metadata,omitempty"`
-	Level       int              `json:"level,omitempty"`
-	Path        string           `json:"path,omitempty"`
-	Children    []*Group         `json:"children,omitempty"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at,omitempty"`
-	UpdatedBy   string           `json:"updated_by,omitempty"`
-	Status      clients.Status   `json:"status"`
-	Permissions []string         `json:"permissions,omitempty"`
+	ID          string    `json:"id"`
+	Domain      string    `json:"domain_id,omitempty"`
+	Parent      string    `json:"parent_id,omitempty"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
+	Level       int       `json:"level,omitempty"`
+	Path        string    `json:"path,omitempty"`
+	Children    []*Group  `json:"children,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	UpdatedBy   string    `json:"updated_by,omitempty"`
+	Status      Status    `json:"status"`
+	Permissions []string  `json:"permissions,omitempty"`
 }
 
 type Member struct {
@@ -61,6 +60,9 @@ type Page struct {
 	Direction  int64 // ancestors (+1) or descendants (-1)
 	Groups     []Group
 }
+
+// Metadata represents arbitrary JSON.
+type Metadata map[string]interface{}
 
 // Repository specifies a group persistence API.
 //

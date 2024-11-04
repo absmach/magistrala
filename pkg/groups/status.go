@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package clients
+package groups
 
 import (
 	"encoding/json"
@@ -10,21 +10,21 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
-// Status represents Client status.
+// Status represents User status.
 type Status uint8
 
-// Possible Client status values.
+// Possible User status values.
 const (
-	// EnabledStatus represents enabled Client.
+	// EnabledStatus represents enabled User.
 	EnabledStatus Status = iota
-	// DisabledStatus represents disabled Client.
+	// DisabledStatus represents disabled User.
 	DisabledStatus
-	// DeletedStatus represents a client that will be deleted.
+	// DeletedStatus represents a user that will be deleted.
 	DeletedStatus
 
-	// AllStatus is used for querying purposes to list clients irrespective
+	// AllStatus is used for querying purposes to list users irrespective
 	// of their status - both enabled and disabled. It is never stored in the
-	// database as the actual Client status and should always be the largest
+	// database as the actual User status and should always be the largest
 	// value in this enumeration.
 	AllStatus
 )
@@ -38,7 +38,7 @@ const (
 	Unknown  = "unknown"
 )
 
-// String converts client/group status to string literal.
+// String converts user/group status to string literal.
 func (s Status) String() string {
 	switch s {
 	case DisabledStatus:
@@ -54,7 +54,7 @@ func (s Status) String() string {
 	}
 }
 
-// ToStatus converts string value to a valid Client/Group status.
+// ToStatus converts string value to a valid User/Group status.
 func ToStatus(status string) (Status, error) {
 	switch status {
 	case "", Enabled:
@@ -69,23 +69,12 @@ func ToStatus(status string) (Status, error) {
 	return Status(0), svcerr.ErrInvalidStatus
 }
 
-// Custom Marshaller for Client/Groups.
+// Custom Marshaller for Uesr/Groups.
 func (s Status) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 
-func (client Client) MarshalJSON() ([]byte, error) {
-	type Alias Client
-	return json.Marshal(&struct {
-		Alias
-		Status string `json:"status,omitempty"`
-	}{
-		Alias:  (Alias)(client),
-		Status: client.Status.String(),
-	})
-}
-
-// Custom Unmarshaler for Client/Groups.
+// Custom Unmarshaler for User/Groups.
 func (s *Status) UnmarshalJSON(data []byte) error {
 	str := strings.Trim(string(data), "\"")
 	val, err := ToStatus(str)

@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/things"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -715,7 +715,7 @@ type dbChannel struct {
 	CreatedAt   time.Time      `db:"created_at"`
 	UpdatedAt   sql.NullTime   `db:"updated_at,omitempty"`
 	UpdatedBy   sql.NullString `db:"updated_by,omitempty"`
-	Status      clients.Status `db:"status"`
+	Status      things.Status  `db:"status"`
 }
 
 func toDBChannel(domainID string, ch bootstrap.Channel) (dbChannel, error) {

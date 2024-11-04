@@ -17,7 +17,6 @@ import (
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
@@ -65,14 +64,14 @@ func TestCreateChannel(t *testing.T) {
 	group := convertChannel(channel)
 	createGroupReq := groups.Group{
 		Name:     channel.Name,
-		Metadata: mgclients.Metadata{"role": "client"},
-		Status:   mgclients.EnabledStatus,
+		Metadata: groups.Metadata{"role": "client"},
+		Status:   groups.EnabledStatus,
 	}
 
 	channelReq := sdk.Channel{
 		Name:     channel.Name,
 		Metadata: validMetadata,
-		Status:   mgclients.EnabledStatus.String(),
+		Status:   groups.EnabledStatus.String(),
 	}
 
 	channelKind := "new_channel"
@@ -83,7 +82,7 @@ func TestCreateChannel(t *testing.T) {
 	pChannel.ParentID = parentID
 
 	iGroup := group
-	iGroup.Metadata = mgclients.Metadata{
+	iGroup.Metadata = groups.Metadata{
 		"test": make(chan int),
 	}
 
@@ -148,14 +147,14 @@ func TestCreateChannel(t *testing.T) {
 			channelReq: sdk.Channel{
 				Name:     channel.Name,
 				ParentID: parentID,
-				Status:   mgclients.EnabledStatus.String(),
+				Status:   groups.EnabledStatus.String(),
 			},
 			domainID: domainID,
 			token:    validToken,
 			createGroupReq: groups.Group{
 				Name:   channel.Name,
 				Parent: parentID,
-				Status: mgclients.EnabledStatus,
+				Status: groups.EnabledStatus,
 			},
 			svcRes:   pGroup,
 			svcErr:   nil,
@@ -167,14 +166,14 @@ func TestCreateChannel(t *testing.T) {
 			channelReq: sdk.Channel{
 				Name:     channel.Name,
 				ParentID: wrongID,
-				Status:   mgclients.EnabledStatus.String(),
+				Status:   groups.EnabledStatus.String(),
 			},
 			domainID: domainID,
 			token:    validToken,
 			createGroupReq: groups.Group{
 				Name:   channel.Name,
 				Parent: wrongID,
-				Status: mgclients.EnabledStatus,
+				Status: groups.EnabledStatus,
 			},
 			svcRes:   groups.Group{},
 			svcErr:   svcerr.ErrCreateEntity,
@@ -184,7 +183,7 @@ func TestCreateChannel(t *testing.T) {
 		{
 			desc: "create channel with missing name",
 			channelReq: sdk.Channel{
-				Status: mgclients.EnabledStatus.String(),
+				Status: groups.EnabledStatus.String(),
 			},
 			domainID:       domainID,
 			token:          validToken,
@@ -204,7 +203,7 @@ func TestCreateChannel(t *testing.T) {
 				Metadata:    validMetadata,
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
-				Status:      mgclients.EnabledStatus.String(),
+				Status:      groups.EnabledStatus.String(),
 			},
 			domainID: domainID,
 			token:    validToken,
@@ -213,10 +212,10 @@ func TestCreateChannel(t *testing.T) {
 				Parent:      parentID,
 				Name:        channel.Name,
 				Description: description,
-				Metadata:    mgclients.Metadata{"role": "client"},
+				Metadata:    groups.Metadata{"role": "client"},
 				CreatedAt:   group.CreatedAt,
 				UpdatedAt:   group.UpdatedAt,
-				Status:      mgclients.EnabledStatus,
+				Status:      groups.EnabledStatus,
 			},
 			svcRes:   pGroup,
 			svcErr:   nil,
@@ -270,7 +269,7 @@ func TestListChannels(t *testing.T) {
 			ID:       generateUUID(t),
 			Name:     fmt.Sprintf("channel_%d", i),
 			Metadata: sdk.Metadata{"name": fmt.Sprintf("thing_%d", i)},
-			Status:   mgclients.EnabledStatus.String(),
+			Status:   groups.EnabledStatus.String(),
 		}
 		chs = append(chs, gr)
 	}
@@ -280,7 +279,7 @@ func TestListChannels(t *testing.T) {
 		domainID        string
 		token           string
 		session         mgauthn.Session
-		status          mgclients.Status
+		status          groups.Status
 		total           uint64
 		offset          uint64
 		limit           uint64
@@ -438,7 +437,7 @@ func TestListChannels(t *testing.T) {
 				PageMeta: groups.PageMeta{
 					Offset:   offset,
 					Limit:    10,
-					Metadata: mgclients.Metadata{"name": "thing_89"},
+					Metadata: groups.Metadata{"name": "thing_89"},
 				},
 				Permission: "view",
 				Direction:  -1,
@@ -493,7 +492,7 @@ func TestListChannels(t *testing.T) {
 				},
 				Groups: []groups.Group{{
 					ID: generateUUID(t),
-					Metadata: mgclients.Metadata{
+					Metadata: groups.Metadata{
 						"test": make(chan int),
 					},
 				}},
@@ -609,7 +608,7 @@ func TestViewChannel(t *testing.T) {
 			channelID: groupRes.ID,
 			svcRes: groups.Group{
 				ID: generateUUID(t),
-				Metadata: mgclients.Metadata{
+				Metadata: groups.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -660,7 +659,7 @@ func TestUpdateChannel(t *testing.T) {
 	dChannel.Description = newDescription
 
 	mGroup := group
-	mGroup.Metadata = mgclients.Metadata{
+	mGroup.Metadata = groups.Metadata{
 		"field": "value2",
 	}
 	mChannel := channel
@@ -671,7 +670,7 @@ func TestUpdateChannel(t *testing.T) {
 	aGroup := group
 	aGroup.Name = newName
 	aGroup.Description = newDescription
-	aGroup.Metadata = mgclients.Metadata{"field": "value2"}
+	aGroup.Metadata = groups.Metadata{"field": "value2"}
 	aChannel := channel
 	aChannel.Name = newName
 	aChannel.Description = newDescription
@@ -736,7 +735,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			updateGroupReq: groups.Group{
 				ID:       group.ID,
-				Metadata: mgclients.Metadata{"field": "value2"},
+				Metadata: groups.Metadata{"field": "value2"},
 			},
 			svcRes:   mGroup,
 			svcErr:   nil,
@@ -757,7 +756,7 @@ func TestUpdateChannel(t *testing.T) {
 				ID:          group.ID,
 				Name:        newName,
 				Description: newDescription,
-				Metadata:    mgclients.Metadata{"field": "value2"},
+				Metadata:    groups.Metadata{"field": "value2"},
 			},
 			svcRes:   aGroup,
 			svcErr:   nil,
@@ -810,7 +809,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			updateGroupReq: groups.Group{
 				ID:       wrongID,
-				Metadata: mgclients.Metadata{"field": "value2"},
+				Metadata: groups.Metadata{"field": "value2"},
 			},
 			svcRes:   groups.Group{},
 			svcErr:   svcerr.ErrNotFound,
@@ -896,7 +895,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			svcRes: groups.Group{
 				ID: generateUUID(t),
-				Metadata: mgclients.Metadata{
+				Metadata: groups.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -955,7 +954,7 @@ func TestListChannelsByThing(t *testing.T) {
 			ID:       generateUUID(t),
 			Name:     fmt.Sprintf("membership_%d@example.com", i),
 			Metadata: sdk.Metadata{"role": "channel"},
-			Status:   mgclients.EnabledStatus.String(),
+			Status:   groups.EnabledStatus.String(),
 		}
 		aChannels = append(aChannels, channel)
 	}
@@ -1153,7 +1152,7 @@ func TestListChannelsByThing(t *testing.T) {
 				},
 				Groups: []groups.Group{{
 					ID: generateUUID(t),
-					Metadata: mgclients.Metadata{
+					Metadata: groups.Metadata{
 						"test": make(chan int),
 					},
 				}},
@@ -1262,7 +1261,7 @@ func TestEnableChannel(t *testing.T) {
 			channelID: channel.ID,
 			svcRes: groups.Group{
 				ID: generateUUID(t),
-				Metadata: mgclients.Metadata{
+				Metadata: groups.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1302,9 +1301,9 @@ func TestDisableChannel(t *testing.T) {
 
 	group := convertChannel(channel)
 	dGroup := group
-	dGroup.Status = mgclients.DisabledStatus
+	dGroup.Status = groups.DisabledStatus
 	dChannel := channel
-	dChannel.Status = mgclients.DisabledStatus.String()
+	dChannel.Status = groups.DisabledStatus.String()
 
 	cases := []struct {
 		desc            string
@@ -1375,7 +1374,7 @@ func TestDisableChannel(t *testing.T) {
 			channelID: channel.ID,
 			svcRes: groups.Group{
 				ID: generateUUID(t),
-				Metadata: mgclients.Metadata{
+				Metadata: groups.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -2051,7 +2050,7 @@ func TestListChannelUserGroups(t *testing.T) {
 			ID:       generateUUID(t),
 			Name:     fmt.Sprintf("group_%d", i),
 			Metadata: sdk.Metadata{"role": "group"},
-			Status:   mgclients.EnabledStatus.String(),
+			Status:   groups.EnabledStatus.String(),
 		}
 		aGroups = append(aGroups, group)
 	}
@@ -2257,7 +2256,7 @@ func TestListChannelUserGroups(t *testing.T) {
 				Groups: []groups.Group{
 					{
 						ID:       generateUUID(t),
-						Metadata: mgclients.Metadata{"test": make(chan int)},
+						Metadata: groups.Metadata{"test": make(chan int)},
 					},
 				},
 			},
@@ -2704,7 +2703,7 @@ func TestListGroupChannels(t *testing.T) {
 		ID:       testsutil.GenerateUUID(t),
 		Name:     "group_channel",
 		Metadata: sdk.Metadata{"role": "group"},
-		Status:   mgclients.EnabledStatus.String(),
+		Status:   groups.EnabledStatus.String(),
 	}
 
 	cases := []struct {
@@ -2854,7 +2853,7 @@ func TestListGroupChannels(t *testing.T) {
 				Groups: []groups.Group{
 					{
 						ID:       generateUUID(t),
-						Metadata: mgclients.Metadata{"test": make(chan int)},
+						Metadata: groups.Metadata{"test": make(chan int)},
 					},
 				},
 			},
@@ -2895,7 +2894,7 @@ func generateTestChannel(t *testing.T) sdk.Channel {
 		Metadata:    sdk.Metadata{"role": "client"},
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
-		Status:      mgclients.EnabledStatus.String(),
+		Status:      groups.EnabledStatus.String(),
 	}
 	return ch
 }

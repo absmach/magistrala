@@ -15,9 +15,9 @@ type Cache struct {
 	mock.Mock
 }
 
-// ID provides a mock function with given fields: ctx, thingSecret
-func (_m *Cache) ID(ctx context.Context, thingSecret string) (string, error) {
-	ret := _m.Called(ctx, thingSecret)
+// ID provides a mock function with given fields: ctx, clientSecret
+func (_m *Cache) ID(ctx context.Context, clientSecret string) (string, error) {
+	ret := _m.Called(ctx, clientSecret)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ID")
@@ -26,16 +26,16 @@ func (_m *Cache) ID(ctx context.Context, thingSecret string) (string, error) {
 	var r0 string
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return rf(ctx, thingSecret)
+		return rf(ctx, clientSecret)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = rf(ctx, thingSecret)
+		r0 = rf(ctx, clientSecret)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, thingSecret)
+		r1 = rf(ctx, clientSecret)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -43,9 +43,9 @@ func (_m *Cache) ID(ctx context.Context, thingSecret string) (string, error) {
 	return r0, r1
 }
 
-// Remove provides a mock function with given fields: ctx, thingID
-func (_m *Cache) Remove(ctx context.Context, thingID string) error {
-	ret := _m.Called(ctx, thingID)
+// Remove provides a mock function with given fields: ctx, clientID
+func (_m *Cache) Remove(ctx context.Context, clientID string) error {
+	ret := _m.Called(ctx, clientID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Remove")
@@ -53,7 +53,7 @@ func (_m *Cache) Remove(ctx context.Context, thingID string) error {
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, thingID)
+		r0 = rf(ctx, clientID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -61,9 +61,9 @@ func (_m *Cache) Remove(ctx context.Context, thingID string) error {
 	return r0
 }
 
-// Save provides a mock function with given fields: ctx, thingSecret, thingID
-func (_m *Cache) Save(ctx context.Context, thingSecret string, thingID string) error {
-	ret := _m.Called(ctx, thingSecret, thingID)
+// Save provides a mock function with given fields: ctx, clientSecret, clientID
+func (_m *Cache) Save(ctx context.Context, clientSecret string, clientID string) error {
+	ret := _m.Called(ctx, clientSecret, clientID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
@@ -71,7 +71,7 @@ func (_m *Cache) Save(ctx context.Context, thingSecret string, thingID string) e
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, thingSecret, thingID)
+		r0 = rf(ctx, clientSecret, clientID)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/internal/api"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/groups"
@@ -65,7 +64,7 @@ func (repo *userRepo) Save(ctx context.Context, c users.User) (users.User, error
 
 func (repo *userRepo) CheckSuperAdmin(ctx context.Context, adminID string) error {
 	q := "SELECT 1 FROM users WHERE id = $1 AND role = $2"
-	rows, err := repo.Repository.DB.QueryContext(ctx, q, adminID, mgclients.AdminRole)
+	rows, err := repo.Repository.DB.QueryContext(ctx, q, adminID, users.AdminRole)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrViewEntity, err)
 	}

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 )
@@ -87,41 +86,44 @@ func (s *Status) UnmarshalJSON(data []byte) error {
 }
 
 type DomainReq struct {
-	Name     *string           `json:"name,omitempty"`
-	Metadata *clients.Metadata `json:"metadata,omitempty"`
-	Tags     *[]string         `json:"tags,omitempty"`
-	Alias    *string           `json:"alias,omitempty"`
-	Status   *Status           `json:"status,omitempty"`
+	Name     *string   `json:"name,omitempty"`
+	Metadata *Metadata `json:"metadata,omitempty"`
+	Tags     *[]string `json:"tags,omitempty"`
+	Alias    *string   `json:"alias,omitempty"`
+	Status   *Status   `json:"status,omitempty"`
 }
 type Domain struct {
-	ID         string           `json:"id"`
-	Name       string           `json:"name"`
-	Metadata   clients.Metadata `json:"metadata,omitempty"`
-	Tags       []string         `json:"tags,omitempty"`
-	Alias      string           `json:"alias,omitempty"`
-	Status     Status           `json:"status"`
-	Permission string           `json:"permission,omitempty"`
-	CreatedBy  string           `json:"created_by,omitempty"`
-	CreatedAt  time.Time        `json:"created_at"`
-	UpdatedBy  string           `json:"updated_by,omitempty"`
-	UpdatedAt  time.Time        `json:"updated_at,omitempty"`
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	Metadata   Metadata  `json:"metadata,omitempty"`
+	Tags       []string  `json:"tags,omitempty"`
+	Alias      string    `json:"alias,omitempty"`
+	Status     Status    `json:"status"`
+	Permission string    `json:"permission,omitempty"`
+	CreatedBy  string    `json:"created_by,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedBy  string    `json:"updated_by,omitempty"`
+	UpdatedAt  time.Time `json:"updated_at,omitempty"`
 }
 
+// Metadata represents arbitrary JSON.
+type Metadata map[string]interface{}
+
 type Page struct {
-	Total      uint64           `json:"total"`
-	Offset     uint64           `json:"offset"`
-	Limit      uint64           `json:"limit"`
-	Name       string           `json:"name,omitempty"`
-	Order      string           `json:"-"`
-	Dir        string           `json:"-"`
-	Metadata   clients.Metadata `json:"metadata,omitempty"`
-	Tag        string           `json:"tag,omitempty"`
-	Permission string           `json:"permission,omitempty"`
-	Status     Status           `json:"status,omitempty"`
-	ID         string           `json:"id,omitempty"`
-	IDs        []string         `json:"-"`
-	Identity   string           `json:"identity,omitempty"`
-	SubjectID  string           `json:"-"`
+	Total      uint64   `json:"total"`
+	Offset     uint64   `json:"offset"`
+	Limit      uint64   `json:"limit"`
+	Name       string   `json:"name,omitempty"`
+	Order      string   `json:"-"`
+	Dir        string   `json:"-"`
+	Metadata   Metadata `json:"metadata,omitempty"`
+	Tag        string   `json:"tag,omitempty"`
+	Permission string   `json:"permission,omitempty"`
+	Status     Status   `json:"status,omitempty"`
+	ID         string   `json:"id,omitempty"`
+	IDs        []string `json:"-"`
+	Identity   string   `json:"identity,omitempty"`
+	SubjectID  string   `json:"-"`
 }
 
 type DomainsPage struct {

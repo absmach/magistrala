@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/things"
 	"github.com/pelletier/go-toml"
 )
 
@@ -60,15 +60,15 @@ type Cert struct {
 
 // Config struct of Provision.
 type Config struct {
-	File          string             `toml:"file"      env:"MG_PROVISION_CONFIG_FILE" envDefault:"config.toml"`
-	Server        ServiceConf        `toml:"server"    mapstructure:"server"`
-	Bootstrap     Bootstrap          `toml:"bootstrap" mapstructure:"bootstrap"`
-	Things        []mgclients.Client `toml:"things"    mapstructure:"things"`
-	Channels      []groups.Group     `toml:"channels"  mapstructure:"channels"`
-	Cert          Cert               `toml:"cert"      mapstructure:"cert"`
-	BSContent     string             `env:"MG_PROVISION_BS_CONTENT" envDefault:""`
-	SendTelemetry bool               `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID    string             `env:"MG_MQTT_ADAPTER_INSTANCE_ID" envDefault:""`
+	File          string          `toml:"file"      env:"MG_PROVISION_CONFIG_FILE" envDefault:"config.toml"`
+	Server        ServiceConf     `toml:"server"    mapstructure:"server"`
+	Bootstrap     Bootstrap       `toml:"bootstrap" mapstructure:"bootstrap"`
+	Things        []things.Client `toml:"things"    mapstructure:"things"`
+	Channels      []groups.Group  `toml:"channels"  mapstructure:"channels"`
+	Cert          Cert            `toml:"cert"      mapstructure:"cert"`
+	BSContent     string          `env:"MG_PROVISION_BS_CONTENT" envDefault:""`
+	SendTelemetry bool            `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
+	InstanceID    string          `env:"MG_MQTT_ADAPTER_INSTANCE_ID" envDefault:""`
 }
 
 // Save - store config in a file.

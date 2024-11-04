@@ -13,7 +13,6 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/things"
 	"github.com/go-chi/chi/v5"
@@ -197,7 +196,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	st, err := mgclients.ToStatus(s)
+	st, err := things.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -266,12 +265,12 @@ func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, err
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var c mgclients.Client
+	var c things.Client
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 	req := createClientReq{
-		client: c,
+		thing: c,
 	}
 
 	return req, nil
@@ -283,7 +282,7 @@ func decodeCreateClientsReq(_ context.Context, r *http.Request) (interface{}, er
 	}
 
 	c := createClientsReq{}
-	if err := json.NewDecoder(r.Body).Decode(&c.Clients); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&c.Things); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 
@@ -315,7 +314,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	st, err := mgclients.ToStatus(s)
+	st, err := things.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -329,7 +328,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listMembersReq{
-		Page: mgclients.Page{
+		Page: things.Page{
 			Status:     st,
 			Offset:     o,
 			Limit:      l,

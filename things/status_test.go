@@ -1,45 +1,45 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package clients_test
+package things_test
 
 import (
 	"testing"
 
-	"github.com/absmach/magistrala/pkg/clients"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/things"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStatusString(t *testing.T) {
 	cases := []struct {
 		desc     string
-		status   clients.Status
+		status   things.Status
 		expected string
 	}{
 		{
 			desc:     "Enabled",
-			status:   clients.EnabledStatus,
+			status:   things.EnabledStatus,
 			expected: "enabled",
 		},
 		{
 			desc:     "Disabled",
-			status:   clients.DisabledStatus,
+			status:   things.DisabledStatus,
 			expected: "disabled",
 		},
 		{
 			desc:     "Deleted",
-			status:   clients.DeletedStatus,
+			status:   things.DeletedStatus,
 			expected: "deleted",
 		},
 		{
 			desc:     "All",
-			status:   clients.AllStatus,
+			status:   things.AllStatus,
 			expected: "all",
 		},
 		{
 			desc:     "Unknown",
-			status:   clients.Status(100),
+			status:   things.Status(100),
 			expected: "unknown",
 		},
 	}
@@ -56,44 +56,44 @@ func TestToStatus(t *testing.T) {
 	cases := []struct {
 		desc      string
 		status    string
-		expetcted clients.Status
+		expetcted things.Status
 		err       error
 	}{
 		{
 			desc:      "Enabled",
 			status:    "enabled",
-			expetcted: clients.EnabledStatus,
+			expetcted: things.EnabledStatus,
 			err:       nil,
 		},
 		{
 			desc:      "Disabled",
 			status:    "disabled",
-			expetcted: clients.DisabledStatus,
+			expetcted: things.DisabledStatus,
 			err:       nil,
 		},
 		{
 			desc:      "Deleted",
 			status:    "deleted",
-			expetcted: clients.DeletedStatus,
+			expetcted: things.DeletedStatus,
 			err:       nil,
 		},
 		{
 			desc:      "All",
 			status:    "all",
-			expetcted: clients.AllStatus,
+			expetcted: things.AllStatus,
 			err:       nil,
 		},
 		{
 			desc:      "Unknown",
 			status:    "unknown",
-			expetcted: clients.Status(0),
+			expetcted: things.Status(0),
 			err:       svcerr.ErrInvalidStatus,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, err := clients.ToStatus(tc.status)
+			got, err := things.ToStatus(tc.status)
 			assert.Equal(t, tc.err, err, "ToStatus() error = %v, expected %v", err, tc.err)
 			assert.Equal(t, tc.expetcted, got, "ToStatus() = %v, expected %v", got, tc.expetcted)
 		})
@@ -104,37 +104,37 @@ func TestStatusMarshalJSON(t *testing.T) {
 	cases := []struct {
 		desc     string
 		expected []byte
-		status   clients.Status
+		status   things.Status
 		err      error
 	}{
 		{
 			desc:     "Enabled",
 			expected: []byte(`"enabled"`),
-			status:   clients.EnabledStatus,
+			status:   things.EnabledStatus,
 			err:      nil,
 		},
 		{
 			desc:     "Disabled",
 			expected: []byte(`"disabled"`),
-			status:   clients.DisabledStatus,
+			status:   things.DisabledStatus,
 			err:      nil,
 		},
 		{
 			desc:     "Deleted",
 			expected: []byte(`"deleted"`),
-			status:   clients.DeletedStatus,
+			status:   things.DeletedStatus,
 			err:      nil,
 		},
 		{
 			desc:     "All",
 			expected: []byte(`"all"`),
-			status:   clients.AllStatus,
+			status:   things.AllStatus,
 			err:      nil,
 		},
 		{
 			desc:     "Unknown",
 			expected: []byte(`"unknown"`),
-			status:   clients.Status(100),
+			status:   things.Status(100),
 			err:      nil,
 		},
 	}
@@ -151,37 +151,37 @@ func TestStatusMarshalJSON(t *testing.T) {
 func TestStatusUnmarshalJSON(t *testing.T) {
 	cases := []struct {
 		desc     string
-		expected clients.Status
+		expected things.Status
 		status   []byte
 		err      error
 	}{
 		{
 			desc:     "Enabled",
-			expected: clients.EnabledStatus,
+			expected: things.EnabledStatus,
 			status:   []byte(`"enabled"`),
 			err:      nil,
 		},
 		{
 			desc:     "Disabled",
-			expected: clients.DisabledStatus,
+			expected: things.DisabledStatus,
 			status:   []byte(`"disabled"`),
 			err:      nil,
 		},
 		{
 			desc:     "Deleted",
-			expected: clients.DeletedStatus,
+			expected: things.DeletedStatus,
 			status:   []byte(`"deleted"`),
 			err:      nil,
 		},
 		{
 			desc:     "All",
-			expected: clients.AllStatus,
+			expected: things.AllStatus,
 			status:   []byte(`"all"`),
 			err:      nil,
 		},
 		{
 			desc:     "Unknown",
-			expected: clients.Status(0),
+			expected: things.Status(0),
 			status:   []byte(`"unknown"`),
 			err:      svcerr.ErrInvalidStatus,
 		},
@@ -189,7 +189,7 @@ func TestStatusUnmarshalJSON(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			var s clients.Status
+			var s things.Status
 			err := s.UnmarshalJSON(tc.status)
 			assert.Equal(t, tc.err, err, "UnmarshalJSON() error = %v, expected %v", err, tc.err)
 			assert.Equal(t, tc.expected, s, "UnmarshalJSON() = %v, expected %v", s, tc.expected)
@@ -201,37 +201,37 @@ func TestUserMarshalJSON(t *testing.T) {
 	cases := []struct {
 		desc     string
 		expected []byte
-		user     clients.Client
+		user     things.Client
 		err      error
 	}{
 		{
 			desc:     "Enabled",
 			expected: []byte(`{"id":"","credentials":{},"created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","status":"enabled"}`),
-			user:     clients.Client{Status: clients.EnabledStatus},
+			user:     things.Client{Status: things.EnabledStatus},
 			err:      nil,
 		},
 		{
 			desc:     "Disabled",
 			expected: []byte(`{"id":"","credentials":{},"created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","status":"disabled"}`),
-			user:     clients.Client{Status: clients.DisabledStatus},
+			user:     things.Client{Status: things.DisabledStatus},
 			err:      nil,
 		},
 		{
 			desc:     "Deleted",
 			expected: []byte(`{"id":"","credentials":{},"created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","status":"deleted"}`),
-			user:     clients.Client{Status: clients.DeletedStatus},
+			user:     things.Client{Status: things.DeletedStatus},
 			err:      nil,
 		},
 		{
 			desc:     "All",
 			expected: []byte(`{"id":"","credentials":{},"created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","status":"all"}`),
-			user:     clients.Client{Status: clients.AllStatus},
+			user:     things.Client{Status: things.AllStatus},
 			err:      nil,
 		},
 		{
 			desc:     "Unknown",
 			expected: []byte(`{"id":"","credentials":{},"created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","status":"unknown"}`),
-			user:     clients.Client{Status: clients.Status(100)},
+			user:     things.Client{Status: things.Status(100)},
 			err:      nil,
 		},
 	}

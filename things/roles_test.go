@@ -1,40 +1,40 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package clients_test
+package things_test
 
 import (
 	"testing"
 
 	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/things"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRoleString(t *testing.T) {
 	cases := []struct {
 		desc     string
-		role     clients.Role
+		role     things.Role
 		expected string
 	}{
 		{
 			desc:     "User",
-			role:     clients.UserRole,
+			role:     things.UserRole,
 			expected: "user",
 		},
 		{
 			desc:     "Admin",
-			role:     clients.AdminRole,
+			role:     things.AdminRole,
 			expected: "admin",
 		},
 		{
 			desc:     "All",
-			role:     clients.AllRole,
+			role:     things.AllRole,
 			expected: "all",
 		},
 		{
 			desc:     "Unknown",
-			role:     clients.Role(100),
+			role:     things.Role(100),
 			expected: "unknown",
 		},
 	}
@@ -51,38 +51,38 @@ func TestToRole(t *testing.T) {
 	cases := []struct {
 		desc     string
 		role     string
-		expected clients.Role
+		expected things.Role
 		err      error
 	}{
 		{
 			desc:     "User",
 			role:     "user",
-			expected: clients.UserRole,
+			expected: things.UserRole,
 			err:      nil,
 		},
 		{
 			desc:     "Admin",
 			role:     "admin",
-			expected: clients.AdminRole,
+			expected: things.AdminRole,
 			err:      nil,
 		},
 		{
 			desc:     "All",
 			role:     "all",
-			expected: clients.AllRole,
+			expected: things.AllRole,
 			err:      nil,
 		},
 		{
 			desc:     "Unknown",
 			role:     "unknown",
-			expected: clients.Role(0),
+			expected: things.Role(0),
 			err:      apiutil.ErrInvalidRole,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			got, err := clients.ToRole(c.role)
+			got, err := things.ToRole(c.role)
 			assert.Equal(t, c.err, err, "ToRole() error = %v, expected %v", err, c.err)
 			assert.Equal(t, c.expected, got, "ToRole() = %v, expected %v", got, c.expected)
 		})
@@ -93,31 +93,31 @@ func TestRoleMarshalJSON(t *testing.T) {
 	cases := []struct {
 		desc     string
 		expected []byte
-		role     clients.Role
+		role     things.Role
 		err      error
 	}{
 		{
 			desc:     "User",
 			expected: []byte(`"user"`),
-			role:     clients.UserRole,
+			role:     things.UserRole,
 			err:      nil,
 		},
 		{
 			desc:     "Admin",
 			expected: []byte(`"admin"`),
-			role:     clients.AdminRole,
+			role:     things.AdminRole,
 			err:      nil,
 		},
 		{
 			desc:     "All",
 			expected: []byte(`"all"`),
-			role:     clients.AllRole,
+			role:     things.AllRole,
 			err:      nil,
 		},
 		{
 			desc:     "Unknown",
 			expected: []byte(`"unknown"`),
-			role:     clients.Role(100),
+			role:     things.Role(100),
 			err:      nil,
 		},
 	}
@@ -134,31 +134,31 @@ func TestRoleMarshalJSON(t *testing.T) {
 func TestRoleUnmarshalJSON(t *testing.T) {
 	cases := []struct {
 		desc     string
-		expected clients.Role
+		expected things.Role
 		role     []byte
 		err      error
 	}{
 		{
 			desc:     "User",
-			expected: clients.UserRole,
+			expected: things.UserRole,
 			role:     []byte(`"user"`),
 			err:      nil,
 		},
 		{
 			desc:     "Admin",
-			expected: clients.AdminRole,
+			expected: things.AdminRole,
 			role:     []byte(`"admin"`),
 			err:      nil,
 		},
 		{
 			desc:     "All",
-			expected: clients.AllRole,
+			expected: things.AllRole,
 			role:     []byte(`"all"`),
 			err:      nil,
 		},
 		{
 			desc:     "Unknown",
-			expected: clients.Role(0),
+			expected: things.Role(0),
 			role:     []byte(`"unknown"`),
 			err:      apiutil.ErrInvalidRole,
 		},
@@ -166,7 +166,7 @@ func TestRoleUnmarshalJSON(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			var r clients.Role
+			var r things.Role
 			err := r.UnmarshalJSON(tc.role)
 			assert.Equal(t, tc.err, err, "UnmarshalJSON() error = %v, expected %v", err, tc.err)
 			assert.Equal(t, tc.expected, r, "UnmarshalJSON() = %v, expected %v", r, tc.expected)

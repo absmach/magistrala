@@ -16,12 +16,12 @@ import (
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
 	policies "github.com/absmach/magistrala/pkg/policies"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
+	mgthings "github.com/absmach/magistrala/things"
 	api "github.com/absmach/magistrala/things/api/http"
 	"github.com/absmach/magistrala/things/mocks"
 	"github.com/go-chi/chi/v5"
@@ -66,8 +66,8 @@ func TestCreateThing(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		createThingReq  sdk.Thing
-		svcReq          mgclients.Client
-		svcRes          []mgclients.Client
+		svcReq          mgthings.Client
+		svcRes          []mgthings.Client
 		svcErr          error
 		authenticateErr error
 		response        sdk.Thing
@@ -79,7 +79,7 @@ func TestCreateThing(t *testing.T) {
 			token:          validToken,
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
-			svcRes:         []mgclients.Client{convertThing(thing)},
+			svcRes:         []mgthings.Client{convertThing(thing)},
 			svcErr:         nil,
 			response:       thing,
 			err:            nil,
@@ -90,7 +90,7 @@ func TestCreateThing(t *testing.T) {
 			token:           invalidToken,
 			createThingReq:  createThingReq,
 			svcReq:          convertThing(createThingReq),
-			svcRes:          []mgclients.Client{},
+			svcRes:          []mgthings.Client{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.Thing{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -101,7 +101,7 @@ func TestCreateThing(t *testing.T) {
 			token:          "",
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
-			svcRes:         []mgclients.Client{},
+			svcRes:         []mgthings.Client{},
 			svcErr:         nil,
 			response:       sdk.Thing{},
 			err:            errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -112,7 +112,7 @@ func TestCreateThing(t *testing.T) {
 			token:          validToken,
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
-			svcRes:         []mgclients.Client{},
+			svcRes:         []mgthings.Client{},
 			svcErr:         svcerr.ErrCreateEntity,
 			response:       sdk.Thing{},
 			err:            errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
@@ -128,8 +128,8 @@ func TestCreateThing(t *testing.T) {
 				Metadata:    thing.Metadata,
 				Status:      thing.Status,
 			},
-			svcReq:   mgclients.Client{},
-			svcRes:   []mgclients.Client{},
+			svcReq:   mgthings.Client{},
+			svcRes:   []mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
@@ -146,8 +146,8 @@ func TestCreateThing(t *testing.T) {
 				Metadata:    thing.Metadata,
 				Status:      thing.Status,
 			},
-			svcReq:   mgclients.Client{},
-			svcRes:   []mgclients.Client{},
+			svcReq:   mgthings.Client{},
+			svcRes:   []mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidIDFormat), http.StatusBadRequest),
@@ -162,8 +162,8 @@ func TestCreateThing(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			svcReq:   mgclients.Client{},
-			svcRes:   []mgclients.Client{},
+			svcReq:   mgthings.Client{},
+			svcRes:   []mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -174,11 +174,11 @@ func TestCreateThing(t *testing.T) {
 			token:          validToken,
 			createThingReq: createThingReq,
 			svcReq:         convertThing(createThingReq),
-			svcRes: []mgclients.Client{{
+			svcRes: []mgthings.Client{{
 				Name:        thing.Name,
 				Tags:        thing.Tags,
-				Credentials: mgclients.Credentials(thing.Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(thing.Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			}},
@@ -193,12 +193,12 @@ func TestCreateThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("CreateThings", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("CreateClients", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.CreateThing(tc.createThingReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "CreateThings", mock.Anything, tc.session, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "CreateClients", mock.Anything, tc.session, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -228,8 +228,8 @@ func TestCreateThings(t *testing.T) {
 		token               string
 		session             mgauthn.Session
 		createThingsRequest []sdk.Thing
-		svcReq              []mgclients.Client
-		svcRes              []mgclients.Client
+		svcReq              []mgthings.Client
+		svcRes              []mgthings.Client
 		svcErr              error
 		authenticateErr     error
 		response            []sdk.Thing
@@ -252,7 +252,7 @@ func TestCreateThings(t *testing.T) {
 			token:               invalidToken,
 			createThingsRequest: things,
 			svcReq:              convertThings(things...),
-			svcRes:              []mgclients.Client{},
+			svcRes:              []mgthings.Client{},
 			authenticateErr:     svcerr.ErrAuthentication,
 			response:            []sdk.Thing{},
 			err:                 errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -263,7 +263,7 @@ func TestCreateThings(t *testing.T) {
 			token:               "",
 			createThingsRequest: things,
 			svcReq:              convertThings(things...),
-			svcRes:              []mgclients.Client{},
+			svcRes:              []mgthings.Client{},
 			svcErr:              nil,
 			response:            []sdk.Thing{},
 			err:                 errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -274,7 +274,7 @@ func TestCreateThings(t *testing.T) {
 			token:               validToken,
 			createThingsRequest: []sdk.Thing{{Name: "test", Metadata: map[string]interface{}{"test": make(chan int)}}},
 			svcReq:              convertThings(things...),
-			svcRes:              []mgclients.Client{},
+			svcRes:              []mgthings.Client{},
 			svcErr:              nil,
 			response:            []sdk.Thing{},
 			err:                 errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -285,11 +285,11 @@ func TestCreateThings(t *testing.T) {
 			token:               validToken,
 			createThingsRequest: things,
 			svcReq:              convertThings(things...),
-			svcRes: []mgclients.Client{{
+			svcRes: []mgthings.Client{{
 				Name:        things[0].Name,
 				Tags:        things[0].Tags,
-				Credentials: mgclients.Credentials(things[0].Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(things[0].Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			}},
@@ -304,12 +304,12 @@ func TestCreateThings(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("CreateThings", mock.Anything, tc.session, tc.svcReq[0], tc.svcReq[1], tc.svcReq[2]).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("CreateClients", mock.Anything, tc.session, tc.svcReq[0], tc.svcReq[1], tc.svcReq[2]).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.CreateThings(tc.createThingsRequest, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "CreateThings", mock.Anything, tc.session, tc.svcReq[0], tc.svcReq[1], tc.svcReq[2])
+				ok := svcCall.Parent.AssertCalled(t, "CreateClients", mock.Anything, tc.session, tc.svcReq[0], tc.svcReq[1], tc.svcReq[2])
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -326,7 +326,7 @@ func TestListThings(t *testing.T) {
 	for i := 10; i < 100; i++ {
 		thing := generateTestThing(t)
 		if i == 50 {
-			thing.Status = mgclients.DisabledStatus.String()
+			thing.Status = mgthings.DisabledStatus.String()
 			thing.Tags = []string{"tag1", "tag2"}
 		}
 		things = append(things, thing)
@@ -343,8 +343,8 @@ func TestListThings(t *testing.T) {
 		domainID        string
 		session         mgauthn.Session
 		pageMeta        sdk.PageMetadata
-		svcReq          mgclients.Page
-		svcRes          mgclients.ClientsPage
+		svcReq          mgthings.Page
+		svcRes          mgthings.ClientsPage
 		svcErr          error
 		authenticateErr error
 		response        sdk.ThingsPage
@@ -358,14 +358,13 @@ func TestListThings(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  uint64(len(things)),
@@ -389,13 +388,12 @@ func TestListThings(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes:          mgclients.ClientsPage{},
+			svcRes:          mgthings.ClientsPage{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.ThingsPage{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -408,8 +406,8 @@ func TestListThings(t *testing.T) {
 				Offset: 0,
 				Limit:  1000,
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.ClientsPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
@@ -423,8 +421,8 @@ func TestListThings(t *testing.T) {
 				Limit:  100,
 				Name:   strings.Repeat("a", 1025),
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.ClientsPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
@@ -436,17 +434,16 @@ func TestListThings(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
-				Status: mgclients.DisabledStatus.String(),
+				Status: mgthings.DisabledStatus.String(),
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
-				Status:     mgclients.DisabledStatus,
+				Status:     mgthings.DisabledStatus,
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
@@ -472,15 +469,14 @@ func TestListThings(t *testing.T) {
 				Limit:  100,
 				Tag:    "tag1",
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 				Tag:        "tag1",
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
@@ -508,8 +504,8 @@ func TestListThings(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.ClientsPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -522,23 +518,22 @@ func TestListThings(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
 				},
-				Clients: []mgclients.Client{{
+				Clients: []mgthings.Client{{
 					Name:        things[0].Name,
 					Tags:        things[0].Tags,
-					Credentials: mgclients.Credentials(things[0].Credentials),
-					Metadata: mgclients.Metadata{
+					Credentials: mgthings.Credentials(things[0].Credentials),
+					Metadata: mgthings.Metadata{
 						"test": make(chan int),
 					},
 				}},
@@ -576,7 +571,7 @@ func TestListThingsByChannel(t *testing.T) {
 	for i := 10; i < 100; i++ {
 		thing := generateTestThing(t)
 		if i == 50 {
-			thing.Status = mgclients.DisabledStatus.String()
+			thing.Status = mgthings.DisabledStatus.String()
 		}
 		things = append(things, thing)
 	}
@@ -593,8 +588,8 @@ func TestListThingsByChannel(t *testing.T) {
 		session         mgauthn.Session
 		channelID       string
 		pageMeta        sdk.PageMetadata
-		svcReq          mgclients.Page
-		svcRes          mgclients.MembersPage
+		svcReq          mgthings.Page
+		svcRes          mgthings.MembersPage
 		svcErr          error
 		authenticateErr error
 		response        sdk.ThingsPage
@@ -609,14 +604,13 @@ func TestListThingsByChannel(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.MembersPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.MembersPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  uint64(len(things)),
@@ -641,13 +635,12 @@ func TestListThingsByChannel(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes:          mgclients.MembersPage{},
+			svcRes:          mgthings.MembersPage{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.ThingsPage{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -661,8 +654,8 @@ func TestListThingsByChannel(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.MembersPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.MembersPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -675,17 +668,16 @@ func TestListThingsByChannel(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  100,
-				Status: mgclients.DisabledStatus.String(),
+				Status: mgthings.DisabledStatus.String(),
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
-				Status:     mgclients.DisabledStatus,
+				Status:     mgthings.DisabledStatus,
 			},
-			svcRes: mgclients.MembersPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.MembersPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
@@ -711,8 +703,8 @@ func TestListThingsByChannel(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.MembersPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.MembersPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -729,8 +721,8 @@ func TestListThingsByChannel(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.MembersPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.MembersPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -744,23 +736,22 @@ func TestListThingsByChannel(t *testing.T) {
 				Offset: 0,
 				Limit:  100,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.MembersPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.MembersPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
 				},
-				Members: []mgclients.Client{{
+				Members: []mgthings.Client{{
 					Name:        things[0].Name,
 					Tags:        things[0].Tags,
-					Credentials: mgclients.Credentials(things[0].Credentials),
-					Metadata: mgclients.Metadata{
+					Credentials: mgthings.Credentials(things[0].Credentials),
+					Metadata: mgthings.Metadata{
 						"test": make(chan int),
 					},
 				}},
@@ -806,7 +797,7 @@ func TestViewThing(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		thingID         string
-		svcRes          mgclients.Client
+		svcRes          mgthings.Client
 		svcErr          error
 		authenticateErr error
 		response        sdk.Thing
@@ -827,7 +818,7 @@ func TestViewThing(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
-			svcRes:          mgclients.Client{},
+			svcRes:          mgthings.Client{},
 			authenticateErr: svcerr.ErrAuthorization,
 			response:        sdk.Thing{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -837,7 +828,7 @@ func TestViewThing(t *testing.T) {
 			domainID: domainID,
 			token:    "",
 			thingID:  thing.ID,
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -847,7 +838,7 @@ func TestViewThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  wrongID,
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   svcerr.ErrViewEntity,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
@@ -857,7 +848,7 @@ func TestViewThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  "",
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKError(apiutil.ErrMissingID),
@@ -867,11 +858,11 @@ func TestViewThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  thing.ID,
-			svcRes: mgclients.Client{
+			svcRes: mgthings.Client{
 				Name:        thing.Name,
 				Tags:        thing.Tags,
-				Credentials: mgclients.Credentials(thing.Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(thing.Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -886,12 +877,12 @@ func TestViewThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("ViewClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("View", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.Thing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ViewClient", mock.Anything, tc.session, tc.thingID)
+				ok := svcCall.Parent.AssertCalled(t, "View", mock.Anything, tc.session, tc.thingID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -981,12 +972,12 @@ func TestViewThingPermissions(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("ViewClientPerms", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("ViewPerms", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.ThingPermissions(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ViewClientPerms", mock.Anything, tc.session, tc.thingID)
+				ok := svcCall.Parent.AssertCalled(t, "ViewPerms", mock.Anything, tc.session, tc.thingID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1022,8 +1013,8 @@ func TestUpdateThing(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		updateThingReq  sdk.Thing
-		svcReq          mgclients.Client
-		svcRes          mgclients.Client
+		svcReq          mgthings.Client
+		svcRes          mgthings.Client
 		svcErr          error
 		authenticateErr error
 		response        sdk.Thing
@@ -1046,7 +1037,7 @@ func TestUpdateThing(t *testing.T) {
 			token:           invalidToken,
 			updateThingReq:  updateThingReq,
 			svcReq:          convertThing(updateThingReq),
-			svcRes:          mgclients.Client{},
+			svcRes:          mgthings.Client{},
 			authenticateErr: svcerr.ErrAuthorization,
 			response:        sdk.Thing{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1057,7 +1048,7 @@ func TestUpdateThing(t *testing.T) {
 			token:          "",
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
-			svcRes:         mgclients.Client{},
+			svcRes:         mgthings.Client{},
 			svcErr:         nil,
 			response:       sdk.Thing{},
 			err:            errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -1074,7 +1065,7 @@ func TestUpdateThing(t *testing.T) {
 				ID:   wrongID,
 				Name: updatedThing.Name,
 			}),
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   svcerr.ErrUpdateEntity,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
@@ -1092,7 +1083,7 @@ func TestUpdateThing(t *testing.T) {
 				ID:   "",
 				Name: updatedThing.Name,
 			}),
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKError(apiutil.ErrMissingID),
@@ -1108,8 +1099,8 @@ func TestUpdateThing(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			svcReq:   mgclients.Client{},
-			svcRes:   mgclients.Client{},
+			svcReq:   mgthings.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -1120,11 +1111,11 @@ func TestUpdateThing(t *testing.T) {
 			token:          validToken,
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
-			svcRes: mgclients.Client{
+			svcRes: mgthings.Client{
 				Name:        updatedThing.Name,
 				Tags:        updatedThing.Tags,
-				Credentials: mgclients.Credentials(updatedThing.Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(updatedThing.Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1139,12 +1130,12 @@ func TestUpdateThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("UpdateClient", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("Update", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.UpdateThing(tc.updateThingReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "UpdateClient", mock.Anything, tc.session, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "Update", mock.Anything, tc.session, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1176,8 +1167,8 @@ func TestUpdateThingTags(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		updateThingReq  sdk.Thing
-		svcReq          mgclients.Client
-		svcRes          mgclients.Client
+		svcReq          mgthings.Client
+		svcRes          mgthings.Client
 		svcErr          error
 		authenticateErr error
 		response        sdk.Thing
@@ -1200,7 +1191,7 @@ func TestUpdateThingTags(t *testing.T) {
 			token:           invalidToken,
 			updateThingReq:  updateThingReq,
 			svcReq:          convertThing(updateThingReq),
-			svcRes:          mgclients.Client{},
+			svcRes:          mgthings.Client{},
 			authenticateErr: svcerr.ErrAuthorization,
 			response:        sdk.Thing{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1211,7 +1202,7 @@ func TestUpdateThingTags(t *testing.T) {
 			token:          "",
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
-			svcRes:         mgclients.Client{},
+			svcRes:         mgthings.Client{},
 			svcErr:         nil,
 			response:       sdk.Thing{},
 			err:            errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -1228,7 +1219,7 @@ func TestUpdateThingTags(t *testing.T) {
 				ID:   wrongID,
 				Tags: updatedThing.Tags,
 			}),
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   svcerr.ErrUpdateEntity,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
@@ -1245,7 +1236,7 @@ func TestUpdateThingTags(t *testing.T) {
 				ID:   "",
 				Tags: updatedThing.Tags,
 			}),
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -1260,8 +1251,8 @@ func TestUpdateThingTags(t *testing.T) {
 					"test": make(chan int),
 				},
 			},
-			svcReq:   mgclients.Client{},
-			svcRes:   mgclients.Client{},
+			svcReq:   mgthings.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -1272,11 +1263,11 @@ func TestUpdateThingTags(t *testing.T) {
 			token:          validToken,
 			updateThingReq: updateThingReq,
 			svcReq:         convertThing(updateThingReq),
-			svcRes: mgclients.Client{
+			svcRes: mgthings.Client{
 				Name:        updatedThing.Name,
 				Tags:        updatedThing.Tags,
-				Credentials: mgclients.Credentials(updatedThing.Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(updatedThing.Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1291,12 +1282,12 @@ func TestUpdateThingTags(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("UpdateClientTags", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("UpdateTags", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.UpdateThingTags(tc.updateThingReq, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "UpdateClientTags", mock.Anything, tc.session, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "UpdateTags", mock.Anything, tc.session, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1326,7 +1317,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		session         mgauthn.Session
 		thingID         string
 		newSecret       string
-		svcRes          mgclients.Client
+		svcRes          mgthings.Client
 		svcErr          error
 		authenticateErr error
 		response        sdk.Thing
@@ -1349,7 +1340,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:           invalidToken,
 			thingID:         thing.ID,
 			newSecret:       newSecret,
-			svcRes:          mgclients.Client{},
+			svcRes:          mgthings.Client{},
 			authenticateErr: svcerr.ErrAuthorization,
 			response:        sdk.Thing{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1360,7 +1351,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     "",
 			thingID:   thing.ID,
 			newSecret: newSecret,
-			svcRes:    mgclients.Client{},
+			svcRes:    mgthings.Client{},
 			svcErr:    nil,
 			response:  sdk.Thing{},
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
@@ -1371,7 +1362,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     validToken,
 			thingID:   wrongID,
 			newSecret: newSecret,
-			svcRes:    mgclients.Client{},
+			svcRes:    mgthings.Client{},
 			svcErr:    svcerr.ErrUpdateEntity,
 			response:  sdk.Thing{},
 			err:       errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
@@ -1382,7 +1373,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     validToken,
 			thingID:   "",
 			newSecret: newSecret,
-			svcRes:    mgclients.Client{},
+			svcRes:    mgthings.Client{},
 			svcErr:    nil,
 			response:  sdk.Thing{},
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -1393,7 +1384,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     validToken,
 			thingID:   thing.ID,
 			newSecret: "",
-			svcRes:    mgclients.Client{},
+			svcRes:    mgthings.Client{},
 			svcErr:    nil,
 			response:  sdk.Thing{},
 			err:       errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingSecret), http.StatusBadRequest),
@@ -1404,11 +1395,11 @@ func TestUpdateThingSecret(t *testing.T) {
 			token:     validToken,
 			thingID:   thing.ID,
 			newSecret: newSecret,
-			svcRes: mgclients.Client{
+			svcRes: mgthings.Client{
 				Name:        updatedThing.Name,
 				Tags:        updatedThing.Tags,
-				Credentials: mgclients.Credentials(updatedThing.Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(updatedThing.Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1423,12 +1414,12 @@ func TestUpdateThingSecret(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("UpdateClientSecret", mock.Anything, tc.session, tc.thingID, tc.newSecret).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("UpdateSecret", mock.Anything, tc.session, tc.thingID, tc.newSecret).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.UpdateThingSecret(tc.thingID, tc.newSecret, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "UpdateClientSecret", mock.Anything, tc.session, tc.thingID, tc.newSecret)
+				ok := svcCall.Parent.AssertCalled(t, "UpdateSecret", mock.Anything, tc.session, tc.thingID, tc.newSecret)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1443,7 +1434,7 @@ func TestEnableThing(t *testing.T) {
 
 	thing := generateTestThing(t)
 	enabledThing := thing
-	enabledThing.Status = mgclients.EnabledStatus.String()
+	enabledThing.Status = mgthings.EnabledStatus.String()
 
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
@@ -1456,7 +1447,7 @@ func TestEnableThing(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		thingID         string
-		svcRes          mgclients.Client
+		svcRes          mgthings.Client
 		svcErr          error
 		authenticateErr error
 		response        sdk.Thing
@@ -1477,7 +1468,7 @@ func TestEnableThing(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
-			svcRes:          mgclients.Client{},
+			svcRes:          mgthings.Client{},
 			authenticateErr: svcerr.ErrAuthorization,
 			response:        sdk.Thing{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1487,7 +1478,7 @@ func TestEnableThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  wrongID,
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   svcerr.ErrEnableClient,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrEnableClient, http.StatusUnprocessableEntity),
@@ -1497,7 +1488,7 @@ func TestEnableThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  "",
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -1507,11 +1498,11 @@ func TestEnableThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  thing.ID,
-			svcRes: mgclients.Client{
+			svcRes: mgthings.Client{
 				Name:        enabledThing.Name,
 				Tags:        enabledThing.Tags,
-				Credentials: mgclients.Credentials(enabledThing.Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(enabledThing.Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1526,12 +1517,12 @@ func TestEnableThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("EnableClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("Enable", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.EnableThing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "EnableClient", mock.Anything, tc.session, tc.thingID)
+				ok := svcCall.Parent.AssertCalled(t, "Enable", mock.Anything, tc.session, tc.thingID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1546,7 +1537,7 @@ func TestDisableThing(t *testing.T) {
 
 	thing := generateTestThing(t)
 	disabledThing := thing
-	disabledThing.Status = mgclients.DisabledStatus.String()
+	disabledThing.Status = mgthings.DisabledStatus.String()
 
 	conf := sdk.Config{
 		ThingsURL: ts.URL,
@@ -1559,7 +1550,7 @@ func TestDisableThing(t *testing.T) {
 		token           string
 		session         mgauthn.Session
 		thingID         string
-		svcRes          mgclients.Client
+		svcRes          mgthings.Client
 		svcErr          error
 		authenticateErr error
 		response        sdk.Thing
@@ -1580,7 +1571,7 @@ func TestDisableThing(t *testing.T) {
 			domainID:        domainID,
 			token:           invalidToken,
 			thingID:         thing.ID,
-			svcRes:          mgclients.Client{},
+			svcRes:          mgthings.Client{},
 			authenticateErr: svcerr.ErrAuthorization,
 			response:        sdk.Thing{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
@@ -1590,7 +1581,7 @@ func TestDisableThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  wrongID,
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   svcerr.ErrDisableClient,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrDisableClient, http.StatusInternalServerError),
@@ -1600,7 +1591,7 @@ func TestDisableThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  "",
-			svcRes:   mgclients.Client{},
+			svcRes:   mgthings.Client{},
 			svcErr:   nil,
 			response: sdk.Thing{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
@@ -1610,11 +1601,11 @@ func TestDisableThing(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			thingID:  thing.ID,
-			svcRes: mgclients.Client{
+			svcRes: mgthings.Client{
 				Name:        disabledThing.Name,
 				Tags:        disabledThing.Tags,
-				Credentials: mgclients.Credentials(disabledThing.Credentials),
-				Metadata: mgclients.Metadata{
+				Credentials: mgthings.Credentials(disabledThing.Credentials),
+				Metadata: mgthings.Metadata{
 					"test": make(chan int),
 				},
 			},
@@ -1629,12 +1620,12 @@ func TestDisableThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("DisableClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
+			svcCall := tsvc.On("Disable", mock.Anything, tc.session, tc.thingID).Return(tc.svcRes, tc.svcErr)
 			resp, err := mgsdk.DisableThing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "DisableClient", mock.Anything, tc.session, tc.thingID)
+				ok := svcCall.Parent.AssertCalled(t, "Disable", mock.Anything, tc.session, tc.thingID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1926,11 +1917,11 @@ func TestDeleteThing(t *testing.T) {
 				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authenticateErr)
-			svcCall := tsvc.On("DeleteClient", mock.Anything, tc.session, tc.thingID).Return(tc.svcErr)
+			svcCall := tsvc.On("Delete", mock.Anything, tc.session, tc.thingID).Return(tc.svcErr)
 			err := mgsdk.DeleteThing(tc.thingID, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "DeleteClient", mock.Anything, tc.session, tc.thingID)
+				ok := svcCall.Parent.AssertCalled(t, "Delete", mock.Anything, tc.session, tc.thingID)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
@@ -1947,7 +1938,7 @@ func TestListUserThings(t *testing.T) {
 	for i := 10; i < 100; i++ {
 		thing := generateTestThing(t)
 		if i == 50 {
-			thing.Status = mgclients.DisabledStatus.String()
+			thing.Status = mgthings.DisabledStatus.String()
 			thing.Tags = []string{"tag1", "tag2"}
 		}
 		things = append(things, thing)
@@ -1964,8 +1955,8 @@ func TestListUserThings(t *testing.T) {
 		session         mgauthn.Session
 		userID          string
 		pageMeta        sdk.PageMetadata
-		svcReq          mgclients.Page
-		svcRes          mgclients.ClientsPage
+		svcReq          mgthings.Page
+		svcRes          mgthings.ClientsPage
 		svcErr          error
 		authenticateErr error
 		response        sdk.ThingsPage
@@ -1980,14 +1971,13 @@ func TestListUserThings(t *testing.T) {
 				Limit:    100,
 				DomainID: domainID,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  uint64(len(things)),
@@ -2012,13 +2002,12 @@ func TestListUserThings(t *testing.T) {
 				Limit:    100,
 				DomainID: domainID,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes:          mgclients.ClientsPage{},
+			svcRes:          mgthings.ClientsPage{},
 			authenticateErr: svcerr.ErrAuthentication,
 			response:        sdk.ThingsPage{},
 			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
@@ -2032,8 +2021,8 @@ func TestListUserThings(t *testing.T) {
 				Limit:    1000,
 				DomainID: domainID,
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.ClientsPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusBadRequest),
@@ -2048,8 +2037,8 @@ func TestListUserThings(t *testing.T) {
 				Name:     strings.Repeat("a", 1025),
 				DomainID: domainID,
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.ClientsPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
@@ -2061,18 +2050,17 @@ func TestListUserThings(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset:   0,
 				Limit:    100,
-				Status:   mgclients.DisabledStatus.String(),
+				Status:   mgthings.DisabledStatus.String(),
 				DomainID: domainID,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
-				Status:     mgclients.DisabledStatus,
+				Status:     mgthings.DisabledStatus,
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
@@ -2099,15 +2087,14 @@ func TestListUserThings(t *testing.T) {
 				Tag:      "tag1",
 				DomainID: domainID,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 				Tag:        "tag1",
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
@@ -2136,8 +2123,8 @@ func TestListUserThings(t *testing.T) {
 				},
 				DomainID: domainID,
 			},
-			svcReq:   mgclients.Page{},
-			svcRes:   mgclients.ClientsPage{},
+			svcReq:   mgthings.Page{},
+			svcRes:   mgthings.ClientsPage{},
 			svcErr:   nil,
 			response: sdk.ThingsPage{},
 			err:      errors.NewSDKError(errors.New("json: unsupported type: chan int")),
@@ -2150,23 +2137,22 @@ func TestListUserThings(t *testing.T) {
 				Limit:    100,
 				DomainID: domainID,
 			},
-			svcReq: mgclients.Page{
+			svcReq: mgthings.Page{
 				Offset:     0,
 				Limit:      100,
 				Permission: policies.ViewPermission,
-				Role:       mgclients.AllRole,
 			},
-			svcRes: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			svcRes: mgthings.ClientsPage{
+				Page: mgthings.Page{
 					Offset: 0,
 					Limit:  100,
 					Total:  1,
 				},
-				Clients: []mgclients.Client{{
+				Clients: []mgthings.Client{{
 					Name:        things[0].Name,
 					Tags:        things[0].Tags,
-					Credentials: mgclients.Credentials(things[0].Credentials),
-					Metadata: mgclients.Metadata{
+					Credentials: mgthings.Credentials(things[0].Credentials),
+					Metadata: mgthings.Metadata{
 						"test": make(chan int),
 					},
 				}},
@@ -2209,7 +2195,7 @@ func generateTestThing(t *testing.T) sdk.Thing {
 		},
 		Tags:      []string{"tag1", "tag2"},
 		Metadata:  validMetadata,
-		Status:    mgclients.EnabledStatus.String(),
+		Status:    mgthings.EnabledStatus.String(),
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}

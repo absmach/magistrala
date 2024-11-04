@@ -49,8 +49,8 @@ func (client grpcClient) Authorize(ctx context.Context, req *magistrala.ThingsAu
 	defer cancel()
 
 	res, err := client.authorize(ctx, things.AuthzReq{
-		ThingID:    req.GetThingID(),
-		ThingKey:   req.GetThingKey(),
+		ClientID:   req.GetThingID(),
+		ClientKey:  req.GetThingKey(),
 		ChannelID:  req.GetChannelID(),
 		Permission: req.GetPermission(),
 	})
@@ -71,8 +71,8 @@ func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}
 	req := grpcReq.(things.AuthzReq)
 	return &magistrala.ThingsAuthzReq{
 		ChannelID:  req.ChannelID,
-		ThingID:    req.ThingID,
-		ThingKey:   req.ThingKey,
+		ThingID:    req.ClientID,
+		ThingKey:   req.ClientKey,
 		Permission: req.Permission,
 	}, nil
 }

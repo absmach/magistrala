@@ -19,7 +19,6 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	policies "github.com/absmach/magistrala/pkg/policies"
@@ -29,7 +28,7 @@ import (
 )
 
 var (
-	validCMetadata = mgclients.Metadata{"role": "client"}
+	validCMetadata = auth.Metadata{"role": "client"}
 	ID             = testsutil.GenerateUUID(&testing.T{})
 	domain         = auth.Domain{
 		ID:       ID,
@@ -114,7 +113,7 @@ func TestCreateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -128,7 +127,7 @@ func TestCreateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -142,7 +141,7 @@ func TestCreateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -157,7 +156,7 @@ func TestCreateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -171,7 +170,7 @@ func TestCreateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "",
 			},
@@ -185,7 +184,7 @@ func TestCreateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -646,7 +645,7 @@ func TestUpdateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -660,7 +659,7 @@ func TestUpdateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -674,7 +673,7 @@ func TestUpdateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -689,7 +688,7 @@ func TestUpdateDomain(t *testing.T) {
 			domain: auth.Domain{
 				ID:       ID,
 				Name:     "test",
-				Metadata: mgclients.Metadata{"role": "domain"},
+				Metadata: auth.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
 				Alias:    "test",
 			},
@@ -1301,11 +1300,11 @@ func TestListDomainsByUserID(t *testing.T) {
 }
 
 type respBody struct {
-	Err         string           `json:"error"`
-	Message     string           `json:"message"`
-	Total       int              `json:"total"`
-	Permissions []string         `json:"permissions"`
-	ID          string           `json:"id"`
-	Tags        []string         `json:"tags"`
-	Status      mgclients.Status `json:"status"`
+	Err         string      `json:"error"`
+	Message     string      `json:"message"`
+	Total       int         `json:"total"`
+	Permissions []string    `json:"permissions"`
+	ID          string      `json:"id"`
+	Tags        []string    `json:"tags"`
+	Status      auth.Status `json:"status"`
 }

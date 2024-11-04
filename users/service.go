@@ -11,7 +11,6 @@ import (
 	"github.com/absmach/magistrala"
 	mgauth "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/authn"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -408,7 +407,7 @@ func (svc service) Enable(ctx context.Context, session authn.Session, id string)
 	}
 	user, err := svc.changeUserStatus(ctx, session, u)
 	if err != nil {
-		return User{}, errors.Wrap(mgclients.ErrEnableClient, err)
+		return User{}, errors.Wrap(ErrEnableClient, err)
 	}
 
 	return user, nil

@@ -6,7 +6,7 @@ package cli
 import (
 	"encoding/json"
 
-	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/internal/groups"
 	mgxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ var cmdGroups = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			group.Status = mgclients.EnabledStatus.String()
+			group.Status = groups.EnabledStatus.String()
 			group, err := sdk.CreateGroup(group, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)

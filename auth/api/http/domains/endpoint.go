@@ -8,7 +8,6 @@ import (
 
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-kit/kit/endpoint"
 )
@@ -72,7 +71,7 @@ func updateDomainEndpoint(svc auth.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		var metadata clients.Metadata
+		var metadata auth.Metadata
 		if req.Metadata != nil {
 			metadata = *req.Metadata
 		}

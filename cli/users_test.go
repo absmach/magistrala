@@ -12,11 +12,11 @@ import (
 
 	"github.com/absmach/magistrala/cli"
 	"github.com/absmach/magistrala/internal/testsutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -29,7 +29,7 @@ var user = mgsdk.User{
 		Secret:   "testpassword",
 		Username: "testusername",
 	},
-	Status: mgclients.EnabledStatus.String(),
+	Status: users.EnabledStatus.String(),
 }
 
 var (

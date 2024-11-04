@@ -17,7 +17,6 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	policies "github.com/absmach/magistrala/pkg/policies"
@@ -142,7 +141,7 @@ func TestCreateDomain(t *testing.T) {
 			svcRes: auth.Domain{
 				ID:   authDomain.ID,
 				Name: authDomain.Name,
-				Metadata: mgclients.Metadata{
+				Metadata: auth.Metadata{
 					"key": make(chan int),
 				},
 			},
@@ -283,7 +282,7 @@ func TestUpdateDomain(t *testing.T) {
 			svcRes: auth.Domain{
 				ID:   authDomain.ID,
 				Name: authDomain.Name,
-				Metadata: mgclients.Metadata{
+				Metadata: auth.Metadata{
 					"key": make(chan int),
 				},
 			},
@@ -379,7 +378,7 @@ func TestViewDomain(t *testing.T) {
 			svcRes: auth.Domain{
 				ID:   authDomain.ID,
 				Name: authDomain.Name,
-				Metadata: mgclients.Metadata{
+				Metadata: auth.Metadata{
 					"key": make(chan int),
 				},
 			},
@@ -597,7 +596,7 @@ func TestListDomians(t *testing.T) {
 				Total: 1,
 				Domains: []auth.Domain{{
 					Name:     authDomain.Name,
-					Metadata: mgclients.Metadata{"key": make(chan int)},
+					Metadata: auth.Metadata{"key": make(chan int)},
 				}},
 			},
 			svcErr:   nil,
@@ -734,7 +733,7 @@ func TestListUserDomains(t *testing.T) {
 				Total: 1,
 				Domains: []auth.Domain{{
 					Name:     authDomain.Name,
-					Metadata: mgclients.Metadata{"key": make(chan int)},
+					Metadata: auth.Metadata{"key": make(chan int)},
 				}},
 			},
 			svcErr:   nil,
@@ -1111,7 +1110,7 @@ func generateTestDomain(t *testing.T) (auth.Domain, sdk.Domain) {
 	ad := auth.Domain{
 		ID:        testsutil.GenerateUUID(t),
 		Name:      "test-domain",
-		Metadata:  mgclients.Metadata(validMetadata),
+		Metadata:  auth.Metadata(validMetadata),
 		Tags:      []string{"tag1", "tag2"},
 		Alias:     "test-alias",
 		Status:    auth.EnabledStatus,

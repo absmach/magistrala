@@ -28,7 +28,7 @@ const port = 7000
 
 var (
 	thingID   = "testID"
-	thingKey  = "testKey"
+	clientKey = "testKey"
 	channelID = "testID"
 	invalid   = "invalid"
 )
@@ -71,17 +71,17 @@ func TestAuthorize(t *testing.T) {
 			desc:    "authorize successfully",
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
-				ThingKey:   thingKey,
+				ThingKey:   clientKey,
 				ChannelID:  channelID,
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
-				ThingKey:   thingKey,
+				ClientKey:  clientKey,
 				ChannelID:  channelID,
 				Permission: policies.PublishPermission,
 			},
 			authorizeRes: thingID,
-			identifyKey:  thingKey,
+			identifyKey:  clientKey,
 			res:          &magistrala.ThingsAuthzRes{Authorized: true, Id: thingID},
 			err:          nil,
 		},
@@ -93,7 +93,7 @@ func TestAuthorize(t *testing.T) {
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
-				ThingKey:   invalid,
+				ClientKey:  invalid,
 				ChannelID:  channelID,
 				Permission: policies.PublishPermission,
 			},
@@ -107,17 +107,17 @@ func TestAuthorize(t *testing.T) {
 			desc:    "authorize with failed authorization",
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
-				ThingKey:   thingKey,
+				ThingKey:   clientKey,
 				ChannelID:  channelID,
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
-				ThingKey:   thingKey,
+				ClientKey:  clientKey,
 				ChannelID:  channelID,
 				Permission: policies.PublishPermission,
 			},
 			authorizeErr: svcerr.ErrAuthorization,
-			identifyKey:  thingKey,
+			identifyKey:  clientKey,
 			res:          &magistrala.ThingsAuthzRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,
 		},
@@ -126,16 +126,16 @@ func TestAuthorize(t *testing.T) {
 			desc:    "authorize with invalid permission",
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
-				ThingKey:   thingKey,
+				ThingKey:   clientKey,
 				ChannelID:  channelID,
 				Permission: invalid,
 			},
 			authorizeReq: things.AuthzReq{
 				ChannelID:  channelID,
-				ThingKey:   thingKey,
+				ClientKey:  clientKey,
 				Permission: invalid,
 			},
-			identifyKey:  thingKey,
+			identifyKey:  clientKey,
 			authorizeErr: svcerr.ErrAuthorization,
 			res:          &magistrala.ThingsAuthzRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,
@@ -144,16 +144,16 @@ func TestAuthorize(t *testing.T) {
 			desc:    "authorize with invalid channel ID",
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
-				ThingKey:   thingKey,
+				ThingKey:   clientKey,
 				ChannelID:  invalid,
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
 				ChannelID:  invalid,
-				ThingKey:   thingKey,
+				ClientKey:  clientKey,
 				Permission: policies.PublishPermission,
 			},
-			identifyKey:  thingKey,
+			identifyKey:  clientKey,
 			authorizeErr: svcerr.ErrAuthorization,
 			res:          &magistrala.ThingsAuthzRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,
@@ -162,17 +162,17 @@ func TestAuthorize(t *testing.T) {
 			desc:    "authorize with empty channel ID",
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
-				ThingKey:   thingKey,
+				ThingKey:   clientKey,
 				ChannelID:  "",
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
-				ThingKey:   thingKey,
+				ClientKey:  clientKey,
 				ChannelID:  "",
 				Permission: policies.PublishPermission,
 			},
 			authorizeErr: svcerr.ErrAuthorization,
-			identifyKey:  thingKey,
+			identifyKey:  clientKey,
 			res:          &magistrala.ThingsAuthzRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,
 		},
@@ -180,16 +180,16 @@ func TestAuthorize(t *testing.T) {
 			desc:    "authorize with empty permission",
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
-				ThingKey:   thingKey,
+				ThingKey:   clientKey,
 				ChannelID:  channelID,
 				Permission: "",
 			},
 			authorizeReq: things.AuthzReq{
 				ChannelID:  channelID,
 				Permission: "",
-				ThingKey:   thingKey,
+				ClientKey:  clientKey,
 			},
-			identifyKey:  thingKey,
+			identifyKey:  clientKey,
 			authorizeErr: svcerr.ErrAuthorization,
 			res:          &magistrala.ThingsAuthzRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,

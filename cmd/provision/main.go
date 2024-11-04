@@ -15,7 +15,6 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	mglog "github.com/absmach/magistrala/logger"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -24,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/magistrala/provision/api"
+	"github.com/absmach/magistrala/things"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -147,7 +147,7 @@ func loadConfig() (provision.Config, error) {
 			Metadata: map[string]interface{}{"type": "data"},
 		},
 	}
-	cfg.Things = []mgclients.Client{
+	cfg.Things = []things.Client{
 		{
 			Name:     "thing",
 			Metadata: map[string]interface{}{"external_id": "xxxxxx"},

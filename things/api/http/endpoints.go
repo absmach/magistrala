@@ -9,7 +9,6 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/authn"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/groups"
@@ -30,13 +29,13 @@ func createClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		client, err := svc.CreateThings(ctx, session, req.client)
+		thing, err := svc.CreateClients(ctx, session, req.thing)
 		if err != nil {
 			return nil, err
 		}
 
 		return createClientRes{
-			Client:  client[0],
+			Client:  thing[0],
 			created: true,
 		}, nil
 	}
@@ -54,7 +53,7 @@ func createClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		page, err := svc.CreateThings(ctx, session, req.Clients...)
+		page, err := svc.CreateClients(ctx, session, req.Things...)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +84,7 @@ func viewClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		c, err := svc.ViewClient(ctx, session, req.id)
+		c, err := svc.View(ctx, session, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +105,7 @@ func viewClientPermsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		p, err := svc.ViewClientPerms(ctx, session, req.id)
+		p, err := svc.ViewPerms(ctx, session, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +126,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		pm := mgclients.Page{
+		pm := things.Page{
 			Status:     req.status,
 			Offset:     req.offset,
 			Limit:      req.limit,
@@ -136,7 +135,6 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			Permission: req.permission,
 			Metadata:   req.metadata,
 			ListPerms:  req.listPerms,
-			Role:       mgclients.AllRole, // retrieve all things since things don't have roles
 			Id:         req.id,
 		}
 		page, err := svc.ListClients(ctx, session, req.userID, pm)
@@ -172,7 +170,6 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req.Page.Role = mgclients.AllRole // retrieve all things since things don't have roles
 		page, err := svc.ListClientsByGroup(ctx, session, req.groupID, req.Page)
 		if err != nil {
 			return nil, err
@@ -194,12 +191,12 @@ func updateClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		cli := mgclients.Client{
+		cli := things.Client{
 			ID:       req.id,
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
-		client, err := svc.UpdateClient(ctx, session, cli)
+		client, err := svc.Update(ctx, session, cli)
 		if err != nil {
 			return nil, err
 		}
@@ -220,11 +217,11 @@ func updateClientTagsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		cli := mgclients.Client{
+		cli := things.Client{
 			ID:   req.id,
 			Tags: req.Tags,
 		}
-		client, err := svc.UpdateClientTags(ctx, session, cli)
+		client, err := svc.UpdateTags(ctx, session, cli)
 		if err != nil {
 			return nil, err
 		}
@@ -245,7 +242,7 @@ func updateClientSecretEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		client, err := svc.UpdateClientSecret(ctx, session, req.id, req.Secret)
+		client, err := svc.UpdateSecret(ctx, session, req.id, req.Secret)
 		if err != nil {
 			return nil, err
 		}
@@ -266,7 +263,7 @@ func enableClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		client, err := svc.EnableClient(ctx, session, req.id)
+		client, err := svc.Enable(ctx, session, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +284,7 @@ func disableClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		client, err := svc.DisableClient(ctx, session, req.id)
+		client, err := svc.Disable(ctx, session, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -296,7 +293,7 @@ func disableClientEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func buildClientsResponse(cp mgclients.MembersPage) clientsPageRes {
+func buildClientsResponse(cp things.MembersPage) clientsPageRes {
 	res := clientsPageRes{
 		pageRes: pageRes{
 			Total:  cp.Total,
@@ -524,7 +521,7 @@ func deleteClientEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		if err := svc.DeleteClient(ctx, session, req.id); err != nil {
+		if err := svc.Delete(ctx, session, req.id); err != nil {
 			return nil, err
 		}
 

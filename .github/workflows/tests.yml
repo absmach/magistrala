@@ -160,9 +160,6 @@ jobs:
               - "logger/**"
               - "pkg/events/**"
 
-            pkg-clients:
-              - "pkg/clients/**"
-
             pkg-errors:
               - "pkg/errors/**"
 
@@ -178,7 +175,6 @@ jobs:
 
             pkg-sdk:
               - "pkg/sdk/**"
-              - "pkg/clients/**"
               - "pkg/errors/**"
               - "pkg/groups/**"
               - "auth/**"
@@ -226,7 +222,6 @@ jobs:
               - "auth.pb.go"
               - "auth_grpc.pb.go"
               - "auth/**"
-              - "pkg/clients/**"
               - "pkg/ulid/**"
               - "pkg/uuid/**"
               - "pkg/events/**"
@@ -237,7 +232,6 @@ jobs:
               - "auth.pb.go"
               - "auth_grpc.pb.go"
               - "auth/**"
-              - "pkg/clients/**"
               - "pkg/ulid/**"
               - "pkg/uuid/**"
               - "pkg/events/**"
@@ -313,11 +307,6 @@ jobs:
         if: steps.changes.outputs.mqtt == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/mqtt.out ./mqtt/...
-
-      - name: Run pkg clients tests
-        if: steps.changes.outputs.pkg-clients == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-clients.out ./pkg/clients/...
 
       - name: Run pkg errors tests
         if: steps.changes.outputs.pkg-errors == 'true' || steps.changes.outputs.workflow == 'true'

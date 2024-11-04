@@ -13,7 +13,6 @@ import (
 
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
@@ -473,7 +472,7 @@ func toDBDomain(d auth.Domain) (dbDomain, error) {
 }
 
 func toDomain(d dbDomain) (auth.Domain, error) {
-	var metadata clients.Metadata
+	var metadata auth.Metadata
 	if d.Metadata != nil {
 		if err := json.Unmarshal([]byte(d.Metadata), &metadata); err != nil {
 			return auth.Domain{}, errors.Wrap(errors.ErrMalformedEntity, err)

@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/absmach/magistrala"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/things"
 )
 
 var (
@@ -32,7 +32,7 @@ type pageRes struct {
 }
 
 type createClientRes struct {
-	mgclients.Client
+	things.Client
 	created bool
 }
 
@@ -59,7 +59,7 @@ func (res createClientRes) Empty() bool {
 }
 
 type updateClientRes struct {
-	mgclients.Client
+	things.Client
 }
 
 func (res updateClientRes) Code() int {
@@ -75,7 +75,7 @@ func (res updateClientRes) Empty() bool {
 }
 
 type viewClientRes struct {
-	mgclients.Client
+	things.Client
 }
 
 func (res viewClientRes) Code() int {
@@ -124,7 +124,7 @@ func (res clientsPageRes) Empty() bool {
 }
 
 type viewMembersRes struct {
-	mgclients.Client
+	things.Client
 }
 
 func (res viewMembersRes) Code() int {
@@ -140,7 +140,7 @@ func (res viewMembersRes) Empty() bool {
 }
 
 type changeClientStatusRes struct {
-	mgclients.Client
+	things.Client
 }
 
 func (res changeClientStatusRes) Code() int {

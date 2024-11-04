@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/groups"
 	mggroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jmoiron/sqlx"
@@ -71,7 +71,7 @@ func (repo groupRepository) Update(ctx context.Context, g mggroups.Group) (mggro
 	if len(query) > 0 {
 		upq = strings.Join(query, " ")
 	}
-	g.Status = mgclients.EnabledStatus
+	g.Status = mggroups.EnabledStatus
 	q := fmt.Sprintf(`UPDATE groups SET %s updated_at = :updated_at, updated_by = :updated_by
 		WHERE id = :id AND status = :status
 		RETURNING id, name, description, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, updated_at, updated_by, status`, upq)
@@ -337,7 +337,7 @@ func buildQuery(gm mggroups.Page, ids ...string) string {
 	if gm.PageMeta.ID != "" {
 		queries = append(queries, "g.id ILIKE '%' || :id || '%'")
 	}
-	if gm.Status != mgclients.AllStatus {
+	if gm.Status != mggroups.AllStatus {
 		queries = append(queries, "g.status = :status")
 	}
 	if gm.DomainID != "" {
@@ -354,18 +354,18 @@ func buildQuery(gm mggroups.Page, ids ...string) string {
 }
 
 type dbGroup struct {
-	ID          string           `db:"id"`
-	ParentID    *string          `db:"parent_id,omitempty"`
-	DomainID    string           `db:"domain_id,omitempty"`
-	Name        string           `db:"name"`
-	Description string           `db:"description,omitempty"`
-	Level       int              `db:"level"`
-	Path        string           `db:"path,omitempty"`
-	Metadata    []byte           `db:"metadata,omitempty"`
-	CreatedAt   time.Time        `db:"created_at"`
-	UpdatedAt   sql.NullTime     `db:"updated_at,omitempty"`
-	UpdatedBy   *string          `db:"updated_by,omitempty"`
-	Status      mgclients.Status `db:"status"`
+	ID          string          `db:"id"`
+	ParentID    *string         `db:"parent_id,omitempty"`
+	DomainID    string          `db:"domain_id,omitempty"`
+	Name        string          `db:"name"`
+	Description string          `db:"description,omitempty"`
+	Level       int             `db:"level"`
+	Path        string          `db:"path,omitempty"`
+	Metadata    []byte          `db:"metadata,omitempty"`
+	CreatedAt   time.Time       `db:"created_at"`
+	UpdatedAt   sql.NullTime    `db:"updated_at,omitempty"`
+	UpdatedBy   *string         `db:"updated_by,omitempty"`
+	Status      mggroups.Status `db:"status"`
 }
 
 func toDBGroup(g mggroups.Group) (dbGroup, error) {
@@ -405,7 +405,7 @@ func toDBGroup(g mggroups.Group) (dbGroup, error) {
 }
 
 func toGroup(g dbGroup) (mggroups.Group, error) {
-	var metadata mgclients.Metadata
+	var metadata groups.Metadata
 	if g.Metadata != nil {
 		if err := json.Unmarshal(g.Metadata, &metadata); err != nil {
 			return mggroups.Group{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
@@ -469,20 +469,20 @@ func toDBGroupPage(pm mggroups.Page) (dbGroupPage, error) {
 }
 
 type dbGroupPage struct {
-	ClientID string           `db:"client_id"`
-	ID       string           `db:"id"`
-	Name     string           `db:"name"`
-	ParentID string           `db:"parent_id"`
-	DomainID string           `db:"domain_id"`
-	Metadata []byte           `db:"metadata"`
-	Path     string           `db:"path"`
-	Level    uint64           `db:"level"`
-	Total    uint64           `db:"total"`
-	Limit    uint64           `db:"limit"`
-	Offset   uint64           `db:"offset"`
-	Subject  string           `db:"subject"`
-	Action   string           `db:"action"`
-	Status   mgclients.Status `db:"status"`
+	ClientID string          `db:"client_id"`
+	ID       string          `db:"id"`
+	Name     string          `db:"name"`
+	ParentID string          `db:"parent_id"`
+	DomainID string          `db:"domain_id"`
+	Metadata []byte          `db:"metadata"`
+	Path     string          `db:"path"`
+	Level    uint64          `db:"level"`
+	Total    uint64          `db:"total"`
+	Limit    uint64          `db:"limit"`
+	Offset   uint64          `db:"offset"`
+	Subject  string          `db:"subject"`
+	Action   string          `db:"action"`
+	Status   mggroups.Status `db:"status"`
 }
 
 func (repo groupRepository) processRows(rows *sqlx.Rows) ([]mggroups.Group, error) {

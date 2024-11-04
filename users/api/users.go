@@ -249,7 +249,7 @@ func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
-	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
+	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefUserStatus)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}

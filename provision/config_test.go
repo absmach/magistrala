@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/absmach/magistrala/provision"
+	"github.com/absmach/magistrala/things"
 	"github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,7 +31,7 @@ var (
 				"test": "test",
 			},
 		},
-		Things: []mgclients.Client{
+		Things: []things.Client{
 			{
 				ID:   "1234567890",
 				Name: "test",

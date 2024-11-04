@@ -19,10 +19,10 @@ import (
 	"github.com/absmach/magistrala/pkg/apiutil"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	mgclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	gmocks "github.com/absmach/magistrala/pkg/groups/mocks"
+	"github.com/absmach/magistrala/things"
 	httpapi "github.com/absmach/magistrala/things/api/http"
 	"github.com/absmach/magistrala/things/mocks"
 	"github.com/go-chi/chi/v5"
@@ -32,15 +32,15 @@ import (
 
 var (
 	secret         = "strongsecret"
-	validCMetadata = mgclients.Metadata{"role": "client"}
+	validCMetadata = things.Metadata{"role": "client"}
 	ID             = testsutil.GenerateUUID(&testing.T{})
-	client         = mgclients.Client{
+	client         = things.Client{
 		ID:          ID,
 		Name:        "clientname",
 		Tags:        []string{"tag1", "tag2"},
-		Credentials: mgclients.Credentials{Identity: "clientidentity", Secret: secret},
+		Credentials: things.Credentials{Identity: "clientidentity", Secret: secret},
 		Metadata:    validCMetadata,
-		Status:      mgclients.EnabledStatus,
+		Status:      things.EnabledStatus,
 	}
 	validToken   = "token"
 	inValidToken = "invalid"
@@ -106,7 +106,7 @@ func TestCreateThing(t *testing.T) {
 
 	cases := []struct {
 		desc        string
-		client      mgclients.Client
+		client      things.Client
 		domainID    string
 		token       string
 		contentType string
@@ -147,9 +147,9 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc: "register a thing with an  invalid ID",
-			client: mgclients.Client{
+			client: things.Client{
 				ID: inValid,
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "user@example.com",
 					Secret:   "12345678",
 				},
@@ -163,8 +163,8 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc: "register a thing that can't be marshalled",
-			client: mgclients.Client{
-				Credentials: mgclients.Credentials{
+			client: things.Client{
+				Credentials: things.Credentials{
 					Identity: "user@example.com",
 					Secret:   "12345678",
 				},
@@ -181,13 +181,13 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc: "register thing with invalid status",
-			client: mgclients.Client{
+			client: things.Client{
 				ID: testsutil.GenerateUUID(t),
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "newclientwithinvalidstatus@example.com",
 					Secret:   secret,
 				},
-				Status: mgclients.AllStatus,
+				Status: things.AllStatus,
 			},
 			domainID:    domainID,
 			token:       validToken,
@@ -198,9 +198,9 @@ func TestCreateThing(t *testing.T) {
 		},
 		{
 			desc: "create thing with invalid contentype",
-			client: mgclients.Client{
+			client: things.Client{
 				ID: testsutil.GenerateUUID(t),
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "example@example.com",
 					Secret:   secret,
 				},
@@ -227,7 +227,7 @@ func TestCreateThing(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("CreateThings", mock.Anything, tc.authnRes, tc.client).Return([]mgclients.Client{tc.client}, tc.err)
+			svcCall := svc.On("CreateClients", mock.Anything, tc.authnRes, tc.client).Return([]things.Client{tc.client}, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var errRes respBody
@@ -249,24 +249,24 @@ func TestCreateThings(t *testing.T) {
 	defer ts.Close()
 
 	num := 3
-	var items []mgclients.Client
+	var items []things.Client
 	for i := 0; i < num; i++ {
-		client := mgclients.Client{
+		client := things.Client{
 			ID:   testsutil.GenerateUUID(t),
 			Name: namesgen.Generate(),
-			Credentials: mgclients.Credentials{
+			Credentials: things.Credentials{
 				Identity: fmt.Sprintf("%s@example.com", namesgen.Generate()),
 				Secret:   secret,
 			},
-			Metadata: mgclients.Metadata{},
-			Status:   mgclients.EnabledStatus,
+			Metadata: things.Metadata{},
+			Status:   things.EnabledStatus,
 		}
 		items = append(items, client)
 	}
 
 	cases := []struct {
 		desc        string
-		client      []mgclients.Client
+		client      []things.Client
 		domainID    string
 		token       string
 		contentType string
@@ -308,7 +308,7 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc:        "create things with empty request",
-			client:      []mgclients.Client{},
+			client:      []things.Client{},
 			domainID:    domainID,
 			token:       validToken,
 			authnRes:    mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
@@ -319,7 +319,7 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc: "create things with invalid IDs",
-			client: []mgclients.Client{
+			client: []things.Client{
 				{
 					ID: inValid,
 				},
@@ -339,7 +339,7 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc: "create things with invalid contentype",
-			client: []mgclients.Client{
+			client: []things.Client{
 				{
 					ID: testsutil.GenerateUUID(t),
 				},
@@ -353,10 +353,10 @@ func TestCreateThings(t *testing.T) {
 		},
 		{
 			desc: "create a thing that can't be marshalled",
-			client: []mgclients.Client{
+			client: []things.Client{
 				{
 					ID: testsutil.GenerateUUID(t),
-					Credentials: mgclients.Credentials{
+					Credentials: things.Credentials{
 						Identity: "user@example.com",
 						Secret:   "12345678",
 					},
@@ -397,7 +397,7 @@ func TestCreateThings(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("CreateThings", mock.Anything, tc.authnRes, mock.Anything, mock.Anything, mock.Anything).Return(tc.client, tc.err)
+			svcCall := svc.On("CreateClients", mock.Anything, tc.authnRes, mock.Anything, mock.Anything, mock.Anything).Return(tc.client, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
@@ -425,7 +425,7 @@ func TestListThings(t *testing.T) {
 		query              string
 		domainID           string
 		token              string
-		listThingsResponse mgclients.ClientsPage
+		listThingsResponse things.ClientsPage
 		status             int
 		authnRes           mgauthn.Session
 		authnErr           error
@@ -437,11 +437,11 @@ func TestListThings(t *testing.T) {
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
 			status:   http.StatusOK,
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			err: nil,
 		},
@@ -451,11 +451,11 @@ func TestListThings(t *testing.T) {
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
 			status:   http.StatusOK,
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			err: nil,
 		},
@@ -479,12 +479,12 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Offset: 1,
 					Total:  1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "offset=1",
 			status: http.StatusOK,
@@ -504,12 +504,12 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Limit: 1,
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "limit=1",
 			status: http.StatusOK,
@@ -538,11 +538,11 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "name=clientname",
 			status: http.StatusOK,
@@ -571,11 +571,11 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "status=enabled",
 			status: http.StatusOK,
@@ -604,11 +604,11 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "tag=tag1,tag2",
 			status: http.StatusOK,
@@ -637,11 +637,11 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status: http.StatusOK,
@@ -670,11 +670,11 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "permission=view",
 			status: http.StatusOK,
@@ -703,11 +703,11 @@ func TestListThings(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
-			listThingsResponse: mgclients.ClientsPage{
-				Page: mgclients.Page{
+			listThingsResponse: things.ClientsPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Clients: []mgclients.Client{client},
+				Clients: []things.Client{client},
 			},
 			query:  "list_perms=true",
 			status: http.StatusOK,
@@ -825,7 +825,7 @@ func TestViewThing(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ViewClient", mock.Anything, tc.authnRes, tc.id).Return(mgclients.Client{}, tc.err)
+			svcCall := svc.On("View", mock.Anything, tc.authnRes, tc.id).Return(things.Client{}, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var errRes respBody
@@ -921,7 +921,7 @@ func TestViewThingPerms(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ViewClientPerms", mock.Anything, tc.authnRes, tc.thingID).Return(tc.response, tc.err)
+			svcCall := svc.On("ViewPerms", mock.Anything, tc.authnRes, tc.thingID).Return(tc.response, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var resBody respBody
@@ -945,13 +945,13 @@ func TestUpdateThing(t *testing.T) {
 
 	newName := "newname"
 	newTag := "newtag"
-	newMetadata := mgclients.Metadata{"newkey": "newvalue"}
+	newMetadata := things.Metadata{"newkey": "newvalue"}
 
 	cases := []struct {
 		desc           string
 		id             string
 		data           string
-		clientResponse mgclients.Client
+		clientResponse things.Client
 		domainID       string
 		token          string
 		contentType    string
@@ -968,7 +968,7 @@ func TestUpdateThing(t *testing.T) {
 			data:        fmt.Sprintf(`{"name":"%s","tags":["%s"],"metadata":%s}`, newName, newTag, toJSON(newMetadata)),
 			token:       validToken,
 			contentType: contentType,
-			clientResponse: mgclients.Client{
+			clientResponse: things.Client{
 				ID:       client.ID,
 				Name:     newName,
 				Tags:     []string{newTag},
@@ -1043,7 +1043,7 @@ func TestUpdateThing(t *testing.T) {
 			domainID:       domainID,
 			token:          validToken,
 			contentType:    contentType,
-			clientResponse: mgclients.Client{},
+			clientResponse: things.Client{},
 			status:         http.StatusBadRequest,
 			err:            apiutil.ErrNameSize,
 		},
@@ -1061,7 +1061,7 @@ func TestUpdateThing(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("UpdateClient", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
+			svcCall := svc.On("Update", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
@@ -1094,7 +1094,7 @@ func TestUpdateThingsTags(t *testing.T) {
 		id             string
 		data           string
 		contentType    string
-		clientResponse mgclients.Client
+		clientResponse things.Client
 		domainID       string
 		token          string
 		status         int
@@ -1107,7 +1107,7 @@ func TestUpdateThingsTags(t *testing.T) {
 			id:          client.ID,
 			data:        fmt.Sprintf(`{"tags":["%s"]}`, newTag),
 			contentType: contentType,
-			clientResponse: mgclients.Client{
+			clientResponse: things.Client{
 				ID:   client.ID,
 				Tags: []string{newTag},
 			},
@@ -1200,7 +1200,7 @@ func TestUpdateThingsTags(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("UpdateClientTags", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
+			svcCall := svc.On("UpdateTags", mock.Anything, tc.authnRes, mock.Anything).Return(tc.clientResponse, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var resBody respBody
@@ -1224,7 +1224,7 @@ func TestUpdateClientSecret(t *testing.T) {
 	cases := []struct {
 		desc        string
 		data        string
-		client      mgclients.Client
+		client      things.Client
 		contentType string
 		domainID    string
 		token       string
@@ -1236,9 +1236,9 @@ func TestUpdateClientSecret(t *testing.T) {
 		{
 			desc: "update thing secret with valid token",
 			data: fmt.Sprintf(`{"secret": "%s"}`, "strongersecret"),
-			client: mgclients.Client{
+			client: things.Client{
 				ID: client.ID,
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "clientname",
 					Secret:   "strongersecret",
 				},
@@ -1253,9 +1253,9 @@ func TestUpdateClientSecret(t *testing.T) {
 		{
 			desc: "update thing secret with empty token",
 			data: fmt.Sprintf(`{"secret": "%s"}`, "strongersecret"),
-			client: mgclients.Client{
+			client: things.Client{
 				ID: client.ID,
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "clientname",
 					Secret:   "strongersecret",
 				},
@@ -1269,9 +1269,9 @@ func TestUpdateClientSecret(t *testing.T) {
 		{
 			desc: "update thing secret with invalid token",
 			data: fmt.Sprintf(`{"secret": "%s"}`, "strongersecret"),
-			client: mgclients.Client{
+			client: things.Client{
 				ID: client.ID,
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "clientname",
 					Secret:   "strongersecret",
 				},
@@ -1286,9 +1286,9 @@ func TestUpdateClientSecret(t *testing.T) {
 		{
 			desc: "update thing secret with empty id",
 			data: fmt.Sprintf(`{"secret": "%s"}`, "strongersecret"),
-			client: mgclients.Client{
+			client: things.Client{
 				ID: "",
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "clientname",
 					Secret:   "strongersecret",
 				},
@@ -1303,9 +1303,9 @@ func TestUpdateClientSecret(t *testing.T) {
 		{
 			desc: "update thing secret with empty secret",
 			data: fmt.Sprintf(`{"secret": "%s"}`, ""),
-			client: mgclients.Client{
+			client: things.Client{
 				ID: client.ID,
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "clientname",
 					Secret:   "",
 				},
@@ -1321,9 +1321,9 @@ func TestUpdateClientSecret(t *testing.T) {
 		{
 			desc: "update thing secret with invalid contentype",
 			data: fmt.Sprintf(`{"secret": "%s"}`, ""),
-			client: mgclients.Client{
+			client: things.Client{
 				ID: client.ID,
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "clientname",
 					Secret:   "",
 				},
@@ -1339,9 +1339,9 @@ func TestUpdateClientSecret(t *testing.T) {
 		{
 			desc: "update thing secret with malformed data",
 			data: fmt.Sprintf(`{"secret": %s}`, "invalid"),
-			client: mgclients.Client{
+			client: things.Client{
 				ID: client.ID,
-				Credentials: mgclients.Credentials{
+				Credentials: things.Credentials{
 					Identity: "clientname",
 					Secret:   "",
 				},
@@ -1368,7 +1368,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("UpdateClientSecret", mock.Anything, tc.authnRes, tc.client.ID, mock.Anything).Return(tc.client, tc.err)
+			svcCall := svc.On("UpdateSecret", mock.Anything, tc.authnRes, tc.client.ID, mock.Anything).Return(tc.client, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var resBody respBody
@@ -1391,8 +1391,8 @@ func TestEnableThing(t *testing.T) {
 
 	cases := []struct {
 		desc     string
-		client   mgclients.Client
-		response mgclients.Client
+		client   things.Client
+		response things.Client
 		domainID string
 		token    string
 		status   int
@@ -1403,9 +1403,9 @@ func TestEnableThing(t *testing.T) {
 		{
 			desc:   "enable thing with valid token",
 			client: client,
-			response: mgclients.Client{
+			response: things.Client{
 				ID:     client.ID,
-				Status: mgclients.EnabledStatus,
+				Status: things.EnabledStatus,
 			},
 			domainID: domainID,
 			token:    validToken,
@@ -1425,7 +1425,7 @@ func TestEnableThing(t *testing.T) {
 		},
 		{
 			desc: "enable thing with empty id",
-			client: mgclients.Client{
+			client: things.Client{
 				ID: "",
 			},
 			domainID: domainID,
@@ -1450,7 +1450,7 @@ func TestEnableThing(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("EnableClient", mock.Anything, tc.authnRes, tc.client.ID).Return(tc.response, tc.err)
+			svcCall := svc.On("Enable", mock.Anything, tc.authnRes, tc.client.ID).Return(tc.response, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var resBody respBody
@@ -1476,8 +1476,8 @@ func TestDisableThing(t *testing.T) {
 
 	cases := []struct {
 		desc     string
-		client   mgclients.Client
-		response mgclients.Client
+		client   things.Client
+		response things.Client
 		domainID string
 		token    string
 		status   int
@@ -1488,9 +1488,9 @@ func TestDisableThing(t *testing.T) {
 		{
 			desc:   "disable thing with valid token",
 			client: client,
-			response: mgclients.Client{
+			response: things.Client{
 				ID:     client.ID,
-				Status: mgclients.DisabledStatus,
+				Status: things.DisabledStatus,
 			},
 			domainID: domainID,
 			token:    validToken,
@@ -1510,7 +1510,7 @@ func TestDisableThing(t *testing.T) {
 		},
 		{
 			desc: "disable thing with empty id",
-			client: mgclients.Client{
+			client: things.Client{
 				ID: "",
 			},
 			domainID: domainID,
@@ -1535,7 +1535,7 @@ func TestDisableThing(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("DisableClient", mock.Anything, tc.authnRes, tc.client.ID).Return(tc.response, tc.err)
+			svcCall := svc.On("Disable", mock.Anything, tc.authnRes, tc.client.ID).Return(tc.response, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var resBody respBody
@@ -1933,7 +1933,7 @@ func TestDeleteThing(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("DeleteClient", mock.Anything, tc.authnRes, tc.id).Return(tc.err)
+			svcCall := svc.On("Delete", mock.Anything, tc.authnRes, tc.id).Return(tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -1953,7 +1953,7 @@ func TestListMembers(t *testing.T) {
 		groupID             string
 		domainID            string
 		token               string
-		listMembersResponse mgclients.MembersPage
+		listMembersResponse things.MembersPage
 		status              int
 		authnRes            mgauthn.Session
 		authnErr            error
@@ -1965,11 +1965,11 @@ func TestListMembers(t *testing.T) {
 			token:    validToken,
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
 			groupID:  client.ID,
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			status: http.StatusOK,
 
@@ -1999,12 +1999,12 @@ func TestListMembers(t *testing.T) {
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
 			query:    "offset=1",
 			groupID:  client.ID,
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Offset: 1,
 					Total:  1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			status: http.StatusOK,
 
@@ -2028,12 +2028,12 @@ func TestListMembers(t *testing.T) {
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
 			query:    "limit=1",
 			groupID:  client.ID,
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Limit: 1,
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			status: http.StatusOK,
 
@@ -2068,11 +2068,11 @@ func TestListMembers(t *testing.T) {
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
 			query:    fmt.Sprintf("channel_id=%s", validID),
 			groupID:  client.ID,
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			status: http.StatusOK,
 
@@ -2107,11 +2107,11 @@ func TestListMembers(t *testing.T) {
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
 			query:    "connected=true",
 			groupID:  client.ID,
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			status: http.StatusOK,
 
@@ -2151,12 +2151,12 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:  "list members with status",
-			query: fmt.Sprintf("status=%s", mgclients.EnabledStatus),
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			query: fmt.Sprintf("status=%s", things.EnabledStatus),
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			domainID: domainID,
 			token:    validToken,
@@ -2179,7 +2179,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with duplicate status",
-			query:    fmt.Sprintf("status=%s&status=%s", mgclients.EnabledStatus, mgclients.DisabledStatus),
+			query:    fmt.Sprintf("status=%s&status=%s", things.EnabledStatus, things.DisabledStatus),
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
@@ -2193,11 +2193,11 @@ func TestListMembers(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			groupID: client.ID,
 			query:   "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
@@ -2230,11 +2230,11 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:  "list members with permission",
 			query: fmt.Sprintf("permission=%s", "view"),
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			domainID: domainID,
 			token:    validToken,
@@ -2261,11 +2261,11 @@ func TestListMembers(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Total: 1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			groupID: client.ID,
 			status:  http.StatusOK,
@@ -2296,18 +2296,18 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:     "list members with all query params",
-			query:    fmt.Sprintf("offset=1&limit=1&channel_id=%s&connected=true&status=%s&metadata=%s&permission=%s&list_perms=true", validID, mgclients.EnabledStatus, "%7B%22domain%22%3A%20%22example.com%22%7D", "view"),
+			query:    fmt.Sprintf("offset=1&limit=1&channel_id=%s&connected=true&status=%s&metadata=%s&permission=%s&list_perms=true", validID, things.EnabledStatus, "%7B%22domain%22%3A%20%22example.com%22%7D", "view"),
 			domainID: domainID,
 			token:    validToken,
 			authnRes: mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID},
 			groupID:  client.ID,
-			listMembersResponse: mgclients.MembersPage{
-				Page: mgclients.Page{
+			listMembersResponse: things.MembersPage{
+				Page: things.Page{
 					Offset: 1,
 					Limit:  1,
 					Total:  1,
 				},
-				Members: []mgclients.Client{client},
+				Members: []things.Client{client},
 			},
 			status: http.StatusOK,
 
@@ -3338,13 +3338,13 @@ func TestDisconnect(t *testing.T) {
 }
 
 type respBody struct {
-	Err         string           `json:"error"`
-	Message     string           `json:"message"`
-	Total       int              `json:"total"`
-	Permissions []string         `json:"permissions"`
-	ID          string           `json:"id"`
-	Tags        []string         `json:"tags"`
-	Status      mgclients.Status `json:"status"`
+	Err         string        `json:"error"`
+	Message     string        `json:"message"`
+	Total       int           `json:"total"`
+	Permissions []string      `json:"permissions"`
+	ID          string        `json:"id"`
+	Tags        []string      `json:"tags"`
+	Status      things.Status `json:"status"`
 }
 
 type groupReqBody struct {

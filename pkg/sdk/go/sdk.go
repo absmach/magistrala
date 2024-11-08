@@ -1182,9 +1182,9 @@ type SDK interface {
 	// Invitations returns a list of invitations.
 	//
 	// For example:
-	//  invitations, _ := sdk.Invitations(PageMetadata{Offset: 0, Limit: 10}, "domainID", "token")
+	//  invitations, _ := sdk.Invitations(PageMetadata{Offset: 0, Limit: 10}, "token")
 	//  fmt.Println(invitations)
-	Invitations(pm PageMetadata, domainID, token string) (invitations InvitationPage, err error)
+	Invitations(pm PageMetadata, token string) (invitations InvitationPage, err error)
 
 	// AcceptInvitation accepts an invitation by adding the user to the domain that they were invited to.
 	//

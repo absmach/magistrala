@@ -53,7 +53,7 @@ var cmdInvitations = []cobra.Command{
 				Limit:    Limit,
 			}
 			if args[0] == all {
-				l, err := sdk.Invitations(pageMetadata, args[1], args[2])
+				l, err := sdk.Invitations(pageMetadata, args[1])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return

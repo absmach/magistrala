@@ -113,7 +113,6 @@ func TestGetInvitationCmd(t *testing.T) {
 			desc: "get all invitations successfully",
 			args: []string{
 				all,
-				domain.ID,
 				token,
 			},
 			page: mgsdk.InvitationPage{
@@ -148,7 +147,6 @@ func TestGetInvitationCmd(t *testing.T) {
 			desc: "get all invitations with invalid token",
 			args: []string{
 				all,
-				domain.ID,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -171,7 +169,7 @@ func TestGetInvitationCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sdkCall := sdkMock.On("Invitation", tc.args[0], tc.args[1], mock.Anything).Return(tc.inv, tc.sdkErr)
-			sdkCall1 := sdkMock.On("Invitations", mock.Anything, tc.args[1], tc.args[2]).Return(tc.page, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Invitations", mock.Anything, tc.args[1]).Return(tc.page, tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 

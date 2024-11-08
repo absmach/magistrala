@@ -1344,9 +1344,9 @@ func (_m *SDK) Invitation(userID string, domainID string, token string) (sdk.Inv
 	return r0, r1
 }
 
-// Invitations provides a mock function with given fields: pm, domainID, token
-func (_m *SDK) Invitations(pm sdk.PageMetadata, domainID string, token string) (sdk.InvitationPage, error) {
-	ret := _m.Called(pm, domainID, token)
+// Invitations provides a mock function with given fields: pm, token
+func (_m *SDK) Invitations(pm sdk.PageMetadata, token string) (sdk.InvitationPage, error) {
+	ret := _m.Called(pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Invitations")
@@ -1354,17 +1354,17 @@ func (_m *SDK) Invitations(pm sdk.PageMetadata, domainID string, token string) (
 
 	var r0 sdk.InvitationPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) (sdk.InvitationPage, error)); ok {
-		return rf(pm, domainID, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) (sdk.InvitationPage, error)); ok {
+		return rf(pm, token)
 	}
-	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string, string) sdk.InvitationPage); ok {
-		r0 = rf(pm, domainID, token)
+	if rf, ok := ret.Get(0).(func(sdk.PageMetadata, string) sdk.InvitationPage); ok {
+		r0 = rf(pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.InvitationPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string, string) error); ok {
-		r1 = rf(pm, domainID, token)
+	if rf, ok := ret.Get(1).(func(sdk.PageMetadata, string) error); ok {
+		r1 = rf(pm, token)
 	} else {
 		r1 = ret.Error(1)
 	}

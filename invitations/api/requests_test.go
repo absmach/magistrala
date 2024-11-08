@@ -25,7 +25,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			desc: "valid request",
 			req: sendInvitationReq{
 				UserID:   valid,
-				domainID: valid,
+				DomainID: valid,
 				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
@@ -35,17 +35,27 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			desc: "empty user ID",
 			req: sendInvitationReq{
 				UserID:   "",
-				domainID: valid,
+				DomainID: valid,
 				Relation: policies.DomainRelation,
 				Resend:   true,
 			},
 			err: apiutil.ErrMissingID,
 		},
 		{
+			desc: "empty domain_id",
+			req: sendInvitationReq{
+				UserID:   valid,
+				DomainID: "",
+				Relation: policies.DomainRelation,
+				Resend:   true,
+			},
+			err: apiutil.ErrMissingDomainID,
+		},
+		{
 			desc: "missing relation",
 			req: sendInvitationReq{
 				UserID:   valid,
-				domainID: valid,
+				DomainID: valid,
 				Relation: "",
 				Resend:   true,
 			},
@@ -55,7 +65,7 @@ func TestSendInvitationReqValidation(t *testing.T) {
 			desc: "invalid relation",
 			req: sendInvitationReq{
 				UserID:   valid,
-				domainID: valid,
+				DomainID: valid,
 				Relation: "invalid",
 				Resend:   true,
 			},
@@ -80,20 +90,14 @@ func TestListInvitationsReq(t *testing.T) {
 		{
 			desc: "valid request",
 			req: listInvitationsReq{
-				Page: invitations.Page{
-					Limit:    1,
-					DomainID: valid,
-				},
+				Page: invitations.Page{Limit: 1},
 			},
 			err: nil,
 		},
 		{
 			desc: "invalid limit",
 			req: listInvitationsReq{
-				Page: invitations.Page{
-					Limit:    1000,
-					DomainID: valid,
-				},
+				Page: invitations.Page{Limit: 1000},
 			},
 			err: apiutil.ErrLimitSize,
 		},
@@ -116,9 +120,16 @@ func TestAcceptInvitationReq(t *testing.T) {
 		{
 			desc: "valid request",
 			req: acceptInvitationReq{
-				domainID: valid,
+				DomainID: valid,
 			},
 			err: nil,
+		},
+		{
+			desc: "empty domain_id",
+			req: acceptInvitationReq{
+				DomainID: "",
+			},
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 
@@ -151,6 +162,14 @@ func TestInvitationReqValidation(t *testing.T) {
 				domainID: valid,
 			},
 			err: apiutil.ErrMissingID,
+		},
+		{
+			desc: "empty domain",
+			req: invitationReq{
+				userID:   valid,
+				domainID: "",
+			},
+			err: apiutil.ErrMissingDomainID,
 		},
 	}
 

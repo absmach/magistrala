@@ -33,7 +33,7 @@ func (am *authorizationMiddleware) SendInvitation(ctx context.Context, session a
 	if err := am.checkAdmin(ctx, session.UserID, session.DomainID); err != nil {
 		return err
 	}
-
+	session.DomainUserID = auth.EncodeDomainUserID(session.DomainID, session.UserID)
 	domainUserId := auth.EncodeDomainUserID(invitation.DomainID, invitation.UserID)
 	if err := am.authorize(ctx, domainUserId, policies.MembershipPermission, policies.DomainType, invitation.DomainID); err == nil {
 		// return error if the user is already a member of the domain
@@ -48,6 +48,7 @@ func (am *authorizationMiddleware) SendInvitation(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) ViewInvitation(ctx context.Context, session authn.Session, userID, domain string) (invitation invitations.Invitation, err error) {
+	session.DomainUserID = auth.EncodeDomainUserID(session.DomainID, session.UserID)
 	if session.UserID != userID {
 		if err := am.checkAdmin(ctx, session.DomainUserID, domain); err != nil {
 			return invitations.Invitation{}, err
@@ -58,6 +59,7 @@ func (am *authorizationMiddleware) ViewInvitation(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) ListInvitations(ctx context.Context, session authn.Session, page invitations.Page) (invs invitations.InvitationPage, err error) {
+	session.DomainUserID = auth.EncodeDomainUserID(session.DomainID, session.UserID)
 	if err := am.authorize(ctx, session.DomainUserID, policies.AdminPermission, policies.PlatformType, policies.MagistralaObject); err == nil {
 		session.SuperAdmin = true
 	}
@@ -85,6 +87,7 @@ func (am *authorizationMiddleware) RejectInvitation(ctx context.Context, session
 }
 
 func (am *authorizationMiddleware) DeleteInvitation(ctx context.Context, session authn.Session, userID, domainID string) (err error) {
+	session.DomainUserID = auth.EncodeDomainUserID(session.DomainID, session.UserID)
 	if err := am.checkAdmin(ctx, session.DomainUserID, domainID); err != nil {
 		return err
 	}

@@ -515,9 +515,9 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 	if err != nil {
 		return []string{}, err
 	}
-
+	domainUserSubject := EncodeDomainUserID(id, res.User)
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     res.User,
+		Subject:     domainUserSubject,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,
@@ -529,7 +529,7 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 
 	lp, err := svc.policysvc.ListPermissions(ctx, policies.Policy{
 		SubjectType: policies.UserType,
-		Subject:     res.User,
+		Subject:     domainUserSubject,
 		Object:      id,
 		ObjectType:  policies.DomainType,
 	}, []string{policies.AdminPermission, policies.EditPermission, policies.ViewPermission, policies.MembershipPermission, policies.CreatePermission})

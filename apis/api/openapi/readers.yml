@@ -35,7 +35,7 @@ tags:
       url: https://docs.magistrala.abstractmachines.fr/
 
 paths:
-  /channels/{chanId}/messages:
+  /{domainID}/channels/{chanId}/messages:
     get:
       operationId: getMessages
       summary: Retrieves messages sent to single channel
@@ -47,6 +47,7 @@ paths:
       tags:
         - readers
       parameters:
+        - $ref: "#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -141,6 +142,14 @@ components:
                 description: Time of updating measurement.
 
   parameters:
+    DomainID:
+      name: domainID
+      description: Unique domain identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
     ChanId:
       name: chanId
       description: Unique channel identifier.

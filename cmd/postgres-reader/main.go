@@ -14,6 +14,7 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	mglog "github.com/absmach/magistrala/logger"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	"github.com/absmach/magistrala/pkg/authz/authsvc"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
@@ -84,14 +85,14 @@ func main() {
 	}
 	defer db.Close()
 
-	authzCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&authzCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+	clientCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&clientCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
 		exitCode = 1
 		return
 	}
 
-	authz, authzHandler, err := authsvc.NewAuthorization(ctx, authzCfg)
+	authz, authzHandler, err := authsvc.NewAuthorization(ctx, clientCfg)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -99,6 +100,15 @@ func main() {
 	}
 	defer authzHandler.Close()
 	logger.Info("Authz successfully connected to auth gRPC server " + authzHandler.Secure())
+
+	authn, authnHandler, err := authsvcAuthn.NewAuthentication(ctx, clientCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authnHandler.Close()
+	logger.Info("Authn successfully connected to auth gRPC server " + authnHandler.Secure())
 
 	thingsClientCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&thingsClientCfg, env.Options{Prefix: envPrefixThings}); err != nil {
@@ -125,7 +135,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, authz, thingsClient, svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, authn, authz, thingsClient, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)

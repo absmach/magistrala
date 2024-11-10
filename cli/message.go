@@ -28,13 +28,13 @@ var cmdMessages = []cobra.Command{
 		},
 	},
 	{
-		Use:   "read <channel_id.subtopic> <user_token>",
+		Use:   "read <channel_id.subtopic> <domain_id> <user_token>",
 		Short: "Read messages",
 		Long: "Reads all channel messages\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli messages read <channel_id.subtopic> <user_token> --offset <offset> --limit <limit> - lists all messages with provided offset and limit\n",
+			"\tmagistrala-cli messages read <channel_id.subtopic> <domain_id> <user_token> --offset <offset> --limit <limit> - lists all messages with provided offset and limit\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
@@ -45,7 +45,7 @@ var cmdMessages = []cobra.Command{
 				},
 			}
 
-			m, err := sdk.ReadMessages(pageMetadata, args[0], args[1])
+			m, err := sdk.ReadMessages(pageMetadata, args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

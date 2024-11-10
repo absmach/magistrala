@@ -13,8 +13,12 @@ import (
 	bmocks "github.com/absmach/magistrala/bootstrap/mocks"
 	mglog "github.com/absmach/magistrala/logger"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	authzmocks "github.com/absmach/magistrala/pkg/authz/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
+	readersapi "github.com/absmach/magistrala/readers/api"
+	readersmocks "github.com/absmach/magistrala/readers/mocks"
+	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +35,7 @@ func TestHealth(t *testing.T) {
 	bootstrapTs := setupMinimalBootstrap()
 	defer bootstrapTs.Close()
 
-	readerTs, _, _ := setupReader()
+	readerTs := setupMinimalReader()
 	defer readerTs.Close()
 
 	httpAdapterTs, _, _ := setupMessages()
@@ -126,5 +130,15 @@ func setupMinimalBootstrap() *httptest.Server {
 	authn := new(authnmocks.Authentication)
 	mux := api.MakeHandler(bsvc, authn, reader, logger, "")
 
+	return httptest.NewServer(mux)
+}
+
+func setupMinimalReader() *httptest.Server {
+	repo := new(readersmocks.MessageRepository)
+	authz := new(authzmocks.Authorization)
+	authn := new(authnmocks.Authentication)
+	things := new(thmocks.ThingsServiceClient)
+
+	mux := readersapi.MakeHandler(repo, authn, authz, things, "test", "")
 	return httptest.NewServer(mux)
 }

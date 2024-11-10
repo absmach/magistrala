@@ -14,6 +14,8 @@ import (
 	"github.com/absmach/magistrala/http/api"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	authzmocks "github.com/absmach/magistrala/pkg/authz/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -50,13 +52,14 @@ func setupMessages() (*httptest.Server, *thmocks.ThingsServiceClient, *pubsub.Pu
 	return httptest.NewServer(http.HandlerFunc(mp.ServeHTTP)), things, pub
 }
 
-func setupReader() (*httptest.Server, *authzmocks.Authorization, *readersmocks.MessageRepository) {
+func setupReader() (*httptest.Server, *authzmocks.Authorization, *authnmocks.Authentication, *readersmocks.MessageRepository) {
 	repo := new(readersmocks.MessageRepository)
 	authz := new(authzmocks.Authorization)
+	authn := new(authnmocks.Authentication)
 	things := new(thmocks.ThingsServiceClient)
 
-	mux := readersapi.MakeHandler(repo, authz, things, "test", "")
-	return httptest.NewServer(mux), authz, repo
+	mux := readersapi.MakeHandler(repo, authn, authz, things, "test", "")
+	return httptest.NewServer(mux), authz, authn, repo
 }
 
 func TestSendMessage(t *testing.T) {
@@ -196,7 +199,7 @@ func TestSetContentType(t *testing.T) {
 }
 
 func TestReadMessages(t *testing.T) {
-	ts, authz, repo := setupReader()
+	ts, authz, authn, repo := setupReader()
 	defer ts.Close()
 
 	channelID := "channelID"
@@ -220,8 +223,10 @@ func TestReadMessages(t *testing.T) {
 		desc            string
 		token           string
 		chanName        string
+		domainID        string
 		messagePageMeta sdk.MessagePageMetadata
-		authErr         error
+		authzErr        error
+		authnErr        error
 		repoRes         readers.MessagesPage
 		repoErr         error
 		response        sdk.MessagesPage
@@ -231,6 +236,7 @@ func TestReadMessages(t *testing.T) {
 			desc:     "read messages successfully",
 			token:    validToken,
 			chanName: channelID,
+			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
@@ -257,6 +263,7 @@ func TestReadMessages(t *testing.T) {
 			desc:     "read messages successfully with subtopic",
 			token:    validToken,
 			chanName: channelID + ".subtopic",
+			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
@@ -281,6 +288,7 @@ func TestReadMessages(t *testing.T) {
 			desc:     "read messages with invalid token",
 			token:    invalidToken,
 			chanName: channelID,
+			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
@@ -289,7 +297,7 @@ func TestReadMessages(t *testing.T) {
 				Subtopic:  "subtopic",
 				Publisher: validID,
 			},
-			authErr:  svcerr.ErrAuthorization,
+			authzErr: svcerr.ErrAuthorization,
 			repoRes:  readers.MessagesPage{},
 			response: sdk.MessagesPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusUnauthorized),
@@ -298,6 +306,7 @@ func TestReadMessages(t *testing.T) {
 			desc:     "read messages with empty token",
 			token:    "",
 			chanName: channelID,
+			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
@@ -306,7 +315,7 @@ func TestReadMessages(t *testing.T) {
 				Subtopic:  "subtopic",
 				Publisher: validID,
 			},
-			authErr:  svcerr.ErrAuthorization,
+			authnErr: svcerr.ErrAuthentication,
 			repoRes:  readers.MessagesPage{},
 			response: sdk.MessagesPage{},
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
@@ -315,6 +324,7 @@ func TestReadMessages(t *testing.T) {
 			desc:     "read messages with empty channel ID",
 			token:    validToken,
 			chanName: "",
+			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
@@ -332,6 +342,7 @@ func TestReadMessages(t *testing.T) {
 			desc:     "read messages with invalid message page metadata",
 			token:    validToken,
 			chanName: channelID,
+			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
@@ -352,6 +363,7 @@ func TestReadMessages(t *testing.T) {
 			desc:     "read messages with response that cannot be unmarshalled",
 			token:    validToken,
 			chanName: channelID,
+			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
@@ -371,9 +383,11 @@ func TestReadMessages(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authCall := authz.On("Authorize", mock.Anything, mock.Anything).Return(tc.authErr)
+			authCall := authz.On("Authorize", mock.Anything, mock.Anything).Return(tc.authzErr)
+			authCall1 := authn.On("Authenticate", mock.Anything, tc.token).Return(mgauthn.Session{UserID: validID}, tc.authnErr)
 			repoCall := repo.On("ReadAll", channelID, mock.Anything).Return(tc.repoRes, tc.repoErr)
-			response, err := mgsdk.ReadMessages(tc.messagePageMeta, tc.chanName, tc.token)
+			response, err := mgsdk.ReadMessages(tc.messagePageMeta, tc.chanName, tc.domainID, tc.token)
+			fmt.Println(err)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, response)
 			if tc.err == nil {
@@ -381,6 +395,7 @@ func TestReadMessages(t *testing.T) {
 				assert.True(t, ok)
 			}
 			authCall.Unset()
+			authCall1.Unset()
 			repoCall.Unset()
 		})
 	}

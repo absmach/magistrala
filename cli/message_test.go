@@ -104,6 +104,7 @@ func TestReadMesageCmd(t *testing.T) {
 			desc: "read message successfully",
 			args: []string{
 				channel.ID,
+				domainID,
 				validToken,
 			},
 			page: mgsdk.MessagesPage{
@@ -124,6 +125,7 @@ func TestReadMesageCmd(t *testing.T) {
 			desc: "read message with invalid args",
 			args: []string{
 				channel.ID,
+				domainID,
 				validToken,
 				extraArg,
 			},
@@ -133,6 +135,7 @@ func TestReadMesageCmd(t *testing.T) {
 			desc: "read message with invalid token",
 			args: []string{
 				channel.ID,
+				domainID,
 				invalidToken,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
@@ -143,7 +146,7 @@ func TestReadMesageCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ReadMessages", mock.Anything, tc.args[0], tc.args[1]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ReadMessages", mock.Anything, tc.args[0], tc.args[1], tc.args[2]).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{readCmd}, tc.args...)...)
 
 			switch tc.logType {

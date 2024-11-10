@@ -32,7 +32,7 @@ func (sdk mgSDK) SendMessage(chanName, msg, key string) errors.SDKError {
 	return err
 }
 
-func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, token string) (MessagesPage, errors.SDKError) {
+func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token string) (MessagesPage, errors.SDKError) {
 	chanNameParts := strings.SplitN(chanName, ".", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
@@ -40,7 +40,7 @@ func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, token string) (M
 		subtopicPart = fmt.Sprintf("?subtopic=%s", chanNameParts[1])
 	}
 
-	readMessagesEndpoint := fmt.Sprintf("channels/%s/messages%s", chanID, subtopicPart)
+	readMessagesEndpoint := fmt.Sprintf("%s/channels/%s/messages%s", domainID, chanID, subtopicPart)
 	msgURL, err := sdk.withMessageQueryParams(sdk.readerURL, readMessagesEndpoint, pm)
 	if err != nil {
 		return MessagesPage{}, errors.NewSDKError(err)

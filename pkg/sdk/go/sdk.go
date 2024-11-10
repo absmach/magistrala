@@ -884,9 +884,9 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  msgs, _ := sdk.ReadMessages(pm,"channelID", "token")
+	//  msgs, _ := sdk.ReadMessages(pm,"channelID", "domainID", "token")
 	//  fmt.Println(msgs)
-	ReadMessages(pm MessagePageMetadata, chanID, token string) (MessagesPage, errors.SDKError)
+	ReadMessages(pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, errors.SDKError)
 
 	// SetContentType sets message content type.
 	//

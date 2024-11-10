@@ -10,9 +10,11 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/readers"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -43,26 +45,19 @@ const (
 	defLimit       = 10
 	defOffset      = 0
 	defFormat      = "messages"
-
-	tokenKind           = "token"
-	thingType           = "thing"
-	userType            = "user"
-	subscribePermission = "subscribe"
-	viewPermission      = "view"
-	groupType           = "group"
 )
 
 var errUserAccess = errors.New("user has no permission")
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, authz mgauthz.Authorization, things magistrala.ThingsServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, authn mgauthn.Authentication, authz mgauthz.Authorization, things magistrala.ThingsServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
 	mux := chi.NewRouter()
-	mux.Get("/channels/{chanID}/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, authz, things),
+	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
+		listMessagesEndpoint(svc, authn, authz, things),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -159,9 +154,10 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := listMessagesReq{
-		chanID: chi.URLParam(r, "chanID"),
-		token:  apiutil.ExtractBearerToken(r),
-		key:    apiutil.ExtractThingKey(r),
+		chanID:   chi.URLParam(r, "chanID"),
+		token:    apiutil.ExtractBearerToken(r),
+		key:      apiutil.ExtractThingKey(r),
+		domainID: chi.URLParam(r, "domainID"),
 		pageMeta: readers.PageMetadata{
 			Offset:      offset,
 			Limit:       limit,
@@ -219,7 +215,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidAggregation),
 		errors.Contains(err, apiutil.ErrInvalidInterval),
 		errors.Contains(err, apiutil.ErrMissingFrom),
-		errors.Contains(err, apiutil.ErrMissingTo):
+		errors.Contains(err, apiutil.ErrMissingTo),
+		errors.Contains(err, apiutil.ErrMissingDomainID):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, svcerr.ErrAuthorization),
@@ -242,15 +239,20 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, authz mgauthz.Authorization, things magistrala.ThingsServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, authn mgauthn.Authentication, authz mgauthz.Authorization, things magistrala.ThingsServiceClient) (err error) {
 	switch {
 	case req.token != "":
+		session, err := authn.Authenticate(ctx, req.token)
+		if err != nil {
+			return errors.Wrap(svcerr.ErrAuthentication, err)
+		}
 		if err = authz.Authorize(ctx, mgauthz.PolicyReq{
-			SubjectType: userType,
-			SubjectKind: tokenKind,
-			Subject:     req.token,
-			Permission:  viewPermission,
-			ObjectType:  groupType,
+			Domain:      req.domainID,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Subject:     req.domainID + "_" + session.UserID,
+			Permission:  policies.ViewPermission,
+			ObjectType:  policies.GroupType,
 			Object:      req.chanID,
 		}); err != nil {
 			e, ok := status.FromError(err)
@@ -264,7 +266,7 @@ func authorize(ctx context.Context, req listMessagesReq, authz mgauthz.Authoriza
 		if _, err = things.Authorize(ctx, &magistrala.ThingsAuthzReq{
 			ThingKey:   req.key,
 			ChannelID:  req.chanID,
-			Permission: subscribePermission,
+			Permission: policies.SubscribePermission,
 		}); err != nil {
 			e, ok := status.FromError(err)
 			if ok && e.Code() == codes.PermissionDenied {

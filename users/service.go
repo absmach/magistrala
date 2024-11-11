@@ -206,6 +206,7 @@ func (svc service) Update(ctx context.Context, session authn.Session, usr User) 
 		FirstName: usr.FirstName,
 		LastName:  usr.LastName,
 		Metadata:  usr.Metadata,
+		Role:      AllRole,
 		UpdatedAt: time.Now(),
 		UpdatedBy: session.UserID,
 	}
@@ -227,6 +228,7 @@ func (svc service) UpdateTags(ctx context.Context, session authn.Session, usr Us
 	user := User{
 		ID:        usr.ID,
 		Tags:      usr.Tags,
+		Role:      AllRole,
 		UpdatedAt: time.Now(),
 		UpdatedBy: session.UserID,
 	}
@@ -248,6 +250,7 @@ func (svc service) UpdateProfilePicture(ctx context.Context, session authn.Sessi
 	user := User{
 		ID:             usr.ID,
 		ProfilePicture: usr.ProfilePicture,
+		Role:           AllRole,
 		UpdatedAt:      time.Now(),
 		UpdatedBy:      session.UserID,
 	}
@@ -270,6 +273,7 @@ func (svc service) UpdateEmail(ctx context.Context, session authn.Session, userI
 	user := User{
 		ID:        userID,
 		Email:     email,
+		Role:      AllRole,
 		UpdatedAt: time.Now(),
 		UpdatedBy: session.UserID,
 	}

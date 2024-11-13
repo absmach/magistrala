@@ -498,7 +498,7 @@ func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain
 		return Domain{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if err = svc.Authorize(ctx, policies.Policy{
-		Subject:     res.Subject,
+		Subject:     EncodeDomainUserID(id, res.User),
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,
@@ -545,7 +545,7 @@ func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainR
 		return Domain{}, err
 	}
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     key.User,
+		Subject:     EncodeDomainUserID(id, key.User),
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,
@@ -568,7 +568,7 @@ func (svc service) ChangeDomainStatus(ctx context.Context, token, id string, d D
 		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     key.User,
+		Subject:     EncodeDomainUserID(id, key.User),
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,

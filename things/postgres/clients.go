@@ -252,7 +252,7 @@ func (repo *clientRepo) SearchClients(ctx context.Context, pm things.Page) (thin
 	tq := query
 	query = applyOrdering(query, pm)
 
-	q := fmt.Sprintf(`SELECT c.id, c.name, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, query)
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.created_at, c.updated_at FROM clients c %s LIMIT :limit OFFSET :offset;`, query)
 
 	dbPage, err := ToDBClientsPage(pm)
 	if err != nil {

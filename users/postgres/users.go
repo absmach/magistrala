@@ -628,11 +628,6 @@ func PageQuery(pm users.Page) (string, error) {
 	if pm.Role != users.AllRole {
 		query = append(query, "u.role = :role")
 	}
-	// If there are search params presents, use search and ignore other options.
-	// Always combine role with search params, so len(query) > 1.
-	if len(query) > 1 {
-		return fmt.Sprintf("WHERE %s", strings.Join(query, " AND ")), nil
-	}
 
 	if mq != "" {
 		query = append(query, mq)

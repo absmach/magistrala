@@ -23,6 +23,14 @@ jobs:
           go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
+      - name: Install protolint
+        run: |
+          go install github.com/yoheimuta/protolint/cmd/protolint@latest
+
+      - name: Lint Protobuf Files
+        run: |
+          protolint . 
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:

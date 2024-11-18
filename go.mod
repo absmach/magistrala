@@ -10,7 +10,7 @@ require (
 	github.com/absmach/certs v0.0.0-20241014135535-3f118b801054
 	github.com/absmach/mgate v0.4.5
 	github.com/absmach/senml v1.0.5
-	github.com/authzed/authzed-go v1.1.0
+	github.com/authzed/authzed-go v1.1.1
 	github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b
 	github.com/caarlos0/env/v11 v11.2.2
 	github.com/cenkalti/backoff/v4 v4.3.0
@@ -164,7 +164,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
-	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.6.0 // indirect

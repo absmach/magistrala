@@ -99,7 +99,7 @@ func TestPublish(t *testing.T) {
 
 	defer ts.Close()
 
-	things.On("Authorize", mock.Anything, &magistrala.ThingsAuthzReq{ThingKey: thingKey, ChannelID: chanID, Permission: "publish"}).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: ""}, nil)
+	things.On("Authorize", mock.Anything, &magistrala.ThingsAuthzReq{ThingKey: thingKey, ChannelId: chanID, Permission: "publish"}).Return(&magistrala.ThingsAuthzRes{Authorized: true, Id: ""}, nil)
 	things.On("Authorize", mock.Anything, mock.Anything).Return(&magistrala.ThingsAuthzRes{Authorized: false, Id: ""}, nil)
 
 	cases := map[string]struct {

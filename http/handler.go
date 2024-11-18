@@ -144,7 +144,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 	}
 	ar := &magistrala.ThingsAuthzReq{
 		ThingKey:   tok,
-		ChannelID:  msg.Channel,
+		ChannelId:  msg.Channel,
 		Permission: policies.PublishPermission,
 	}
 	res, err := h.things.Authorize(ctx, ar)

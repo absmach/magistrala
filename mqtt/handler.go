@@ -227,7 +227,7 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 	ar := &magistrala.ThingsAuthzReq{
 		Permission: action,
 		ThingKey:   password,
-		ChannelID:  chanID,
+		ChannelId:  chanID,
 	}
 	res, err := h.things.Authorize(ctx, ar)
 	if err != nil {

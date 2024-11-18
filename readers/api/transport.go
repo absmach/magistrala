@@ -265,7 +265,7 @@ func authorize(ctx context.Context, req listMessagesReq, authn mgauthn.Authentic
 	case req.key != "":
 		if _, err = things.Authorize(ctx, &magistrala.ThingsAuthzReq{
 			ThingKey:   req.key,
-			ChannelID:  req.chanID,
+			ChannelId:  req.chanID,
 			Permission: policies.SubscribePermission,
 		}); err != nil {
 			e, ok := status.FromError(err)

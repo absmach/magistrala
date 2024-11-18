@@ -55,7 +55,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 	ar := &magistrala.ThingsAuthzReq{
 		Permission: policies.PublishPermission,
 		ThingKey:   key,
-		ChannelID:  msg.GetChannel(),
+		ChannelId:  msg.GetChannel(),
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
@@ -73,7 +73,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 	ar := &magistrala.ThingsAuthzReq{
 		Permission: policies.SubscribePermission,
 		ThingKey:   key,
-		ChannelID:  chanID,
+		ChannelId:  chanID,
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {
@@ -98,7 +98,7 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopi
 	ar := &magistrala.ThingsAuthzReq{
 		Permission: policies.SubscribePermission,
 		ThingKey:   key,
-		ChannelID:  chanID,
+		ChannelId:  chanID,
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {

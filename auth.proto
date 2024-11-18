@@ -36,19 +36,19 @@ service DomainsService {
 // field can be used to determine how to validate the token.
 // Also, different tokens can be encoded in different ways.
 message Token {
-    string accessToken = 1;
-    optional string refreshToken = 2;
-    string accessType = 3;
+  string access_token = 1;
+  optional string refresh_token = 2;
+  string access_type = 3;
 }
 
 message AuthNReq {
-    string token = 1;
+  string token = 1;
 }
 
 message AuthNRes {
-    string id    = 1; // IMPROVEMENT NOTE: change name from "id" to "subject" , sub in jwt = user id  + domain id //
-    string user_id = 2; // user id
-    string domain_id = 3; // domain id
+  string id = 1; // change "id" to "subject", sub in jwt = user + domain id
+  string user_id = 2; // user id
+  string domain_id = 3; // domain id
 }
 
 message IssueReq {
@@ -77,16 +77,18 @@ message AuthZRes {
   string id = 2;
 }
 
-message DeleteUserRes { bool deleted = 1; }
+message DeleteUserRes {
+  bool deleted = 1;
+}
 
-message DeleteUserReq{
-  string id          = 1;
+message DeleteUserReq {
+  string id = 1;
 }
 
 message ThingsAuthzReq {
-  string channelID = 1;
-  string thingID = 2;
-  string thingKey = 3;
+  string channel_id = 1;
+  string thing_id = 2;
+  string thing_key = 3;
   string permission = 4;
 }
 

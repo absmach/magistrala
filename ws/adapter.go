@@ -88,7 +88,7 @@ func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, acti
 	ar := &magistrala.ThingsAuthzReq{
 		Permission: action,
 		ThingKey:   thingKey,
-		ChannelID:  chanID,
+		ChannelId:  chanID,
 	}
 	res, err := svc.things.Authorize(ctx, ar)
 	if err != nil {

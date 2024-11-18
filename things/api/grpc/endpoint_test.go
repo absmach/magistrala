@@ -72,7 +72,7 @@ func TestAuthorize(t *testing.T) {
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
 				ThingKey:   clientKey,
-				ChannelID:  channelID,
+				ChannelId:  channelID,
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
@@ -89,7 +89,7 @@ func TestAuthorize(t *testing.T) {
 			desc: "authorize with invalid key",
 			req: &magistrala.ThingsAuthzReq{
 				ThingKey:   invalid,
-				ChannelID:  channelID,
+				ChannelId:  channelID,
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
@@ -108,7 +108,7 @@ func TestAuthorize(t *testing.T) {
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
 				ThingKey:   clientKey,
-				ChannelID:  channelID,
+				ChannelId:  channelID,
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
@@ -127,7 +127,7 @@ func TestAuthorize(t *testing.T) {
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
 				ThingKey:   clientKey,
-				ChannelID:  channelID,
+				ChannelId:  channelID,
 				Permission: invalid,
 			},
 			authorizeReq: things.AuthzReq{
@@ -145,7 +145,7 @@ func TestAuthorize(t *testing.T) {
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
 				ThingKey:   clientKey,
-				ChannelID:  invalid,
+				ChannelId:  invalid,
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
@@ -163,7 +163,7 @@ func TestAuthorize(t *testing.T) {
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
 				ThingKey:   clientKey,
-				ChannelID:  "",
+				ChannelId:  "",
 				Permission: policies.PublishPermission,
 			},
 			authorizeReq: things.AuthzReq{
@@ -181,7 +181,7 @@ func TestAuthorize(t *testing.T) {
 			thingID: thingID,
 			req: &magistrala.ThingsAuthzReq{
 				ThingKey:   clientKey,
-				ChannelID:  channelID,
+				ChannelId:  channelID,
 				Permission: "",
 			},
 			authorizeReq: things.AuthzReq{

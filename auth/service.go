@@ -618,8 +618,9 @@ func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
+	domainUserID := EncodeDomainUserID(id, res.User)
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     res.User,
+		Subject:     domainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,
@@ -630,7 +631,7 @@ func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []
 	}
 
 	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     res.User,
+		Subject:     domainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,
@@ -661,8 +662,9 @@ func (svc service) UnassignUser(ctx context.Context, token, id, userID string) e
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
+	domainUserID := EncodeDomainUserID(id, res.User)
 	pr := policies.Policy{
-		Subject:     res.User,
+		Subject:     domainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Object:      id,

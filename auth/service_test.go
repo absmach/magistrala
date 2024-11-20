@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/auth/jwt"
 	"github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -56,6 +57,7 @@ var (
 		CreatedBy:  validID,
 		UpdatedBy:  validID,
 	}
+	userID = testsutil.GenerateUUID(&testing.T{})
 )
 
 var (
@@ -78,7 +80,7 @@ func newService() (auth.Service, string) {
 		ExpiresAt: time.Now().Add(refreshDuration),
 		Subject:   id,
 		Type:      auth.AccessKey,
-		User:      email,
+		User:      userID,
 		Domain:    groupName,
 	}
 	token, _ := t.Issue(key)
@@ -1746,10 +1748,10 @@ func TestAssignUsers(t *testing.T) {
 		domainID             string
 		userIDs              []string
 		relation             string
-		checkPolicyReq3      policies.Policy
+		checkPolicyReq       policies.Policy
 		checkAdminPolicyReq  policies.Policy
 		checkDomainPolicyReq policies.Policy
-		checkPolicyReq33     policies.Policy
+		checkPolicyReq1      policies.Policy
 		checkpolicyErr       error
 		checkPolicyErr1      error
 		checkPolicyErr2      error
@@ -1764,8 +1766,8 @@ func TestAssignUsers(t *testing.T) {
 			domainID: validID,
 			userIDs:  []string{validID},
 			relation: policies.ContributorRelation,
-			checkPolicyReq3: policies.Policy{
-				Subject:     email,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1773,7 +1775,7 @@ func TestAssignUsers(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1787,8 +1789,8 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: policies.Policy{
-				Subject:     email,
+			checkPolicyReq1: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
@@ -1802,7 +1804,7 @@ func TestAssignUsers(t *testing.T) {
 			domainID: validID,
 			userIDs:  []string{validID},
 			relation: policies.ContributorRelation,
-			checkPolicyReq3: policies.Policy{
+			checkPolicyReq: policies.Policy{
 				Subject:     email,
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
@@ -1833,8 +1835,8 @@ func TestAssignUsers(t *testing.T) {
 			token:    accessToken,
 			domainID: inValid,
 			relation: policies.ContributorRelation,
-			checkPolicyReq3: policies.Policy{
-				Subject:     email,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(inValid, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      inValid,
@@ -1842,15 +1844,15 @@ func TestAssignUsers(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(inValid, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      inValid,
 				ObjectType:  policies.DomainType,
 				Permission:  policies.ViewPermission,
 			},
-			checkPolicyReq33: policies.Policy{
-				Subject:     email,
+			checkPolicyReq1: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(inValid, userID),
 				SubjectType: policies.UserType,
 				Object:      inValid,
 				ObjectType:  policies.DomainType,
@@ -1865,8 +1867,8 @@ func TestAssignUsers(t *testing.T) {
 			userIDs:  []string{inValid},
 			domainID: validID,
 			relation: policies.ContributorRelation,
-			checkPolicyReq3: policies.Policy{
-				Subject:     email,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1874,7 +1876,7 @@ func TestAssignUsers(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1888,8 +1890,8 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: policies.Policy{
-				Subject:     email,
+			checkPolicyReq1: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
@@ -1904,8 +1906,8 @@ func TestAssignUsers(t *testing.T) {
 			domainID: validID,
 			userIDs:  []string{validID},
 			relation: policies.ContributorRelation,
-			checkPolicyReq3: policies.Policy{
-				Subject:     email,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1913,7 +1915,7 @@ func TestAssignUsers(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1927,8 +1929,8 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: policies.Policy{
-				Subject:     email,
+			checkPolicyReq1: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
@@ -1943,8 +1945,8 @@ func TestAssignUsers(t *testing.T) {
 			domainID: validID,
 			userIDs:  []string{validID},
 			relation: policies.ContributorRelation,
-			checkPolicyReq3: policies.Policy{
-				Subject:     email,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1952,7 +1954,7 @@ func TestAssignUsers(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1966,8 +1968,8 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: policies.Policy{
-				Subject:     email,
+			checkPolicyReq1: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
@@ -1982,8 +1984,8 @@ func TestAssignUsers(t *testing.T) {
 			domainID: validID,
 			userIDs:  []string{validID},
 			relation: policies.ContributorRelation,
-			checkPolicyReq3: policies.Policy{
-				Subject:     email,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -1991,7 +1993,7 @@ func TestAssignUsers(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2005,8 +2007,8 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyReq33: policies.Policy{
-				Subject:     email,
+			checkPolicyReq1: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
@@ -2021,10 +2023,10 @@ func TestAssignUsers(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, nil)
-			repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq3).Return(tc.checkpolicyErr)
+			repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkpolicyErr)
 			repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
 			repoCall3 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr2)
-			repoCall4 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq33).Return(tc.checkPolicyErr2)
+			repoCall4 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq1).Return(tc.checkPolicyErr2)
 			repoCall5 := pService.On("AddPolicies", mock.Anything, mock.Anything).Return(tc.addPoliciesErr)
 			repoCall6 := drepo.On("SavePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.savePoliciesErr)
 			repoCall7 := pService.On("DeletePolicies", mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
@@ -2065,14 +2067,14 @@ func TestUnassignUser(t *testing.T) {
 			domainID: validID,
 			userID:   validID,
 			checkPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2080,7 +2082,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.AdminPermission,
 			},
 			checkDomainPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2095,7 +2097,7 @@ func TestUnassignUser(t *testing.T) {
 			domainID: validID,
 			userID:   validID,
 			checkPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2103,7 +2105,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2118,7 +2120,7 @@ func TestUnassignUser(t *testing.T) {
 			domainID: inValid,
 			userID:   validID,
 			checkPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(inValid, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      inValid,
@@ -2126,7 +2128,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(inValid, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      inValid,
@@ -2134,7 +2136,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.AdminPermission,
 			},
 			checkDomainPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(inValid, userID),
 				SubjectType: policies.UserType,
 				Object:      inValid,
 				ObjectType:  policies.DomainType,
@@ -2149,7 +2151,7 @@ func TestUnassignUser(t *testing.T) {
 			domainID: validID,
 			userID:   validID,
 			checkPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2157,7 +2159,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2165,7 +2167,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.AdminPermission,
 			},
 			checkDomainPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
@@ -2180,7 +2182,7 @@ func TestUnassignUser(t *testing.T) {
 			domainID: validID,
 			userID:   validID,
 			checkPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2188,7 +2190,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.SharePermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2196,7 +2198,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.AdminPermission,
 			},
 			checkDomainPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
@@ -2207,19 +2209,19 @@ func TestUnassignUser(t *testing.T) {
 			err:                   errors.ErrMalformedEntity,
 		},
 		{
-			desc:     "unassign user with failed to delete pService from domain",
+			desc:     "unassign user with failed to delete policies from domain",
 			token:    accessToken,
 			domainID: validID,
 			userID:   validID,
 			checkPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				Object:      validID,
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
 			checkAdminPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,
@@ -2227,7 +2229,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.AdminPermission,
 			},
 			checkDomainPolicyReq: policies.Policy{
-				Subject:     email,
+				Subject:     auth.EncodeDomainUserID(validID, userID),
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
 				Object:      validID,

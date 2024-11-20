@@ -1,3 +1,6 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
 package domains
 
 import (
@@ -17,7 +20,6 @@ const defLimit = 100
 var (
 	errCreateDomainPolicy = errors.New("failed to create domain policy")
 	errRollbackRepo       = errors.New("failed to rollback repo")
-	errRemovePolicyEngine = errors.New("failed to remove from policy engine")
 )
 
 type service struct {
@@ -30,7 +32,6 @@ type service struct {
 var _ Service = (*service)(nil)
 
 func New(repo Repository, policy policies.Service, idProvider magistrala.IDProvider, sidProvider magistrala.IDProvider) (Service, error) {
-
 	rpms, err := roles.NewProvisionManageService(policies.DomainType, repo, policy, sidProvider, AvailableActions(), BuiltInRoles())
 	if err != nil {
 		return nil, err
@@ -45,7 +46,6 @@ func New(repo Repository, policy policies.Service, idProvider magistrala.IDProvi
 }
 
 func (svc service) CreateDomain(ctx context.Context, session authn.Session, d Domain) (do Domain, err error) {
-
 	d.CreatedBy = session.UserID
 
 	domainID, err := svc.idProvider.ID()
@@ -129,7 +129,7 @@ func (svc service) DisableDomain(ctx context.Context, session authn.Session, id 
 	return dom, nil
 }
 
-// Only SuperAdmin can freeze the domain
+// Only SuperAdmin can freeze the domain.
 func (svc service) FreezeDomain(ctx context.Context, session authn.Session, id string) (Domain, error) {
 	status := FreezeStatus
 	dom, err := svc.repo.Update(ctx, id, session.UserID, DomainReq{Status: &status})
@@ -141,7 +141,7 @@ func (svc service) FreezeDomain(ctx context.Context, session authn.Session, id s
 
 func (svc service) ListDomains(ctx context.Context, session authn.Session, p Page) (DomainsPage, error) {
 	p.SubjectID = session.UserID
-	//ToDo : Check list without below function and confirm and decide to remove or not
+	//ToDo : Check list without below function and confirm and decide to remove or not.
 	if session.SuperAdmin {
 		p.SubjectID = ""
 	}

@@ -5,7 +5,6 @@ package postgres
 
 import (
 	"github.com/absmach/magistrala/pkg/errors"
-
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	rolesPostgres "github.com/absmach/magistrala/pkg/roles/repo/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access

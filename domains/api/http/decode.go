@@ -57,8 +57,7 @@ func decodeListDomainRequest(ctx context.Context, r *http.Request) (interface{},
 		return nil, err
 	}
 	req := listDomainsReq{
-		token: apiutil.ExtractBearerToken(r),
-		page:  page,
+		page: page,
 	}
 
 	return req, nil

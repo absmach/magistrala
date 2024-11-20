@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	inValid = "invalid"
+	invalid = "invalid"
 )
 
 var (
@@ -50,8 +50,8 @@ func TestSave(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"test": "test",
 				},
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				CreatedAt: time.Now().UTC().Truncate(time.Millisecond),
+				UpdatedAt: time.Now().UTC().Truncate(time.Millisecond),
 				CreatedBy: userID,
 				UpdatedBy: userID,
 				Status:    domains.EnabledStatus,
@@ -68,8 +68,8 @@ func TestSave(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"test": "test",
 				},
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				CreatedAt: time.Now().UTC().Truncate(time.Millisecond),
+				UpdatedAt: time.Now().UTC().Truncate(time.Millisecond),
 				CreatedBy: userID,
 				UpdatedBy: userID,
 				Status:    domains.EnabledStatus,
@@ -86,8 +86,8 @@ func TestSave(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"test": "test",
 				},
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				CreatedAt: time.Now().UTC().Truncate(time.Millisecond),
+				UpdatedAt: time.Now().UTC().Truncate(time.Millisecond),
 				CreatedBy: userID,
 				UpdatedBy: userID,
 				Status:    domains.EnabledStatus,
@@ -133,10 +133,13 @@ func TestSave(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := repo.Save(context.Background(), tc.domain)
-		{
+		t.Run(tc.desc, func(t *testing.T) {
+			domain, err := repo.Save(context.Background(), tc.domain)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+			if err == nil {
+				assert.Equal(t, tc.domain, domain, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.domain, domain))
+			}
+		})
 	}
 }
 
@@ -158,6 +161,8 @@ func TestRetrieveByID(t *testing.T) {
 		},
 		CreatedBy: userID,
 		UpdatedBy: userID,
+		CreatedAt: time.Now().UTC().Truncate(time.Millisecond),
+		UpdatedAt: time.Now().UTC().Truncate(time.Millisecond),
 		Status:    domains.EnabledStatus,
 	}
 
@@ -178,7 +183,7 @@ func TestRetrieveByID(t *testing.T) {
 		},
 		{
 			desc:     "retrieve non-existing client",
-			domainID: inValid,
+			domainID: invalid,
 			response: domains.Domain{},
 			err:      repoerr.ErrNotFound,
 		},
@@ -191,9 +196,11 @@ func TestRetrieveByID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		d, err := repo.RetrieveByID(context.Background(), tc.domainID)
-		assert.Equal(t, tc.response, d, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, d))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			d, err := repo.RetrieveByID(context.Background(), tc.domainID)
+			assert.Equal(t, tc.response, d, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, d))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
+		})
 	}
 }
 
@@ -271,7 +278,7 @@ func TestRetrieveAllByIDs(t *testing.T) {
 			pm: domains.Page{
 				Offset: 0,
 				Limit:  10,
-				IDs:    []string{inValid},
+				IDs:    []string{invalid},
 			},
 			response: domains.DomainsPage{
 				Total:  0,
@@ -326,7 +333,7 @@ func TestRetrieveAllByIDs(t *testing.T) {
 			},
 		},
 		{
-			desc: " retrieve by ids and metadata",
+			desc: "retrieve by ids and metadata",
 			pm: domains.Page{
 				Offset: 0,
 				Limit:  10,
@@ -394,7 +401,7 @@ func TestRetrieveAllByIDs(t *testing.T) {
 			pm: domains.Page{
 				Offset: 0,
 				Limit:  10,
-				ID:     inValid,
+				ID:     invalid,
 				IDs:    []string{items[1].ID, items[2].ID},
 			},
 			response: domains.DomainsPage{
@@ -426,9 +433,11 @@ func TestRetrieveAllByIDs(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		d, err := repo.RetrieveAllByIDs(context.Background(), tc.pm)
-		assert.Equal(t, tc.response, d, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, d))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			dp, err := repo.RetrieveAllByIDs(context.Background(), tc.pm)
+			assert.Equal(t, tc.response, dp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, dp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
+		})
 	}
 }
 
@@ -520,7 +529,7 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			desc:     "update non-existing domain",
-			domainID: inValid,
+			domainID: invalid,
 			d: domains.DomainReq{
 				Name:     &updatedName,
 				Metadata: &updatedMetadata,
@@ -551,10 +560,12 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		d, err := repo.Update(context.Background(), tc.domainID, userID, tc.d)
-		d.UpdatedAt = tc.response.UpdatedAt
-		assert.Equal(t, tc.response, d, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, d))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			d, err := repo.Update(context.Background(), tc.domainID, userID, tc.d)
+			d.UpdatedAt = tc.response.UpdatedAt
+			assert.Equal(t, tc.response, d, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, d))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
 	}
 }
 
@@ -594,7 +605,7 @@ func TestDelete(t *testing.T) {
 		},
 		{
 			desc:     "delete non-existing domain",
-			domainID: inValid,
+			domainID: invalid,
 			err:      repoerr.ErrNotFound,
 		},
 		{
@@ -605,7 +616,166 @@ func TestDelete(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := repo.Delete(context.Background(), tc.domainID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.Delete(context.Background(), tc.domainID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
+	}
+}
+
+func TestListDomains(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM domains")
+		require.Nil(t, err, fmt.Sprintf("clean domains unexpected error: %s", err))
+	})
+
+	repo := postgres.New(database)
+
+	items := []domains.Domain{}
+	for i := 0; i < 10; i++ {
+		domain := domains.Domain{
+			ID:    testsutil.GenerateUUID(t),
+			Name:  fmt.Sprintf(`"test%d"`, i),
+			Alias: fmt.Sprintf(`"test%d"`, i),
+			Tags:  []string{"test"},
+			Metadata: map[string]interface{}{
+				"test": "test",
+			},
+			CreatedBy: userID,
+			UpdatedBy: userID,
+			Status:    domains.EnabledStatus,
+		}
+		if i%5 == 0 {
+			domain.Status = domains.DisabledStatus
+			domain.Tags = []string{"test", "admin"}
+			domain.Metadata = map[string]interface{}{
+				"test1": "test1",
+			}
+		}
+		_, err := repo.Save(context.Background(), domain)
+		require.Nil(t, err, fmt.Sprintf("save domain unexpected error: %s", err))
+		items = append(items, domain)
+	}
+	cases := []struct {
+		desc     string
+		pm       domains.Page
+		response domains.DomainsPage
+		err      error
+	}{
+		{
+			desc: "list all domains",
+			pm: domains.Page{
+				Offset: 0,
+				Limit:  10,
+				Status: domains.AllStatus,
+			},
+			response: domains.DomainsPage{
+				Total:   10,
+				Offset:  0,
+				Limit:   10,
+				Domains: items,
+			},
+			err: nil,
+		},
+		{
+			desc: "list all domains with enabled status",
+			pm: domains.Page{
+				Offset: 0,
+				Limit:  10,
+				Status: domains.EnabledStatus,
+			},
+			response: domains.DomainsPage{
+				Total:   8,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain{items[1], items[2], items[3], items[4], items[6], items[7], items[8], items[9]},
+			},
+			err: nil,
+		},
+		{
+			desc: "list all domains with disabled status",
+			pm: domains.Page{
+				Offset: 0,
+				Limit:  10,
+				Status: domains.DisabledStatus,
+			},
+			response: domains.DomainsPage{
+				Total:   2,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain{items[0], items[5]},
+			},
+			err: nil,
+		},
+		{
+			desc: "list all domains with tags",
+			pm: domains.Page{
+				Offset: 0,
+				Limit:  10,
+				Tag:    "admin",
+				Status: domains.AllStatus,
+			},
+			response: domains.DomainsPage{
+				Total:   2,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain{items[0], items[5]},
+			},
+			err: nil,
+		},
+		{
+			desc: "list all domains with metadata",
+			pm: domains.Page{
+				Offset: 0,
+				Limit:  10,
+				Metadata: map[string]interface{}{
+					"test1": "test1",
+				},
+				Status: domains.AllStatus,
+			},
+			response: domains.DomainsPage{
+				Total:   2,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain{items[0], items[5]},
+			},
+			err: nil,
+		},
+		{
+			desc: "list all domains with invalid metadata",
+			pm: domains.Page{
+				Offset: 0,
+				Limit:  10,
+				Metadata: map[string]interface{}{
+					"key": make(chan int),
+				},
+				Status: domains.AllStatus,
+			},
+			response: domains.DomainsPage{},
+			err:      repoerr.ErrViewEntity,
+		},
+		{
+			desc: "list all domains with subject id",
+			pm: domains.Page{
+				Offset:    0,
+				Limit:     10,
+				SubjectID: userID,
+				Status:    domains.AllStatus,
+			},
+			response: domains.DomainsPage{
+				Total:  0,
+				Offset: 0,
+				Limit:  10,
+			},
+			err: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			dp, err := repo.ListDomains(context.Background(), tc.pm)
+			assert.Equal(t, tc.response, dp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, dp))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
+		})
 	}
 }

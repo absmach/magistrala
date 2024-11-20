@@ -50,22 +50,6 @@ func (res retrieveDomainRes) Empty() bool {
 	return false
 }
 
-type retrieveDomainPermissionsRes struct {
-	Permissions []string `json:"permissions"`
-}
-
-func (res retrieveDomainPermissionsRes) Code() int {
-	return http.StatusOK
-}
-
-func (res retrieveDomainPermissionsRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res retrieveDomainPermissionsRes) Empty() bool {
-	return false
-}
-
 type updateDomainRes struct {
 	domains.Domain
 }
@@ -166,20 +150,4 @@ func (res unassignUsersRes) Headers() map[string]string {
 
 func (res unassignUsersRes) Empty() bool {
 	return true
-}
-
-type listUserDomainsRes struct {
-	domains.DomainsPage
-}
-
-func (res listUserDomainsRes) Code() int {
-	return http.StatusOK
-}
-
-func (res listUserDomainsRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res listUserDomainsRes) Empty() bool {
-	return false
 }

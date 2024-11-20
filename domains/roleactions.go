@@ -1,3 +1,6 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
 package domains
 
 import "github.com/absmach/magistrala/pkg/roles"
@@ -31,7 +34,7 @@ const (
 	ClientRemoveRoleUsers  roles.Action = "client_remove_role_users"
 	ClientViewRoleUsers    roles.Action = "client_view_role_users"
 
-	// Domain Channels Roles: Actions related to channels present within the Domain
+	// Domain Channels Roles: Actions related to channels present within the Domain.
 	ChannelUpdate          roles.Action = "channel_update"
 	ChannelRead            roles.Action = "channel_read"
 	ChannelDelete          roles.Action = "channel_delete"
@@ -44,7 +47,7 @@ const (
 	ChannelRemoveRoleUsers roles.Action = "channel_remove_role_users"
 	ChannelViewRoleUsers   roles.Action = "channel_view_role_users"
 
-	// Domain Groups Roles: Actions related to Groups present within the Domain
+	// Domain Groups Roles: Actions related to Groups present within the Domain.
 	GroupUpdate          roles.Action = "group_update"
 	GroupMembership      roles.Action = "group_membership"
 	GroupRead            roles.Action = "group_read"

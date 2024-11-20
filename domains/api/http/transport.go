@@ -81,7 +81,6 @@ func MakeHandler(svc domains.Service, authn authn.Authentication, mux *chi.Mux, 
 				opts...,
 			), "freeze_domain").ServeHTTP)
 			roleManagerHttp.EntityRoleMangerRouter(svc, d, r, opts)
-
 		})
 	})
 

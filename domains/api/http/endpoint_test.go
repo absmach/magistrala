@@ -13,38 +13,37 @@ import (
 	"testing"
 	"time"
 
-	mgclients "github.com/absmach/magistrala/clients"
 	"github.com/absmach/magistrala/domains"
 	httpapi "github.com/absmach/magistrala/domains/api/http"
 	"github.com/absmach/magistrala/domains/mocks"
+	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	"github.com/absmach/magistrala/pkg/authn"
 	authnmock "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	policies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 var (
-	validCMetadata = domains.Metadata{"role": "client"}
-	ID             = testsutil.GenerateUUID(&testing.T{})
-	domain         = domains.Domain{
+	validMetadata = domains.Metadata{"role": "client"}
+	ID            = testsutil.GenerateUUID(&testing.T{})
+	domain        = domains.Domain{
 		ID:       ID,
 		Name:     "domainname",
 		Tags:     []string{"tag1", "tag2"},
-		Metadata: validCMetadata,
+		Metadata: validMetadata,
 		Status:   domains.EnabledStatus,
 		Alias:    "mydomain",
 	}
 	validToken   = "token"
 	inValidToken = "invalid"
-	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
-
-	id = "testID"
+	invalid      = "invalid"
+	userID       = testsutil.GenerateUUID(&testing.T{})
 )
 
 const (
@@ -89,33 +88,33 @@ func toJSON(data interface{}) string {
 	return string(jsonData)
 }
 
-func newDomainsServer() (*httptest.Server, *mocks.Service) {
+func newDomainsServer() (*httptest.Server, *mocks.Service, *authnmock.Authentication) {
 	logger := mglog.NewMock()
-	mux := chi.NewRouter()
 	svc := new(mocks.Service)
 	authn := new(authnmock.Authentication)
-	mux = chi.NewMux()
+	mux := chi.NewMux()
 	httpapi.MakeHandler(svc, authn, mux, logger, "")
-	return httptest.NewServer(mux), svc
+	return httptest.NewServer(mux), svc, authn
 }
 
 func TestCreateDomain(t *testing.T) {
-	ds, svc := newDomainsServer()
+	ds, svc, auth := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
 		desc        string
 		domain      domains.Domain
 		token       string
+		session     authn.Session
 		contentType string
 		svcErr      error
 		status      int
+		authnErr    error
 		err         error
 	}{
 		{
-			desc: "register  a new domain successfully",
+			desc: "register a new domain successfully",
 			domain: domains.Domain{
-				ID:       ID,
 				Name:     "test",
 				Metadata: domains.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
@@ -129,7 +128,6 @@ func TestCreateDomain(t *testing.T) {
 		{
 			desc: "register  a new domain with empty token",
 			domain: domains.Domain{
-				ID:       ID,
 				Name:     "test",
 				Metadata: domains.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
@@ -143,7 +141,6 @@ func TestCreateDomain(t *testing.T) {
 		{
 			desc: "register  a new domain with invalid token",
 			domain: domains.Domain{
-				ID:       ID,
 				Name:     "test",
 				Metadata: domains.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
@@ -152,13 +149,12 @@ func TestCreateDomain(t *testing.T) {
 			token:       inValidToken,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
-			svcErr:      svcerr.ErrAuthentication,
+			authnErr:    svcerr.ErrAuthentication,
 			err:         svcerr.ErrAuthentication,
 		},
 		{
 			desc: "register  a new domain with an empty name",
 			domain: domains.Domain{
-				ID:       ID,
 				Name:     "",
 				Metadata: domains.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
@@ -172,7 +168,6 @@ func TestCreateDomain(t *testing.T) {
 		{
 			desc: "register a new domain with an empty alias",
 			domain: domains.Domain{
-				ID:       ID,
 				Name:     "test",
 				Metadata: domains.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
@@ -186,7 +181,6 @@ func TestCreateDomain(t *testing.T) {
 		{
 			desc: "register a  new domain with invalid content type",
 			domain: domains.Domain{
-				ID:       ID,
 				Name:     "test",
 				Metadata: domains.Metadata{"role": "domain"},
 				Tags:     []string{"tag1", "tag2"},
@@ -200,7 +194,6 @@ func TestCreateDomain(t *testing.T) {
 		{
 			desc: "register a  new domain that cant be marshalled",
 			domain: domains.Domain{
-				ID:   ID,
 				Name: "test",
 				Metadata: map[string]interface{}{
 					"test": make(chan int),
@@ -213,52 +206,81 @@ func TestCreateDomain(t *testing.T) {
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
+		{
+			desc: "register domain with service error",
+			domain: domains.Domain{
+				Name:     "test",
+				Metadata: domains.Metadata{"role": "domain"},
+				Tags:     []string{"tag1", "tag2"},
+				Alias:    "test",
+			},
+			token:       validToken,
+			contentType: contentType,
+			status:      http.StatusUnprocessableEntity,
+			svcErr:      svcerr.ErrCreateEntity,
+			err:         svcerr.ErrCreateEntity,
+		},
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.domain)
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains", ds.URL),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
-
-		svcCall := svc.On("CreateDomain", mock.Anything, mock.Anything, mock.Anything).Return(domains.Domain{}, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var errRes respBody
-		err = json.NewDecoder(res.Body).Decode(&errRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if errRes.Err != "" || errRes.Message != "" {
-			err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.domain)
+			req := testRequest{
+				client:      ds.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/domains", ds.URL),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
+			}
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("CreateDomain", mock.Anything, tc.session, tc.domain).Return(tc.domain, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
 func TestListDomains(t *testing.T) {
-	ds, svc := newDomainsServer()
+	ds, svc, auth := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
-		desc               string
-		token              string
-		query              string
-		listDomainsRequest domains.DomainsPage
-		status             int
-		svcErr             error
-		err                error
+		desc            string
+		token           string
+		session         authn.Session
+		query           string
+		page            domains.Page
+		listDomainsResp domains.DomainsPage
+		status          int
+		svcErr          error
+		authnErr        error
+		err             error
 	}{
 		{
-			desc:   "list domains with valid token",
-			token:  validToken,
+			desc:  "list domains with valid token",
+			token: validToken,
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+			},
 			status: http.StatusOK,
-			listDomainsRequest: domains.DomainsPage{
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
@@ -271,20 +293,26 @@ func TestListDomains(t *testing.T) {
 			err:    apiutil.ErrBearerToken,
 		},
 		{
-			desc:   "list domains  with invalid token",
-			token:  inValidToken,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
+			desc:     "list domains  with invalid token",
+			token:    inValidToken,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
 			desc:  "list domains  with offset",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			query: "offset=1",
+			page: domains.Page{
+				Offset: 1,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+			},
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "offset=1",
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -298,11 +326,17 @@ func TestListDomains(t *testing.T) {
 		{
 			desc:  "list domains  with limit",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			query: "limit=1",
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  1,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+			},
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "limit=1",
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -316,11 +350,18 @@ func TestListDomains(t *testing.T) {
 		{
 			desc:  "list domains  with name",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "name=domainname",
+			query: "name=domainname",
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+				Name:   "domainname",
+			},
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -341,11 +382,18 @@ func TestListDomains(t *testing.T) {
 		{
 			desc:  "list domains with status",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "status=enabled",
+			query: "status=enabled",
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+				Status: domains.EnabledStatus,
+			},
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -364,13 +412,20 @@ func TestListDomains(t *testing.T) {
 			err:    apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:  "list domains  with tags",
+			desc:  "list domains with tags",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "tag=tag1,tag2",
+			query: "tag=tag1",
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+				Tag:    "tag1",
+			},
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -391,11 +446,20 @@ func TestListDomains(t *testing.T) {
 		{
 			desc:  "list domains  with metadata",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			query: "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+				Metadata: domains.Metadata{
+					"domain": "example.com",
+				},
+			},
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "metadata=%7B%22domain%22%3A%20%22example.com%22%7D&",
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -416,11 +480,18 @@ func TestListDomains(t *testing.T) {
 		{
 			desc:  "list domains  with permissions",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			query: "permission=view",
+			page: domains.Page{
+				Offset:     api.DefOffset,
+				Limit:      api.DefLimit,
+				Order:      api.DefOrder,
+				Dir:        api.DefDir,
+				Permission: "view",
+			},
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "permission=view",
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -441,11 +512,17 @@ func TestListDomains(t *testing.T) {
 		{
 			desc:  "list domains  with order",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  "name",
+				Dir:    api.DefDir,
+			},
+			query: "order=name",
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "order=name",
 			status: http.StatusOK,
 		},
 		{
@@ -465,11 +542,17 @@ func TestListDomains(t *testing.T) {
 		{
 			desc:  "list domains  with dir",
 			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    "asc",
+			},
+			query: "dir=asc",
+			listDomainsResp: domains.DomainsPage{
 				Total:   1,
 				Domains: []domains.Domain{domain},
 			},
-			query:  "dir=asc",
 			status: http.StatusOK,
 		},
 		{
@@ -486,829 +569,515 @@ func TestListDomains(t *testing.T) {
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrInvalidQueryParams,
 		},
+		{
+			desc:  "list domains with service error",
+			token: validToken,
+			page: domains.Page{
+				Offset: api.DefOffset,
+				Limit:  api.DefLimit,
+				Order:  api.DefOrder,
+				Dir:    api.DefDir,
+			},
+			status:          http.StatusBadRequest,
+			listDomainsResp: domains.DomainsPage{},
+			svcErr:          svcerr.ErrViewEntity,
+			err:             svcerr.ErrViewEntity,
+		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: ds.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/domains?", ds.URL) + tc.query,
-			token:  tc.token,
-		}
-
-		svcCall := svc.On("ListDomains", mock.Anything, mock.Anything, mock.Anything).Return(tc.listDomainsRequest, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: ds.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/domains?", ds.URL) + tc.query,
+				token:  tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("ListDomains", mock.Anything, tc.session, tc.page).Return(tc.listDomainsResp, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
 func TestViewDomain(t *testing.T) {
-	ds, svc := newDomainsServer()
+	ds, svc, auth := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
 		desc     string
 		token    string
+		session  authn.Session
 		domainID string
 		status   int
+		svcRes   domains.Domain
 		svcErr   error
+		authnErr error
 		err      error
 	}{
 		{
 			desc:     "view domain successfully",
 			token:    validToken,
-			domainID: id,
+			domainID: domain.ID,
 			status:   http.StatusOK,
 			err:      nil,
 		},
 		{
 			desc:     "view domain with empty token",
 			token:    "",
-			domainID: id,
+			domainID: domain.ID,
 			status:   http.StatusUnauthorized,
 			err:      apiutil.ErrBearerToken,
 		},
 		{
 			desc:     "view domain with invalid token",
 			token:    inValidToken,
-			domainID: id,
+			domainID: domain.ID,
 			status:   http.StatusUnauthorized,
-			svcErr:   svcerr.ErrAuthentication,
+			authnErr: svcerr.ErrAuthentication,
 			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "view domain with invalid id",
+			token:    validToken,
+			domainID: invalid,
+			status:   http.StatusBadRequest,
+			svcErr:   svcerr.ErrViewEntity,
+			err:      svcerr.ErrViewEntity,
 		},
 	}
 
 	for _, tc := range cases {
-		req := testRequest{
-			client: ds.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/domains/%s", ds.URL, tc.domainID),
-			token:  tc.token,
-		}
-
-		svcCall := svc.On("RetrieveDomain", mock.Anything, mock.Anything, mock.Anything).Return(domains.Domain{}, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var errRes respBody
-		err = json.NewDecoder(res.Body).Decode(&errRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if errRes.Err != "" || errRes.Message != "" {
-			err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-		}
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: ds.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/domains/%s", ds.URL, tc.domainID),
+				token:  tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID, DomainID: tc.domainID, DomainUserID: tc.domainID + "_" + userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("RetrieveDomain", mock.Anything, tc.session, tc.domainID).Return(tc.svcRes, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
-func TestViewDomainPermissions(t *testing.T) {
-	ds, svc := newDomainsServer()
+func TestUpdateDomain(t *testing.T) {
+	ds, svc, auth := newDomainsServer()
+	defer ds.Close()
+
+	updatedName := "test"
+	updatedMetadata := domains.Metadata{"role": "domain"}
+	updatedTags := []string{"tag1", "tag2"}
+	updatedAlias := "test"
+	updatedDomain := domains.Domain{
+		ID:       ID,
+		Name:     updatedName,
+		Metadata: updatedMetadata,
+		Tags:     updatedTags,
+		Alias:    updatedAlias,
+	}
+	unMetadata := domains.Metadata{
+		"test": make(chan int),
+	}
+
+	cases := []struct {
+		desc        string
+		token       string
+		session     authn.Session
+		domainID    string
+		updateReq   domains.DomainReq
+		contentType string
+		status      int
+		svcRes      domains.Domain
+		svcErr      error
+		authnErr    error
+		err         error
+	}{
+		{
+			desc:     "update domain successfully",
+			token:    validToken,
+			domainID: domain.ID,
+			updateReq: domains.DomainReq{
+				Name:     &updatedName,
+				Metadata: &updatedMetadata,
+				Tags:     &updatedTags,
+				Alias:    &updatedAlias,
+			},
+			contentType: contentType,
+			status:      http.StatusOK,
+			svcRes:      updatedDomain,
+			err:         nil,
+		},
+		{
+			desc:     "update domain with empty token",
+			token:    "",
+			domainID: domain.ID,
+			updateReq: domains.DomainReq{
+				Name:     &updatedName,
+				Metadata: &updatedMetadata,
+				Tags:     &updatedTags,
+				Alias:    &updatedAlias,
+			},
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			err:         apiutil.ErrBearerToken,
+		},
+		{
+			desc:     "update domain with invalid token",
+			token:    inValidToken,
+			domainID: domain.ID,
+			updateReq: domains.DomainReq{
+				Name:     &updatedName,
+				Metadata: &updatedMetadata,
+				Tags:     &updatedTags,
+				Alias:    &updatedAlias,
+			},
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			authnErr:    svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "update domain with invalid content type",
+			token:    validToken,
+			domainID: domain.ID,
+			updateReq: domains.DomainReq{
+				Name:     &updatedName,
+				Metadata: &updatedMetadata,
+				Tags:     &updatedTags,
+				Alias:    &updatedAlias,
+			},
+			contentType: "application/xml",
+			status:      http.StatusUnsupportedMediaType,
+			err:         apiutil.ErrUnsupportedContentType,
+		},
+		{
+			desc:     "update domain with data that cant be marshalled",
+			token:    validToken,
+			domainID: domain.ID,
+			updateReq: domains.DomainReq{
+				Name:     &updatedName,
+				Metadata: &unMetadata,
+				Tags:     &updatedTags,
+				Alias:    &updatedAlias,
+			},
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
+		},
+		{
+			desc:     "update domain with invalid id",
+			token:    validToken,
+			domainID: invalid,
+			updateReq: domains.DomainReq{
+				Name:     &updatedName,
+				Metadata: &updatedMetadata,
+				Tags:     &updatedTags,
+				Alias:    &updatedAlias,
+			},
+			contentType: contentType,
+			status:      http.StatusUnprocessableEntity,
+			svcErr:      svcerr.ErrUpdateEntity,
+			err:         svcerr.ErrUpdateEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.updateReq)
+			req := testRequest{
+				client:      ds.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/domains/%s", ds.URL, tc.domainID),
+				body:        strings.NewReader(data),
+				contentType: tc.contentType,
+				token:       tc.token,
+			}
+			fmt.Println("req url", req.url)
+
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID, DomainID: tc.domainID, DomainUserID: tc.domainID + "_" + userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("UpdateDomain", mock.Anything, tc.session, tc.domainID, tc.updateReq).Return(tc.svcRes, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestEnableDomain(t *testing.T) {
+	ds, svc, auth := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
 		desc     string
 		token    string
+		session  authn.Session
 		domainID string
 		status   int
 		svcErr   error
+		svcRes   domains.Domain
+		authnErr error
 		err      error
 	}{
 		{
-			desc:     "view domain permissions successfully",
+			desc:     "enable domain with valid token",
 			token:    validToken,
-			domainID: id,
+			domainID: domain.ID,
 			status:   http.StatusOK,
+			svcRes:   domain,
 			err:      nil,
 		},
 		{
-			desc:     "view domain permissions with empty token",
+			desc:     "enable domain with invalid token",
+			token:    inValidToken,
+			domainID: domain.ID,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "enable domain with empty token",
 			token:    "",
-			domainID: id,
+			domainID: domain.ID,
 			status:   http.StatusUnauthorized,
 			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:     "view domain permissions with invalid token",
-			token:    inValidToken,
-			domainID: id,
-			status:   http.StatusUnauthorized,
-			svcErr:   svcerr.ErrAuthentication,
-			err:      svcerr.ErrAuthentication,
-		},
-		{
-			desc:     "view domain permissions with empty domainID",
+			desc:     "enable domain with empty id",
 			token:    validToken,
 			domainID: "",
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrMissingID,
 		},
-	}
-
-	for _, tc := range cases {
-		req := testRequest{
-			client: ds.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/domains/%s/permissions", ds.URL, tc.domainID),
-			token:  tc.token,
-		}
-
-		svcCall := svc.On("RetrieveDomainPermissions", mock.Anything, mock.Anything, mock.Anything).Return(policies.Permissions{}, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var errRes respBody
-		err = json.NewDecoder(res.Body).Decode(&errRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if errRes.Err != "" || errRes.Message != "" {
-			err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-		}
-
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-	}
-}
-
-func TestUpdateDomain(t *testing.T) {
-	ds, svc := newDomainsServer()
-	defer ds.Close()
-
-	cases := []struct {
-		desc        string
-		token       string
-		domain      domains.Domain
-		contentType string
-		status      int
-		svcErr      error
-		err         error
-	}{
 		{
-			desc:  "update domain successfully",
-			token: validToken,
-			domain: domains.Domain{
-				ID:       ID,
-				Name:     "test",
-				Metadata: domains.Metadata{"role": "domain"},
-				Tags:     []string{"tag1", "tag2"},
-				Alias:    "test",
-			},
-			contentType: contentType,
-			status:      http.StatusOK,
-			err:         nil,
-		},
-		{
-			desc:  "update domain with empty token",
-			token: "",
-			domain: domains.Domain{
-				ID:       ID,
-				Name:     "test",
-				Metadata: domains.Metadata{"role": "domain"},
-				Tags:     []string{"tag1", "tag2"},
-				Alias:    "test",
-			},
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         apiutil.ErrBearerToken,
-		},
-		{
-			desc:  "update domain with invalid token",
-			token: inValidToken,
-			domain: domains.Domain{
-				ID:       ID,
-				Name:     "test",
-				Metadata: domains.Metadata{"role": "domain"},
-				Tags:     []string{"tag1", "tag2"},
-				Alias:    "test",
-			},
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			svcErr:      svcerr.ErrAuthentication,
-			err:         svcerr.ErrAuthentication,
-		},
-		{
-			desc:  "update domain with invalid content type",
-			token: validToken,
-			domain: domains.Domain{
-				ID:       ID,
-				Name:     "test",
-				Metadata: domains.Metadata{"role": "domain"},
-				Tags:     []string{"tag1", "tag2"},
-				Alias:    "test",
-			},
-			contentType: "application/xml",
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
-		},
-		{
-			desc:  "update domain with data that cant be marshalled",
-			token: validToken,
-			domain: domains.Domain{
-				ID:   ID,
-				Name: "test",
-				Metadata: map[string]interface{}{
-					"test": make(chan int),
-				},
-				Tags:  []string{"tag1", "tag2"},
-				Alias: "test",
-			},
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
+			desc:     "enable domain with invalid id",
+			token:    validToken,
+			domainID: invalid,
+			status:   http.StatusUnprocessableEntity,
+			svcErr:   svcerr.ErrUpdateEntity,
+			err:      svcerr.ErrUpdateEntity,
 		},
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.domain)
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPatch,
-			url:         fmt.Sprintf("%s/domains/%s", ds.URL, tc.domain.ID),
-			body:        strings.NewReader(data),
-			contentType: tc.contentType,
-			token:       tc.token,
-		}
-
-		svcCall := svc.On("UpdateDomain", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(domains.Domain{}, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		var errRes respBody
-		err = json.NewDecoder(res.Body).Decode(&errRes)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-		if errRes.Err != "" || errRes.Message != "" {
-			err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-		}
-
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-	}
-}
-
-func TestEnableDomain(t *testing.T) {
-	ds, svc := newDomainsServer()
-	defer ds.Close()
-
-	disabledDomain := domain
-	disabledDomain.Status = domains.DisabledStatus
-
-	cases := []struct {
-		desc     string
-		domain   domains.Domain
-		response domains.Domain
-		token    string
-		status   int
-		svcErr   error
-		err      error
-	}{
-		{
-			desc:   "enable domain with valid token",
-			domain: disabledDomain,
-			response: domains.Domain{
-				ID:     domain.ID,
-				Status: domains.EnabledStatus,
-			},
-			token:  validToken,
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "enable domain with invalid token",
-			domain: disabledDomain,
-			token:  inValidToken,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
-		},
-		{
-			desc:   "enable domain with empty token",
-			domain: disabledDomain,
-			token:  "",
-			status: http.StatusUnauthorized,
-			err:    apiutil.ErrBearerToken,
-		},
-		{
-			desc: "enable domain with empty id",
-			domain: domains.Domain{
-				ID: "",
-			},
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
-		},
-		{
-			desc: "enable domain with invalid id",
-			domain: domains.Domain{
-				ID: "invalid",
-			},
-			token:  validToken,
-			status: http.StatusForbidden,
-			svcErr: svcerr.ErrAuthorization,
-			err:    svcerr.ErrAuthorization,
-		},
-	}
-
-	for _, tc := range cases {
-		data := toJSON(tc.domain)
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/enable", ds.URL, tc.domain.ID),
-			contentType: contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
-		svcCall := svc.On("ChangeDomainStatus", mock.Anything, tc.token, tc.domain.ID, mock.Anything).Return(tc.response, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ds.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/domains/%s/enable", ds.URL, tc.domainID),
+				contentType: contentType,
+				token:       tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID, DomainID: tc.domainID, DomainUserID: tc.domainID + "_" + userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("EnableDomain", mock.Anything, tc.session, tc.domainID).Return(tc.svcRes, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
 func TestDisableDomain(t *testing.T) {
-	ds, svc := newDomainsServer()
+	ds, svc, auth := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
 		desc     string
-		domain   domains.Domain
-		response domains.Domain
 		token    string
+		session  authn.Session
+		domainID string
 		status   int
 		svcErr   error
+		svcRes   domains.Domain
+		authnErr error
 		err      error
 	}{
 		{
-			desc:   "disable domain with valid token",
-			domain: domain,
-			response: domains.Domain{
-				ID:     domain.ID,
-				Status: domains.DisabledStatus,
-			},
-			token:  validToken,
-			status: http.StatusOK,
-			err:    nil,
+			desc:     "disable domain with valid token",
+			token:    validToken,
+			domainID: domain.ID,
+			status:   http.StatusOK,
+			svcRes:   domain,
+			err:      nil,
 		},
 		{
-			desc:   "disable domain with invalid token",
-			domain: domain,
-			token:  inValidToken,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
+			desc:     "disable domain with invalid token",
+			token:    inValidToken,
+			domainID: domain.ID,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:   "disable domain with empty token",
-			domain: domain,
-			token:  "",
-			status: http.StatusUnauthorized,
-			err:    apiutil.ErrBearerToken,
+			desc:     "disable domain with empty token",
+			token:    "",
+			domainID: domain.ID,
+			status:   http.StatusUnauthorized,
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc: "disable domain with empty id",
-			domain: domains.Domain{
-				ID: "",
-			},
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
+			desc:     "disable domain with empty id",
+			token:    validToken,
+			domainID: "",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrMissingID,
 		},
 		{
-			desc: "disable domain with invalid id",
-			domain: domains.Domain{
-				ID: "invalid",
-			},
-			token:  validToken,
-			status: http.StatusForbidden,
-			svcErr: svcerr.ErrAuthorization,
-			err:    svcerr.ErrAuthorization,
+			desc:     "disable domain with invalid id",
+			token:    validToken,
+			domainID: invalid,
+			status:   http.StatusUnprocessableEntity,
+			svcErr:   svcerr.ErrUpdateEntity,
+			err:      svcerr.ErrUpdateEntity,
 		},
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.domain)
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/disable", ds.URL, tc.domain.ID),
-			contentType: contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
-		svcCall := svc.On("ChangeDomainStatus", mock.Anything, tc.token, tc.domain.ID, mock.Anything).Return(tc.response, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ds.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/domains/%s/disable", ds.URL, tc.domainID),
+				contentType: contentType,
+				token:       tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID, DomainID: tc.domainID, DomainUserID: tc.domainID + "_" + userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("DisableDomain", mock.Anything, tc.session, tc.domainID).Return(tc.svcRes, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
 func TestFreezeDomain(t *testing.T) {
-	ds, svc := newDomainsServer()
+	ds, svc, auth := newDomainsServer()
 	defer ds.Close()
 
 	cases := []struct {
 		desc     string
-		domain   domains.Domain
-		response domains.Domain
 		token    string
+		session  authn.Session
+		domainID string
 		status   int
 		svcErr   error
+		svcRes   domains.Domain
+		authnErr error
 		err      error
 	}{
 		{
-			desc:   "freeze domain with valid token",
-			domain: domain,
-			response: domains.Domain{
-				ID:     domain.ID,
-				Status: domains.FreezeStatus,
-			},
-			token:  validToken,
-			status: http.StatusOK,
-			err:    nil,
+			desc:     "freeze domain with valid token",
+			token:    validToken,
+			domainID: domain.ID,
+			status:   http.StatusOK,
+			svcRes:   domain,
+			err:      nil,
 		},
 		{
-			desc:   "freeze domain with invalid token",
-			domain: domain,
-			token:  inValidToken,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
+			desc:     "freeze domain with invalid token",
+			token:    inValidToken,
+			domainID: domain.ID,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:   "freeze domain with empty token",
-			domain: domain,
-			token:  "",
-			status: http.StatusUnauthorized,
-			err:    apiutil.ErrBearerToken,
+			desc:     "freeze domain with empty token",
+			token:    "",
+			domainID: domain.ID,
+			status:   http.StatusUnauthorized,
+			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc: "freeze domain with empty id",
-			domain: domains.Domain{
-				ID: "",
-			},
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
+			desc:     "freeze domain with empty id",
+			token:    validToken,
+			domainID: "",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrMissingID,
 		},
 		{
-			desc: "freeze domain with invalid id",
-			domain: domains.Domain{
-				ID: "invalid",
-			},
-			token:  validToken,
-			status: http.StatusForbidden,
-			svcErr: svcerr.ErrAuthorization,
-			err:    svcerr.ErrAuthorization,
+			desc:     "freeze domain with invalid id",
+			token:    validToken,
+			domainID: invalid,
+			status:   http.StatusUnprocessableEntity,
+			svcErr:   svcerr.ErrUpdateEntity,
+			err:      svcerr.ErrUpdateEntity,
 		},
 	}
 
 	for _, tc := range cases {
-		data := toJSON(tc.domain)
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/freeze", ds.URL, tc.domain.ID),
-			contentType: contentType,
-			token:       tc.token,
-			body:        strings.NewReader(data),
-		}
-		svcCall := svc.On("ChangeDomainStatus", mock.Anything, tc.token, tc.domain.ID, mock.Anything).Return(tc.response, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-	}
-}
-
-func TestAssignDomainUsers(t *testing.T) {
-	ds, svc := newDomainsServer()
-	defer ds.Close()
-
-	cases := []struct {
-		desc        string
-		data        string
-		domainID    string
-		contentType string
-		token       string
-		status      int
-		err         error
-	}{
-		{
-			desc:        "assign domain users with valid token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusCreated,
-			err:         nil,
-		},
-		{
-			desc:        "assign domain users with invalid token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       inValidToken,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
-		},
-		{
-			desc:        "assign domain users with empty token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       "",
-			status:      http.StatusUnauthorized,
-			err:         apiutil.ErrBearerToken,
-		},
-		{
-			desc:        "assign domain users with empty id",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
-			domainID:    "",
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrMissingID,
-		},
-		{
-			desc:        "assign domain users with invalid id",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
-			domainID:    "invalid",
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusForbidden,
-			err:         svcerr.ErrAuthorization,
-		},
-		{
-			desc:        "assign domain users with malformed data",
-			data:        fmt.Sprintf(`{"relation": "%s", user_ids : ["%s", "%s"]}`, "editor", validID, validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
-		},
-		{
-			desc:        "assign domain users with invalid content type",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "editor", validID, validID),
-			domainID:    domain.ID,
-			contentType: "application/xml",
-			token:       validToken,
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
-		},
-		{
-			desc:        "assign domain users with empty user ids",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : []}`, "editor"),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrMissingID,
-		},
-		{
-			desc:        "assign domain users with empty relation",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_ids" : ["%s", "%s"]}`, "", validID, validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrMissingRelation,
-		},
-	}
-
-	for _, tc := range cases {
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/users/assign", ds.URL, tc.domainID),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
-
-		svcCall := svc.On("AssignUsers", mock.Anything, tc.token, tc.domainID, mock.Anything, mock.Anything).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-	}
-}
-
-func TestUnassignDomainUser(t *testing.T) {
-	ds, svc := newDomainsServer()
-	defer ds.Close()
-
-	cases := []struct {
-		desc        string
-		data        string
-		domainID    string
-		contentType string
-		token       string
-		status      int
-		err         error
-	}{
-		{
-			desc:        "unassign domain user with valid token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusNoContent,
-			err:         nil,
-		},
-		{
-			desc:        "unassign domain user with invalid token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       inValidToken,
-			status:      http.StatusUnauthorized,
-			err:         svcerr.ErrAuthentication,
-		},
-		{
-			desc:        "unassign domain user with empty token",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       "",
-			status:      http.StatusUnauthorized,
-			err:         apiutil.ErrBearerToken,
-		},
-		{
-			desc:        "unassign domain user with empty domain id",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
-			domainID:    "",
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrMissingID,
-		},
-		{
-			desc:        "unassign domain user with invalid id",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
-			domainID:    "invalid",
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusForbidden,
-			err:         svcerr.ErrAuthorization,
-		},
-		{
-			desc:        "unassign domain user with malformed data",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s}`, "editor", validID),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
-		},
-		{
-			desc:        "unassign domain user with invalid content type",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : "%s"}`, "editor", validID),
-			domainID:    domain.ID,
-			contentType: "application/xml",
-			token:       validToken,
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
-		},
-		{
-			desc:        "unassign domain user with empty user id",
-			data:        fmt.Sprintf(`{"relation": "%s", "user_id" : ""}`, "editor"),
-			domainID:    domain.ID,
-			contentType: contentType,
-			token:       validToken,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
-		},
-	}
-
-	for _, tc := range cases {
-		req := testRequest{
-			client:      ds.Client(),
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/domains/%s/users/unassign", ds.URL, tc.domainID),
-			contentType: tc.contentType,
-			token:       tc.token,
-			body:        strings.NewReader(tc.data),
-		}
-
-		svcCall := svc.On("UnassignUser", mock.Anything, tc.token, tc.domainID, mock.Anything, mock.Anything).Return(tc.err)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
-	}
-}
-
-func TestListDomainsByUserID(t *testing.T) {
-	ds, svc := newDomainsServer()
-	defer ds.Close()
-
-	cases := []struct {
-		desc               string
-		token              string
-		query              string
-		listDomainsRequest domains.DomainsPage
-		userID             string
-		status             int
-		svcErr             error
-		err                error
-	}{
-		{
-			desc:   "list domains by user id with valid token",
-			token:  validToken,
-			status: http.StatusOK,
-			listDomainsRequest: domains.DomainsPage{
-				Total:   1,
-				Domains: []domains.Domain{domain},
-			},
-			userID: validID,
-			err:    nil,
-		},
-		{
-			desc:   "list domains by user id with empty user id",
-			token:  validToken,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingID,
-		},
-		{
-			desc:   "list domains by user id with empty token",
-			token:  "",
-			userID: validID,
-			status: http.StatusUnauthorized,
-			err:    apiutil.ErrBearerToken,
-		},
-		{
-			desc:   "list domains by user id with invalid token",
-			token:  inValidToken,
-			userID: validID,
-			status: http.StatusUnauthorized,
-			svcErr: svcerr.ErrAuthentication,
-			err:    svcerr.ErrAuthentication,
-		},
-		{
-			desc:  "list domains by user id with offset",
-			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
-				Total:   1,
-				Domains: []domains.Domain{domain},
-			},
-			query:  "offset=1",
-			userID: validID,
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "list domains by user id with invalid offset",
-			token:  validToken,
-			query:  "offset=invalid",
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-		{
-			desc:  "list domains by user id with limit",
-			token: validToken,
-			listDomainsRequest: domains.DomainsPage{
-				Total:   1,
-				Domains: []domains.Domain{domain},
-			},
-			query:  "limit=1",
-			userID: validID,
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:   "list domains by user id with invalid limit",
-			token:  validToken,
-			query:  "limit=invalid",
-			userID: validID,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrValidation,
-		},
-	}
-	for _, tc := range cases {
-		req := testRequest{
-			client: ds.Client(),
-			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users/%s/domains?", ds.URL, tc.userID) + tc.query,
-			token:  tc.token,
-		}
-
-		svcCall := svc.On("ListUserDomains", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.listDomainsRequest, tc.svcErr)
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		svcCall.Unset()
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ds.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/domains/%s/freeze", ds.URL, tc.domainID),
+				contentType: contentType,
+				token:       tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID, DomainID: tc.domainID, DomainUserID: tc.domainID + "_" + userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("FreezeDomain", mock.Anything, tc.session, tc.domainID).Return(tc.svcRes, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
 	}
 }
 
 type respBody struct {
-	Err         string           `json:"error"`
-	Message     string           `json:"message"`
-	Total       int              `json:"total"`
-	Permissions []string         `json:"permissions"`
-	ID          string           `json:"id"`
-	Tags        []string         `json:"tags"`
-	Status      mgclients.Status `json:"status"`
+	Err         string         `json:"error"`
+	Message     string         `json:"message"`
+	Total       int            `json:"total"`
+	Permissions []string       `json:"permissions"`
+	ID          string         `json:"id"`
+	Tags        []string       `json:"tags"`
+	Status      domains.Status `json:"status"`
 }

@@ -68,15 +68,10 @@ func (req updateDomainReq) validate() error {
 }
 
 type listDomainsReq struct {
-	token string
 	page
 }
 
 func (req listDomainsReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	return nil
 }
 

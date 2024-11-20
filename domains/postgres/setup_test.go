@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	apostgres "github.com/absmach/magistrala/auth/postgres"
+	dpostgres "github.com/absmach/magistrala/domains/postgres"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jmoiron/sqlx"
@@ -77,7 +77,11 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	if db, err = pgclient.Setup(dbConfig, *apostgres.Migration()); err != nil {
+	dMigration, err := dpostgres.Migration()
+	if err != nil {
+		log.Fatalf("Could not apply domains table migration: %v", err)
+	}
+	if db, err = pgclient.Setup(dbConfig, *dMigration); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 

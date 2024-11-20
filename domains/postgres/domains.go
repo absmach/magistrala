@@ -491,38 +491,3 @@ func buildPageQuery(pm domains.Page) (string, error) {
 
 	return emq, nil
 }
-
-type dbPolicy struct {
-	SubjectType     string `db:"subject_type,omitempty"`
-	SubjectID       string `db:"subject_id,omitempty"`
-	SubjectRelation string `db:"subject_relation,omitempty"`
-	Relation        string `db:"relation,omitempty"`
-	ObjectType      string `db:"object_type,omitempty"`
-	ObjectID        string `db:"object_id,omitempty"`
-}
-
-func toDBPolicies(pcs ...domains.Policy) []dbPolicy {
-	var dbpcs []dbPolicy
-	for _, pc := range pcs {
-		dbpcs = append(dbpcs, dbPolicy{
-			SubjectType:     pc.SubjectType,
-			SubjectID:       pc.SubjectID,
-			SubjectRelation: pc.SubjectRelation,
-			Relation:        pc.Relation,
-			ObjectType:      pc.ObjectType,
-			ObjectID:        pc.ObjectID,
-		})
-	}
-	return dbpcs
-}
-
-func toDBPolicy(pc domains.Policy) dbPolicy {
-	return dbPolicy{
-		SubjectType:     pc.SubjectType,
-		SubjectID:       pc.SubjectID,
-		SubjectRelation: pc.SubjectRelation,
-		Relation:        pc.Relation,
-		ObjectType:      pc.ObjectType,
-		ObjectID:        pc.ObjectID,
-	}
-}

@@ -163,6 +163,7 @@ func (lm *loggingMiddleware) ListDomains(ctx context.Context, session authn.Sess
 	}(time.Now())
 	return lm.svc.ListDomains(ctx, session, page)
 }
+
 func (lm *loggingMiddleware) DeleteUserFromDomains(ctx context.Context, id string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{

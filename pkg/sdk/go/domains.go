@@ -129,7 +129,7 @@ func (sdk mgSDK) Domains(pm PageMetadata, token string) (DomainsPage, errors.SDK
 }
 
 func (sdk mgSDK) ListDomainUsers(domainID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", domainsEndpoint, domainID, usersEndpoint), pm)
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s", domainID, usersEndpoint), pm)
 	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}

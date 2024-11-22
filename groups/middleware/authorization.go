@@ -334,7 +334,6 @@ func (am *authorizationMiddleware) RemoveAllChildrenGroups(ctx context.Context, 
 	}); err != nil {
 		return err
 	}
-	// ToDo: Add session DomainUserID authz check for all children groups
 
 	return am.svc.RemoveAllChildrenGroups(ctx, session, id)
 }

@@ -19,7 +19,7 @@ const (
 	EnabledStatus Status = iota
 	// DisabledStatus represents disabled Group.
 	DisabledStatus
-	// DeletedStatus
+	// DeletedStatus represents deleted Group.
 	DeletedStatus
 
 	// AllStatus is used for querying purposes to list groups irrespective

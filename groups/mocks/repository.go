@@ -260,6 +260,34 @@ func (_m *Repository) RetrieveByID(ctx context.Context, id string) (groups.Group
 	return r0, r1
 }
 
+// RetrieveByIDAndUser provides a mock function with given fields: ctx, domainID, userID, groupID
+func (_m *Repository) RetrieveByIDAndUser(ctx context.Context, domainID string, userID string, groupID string) (groups.Group, error) {
+	ret := _m.Called(ctx, domainID, userID, groupID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveByIDAndUser")
+	}
+
+	var r0 groups.Group
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (groups.Group, error)); ok {
+		return rf(ctx, domainID, userID, groupID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) groups.Group); ok {
+		r0 = rf(ctx, domainID, userID, groupID)
+	} else {
+		r0 = ret.Get(0).(groups.Group)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, domainID, userID, groupID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RetrieveByIDs provides a mock function with given fields: ctx, pm, ids
 func (_m *Repository) RetrieveByIDs(ctx context.Context, pm groups.PageMeta, ids ...string) (groups.Page, error) {
 	ret := _m.Called(ctx, pm, ids)
@@ -289,7 +317,7 @@ func (_m *Repository) RetrieveByIDs(ctx context.Context, pm groups.PageMeta, ids
 }
 
 // RetrieveChildrenGroups provides a mock function with given fields: ctx, domainID, userID, groupID, startLevel, endLevel, pm
-func (_m *Repository) RetrieveChildrenGroups(ctx context.Context, domainID string, userID string, groupID string, startLevel int, endLevel int, pm groups.PageMeta) (groups.Page, error) {
+func (_m *Repository) RetrieveChildrenGroups(ctx context.Context, domainID string, userID string, groupID string, startLevel int64, endLevel int64, pm groups.PageMeta) (groups.Page, error) {
 	ret := _m.Called(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
 
 	if len(ret) == 0 {
@@ -298,16 +326,16 @@ func (_m *Repository) RetrieveChildrenGroups(ctx context.Context, domainID strin
 
 	var r0 groups.Page
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int, int, groups.PageMeta) (groups.Page, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int64, int64, groups.PageMeta) (groups.Page, error)); ok {
 		return rf(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int, int, groups.PageMeta) groups.Page); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int64, int64, groups.PageMeta) groups.Page); ok {
 		r0 = rf(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
 	} else {
 		r0 = ret.Get(0).(groups.Page)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, int, int, groups.PageMeta) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, int64, int64, groups.PageMeta) error); ok {
 		r1 = rf(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
 	} else {
 		r1 = ret.Error(1)
@@ -741,12 +769,12 @@ func (_m *Repository) Save(ctx context.Context, g groups.Group) (groups.Group, e
 	return r0, r1
 }
 
-// UnassignAllChildrenGroup provides a mock function with given fields: ctx, id
-func (_m *Repository) UnassignAllChildrenGroup(ctx context.Context, id string) error {
+// UnassignAllChildrenGroups provides a mock function with given fields: ctx, id
+func (_m *Repository) UnassignAllChildrenGroups(ctx context.Context, id string) error {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UnassignAllChildrenGroup")
+		panic("no return value specified for UnassignAllChildrenGroups")
 	}
 
 	var r0 error

@@ -16,14 +16,16 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	namegen    = namegenerator.NewGenerator()
-	invalidID  = strings.Repeat("a", 37)
-	validGroup = groups.Group{
+	namegen        = namegenerator.NewGenerator()
+	invalidID      = strings.Repeat("a", 37)
+	validTimestamp = time.Now().UTC().Truncate(time.Millisecond)
+	validGroup     = groups.Group{
 		ID:          testsutil.GenerateUUID(&testing.T{}),
 		Domain:      testsutil.GenerateUUID(&testing.T{}),
 		Name:        namegen.Generate(),
@@ -31,6 +33,26 @@ var (
 		Metadata:    map[string]interface{}{"key": "value"},
 		CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 		Status:      groups.EnabledStatus,
+	}
+	directAccess     = "direct"
+	availableActions = []string{
+		"update",
+		"read",
+		"membership",
+		"delete",
+		"subgroup_create",
+		"subgroup_client_create",
+		"subgroup_channel_create",
+		"subgroup_update",
+		"subgroup_read",
+		"subgroup_membership",
+		"subgroup_delete",
+		"subgroup_set_child",
+		"subgroup_set_parent",
+		"subgroup_manage_role",
+		"subgroup_add_role_users",
+		"subgroup_remove_role_users",
+		"subgroup_view_role_users",
 	}
 )
 
@@ -40,22 +62,49 @@ func TestSave(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
 	})
 
+	validGroupRes := validGroup
+	validGroupRes.Path = validGroup.ID
+	validGroupRes.Level = 1
+
 	repo := postgres.New(database)
+
+	parentGroup := validGroup
+	parentGroup.ID = testsutil.GenerateUUID(t)
+	parentGroup.Name = namegen.Generate()
+
+	pgroup, err := repo.Save(context.Background(), parentGroup)
+	require.Nil(t, err, fmt.Sprintf("save group unexpected error: %s", err))
+
+	validChildGroup := validGroup
+	validChildGroup.ID = testsutil.GenerateUUID(t)
+	validChildGroup.Name = namegen.Generate()
+	validChildGroup.Parent = pgroup.ID
+	validChildGroupRes := validChildGroup
+	validChildGroupRes.Path = fmt.Sprintf("%s.%s", pgroup.Path, validChildGroupRes.ID)
+	validChildGroupRes.Level = 2
 
 	cases := []struct {
 		desc  string
 		group groups.Group
+		resp  groups.Group
 		err   error
 	}{
 		{
 			desc:  "add new group successfully",
 			group: validGroup,
+			resp:  validGroupRes,
 			err:   nil,
 		},
 		{
 			desc:  "add duplicate group",
 			group: validGroup,
 			err:   repoerr.ErrConflict,
+		},
+		{
+			desc:  "add group with parent",
+			group: validChildGroup,
+			resp:  validChildGroupRes,
+			err:   nil,
 		},
 		{
 			desc: "add group with invalid ID",
@@ -65,7 +114,7 @@ func TestSave(t *testing.T) {
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				CreatedAt:   validTimestamp,
 				Status:      groups.EnabledStatus,
 			},
 			err: repoerr.ErrMalformedEntity,
@@ -78,7 +127,7 @@ func TestSave(t *testing.T) {
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				CreatedAt:   validTimestamp,
 				Status:      groups.EnabledStatus,
 			},
 			err: repoerr.ErrMalformedEntity,
@@ -87,14 +136,14 @@ func TestSave(t *testing.T) {
 			desc: "add group with invalid parent",
 			group: groups.Group{
 				ID:          testsutil.GenerateUUID(t),
-				Parent:      invalidID,
+				Parent:      testsutil.GenerateUUID(t),
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				CreatedAt:   validTimestamp,
 				Status:      groups.EnabledStatus,
 			},
-			err: repoerr.ErrMalformedEntity,
+			err: repoerr.ErrNotFound,
 		},
 		{
 			desc: "add group with invalid name",
@@ -104,7 +153,7 @@ func TestSave(t *testing.T) {
 				Name:        strings.Repeat("a", 1025),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				CreatedAt:   validTimestamp,
 				Status:      groups.EnabledStatus,
 			},
 			err: repoerr.ErrMalformedEntity,
@@ -117,7 +166,7 @@ func TestSave(t *testing.T) {
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 1025),
 				Metadata:    map[string]interface{}{"key": "value"},
-				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				CreatedAt:   validTimestamp,
 				Status:      groups.EnabledStatus,
 			},
 			err: repoerr.ErrMalformedEntity,
@@ -132,31 +181,20 @@ func TestSave(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"key": make(chan int),
 				},
-				CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				CreatedAt: validTimestamp,
 				Status:    groups.EnabledStatus,
 			},
 			err: repoerr.ErrMalformedEntity,
 		},
 		{
-			desc: "add group with empty domain",
+			desc: "add group with invalid domain",
 			group: groups.Group{
 				ID:          testsutil.GenerateUUID(t),
 				Name:        namegen.Generate(),
+				Domain:      invalidID,
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
-				Status:      groups.EnabledStatus,
-			},
-			err: repoerr.ErrMalformedEntity,
-		},
-		{
-			desc: "add group with empty name",
-			group: groups.Group{
-				ID:          testsutil.GenerateUUID(t),
-				Domain:      testsutil.GenerateUUID(t),
-				Description: strings.Repeat("a", 64),
-				Metadata:    map[string]interface{}{"key": "value"},
-				CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				CreatedAt:   validTimestamp,
 				Status:      groups.EnabledStatus,
 			},
 			err: repoerr.ErrMalformedEntity,
@@ -164,13 +202,11 @@ func TestSave(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch group, err := repo.Save(context.Background(), tc.group); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.group, group, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group, group))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			group, err := repo.Save(context.Background(), tc.group)
+			assert.Equal(t, tc.resp, group, fmt.Sprintf("%s: expected %v got %+v\n", tc.desc, tc.resp, group))
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+		})
 	}
 }
 
@@ -186,71 +222,78 @@ func TestUpdate(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("save group unexpected error: %s", err))
 
 	cases := []struct {
-		desc  string
-		group groups.Group
-		err   error
+		desc   string
+		update string
+		group  groups.Group
+		err    error
 	}{
 		{
-			desc: "update group successfully",
+			desc:   "update group successfully",
+			update: "all",
 			group: groups.Group{
 				ID:          group.ID,
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				UpdatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedAt:   validTimestamp,
 				UpdatedBy:   testsutil.GenerateUUID(t),
 			},
 			err: nil,
 		},
 		{
-			desc: "update group name",
+			desc:   "update group name",
+			update: "name",
 			group: groups.Group{
 				ID:        group.ID,
 				Name:      namegen.Generate(),
-				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedAt: validTimestamp,
 				UpdatedBy: testsutil.GenerateUUID(t),
 			},
 			err: nil,
 		},
 		{
-			desc: "update group description",
+			desc:   "update group description",
+			update: "description",
 			group: groups.Group{
 				ID:          group.ID,
-				Description: strings.Repeat("a", 64),
-				UpdatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				Description: strings.Repeat("b", 64),
+				UpdatedAt:   validTimestamp,
 				UpdatedBy:   testsutil.GenerateUUID(t),
 			},
 			err: nil,
 		},
 		{
-			desc: "update group metadata",
+			desc:   "update group metadata",
+			update: "metadata",
 			group: groups.Group{
 				ID:        group.ID,
-				Metadata:  map[string]interface{}{"key": "value"},
-				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				Metadata:  map[string]interface{}{"key1": "value1"},
+				UpdatedAt: validTimestamp,
 				UpdatedBy: testsutil.GenerateUUID(t),
 			},
 			err: nil,
 		},
 		{
-			desc: "update group with invalid ID",
+			desc:   "update group with invalid ID",
+			update: "all",
 			group: groups.Group{
 				ID:          testsutil.GenerateUUID(t),
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				UpdatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedAt:   validTimestamp,
 				UpdatedBy:   testsutil.GenerateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
 		},
 		{
-			desc: "update group with empty ID",
+			desc:   "update group with empty ID",
+			update: "all",
 			group: groups.Group{
 				Name:        namegen.Generate(),
 				Description: strings.Repeat("a", 64),
 				Metadata:    map[string]interface{}{"key": "value"},
-				UpdatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedAt:   validTimestamp,
 				UpdatedBy:   testsutil.GenerateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
@@ -258,15 +301,27 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch group, err := repo.Update(context.Background(), tc.group); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.group.ID, group.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.ID, group.ID))
-			assert.Equal(t, tc.group.UpdatedAt, group.UpdatedAt, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedAt, group.UpdatedAt))
-			assert.Equal(t, tc.group.UpdatedBy, group.UpdatedBy, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedBy, group.UpdatedBy))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			group, err := repo.Update(context.Background(), tc.group)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+			if err == nil {
+				assert.Equal(t, tc.group.ID, group.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.ID, group.ID))
+				assert.Equal(t, tc.group.UpdatedAt, group.UpdatedAt, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedAt, group.UpdatedAt))
+				assert.Equal(t, tc.group.UpdatedBy, group.UpdatedBy, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedBy, group.UpdatedBy))
+				switch tc.update {
+				case "all":
+					assert.Equal(t, tc.group.Name, group.Name, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.Name, group.Name))
+					assert.Equal(t, tc.group.Description, group.Description, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.Description, group.Description))
+					assert.Equal(t, tc.group.Metadata, group.Metadata, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.Metadata, group.Metadata))
+				case "name":
+					assert.Equal(t, tc.group.Name, group.Name, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.Name, group.Name))
+				case "description":
+					assert.Equal(t, tc.group.Description, group.Description, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.Description, group.Description))
+				case "metadata":
+					assert.Equal(t, tc.group.Metadata, group.Metadata, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.Metadata, group.Metadata))
+				}
+			}
+		})
 	}
 }
 
@@ -291,7 +346,7 @@ func TestChangeStatus(t *testing.T) {
 			group: groups.Group{
 				ID:        group.ID,
 				Status:    groups.DisabledStatus,
-				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedAt: validTimestamp,
 				UpdatedBy: testsutil.GenerateUUID(t),
 			},
 			err: nil,
@@ -301,7 +356,7 @@ func TestChangeStatus(t *testing.T) {
 			group: groups.Group{
 				ID:        testsutil.GenerateUUID(t),
 				Status:    groups.DisabledStatus,
-				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedAt: validTimestamp,
 				UpdatedBy: testsutil.GenerateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
@@ -310,7 +365,7 @@ func TestChangeStatus(t *testing.T) {
 			desc: "change status group with empty ID",
 			group: groups.Group{
 				Status:    groups.DisabledStatus,
-				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedAt: validTimestamp,
 				UpdatedBy: testsutil.GenerateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
@@ -318,15 +373,16 @@ func TestChangeStatus(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch group, err := repo.ChangeStatus(context.Background(), tc.group); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.group.ID, group.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.ID, group.ID))
-			assert.Equal(t, tc.group.UpdatedAt, group.UpdatedAt, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedAt, group.UpdatedAt))
-			assert.Equal(t, tc.group.UpdatedBy, group.UpdatedBy, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedBy, group.UpdatedBy))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			group, err := repo.ChangeStatus(context.Background(), tc.group)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+			if err == nil {
+				assert.Equal(t, tc.group.ID, group.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.ID, group.ID))
+				assert.Equal(t, tc.group.UpdatedAt, group.UpdatedAt, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedAt, group.UpdatedAt))
+				assert.Equal(t, tc.group.UpdatedBy, group.UpdatedBy, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.UpdatedBy, group.UpdatedBy))
+				assert.Equal(t, tc.group.Status, group.Status, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group.Status, group.Status))
+			}
+		})
 	}
 }
 
@@ -338,6 +394,9 @@ func TestRetrieveByID(t *testing.T) {
 
 	repo := postgres.New(database)
 
+	validGroupRes := validGroup
+	validGroupRes.Path = validGroup.ID
+
 	group, err := repo.Save(context.Background(), validGroup)
 	require.Nil(t, err, fmt.Sprintf("save group unexpected error: %s", err))
 
@@ -345,12 +404,14 @@ func TestRetrieveByID(t *testing.T) {
 		desc  string
 		id    string
 		group groups.Group
+		resp  groups.Group
 		err   error
 	}{
 		{
 			desc:  "retrieve group by id successfully",
 			id:    group.ID,
 			group: validGroup,
+			resp:  validGroupRes,
 			err:   nil,
 		},
 		{
@@ -368,13 +429,143 @@ func TestRetrieveByID(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch group, err := repo.RetrieveByID(context.Background(), tc.id); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.group, group, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group, group))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			group, err := repo.RetrieveByID(context.Background(), tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+				assert.Equal(t, tc.resp, group, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.group, group))
+			}
+		})
+	}
+}
+
+func TestRetrieveByIDAndUser(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM groups")
+		require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
+	})
+
+	repo := postgres.New(database)
+
+	domainID := testsutil.GenerateUUID(t)
+	userID := testsutil.GenerateUUID(t)
+	num := 10
+	items := []groups.Group{}
+	for i := 0; i < num; i++ {
+		name := namegen.Generate()
+		group := groups.Group{
+			ID:          testsutil.GenerateUUID(t),
+			Domain:      domainID,
+			Name:        name,
+			Description: strings.Repeat("a", 64),
+			Metadata:    map[string]interface{}{"name": name},
+			CreatedAt:   validTimestamp,
+			Status:      groups.EnabledStatus,
 		}
+		grp, err := repo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("create group unexpected error: %s", err))
+		newRolesProvision := []roles.RoleProvision{
+			{
+				Role: roles.Role{
+					ID:        testsutil.GenerateUUID(t) + "_" + grp.ID,
+					Name:      "admin",
+					EntityID:  grp.ID,
+					CreatedAt: validTimestamp,
+					CreatedBy: userID,
+				},
+				OptionalActions: availableActions,
+				OptionalMembers: []string{userID},
+			},
+		}
+		_, err = repo.AddRoles(context.Background(), newRolesProvision)
+		require.Nil(t, err, fmt.Sprintf("add roles unexpected error: %s", err))
+		ngrp := grp
+		ngrp.RoleID = newRolesProvision[0].Role.ID
+		ngrp.RoleName = newRolesProvision[0].Role.Name
+		ngrp.AccessType = directAccess
+		items = append(items, ngrp)
+	}
+
+	cases := []struct {
+		desc     string
+		groupID  string
+		userID   string
+		domainID string
+		resp     groups.Group
+		err      error
+	}{
+		{
+			desc:     "retrieve group by id and user successfully",
+			groupID:  items[0].ID,
+			userID:   userID,
+			domainID: domainID,
+			resp:     items[0],
+			err:      nil,
+		},
+		{
+			desc:     "retrieve group by id and user successfully",
+			groupID:  items[5].ID,
+			userID:   userID,
+			domainID: domainID,
+			resp:     items[5],
+			err:      nil,
+		},
+		{
+			desc:     "retrieve group by id and user with invalid group ID",
+			groupID:  invalidID,
+			userID:   userID,
+			domainID: domainID,
+			err:      repoerr.ErrNotFound,
+		},
+		{
+			desc:     "retrieve group by id and user with empty group ID",
+			groupID:  "",
+			userID:   userID,
+			domainID: domainID,
+			err:      repoerr.ErrNotFound,
+		},
+		{
+			desc:     "retrieve group by id and user with invalid user ID",
+			groupID:  items[0].ID,
+			userID:   testsutil.GenerateUUID(t),
+			domainID: domainID,
+			err:      repoerr.ErrNotFound,
+		},
+		{
+			desc:     "retrieve group by id and user with empty user ID",
+			groupID:  items[0].ID,
+			userID:   "",
+			domainID: domainID,
+			err:      repoerr.ErrNotFound,
+		},
+		{
+			desc:     "retrieve group by id and user with invalid domain ID",
+			groupID:  items[0].ID,
+			userID:   userID,
+			domainID: invalidID,
+			err:      repoerr.ErrNotFound,
+		},
+		{
+			desc:     "retrieve group by id and user with empty domain ID",
+			groupID:  items[0].ID,
+			userID:   userID,
+			domainID: "",
+			err:      repoerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			group, err := repo.RetrieveByIDAndUser(context.Background(), tc.domainID, tc.userID, tc.groupID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				group.Actions = nil
+				group.Level = 1
+				group.AccessProviderRoleActions = nil
+				assert.Equal(t, tc.resp, group, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, group))
+			}
+		})
 	}
 }
 
@@ -402,9 +593,11 @@ func TestRetrieveAll(t *testing.T) {
 			Status:      groups.EnabledStatus,
 		}
 		_, err := repo.Save(context.Background(), group)
-		require.Nil(t, err, fmt.Sprintf("create invitation unexpected error: %s", err))
+		require.Nil(t, err, fmt.Sprintf("create group unexpected error: %s", err))
 		items = append(items, group)
-		parentID = group.ID
+		if i%20 == 0 {
+			parentID = group.ID
+		}
 	}
 
 	cases := []struct {
@@ -630,59 +823,23 @@ func TestRetrieveAll(t *testing.T) {
 			},
 			err: errors.ErrMalformedEntity,
 		},
-		{
-			desc: "retrieve parent groups",
-			page: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-			},
-			response: groups.Page{
-				PageMeta: groups.PageMeta{
-					Total:  uint64(num),
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-				Groups: items[:6],
-			},
-			err: nil,
-		},
-		{
-			desc: "retrieve children groups",
-			page: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-			},
-			response: groups.Page{
-				PageMeta: groups.PageMeta{
-					Total:  uint64(num),
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-				Groups: items[150:],
-			},
-			err: nil,
-		},
 	}
 
 	for _, tc := range cases {
-		switch groups, err := repo.RetrieveAll(context.Background(), tc.page.PageMeta); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))
-			assert.Equal(t, tc.response.Limit, groups.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Limit, groups.Limit))
-			assert.Equal(t, tc.response.Offset, groups.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Offset, groups.Offset))
-			for i := range tc.response.Groups {
-				tc.response.Groups[i].Level = groups.Groups[i].Level
-				tc.response.Groups[i].Path = groups.Groups[i].Path
+		t.Run(tc.desc, func(t *testing.T) {
+			switch groups, err := repo.RetrieveAll(context.Background(), tc.page.PageMeta); {
+			case err == nil:
+				assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+				assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))
+				assert.Equal(t, tc.response.Limit, groups.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Limit, groups.Limit))
+				assert.Equal(t, tc.response.Offset, groups.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Offset, groups.Offset))
+				got := stripGroupDetails(groups.Groups)
+				resp := stripGroupDetails(tc.response.Groups)
+				assert.ElementsMatch(t, resp, got, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, resp, got))
+			default:
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			}
-			assert.ElementsMatch(t, groups.Groups, tc.response.Groups, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, tc.response.Groups, groups.Groups))
-		default:
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+		})
 	}
 }
 
@@ -712,7 +869,9 @@ func TestRetrieveByIDs(t *testing.T) {
 		_, err := repo.Save(context.Background(), group)
 		require.Nil(t, err, fmt.Sprintf("create invitation unexpected error: %s", err))
 		items = append(items, group)
-		parentID = group.ID
+		if i%20 == 0 {
+			parentID = group.ID
+		}
 	}
 
 	cases := []struct {
@@ -937,61 +1096,21 @@ func TestRetrieveByIDs(t *testing.T) {
 			},
 			err: errors.ErrMalformedEntity,
 		},
-		{
-			desc: "retrieve parent groups",
-			page: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-			},
-			ids: getIDs(items[0:20]),
-			response: groups.Page{
-				PageMeta: groups.PageMeta{
-					Total:  20,
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-				Groups: items[:6],
-			},
-			err: nil,
-		},
-		{
-			desc: "retrieve children groups",
-			page: groups.Page{
-				PageMeta: groups.PageMeta{
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-			},
-			ids: getIDs(items[0:20]),
-			response: groups.Page{
-				PageMeta: groups.PageMeta{
-					Total:  20,
-					Offset: 0,
-					Limit:  uint64(num),
-				},
-				Groups: items[15:20],
-			},
-			err: nil,
-		},
 	}
 
 	for _, tc := range cases {
-		switch groups, err := repo.RetrieveByIDs(context.Background(), tc.page.PageMeta, tc.ids...); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))
-			assert.Equal(t, tc.response.Limit, groups.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Limit, groups.Limit))
-			assert.Equal(t, tc.response.Offset, groups.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Offset, groups.Offset))
-			for i := range tc.response.Groups {
-				tc.response.Groups[i].Level = groups.Groups[i].Level
-				tc.response.Groups[i].Path = groups.Groups[i].Path
-			}
-			assert.ElementsMatch(t, groups.Groups, tc.response.Groups, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, tc.response.Groups, groups.Groups))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			groups, err := repo.RetrieveByIDs(context.Background(), tc.page.PageMeta, tc.ids...)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+			if err == nil {
+				assert.Equal(t, tc.response.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Total, groups.Total))
+				assert.Equal(t, tc.response.Limit, groups.Limit, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Limit, groups.Limit))
+				assert.Equal(t, tc.response.Offset, groups.Offset, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.response.Offset, groups.Offset))
+				got := stripGroupDetails(groups.Groups)
+				resp := stripGroupDetails(tc.response.Groups)
+				assert.ElementsMatch(t, resp, got, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, resp, got))
+			}
+		})
 	}
 }
 
@@ -1029,12 +1148,10 @@ func TestDelete(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch err := repo.Delete(context.Background(), tc.id); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.Delete(context.Background(), tc.id)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+		})
 	}
 }
 
@@ -1049,23 +1166,20 @@ func TestAssignParentGroup(t *testing.T) {
 	num := 10
 
 	var items []groups.Group
-	parentID := ""
 	for i := 0; i < num; i++ {
 		name := namegen.Generate()
 		group := groups.Group{
 			ID:          testsutil.GenerateUUID(t),
 			Domain:      testsutil.GenerateUUID(t),
-			Parent:      parentID,
 			Name:        name,
 			Description: strings.Repeat("a", 64),
 			Metadata:    map[string]interface{}{"name": name},
-			CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+			CreatedAt:   validTimestamp,
 			Status:      groups.EnabledStatus,
 		}
 		_, err := repo.Save(context.Background(), group)
 		require.Nil(t, err, fmt.Sprintf("create invitation unexpected error: %s", err))
 		items = append(items, group)
-		parentID = group.ID
 	}
 
 	cases := []struct {
@@ -1084,13 +1198,13 @@ func TestAssignParentGroup(t *testing.T) {
 			desc: "assign parent group with invalid ID",
 			id:   testsutil.GenerateUUID(t),
 			ids:  []string{items[1].ID, items[2].ID, items[3].ID, items[4].ID, items[5].ID},
-			err:  repoerr.ErrCreateEntity,
+			err:  repoerr.ErrUpdateEntity,
 		},
 		{
 			desc: "assign parent group with empty ID",
 			id:   "",
 			ids:  []string{items[1].ID, items[2].ID, items[3].ID, items[4].ID, items[5].ID},
-			err:  repoerr.ErrCreateEntity,
+			err:  repoerr.ErrUpdateEntity,
 		},
 		{
 			desc: "assign parent group with invalid group IDs",
@@ -1107,12 +1221,10 @@ func TestAssignParentGroup(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch err := repo.AssignParentGroup(context.Background(), tc.id, tc.ids...); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.AssignParentGroup(context.Background(), tc.id, tc.ids...)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		}
+		})
 	}
 }
 
@@ -1143,7 +1255,9 @@ func TestUnassignParentGroup(t *testing.T) {
 		_, err := repo.Save(context.Background(), group)
 		require.Nil(t, err, fmt.Sprintf("create invitation unexpected error: %s", err))
 		items = append(items, group)
-		parentID = group.ID
+		if i == 0 {
+			parentID = group.ID
+		}
 	}
 
 	cases := []struct {
@@ -1162,13 +1276,13 @@ func TestUnassignParentGroup(t *testing.T) {
 			desc: "un-assign parent group with invalid ID",
 			id:   testsutil.GenerateUUID(t),
 			ids:  []string{items[1].ID, items[2].ID, items[3].ID, items[4].ID, items[5].ID},
-			err:  repoerr.ErrCreateEntity,
+			err:  repoerr.ErrUpdateEntity,
 		},
 		{
 			desc: "un-assign parent group with empty ID",
 			id:   "",
 			ids:  []string{items[1].ID, items[2].ID, items[3].ID, items[4].ID, items[5].ID},
-			err:  repoerr.ErrCreateEntity,
+			err:  repoerr.ErrUpdateEntity,
 		},
 		{
 			desc: "un-assign parent group with invalid group IDs",
@@ -1185,12 +1299,598 @@ func TestUnassignParentGroup(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		switch err := repo.UnassignParentGroup(context.Background(), tc.id, tc.ids...); {
-		case err == nil:
-			assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		default:
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.UnassignParentGroup(context.Background(), tc.id, tc.ids...)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
+	}
+}
+
+func TestUnassignAllChildrenGroups(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM groups")
+		require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
+	})
+
+	repo := postgres.New(database)
+
+	num := 10
+
+	var items []groups.Group
+	parentID := ""
+	for i := 0; i < num; i++ {
+		name := namegen.Generate()
+		group := groups.Group{
+			ID:          testsutil.GenerateUUID(t),
+			Domain:      testsutil.GenerateUUID(t),
+			Parent:      parentID,
+			Name:        name,
+			Description: strings.Repeat("a", 64),
+			Metadata:    map[string]interface{}{"name": name},
+			CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+			Status:      groups.EnabledStatus,
 		}
+		_, err := repo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("create invitation unexpected error: %s", err))
+		items = append(items, group)
+		if i == 0 {
+			parentID = group.ID
+		}
+	}
+
+	cases := []struct {
+		desc string
+		id   string
+		err  error
+	}{
+		{
+			desc: "un-assign all children groups successfully",
+			id:   items[0].ID,
+			err:  nil,
+		},
+		{
+			desc: "un-assign all children groups with invalid ID",
+			id:   testsutil.GenerateUUID(t),
+			err:  repoerr.ErrNotFound,
+		},
+		{
+			desc: "un-assign all children groups with empty ID",
+			id:   "",
+			err:  repoerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := repo.UnassignAllChildrenGroups(context.Background(), tc.id)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
+	}
+}
+
+func TestRetrieveHierarchy(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM groups")
+		require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
+	})
+
+	repo := postgres.New(database)
+
+	num := 10
+
+	var items []groups.Group
+	parentID := ""
+	for i := 0; i < num; i++ {
+		name := namegen.Generate()
+		group := groups.Group{
+			ID:          testsutil.GenerateUUID(t),
+			Domain:      testsutil.GenerateUUID(t),
+			Parent:      parentID,
+			Name:        name,
+			Description: strings.Repeat("a", 64),
+			Metadata:    map[string]interface{}{"name": name},
+			CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
+			Status:      groups.EnabledStatus,
+		}
+		_, err := repo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("create group unexpected error: %s", err))
+		items = append(items, group)
+		if i == 0 {
+			parentID = group.ID
+		}
+	}
+
+	cases := []struct {
+		desc string
+		id   string
+		hm   groups.HierarchyPageMeta
+		resp groups.HierarchyPage
+		err  error
+	}{
+		{
+			desc: "retrieve ancestors successfully",
+			id:   items[1].ID,
+			hm: groups.HierarchyPageMeta{
+				Level:     1,
+				Direction: +1,
+				Tree:      false,
+			},
+			resp: groups.HierarchyPage{
+				Groups: []groups.Group{items[0], items[1]},
+				HierarchyPageMeta: groups.HierarchyPageMeta{
+					Level:     1,
+					Direction: +1,
+					Tree:      false,
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve descendants successfully",
+			id:   items[0].ID,
+			hm: groups.HierarchyPageMeta{
+				Level:     1,
+				Direction: -1,
+				Tree:      false,
+			},
+			resp: groups.HierarchyPage{
+				Groups: items,
+				HierarchyPageMeta: groups.HierarchyPageMeta{
+					Level:     1,
+					Direction: -1,
+					Tree:      false,
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve hierarchy with invalid ID",
+			id:   testsutil.GenerateUUID(t),
+			err:  nil,
+		},
+		{
+			desc: "retrieve hierarchy with empty ID",
+			id:   "",
+			err:  nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			gpPage, err := repo.RetrieveHierarchy(context.Background(), tc.id, tc.hm)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				got := stripGroupDetails(gpPage.Groups)
+				resp := stripGroupDetails(tc.resp.Groups)
+				assert.ElementsMatch(t, resp, got, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, resp, got))
+			}
+		})
+	}
+}
+
+func TestRetrieveAllParentGroups(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM groups")
+		require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
+	})
+
+	repo := postgres.New(database)
+
+	parentID := ""
+	domainID := testsutil.GenerateUUID(t)
+	userID := testsutil.GenerateUUID(t)
+	num := 10
+	halfindex := num/2 + 1
+	items := []groups.Group{}
+	for i := 0; i < num; i++ {
+		name := namegen.Generate()
+		group := groups.Group{
+			ID:          testsutil.GenerateUUID(t),
+			Domain:      domainID,
+			Name:        name,
+			Parent:      parentID,
+			Description: strings.Repeat("a", 64),
+			Metadata:    map[string]interface{}{"name": name},
+			CreatedAt:   validTimestamp,
+			Status:      groups.EnabledStatus,
+		}
+		grp, err := repo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("create group unexpected error: %s", err))
+		parentID = grp.ID
+		newRolesProvision := []roles.RoleProvision{
+			{
+				Role: roles.Role{
+					ID:        testsutil.GenerateUUID(t) + "_" + grp.ID,
+					Name:      "admin",
+					EntityID:  grp.ID,
+					CreatedAt: validTimestamp,
+					CreatedBy: userID,
+				},
+				OptionalActions: availableActions,
+				OptionalMembers: []string{userID},
+			},
+		}
+		_, err = repo.AddRoles(context.Background(), newRolesProvision)
+		require.Nil(t, err, fmt.Sprintf("add roles unexpected error: %s", err))
+		ngrp := grp
+		ngrp.RoleID = newRolesProvision[0].Role.ID
+		ngrp.RoleName = newRolesProvision[0].Role.Name
+		ngrp.AccessType = directAccess
+		items = append(items, ngrp)
+	}
+
+	cases := []struct {
+		desc     string
+		id       string
+		domainID string
+		userID   string
+		pageMeta groups.PageMeta
+		resp     groups.Page
+		err      error
+	}{
+		{
+			desc:     "retrieve all parent groups successfully",
+			id:       items[num-1].ID,
+			domainID: domainID,
+			userID:   userID,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: uint64(num),
+				},
+				Groups: items,
+			},
+			err: nil,
+		},
+		{
+			desc:     "retrieve half of all parent groups successfully",
+			id:       items[num/2].ID,
+			domainID: domainID,
+			userID:   userID,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: uint64(halfindex),
+				},
+				Groups: items[:halfindex],
+			},
+			err: nil,
+		},
+		{
+			desc:     "retrieve all parent groups with invalid group ID",
+			id:       testsutil.GenerateUUID(t),
+			domainID: domainID,
+			userID:   userID,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: repoerr.ErrNotFound,
+		},
+		{
+			desc:     "retrieve all parent groups with empty group ID",
+			id:       "",
+			domainID: domainID,
+			userID:   userID,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: repoerr.ErrNotFound,
+		},
+		{
+			desc:     "retrieve all parent groups with invalid domain ID",
+			id:       items[num-1].ID,
+			domainID: testsutil.GenerateUUID(t),
+			userID:   userID,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: nil,
+		},
+		{
+			desc:     "retrieve all parent groups with invalid user ID",
+			id:       items[num-1].ID,
+			domainID: domainID,
+			userID:   testsutil.GenerateUUID(t),
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			groups, err := repo.RetrieveAllParentGroups(context.Background(), tc.domainID, tc.userID, tc.id, tc.pageMeta)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.resp.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.resp.Total, groups.Total))
+				got := stripGroupDetails(groups.Groups)
+				resp := stripGroupDetails(tc.resp.Groups)
+				assert.ElementsMatch(t, resp, got, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, resp, got))
+			}
+		})
+	}
+}
+
+func TestRetrieveChildrenGroups(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM groups")
+		require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
+	})
+
+	repo := postgres.New(database)
+
+	parentID := ""
+	domainID := testsutil.GenerateUUID(t)
+	userID := testsutil.GenerateUUID(t)
+	num := 10
+	items := []groups.Group{}
+	for i := 0; i < num; i++ {
+		name := namegen.Generate()
+		group := groups.Group{
+			ID:          testsutil.GenerateUUID(t),
+			Domain:      domainID,
+			Name:        name,
+			Parent:      parentID,
+			Description: strings.Repeat("a", 64),
+			Metadata:    map[string]interface{}{"name": name},
+			CreatedAt:   validTimestamp,
+			Status:      groups.EnabledStatus,
+		}
+		grp, err := repo.Save(context.Background(), group)
+		require.Nil(t, err, fmt.Sprintf("create group unexpected error: %s", err))
+		parentID = grp.ID
+		newRolesProvision := []roles.RoleProvision{
+			{
+				Role: roles.Role{
+					ID:        testsutil.GenerateUUID(t) + "_" + grp.ID,
+					Name:      "admin",
+					EntityID:  grp.ID,
+					CreatedAt: validTimestamp,
+					CreatedBy: userID,
+				},
+				OptionalActions: availableActions,
+				OptionalMembers: []string{userID},
+			},
+		}
+		_, err = repo.AddRoles(context.Background(), newRolesProvision)
+		require.Nil(t, err, fmt.Sprintf("add roles unexpected error: %s", err))
+		ngrp := grp
+		ngrp.RoleID = newRolesProvision[0].Role.ID
+		ngrp.RoleName = newRolesProvision[0].Role.Name
+		ngrp.AccessType = directAccess
+		items = append(items, ngrp)
+	}
+
+	cases := []struct {
+		desc       string
+		id         string
+		domainID   string
+		userID     string
+		startLevel int64
+		endLevel   int64
+		pageMeta   groups.PageMeta
+		resp       groups.Page
+		err        error
+	}{
+		{
+			desc:       "retrieve children groups from parent group level successfully",
+			id:         items[0].ID,
+			domainID:   domainID,
+			userID:     userID,
+			startLevel: 0,
+			endLevel:   -1,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: uint64(num),
+				},
+				Groups: items,
+			},
+			err: nil,
+		},
+		{
+			desc:       "Retrieve specific level of children groups from parent group level",
+			id:         items[0].ID,
+			domainID:   domainID,
+			userID:     userID,
+			startLevel: 1,
+			endLevel:   1,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 1,
+				},
+				Groups: []groups.Group{items[1]},
+			},
+			err: nil,
+		},
+		{
+			desc: "Retrieve all children groups from specific level from parent group level",
+			id:   items[0].ID,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			domainID:   domainID,
+			userID:     userID,
+			startLevel: 2,
+			endLevel:   -1,
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 8,
+				},
+				Groups: items[2:],
+			},
+			err: nil,
+		},
+		{
+			desc: "Retrieve all children groups from specific level to specific level from parent group level",
+			id:   items[0].ID,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			domainID:   domainID,
+			userID:     userID,
+			startLevel: 1,
+			endLevel:   2,
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 2,
+				},
+				Groups: items[1:3],
+			},
+			err: nil,
+		},
+		{
+			desc:       "Retrieve all children groups with invalid group ID",
+			id:         testsutil.GenerateUUID(t),
+			domainID:   domainID,
+			userID:     userID,
+			startLevel: 0,
+			endLevel:   -1,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: repoerr.ErrNotFound,
+		},
+		{
+			desc:       "Retrieve all children groups with empty group ID",
+			id:         "",
+			domainID:   domainID,
+			userID:     userID,
+			startLevel: 0,
+			endLevel:   -1,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: repoerr.ErrNotFound,
+		},
+		{
+			desc:       "Retrieve all children groups with invalid domain ID",
+			id:         items[0].ID,
+			domainID:   testsutil.GenerateUUID(t),
+			userID:     userID,
+			startLevel: 0,
+			endLevel:   -1,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: nil,
+		},
+		{
+			desc:       "Retrieve all children groups with invalid user ID",
+			id:         items[0].ID,
+			domainID:   domainID,
+			userID:     testsutil.GenerateUUID(t),
+			startLevel: 0,
+			endLevel:   -1,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: nil,
+		},
+		{
+			desc:       "Retrieve all children groups with invalid start level",
+			id:         items[0].ID,
+			domainID:   domainID,
+			userID:     userID,
+			startLevel: -1,
+			endLevel:   -1,
+			pageMeta: groups.PageMeta{
+				Offset: 0,
+				Limit:  20,
+			},
+			resp: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 0,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: repoerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			groups, err := repo.RetrieveChildrenGroups(context.Background(), tc.domainID, tc.userID, tc.id, tc.startLevel, tc.endLevel, tc.pageMeta)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.resp.Total, groups.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.resp.Total, groups.Total))
+				got := stripGroupDetails(groups.Groups)
+				resp := stripGroupDetails(tc.resp.Groups)
+				assert.ElementsMatch(t, resp, got, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, resp, got))
+			}
+		})
 	}
 }
 
@@ -1201,4 +1901,16 @@ func getIDs(groups []groups.Group) []string {
 	}
 
 	return ids
+}
+
+func stripGroupDetails(groups []groups.Group) []groups.Group {
+	for i := range groups {
+		groups[i].Level = 0
+		groups[i].Path = ""
+		groups[i].CreatedAt = validTimestamp
+		groups[i].Actions = nil
+		groups[i].AccessProviderRoleActions = nil
+	}
+
+	return groups
 }

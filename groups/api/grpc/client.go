@@ -31,7 +31,6 @@ type grpcClient struct {
 // NewClient returns new gRPC client instance.
 func NewClient(conn *grpc.ClientConn, timeout time.Duration) grpcGroupsV1.GroupsServiceClient {
 	return &grpcClient{
-
 		retrieveEntity: kitgrpc.NewClient(
 			conn,
 			svcName,

@@ -10,6 +10,7 @@ import (
 
 	"github.com/absmach/magistrala/groups"
 	"github.com/absmach/magistrala/internal/api"
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/stretchr/testify/assert"
 )
@@ -108,15 +109,6 @@ func TestListGroupReqValidation(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "invalid upper level",
-			req: listGroupsReq{
-				PageMeta: groups.PageMeta{
-					Limit: 10,
-				},
-			},
-			err: apiutil.ErrInvalidLevel,
-		},
-		{
 			desc: "invalid lower limit",
 			req: listGroupsReq{
 				PageMeta: groups.PageMeta{
@@ -195,206 +187,309 @@ func TestChangeGroupStatusReqValidation(t *testing.T) {
 	}
 }
 
-func Test_createGroupReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     createGroupReq
-		wantErr bool
+func TestRetrieveGroupHierarchyReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  retrieveGroupHierarchyReq
+		err  error
 	}{
-		// TODO: Add test cases.
+		{
+			desc: "valid request",
+			req: retrieveGroupHierarchyReq{
+				HierarchyPageMeta: groups.HierarchyPageMeta{
+					Tree:      true,
+					Level:     1,
+					Direction: -1,
+				},
+				id: valid,
+			},
+		},
+		{
+			desc: "invalid level",
+			req: retrieveGroupHierarchyReq{
+				HierarchyPageMeta: groups.HierarchyPageMeta{
+					Tree:      true,
+					Level:     groups.MaxLevel + 1,
+					Direction: -1,
+				},
+				id: valid,
+			},
+			err: apiutil.ErrLevel,
+		},
+		{
+			desc: "empty id",
+			req: retrieveGroupHierarchyReq{
+				HierarchyPageMeta: groups.HierarchyPageMeta{
+					Tree:      true,
+					Level:     1,
+					Direction: -1,
+				},
+			},
+			err: apiutil.ErrMissingID,
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("createGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
+
+	for _, tc := range cases {
+		err := tc.req.validate()
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestAddParentGroupReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  addParentGroupReq
+		err  error
+	}{
+		{
+			desc: "valid request",
+			req: addParentGroupReq{
+				id:       testsutil.GenerateUUID(t),
+				ParentID: testsutil.GenerateUUID(t),
+			},
+			err: nil,
+		},
+		{
+			desc: "empty id",
+			req: addParentGroupReq{
+				ParentID: testsutil.GenerateUUID(t),
+			},
+			err: apiutil.ErrMissingID,
+		},
+		{
+			desc: "empty parent id",
+			req: addParentGroupReq{
+				id: testsutil.GenerateUUID(t),
+			},
+			err: apiutil.ErrInvalidIDFormat,
+		},
+		{
+			desc: "invalid parent id",
+			req: addParentGroupReq{
+				id:       testsutil.GenerateUUID(t),
+				ParentID: "invalid",
+			},
+			err: apiutil.ErrInvalidIDFormat,
+		},
+		{
+			desc: "same id",
+			req: addParentGroupReq{
+				id:       validID,
+				ParentID: validID,
+			},
+			err: apiutil.ErrSelfParentingNotAllowed,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.req.validate()
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
 
-func Test_updateGroupReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     updateGroupReq
-		wantErr bool
+func TestRemoveParentGroupReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  removeParentGroupReq
+		err  error
 	}{
-		// TODO: Add test cases.
+		{
+			desc: "valid request",
+			req: removeParentGroupReq{
+				id: testsutil.GenerateUUID(t),
+			},
+			err: nil,
+		},
+		{
+			desc: "empty id",
+			req:  removeParentGroupReq{},
+			err:  apiutil.ErrMissingID,
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("updateGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.req.validate()
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
 
-func Test_listGroupsReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     listGroupsReq
-		wantErr bool
+func TestAddChildrenGroupsReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  addChildrenGroupsReq
+		err  error
 	}{
-		// TODO: Add test cases.
+		{
+			desc: "valid request",
+			req: addChildrenGroupsReq{
+				id:          testsutil.GenerateUUID(t),
+				ChildrenIDs: []string{testsutil.GenerateUUID(t)},
+			},
+			err: nil,
+		},
+		{
+			desc: "empty id",
+			req: addChildrenGroupsReq{
+				ChildrenIDs: []string{testsutil.GenerateUUID(t)},
+			},
+			err: apiutil.ErrMissingID,
+		},
+		{
+			desc: "empty children ids",
+			req: addChildrenGroupsReq{
+				id: testsutil.GenerateUUID(t),
+			},
+			err: apiutil.ErrMissingChildrenGroupIDs,
+		},
+		{
+			desc: "invalid child id",
+			req: addChildrenGroupsReq{
+				id:          testsutil.GenerateUUID(t),
+				ChildrenIDs: []string{"invalid"},
+			},
+			err: apiutil.ErrInvalidIDFormat,
+		},
+		{
+			desc: "self parenting",
+			req: addChildrenGroupsReq{
+				id:          validID,
+				ChildrenIDs: []string{validID, testsutil.GenerateUUID(t), testsutil.GenerateUUID(t)},
+			},
+			err: apiutil.ErrSelfParentingNotAllowed,
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("listGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.req.validate()
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
 
-func Test_groupReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     groupReq
-		wantErr bool
+func TestRemoveChildrenGroupsReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  removeChildrenGroupsReq
+		err  error
 	}{
-		// TODO: Add test cases.
+		{
+			desc: "valid request",
+			req: removeChildrenGroupsReq{
+				id:          testsutil.GenerateUUID(t),
+				ChildrenIDs: []string{testsutil.GenerateUUID(t)},
+			},
+			err: nil,
+		},
+		{
+			desc: "empty id",
+			req:  removeChildrenGroupsReq{},
+			err:  apiutil.ErrMissingID,
+		},
+		{
+			desc: "empty children ids",
+			req: removeChildrenGroupsReq{
+				id: testsutil.GenerateUUID(t),
+			},
+			err: apiutil.ErrMissingChildrenGroupIDs,
+		},
+		{
+			desc: "invalid child id",
+			req: removeChildrenGroupsReq{
+				id:          testsutil.GenerateUUID(t),
+				ChildrenIDs: []string{"invalid"},
+			},
+			err: apiutil.ErrInvalidIDFormat,
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("groupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.req.validate()
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
 
-func Test_changeGroupStatusReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     changeGroupStatusReq
-		wantErr bool
+func TestRemoveAllChildrenGroupsReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  removeAllChildrenGroupsReq
+		err  error
 	}{
-		// TODO: Add test cases.
+		{
+			desc: "valid request",
+			req: removeAllChildrenGroupsReq{
+				id: testsutil.GenerateUUID(t),
+			},
+			err: nil,
+		},
+		{
+			desc: "empty id",
+			req:  removeAllChildrenGroupsReq{},
+			err:  apiutil.ErrMissingID,
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("changeGroupStatusReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.req.validate()
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
 
-func Test_retrieveGroupHierarchyReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     retrieveGroupHierarchyReq
-		wantErr bool
+func TestListChildrenGroupsReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		req  listChildrenGroupsReq
+		err  error
 	}{
-		// TODO: Add test cases.
+		{
+			desc: "valid request",
+			req: listChildrenGroupsReq{
+				id: validID,
+				PageMeta: groups.PageMeta{
+					Limit: 10,
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "empty id",
+			req:  listChildrenGroupsReq{},
+			err:  apiutil.ErrMissingID,
+		},
+		{
+			desc: "invalid lower limit",
+			req: listChildrenGroupsReq{
+				id: validID,
+				PageMeta: groups.PageMeta{
+					Limit: 0,
+				},
+			},
+			err: apiutil.ErrLimitSize,
+		},
+		{
+			desc: "invalid upper limit",
+			req: listChildrenGroupsReq{
+				id: validID,
+				PageMeta: groups.PageMeta{
+					Limit: api.MaxLimitSize + 1,
+				},
+			},
+			err: apiutil.ErrLimitSize,
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("retrieveGroupHierarchyReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
 
-func Test_addParentGroupReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     addParentGroupReq
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("addParentGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_removeParentGroupReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     removeParentGroupReq
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("removeParentGroupReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_addChildrenGroupsReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     addChildrenGroupsReq
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("addChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_removeChildrenGroupsReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     removeChildrenGroupsReq
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("removeChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_removeAllChildrenGroupsReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     removeAllChildrenGroupsReq
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("removeAllChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_listChildrenGroupsReq_validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     listChildrenGroupsReq
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.req.validate(); (err != nil) != tt.wantErr {
-				t.Errorf("listChildrenGroupsReq.validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := tc.req.validate()
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }

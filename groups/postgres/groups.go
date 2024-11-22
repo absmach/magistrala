@@ -59,6 +59,7 @@ func (repo groupRepository) Save(ctx context.Context, g mggroups.Group) (mggroup
 	if err != nil {
 		return mggroups.Group{}, err
 	}
+
 	row, err := repo.db.NamedQueryContext(ctx, q, dbg)
 	if err != nil {
 		return mggroups.Group{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
@@ -297,8 +298,6 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, pm mggroups.PageM
 }
 
 func (repo groupRepository) RetrieveHierarchy(ctx context.Context, id string, hm mggroups.HierarchyPageMeta) (mggroups.HierarchyPage, error) {
-	// ToDo : use the query to userGroupsBaseQuery
-	// repo.userGroupsBaseQuery(domainID, userID)
 	query := ""
 	switch {
 	// ancestors
@@ -381,7 +380,6 @@ func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID
 		}
 	}()
 
-	//ToDo: Move this logic to service layer
 	pq := `SELECT id, path FROM groups WHERE id = $1 LIMIT 1;`
 	rows, err := tx.Queryx(pq, parentGroupID)
 	if err != nil {
@@ -458,8 +456,6 @@ func (repo groupRepository) AssignParentGroup(ctx context.Context, parentGroupID
 	return nil
 }
 
-// ToDo: Query need to change to ANY
-// ToDo: If parent is changed, then path of all children need to be updated https://patshaughnessy.net/2017/12/14/manipulating-trees-using-sql-and-the-postgres-ltree-extension
 func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) (err error) {
 	if len(groupIDs) == 0 {
 		return nil
@@ -540,19 +536,20 @@ func (repo groupRepository) UnassignParentGroup(ctx context.Context, parentGroup
 	return nil
 }
 
-func (repo groupRepository) UnassignAllChildrenGroup(ctx context.Context, id string) error {
-
+func (repo groupRepository) UnassignAllChildrenGroups(ctx context.Context, id string) error {
 	query := `
 			UPDATE groups AS g SET
 				parent_id = NULL
-			WHERE g.parent = :parent_id ;
+			WHERE g.parent_id = :parent_id ;
 	`
 
-	row, err := repo.db.NamedQueryContext(ctx, query, dbGroup{ParentID: &id})
+	result, err := repo.db.NamedExecContext(ctx, query, dbGroup{ParentID: &id})
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
-	defer row.Close()
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return repoerr.ErrNotFound
+	}
 
 	return nil
 }
@@ -616,7 +613,7 @@ func (repo groupRepository) RetrieveChildrenGroups(ctx context.Context, domainID
 	case startLevel > 0 && endLevel > 0 && startLevel < endLevel:
 		levelCondition = fmt.Sprintf(" path ~ '%s.*{%d,%d}'::::lquery ", pGroup.Path, startLevel, endLevel)
 	default:
-		return mggroups.Page{}, fmt.Errorf("invalid level range: start level: %d end level: %d", startLevel, endLevel)
+		return mggroups.Page{}, errors.Wrap(repoerr.ErrViewEntity, fmt.Errorf("invalid level range: start level: %d end level: %d", startLevel, endLevel))
 	}
 
 	switch {
@@ -721,6 +718,7 @@ func (repo groupRepository) retrieveGroups(ctx context.Context, domainID, userID
 	page.Groups = items
 	return page, nil
 }
+
 func (repo groupRepository) userGroupsBaseQuery(domainID, userID string) string {
 	return fmt.Sprintf(`
 	WITH direct_groups AS (
@@ -823,7 +821,6 @@ func (repo groupRepository) userGroupsBaseQuery(domainID, userID string) string 
 		FROM
 			indirect_child_groups
 	)`, userID, domainID, domainID)
-
 }
 
 func buildQuery(gm mggroups.PageMeta, ids ...string) string {
@@ -994,7 +991,6 @@ func toDBGroupPageMeta(pm mggroups.PageMeta) (dbGroupPageMeta, error) {
 	}, nil
 }
 
-// ToDo: check and remove field "Level" after new auth stabilize
 type dbGroupPageMeta struct {
 	ID         string          `db:"id"`
 	Name       string          `db:"name"`

@@ -189,7 +189,9 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingLastName),
 		errors.Contains(err, apiutil.ErrInvalidUsername),
 		errors.Contains(err, apiutil.ErrMissingIdentity),
-		errors.Contains(err, apiutil.ErrInvalidProfilePictureURL):
+		errors.Contains(err, apiutil.ErrInvalidProfilePictureURL),
+		errors.Contains(err, apiutil.ErrSelfParentingNotAllowed),
+		errors.Contains(err, apiutil.ErrMissingChildrenGroupIDs):
 		err = unwrap(err)
 		w.WriteHeader(http.StatusBadRequest)
 

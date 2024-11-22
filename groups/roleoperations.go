@@ -1,3 +1,6 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
 package groups
 
 import (
@@ -56,7 +59,7 @@ func NewOperationPerm() svcutil.OperationPerm {
 	return svcutil.NewOperationPerm(expectedOperations, operationNames)
 }
 
-// External Operations
+// External Operations.
 const (
 	DomainOpCreateGroup svcutil.ExternalOperation = iota
 	DomainOpListGroups
@@ -72,6 +75,7 @@ var expectedExternalOperations = []svcutil.ExternalOperation{
 	ClientsOpListGroups,
 	ChannelsOpListGroups,
 }
+
 var externalOperationNames = []string{
 	"DomainOpCreateGroup",
 	"DomainOpListGroups",
@@ -139,8 +143,7 @@ func NewRolesOperationPermissionMap() map[svcutil.Operation]svcutil.Permission {
 }
 
 const (
-	// External Permission
-	// Domains
+	// External Permissions for the domain.
 	domainCreateGroupPermission = "channel_create_permission"
 	domainListGroupPermission   = "membership_permission"
 	userListGroupsPermission    = "membership_permission"

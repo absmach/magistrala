@@ -217,9 +217,9 @@ func (_m *Service) ListAvailableActions(ctx context.Context, session authn.Sessi
 	return r0, r1
 }
 
-// ListChildrenGroups provides a mock function with given fields: ctx, session, id, pm
-func (_m *Service) ListChildrenGroups(ctx context.Context, session authn.Session, id string, pm groups.PageMeta) (groups.Page, error) {
-	ret := _m.Called(ctx, session, id, pm)
+// ListChildrenGroups provides a mock function with given fields: ctx, session, id, startLevel, endLevel, pm
+func (_m *Service) ListChildrenGroups(ctx context.Context, session authn.Session, id string, startLevel int64, endLevel int64, pm groups.PageMeta) (groups.Page, error) {
+	ret := _m.Called(ctx, session, id, startLevel, endLevel, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListChildrenGroups")
@@ -227,17 +227,17 @@ func (_m *Service) ListChildrenGroups(ctx context.Context, session authn.Session
 
 	var r0 groups.Page
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, groups.PageMeta) (groups.Page, error)); ok {
-		return rf(ctx, session, id, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, int64, int64, groups.PageMeta) (groups.Page, error)); ok {
+		return rf(ctx, session, id, startLevel, endLevel, pm)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, groups.PageMeta) groups.Page); ok {
-		r0 = rf(ctx, session, id, pm)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, int64, int64, groups.PageMeta) groups.Page); ok {
+		r0 = rf(ctx, session, id, startLevel, endLevel, pm)
 	} else {
 		r0 = ret.Get(0).(groups.Page)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, groups.PageMeta) error); ok {
-		r1 = rf(ctx, session, id, pm)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, int64, int64, groups.PageMeta) error); ok {
+		r1 = rf(ctx, session, id, startLevel, endLevel, pm)
 	} else {
 		r1 = ret.Error(1)
 	}

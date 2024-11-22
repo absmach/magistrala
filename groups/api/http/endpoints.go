@@ -15,8 +15,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-const groupTypeChannels = "channels"
-
 func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
@@ -157,14 +155,14 @@ func ListGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 			groups = append(groups, toViewGroupRes(g))
 		}
 
-		return groupPageRes{pageRes: pageRes{
-			Limit:  page.Limit,
-			Offset: page.Offset,
-			Total:  page.Total,
-		},
+		return groupPageRes{
+			pageRes: pageRes{
+				Limit:  page.Limit,
+				Offset: page.Offset,
+				Total:  page.Total,
+			},
 			Groups: groups,
 		}, nil
-
 	}
 }
 
@@ -208,7 +206,6 @@ func retrieveGroupHierarchyEndpoint(svc groups.Service) endpoint.Endpoint {
 			groups = append(groups, toViewGroupRes(g))
 		}
 		return retrieveGroupHierarchyRes{Level: hp.Level, Direction: hp.Direction, Groups: groups}, nil
-
 	}
 }
 
@@ -339,73 +336,9 @@ func listChildrenGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func buildGroupsResponseTree(page groups.Page) groupPageRes {
-	groupsMap := map[string]*groups.Group{}
-	// Parents' map keeps its array of children.
-	parentsMap := map[string][]*groups.Group{}
-	for i := range page.Groups {
-		if _, ok := groupsMap[page.Groups[i].ID]; !ok {
-			groupsMap[page.Groups[i].ID] = &page.Groups[i]
-			parentsMap[page.Groups[i].ID] = make([]*groups.Group, 0)
-		}
-	}
-
-	for _, group := range groupsMap {
-		if children, ok := parentsMap[group.Parent]; ok {
-			children = append(children, group)
-			parentsMap[group.Parent] = children
-		}
-	}
-
-	res := groupPageRes{
-		pageRes: pageRes{
-			Limit:  page.Limit,
-			Offset: page.Offset,
-			Total:  page.Total,
-		},
-		Groups: []viewGroupRes{},
-	}
-
-	for _, group := range groupsMap {
-		if children, ok := parentsMap[group.ID]; ok {
-			group.Children = children
-		}
-	}
-
-	for _, group := range groupsMap {
-		view := toViewGroupRes(*group)
-		if children, ok := parentsMap[group.Parent]; len(children) == 0 || !ok {
-			res.Groups = append(res.Groups, view)
-		}
-	}
-
-	return res
-}
-
 func toViewGroupRes(group groups.Group) viewGroupRes {
 	view := viewGroupRes{
 		Group: group,
 	}
 	return view
-}
-
-func buildGroupsResponse(gp groups.Page, filterByID bool) groupPageRes {
-	res := groupPageRes{
-		pageRes: pageRes{
-			Total: gp.Total,
-		},
-		Groups: []viewGroupRes{},
-	}
-
-	for _, group := range gp.Groups {
-		view := viewGroupRes{
-			Group: group,
-		}
-		if filterByID && group.Level == 0 {
-			continue
-		}
-		res.Groups = append(res.Groups, view)
-	}
-
-	return res
 }

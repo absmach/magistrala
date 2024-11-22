@@ -76,12 +76,11 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	mig, err := gpostgres.Migration()
+	gmig, err := gpostgres.Migration()
 	if err != nil {
 		log.Fatalf("Could not get groups migration : %s", err)
-
 	}
-	if db, err = pgclient.Setup(dbConfig, *mig); err != nil {
+	if db, err = pgclient.Setup(dbConfig, *gmig); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 

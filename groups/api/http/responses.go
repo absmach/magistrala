@@ -162,8 +162,7 @@ func (res retrieveGroupHierarchyRes) Empty() bool {
 	return false
 }
 
-type addParentGroupRes struct {
-}
+type addParentGroupRes struct{}
 
 func (res addParentGroupRes) Code() int {
 	return http.StatusNoContent
@@ -177,8 +176,7 @@ func (res addParentGroupRes) Empty() bool {
 	return true
 }
 
-type removeParentGroupRes struct {
-}
+type removeParentGroupRes struct{}
 
 func (res removeParentGroupRes) Code() int {
 	return http.StatusNoContent
@@ -192,8 +190,7 @@ func (res removeParentGroupRes) Empty() bool {
 	return true
 }
 
-type addChildrenGroupsRes struct {
-}
+type addChildrenGroupsRes struct{}
 
 func (res addChildrenGroupsRes) Code() int {
 	return http.StatusNoContent
@@ -207,8 +204,7 @@ func (res addChildrenGroupsRes) Empty() bool {
 	return true
 }
 
-type removeChildrenGroupsRes struct {
-}
+type removeChildrenGroupsRes struct{}
 
 func (res removeChildrenGroupsRes) Code() int {
 	return http.StatusNoContent
@@ -222,8 +218,7 @@ func (res removeChildrenGroupsRes) Empty() bool {
 	return true
 }
 
-type removeAllChildrenGroupsRes struct {
-}
+type removeAllChildrenGroupsRes struct{}
 
 func (res removeAllChildrenGroupsRes) Code() int {
 	return http.StatusNoContent

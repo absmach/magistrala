@@ -195,6 +195,7 @@ func decodeHierarchyPageMeta(r *http.Request) (mggroups.HierarchyPageMeta, error
 		Tree:      tree,
 	}, nil
 }
+
 func decodePageMeta(r *http.Request) (mggroups.PageMeta, error) {
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefGroupStatus)
 	if err != nil {

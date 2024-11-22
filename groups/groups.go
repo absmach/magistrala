@@ -74,7 +74,6 @@ type HierarchyPageMeta struct {
 	Direction int64  `json:"direction"` // ancestors (+1) or descendants (-1)
 	// - `true`  - result is JSON tree representing groups hierarchy,
 	// - `false` - result is JSON array of groups.
-	// ToDo: Tree is build in API layer now, not in service layer. This need to be fine tuned.
 	Tree bool `json:"tree"`
 }
 type HierarchyPage struct {
@@ -114,7 +113,7 @@ type Repository interface {
 	// UnassignParentGroup unassign parent group id fr given group id
 	UnassignParentGroup(ctx context.Context, parentGroupID string, groupIDs ...string) error
 
-	UnassignAllChildrenGroup(ctx context.Context, id string) error
+	UnassignAllChildrenGroups(ctx context.Context, id string) error
 
 	RetrieveUserGroups(ctx context.Context, domainID, userID string, pm PageMeta) (Page, error)
 

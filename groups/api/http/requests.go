@@ -46,7 +46,6 @@ type listGroupsReq struct {
 }
 
 func (req listGroupsReq) validate() error {
-
 	if req.Limit > api.MaxLimitSize || req.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
@@ -88,6 +87,9 @@ type retrieveGroupHierarchyReq struct {
 func (req retrieveGroupHierarchyReq) validate() error {
 	if req.Level > groups.MaxLevel {
 		return apiutil.ErrLevel
+	}
+	if req.id == "" {
+		return apiutil.ErrMissingID
 	}
 
 	return nil

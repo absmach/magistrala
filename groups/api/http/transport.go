@@ -1,7 +1,7 @@
-package api
-
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
+
+package api
 
 import (
 	"log/slog"
@@ -99,7 +99,6 @@ func MakeHandler(svc groups.Service, authn authn.Authentication, mux *chi.Mux, l
 					api.EncodeResponse,
 					opts...,
 				), "remove_parent_group").ServeHTTP)
-
 			})
 
 			r.Route("/children", func(r chi.Router) {
@@ -132,7 +131,6 @@ func MakeHandler(svc groups.Service, authn authn.Authentication, mux *chi.Mux, l
 				), "list_children_groups").ServeHTTP)
 			})
 		})
-
 	})
 
 	return mux

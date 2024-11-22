@@ -766,6 +766,7 @@ func (repo *Repository) RetrieveEntitiesRolesActionsMembers(ctx context.Context,
 	}
 	return dbToEntityActionRole(dbears), dbToEntityMemberRole(dbemrs), nil
 }
+
 func (repo *Repository) RemoveMemberFromAllRoles(ctx context.Context, memberID string) (err error) {
 
 	return nil

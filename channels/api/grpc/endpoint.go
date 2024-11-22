@@ -52,3 +52,15 @@ func unsetParentGroupFromChannelsEndpoint(svc channels.Service) endpoint.Endpoin
 		return unsetParentGroupFromChannelsRes{}, nil
 	}
 }
+
+func retrieveEntityEndpoint(svc channels.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(retrieveEntityReq)
+		channel, err := svc.RetrieveByID(ctx, req.Id)
+
+		if err != nil {
+			return retrieveEntityRes{}, err
+		}
+		return retrieveEntityRes{id: channel.ID, domain: channel.Domain, parentGroup: channel.ParentGroup, status: uint8(channel.Status)}, nil
+	}
+}

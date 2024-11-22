@@ -9,6 +9,7 @@ import (
 	"time"
 
 	grpcChannelsV1 "github.com/absmach/magistrala/internal/grpc/channels/v1"
+	grpcCommonV1 "github.com/absmach/magistrala/internal/grpc/common/v1"
 	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
@@ -28,6 +29,7 @@ type grpcClient struct {
 	authorize                    endpoint.Endpoint
 	removeClientConnections       endpoint.Endpoint
 	unsetParentGroupFromChannels endpoint.Endpoint
+	retrieveEntity               endpoint.Endpoint
 }
 
 // NewClient returns new gRPC client instance.
@@ -56,6 +58,14 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) grpcChannelsV1.Chan
 			encodeUnsetParentGroupFromChannelsRequest,
 			decodeUnsetParentGroupFromChannelsResponse,
 			grpcChannelsV1.UnsetParentGroupFromChannelsRes{},
+		).Endpoint(),
+		retrieveEntity: kitgrpc.NewClient(
+			conn,
+			svcName,
+			"RetrieveEntity",
+			encodeRetrieveEntityRequest,
+			decodeRetrieveEntityResponse,
+			grpcCommonV1.RetrieveEntityRes{},
 		).Endpoint(),
 		timeout: timeout,
 	}
@@ -135,6 +145,26 @@ func encodeUnsetParentGroupFromChannelsRequest(_ context.Context, grpcReq interf
 
 func decodeUnsetParentGroupFromChannelsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	return grpcRes.(*grpcChannelsV1.UnsetParentGroupFromChannelsRes), nil
+}
+
+func (client grpcClient) RetrieveEntity(ctx context.Context, req *grpcCommonV1.RetrieveEntityReq, _ ...grpc.CallOption) (r *grpcCommonV1.RetrieveEntityRes, err error) {
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	res, err := client.retrieveEntity(ctx, req.GetId())
+	if err != nil {
+		return &grpcCommonV1.RetrieveEntityRes{}, decodeError(err)
+	}
+
+	return res.(*grpcCommonV1.RetrieveEntityRes), nil
+}
+
+func encodeRetrieveEntityRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	return grpcReq.(*grpcCommonV1.RetrieveEntityReq), nil
+}
+
+func decodeRetrieveEntityResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	return grpcRes.(*grpcCommonV1.RetrieveEntityRes), nil
 }
 
 func decodeError(err error) error {

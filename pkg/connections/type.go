@@ -59,7 +59,6 @@ func NewType(c uint) (ConnType, error) {
 		return Invalid, err
 	}
 	return ConnType(c), nil
-
 }
 
 func ParseConnType(c string) (ConnType, error) {

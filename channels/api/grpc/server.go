@@ -9,6 +9,7 @@ import (
 	mgauth "github.com/absmach/magistrala/auth"
 	channels "github.com/absmach/magistrala/channels/private"
 	grpcChannelsV1 "github.com/absmach/magistrala/internal/grpc/channels/v1"
+	grpcCommonV1 "github.com/absmach/magistrala/internal/grpc/common/v1"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -26,6 +27,7 @@ type grpcServer struct {
 	authorize                    kitgrpc.Handler
 	removeClientConnections       kitgrpc.Handler
 	unsetParentGroupFromChannels kitgrpc.Handler
+	retrieveEntity               kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -45,6 +47,11 @@ func NewServer(svc channels.Service) grpcChannelsV1.ChannelsServiceServer {
 			unsetParentGroupFromChannelsEndpoint(svc),
 			decodeUnsetParentGroupFromChannelsRequest,
 			encodeUnsetParentGroupFromChannelsResponse,
+		),
+		retrieveEntity: kitgrpc.NewServer(
+			retrieveEntityEndpoint(svc),
+			decodeRetrieveEntityRequest,
+			encodeRetrieveEntityResponse,
 		),
 	}
 }
@@ -118,6 +125,34 @@ func decodeUnsetParentGroupFromChannelsRequest(_ context.Context, grpcReq interf
 func encodeUnsetParentGroupFromChannelsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	_ = grpcRes.(unsetParentGroupFromChannelsRes)
 	return &grpcChannelsV1.UnsetParentGroupFromChannelsRes{}, nil
+}
+
+func (s *grpcServer) RetrieveEntity(ctx context.Context, req *grpcCommonV1.RetrieveEntityReq) (*grpcCommonV1.RetrieveEntityRes, error) {
+	_, res, err := s.retrieveEntity.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*grpcCommonV1.RetrieveEntityRes), nil
+}
+
+func decodeRetrieveEntityRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*grpcCommonV1.RetrieveEntityReq)
+	return retrieveEntityReq{
+		Id: req.GetId(),
+	}, nil
+}
+
+func encodeRetrieveEntityResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(retrieveEntityRes)
+
+	return &grpcCommonV1.RetrieveEntityRes{
+		Entity: &grpcCommonV1.EntityBasic{
+			Id:            res.id,
+			DomainId:      res.domain,
+			ParentGroupId: res.parentGroup,
+			Status:        uint32(res.status),
+		},
+	}, nil
 }
 
 func encodeError(err error) error {

@@ -273,6 +273,34 @@ func (_m *Service) ListGroups(ctx context.Context, session authn.Session, pm gro
 	return r0, r1
 }
 
+// ListUserGroups provides a mock function with given fields: ctx, session, userID, pm
+func (_m *Service) ListUserGroups(ctx context.Context, session authn.Session, userID string, pm groups.PageMeta) (groups.Page, error) {
+	ret := _m.Called(ctx, session, userID, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUserGroups")
+	}
+
+	var r0 groups.Page
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, groups.PageMeta) (groups.Page, error)); ok {
+		return rf(ctx, session, userID, pm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, string, groups.PageMeta) groups.Page); ok {
+		r0 = rf(ctx, session, userID, pm)
+	} else {
+		r0 = ret.Get(0).(groups.Page)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, string, groups.PageMeta) error); ok {
+		r1 = rf(ctx, session, userID, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemoveAllChildrenGroups provides a mock function with given fields: ctx, session, id
 func (_m *Service) RemoveAllChildrenGroups(ctx context.Context, session authn.Session, id string) error {
 	ret := _m.Called(ctx, session, id)

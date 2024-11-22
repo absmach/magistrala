@@ -20,7 +20,7 @@ func retrieveEntityEndpoint(svc groups.Service) endpoint.Endpoint {
 			return retrieveEntityRes{}, err
 		}
 
-		return retrieveEntityRes{id: group.ID, domain: group.Domain, status: uint8(group.Status)}, nil
+		return retrieveEntityRes{id: group.ID, domain: group.Domain, parentGroup: group.Parent, status: uint8(group.Status)}, nil
 
 	}
 }

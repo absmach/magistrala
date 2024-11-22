@@ -36,6 +36,10 @@ const (
 	NameKey          = "name"
 	GroupKey         = "group"
 	ActionKey        = "action"
+	ActionsKey       = "actions"
+	RoleIDKey        = "role_id"
+	RoleNameKey      = "role_name"
+	AccessTypeKey    = "access_type"
 	TagKey           = "tag"
 	FirstNameKey     = "first_name"
 	LastNameKey      = "last_name"
@@ -43,6 +47,8 @@ const (
 	SubjectKey       = "subject"
 	ObjectKey        = "object"
 	LevelKey         = "level"
+	StartLevelKey    = "start_level"
+	EndLevelKey      = "end_level"
 	TreeKey          = "tree"
 	DirKey           = "dir"
 	ListPerms        = "list_perms"
@@ -50,6 +56,9 @@ const (
 	EmailKey         = "email"
 	SharedByKey      = "shared_by"
 	TokenKey         = "token"
+	UserKey          = "user"
+	DomainKey        = "domain"
+	ChannelKey       = "channel"
 	DefPermission    = "read_permission"
 	DefTotal         = uint64(100)
 	DefOffset        = 0
@@ -57,6 +66,8 @@ const (
 	DefDir           = "asc"
 	DefLimit         = 10
 	DefLevel         = 0
+	DefStartLevel    = 1
+	DefEndLevel      = 0
 	DefStatus        = "enabled"
 	DefClientStatus  = clients.Enabled
 	DefUserStatus    = users.Enabled

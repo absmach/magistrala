@@ -17,6 +17,7 @@ var (
 	groupChangeStatus            = groupPrefix + "change_status"
 	groupView                    = groupPrefix + "view"
 	groupList                    = groupPrefix + "list"
+	groupListUserGroups          = groupPrefix + "list_user_groups"
 	groupRemove                  = groupPrefix + "remove"
 	groupRetrieveGroupHierarchy  = groupPrefix + "retrieve_group_hierarchy"
 	groupAddParentGroup          = groupPrefix + "add_parent_group"
@@ -208,6 +209,39 @@ func (lge listGroupEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
+type listUserGroupEvent struct {
+	userID string
+	groups.PageMeta
+}
+
+func (luge listUserGroupEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation": groupListUserGroups,
+		"user_id":   luge.userID,
+		"total":     luge.Total,
+		"offset":    luge.Offset,
+		"limit":     luge.Limit,
+	}
+
+	if luge.Name != "" {
+		val["name"] = luge.Name
+	}
+	if luge.DomainID != "" {
+		val["domain_id"] = luge.DomainID
+	}
+	if luge.Tag != "" {
+		val["tag"] = luge.Tag
+	}
+	if luge.Metadata != nil {
+		val["metadata"] = luge.Metadata
+	}
+	if luge.Status.String() != "" {
+		val["status"] = luge.Status.String()
+	}
+
+	return val, nil
+}
+
 type deleteGroupEvent struct {
 	id string
 }
@@ -308,17 +342,21 @@ func (racge removeAllChildrenGroupsEvent) Encode() (map[string]interface{}, erro
 }
 
 type listChildrenGroupsEvent struct {
-	id string
+	id         string
+	startLevel int64
+	endLevel   int64
 	groups.PageMeta
 }
 
 func (vcge listChildrenGroupsEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": groupListChildrenGroups,
-		"id":        vcge.id,
-		"total":     vcge.Total,
-		"offset":    vcge.Offset,
-		"limit":     vcge.Limit,
+		"operation":   groupListChildrenGroups,
+		"id":          vcge.id,
+		"start_level": vcge.startLevel,
+		"end_level":   vcge.endLevel,
+		"total":       vcge.Total,
+		"offset":      vcge.Offset,
+		"limit":       vcge.Limit,
 	}
 	if vcge.Name != "" {
 		val["name"] = vcge.Name

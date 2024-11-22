@@ -56,9 +56,10 @@ func encodeRetrieveEntityResponse(_ context.Context, grpcRes interface{}) (inter
 
 	return &grpcCommonV1.RetrieveEntityRes{
 		Entity: &grpcCommonV1.EntityBasic{
-			Id:       res.id,
-			DomainId: res.domain,
-			Status:   uint32(res.status),
+			Id:            res.id,
+			DomainId:      res.domain,
+			ParentGroupId: res.parentGroup,
+			Status:        uint32(res.status),
 		},
 	}, nil
 }

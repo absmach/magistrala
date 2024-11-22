@@ -6,11 +6,13 @@ syntax = "proto3";
 package channels.v1;
 option go_package = "github.com/absmach/magistrala/internal/grpc/channels/v1";
 
+import "common/v1/common.proto";
 
 service ChannelsService {
   rpc Authorize(AuthzReq)returns(AuthzRes) {}
   rpc RemoveClientConnections(RemoveClientConnectionsReq)returns(RemoveClientConnectionsRes) {}
   rpc UnsetParentGroupFromChannels(UnsetParentGroupFromChannelsReq)returns(UnsetParentGroupFromChannelsRes){}
+  rpc RetrieveEntity(common.v1.RetrieveEntityReq) returns (common.v1.RetrieveEntityRes) {}
 }
 
 message RemoveClientConnectionsReq {

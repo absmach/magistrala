@@ -10,12 +10,13 @@ type PageMeta struct {
 	Limit      uint64   `json:"limit"`
 	Name       string   `json:"name,omitempty"`
 	ID         string   `json:"id,omitempty"`
-	Level      int      `json:"level,omitempty"`
 	Path       string   `json:"path,omitempty"`
 	DomainID   string   `json:"domain_id,omitempty"`
 	Tag        string   `json:"tag,omitempty"`
 	Metadata   Metadata `json:"metadata,omitempty"`
 	Status     Status   `json:"status,omitempty"`
-	Permission string
-	ListPerms  bool
+	RoleName   string   `json:"role_name,omitempty"`
+	RoleID     string   `json:"role_id,omitempty"`
+	Actions    []string `json:"actions,omitempty"`
+	AccessType string   `json:"access_type,omitempty"`
 }

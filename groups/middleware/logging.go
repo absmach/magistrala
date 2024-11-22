@@ -112,6 +112,27 @@ func (lm *loggingMiddleware) ListGroups(ctx context.Context, session authn.Sessi
 	return lm.svc.ListGroups(ctx, session, pm)
 }
 
+func (lm *loggingMiddleware) ListUserGroups(ctx context.Context, session authn.Session, userID string, pm groups.PageMeta) (cg groups.Page, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("user_id", userID),
+			slog.Group("page",
+				slog.Uint64("limit", pm.Limit),
+				slog.Uint64("offset", pm.Offset),
+				slog.Uint64("total", cg.Total),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("List user groups failed", args...)
+			return
+		}
+		lm.logger.Info("List user groups completed successfully", args...)
+	}(time.Now())
+	return lm.svc.ListUserGroups(ctx, session, userID, pm)
+}
+
 // EnableGroup logs the enable_group request. It logs the group name, id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) EnableGroup(ctx context.Context, session authn.Session, id string) (g groups.Group, err error) {
@@ -274,7 +295,7 @@ func (lm *loggingMiddleware) RemoveAllChildrenGroups(ctx context.Context, sessio
 	return lm.svc.RemoveAllChildrenGroups(ctx, session, id)
 }
 
-func (lm *loggingMiddleware) ListChildrenGroups(ctx context.Context, session authn.Session, id string, pm groups.PageMeta) (gp groups.Page, err error) {
+func (lm *loggingMiddleware) ListChildrenGroups(ctx context.Context, session authn.Session, id string, startLevel, endLevel int64, pm groups.PageMeta) (gp groups.Page, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -292,5 +313,5 @@ func (lm *loggingMiddleware) ListChildrenGroups(ctx context.Context, session aut
 		}
 		lm.logger.Info("List children groups completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ListChildrenGroups(ctx, session, id, pm)
+	return lm.svc.ListChildrenGroups(ctx, session, id, startLevel, endLevel, pm)
 }

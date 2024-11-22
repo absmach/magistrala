@@ -6,9 +6,10 @@ package grpc
 import "github.com/absmach/magistrala/pkg/connections"
 
 type enitity struct {
-	id     string
-	domain string
-	status uint8
+	id          string
+	domain      string
+	parentGroup string
+	status      uint8
 }
 
 type authenticateRes struct {

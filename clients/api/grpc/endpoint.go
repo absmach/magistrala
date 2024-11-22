@@ -28,12 +28,12 @@ func authenticateEndpoint(svc pClients.Service) endpoint.Endpoint {
 func retrieveEntityEndpoint(svc pClients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(retrieveEntityReq)
-		Client, err := svc.RetrieveById(ctx, req.Id)
+		client, err := svc.RetrieveById(ctx, req.Id)
 		if err != nil {
 			return retrieveEntityRes{}, err
 		}
 
-		return retrieveEntityRes{id: Client.ID, domain: Client.Domain, status: uint8(Client.Status)}, nil
+		return retrieveEntityRes{id: client.ID, domain: client.Domain, parentGroup: client.ParentGroup, status: uint8(client.Status)}, nil
 	}
 }
 
@@ -46,7 +46,7 @@ func retrieveEntitiesEndpoint(svc pClients.Service) endpoint.Endpoint {
 		}
 		clientsBasic := []enitity{}
 		for _, client := range tp.Clients {
-			clientsBasic = append(clientsBasic, enitity{id: client.ID, domain: client.Domain, status: uint8(client.Status)})
+			clientsBasic = append(clientsBasic, enitity{id: client.ID, domain: client.Domain, parentGroup: client.ParentGroup, status: uint8(client.Status)})
 		}
 		return retrieveEntitiesRes{
 			total:   tp.Total,

@@ -248,9 +248,9 @@ func (_m *Repository) RemoveMemberFromAllRoles(ctx context.Context, members stri
 	return r0
 }
 
-// RemoveParentGroup provides a mock function with given fields: ctx, th
-func (_m *Repository) RemoveParentGroup(ctx context.Context, th clients.Client) error {
-	ret := _m.Called(ctx, th)
+// RemoveParentGroup provides a mock function with given fields: ctx, cli
+func (_m *Repository) RemoveParentGroup(ctx context.Context, cli clients.Client) error {
+	ret := _m.Called(ctx, cli)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveParentGroup")
@@ -258,7 +258,7 @@ func (_m *Repository) RemoveParentGroup(ctx context.Context, th clients.Client) 
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) error); ok {
-		r0 = rf(ctx, th)
+		r0 = rf(ctx, cli)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -888,9 +888,9 @@ func (_m *Repository) SearchClients(ctx context.Context, pm clients.Page) (clien
 	return r0, r1
 }
 
-// SetParentGroup provides a mock function with given fields: ctx, th
-func (_m *Repository) SetParentGroup(ctx context.Context, th clients.Client) error {
-	ret := _m.Called(ctx, th)
+// SetParentGroup provides a mock function with given fields: ctx, cli
+func (_m *Repository) SetParentGroup(ctx context.Context, cli clients.Client) error {
+	ret := _m.Called(ctx, cli)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetParentGroup")
@@ -898,7 +898,7 @@ func (_m *Repository) SetParentGroup(ctx context.Context, th clients.Client) err
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, clients.Client) error); ok {
-		r0 = rf(ctx, th)
+		r0 = rf(ctx, cli)
 	} else {
 		r0 = ret.Error(0)
 	}

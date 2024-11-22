@@ -41,6 +41,8 @@ func (req updateGroupReq) validate() error {
 
 type listGroupsReq struct {
 	mggroups.PageMeta
+	userID  string
+	groupID string
 }
 
 func (req listGroupsReq) validate() error {
@@ -49,6 +51,9 @@ func (req listGroupsReq) validate() error {
 		return apiutil.ErrLimitSize
 	}
 
+	if req.userID != "" && req.groupID != "" {
+		return apiutil.ErrMultipleEntitiesFilter
+	}
 	return nil
 }
 
@@ -172,7 +177,9 @@ func (req removeAllChildrenGroupsReq) validate() error {
 }
 
 type listChildrenGroupsReq struct {
-	id string
+	id         string
+	startLevel int64
+	endLevel   int64
 	mggroups.PageMeta
 }
 

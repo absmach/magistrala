@@ -160,9 +160,10 @@ func decodeRetrieveEntityResponse(_ context.Context, grpcRes interface{}) (inter
 	res := grpcRes.(*grpcCommonV1.RetrieveEntityRes)
 
 	return retrieveEntityRes{
-		id:     res.Entity.GetId(),
-		domain: res.Entity.GetDomainId(),
-		status: uint8(res.Entity.GetStatus()),
+		id:          res.Entity.GetId(),
+		domain:      res.Entity.GetDomainId(),
+		parentGroup: res.Entity.GetParentGroupId(),
+		status:      uint8(res.Entity.GetStatus()),
 	}, nil
 }
 
@@ -202,9 +203,10 @@ func decodeRetrieveEntitiesResponse(_ context.Context, grpcRes interface{}) (int
 
 	for _, e := range res.Entities {
 		clis = append(clis, enitity{
-			id:     e.GetId(),
-			domain: e.GetDomainId(),
-			status: uint8(e.GetStatus()),
+			id:          e.GetId(),
+			domain:      e.GetDomainId(),
+			parentGroup: e.GetParentGroupId(),
+			status:      uint8(e.GetStatus()),
 		})
 	}
 	return retrieveEntitiesRes{total: res.GetTotal(), limit: res.GetLimit(), offset: res.GetOffset(), clients: clis}, nil

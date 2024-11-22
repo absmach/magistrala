@@ -33,8 +33,7 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 			header: map[string][]string{},
 			resp: listGroupsReq{
 				PageMeta: groups.PageMeta{
-					Limit:      10,
-					Permission: api.DefPermission,
+					Limit: 10,
 				},
 			},
 			err: nil,
@@ -47,12 +46,10 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 			},
 			resp: listGroupsReq{
 				PageMeta: groups.PageMeta{
-					Status:     groups.EnabledStatus,
-					Offset:     10,
-					Limit:      10,
-					Name:       "random",
-					ListPerms:  true,
-					Permission: "random",
+					Status: groups.EnabledStatus,
+					Offset: 10,
+					Limit:  10,
+					Name:   "random",
 					Metadata: groups.Metadata{
 						"test": "test",
 					},
@@ -212,8 +209,7 @@ func TestDecodeListChildrenRequest(t *testing.T) {
 			header: map[string][]string{},
 			resp: listGroupsReq{
 				PageMeta: groups.PageMeta{
-					Limit:      10,
-					Permission: api.DefPermission,
+					Limit: 10,
 				},
 			},
 			err: nil,
@@ -233,8 +229,6 @@ func TestDecodeListChildrenRequest(t *testing.T) {
 					Metadata: groups.Metadata{
 						"test": "test",
 					},
-					Permission: "random",
-					ListPerms:  true,
 				},
 			},
 			err: nil,

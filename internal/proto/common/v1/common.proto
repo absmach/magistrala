@@ -29,7 +29,8 @@ message RetrieveEntityRes {
 message EntityBasic {
   string id = 1;
   string domain_id = 2;
-  uint32 status = 3;
+  string parent_group_id = 3;
+  uint32 status = 4;
 }
 
 message AddConnectionsReq {

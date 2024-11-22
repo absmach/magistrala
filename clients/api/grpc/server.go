@@ -114,9 +114,10 @@ func encodeRetrieveEntityResponse(_ context.Context, grpcRes interface{}) (inter
 
 	return &grpcCommonV1.RetrieveEntityRes{
 		Entity: &grpcCommonV1.EntityBasic{
-			Id:       res.id,
-			DomainId: res.domain,
-			Status:   uint32(res.status),
+			Id:            res.id,
+			DomainId:      res.domain,
+			ParentGroupId: res.parentGroup,
+			Status:        uint32(res.status),
 		},
 	}, nil
 }
@@ -142,9 +143,10 @@ func encodeRetrieveEntitiesResponse(_ context.Context, grpcRes interface{}) (int
 	entities := []*grpcCommonV1.EntityBasic{}
 	for _, c := range res.clients {
 		entities = append(entities, &grpcCommonV1.EntityBasic{
-			Id:       c.id,
-			DomainId: c.domain,
-			Status:   uint32(c.status),
+			Id:            c.id,
+			DomainId:      c.domain,
+			ParentGroupId: c.parentGroup,
+			Status:        uint32(c.status),
 		})
 	}
 	return &grpcCommonV1.RetrieveEntitiesRes{Total: res.total, Limit: res.limit, Offset: res.offset, Entities: entities}, nil

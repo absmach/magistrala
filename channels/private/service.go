@@ -13,6 +13,7 @@ type Service interface {
 	Authorize(ctx context.Context, req channels.AuthzReq) error
 	UnsetParentGroupFromChannels(ctx context.Context, parentGroupID string) error
 	RemoveClientConnections(ctx context.Context, clientID string) error
+	RetrieveByID(ctx context.Context, id string) (channels.Channel, error)
 }
 
 type service struct {
@@ -93,4 +94,8 @@ func (svc service) UnsetParentGroupFromChannels(ctx context.Context, parentGroup
 		}
 	}
 	return nil
+}
+
+func (svc service) RetrieveByID(ctx context.Context, id string) (channels.Channel, error) {
+	return svc.repo.RetrieveByID(ctx, id)
 }

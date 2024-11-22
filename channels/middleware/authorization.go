@@ -57,10 +57,7 @@ func AuthorizationMiddleware(svc channels.Service, repo channels.Repository, aut
 	if err := opp.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rmMW.NewRoleManagerAuthorizationMiddleware(policies.ChannelType, svc, authz, rolesOpPerm)
-	if err != nil {
-		return nil, err
-	}
+
 	extOpp := channels.NewExternalOperationPerm()
 	if err := extOpp.AddOperationPermissionMap(extOpPerm); err != nil {
 		return nil, err
@@ -68,6 +65,11 @@ func AuthorizationMiddleware(svc channels.Service, repo channels.Repository, aut
 	if err := extOpp.Validate(); err != nil {
 		return nil, err
 	}
+	ram, err := rmMW.NewRoleManagerAuthorizationMiddleware(policies.ChannelType, svc, authz, rolesOpPerm)
+	if err != nil {
+		return nil, err
+	}
+
 	return &authorizationMiddleware{
 		svc:                                svc,
 		repo:                               repo,

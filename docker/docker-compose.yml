@@ -66,6 +66,7 @@ services:
       POSTGRES_DB: ${MG_SPICEDB_DB_NAME}
     volumes:
       - magistrala-spicedb-db-volume:/var/lib/postgresql/data
+    command: ["postgres", "-c", "track_commit_timestamp=on"]
 
   auth-db:
     image: postgres:16.2-alpine
@@ -791,12 +792,14 @@ services:
       MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
       MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
       MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      MG_SPICEDB_SCHEMA_FILE: ${MG_SPICEDB_SCHEMA_FILE}
     ports:
       - ${MG_GROUPS_HTTP_PORT}:${MG_GROUPS_HTTP_PORT}
       - ${MG_GROUPS_GRPC_PORT}:${MG_GROUPS_GRPC_PORT}
     networks:
       - magistrala-base-net
     volumes:
+      - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
       # Auth gRPC client certificates
       - type: bind
         source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}

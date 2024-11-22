@@ -3,7 +3,12 @@
 
 package groups
 
-import svcerr "github.com/absmach/magistrala/pkg/errors/service"
+import (
+	"encoding/json"
+	"strings"
+
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+)
 
 // Status represents Group status.
 type Status uint8
@@ -62,4 +67,17 @@ func ToStatus(status string) (Status, error) {
 		return AllStatus, nil
 	}
 	return Status(0), svcerr.ErrInvalidStatus
+}
+
+// Custom Marshaller for Status.
+func (s Status) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+// Custom Unmarshaler for Status.
+func (s *Status) UnmarshalJSON(data []byte) error {
+	str := strings.Trim(string(data), "\"")
+	val, err := ToStatus(str)
+	*s = val
+	return err
 }

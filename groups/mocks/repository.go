@@ -176,6 +176,34 @@ func (_m *Repository) RetrieveAll(ctx context.Context, pm groups.PageMeta) (grou
 	return r0, r1
 }
 
+// RetrieveAllParentGroups provides a mock function with given fields: ctx, domainID, userID, groupID, pm
+func (_m *Repository) RetrieveAllParentGroups(ctx context.Context, domainID string, userID string, groupID string, pm groups.PageMeta) (groups.Page, error) {
+	ret := _m.Called(ctx, domainID, userID, groupID, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveAllParentGroups")
+	}
+
+	var r0 groups.Page
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, groups.PageMeta) (groups.Page, error)); ok {
+		return rf(ctx, domainID, userID, groupID, pm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, groups.PageMeta) groups.Page); ok {
+		r0 = rf(ctx, domainID, userID, groupID, pm)
+	} else {
+		r0 = ret.Get(0).(groups.Page)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, groups.PageMeta) error); ok {
+		r1 = rf(ctx, domainID, userID, groupID, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RetrieveAllRoles provides a mock function with given fields: ctx, entityID, limit, offset
 func (_m *Repository) RetrieveAllRoles(ctx context.Context, entityID string, limit uint64, offset uint64) (roles.RolePage, error) {
 	ret := _m.Called(ctx, entityID, limit, offset)
@@ -253,6 +281,34 @@ func (_m *Repository) RetrieveByIDs(ctx context.Context, pm groups.PageMeta, ids
 
 	if rf, ok := ret.Get(1).(func(context.Context, groups.PageMeta, ...string) error); ok {
 		r1 = rf(ctx, pm, ids...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RetrieveChildrenGroups provides a mock function with given fields: ctx, domainID, userID, groupID, startLevel, endLevel, pm
+func (_m *Repository) RetrieveChildrenGroups(ctx context.Context, domainID string, userID string, groupID string, startLevel int, endLevel int, pm groups.PageMeta) (groups.Page, error) {
+	ret := _m.Called(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveChildrenGroups")
+	}
+
+	var r0 groups.Page
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int, int, groups.PageMeta) (groups.Page, error)); ok {
+		return rf(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int, int, groups.PageMeta) groups.Page); ok {
+		r0 = rf(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
+	} else {
+		r0 = ret.Get(0).(groups.Page)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, int, int, groups.PageMeta) error); ok {
+		r1 = rf(ctx, domainID, userID, groupID, startLevel, endLevel, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -376,6 +432,34 @@ func (_m *Repository) RetrieveRoleByEntityIDAndName(ctx context.Context, entityI
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = rf(ctx, entityID, roleName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RetrieveUserGroups provides a mock function with given fields: ctx, domainID, userID, pm
+func (_m *Repository) RetrieveUserGroups(ctx context.Context, domainID string, userID string, pm groups.PageMeta) (groups.Page, error) {
+	ret := _m.Called(ctx, domainID, userID, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveUserGroups")
+	}
+
+	var r0 groups.Page
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, groups.PageMeta) (groups.Page, error)); ok {
+		return rf(ctx, domainID, userID, pm)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, groups.PageMeta) groups.Page); ok {
+		r0 = rf(ctx, domainID, userID, pm)
+	} else {
+		r0 = ret.Get(0).(groups.Page)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, groups.PageMeta) error); ok {
+		r1 = rf(ctx, domainID, userID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}

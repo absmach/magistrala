@@ -239,4 +239,6 @@ var (
 
 	// ErrInvalidProfilePictureURL indicates that the profile picture url is invalid.
 	ErrInvalidProfilePictureURL = errors.New("invalid profile picture url")
+
+	ErrMultipleEntitiesFilter = errors.New("multiple entities are provided in filter are not supported")
 )

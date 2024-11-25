@@ -12,11 +12,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/journal"
 	"github.com/absmach/magistrala/journal/api"
 	"github.com/absmach/magistrala/journal/mocks"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,20 +48,22 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newjournalServer() (*httptest.Server, *mocks.Service) {
+func newjournalServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 
 	logger := mglog.NewMock()
-	mux := api.MakeHandler(svc, logger, "journal-log", "test")
-	return httptest.NewServer(mux), svc
+	authn := new(authnmocks.Authentication)
+	mux := api.MakeHandler(svc, authn, logger, "journal-log", "test")
+	return httptest.NewServer(mux), svc, authn
 }
 
-func TestListJournalsEndpoint(t *testing.T) {
-	es, svc := newjournalServer()
+func TestListUserJournalsEndpoint(t *testing.T) {
+	es, svc, authn := newjournalServer()
 
 	cases := []struct {
 		desc        string
 		token       string
+		session     mgauthn.Session
 		url         string
 		contentType string
 		status      int
@@ -226,20 +231,6 @@ func TestListJournalsEndpoint(t *testing.T) {
 			svcErr: nil,
 		},
 		{
-			desc:   "with invalid entity type",
-			token:  validToken,
-			url:    "/invalid/123",
-			status: http.StatusBadRequest,
-			svcErr: nil,
-		},
-		{
-			desc:   "with all query params",
-			token:  validToken,
-			url:    "/user/123?offset=10&limit=10&operation=user.create&from=0&to=10&with_attributes=true&with_metadata=true&dir=asc",
-			status: http.StatusOK,
-			svcErr: nil,
-		},
-		{
 			desc:   "with empty url",
 			token:  validToken,
 			url:    "",
@@ -250,7 +241,7 @@ func TestListJournalsEndpoint(t *testing.T) {
 			desc:   "with empty entity type",
 			token:  validToken,
 			url:    "//123",
-			status: http.StatusBadRequest,
+			status: http.StatusNotFound,
 			svcErr: nil,
 		},
 		{
@@ -264,7 +255,13 @@ func TestListJournalsEndpoint(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			svcCall := svc.On("RetrieveAll", mock.Anything, c.token, mock.Anything).Return(journal.JournalsPage{}, c.svcErr)
+			if c.token == validToken {
+				c.session = mgauthn.Session{
+					UserID: testsutil.GenerateUUID(t),
+				}
+			}
+			authCall := authn.On("Authenticate", mock.Anything, c.token).Return(c.session, nil)
+			svcCall := svc.On("RetrieveAll", mock.Anything, c.session, mock.Anything).Return(journal.JournalsPage{}, c.svcErr)
 			req := testRequest{
 				client: es.Client(),
 				method: http.MethodGet,
@@ -277,6 +274,131 @@ func TestListJournalsEndpoint(t *testing.T) {
 			defer resp.Body.Close()
 			assert.Equal(t, c.status, resp.StatusCode, c.desc)
 			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestListEntityJournalsEndpoint(t *testing.T) {
+	es, svc, authn := newjournalServer()
+
+	domainID := testsutil.GenerateUUID(t)
+	userID := testsutil.GenerateUUID(t)
+
+	cases := []struct {
+		desc        string
+		token       string
+		session     mgauthn.Session
+		domainID    string
+		url         string
+		contentType string
+		status      int
+		authnErr    error
+		svcErr      error
+	}{
+		{
+			desc:     "with group type successful",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/group/123",
+			status:   http.StatusOK,
+			svcErr:   nil,
+		},
+		{
+			desc:     "with channel type successful",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/channel/123",
+			status:   http.StatusOK,
+			svcErr:   nil,
+		},
+		{
+			desc:     "with thing type successful",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/thing/123",
+			status:   http.StatusOK,
+			svcErr:   nil,
+		},
+		{
+			desc:     "with service error",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/thing/123",
+			status:   http.StatusForbidden,
+			svcErr:   svcerr.ErrAuthorization,
+		},
+		{
+			desc:     "with operation",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/channel/123?operation=channel.create",
+			status:   http.StatusOK,
+			svcErr:   nil,
+		},
+		{
+			desc:     "with malformed operation",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/user/123?operation=user.create&operation=user.update",
+			status:   http.StatusBadRequest,
+			svcErr:   nil,
+		},
+		{
+			desc:     "with invalid entity type",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/invalid/123",
+			status:   http.StatusBadRequest,
+			svcErr:   nil,
+		},
+		{
+			desc:     "with all query params",
+			token:    validToken,
+			domainID: domainID,
+			url:      "/group/123?offset=10&limit=10&operation=group.create&from=0&to=10&with_attributes=true&with_metadata=true&dir=asc",
+			status:   http.StatusOK,
+			svcErr:   nil,
+		},
+		{
+			desc:     " with empty token",
+			url:      "/group/123",
+			domainID: domainID,
+			status:   http.StatusUnauthorized,
+			svcErr:   nil,
+		},
+		{
+			desc:   "with empty domain ID",
+			token:  validToken,
+			url:    "/group/",
+			status: http.StatusNotFound,
+			svcErr: nil,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			if c.token == validToken {
+				c.session = mgauthn.Session{
+					UserID:       userID,
+					DomainID:     domainID,
+					DomainUserID: domainID + "_" + userID,
+				}
+			}
+			authCall := authn.On("Authenticate", mock.Anything, c.token).Return(c.session, c.authnErr)
+			svcCall := svc.On("RetrieveAll", mock.Anything, c.session, mock.Anything).Return(journal.JournalsPage{}, c.svcErr)
+			req := testRequest{
+				client: es.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/%s/journal%s", es.URL, c.domainID, c.url),
+				token:  c.token,
+			}
+			resp, err := req.make()
+			assert.Nil(t, err, c.desc)
+			defer resp.Body.Close()
+			assert.Equal(t, c.status, resp.StatusCode, c.desc)
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }

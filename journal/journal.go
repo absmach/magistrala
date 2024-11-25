@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/policies"
 )
 
@@ -143,7 +144,7 @@ type Service interface {
 	Save(ctx context.Context, journal Journal) error
 
 	// RetrieveAll retrieves all journals from the database with the given page.
-	RetrieveAll(ctx context.Context, token string, page Page) (JournalsPage, error)
+	RetrieveAll(ctx context.Context, session mgauthn.Session, page Page) (JournalsPage, error)
 }
 
 // Repository provides access to the journal log database.

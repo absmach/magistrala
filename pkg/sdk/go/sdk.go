@@ -1210,9 +1210,9 @@ type SDK interface {
 	// Journal returns a list of journal logs.
 	//
 	// For example:
-	//  journals, _ := sdk.Journal("thing", "thingID", PageMetadata{Offset: 0, Limit: 10, Operation: "users.create"}, "token")
+	//  journals, _ := sdk.Journal("thing", "thingID","domainID", PageMetadata{Offset: 0, Limit: 10, Operation: "thing.create"}, "token")
 	//  fmt.Println(journals)
-	Journal(entityType, entityID string, pm PageMetadata, token string) (journal JournalsPage, err error)
+	Journal(entityType, entityID, domainID string, pm PageMetadata, token string) (journal JournalsPage, err error)
 }
 
 type mgSDK struct {

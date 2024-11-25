@@ -14,13 +14,8 @@ import (
 	"github.com/absmach/magistrala/journal"
 	"github.com/absmach/magistrala/journal/mocks"
 	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	mgauthz "github.com/absmach/magistrala/pkg/authz"
-	authzmocks "github.com/absmach/magistrala/pkg/authz/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -43,9 +38,7 @@ var (
 
 func TestSave(t *testing.T) {
 	repo := new(mocks.Repository)
-	authn := new(authnmocks.Authentication)
-	authz := new(authzmocks.Authorization)
-	svc := journal.NewService(authn, authz, idProvider, repo)
+	svc := journal.NewService(idProvider, repo)
 
 	cases := []struct {
 		desc    string
@@ -78,11 +71,9 @@ func TestSave(t *testing.T) {
 
 func TestReadAll(t *testing.T) {
 	repo := new(mocks.Repository)
-	authn := new(authnmocks.Authentication)
-	authz := new(authzmocks.Authorization)
-	svc := journal.NewService(authn, authz, idProvider, repo)
+	svc := journal.NewService(idProvider, repo)
 
-	validToken := "token"
+	validSession := mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t), DomainID: testsutil.GenerateUUID(t)}
 	validPage := journal.Page{
 		Offset:     0,
 		Limit:      10,
@@ -91,34 +82,31 @@ func TestReadAll(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc        string
-		token       string
-		page        journal.Page
-		resp        journal.JournalsPage
-		identifyRes mgauthn.Session
-		identifyErr error
-		authErr     error
-		repoErr     error
-		err         error
+		desc    string
+		session mgauthn.Session
+		page    journal.Page
+		resp    journal.JournalsPage
+		authErr error
+		repoErr error
+		err     error
 	}{
 		{
-			desc:  "successful",
-			token: validToken,
-			page:  validPage,
+			desc:    "successful",
+			session: validSession,
+			page:    validPage,
 			resp: journal.JournalsPage{
 				Total:    1,
 				Offset:   0,
 				Limit:    10,
 				Journals: []journal.Journal{validJournal},
 			},
-			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
-			authErr:     nil,
-			repoErr:     nil,
-			err:         nil,
+			authErr: nil,
+			repoErr: nil,
+			err:     nil,
 		},
 		{
-			desc:  "successful for user",
-			token: validToken,
+			desc:    "successful for user",
+			session: validSession,
 			page: journal.Page{
 				Offset:     0,
 				Limit:      10,
@@ -131,78 +119,29 @@ func TestReadAll(t *testing.T) {
 				Limit:    10,
 				Journals: []journal.Journal{validJournal},
 			},
-			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
-			authErr:     nil,
-			repoErr:     nil,
-			err:         nil,
+			authErr: nil,
+			repoErr: nil,
+			err:     nil,
 		},
 		{
-			desc:        "with identify error",
-			token:       validToken,
-			page:        validPage,
-			resp:        journal.JournalsPage{},
-			identifyRes: mgauthn.Session{},
-			identifyErr: svcerr.ErrAuthentication,
-			err:         svcerr.ErrAuthentication,
-		},
-		{
-			desc:        "with repo error",
-			token:       validToken,
-			page:        validPage,
-			resp:        journal.JournalsPage{},
-			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
-			repoErr:     repoerr.ErrViewEntity,
-			err:         repoerr.ErrViewEntity,
-		},
-		{
-			desc:        "with failed to authorize",
-			token:       validToken,
-			page:        validPage,
-			resp:        journal.JournalsPage{},
-			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
-			authErr:     svcerr.ErrAuthorization,
-			repoErr:     nil,
-			err:         svcerr.ErrAuthorization,
-		},
-		{
-			desc:        "with error on authorize",
-			token:       validToken,
-			page:        validPage,
-			resp:        journal.JournalsPage{},
-			identifyRes: mgauthn.Session{DomainUserID: testsutil.GenerateUUID(t), UserID: testsutil.GenerateUUID(t)},
-			authErr:     svcerr.ErrAuthorization,
-			repoErr:     nil,
-			err:         svcerr.ErrAuthorization,
+			desc:    "with repo error",
+			session: validSession,
+			page:    validPage,
+			resp:    journal.JournalsPage{},
+			repoErr: repoerr.ErrViewEntity,
+			err:     repoerr.ErrViewEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			authReq := mgauthz.PolicyReq{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Subject:     tc.identifyRes.DomainUserID,
-				ObjectType:  tc.page.EntityType.AuthString(),
-				Object:      tc.page.EntityID,
-				Permission:  policies.ViewPermission,
-			}
-			if tc.page.EntityType == journal.UserEntity {
-				authReq.Permission = policies.AdminPermission
-				authReq.ObjectType = policies.PlatformType
-				authReq.Object = policies.MagistralaObject
-				authReq.Subject = tc.identifyRes.UserID
-			}
-			authCall := authn.On("Authenticate", context.Background(), tc.token).Return(tc.identifyRes, tc.identifyErr)
-			authCall1 := authz.On("Authorize", context.Background(), authReq).Return(tc.authErr)
 			repoCall := repo.On("RetrieveAll", context.Background(), tc.page).Return(tc.resp, tc.repoErr)
-			resp, err := svc.RetrieveAll(context.Background(), tc.token, tc.page)
+			resp, err := svc.RetrieveAll(context.Background(), tc.session, tc.page)
 			if tc.err == nil {
 				assert.Equal(t, tc.resp, resp, tc.desc)
 			}
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
-			authCall.Unset()
-			authCall1.Unset()
 		})
 	}
 }

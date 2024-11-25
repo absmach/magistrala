@@ -7,7 +7,10 @@ package mocks
 import (
 	context "context"
 
+	authn "github.com/absmach/magistrala/pkg/authn"
+
 	journal "github.com/absmach/magistrala/journal"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -16,9 +19,9 @@ type Service struct {
 	mock.Mock
 }
 
-// RetrieveAll provides a mock function with given fields: ctx, token, page
-func (_m *Service) RetrieveAll(ctx context.Context, token string, page journal.Page) (journal.JournalsPage, error) {
-	ret := _m.Called(ctx, token, page)
+// RetrieveAll provides a mock function with given fields: ctx, session, page
+func (_m *Service) RetrieveAll(ctx context.Context, session authn.Session, page journal.Page) (journal.JournalsPage, error) {
+	ret := _m.Called(ctx, session, page)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
@@ -26,17 +29,17 @@ func (_m *Service) RetrieveAll(ctx context.Context, token string, page journal.P
 
 	var r0 journal.JournalsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, journal.Page) (journal.JournalsPage, error)); ok {
-		return rf(ctx, token, page)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, journal.Page) (journal.JournalsPage, error)); ok {
+		return rf(ctx, session, page)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, journal.Page) journal.JournalsPage); ok {
-		r0 = rf(ctx, token, page)
+	if rf, ok := ret.Get(0).(func(context.Context, authn.Session, journal.Page) journal.JournalsPage); ok {
+		r0 = rf(ctx, session, page)
 	} else {
 		r0 = ret.Get(0).(journal.JournalsPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, journal.Page) error); ok {
-		r1 = rf(ctx, token, page)
+	if rf, ok := ret.Get(1).(func(context.Context, authn.Session, journal.Page) error); ok {
+		r1 = rf(ctx, session, page)
 	} else {
 		r1 = ret.Error(1)
 	}

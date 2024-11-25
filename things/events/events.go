@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	clientPrefix       = "client."
+	clientPrefix       = "thing."
 	clientCreate       = clientPrefix + "create"
 	clientUpdate       = clientPrefix + "update"
 	clientChangeStatus = clientPrefix + "change_status"

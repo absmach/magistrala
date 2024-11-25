@@ -72,6 +72,7 @@ var (
 		"user_id":  entityID,
 		"metadata": payload,
 	}
+	validTimeStamp = time.Now().UTC().Truncate(time.Millisecond)
 )
 
 func TestJournalSave(t *testing.T) {
@@ -689,6 +690,8 @@ func TestJournalRetrieveAll(t *testing.T) {
 				page.Journals[i].Attributes = map[string]interface{}{}
 				tc.response.Journals[i].Metadata = map[string]interface{}{}
 				page.Journals[i].Metadata = map[string]interface{}{}
+				tc.response.Journals[i].OccurredAt = validTimeStamp
+				page.Journals[i].OccurredAt = validTimeStamp
 			}
 			assert.ElementsMatch(t, tc.response.Journals, page.Journals)
 

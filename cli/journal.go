@@ -9,24 +9,30 @@ import (
 )
 
 var cmdJournal = cobra.Command{
-	Use:   "get <entity_type> <entity_id> <user_auth_token>",
+	Use:   "get <entity_type> <entity_id> <domain_id> <user_auth_token>",
 	Short: "Get journal",
 	Long: "Get journal\n" +
 		"Usage:\n" +
-		"\tmagistrala-cli journal get <entity_type> <entity_id> <user_auth_token> - lists journal logs\n" +
-		"\tmagistrala-cli journal get <entity_type> <entity_id> <user_auth_token> --offset <offset> --limit <limit> - lists journal logs with provided offset and limit\n",
+		"\tmagistrala-cli journal get user <user_id> <user_auth_token> - lists user journal logs\n" +
+		"\tmagistrala-cli journal get <entity_type> <entity_id> <domain_id> <user_auth_token> - lists entity journal logs\n" +
+		"\tmagistrala-cli journal get <entity_type> <entity_id> <domain_id> <user_auth_token> --offset <offset> --limit <limit> - lists user journal logs with provided offset and limit\n",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 3 {
+		if len(args) < 3 || len(args) > 4 {
 			logUsageCmd(*cmd, cmd.Use)
 			return
 		}
-
 		pageMetadata := mgxsdk.PageMetadata{
 			Offset: Offset,
 			Limit:  Limit,
 		}
 
-		journal, err := sdk.Journal(args[0], args[1], pageMetadata, args[2])
+		entityType, entityID, token := args[0], args[1], args[2]
+		domainID := ""
+		if len(args) == 4 {
+			entityType, entityID, domainID, token = args[0], args[1], args[2], args[3]
+		}
+
+		journal, err := sdk.Journal(entityType, entityID, domainID, pageMetadata, token)
 		if err != nil {
 			logErrorCmd(*cmd, err)
 			return

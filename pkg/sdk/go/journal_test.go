@@ -15,6 +15,8 @@ import (
 	"github.com/absmach/magistrala/journal/mocks"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/apiutil"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
@@ -22,20 +24,21 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupJournal() (*httptest.Server, *mocks.Service) {
+func setupJournal() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
-
+	authn := new(authnmocks.Authentication)
 	logger := mglog.NewMock()
-	mux := api.MakeHandler(svc, logger, "journal-log", "test")
-	return httptest.NewServer(mux), svc
+	mux := api.MakeHandler(svc, authn, logger, "journal-log", "test")
+
+	return httptest.NewServer(mux), svc, authn
 }
 
 func TestRetrieveJournal(t *testing.T) {
-	js, svc := setupJournal()
+	js, svc, authn := setupJournal()
 	defer js.Close()
 
 	testJournal := generateTestJournal(t)
-	validEntityType := "user"
+	validEntityType := "group"
 
 	sdkConf := sdk.Config{
 		JournalURL: js.URL,
@@ -46,20 +49,24 @@ func TestRetrieveJournal(t *testing.T) {
 	cases := []struct {
 		desc       string
 		token      string
+		session    mgauthn.Session
 		entityType string
 		entityID   string
+		domainID   string
 		pageMeta   sdk.PageMetadata
 		svcReq     journal.Page
 		svcRes     journal.JournalsPage
 		svcErr     error
+		authnErr   error
 		response   sdk.JournalsPage
 		err        error
 	}{
 		{
-			desc:       "retrieve journal successfully",
+			desc:       "retrieve user journal successfully",
 			token:      validToken,
-			entityType: validEntityType,
+			entityType: "user",
 			entityID:   validID,
+			domainID:   domainID,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
@@ -69,6 +76,90 @@ func TestRetrieveJournal(t *testing.T) {
 				Limit:      10,
 				EntityID:   validID,
 				EntityType: journal.UserEntity,
+				Direction:  "desc",
+			},
+			svcRes: journal.JournalsPage{
+				Total:    1,
+				Journals: []journal.Journal{convertJournal(testJournal)},
+			},
+			svcErr: nil,
+			response: sdk.JournalsPage{
+				Total:    1,
+				Journals: []sdk.Journal{testJournal},
+			},
+			err: nil,
+		},
+		{
+			desc:       "retrieve channel journal successfully",
+			token:      validToken,
+			entityType: "channel",
+			entityID:   validID,
+			domainID:   domainID,
+			pageMeta: sdk.PageMetadata{
+				Offset: 0,
+				Limit:  10,
+			},
+			svcReq: journal.Page{
+				Offset:     0,
+				Limit:      10,
+				EntityID:   validID,
+				EntityType: journal.ChannelEntity,
+				Direction:  "desc",
+			},
+			svcRes: journal.JournalsPage{
+				Total:    1,
+				Journals: []journal.Journal{convertJournal(testJournal)},
+			},
+			svcErr: nil,
+			response: sdk.JournalsPage{
+				Total:    1,
+				Journals: []sdk.Journal{testJournal},
+			},
+			err: nil,
+		},
+		{
+			desc:       "retrieve group journal successfully",
+			token:      validToken,
+			entityType: "group",
+			entityID:   validID,
+			domainID:   domainID,
+			pageMeta: sdk.PageMetadata{
+				Offset: 0,
+				Limit:  10,
+			},
+			svcReq: journal.Page{
+				Offset:     0,
+				Limit:      10,
+				EntityID:   validID,
+				EntityType: journal.GroupEntity,
+				Direction:  "desc",
+			},
+			svcRes: journal.JournalsPage{
+				Total:    1,
+				Journals: []journal.Journal{convertJournal(testJournal)},
+			},
+			svcErr: nil,
+			response: sdk.JournalsPage{
+				Total:    1,
+				Journals: []sdk.Journal{testJournal},
+			},
+			err: nil,
+		},
+		{
+			desc:       "retrieve thing journal successfully",
+			token:      validToken,
+			entityType: "thing",
+			entityID:   validID,
+			domainID:   domainID,
+			pageMeta: sdk.PageMetadata{
+				Offset: 0,
+				Limit:  10,
+			},
+			svcReq: journal.Page{
+				Offset:     0,
+				Limit:      10,
+				EntityID:   validID,
+				EntityType: journal.ThingEntity,
 				Direction:  "desc",
 			},
 			svcRes: journal.JournalsPage{
@@ -95,11 +186,11 @@ func TestRetrieveJournal(t *testing.T) {
 				Offset:     0,
 				Limit:      10,
 				EntityID:   validID,
-				EntityType: journal.UserEntity,
+				EntityType: journal.GroupEntity,
 				Direction:  "desc",
 			},
 			svcRes:   journal.JournalsPage{},
-			svcErr:   svcerr.ErrAuthentication,
+			authnErr: svcerr.ErrAuthentication,
 			response: sdk.JournalsPage{},
 			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
@@ -116,13 +207,14 @@ func TestRetrieveJournal(t *testing.T) {
 			svcRes:   journal.JournalsPage{},
 			svcErr:   nil,
 			response: sdk.JournalsPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:       "retrieve journal with invalid entity type",
 			token:      validToken,
 			entityType: "invalid",
 			entityID:   validID,
+			domainID:   domainID,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
@@ -138,6 +230,7 @@ func TestRetrieveJournal(t *testing.T) {
 			token:      validToken,
 			entityType: validEntityType,
 			entityID:   "",
+			domainID:   domainID,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
@@ -153,6 +246,7 @@ func TestRetrieveJournal(t *testing.T) {
 			token:      validToken,
 			entityType: "",
 			entityID:   validID,
+			domainID:   domainID,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
@@ -168,6 +262,7 @@ func TestRetrieveJournal(t *testing.T) {
 			token:      validToken,
 			entityType: validEntityType,
 			entityID:   validID,
+			domainID:   domainID,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  1000,
@@ -183,6 +278,7 @@ func TestRetrieveJournal(t *testing.T) {
 			token:      validToken,
 			entityType: validEntityType,
 			entityID:   validID,
+			domainID:   domainID,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
@@ -201,6 +297,7 @@ func TestRetrieveJournal(t *testing.T) {
 			token:      validToken,
 			entityType: validEntityType,
 			entityID:   validID,
+			domainID:   domainID,
 			pageMeta: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
@@ -209,7 +306,7 @@ func TestRetrieveJournal(t *testing.T) {
 				Offset:     0,
 				Limit:      10,
 				EntityID:   validID,
-				EntityType: journal.UserEntity,
+				EntityType: journal.GroupEntity,
 				Direction:  "desc",
 			},
 			svcRes: journal.JournalsPage{
@@ -231,15 +328,20 @@ func TestRetrieveJournal(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("RetrieveAll", mock.Anything, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.Journal(tc.entityType, tc.entityID, tc.pageMeta, tc.token)
+			if tc.token == validToken {
+				tc.session = mgauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := authn.On("Authenticate", mock.Anything, mock.Anything).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("RetrieveAll", mock.Anything, tc.session, tc.svcReq).Return(tc.svcRes, tc.svcErr)
+			resp, err := mgsdk.Journal(tc.entityType, tc.entityID, tc.domainID, tc.pageMeta, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "RetrieveAll", mock.Anything, tc.token, tc.svcReq)
+				ok := svcCall.Parent.AssertCalled(t, "RetrieveAll", mock.Anything, tc.session, tc.svcReq)
 				assert.True(t, ok)
 			}
 			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }

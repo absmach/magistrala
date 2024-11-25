@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/journal"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/go-kit/kit/metrics"
 )
 
@@ -38,11 +39,11 @@ func (mm *metricsMiddleware) Save(ctx context.Context, j journal.Journal) error 
 	return mm.service.Save(ctx, j)
 }
 
-func (mm *metricsMiddleware) RetrieveAll(ctx context.Context, token string, page journal.Page) (journal.JournalsPage, error) {
+func (mm *metricsMiddleware) RetrieveAll(ctx context.Context, session mgauthn.Session, page journal.Page) (journal.JournalsPage, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "retrieve_all").Add(1)
 		mm.latency.With("method", "retrieve_all").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.service.RetrieveAll(ctx, token, page)
+	return mm.service.RetrieveAll(ctx, session, page)
 }

@@ -30,7 +30,7 @@ type JournalsPage struct {
 	Journals []Journal `json:"journals"`
 }
 
-func (sdk mgSDK) Journal(entityType, entityID string, pm PageMetadata, token string) (journals JournalsPage, err error) {
+func (sdk mgSDK) Journal(entityType, entityID, domainID string, pm PageMetadata, token string) (journals JournalsPage, err error) {
 	if entityID == "" {
 		return JournalsPage{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
@@ -38,7 +38,12 @@ func (sdk mgSDK) Journal(entityType, entityID string, pm PageMetadata, token str
 		return JournalsPage{}, errors.NewSDKError(apiutil.ErrMissingEntityType)
 	}
 
-	url, err := sdk.withQueryParams(sdk.journalURL, fmt.Sprintf("%s/%s/%s", journalEndpoint, entityType, entityID), pm)
+	reqUrl := fmt.Sprintf("%s/%s/%s/%s", domainID, journalEndpoint, entityType, entityID)
+	if entityType == "user" {
+		reqUrl = fmt.Sprintf("%s/%s/%s", journalEndpoint, entityType, entityID)
+	}
+
+	url, err := sdk.withQueryParams(sdk.journalURL, reqUrl, pm)
 	if err != nil {
 		return JournalsPage{}, errors.NewSDKError(err)
 	}

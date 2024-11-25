@@ -31,8 +31,9 @@ func TestGetJournalCmd(t *testing.T) {
 	rootCmd := setFlags(invCmd)
 
 	var page mgsdk.JournalsPage
-	entityType := "entity_type"
-	entityId := journal.ID
+	entityType := "group"
+	entityId := testsutil.GenerateUUID(t)
+	domainId := testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc          string
@@ -43,10 +44,26 @@ func TestGetJournalCmd(t *testing.T) {
 		errLogMessage string
 	}{
 		{
-			desc: "get journal with journal id",
+			desc: "get user journal",
+			args: []string{
+				"user",
+				entityId,
+				token,
+			},
+			logType: entityLog,
+			page: mgsdk.JournalsPage{
+				Total:    1,
+				Offset:   0,
+				Limit:    10,
+				Journals: []mgsdk.Journal{journal},
+			},
+		},
+		{
+			desc: "get group journal",
 			args: []string{
 				entityType,
 				entityId,
+				domainId,
 				token,
 			},
 			logType: entityLog,
@@ -63,6 +80,7 @@ func TestGetJournalCmd(t *testing.T) {
 				entityType,
 				entityId,
 				token,
+				domainId,
 				extraArg,
 			},
 			logType: usageLog,
@@ -72,6 +90,7 @@ func TestGetJournalCmd(t *testing.T) {
 			args: []string{
 				entityType,
 				entityId,
+				domainId,
 				invalidToken,
 			},
 			logType:       errLog,
@@ -82,8 +101,10 @@ func TestGetJournalCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Journal", tc.args[0], tc.args[1], mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
-
+			sdkCall := sdkMock.On("Journal", tc.args[0], tc.args[1], "", mock.Anything, tc.args[2]).Return(tc.page, tc.sdkErr)
+			if tc.args[0] != "user" {
+				sdkCall = sdkMock.On("Journal", tc.args[0], tc.args[1], tc.args[2], mock.Anything, tc.args[3]).Return(tc.page, tc.sdkErr)
+			}
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 
 			switch tc.logType {

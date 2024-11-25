@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/journal"
+	mgauthn "github.com/absmach/magistrala/pkg/authn"
 )
 
 var _ journal.Service = (*loggingMiddleware)(nil)
@@ -46,7 +47,7 @@ func (lm *loggingMiddleware) Save(ctx context.Context, j journal.Journal) (err e
 	return lm.service.Save(ctx, j)
 }
 
-func (lm *loggingMiddleware) RetrieveAll(ctx context.Context, token string, page journal.Page) (journalsPage journal.JournalsPage, err error) {
+func (lm *loggingMiddleware) RetrieveAll(ctx context.Context, session mgauthn.Session, page journal.Page) (journalsPage journal.JournalsPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -66,5 +67,5 @@ func (lm *loggingMiddleware) RetrieveAll(ctx context.Context, token string, page
 		lm.logger.Info("Retrieve all journals completed successfully", args...)
 	}(time.Now())
 
-	return lm.service.RetrieveAll(ctx, token, page)
+	return lm.service.RetrieveAll(ctx, session, page)
 }

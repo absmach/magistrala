@@ -27,17 +27,56 @@ tags:
       url: http://docs.mainflux.io/
 
 paths:
-  /journal/{entity_type}/{id}:
+  /journal/user/{userID}:
     get:
       tags:
         - journal-log
-      summary: List journal log
+      summary: List user journal log
       description: |
         Retrieves a list of journal. Due to performance concerns, data
         is retrieved in subsets. The API must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
+        - $ref: "#/components/parameters/user_id"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/operation"
+        - $ref: "#/components/parameters/with_attributes"
+        - $ref: "#/components/parameters/with_metadata"
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/dir"
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/JournalsPageRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/journal/{entityType}/{id}:
+    get:
+      tags:
+        - journal-log
+      summary: List entity journal log
+      description: |
+        Retrieves a list of journal. Due to performance concerns, data
+        is retrieved in subsets. The API must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      parameters:
+        - $ref: "#/components/parameters/domain_id"
         - $ref: "#/components/parameters/entity_type"
         - $ref: "#/components/parameters/id"
         - $ref: "#/components/parameters/offset"
@@ -146,23 +185,42 @@ components:
       example: { "error": "malformed entity specification" }
 
   parameters:
+    domain_id:
+      name: domainID
+      description: Unique identifier for a domain.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
     entity_type:
-      name: entity_type
-      description: Type of entity, e.g. user, group, thing, etc.
+      name: entityType
+      description: Type of entity, e.g. user, group, thing, etc.entityType
       in: path
       schema:
         type: string
         enum:
-          - user
           - group
           - thing
           - channel
       required: true
-      example: user
+      example: group
+
+    user_id:
+      name: userID
+      description: Unique identifier for a user.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
     id:
       name: id
-      description: Unique identifier for an entity, e.g. user, group, domain, etc. Used together with entity_type.
+      description: Unique identifier for an entity, e.g. group, channel or thing.  Used together with entity_type.
       in: path
       schema:
         type: string

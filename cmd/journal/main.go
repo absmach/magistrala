@@ -109,7 +109,7 @@ func main() {
 		return
 	}
 	defer authnHandler.Close()
-	logger.Info("Authn successfully connected to auth gRPC server " + authnHandler.Secure())
+	logger.Info("AuthN successfully connected to auth gRPC server " + authnHandler.Secure())
 
 	authz, authzHandler, err := authsvcAuthz.NewAuthorization(ctx, authClientCfg)
 	if err != nil {
@@ -118,7 +118,7 @@ func main() {
 		return
 	}
 	defer authzHandler.Close()
-	logger.Info("Authz successfully connected to auth gRPC server " + authzHandler.Secure())
+	logger.Info("AuthZ successfully connected to auth gRPC server " + authzHandler.Secure())
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {

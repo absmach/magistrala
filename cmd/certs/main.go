@@ -110,7 +110,7 @@ func main() {
 		return
 	}
 	defer authnClient.Close()
-	logger.Info("AutN successfully connected to auth gRPC server " + authnClient.Secure())
+	logger.Info("AuthN successfully connected to auth gRPC server " + authnClient.Secure())
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {

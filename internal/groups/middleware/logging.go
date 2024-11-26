@@ -225,10 +225,10 @@ func (lm *loggingMiddleware) Unassign(ctx context.Context, session authn.Session
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Unassign member to group failed", args...)
+			lm.logger.Warn("Unassign member from group failed", args...)
 			return
 		}
-		lm.logger.Info("Unassign member to group completed successfully", args...)
+		lm.logger.Info("Unassign member from group completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.Unassign(ctx, session, groupID, relation, memberKind, memberIDs...)

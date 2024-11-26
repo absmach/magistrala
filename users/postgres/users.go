@@ -33,7 +33,7 @@ func NewRepository(db postgres.Database) users.Repository {
 func (repo *userRepo) Save(ctx context.Context, c users.User) (users.User, error) {
 	q := `INSERT INTO users (id, tags, email, secret, metadata, created_at, status, role, first_name, last_name, username, profile_picture)
         VALUES (:id, :tags, :email, :secret, :metadata, :created_at, :status, :role, :first_name, :last_name, :username, :profile_picture)
-        RETURNING id, tags, email, metadata, created_at, status, first_name, last_name, username, profile_picture`
+        RETURNING id, tags, email, metadata, created_at, status, role, first_name, last_name, username, profile_picture`
 
 	dbu, err := toDBUser(c)
 	if err != nil {

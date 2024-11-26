@@ -160,7 +160,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	logger.Info("Policy Evaluator and Policy manager are successfully connected to SpiceDB gRPC server")
+	logger.Info("Policy evaluator and Policy manager are successfully connected to SpiceDB gRPC server")
 
 	grpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {

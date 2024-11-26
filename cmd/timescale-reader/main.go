@@ -99,7 +99,7 @@ func main() {
 		return
 	}
 	defer authzHandler.Close()
-	logger.Info("Authz successfully connected to auth gRPC server " + authzHandler.Secure())
+	logger.Info("AuthZ successfully connected to auth gRPC server " + authzHandler.Secure())
 
 	authn, authnHandler, err := authsvcAuthn.NewAuthentication(ctx, clientCfg)
 	if err != nil {
@@ -108,7 +108,7 @@ func main() {
 		return
 	}
 	defer authnHandler.Close()
-	logger.Info("Authn successfully connected to auth gRPC server " + authnHandler.Secure())
+	logger.Info("AuthN successfully connected to auth gRPC server " + authnHandler.Secure())
 
 	thingsClientCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&thingsClientCfg, env.Options{Prefix: envPrefixThings}); err != nil {
@@ -125,7 +125,7 @@ func main() {
 	}
 	defer thingsHandler.Close()
 
-	logger.Info("ThingsService gRPC client successfully connected to things gRPC server " + thingsHandler.Secure())
+	logger.Info("Things service gRPC client successfully connected to things gRPC server " + thingsHandler.Secure())
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {

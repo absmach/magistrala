@@ -550,7 +550,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /groups/{groupID}/users:
+  /{domainID}/groups/{groupID}/users:
     get:
       operationId: listUsersInGroup
       tags:
@@ -562,6 +562,7 @@ paths:
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -588,7 +589,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{channelID}/users:
+  /{domainID}/channels/{channelID}/users:
     get:
       operationId: listUsersInChannel
       tags:
@@ -600,6 +601,7 @@ paths:
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
+        - $ref: "auth.yml#/components/parameters/DomainID"
         - $ref: "#/components/parameters/ChannelID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -1825,7 +1827,7 @@ components:
 
     ChannelID:
       name: channelID
-      description: Unique group identifier.
+      description: Unique channel identifier.
       in: path
       schema:
         type: string

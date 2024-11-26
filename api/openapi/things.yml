@@ -263,7 +263,7 @@ paths:
   /{domainID}/things/{thingID}/secret:
     patch:
       operationId: updateThingSecret
-      summary: Updates Secret of the identified thing.
+      summary: Updates secret of the identified thing.
       description: |
         Updates secret of the identified in thing. Secret is updated using
         authorization token and the new received info. Update is performed by replacing current key with a new one.
@@ -363,7 +363,7 @@ paths:
       operationId: shareThing
       summary: Shares a thing
       description: |
-        Shares a specific thing that is identifier by the thing ID.
+        Shares a specific thing that is identified by the thing ID.
       tags:
         - Things
       parameters:
@@ -394,7 +394,7 @@ paths:
       operationId: unshareThing
       summary: Unshares a thing
       description: |
-        Unshares a specific thing that is identifier by the thing ID.
+        Unshares a specific thing that is identified by the thing ID.
       tags:
         - Things
       parameters:
@@ -1100,12 +1100,9 @@ components:
               "bb7edb32-2eac-4aad-aebe-ed96fe073879",
             ]
         relation:
-          type: array
-          minItems: 0
-          items:
-            type: string
-          example: ["m_write", "g_add"]
-          description: Policy relations.
+          type: string
+          example: "editor"
+          description: Policy relation.
       required:
         - user_ids
         - relation
@@ -1126,7 +1123,7 @@ components:
             ]
         relation:
           type: string
-          example: "m_write"
+          example: "editor"
           description: Policy relations.
         member_kind:
           type: string
@@ -1153,7 +1150,7 @@ components:
             ]
         relation:
           type: string
-          example: "m_write"
+          example: "editor"
           description: Policy relations.
       required:
         - users_ids

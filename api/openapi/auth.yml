@@ -20,16 +20,24 @@ servers:
   - url: https://localhost:8189
 
 tags:
-  - name: Auth
-    description: Everything about your Authentication and Authorization.
-    externalDocs:
-      description: Find out more about auth
-      url: https://docs.magistrala.abstractmachines.fr/
   - name: Keys
     description: Everything about your Keys.
     externalDocs:
       description: Find out more about keys
       url: https://docs.magistrala.abstractmachines.fr/
+
+  - name: Domains
+    description: Everything about your Domains.
+    externalDocs:
+      description: Find out more about domains
+      url: https://docs.magistrala.abstractmachines.fr/
+  
+  - name: Health
+    description: Service health check endpoint.
+    externalDocs:
+      description: Find out more about health check
+      url: https://docs.magistrala.abstractmachines.fr/
+
 
 paths:
   /domains:
@@ -372,73 +380,18 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /policies:
-    post:
-      operationId: addPolicies
-      summary: Creates new policies.
-      description: |
-        Creates new policies. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
-        Also, only policies defined on the system are allowed to add. For more details, please see the docs for Authorization.
-      tags:
-        - Auth
-      requestBody:
-        $ref: "#/components/requestBodies/PoliciesReq"
-      responses:
-        "201":
-          description: Policies created.
-        "400":
-          description: Failed due to malformed JSON.
-        "401":
-          description: Missing or invalid access token provided.
-        "403":
-          description: Unauthorized access token provided.
-        "404":
-          description: A non-existent entity request.
-        "409":
-          description: Failed due to using an existing email address.
-        "415":
-          description: Missing or invalid content type.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /policies/delete:
-    post:
-      operationId: deletePolicies
-      summary: Deletes policies.
-      description: |
-        Deletes policies. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
-        Also, only policies defined on the system are allowed to delete. For more details, please see the docs for Authorization.
-      tags:
-        - Auth
-      requestBody:
-        $ref: "#/components/requestBodies/PoliciesReq"
-      responses:
-        "204":
-          description: Policies deleted.
-        "400":
-          description: Failed due to malformed JSON.
-        "401":
-          description: Missing or invalid access token provided.
-        "404":
-          description: A non-existent entity request.
-        "409":
-          description: Failed due to using an existing email address.
-        "415":
-          description: Missing or invalid content type.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-  /users/{memberID}/domains:
+  /users/{userID}/domains:
     get:
       tags:
         - Domains
-      summary: List users in a group
+      summary: Lists domains associated with a user.
       description: |
-        Retrieves a list of users in a domain. Due to performance concerns, data
+        Retrieves a list of domains associated with a user. Due to performance concerns, data
         is retrieved in subsets. The API must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
-        - $ref: "users.yml#/components/parameters/MemberID"
+        - $ref: "users.yml#/components/parameters/UserID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
@@ -465,7 +418,7 @@ paths:
     get:
       summary: Retrieves service health check info.
       tags:
-        - health
+        - Health
       security: []
       responses:
         "200":
@@ -677,27 +630,6 @@ components:
           description: Time when the Key expires. If this field is missing,
             that means that Key is valid indefinitely.
 
-    PoliciesReqSchema:
-      type: object
-      properties:
-        object:
-          type: string
-          description: |
-            Specifies an object field for the field.
-            Object indicates application objects such as ThingID.
-        subjects:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items:
-            type: string
-        policies:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items:
-            type: string
-
   parameters:
     DomainID:
       name: domainID
@@ -833,14 +765,6 @@ components:
                 format: integer
                 example: 23456
                 description: Number of seconds issued token is valid for.
-
-    PoliciesReq:
-      description: JSON-formatted document describing adding policies request.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/PoliciesReqSchema"
 
   responses:
     ServiceError:

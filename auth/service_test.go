@@ -1396,14 +1396,22 @@ func TestRetrieveDomain(t *testing.T) {
 		domainID       string
 		domainRepoErr  error
 		domainRepoErr1 error
+		checkAdminErr  error
 		checkPolicyErr error
 		err            error
 	}{
 		{
-			desc:     "retrieve domain successfully",
+			desc:     "retrieve domain successfully as super admin",
 			token:    accessToken,
 			domainID: validID,
 			err:      nil,
+		},
+		{
+			desc:          "retrieve domain successfully as domain admin",
+			token:         accessToken,
+			domainID:      validID,
+			checkAdminErr: svcerr.ErrAuthorization,
+			err:           nil,
 		},
 		{
 			desc:     "retrieve domain with invalid token",
@@ -1438,13 +1446,44 @@ func TestRetrieveDomain(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := drepo.On("RetrieveByID", mock.Anything, groupName).Return(auth.Domain{}, tc.domainRepoErr)
-			repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+			}).Return(tc.checkAdminErr)
+			policyCall1 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				Permission:  policies.MembershipPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall2 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall3 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Permission:  policies.MembershipPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
 			repoCall2 := drepo.On("RetrieveByID", mock.Anything, tc.domainID).Return(auth.Domain{}, tc.domainRepoErr1)
 			_, err := svc.RetrieveDomain(context.Background(), tc.token, tc.domainID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
-			repoCall1.Unset()
 			repoCall2.Unset()
+			policyCall.Unset()
+			policyCall1.Unset()
+			policyCall2.Unset()
+			policyCall3.Unset()
 		})
 	}
 }
@@ -1458,14 +1497,22 @@ func TestRetrieveDomainPermissions(t *testing.T) {
 		domainID               string
 		retreivePermissionsErr error
 		retreiveByIDErr        error
+		checkAdminErr          error
 		checkPolicyErr         error
 		err                    error
 	}{
 		{
-			desc:     "retrieve domain permissions successfully",
+			desc:     "retrieve domain permissions successfully as platform admin",
 			token:    accessToken,
 			domainID: validID,
 			err:      nil,
+		},
+		{
+			desc:          "retrieve domain permissions successfully as domain admin",
+			token:         accessToken,
+			domainID:      validID,
+			checkAdminErr: svcerr.ErrAuthorization,
+			err:           nil,
 		},
 		{
 			desc:     "retrieve domain permissions with invalid token",
@@ -1474,11 +1521,11 @@ func TestRetrieveDomainPermissions(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:           "retrieve domain permissions with empty domainID",
-			token:          accessToken,
-			domainID:       "",
-			checkPolicyErr: svcerr.ErrAuthorization,
-			err:            svcerr.ErrDomainAuthorization,
+			desc:                   "retrieve domain permissions with empty domainID",
+			token:                  accessToken,
+			domainID:               "",
+			retreivePermissionsErr: svcerr.ErrAuthorization,
+			err:                    svcerr.ErrAuthorization,
 		},
 		{
 			desc:                   "retrieve domain permissions with failed to retrieve permissions",
@@ -1491,6 +1538,7 @@ func TestRetrieveDomainPermissions(t *testing.T) {
 			desc:            "retrieve domain permissions with failed to retrieve by id",
 			token:           accessToken,
 			domainID:        validID,
+			checkAdminErr:   svcerr.ErrAuthorization,
 			retreiveByIDErr: repoerr.ErrNotFound,
 			err:             svcerr.ErrNotFound,
 		},
@@ -1500,12 +1548,43 @@ func TestRetrieveDomainPermissions(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := pService.On("ListPermissions", mock.Anything, mock.Anything, mock.Anything).Return(policies.Permissions{}, tc.retreivePermissionsErr)
 			repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retreiveByIDErr)
-			repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+			}).Return(tc.checkAdminErr)
+			policyCall1 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				Permission:  policies.MembershipPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall2 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall3 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Permission:  policies.MembershipPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
 			_, err := svc.RetrieveDomainPermissions(context.Background(), tc.token, tc.domainID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
 			repoCall1.Unset()
-			repoCall2.Unset()
+			policyCall.Unset()
+			policyCall1.Unset()
+			policyCall2.Unset()
+			policyCall3.Unset()
 		})
 	}
 }
@@ -1521,10 +1600,11 @@ func TestUpdateDomain(t *testing.T) {
 		checkPolicyErr  error
 		retrieveByIDErr error
 		updateErr       error
+		checkAdminErr   error
 		err             error
 	}{
 		{
-			desc:     "update domain successfully",
+			desc:     "update domain successfully as platform admin",
 			token:    accessToken,
 			domainID: validID,
 			domReq: auth.DomainReq{
@@ -1532,6 +1612,17 @@ func TestUpdateDomain(t *testing.T) {
 				Alias: &valid,
 			},
 			err: nil,
+		},
+		{
+			desc:     "update domain successfully as domain admin",
+			token:    accessToken,
+			domainID: validID,
+			domReq: auth.DomainReq{
+				Name:  &valid,
+				Alias: &valid,
+			},
+			checkAdminErr: svcerr.ErrAuthorization,
+			err:           nil,
 		},
 		{
 			desc:     "update domain with invalid token",
@@ -1552,6 +1643,7 @@ func TestUpdateDomain(t *testing.T) {
 				Alias: &valid,
 			},
 			checkPolicyErr: svcerr.ErrAuthorization,
+			checkAdminErr:  svcerr.ErrAuthorization,
 			err:            svcerr.ErrDomainAuthorization,
 		},
 		{
@@ -1563,6 +1655,7 @@ func TestUpdateDomain(t *testing.T) {
 				Alias: &valid,
 			},
 			retrieveByIDErr: repoerr.ErrNotFound,
+			checkAdminErr:   svcerr.ErrAuthorization,
 			err:             svcerr.ErrNotFound,
 		},
 		{
@@ -1580,14 +1673,45 @@ func TestUpdateDomain(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+			}).Return(tc.checkAdminErr)
+			policyCall1 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				Permission:  policies.MembershipPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall2 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall3 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Permission:  policies.EditPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
 			repoCall1 := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retrieveByIDErr)
 			repoCall2 := drepo.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.Domain{}, tc.updateErr)
 			_, err := svc.UpdateDomain(context.Background(), tc.token, tc.domainID, tc.domReq)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-			repoCall.Unset()
 			repoCall1.Unset()
 			repoCall2.Unset()
+			policyCall.Unset()
+			policyCall1.Unset()
+			policyCall2.Unset()
+			policyCall3.Unset()
 		})
 	}
 }
@@ -1604,17 +1728,28 @@ func TestChangeDomainStatus(t *testing.T) {
 		domainReq        auth.DomainReq
 		retreieveByIDErr error
 		checkPolicyErr   error
+		checkAdminErr    error
 		updateErr        error
 		err              error
 	}{
 		{
-			desc:     "change domain status successfully",
+			desc:     "change domain status successfully as platform admin",
 			token:    accessToken,
 			domainID: validID,
 			domainReq: auth.DomainReq{
 				Status: &disabledStatus,
 			},
 			err: nil,
+		},
+		{
+			desc:     "change domain status successfully as platform admin",
+			token:    accessToken,
+			domainID: validID,
+			domainReq: auth.DomainReq{
+				Status: &disabledStatus,
+			},
+			checkAdminErr: svcerr.ErrAuthorization,
+			err:           nil,
 		},
 		{
 			desc:     "change domain status with invalid token",
@@ -1632,6 +1767,7 @@ func TestChangeDomainStatus(t *testing.T) {
 			domainReq: auth.DomainReq{
 				Status: &disabledStatus,
 			},
+			checkAdminErr:    svcerr.ErrAuthorization,
 			retreieveByIDErr: repoerr.ErrNotFound,
 			err:              svcerr.ErrNotFound,
 		},
@@ -1642,6 +1778,7 @@ func TestChangeDomainStatus(t *testing.T) {
 			domainReq: auth.DomainReq{
 				Status: &disabledStatus,
 			},
+			checkAdminErr:  svcerr.ErrAuthorization,
 			checkPolicyErr: svcerr.ErrAuthorization,
 			err:            svcerr.ErrDomainAuthorization,
 		},
@@ -1660,13 +1797,44 @@ func TestChangeDomainStatus(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, tc.retreieveByIDErr)
-			repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, mock.Anything).Return(tc.checkPolicyErr)
+			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+			}).Return(tc.checkAdminErr)
+			policyCall1 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				Permission:  policies.MembershipPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall2 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
+			policyCall3 := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     auth.EncodeDomainUserID(tc.domainID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Permission:  policies.AdminPermission,
+				Object:      tc.domainID,
+				ObjectType:  policies.DomainType,
+			}).Return(tc.checkPolicyErr)
 			repoCall2 := drepo.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(auth.Domain{}, tc.updateErr)
 			_, err := svc.ChangeDomainStatus(context.Background(), tc.token, tc.domainID, tc.domainReq)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
-			repoCall1.Unset()
 			repoCall2.Unset()
+			policyCall.Unset()
+			policyCall1.Unset()
+			policyCall2.Unset()
+			policyCall3.Unset()
 		})
 	}
 }
@@ -1743,25 +1911,26 @@ func TestAssignUsers(t *testing.T) {
 	svc, accessToken := newService()
 
 	cases := []struct {
-		desc                 string
-		token                string
-		domainID             string
-		userIDs              []string
-		relation             string
-		checkPolicyReq       policies.Policy
-		checkAdminPolicyReq  policies.Policy
-		checkDomainPolicyReq policies.Policy
-		checkPolicyReq1      policies.Policy
-		checkpolicyErr       error
-		checkPolicyErr1      error
-		checkPolicyErr2      error
-		addPoliciesErr       error
-		savePoliciesErr      error
-		deletePoliciesErr    error
-		err                  error
+		desc                  string
+		token                 string
+		domainID              string
+		userIDs               []string
+		relation              string
+		checkPolicyReq        policies.Policy
+		checkAdminPolicyReq   policies.Policy
+		checkDomainPolicyReq  policies.Policy
+		checkPolicyReq1       policies.Policy
+		checkpolicyErr        error
+		checkPolicyErr1       error
+		checkPolicyErr2       error
+		addPoliciesErr        error
+		savePoliciesErr       error
+		deletePoliciesErr     error
+		checkPlatformAdminErr error
+		err                   error
 	}{
 		{
-			desc:     "assign users successfully",
+			desc:     "assign users successfully as platform admin",
 			token:    accessToken,
 			domainID: validID,
 			userIDs:  []string{validID},
@@ -1799,6 +1968,45 @@ func TestAssignUsers(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc:     "assign users successfully",
+			token:    accessToken,
+			domainID: validID,
+			userIDs:  []string{validID},
+			relation: policies.ContributorRelation,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
+			},
+			checkAdminPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.ViewPermission,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     validID,
+				SubjectType: policies.UserType,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.MembershipPermission,
+			},
+			checkPolicyReq1: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   nil,
+		},
+		{
 			desc:     "assign users with invalid token",
 			token:    inValidToken,
 			domainID: validID,
@@ -1828,7 +2036,8 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.MembershipPermission,
 			},
-			err: svcerr.ErrAuthentication,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   svcerr.ErrAuthentication,
 		},
 		{
 			desc:     "assign users with invalid domainID",
@@ -1858,8 +2067,9 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyErr1: svcerr.ErrAuthorization,
-			err:             svcerr.ErrAuthorization,
+			checkPolicyErr1:       svcerr.ErrAuthorization,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   svcerr.ErrAuthorization,
 		},
 		{
 			desc:     "assign users with invalid userIDs",
@@ -1897,8 +2107,9 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyErr2: svcerr.ErrMalformedEntity,
-			err:             svcerr.ErrDomainAuthorization,
+			checkPolicyErr2:       svcerr.ErrMalformedEntity,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc:     "assign users with failed to add policies to agent",
@@ -1936,8 +2147,9 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
-			addPoliciesErr: svcerr.ErrAuthorization,
-			err:            errAddPolicies,
+			addPoliciesErr:        svcerr.ErrAuthorization,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   errAddPolicies,
 		},
 		{
 			desc:     "assign users with failed to save policies to domain",
@@ -1975,8 +2187,9 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
-			savePoliciesErr: repoerr.ErrCreateEntity,
-			err:             errAddPolicies,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			savePoliciesErr:       repoerr.ErrCreateEntity,
+			err:                   errAddPolicies,
 		},
 		{
 			desc:     "assign users with failed to save policies to domain and failed to delete",
@@ -2014,15 +2227,23 @@ func TestAssignUsers(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
-			savePoliciesErr:   repoerr.ErrCreateEntity,
-			deletePoliciesErr: svcerr.ErrDomainAuthorization,
-			err:               errAddPolicies,
+			savePoliciesErr:       repoerr.ErrCreateEntity,
+			deletePoliciesErr:     svcerr.ErrDomainAuthorization,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   errAddPolicies,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, nil)
+			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+			}).Return(tc.checkPlatformAdminErr)
 			repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkpolicyErr)
 			repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
 			repoCall3 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr2)
@@ -2040,6 +2261,7 @@ func TestAssignUsers(t *testing.T) {
 			repoCall5.Unset()
 			repoCall6.Unset()
 			repoCall7.Unset()
+			policyCall.Unset()
 		})
 	}
 }
@@ -2059,10 +2281,11 @@ func TestUnassignUser(t *testing.T) {
 		checkPolicyErr1       error
 		deletePolicyFilterErr error
 		deletePoliciesErr     error
+		checkPlatformAdminErr error
 		err                   error
 	}{
 		{
-			desc:     "unassign user successfully",
+			desc:     "unassign user successfully as platform admin",
 			token:    accessToken,
 			domainID: validID,
 			userID:   validID,
@@ -2092,6 +2315,37 @@ func TestUnassignUser(t *testing.T) {
 			err: nil,
 		},
 		{
+			desc:     "unassign user successfully as domain admin",
+			token:    accessToken,
+			domainID: validID,
+			userID:   validID,
+			checkPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			checkAdminPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     auth.EncodeDomainUserID(validID, userID),
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.SharePermission,
+			},
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   nil,
+		},
+		{
 			desc:     "unassign users with invalid token",
 			token:    inValidToken,
 			domainID: validID,
@@ -2112,7 +2366,8 @@ func TestUnassignUser(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.AdminPermission,
 			},
-			err: svcerr.ErrAuthentication,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   svcerr.ErrAuthentication,
 		},
 		{
 			desc:     "unassign users with invalid domainID",
@@ -2142,8 +2397,9 @@ func TestUnassignUser(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.MembershipPermission,
 			},
-			checkPolicyErr1: svcerr.ErrAuthorization,
-			err:             svcerr.ErrDomainAuthorization,
+			checkPolicyErr1:       svcerr.ErrAuthorization,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   svcerr.ErrDomainAuthorization,
 		},
 		{
 			desc:     "unassign users with failed to delete policies from agent",
@@ -2174,6 +2430,7 @@ func TestUnassignUser(t *testing.T) {
 				Permission:  policies.MembershipPermission,
 			},
 			deletePolicyFilterErr: errors.ErrMalformedEntity,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
 			err:                   errors.ErrMalformedEntity,
 		},
 		{
@@ -2206,6 +2463,7 @@ func TestUnassignUser(t *testing.T) {
 			},
 			deletePoliciesErr:     errors.ErrMalformedEntity,
 			deletePolicyFilterErr: errors.ErrMalformedEntity,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
 			err:                   errors.ErrMalformedEntity,
 		},
 		{
@@ -2236,26 +2494,35 @@ func TestUnassignUser(t *testing.T) {
 				ObjectType:  policies.DomainType,
 				Permission:  policies.SharePermission,
 			},
-			deletePoliciesErr: errors.ErrMalformedEntity,
-			err:               errors.ErrMalformedEntity,
+			deletePoliciesErr:     errors.ErrMalformedEntity,
+			checkPlatformAdminErr: svcerr.ErrAuthorization,
+			err:                   errors.ErrMalformedEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := drepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(auth.Domain{}, nil)
-			repoCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkPolicyErr)
-			repoCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
-			repoCall3 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
+			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.MagistralaObject,
+				ObjectType:  policies.PlatformType,
+			}).Return(tc.checkPlatformAdminErr)
+			policyCall1 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkPolicyErr)
+			policyCall2 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkAdminPolicyReq).Return(tc.checkPolicyErr1)
+			policyCall3 := pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkPolicyErr1)
 			repoCall4 := pService.On("DeletePolicyFilter", mock.Anything, mock.Anything).Return(tc.deletePolicyFilterErr)
 			repoCall5 := drepo.On("DeletePolicies", mock.Anything, mock.Anything, mock.Anything).Return(tc.deletePoliciesErr)
 			err := svc.UnassignUser(context.Background(), tc.token, tc.domainID, tc.userID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
-			repoCall1.Unset()
-			repoCall2.Unset()
-			repoCall3.Unset()
+			policyCall.Unset()
+			policyCall1.Unset()
+			policyCall2.Unset()
 			repoCall4.Unset()
+			policyCall3.Unset()
 			repoCall5.Unset()
 		})
 	}

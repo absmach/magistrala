@@ -497,15 +497,17 @@ func (svc service) RetrieveDomain(ctx context.Context, token, id string) (Domain
 	if err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	if err = svc.Authorize(ctx, policies.Policy{
-		Subject:     EncodeDomainUserID(id, res.User),
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Object:      id,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return Domain{ID: domain.ID, Name: domain.Name, Alias: domain.Alias}, nil
+	if err := svc.checkSuperAdmin(ctx, res.User); err != nil {
+		if err = svc.Authorize(ctx, policies.Policy{
+			Subject:     EncodeDomainUserID(id, res.User),
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Object:      id,
+			ObjectType:  policies.DomainType,
+			Permission:  policies.MembershipPermission,
+		}); err != nil {
+			return Domain{ID: domain.ID, Name: domain.Name, Alias: domain.Alias}, nil
+		}
 	}
 	return domain, nil
 }
@@ -515,21 +517,25 @@ func (svc service) RetrieveDomainPermissions(ctx context.Context, token, id stri
 	if err != nil {
 		return []string{}, err
 	}
-	domainUserSubject := EncodeDomainUserID(id, res.User)
-	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     domainUserSubject,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Object:      id,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return []string{}, err
+	subject := res.User
+	if err := svc.checkSuperAdmin(ctx, res.User); err != nil {
+		domainUserSubject := EncodeDomainUserID(id, res.User)
+		if err := svc.Authorize(ctx, policies.Policy{
+			Subject:     domainUserSubject,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Object:      id,
+			ObjectType:  policies.DomainType,
+			Permission:  policies.MembershipPermission,
+		}); err != nil {
+			return []string{}, err
+		}
+		subject = domainUserSubject
 	}
 
 	lp, err := svc.policysvc.ListPermissions(ctx, policies.Policy{
 		SubjectType: policies.UserType,
-		Subject:     domainUserSubject,
+		Subject:     subject,
 		Object:      id,
 		ObjectType:  policies.DomainType,
 	}, []string{policies.AdminPermission, policies.EditPermission, policies.ViewPermission, policies.MembershipPermission, policies.CreatePermission})
@@ -544,15 +550,17 @@ func (svc service) UpdateDomain(ctx context.Context, token, id string, d DomainR
 	if err != nil {
 		return Domain{}, err
 	}
-	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     EncodeDomainUserID(id, key.User),
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Object:      id,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.EditPermission,
-	}); err != nil {
-		return Domain{}, err
+	if err := svc.checkSuperAdmin(ctx, key.User); err != nil {
+		if err := svc.Authorize(ctx, policies.Policy{
+			Subject:     EncodeDomainUserID(id, key.User),
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Object:      id,
+			ObjectType:  policies.DomainType,
+			Permission:  policies.EditPermission,
+		}); err != nil {
+			return Domain{}, err
+		}
 	}
 
 	dom, err := svc.domains.Update(ctx, id, key.User, d)
@@ -567,15 +575,17 @@ func (svc service) ChangeDomainStatus(ctx context.Context, token, id string, d D
 	if err != nil {
 		return Domain{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     EncodeDomainUserID(id, key.User),
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Object:      id,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.AdminPermission,
-	}); err != nil {
-		return Domain{}, err
+	if err := svc.checkSuperAdmin(ctx, key.User); err != nil {
+		if err := svc.Authorize(ctx, policies.Policy{
+			Subject:     EncodeDomainUserID(id, key.User),
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Object:      id,
+			ObjectType:  policies.DomainType,
+			Permission:  policies.AdminPermission,
+		}); err != nil {
+			return Domain{}, err
+		}
 	}
 
 	dom, err := svc.domains.Update(ctx, id, key.User, d)
@@ -591,13 +601,7 @@ func (svc service) ListDomains(ctx context.Context, token string, p Page) (Domai
 		return DomainsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	p.SubjectID = key.User
-	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     key.User,
-		SubjectType: policies.UserType,
-		Permission:  policies.AdminPermission,
-		ObjectType:  policies.PlatformType,
-		Object:      policies.MagistralaObject,
-	}); err == nil {
+	if err := svc.checkSuperAdmin(ctx, key.User); err == nil {
 		p.SubjectID = ""
 	}
 	dp, err := svc.domains.ListDomains(ctx, p)
@@ -618,27 +622,29 @@ func (svc service) AssignUsers(ctx context.Context, token, id string, userIds []
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	domainUserID := EncodeDomainUserID(id, res.User)
-	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     domainUserID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Object:      id,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.SharePermission,
-	}); err != nil {
-		return err
-	}
+	if err := svc.checkSuperAdmin(ctx, res.User); err != nil {
+		domainUserID := EncodeDomainUserID(id, res.User)
+		if err := svc.Authorize(ctx, policies.Policy{
+			Subject:     domainUserID,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Object:      id,
+			ObjectType:  policies.DomainType,
+			Permission:  policies.SharePermission,
+		}); err != nil {
+			return err
+		}
 
-	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     domainUserID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Object:      id,
-		ObjectType:  policies.DomainType,
-		Permission:  SwitchToPermission(relation),
-	}); err != nil {
-		return err
+		if err := svc.Authorize(ctx, policies.Policy{
+			Subject:     domainUserID,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Object:      id,
+			ObjectType:  policies.DomainType,
+			Permission:  SwitchToPermission(relation),
+		}); err != nil {
+			return err
+		}
 	}
 
 	for _, userID := range userIds {
@@ -662,27 +668,29 @@ func (svc service) UnassignUser(ctx context.Context, token, id, userID string) e
 		return errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
-	domainUserID := EncodeDomainUserID(id, res.User)
-	pr := policies.Policy{
-		Subject:     domainUserID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Object:      id,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.SharePermission,
-	}
-	if err := svc.Authorize(ctx, pr); err != nil {
-		return err
-	}
+	if err := svc.checkSuperAdmin(ctx, res.User); err != nil {
+		domainUserID := EncodeDomainUserID(id, res.User)
+		pr := policies.Policy{
+			Subject:     domainUserID,
+			SubjectType: policies.UserType,
+			SubjectKind: policies.UsersKind,
+			Object:      id,
+			ObjectType:  policies.DomainType,
+			Permission:  policies.SharePermission,
+		}
+		if err := svc.Authorize(ctx, pr); err != nil {
+			return err
+		}
 
-	pr.Permission = policies.AdminPermission
-	if err := svc.Authorize(ctx, pr); err != nil {
-		pr.SubjectKind = policies.UsersKind
-		// User is not admin.
-		pr.Subject = userID
-		if err := svc.Authorize(ctx, pr); err == nil {
-			// Non admin attempts to remove admin.
-			return errors.Wrap(svcerr.ErrAuthorization, err)
+		pr.Permission = policies.AdminPermission
+		if err := svc.Authorize(ctx, pr); err != nil {
+			pr.SubjectKind = policies.UsersKind
+			// User is not admin.
+			pr.Subject = userID
+			if err := svc.Authorize(ctx, pr); err == nil {
+				// Non admin attempts to remove admin.
+				return errors.Wrap(svcerr.ErrAuthorization, err)
+			}
 		}
 	}
 
@@ -713,13 +721,7 @@ func (svc service) ListUserDomains(ctx context.Context, token, userID string, p 
 	if err != nil {
 		return DomainsPage{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
-	if err := svc.Authorize(ctx, policies.Policy{
-		Subject:     res.User,
-		SubjectType: policies.UserType,
-		Permission:  policies.AdminPermission,
-		Object:      policies.MagistralaObject,
-		ObjectType:  policies.PlatformType,
-	}); err != nil {
+	if err := svc.checkSuperAdmin(ctx, res.User); err != nil {
 		return DomainsPage{}, errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 	if userID != "" && res.User != userID {
@@ -902,6 +904,20 @@ func (svc service) DeleteUserFromDomains(ctx context.Context, id string) (err er
 
 	if err := svc.domains.DeleteUserPolicies(ctx, id); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (svc service) checkSuperAdmin(ctx context.Context, userID string) error {
+	if err := svc.evaluator.CheckPolicy(ctx, policies.Policy{
+		Subject:     userID,
+		SubjectType: policies.UserType,
+		Permission:  policies.AdminPermission,
+		Object:      policies.MagistralaObject,
+		ObjectType:  policies.PlatformType,
+	}); err != nil {
+		return svcerr.ErrAuthorization
 	}
 
 	return nil

@@ -67,21 +67,23 @@ func (am *authorizationMiddleware) ListMembers(ctx context.Context, session auth
 	if session.DomainUserID == "" {
 		return users.MembersPage{}, svcerr.ErrDomainAuthorization
 	}
-	switch objectKind {
-	case policies.GroupsKind:
-		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.GroupType, objectID); err != nil {
-			return users.MembersPage{}, err
+	if err := am.checkSuperAdmin(ctx, session.UserID); err != nil {
+		switch objectKind {
+		case policies.GroupsKind:
+			if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.GroupType, objectID); err != nil {
+				return users.MembersPage{}, err
+			}
+		case policies.DomainsKind:
+			if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.DomainType, objectID); err != nil {
+				return users.MembersPage{}, err
+			}
+		case policies.ThingsKind:
+			if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.ThingType, objectID); err != nil {
+				return users.MembersPage{}, err
+			}
+		default:
+			return users.MembersPage{}, svcerr.ErrAuthorization
 		}
-	case policies.DomainsKind:
-		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.DomainType, objectID); err != nil {
-			return users.MembersPage{}, err
-		}
-	case policies.ThingsKind:
-		if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, mgauth.SwitchToPermission(pm.Permission), policies.ThingType, objectID); err != nil {
-			return users.MembersPage{}, err
-		}
-	default:
-		return users.MembersPage{}, svcerr.ErrAuthorization
 	}
 
 	return am.svc.ListMembers(ctx, session, objectKind, objectID, pm)

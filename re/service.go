@@ -5,8 +5,10 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/consumers"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/messaging"
+	mgjson "github.com/absmach/magistrala/pkg/transformers/json"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -35,17 +37,19 @@ type Schedule struct {
 // Status represents Rule status.
 
 type Rule struct {
-	ID           string    `json:"id"`
-	DomainID     string    `json:"domain"`
-	InputTopic   string    `json:"input_topics"`
-	Logic        Script    `json:"logic"`
-	OutputTopics []string  `json:"output_topics,omitempty"`
-	Schedule     Schedule  `json:"schedule,omitempty"`
-	Status       Status    `json:"status"`
-	CreatedAt    time.Time `json:"created_at,omitempty"`
-	CreatedBy    string    `json:"created_by,omitempty"`
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
-	UpdatedBy    string    `json:"updated_by,omitempty"`
+	ID            string    `json:"id"`
+	DomainID      string    `json:"domain"`
+	InputChannel  string    `json:"input_topics"`
+	InputTopic    string    `json:"input_topic"`
+	Logic         Script    `json:"logic"`
+	OutputChannel string    `json:"output_channel,omitempty"`
+	OutputTopic   string    `json:"output_topic,omitempty"`
+	Schedule      Schedule  `json:"schedule,omitempty"`
+	Status        Status    `json:"status"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
+	CreatedBy     string    `json:"created_by,omitempty"`
+	UpdatedAt     time.Time `json:"updated_at,omitempty"`
+	UpdatedBy     string    `json:"updated_by,omitempty"`
 }
 
 type Repository interface {
@@ -66,6 +70,7 @@ type PageMeta struct {
 }
 
 type Service interface {
+	consumers.AsyncConsumer
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
@@ -78,6 +83,7 @@ type re struct {
 	repo   Repository
 	cache  Repository
 	pubSub messaging.PubSub
+	errors chan error
 }
 
 func NewService(repo, cache Repository, idp magistrala.IDProvider, pubSub messaging.PubSub) Service {
@@ -86,6 +92,7 @@ func NewService(repo, cache Repository, idp magistrala.IDProvider, pubSub messag
 		cache:  cache,
 		idp:    idp,
 		pubSub: pubSub,
+		errors: make(chan error),
 	}
 }
 
@@ -118,13 +125,70 @@ func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) 
 	return re.repo.RemoveRule(ctx, id)
 }
 
-func (re *re) Process(ctx context.Context, session authn.Session) error {
-	rls, _ := re.ListRules(ctx, session, PageMeta{})
-	for _, r := range rls {
-		l := lua.NewState()
-		defer l.Close()
-		if err := l.DoString(string(r.Logic.Value)); err != nil {
-			panic(err)
+func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
+	switch m := msgs.(type) {
+	case *messaging.Message:
+		pm := PageMeta{
+			InputTopic: m.Channel,
+		}
+		rules, err := re.repo.ListRules(ctx, pm)
+		if err != nil {
+			re.errors <- err
+			return
+		}
+		for _, r := range rules {
+			go re.process(r, m)
+		}
+	case mgjson.Message:
+	default:
+	}
+}
+
+func (re *re) Errors() <-chan error {
+	return re.errors
+}
+
+func (re *re) process(r Rule, msg *messaging.Message) error {
+	l := lua.NewState()
+	defer l.Close()
+
+	message := l.NewTable()
+
+	l.RawSet(message, lua.LString("channel"), lua.LString(msg.Channel))
+	l.RawSet(message, lua.LString("subtopic"), lua.LString(msg.Subtopic))
+	l.RawSet(message, lua.LString("publisher"), lua.LString(msg.Publisher))
+	l.RawSet(message, lua.LString("protocol"), lua.LString(msg.Protocol))
+	l.RawSet(message, lua.LString("created"), lua.LNumber(msg.Created))
+
+	pld := l.NewTable()
+	for i, b := range msg.Payload {
+		l.RawSet(pld, lua.LNumber(i+1), lua.LNumber(b)) // Lua tables are 1-indexed
+	}
+	l.RawSet(message, lua.LString("payload"), pld)
+
+	// Set the message object as a Lua global variable.
+	l.SetGlobal("message", message)
+
+	if err := l.DoString(string(r.Logic.Value)); err != nil {
+		return err
+	}
+
+	result := l.Get(-1) // Get the last result
+	switch result {
+	case lua.LNil:
+		return nil
+	default:
+		if len(r.OutputChannel) == 0 {
+			return nil
+		}
+		m := &messaging.Message{
+			Publisher: "magistrala.re",
+			Created:   time.Now().Unix(),
+			Payload:   []byte(result.String()),
+		}
+		for _, t := range r.OutputChannel {
+			m.Channel = t
+			re.pubSub.Publish(context.Background(), t, m)
 		}
 	}
 	return nil

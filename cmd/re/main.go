@@ -15,11 +15,14 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/consumers"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	mglog "github.com/absmach/magistrala/logger"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	"github.com/absmach/magistrala/pkg/postgres"
@@ -63,6 +66,8 @@ type config struct {
 	SpicedbHost         string        `env:"MG_SPICEDB_HOST"           envDefault:"localhost"`
 	SpicedbPort         string        `env:"MG_SPICEDB_PORT"           envDefault:"50051"`
 	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY" envDefault:"12345678"`
+	ConfigPath          string        `env:"MG_RE_CONFIG_PATH"     envDefault:"/config.toml"`
+	BrokerURL           string        `env:"MG_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 }
 
 func main() {
@@ -120,6 +125,22 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
+	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
+	}
+	defer pubSub.Close()
+
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
+
 	// Setup new redis cache client
 	cacheclient, err := redisclient.Connect(cfg.CacheURL)
 	if err != nil {
@@ -168,12 +189,12 @@ func main() {
 		return
 	}
 
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+	if err = consumers.Start(ctx, svcName, pubSub, svc, cfg.ConfigPath, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to create Rule Engine: %s", err))
 		exitCode = 1
 		return
 	}
+
 	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, nil, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {

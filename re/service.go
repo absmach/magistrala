@@ -23,7 +23,8 @@ type Script struct {
 type ReccuringType uint
 
 const (
-	Daily ReccuringType = iota
+	None ReccuringType = iota
+	Daily
 	Weekly
 	Monthly
 )
@@ -39,7 +40,7 @@ type Schedule struct {
 type Rule struct {
 	ID            string    `json:"id"`
 	DomainID      string    `json:"domain"`
-	InputChannel  string    `json:"input_topics"`
+	InputChannel  string    `json:"input_channel"`
 	InputTopic    string    `json:"input_topic"`
 	Logic         Script    `json:"logic"`
 	OutputChannel string    `json:"output_channel,omitempty"`
@@ -186,10 +187,7 @@ func (re *re) process(r Rule, msg *messaging.Message) error {
 			Created:   time.Now().Unix(),
 			Payload:   []byte(result.String()),
 		}
-		for _, t := range r.OutputChannel {
-			m.Channel = t
-			re.pubSub.Publish(context.Background(), t, m)
-		}
+		re.pubSub.Publish(context.Background(), m.Channel, m)
 	}
 	return nil
 }

@@ -2,10 +2,49 @@ package postgres
 
 import (
 	"context"
-	"errors"
 
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/re"
+)
+
+// SQL Queries as Strings
+const (
+	addRuleQuery = `
+		INSERT INTO rules (id, domain_id, input_channel, input_topic, logic_type, logic_value,
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, status)
+		VALUES (:id, :domain_id, :input_channel, :input_topic, :logic_type, :logic_value,
+			:output_channel, :output_topic, :recurring_time, :recurring_type, :recurring_period, :status)
+		RETURNING id;
+	`
+
+	viewRuleQuery = `
+		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
+			output_topic, recurring_time, recurring_type, recurring_period, status
+		FROM rules
+		WHERE id = :id;
+	`
+
+	updateRuleQuery = `
+		UPDATE rules
+		SET input_channel = :input_channel, input_topic = :input_topic, logic_type = :logic_type, 
+			logic_value = :logic_value, output_channel = :output_channel, output_topic = :output_topic, 
+			recurring_time = :recurring_time, recurring_type = :recurring_type, 
+			recurring_period = :recurring_period, status = :status
+		WHERE id = :id;
+	`
+
+	removeRuleQuery = `
+		DELETE FROM rules
+		WHERE id = :id;
+	`
+
+	listRulesQuery = `
+		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
+			output_topic, recurring_time, recurring_type, recurring_period, status
+		FROM rules;
+	`
 )
 
 type PostgresRepository struct {
@@ -17,21 +56,8 @@ func NewRepository(db postgres.Database) re.Repository {
 }
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
-	_, err := repo.DB.ExecContext(ctx, `
-		INSERT INTO rules (id, domain_id, input_topic, logic_type, logic_value, output_topic, recurring_time, recurring_type, recurring_period, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`,
-		r.ID,
-		r.DomainID,
-		r.InputChannel,
-		r.Logic.Type,
-		r.Logic.Value,
-		r.OutputChannel,
-		r.Schedule.Time,
-		r.Schedule.RecurringType,
-		r.Schedule.RecurringPeriod,
-		r.Status,
-	)
+	dbr := ruleToDb(r)
+	_, err := repo.DB.NamedExecContext(ctx, addRuleQuery, dbr)
 	if err != nil {
 		return re.Rule{}, err
 	}
@@ -41,7 +67,8 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
 	var r re.Rule
 	row := repo.DB.QueryRowxContext(ctx, `
-		SELECT id, domain_id, input_topic, logic_type, logic_value, output_topic, recurring_time, recurring_type, recurring_period, status
+		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel,
+			output_topic, recurring_time, recurring_type, recurring_period, status
 		FROM rules WHERE id = $1
 	`, id)
 
@@ -49,9 +76,11 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 		&r.ID,
 		&r.DomainID,
 		&r.InputChannel,
+		&r.InputTopic,
 		&r.Logic.Type,
 		&r.Logic.Value,
 		&r.OutputChannel,
+		&r.OutputTopic,
 		&r.Schedule.Time,
 		&r.Schedule.RecurringType,
 		&r.Schedule.RecurringPeriod,
@@ -67,15 +96,17 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	result, err := repo.DB.ExecContext(ctx, `
 		UPDATE rules
-		SET input_topic = $2, logic_type = $3, logic_value = $4, output_topic = $5, 
-		    recurring_time = $6, recurring_type = $7, recurring_period = $8, status = $9
+		SET input_channel = $2, input_topic = $3, logic_type = $4, logic_value = $5, output_channel = $6,
+			output_topic = $7, recurring_time = $8, recurring_type = $9, recurring_period = $10, status = $11
 		WHERE id = $1
 	`,
 		r.ID,
 		r.InputChannel,
+		r.InputTopic,
 		r.Logic.Type,
 		r.Logic.Value,
 		r.OutputChannel,
+		r.OutputTopic,
 		r.Schedule.Time,
 		r.Schedule.RecurringType,
 		r.Schedule.RecurringPeriod,
@@ -108,34 +139,19 @@ func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error
 }
 
 func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) ([]re.Rule, error) {
-	rows, err := repo.DB.QueryContext(ctx, `
-		SELECT id, domain_id, input_topic, logic_type, logic_value, output_topic, 
-			recurring_time, recurring_type, recurring_period, status FROM rules
-	`)
+	rows, err := repo.DB.NamedQueryContext(ctx, listRulesQuery, pm)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	var rules []re.Rule
+	var r dbRule
 	for rows.Next() {
-		var r re.Rule
-		err := rows.Scan(
-			&r.ID,
-			&r.DomainID,
-			&r.InputChannel,
-			&r.Logic.Type,
-			&r.Logic.Value,
-			&r.OutputChannel,
-			&r.Schedule.Time,
-			&r.Schedule.RecurringType,
-			&r.Schedule.RecurringPeriod,
-			&r.Status,
-		)
-		if err != nil {
-			return nil, err
+		if err := rows.StructScan(&r); err != nil {
+			return nil, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
-		rules = append(rules, r)
+		rules = append(rules, dbToRule(r))
 	}
 
 	return rules, nil

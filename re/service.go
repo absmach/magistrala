@@ -1,3 +1,6 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
 package re
 
 import (
@@ -34,8 +37,6 @@ type Schedule struct {
 	RecurringType   ReccuringType
 	RecurringPeriod uint // 1 meaning every Recurring value, 2 meaning every other, and so on.
 }
-
-// Status represents Rule status.
 
 type Rule struct {
 	ID            string    `json:"id"`

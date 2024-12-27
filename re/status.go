@@ -10,19 +10,19 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
-// Status represents User status.
+// Status represents Rule status.
 type Status uint8
 
 // Possible User status values.
 const (
-	// EnabledStatus represents enabled User.
+	// EnabledStatus represents enabled Rule.
 	EnabledStatus Status = iota
-	// DisabledStatus represents disabled User.
+	// DisabledStatus represents disabled Rule.
 	DisabledStatus
-	// DeletedStatus represents a user that will be deleted.
+	// DeletedStatus represents a rule that will be deleted.
 	DeletedStatus
 
-	// AllStatus is used for querying purposes to list users irrespective
+	// AllStatus is used for querying purposes to list rules irrespective
 	// of their status - both enabled and disabled. It is never stored in the
 	// database as the actual User status and should always be the largest
 	// value in this enumeration.
@@ -38,7 +38,6 @@ const (
 	Unknown  = "unknown"
 )
 
-// String converts user/group status to string literal.
 func (s Status) String() string {
 	switch s {
 	case DisabledStatus:
@@ -54,7 +53,7 @@ func (s Status) String() string {
 	}
 }
 
-// ToStatus converts string value to a valid User/Group status.
+// ToStatus converts string value to a valid status.
 func ToStatus(status string) (Status, error) {
 	switch status {
 	case "", Enabled:
@@ -69,12 +68,10 @@ func ToStatus(status string) (Status, error) {
 	return Status(0), svcerr.ErrInvalidStatus
 }
 
-// Custom Marshaller for Uesr/Groups.
 func (s Status) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 
-// Custom Unmarshaler for User/Groups.
 func (s *Status) UnmarshalJSON(data []byte) error {
 	str := strings.Trim(string(data), "\"")
 	val, err := ToStatus(str)

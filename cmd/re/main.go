@@ -25,7 +25,6 @@ import (
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/policies/spicedb"
-	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
@@ -45,13 +44,12 @@ import (
 )
 
 const (
-	svcName            = "rules_engine"
-	envPrefixDB        = "MG_RE_DB_"
-	envPrefixHTTP      = "MG_RE_HTTP_"
-	envPrefixAuth      = "MG_AUTH_GRPC_"
-	defDB              = "r"
-	defSvcHTTPPort     = "9009"
-	defSvcAuthGRPCPort = "7000"
+	svcName        = "rules_engine"
+	envPrefixDB    = "MG_RE_DB_"
+	envPrefixHTTP  = "MG_RE_HTTP_"
+	envPrefixAuth  = "MG_AUTH_GRPC_"
+	defDB          = "r"
+	defSvcHTTPPort = "9008"
 )
 
 type config struct {
@@ -66,7 +64,7 @@ type config struct {
 	SpicedbHost         string        `env:"MG_SPICEDB_HOST"           envDefault:"localhost"`
 	SpicedbPort         string        `env:"MG_SPICEDB_PORT"           envDefault:"50051"`
 	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY" envDefault:"12345678"`
-	ConfigPath          string        `env:"MG_RE_CONFIG_PATH"     envDefault:"/config.toml"`
+	ConfigPath          string        `env:"MG_RE_CONFIG_PATH"         envDefault:"/config.toml"`
 	BrokerURL           string        `env:"MG_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 }
 
@@ -194,7 +192,6 @@ func main() {
 		exitCode = 1
 		return
 	}
-
 	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, nil, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
@@ -217,7 +214,7 @@ func main() {
 }
 
 func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authz mgauthz.Authorization, pe policies.Evaluator, ps policies.Service, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (re.Service, error) {
-	database := postgres.NewDatabase(db, dbConfig, tracer)
+	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	repo := repg.NewRepository(database)
 	idp := uuid.New()
 

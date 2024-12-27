@@ -10,9 +10,10 @@
 
 networks:
   magistrala-base-net:
+    driver: bridge
 
 volumes:
-  magistrala-postgres-re-db-volume:
+  magistrala-re-db-volume:
 
 services:
   re-db:
@@ -37,12 +38,11 @@ services:
     container_name: magistrala-re
     depends_on:
       - re-db
-      - auth
-      - nats
     restart: on-failure
     environment:
       MG_RE_LOG_LEVEL: ${MG_RE_LOG_LEVEL}
       MG_RE_HTTP_PORT: ${MG_RE_HTTP_PORT}
+      MG_RE_HTTP_HOST: ${MG_RE_HTTP_HOST}
       MG_RE_HTTP_SERVER_CERT: ${MG_RE_HTTP_SERVER_CERT}
       MG_RE_HTTP_SERVER_KEY: ${MG_RE_HTTP_SERVER_KEY}
       MG_RE_DB_HOST: ${MG_RE_DB_HOST}
@@ -54,6 +54,7 @@ services:
       MG_RE_DB_SSL_CERT: ${MG_RE_DB_SSL_CERT}
       MG_RE_DB_SSL_KEY: ${MG_RE_DB_SSL_KEY}
       MG_RE_DB_SSL_ROOT_CERT: ${MG_RE_DB_SSL_ROOT_CERT}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
       MG_ES_URL: ${MG_ES_URL}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
@@ -66,6 +67,7 @@ services:
       MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
       MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
       MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      MG_RE_INSTANCE_ID: ${MG_RE_INSTANCE_ID}
     ports:
       - ${MG_RE_HTTP_PORT}:${MG_RE_HTTP_PORT}
     networks:
@@ -87,3 +89,4 @@ services:
         target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+      - ./config.toml:/config.toml

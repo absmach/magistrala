@@ -10,6 +10,7 @@
 
 networks:
   magistrala-base-net:
+    driver: bridge
 
 volumes:
   magistrala-timescale-writer-volume:

@@ -5,27 +5,27 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/re"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
-	ID              string           `db:"id"`
-	DomainID        string           `db:"domain_id"`
-	InputChannel    string           `db:"input_channel"`
-	InputTopic      sql.NullString   `db:"input_topic"`
-	LogicType       re.ScriptType    `db:"logic_type"`
-	LogicValue      string           `db:"logic_value"`
-	OutputChannel   sql.NullString   `db:"output_channel"`
-	OutputTopic     sql.NullString   `db:"output_topic"`
-	RecurringTime   pq.StringArray   `db:"recurring_time"`
-	RecurringType   re.ReccuringType `db:"recurring_type"`
-	RecurringPeriod uint             `db:"recurring_period"`
-	Status          re.Status        `db:"status"`
-	CreatedAt       time.Time        `db:"created_at"`
-	CreatedBy       string           `db:"created_by"`
-	UpdatedAt       time.Time        `db:"updated_at"`
-	UpdatedBy       string           `db:"updated_by"`
+	ID              string                `db:"id"`
+	DomainID        string                `db:"domain_id"`
+	InputChannel    string                `db:"input_channel"`
+	InputTopic      sql.NullString        `db:"input_topic"`
+	LogicType       re.ScriptType         `db:"logic_type"`
+	LogicValue      string                `db:"logic_value"`
+	OutputChannel   sql.NullString        `db:"output_channel"`
+	OutputTopic     sql.NullString        `db:"output_topic"`
+	RecurringTime   *pgtype.Array[string] `db:"recurring_time"`
+	RecurringType   re.ReccuringType      `db:"recurring_type"`
+	RecurringPeriod uint                  `db:"recurring_period"`
+	Status          re.Status             `db:"status"`
+	CreatedAt       time.Time             `db:"created_at"`
+	CreatedBy       string                `db:"created_by"`
+	UpdatedAt       time.Time             `db:"updated_at"`
+	UpdatedBy       string                `db:"updated_by"`
 }
 
 func ruleToDb(r re.Rule) dbRule {
@@ -88,17 +88,24 @@ func fromNullString(nullString sql.NullString) string {
 	return nullString.String
 }
 
-func toStringArray(times []time.Time) pq.StringArray {
+func toStringArray(times []time.Time) *pgtype.Array[string] {
 	var strArray []string
 	for _, t := range times {
 		strArray = append(strArray, t.Format(time.RFC3339))
 	}
-	return pq.StringArray(strArray)
+	ret := pgtype.Array[string]{
+		Elements: strArray,
+		Valid:    true,
+	}
+	return &ret
 }
 
-func toTimeSlice(strArray pq.StringArray) []time.Time {
+func toTimeSlice(strArray *pgtype.Array[string]) []time.Time {
+	if strArray == nil || !strArray.Valid {
+		return []time.Time{}
+	}
 	var times []time.Time
-	for _, s := range strArray {
+	for _, s := range strArray.Elements {
 		t, err := time.Parse(time.RFC3339, s)
 		if err == nil {
 			times = append(times, t)

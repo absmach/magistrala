@@ -4,7 +4,7 @@
 MG_DOCKER_IMAGE_NAME_PREFIX ?= ghcr.io/absmach/magistrala
 BUILD_DIR = build
 SERVICES = auth users things http coap ws postgres-writer postgres-reader timescale-writer \
-	timescale-reader cli bootstrap mqtt provision certs invitations journal
+	timescale-reader cli bootstrap mqtt provision certs invitations journal re
 TEST_API_SERVICES = journal auth bootstrap certs http invitations notifiers provision readers things users
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))

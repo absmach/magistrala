@@ -125,10 +125,7 @@ func loadConfig(configPath string) (config, error) {
 		SubscriberCfg: subscriberConfig{
 			Subjects: []string{brokers.SubjectAllChannels},
 		},
-		TransformerCfg: transformerConfig{
-			Format:      defFormat,
-			ContentType: defContentType,
-		},
+		TransformerCfg: transformerConfig{},
 	}
 
 	data, err := os.ReadFile(configPath)
@@ -152,8 +149,7 @@ func makeTransformer(cfg transformerConfig, logger *slog.Logger) transformers.Tr
 		logger.Info("Using JSON transformer")
 		return json.New(cfg.TimeFields)
 	default:
-		logger.Error(fmt.Sprintf("Can't create transformer: unknown transformer type %s", cfg.Format))
-		os.Exit(1)
+		logger.Error(fmt.Sprintf("Can't create transformer: unknown transformer type %s; continuing without transformer", cfg.Format))
 		return nil
 	}
 }

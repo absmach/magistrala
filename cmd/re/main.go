@@ -18,13 +18,13 @@ import (
 	"github.com/absmach/magistrala/consumers"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	mglog "github.com/absmach/magistrala/logger"
+	authnsvc "github.com/absmach/magistrala/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/magistrala/pkg/authz"
+	authzsvc "github.com/absmach/magistrala/pkg/authz/authsvc"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
-	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
@@ -32,15 +32,11 @@ import (
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
 	repg "github.com/absmach/magistrala/re/postgres"
-	"github.com/authzed/authzed-go/v1"
-	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -53,19 +49,16 @@ const (
 )
 
 type config struct {
-	LogLevel            string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
-	InstanceID          string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
-	JaegerURL           url.URL       `env:"MG_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"         envDefault:"true"`
-	ESURL               string        `env:"MG_ES_URL"                 envDefault:"nats://localhost:4222"`
-	CacheURL            string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration    time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
-	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	SpicedbHost         string        `env:"MG_SPICEDB_HOST"           envDefault:"localhost"`
-	SpicedbPort         string        `env:"MG_SPICEDB_PORT"           envDefault:"50051"`
-	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY" envDefault:"12345678"`
-	ConfigPath          string        `env:"MG_RE_CONFIG_PATH"         envDefault:"/config.toml"`
-	BrokerURL           string        `env:"MG_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
+	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
+	JaegerURL        url.URL       `env:"MG_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry    bool          `env:"MG_SEND_TELEMETRY"         envDefault:"true"`
+	ESURL            string        `env:"MG_ES_URL"                 envDefault:"nats://localhost:4222"`
+	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
+	TraceRatio       float64       `env:"MG_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
+	ConfigPath       string        `env:"MG_RE_CONFIG_PATH"         envDefault:"/config.toml"`
+	BrokerURL        string        `env:"MG_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 }
 
 func main() {
@@ -148,39 +141,31 @@ func main() {
 	}
 	defer cacheclient.Close()
 
-	policyEvaluator, policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	logger.Info("Policy evaluator and Policy manager are successfully connected to SpiceDB gRPC server")
-
 	grpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
 		exitCode = 1
 		return
 	}
-	// authn, authnClient, err := authsvcAuthn.NewAuthentication(ctx, grpcCfg)
-	// if err != nil {
-	// 	logger.Error(err.Error())
-	// 	exitCode = 1
-	// 	return
-	// }
-	// defer authnClient.Close()
-	// logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
+	authn, authnClient, err := authnsvc.NewAuthentication(ctx, grpcCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authnClient.Close()
+	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
 
-	// authz, authzClient, err := authsvcAuthz.NewAuthorization(ctx, grpcCfg)
-	// if err != nil {
-	// 	logger.Error(err.Error())
-	// 	exitCode = 1
-	// 	return
-	// }
-	// defer authzClient.Close()
-	// logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
+	authz, authzClient, err := authzsvc.NewAuthorization(ctx, grpcCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authzClient.Close()
+	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
-	svc, err := newService(ctx, db, dbConfig, nil, policyEvaluator, policyService, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
+	svc, err := newService(ctx, db, dbConfig, authz, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -192,7 +177,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, nil, logger, cfg.InstanceID), logger)
+	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authn, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -213,29 +198,14 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authz mgauthz.Authorization, pe policies.Evaluator, ps policies.Service, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (re.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authz mgauthz.Authorization, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (re.Service, error) {
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	repo := repg.NewRepository(database)
 	idp := uuid.New()
 
 	csvc := re.NewService(repo, repo, idp, nil)
 
-	// csvc = tmiddleware.AuthorizationMiddleware(csvc, authz)
+	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
 
 	return csvc, nil
-}
-
-func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Evaluator, policies.Service, error) {
-	client, err := authzed.NewClientWithExperimentalAPIs(
-		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	pe := spicedb.NewPolicyEvaluator(client, logger)
-	ps := spicedb.NewPolicyService(client, logger)
-
-	return pe, ps, nil
 }

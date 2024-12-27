@@ -203,9 +203,8 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	repo := repg.NewRepository(database)
 	idp := uuid.New()
 
-	csvc := re.NewService(repo, repo, idp, nil)
-
 	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
+	csvc := re.NewService(repo, idp, nil)
 
 	return csvc, nil
 }

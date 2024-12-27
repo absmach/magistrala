@@ -91,15 +91,13 @@ type Service interface {
 type re struct {
 	idp    magistrala.IDProvider
 	repo   Repository
-	cache  Repository
 	pubSub messaging.PubSub
 	errors chan error
 }
 
-func NewService(repo, cache Repository, idp magistrala.IDProvider, pubSub messaging.PubSub) Service {
+func NewService(repo Repository, idp magistrala.IDProvider, pubSub messaging.PubSub) Service {
 	return &re{
 		repo:   repo,
-		cache:  cache,
 		idp:    idp,
 		pubSub: pubSub,
 		errors: make(chan error),

@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
@@ -23,7 +25,7 @@ const (
 		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
 			output_topic, recurring_time, recurring_type, recurring_period, status
 		FROM rules
-		WHERE id = :id;
+		WHERE id = $1;
 	`
 
 	updateRuleQuery = `
@@ -37,14 +39,16 @@ const (
 
 	removeRuleQuery = `
 		DELETE FROM rules
-		WHERE id = :id;
+		WHERE id = $1;
 	`
 
 	listRulesQuery = `
 		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
 			output_topic, recurring_time, recurring_type, recurring_period, status
-		FROM rules;
+		FROM rules r %s %s; 
 	`
+
+	totalQuery = `SELECT COUNT(*) FROM rules r %s;`
 )
 
 type PostgresRepository struct {
@@ -65,83 +69,60 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 }
 
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
-	var r re.Rule
-	row := repo.DB.QueryRowxContext(ctx, `
-		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel,
-			output_topic, recurring_time, recurring_type, recurring_period, status
-		FROM rules WHERE id = $1
-	`, id)
-
-	err := row.Scan(
-		&r.ID,
-		&r.DomainID,
-		&r.InputChannel,
-		&r.InputTopic,
-		&r.Logic.Type,
-		&r.Logic.Value,
-		&r.OutputChannel,
-		&r.OutputTopic,
-		&r.Schedule.Time,
-		&r.Schedule.RecurringType,
-		&r.Schedule.RecurringPeriod,
-		&r.Status,
-	)
+	row := repo.DB.QueryRowxContext(ctx, viewRuleQuery, id)
+	if err := row.Err(); err != nil {
+		return re.Rule{}, err
+	}
+	var dbr dbRule
+	err := row.StructScan(&dbr)
 	if err != nil {
 		return re.Rule{}, err
 	}
+	ret := dbToRule(dbr)
 
-	return r, nil
+	return ret, nil
 }
 
 func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
-	result, err := repo.DB.ExecContext(ctx, `
-		UPDATE rules
-		SET input_channel = $2, input_topic = $3, logic_type = $4, logic_value = $5, output_channel = $6,
-			output_topic = $7, recurring_time = $8, recurring_type = $9, recurring_period = $10, status = $11
-		WHERE id = $1
-	`,
-		r.ID,
-		r.InputChannel,
-		r.InputTopic,
-		r.Logic.Type,
-		r.Logic.Value,
-		r.OutputChannel,
-		r.OutputTopic,
-		r.Schedule.Time,
-		r.Schedule.RecurringType,
-		r.Schedule.RecurringPeriod,
-		r.Status,
-	)
+	dbr := ruleToDb(r)
+	result, err := repo.DB.NamedExecContext(ctx, updateRuleQuery, dbr)
 	if err != nil {
 		return re.Rule{}, err
 	}
 
 	if _, err := result.RowsAffected(); err != nil {
-		return re.Rule{}, errors.New("no rows affected")
+		return re.Rule{}, repoerr.ErrNotFound
 	}
 
 	return r, nil
 }
 
 func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error {
-	result, err := repo.DB.ExecContext(ctx, `
-		DELETE FROM rules WHERE id = $1
-	`, id)
+	result, err := repo.DB.ExecContext(ctx, removeRuleQuery, id)
 	if err != nil {
 		return err
 	}
 
 	if _, err := result.RowsAffected(); err != nil {
-		return errors.New("no rows affected")
+		return repoerr.ErrNotFound
 	}
 
 	return nil
 }
 
-func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) ([]re.Rule, error) {
-	rows, err := repo.DB.NamedQueryContext(ctx, listRulesQuery, pm)
+func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
+	pgData := ""
+	if pm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if pm.Offset != 0 {
+		pgData += " OFFEST :offset"
+	}
+	pq := pageQuery(pm)
+	q := fmt.Sprintf(listRulesQuery, pq, pgData)
+	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
 	if err != nil {
-		return nil, err
+		return re.Page{}, err
 	}
 	defer rows.Close()
 
@@ -149,10 +130,42 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	var r dbRule
 	for rows.Next() {
 		if err := rows.StructScan(&r); err != nil {
-			return nil, errors.Wrap(repoerr.ErrViewEntity, err)
+			return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 		rules = append(rules, dbToRule(r))
 	}
 
-	return rules, nil
+	cq := fmt.Sprintf(totalQuery, pq)
+
+	total, err := postgres.Total(ctx, repo.DB, cq, pm)
+	if err != nil {
+		return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	pm.Total = total
+	ret := re.Page{
+		PageMeta: pm,
+		Rules:    rules,
+	}
+
+	return ret, nil
+}
+
+func pageQuery(pm re.PageMeta) string {
+	var query []string
+	if pm.InputChannel != "" {
+		query = append(query, "r.input_channel = :input_channel")
+	}
+	if pm.OutputChannel != "" {
+		query = append(query, "r.output_channel = :output_channel")
+	}
+	if pm.Status != re.AllStatus {
+		query = append(query, "r.status = :status")
+	}
+
+	var q string
+	if len(query) > 0 {
+		q = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	return q
 }

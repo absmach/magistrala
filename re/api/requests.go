@@ -7,7 +7,6 @@ import (
 	"github.com/absmach/magistrala/internal/api"
 	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/re"
-	"github.com/absmach/magistrala/users"
 )
 
 const maxLimitSize = 1000
@@ -33,21 +32,14 @@ func (req viewRuleReq) validate() error {
 }
 
 type listRulesReq struct {
-	status     re.Status
-	offset     uint64
-	limit      uint64
-	inputTopic string
-	metadata   users.Metadata
-	order      string
-	dir        string
-	id         string
+	re.PageMeta
 }
 
 func (req listRulesReq) validate() error {
-	if req.limit > maxLimitSize || req.limit < 1 {
+	if req.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
 	}
-	if req.dir != "" && (req.dir != api.AscDir && req.dir != api.DescDir) {
+	if req.Dir != "" && (req.Dir != api.AscDir && req.Dir != api.DescDir) {
 		return apiutil.ErrInvalidDirection
 	}
 

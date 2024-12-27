@@ -58,16 +58,24 @@ type Repository interface {
 	ViewRule(ctx context.Context, id string) (Rule, error)
 	UpdateRule(ctx context.Context, r Rule) (Rule, error)
 	RemoveRule(ctx context.Context, id string) error
-	ListRules(ctx context.Context, pm PageMeta) ([]Rule, error)
+	ListRules(ctx context.Context, pm PageMeta) (Page, error)
 }
 
 // PageMeta contains page metadata that helps navigation.
 type PageMeta struct {
-	Total      uint64 `json:"total"`
-	Offset     uint64 `json:"offset"`
-	Limit      uint64 `json:"limit"`
-	InputTopic string `json:"input_topic,omitempty"`
-	Status     Status `json:"status,omitempty"`
+	Total         uint64 `json:"total" db:"total"`
+	Offset        uint64 `json:"offset" db:"offset"`
+	Limit         uint64 `json:"limit" db:"limit"`
+	Dir           string `json:"dir" db:"dir"`
+	Name          string `json:"name" db:"name"`
+	InputChannel  string `json:"input_channel,omitempty" db:"input_channel"`
+	OutputChannel string `json:"output_channel,omitempty" db:"output_channel"`
+	Status        Status `json:"status,omitempty" db:"status"`
+}
+
+type Page struct {
+	PageMeta
+	Rules []Rule `json:"rules"`
 }
 
 type Service interface {
@@ -75,7 +83,7 @@ type Service interface {
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
-	ListRules(ctx context.Context, session authn.Session, pm PageMeta) ([]Rule, error)
+	ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error)
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 }
 
@@ -118,7 +126,7 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 	return re.repo.UpdateRule(ctx, r)
 }
 
-func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta) ([]Rule, error) {
+func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error) {
 	return re.repo.ListRules(ctx, pm)
 }
 
@@ -130,14 +138,15 @@ func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
 	switch m := msgs.(type) {
 	case *messaging.Message:
 		pm := PageMeta{
-			InputTopic: m.Channel,
+			InputChannel: m.Channel,
+			Status:       EnabledStatus,
 		}
-		rules, err := re.repo.ListRules(ctx, pm)
+		page, err := re.repo.ListRules(ctx, pm)
 		if err != nil {
 			re.errors <- err
 			return
 		}
-		for _, r := range rules {
+		for _, r := range page.Rules {
 			go re.process(r, m)
 		}
 	case mgjson.Message:

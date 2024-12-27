@@ -66,17 +66,14 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 		}
 
 		req := request.(listRulesReq)
-		meta := re.PageMeta{
-			Limit:      req.limit,
-			Offset:     req.offset,
-			InputTopic: req.inputTopic,
-			Status:     req.status,
-		}
-		rules, err := s.ListRules(ctx, session, meta)
+		page, err := s.ListRules(ctx, session, req.PageMeta)
 		if err != nil {
-			return []re.Rule{}, nil
+			return rulesPageRes{}, nil
 		}
-		return rules, nil
+		ret := rulesPageRes{
+			Rules: page.Rules,
+		}
+		return ret, nil
 	}
 }
 

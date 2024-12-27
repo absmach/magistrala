@@ -24,9 +24,10 @@ import (
 )
 
 const (
-	idKey         = "id"
-	inputTopicKey = "input_topic"
-	statusKey     = "status"
+	idKey            = "ruleID"
+	inputChannelKey  = "input_channel"
+	outputChannelKey = "output_channel"
+	statusKey        = "status"
 )
 
 // MakeHandler creates an HTTP handler for the service endpoints.
@@ -93,7 +94,7 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 }
 
 func decodeViewRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := r.URL.Query().Get(idKey)
+	id := chi.URLParam(r, idKey)
 	return viewRuleReq{id: id}, nil
 }
 
@@ -114,14 +115,21 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	it, err := apiutil.ReadStringQuery(r, inputTopicKey, "")
+	ic, err := apiutil.ReadStringQuery(r, inputChannelKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	oc, err := apiutil.ReadStringQuery(r, outputChannelKey, "")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	return listRulesReq{
-		offset:     offset,
-		limit:      limit,
-		inputTopic: it,
+		PageMeta: re.PageMeta{
+			Offset:        offset,
+			Limit:         limit,
+			InputChannel:  ic,
+			OutputChannel: oc,
+		},
 	}, nil
 }
 

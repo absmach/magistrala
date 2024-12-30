@@ -78,6 +78,6 @@ func (sdk *MgxSDK) UpdateChannel(channel Channel, token string) error
 func (sdk *MgxSDK) UpdateThing(thing Thing, token string) error
     UpdateThing - updates thing by ID
 
-func (sdk *MgxSDK) Health() (magistrala.Health, error)
+func (sdk *MgxSDK) Health() (suprmq.Health, error)
     Health - things service health check
 ````

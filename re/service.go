@@ -7,11 +7,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/consumers"
-	"github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/messaging"
-	mgjson "github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/consumers"
+	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/messaging"
+	mgjson "github.com/absmach/supermq/pkg/transformers/json"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -89,13 +89,13 @@ type Service interface {
 }
 
 type re struct {
-	idp    magistrala.IDProvider
+	idp    supermq.IDProvider
 	repo   Repository
 	pubSub messaging.PubSub
 	errors chan error
 }
 
-func NewService(repo Repository, idp magistrala.IDProvider, pubSub messaging.PubSub) Service {
+func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub) Service {
 	return &re{
 		repo:   repo,
 		idp:    idp,

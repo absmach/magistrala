@@ -7,11 +7,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/absmach/magistrala"
 	sdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/supermq"
 )
 
-var _ magistrala.Response = (*provisionRes)(nil)
+var _ supermq.Response = (*provisionRes)(nil)
 
 type provisionRes struct {
 	Things      []sdk.Thing       `json:"things"`

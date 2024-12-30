@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/re"
+	"github.com/absmach/supermq"
 )
 
 var (
-	_ magistrala.Response = (*viewRuleRes)(nil)
-	_ magistrala.Response = (*addRuleRes)(nil)
-	_ magistrala.Response = (*changeRuleStatusRes)(nil)
-	_ magistrala.Response = (*rulesPageRes)(nil)
-	_ magistrala.Response = (*updateRuleRes)(nil)
-	_ magistrala.Response = (*changeRoleStatusRes)(nil)
+	_ supermq.Response = (*viewRuleRes)(nil)
+	_ supermq.Response = (*addRuleRes)(nil)
+	_ supermq.Response = (*changeRuleStatusRes)(nil)
+	_ supermq.Response = (*rulesPageRes)(nil)
+	_ supermq.Response = (*updateRuleRes)(nil)
+	_ supermq.Response = (*changeRoleStatusRes)(nil)
 )
 
 type pageRes struct {

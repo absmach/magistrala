@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/internal/groups"
@@ -17,6 +16,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/things"
 	"github.com/absmach/magistrala/users"
+	"github.com/absmach/supermq"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -89,7 +89,7 @@ func ValidateUUID(extID string) (err error) {
 
 // EncodeResponse encodes successful response.
 func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	if ar, ok := response.(magistrala.Response); ok {
+	if ar, ok := response.(supermq.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}

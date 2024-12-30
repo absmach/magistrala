@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/supermq"
 )
 
 var (
-	_ magistrala.Response = (*createGroupRes)(nil)
-	_ magistrala.Response = (*groupPageRes)(nil)
-	_ magistrala.Response = (*changeStatusRes)(nil)
-	_ magistrala.Response = (*viewGroupRes)(nil)
-	_ magistrala.Response = (*updateGroupRes)(nil)
-	_ magistrala.Response = (*assignRes)(nil)
-	_ magistrala.Response = (*unassignRes)(nil)
+	_ supermq.Response = (*createGroupRes)(nil)
+	_ supermq.Response = (*groupPageRes)(nil)
+	_ supermq.Response = (*changeStatusRes)(nil)
+	_ supermq.Response = (*viewGroupRes)(nil)
+	_ supermq.Response = (*updateGroupRes)(nil)
+	_ supermq.Response = (*assignRes)(nil)
+	_ supermq.Response = (*unassignRes)(nil)
 )
 
 type viewGroupRes struct {

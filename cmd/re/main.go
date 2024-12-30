@@ -14,27 +14,25 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/consumers"
-	redisclient "github.com/absmach/magistrala/internal/clients/redis"
-	mglog "github.com/absmach/magistrala/logger"
-	authnsvc "github.com/absmach/magistrala/pkg/authn/authsvc"
-	mgauthz "github.com/absmach/magistrala/pkg/authz"
-	authzsvc "github.com/absmach/magistrala/pkg/authz/authsvc"
-	"github.com/absmach/magistrala/pkg/grpcclient"
-	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/messaging/brokers"
-	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
-	pgclient "github.com/absmach/magistrala/pkg/postgres"
-	"github.com/absmach/magistrala/pkg/server"
-	httpserver "github.com/absmach/magistrala/pkg/server/http"
-	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
 	repg "github.com/absmach/magistrala/re/postgres"
+	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/consumers"
+	mglog "github.com/absmach/supermq/logger"
+	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
+	mgauthz "github.com/absmach/supermq/pkg/authz"
+	authzsvc "github.com/absmach/supermq/pkg/authz/authsvc"
+	"github.com/absmach/supermq/pkg/grpcclient"
+	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
+	"github.com/absmach/supermq/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	pgclient "github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/supermq/pkg/server"
+	httpserver "github.com/absmach/supermq/pkg/server/http"
+	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
-	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -133,13 +131,13 @@ func main() {
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
 	// Setup new redis cache client
-	cacheclient, err := redisclient.Connect(cfg.CacheURL)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer cacheclient.Close()
+	// cacheclient, err := redisclient.Connect(cfg.CacheURL)
+	// if err != nil {
+	// 	logger.Error(err.Error())
+	// 	exitCode = 1
+	// 	return
+	// }
+	// defer cacheclient.Close()
 
 	grpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
@@ -156,7 +154,7 @@ func main() {
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
 
-	authz, authzClient, err := authzsvc.NewAuthorization(ctx, grpcCfg)
+	authz, authzClient, err := authzsvc.NewAuthorization(ctx, grpcCfg, nil)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -165,7 +163,7 @@ func main() {
 	defer authzClient.Close()
 	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
-	svc, err := newService(ctx, db, dbConfig, authz, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
+	svc, err := newService(ctx, db, dbConfig, authz, cfg.ESURL, tracer, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -180,7 +178,7 @@ func main() {
 	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authn, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, supermq.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -198,7 +196,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authz mgauthz.Authorization, cacheClient *redis.Client, keyDuration time.Duration, esURL string, tracer trace.Tracer, logger *slog.Logger) (re.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, logger *slog.Logger) (re.Service, error) {
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	repo := repg.NewRepository(database)
 	idp := uuid.New()

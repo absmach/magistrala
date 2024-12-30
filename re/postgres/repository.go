@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/re"
+	"github.com/absmach/supermq/pkg/errors"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/supermq/pkg/postgres"
 )
 
 // SQL Queries as Strings

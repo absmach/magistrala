@@ -6,10 +6,10 @@ package api
 import (
 	"context"
 
-	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/pkg/authn"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/re"
+	api "github.com/absmach/supermq/api/http"
+	"github.com/absmach/supermq/pkg/authn"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
 )
 

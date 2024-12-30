@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/supermq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -118,7 +118,7 @@ func TestReadConfig(t *testing.T) {
 		b, err := json.Marshal(res)
 		assert.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
 		assert.Equal(t, tc.enc, b, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.enc, b))
-		resp, ok := res.(magistrala.Response)
+		resp, ok := res.(supermq.Response)
 		assert.True(t, ok, "If not encrypted, reader should return response.")
 		assert.False(t, resp.Empty(), fmt.Sprintf("Response should not be empty %s.", err))
 		assert.Equal(t, http.StatusOK, resp.Code(), "Default config response code should be 200.")

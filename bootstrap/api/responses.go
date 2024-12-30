@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/supermq"
 )
 
 var (
-	_ magistrala.Response = (*removeRes)(nil)
-	_ magistrala.Response = (*configRes)(nil)
-	_ magistrala.Response = (*stateRes)(nil)
-	_ magistrala.Response = (*viewRes)(nil)
-	_ magistrala.Response = (*listRes)(nil)
+	_ supermq.Response = (*removeRes)(nil)
+	_ supermq.Response = (*configRes)(nil)
+	_ supermq.Response = (*stateRes)(nil)
+	_ supermq.Response = (*viewRes)(nil)
+	_ supermq.Response = (*listRes)(nil)
 )
 
 type removeRes struct{}

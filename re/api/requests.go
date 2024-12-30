@@ -4,9 +4,9 @@
 package api
 
 import (
-	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/re"
+	api "github.com/absmach/supermq/api/http"
+	apiutil "github.com/absmach/supermq/api/http/util"
 )
 
 const maxLimitSize = 1000

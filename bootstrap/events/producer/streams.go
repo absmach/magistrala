@@ -6,9 +6,9 @@ package producer
 import (
 	"context"
 
-	"github.com/absmach/magistrala/bootstrap"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/supermq/bootstrap"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/events"
 )
 
 var _ bootstrap.Service = (*eventStore)(nil)
@@ -27,7 +27,7 @@ func NewEventStoreMiddleware(svc bootstrap.Service, publisher events.Publisher) 
 	}
 }
 
-func (es *eventStore) Add(ctx context.Context, session mgauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
+func (es *eventStore) Add(ctx context.Context, session smqauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
 	saved, err := es.svc.Add(ctx, session, token, cfg)
 	if err != nil {
 		return saved, err
@@ -44,7 +44,7 @@ func (es *eventStore) Add(ctx context.Context, session mgauthn.Session, token st
 	return saved, err
 }
 
-func (es *eventStore) View(ctx context.Context, session mgauthn.Session, id string) (bootstrap.Config, error) {
+func (es *eventStore) View(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
 	cfg, err := es.svc.View(ctx, session, id)
 	if err != nil {
 		return cfg, err
@@ -60,7 +60,7 @@ func (es *eventStore) View(ctx context.Context, session mgauthn.Session, id stri
 	return cfg, err
 }
 
-func (es *eventStore) Update(ctx context.Context, session mgauthn.Session, cfg bootstrap.Config) error {
+func (es *eventStore) Update(ctx context.Context, session smqauthn.Session, cfg bootstrap.Config) error {
 	if err := es.svc.Update(ctx, session, cfg); err != nil {
 		return err
 	}
@@ -72,14 +72,14 @@ func (es *eventStore) Update(ctx context.Context, session mgauthn.Session, cfg b
 	return es.Publish(ctx, ev)
 }
 
-func (es eventStore) UpdateCert(ctx context.Context, session mgauthn.Session, thingKey, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	cfg, err := es.svc.UpdateCert(ctx, session, thingKey, clientCert, clientKey, caCert)
+func (es eventStore) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+	cfg, err := es.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 	if err != nil {
 		return cfg, err
 	}
 
 	ev := updateCertEvent{
-		thingKey:   thingKey,
+		clientID:   clientID,
 		clientCert: clientCert,
 		clientKey:  clientKey,
 		caCert:     caCert,
@@ -92,20 +92,20 @@ func (es eventStore) UpdateCert(ctx context.Context, session mgauthn.Session, th
 	return cfg, nil
 }
 
-func (es *eventStore) UpdateConnections(ctx context.Context, session mgauthn.Session, token, id string, connections []string) error {
+func (es *eventStore) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error {
 	if err := es.svc.UpdateConnections(ctx, session, token, id, connections); err != nil {
 		return err
 	}
 
 	ev := updateConnectionsEvent{
-		mgThing:    id,
+		mgClient:   id,
 		mgChannels: connections,
 	}
 
 	return es.Publish(ctx, ev)
 }
 
-func (es *eventStore) List(ctx context.Context, session mgauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
+func (es *eventStore) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
 	bp, err := es.svc.List(ctx, session, filter, offset, limit)
 	if err != nil {
 		return bp, err
@@ -125,13 +125,13 @@ func (es *eventStore) List(ctx context.Context, session mgauthn.Session, filter 
 	return bp, nil
 }
 
-func (es *eventStore) Remove(ctx context.Context, session mgauthn.Session, id string) error {
+func (es *eventStore) Remove(ctx context.Context, session smqauthn.Session, id string) error {
 	if err := es.svc.Remove(ctx, session, id); err != nil {
 		return err
 	}
 
 	ev := removeConfigEvent{
-		mgThing: id,
+		client: id,
 	}
 
 	return es.Publish(ctx, ev)
@@ -157,14 +157,14 @@ func (es *eventStore) Bootstrap(ctx context.Context, externalKey, externalID str
 	return cfg, err
 }
 
-func (es *eventStore) ChangeState(ctx context.Context, session mgauthn.Session, token, id string, state bootstrap.State) error {
+func (es *eventStore) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) error {
 	if err := es.svc.ChangeState(ctx, session, token, id, state); err != nil {
 		return err
 	}
 
 	ev := changeStateEvent{
-		mgThing: id,
-		state:   state,
+		mgClient: id,
+		state:    state,
 	}
 
 	return es.Publish(ctx, ev)
@@ -208,26 +208,26 @@ func (es *eventStore) UpdateChannelHandler(ctx context.Context, channel bootstra
 	return es.Publish(ctx, ev)
 }
 
-func (es *eventStore) ConnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := es.svc.ConnectThingHandler(ctx, channelID, thingID); err != nil {
+func (es *eventStore) ConnectClientHandler(ctx context.Context, channelID, clientID string) error {
+	if err := es.svc.ConnectClientHandler(ctx, channelID, clientID); err != nil {
 		return err
 	}
 
-	ev := connectThingEvent{
-		thingID:   thingID,
+	ev := connectClientEvent{
+		clientID:  clientID,
 		channelID: channelID,
 	}
 
 	return es.Publish(ctx, ev)
 }
 
-func (es *eventStore) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := es.svc.DisconnectThingHandler(ctx, channelID, thingID); err != nil {
+func (es *eventStore) DisconnectClientHandler(ctx context.Context, channelID, clientID string) error {
+	if err := es.svc.DisconnectClientHandler(ctx, channelID, clientID); err != nil {
 		return err
 	}
 
-	ev := disconnectThingEvent{
-		thingID:   thingID,
+	ev := disconnectClientEvent{
+		clientID:  clientID,
 		channelID: channelID,
 	}
 

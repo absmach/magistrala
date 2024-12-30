@@ -16,13 +16,13 @@ import (
 // This is used as a response from ConfigReader and can easily be
 // replace with any other response format.
 type bootstrapRes struct {
-	ThingID    string       `json:"thing_id"`
-	ThingKey   string       `json:"thing_key"`
-	Channels   []channelRes `json:"channels"`
-	Content    string       `json:"content,omitempty"`
-	ClientCert string       `json:"client_cert,omitempty"`
-	ClientKey  string       `json:"client_key,omitempty"`
-	CACert     string       `json:"ca_cert,omitempty"`
+	ClientID     string       `json:"client_id"`
+	ClientSecret string       `json:"client_secret"`
+	Channels     []channelRes `json:"channels"`
+	Content      string       `json:"content,omitempty"`
+	ClientCert   string       `json:"client_cert,omitempty"`
+	ClientKey    string       `json:"client_key,omitempty"`
+	CACert       string       `json:"ca_cert,omitempty"`
 }
 
 type channelRes struct {
@@ -60,13 +60,13 @@ func (r reader) ReadConfig(cfg Config, secure bool) (interface{}, error) {
 	}
 
 	res := bootstrapRes{
-		ThingKey:   cfg.ThingKey,
-		ThingID:    cfg.ThingID,
-		Channels:   channels,
-		Content:    cfg.Content,
-		ClientCert: cfg.ClientCert,
-		ClientKey:  cfg.ClientKey,
-		CACert:     cfg.CACert,
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Channels:     channels,
+		Content:      cfg.Content,
+		ClientCert:   cfg.ClientCert,
+		ClientKey:    cfg.ClientKey,
+		CACert:       cfg.CACert,
 	}
 	if secure {
 		b, err := json.Marshal(res)

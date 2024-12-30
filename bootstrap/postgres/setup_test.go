@@ -9,16 +9,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/magistrala/bootstrap/postgres"
-	mglog "github.com/absmach/magistrala/logger"
-	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/supermq/bootstrap/postgres"
+	smqlog "github.com/absmach/supermq/logger"
+	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 )
 
 var (
-	testLog, _ = mglog.New(os.Stdout, "info")
+	testLog, _ = smqlog.New(os.Stdout, "info")
 	db         *sqlx.DB
 )
 

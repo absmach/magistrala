@@ -8,7 +8,7 @@ package tracing
 import (
 	"context"
 
-	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/supermq/consumers/notifiers"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

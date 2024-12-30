@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/supermq/consumers"
 )
 
 var _ consumers.BlockingConsumer = (*loggingMiddleware)(nil)

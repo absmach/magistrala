@@ -9,18 +9,23 @@ networks:
 
 volumes:
   magistrala-users-db-volume:
-  magistrala-things-db-volume:
-  magistrala-things-redis-volume:
+  magistrala-groups-db-volume:
+  magistrala-clients-db-volume:
+  magistrala-channels-db-volume:
+  magistrala-clients-redis-volume:
   magistrala-broker-volume:
   magistrala-mqtt-broker-volume:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
+  magistrala-pat-db-volume:
+  magistrala-domains-db-volume:
+  magistrala-domains-redis-volume:
   magistrala-invitations-db-volume:
   magistrala-ui-db-volume:
 
 services:
   spicedb:
-    image: "authzed/spicedb:v1.30.0"
+    image: "authzed/spicedb:v1.37.0"
     container_name: magistrala-spicedb
     command: "serve"
     restart: "always"
@@ -31,22 +36,22 @@ services:
       - "9091:9090"
       - "50051:50051"
     environment:
-      SPICEDB_GRPC_PRESHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
-      SPICEDB_DATASTORE_ENGINE: ${MG_SPICEDB_DATASTORE_ENGINE}
-      SPICEDB_DATASTORE_CONN_URI: "${MG_SPICEDB_DATASTORE_ENGINE}://${MG_SPICEDB_DB_USER}:${MG_SPICEDB_DB_PASS}@spicedb-db:${MG_SPICEDB_DB_PORT}/${MG_SPICEDB_DB_NAME}?sslmode=disable"
+      SPICEDB_GRPC_PRESHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SPICEDB_DATASTORE_ENGINE: ${SMQ_SPICEDB_DATASTORE_ENGINE}
+      SPICEDB_DATASTORE_CONN_URI: "${SMQ_SPICEDB_DATASTORE_ENGINE}://${SMQ_SPICEDB_DB_USER}:${SMQ_SPICEDB_DB_PASS}@spicedb-db:${SMQ_SPICEDB_DB_PORT}/${SMQ_SPICEDB_DB_NAME}?sslmode=disable"
     depends_on:
       - spicedb-migrate
 
   spicedb-migrate:
-    image: "authzed/spicedb:v1.30.0"
+    image: "authzed/spicedb:v1.37.0"
     container_name: magistrala-spicedb-migrate
     command: "migrate head"
     restart: "on-failure"
     networks:
       - magistrala-base-net
     environment:
-      SPICEDB_DATASTORE_ENGINE: ${MG_SPICEDB_DATASTORE_ENGINE}
-      SPICEDB_DATASTORE_CONN_URI: "${MG_SPICEDB_DATASTORE_ENGINE}://${MG_SPICEDB_DB_USER}:${MG_SPICEDB_DB_PASS}@spicedb-db:${MG_SPICEDB_DB_PORT}/${MG_SPICEDB_DB_NAME}?sslmode=disable"
+      SPICEDB_DATASTORE_ENGINE: ${SMQ_SPICEDB_DATASTORE_ENGINE}
+      SPICEDB_DATASTORE_CONN_URI: "${SMQ_SPICEDB_DATASTORE_ENGINE}://${SMQ_SPICEDB_DB_USER}:${SMQ_SPICEDB_DB_PASS}@spicedb-db:${SMQ_SPICEDB_DB_PORT}/${SMQ_SPICEDB_DB_NAME}?sslmode=disable"
     depends_on:
       - spicedb-db
 
@@ -58,99 +63,219 @@ services:
     ports:
       - "6010:5432"
     environment:
-      POSTGRES_USER: ${MG_SPICEDB_DB_USER}
-      POSTGRES_PASSWORD: ${MG_SPICEDB_DB_PASS}
-      POSTGRES_DB: ${MG_SPICEDB_DB_NAME}
+      POSTGRES_USER: ${SMQ_SPICEDB_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_SPICEDB_DB_PASS}
+      POSTGRES_DB: ${SMQ_SPICEDB_DB_NAME}
     volumes:
       - magistrala-spicedb-db-volume:/var/lib/postgresql/data
+    command: ["postgres", "-c", "track_commit_timestamp=on"]
 
   auth-db:
     image: postgres:16.2-alpine
     container_name: magistrala-auth-db
     restart: on-failure
     ports:
-      - 6004:5432
+      - 6001:5432
     environment:
-      POSTGRES_USER: ${MG_AUTH_DB_USER}
-      POSTGRES_PASSWORD: ${MG_AUTH_DB_PASS}
-      POSTGRES_DB: ${MG_AUTH_DB_NAME}
+      POSTGRES_USER: ${SMQ_AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_AUTH_DB_PASS}
+      POSTGRES_DB: ${SMQ_AUTH_DB_NAME}
     networks:
       - magistrala-base-net
     volumes:
       - magistrala-auth-db-volume:/var/lib/postgresql/data
 
   auth:
-    image: magistrala/auth:${MG_RELEASE_TAG}
+    image: supermq/auth:${SMQ_RELEASE_TAG}
     container_name: magistrala-auth
     depends_on:
       - auth-db
       - spicedb
     expose:
-      - ${MG_AUTH_GRPC_PORT}
+      - ${SMQ_AUTH_GRPC_PORT}
     restart: on-failure
     environment:
-      MG_AUTH_LOG_LEVEL: ${MG_AUTH_LOG_LEVEL}
-      MG_SPICEDB_SCHEMA_FILE: ${MG_SPICEDB_SCHEMA_FILE}
-      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
-      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
-      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
-      MG_AUTH_ACCESS_TOKEN_DURATION: ${MG_AUTH_ACCESS_TOKEN_DURATION}
-      MG_AUTH_REFRESH_TOKEN_DURATION: ${MG_AUTH_REFRESH_TOKEN_DURATION}
-      MG_AUTH_INVITATION_DURATION: ${MG_AUTH_INVITATION_DURATION}
-      MG_AUTH_SECRET_KEY: ${MG_AUTH_SECRET_KEY}
-      MG_AUTH_HTTP_HOST: ${MG_AUTH_HTTP_HOST}
-      MG_AUTH_HTTP_PORT: ${MG_AUTH_HTTP_PORT}
-      MG_AUTH_HTTP_SERVER_CERT: ${MG_AUTH_HTTP_SERVER_CERT}
-      MG_AUTH_HTTP_SERVER_KEY: ${MG_AUTH_HTTP_SERVER_KEY}
-      MG_AUTH_GRPC_HOST: ${MG_AUTH_GRPC_HOST}
-      MG_AUTH_GRPC_PORT: ${MG_AUTH_GRPC_PORT}
+      SMQ_AUTH_LOG_LEVEL: ${SMQ_AUTH_LOG_LEVEL}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_AUTH_ACCESS_TOKEN_DURATION: ${SMQ_AUTH_ACCESS_TOKEN_DURATION}
+      SMQ_AUTH_REFRESH_TOKEN_DURATION: ${SMQ_AUTH_REFRESH_TOKEN_DURATION}
+      SMQ_AUTH_INVITATION_DURATION: ${SMQ_AUTH_INVITATION_DURATION}
+      SMQ_AUTH_SECRET_KEY: ${SMQ_AUTH_SECRET_KEY}
+      SMQ_AUTH_HTTP_HOST: ${SMQ_AUTH_HTTP_HOST}
+      SMQ_AUTH_HTTP_PORT: ${SMQ_AUTH_HTTP_PORT}
+      SMQ_AUTH_HTTP_SERVER_CERT: ${SMQ_AUTH_HTTP_SERVER_CERT}
+      SMQ_AUTH_HTTP_SERVER_KEY: ${SMQ_AUTH_HTTP_SERVER_KEY}
+      SMQ_AUTH_GRPC_HOST: ${SMQ_AUTH_GRPC_HOST}
+      SMQ_AUTH_GRPC_PORT: ${SMQ_AUTH_GRPC_PORT}
       ## Compose supports parameter expansion in environment,
       ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
       ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
-      MG_AUTH_GRPC_SERVER_CERT: ${MG_AUTH_GRPC_SERVER_CERT:+/auth-grpc-server.crt}
-      MG_AUTH_GRPC_SERVER_KEY: ${MG_AUTH_GRPC_SERVER_KEY:+/auth-grpc-server.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_AUTH_GRPC_CLIENT_CA_CERTS: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:+/auth-grpc-client-ca.crt}
-      MG_AUTH_DB_HOST: ${MG_AUTH_DB_HOST}
-      MG_AUTH_DB_PORT: ${MG_AUTH_DB_PORT}
-      MG_AUTH_DB_USER: ${MG_AUTH_DB_USER}
-      MG_AUTH_DB_PASS: ${MG_AUTH_DB_PASS}
-      MG_AUTH_DB_NAME: ${MG_AUTH_DB_NAME}
-      MG_AUTH_DB_SSL_MODE: ${MG_AUTH_DB_SSL_MODE}
-      MG_AUTH_DB_SSL_CERT: ${MG_AUTH_DB_SSL_CERT}
-      MG_AUTH_DB_SSL_KEY: ${MG_AUTH_DB_SSL_KEY}
-      MG_AUTH_DB_SSL_ROOT_CERT: ${MG_AUTH_DB_SSL_ROOT_CERT}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_AUTH_ADAPTER_INSTANCE_ID: ${MG_AUTH_ADAPTER_INSTANCE_ID}
-      MG_ES_URL: ${MG_ES_URL}
+      SMQ_AUTH_GRPC_SERVER_CERT: ${SMQ_AUTH_GRPC_SERVER_CERT:+/auth-grpc-server.crt}
+      SMQ_AUTH_GRPC_SERVER_KEY: ${SMQ_AUTH_GRPC_SERVER_KEY:+/auth-grpc-server.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_GRPC_CLIENT_CA_CERTS: ${SMQ_AUTH_GRPC_CLIENT_CA_CERTS:+/auth-grpc-client-ca.crt}
+      SMQ_AUTH_DB_HOST: ${SMQ_AUTH_DB_HOST}
+      SMQ_AUTH_DB_PORT: ${SMQ_AUTH_DB_PORT}
+      SMQ_AUTH_DB_USER: ${SMQ_AUTH_DB_USER}
+      SMQ_AUTH_DB_PASS: ${SMQ_AUTH_DB_PASS}
+      SMQ_AUTH_DB_NAME: ${SMQ_AUTH_DB_NAME}
+      SMQ_AUTH_DB_SSL_MODE: ${SMQ_AUTH_DB_SSL_MODE}
+      SMQ_AUTH_DB_SSL_CERT: ${SMQ_AUTH_DB_SSL_CERT}
+      SMQ_AUTH_DB_SSL_KEY: ${SMQ_AUTH_DB_SSL_KEY}
+      SMQ_AUTH_DB_SSL_ROOT_CERT: ${SMQ_AUTH_DB_SSL_ROOT_CERT}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_AUTH_ADAPTER_INSTANCE_ID: ${SMQ_AUTH_ADAPTER_INSTANCE_ID}
+      SMQ_ES_URL: ${SMQ_ES_URL}
     ports:
-      - ${MG_AUTH_HTTP_PORT}:${MG_AUTH_HTTP_PORT}
-      - ${MG_AUTH_GRPC_PORT}:${MG_AUTH_GRPC_PORT}
+      - ${SMQ_AUTH_HTTP_PORT}:${SMQ_AUTH_HTTP_PORT}
+      - ${SMQ_AUTH_GRPC_PORT}:${SMQ_AUTH_GRPC_PORT}
     networks:
       - magistrala-base-net
     volumes:
-      - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
+      - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
+      - magistrala-pat-db-volume:/supermq-data
       # Auth gRPC mTLS server certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /auth-grpc-server${MG_AUTH_GRPC_SERVER_CERT:+.crt}
+        source: ${SMQ_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /auth-grpc-server${SMQ_AUTH_GRPC_SERVER_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /auth-grpc-server${MG_AUTH_GRPC_SERVER_KEY:+.key}
+        source: ${SMQ_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /auth-grpc-server${SMQ_AUTH_GRPC_SERVER_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /auth-grpc-client-ca${MG_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        source: ${SMQ_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /auth-grpc-client-ca${SMQ_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  domains-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-domains-db
+    restart: on-failure
+    ports:
+      - 6003:5432
+    environment:
+      POSTGRES_USER: ${SMQ_DOMAINS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_DOMAINS_DB_PASS}
+      POSTGRES_DB: ${SMQ_DOMAINS_DB_NAME}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-domains-db-volume:/var/lib/postgresql/data
+  
+  domains-redis:
+    image: redis:7.2.4-alpine
+    container_name: magistrala-domains-redis
+    restart: on-failure
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-domains-redis-volume:/data
+
+  domains:
+    image: supermq/domains:${SMQ_RELEASE_TAG}
+    container_name: magistrala-domains
+    depends_on:
+      - domains-db
+      - spicedb
+    expose:
+      - ${SMQ_DOMAINS_GRPC_PORT}
+    restart: on-failure
+    environment:
+      SMQ_DOMAINS_LOG_LEVEL: ${SMQ_DOMAINS_LOG_LEVEL}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_DOMAINS_HTTP_HOST: ${SMQ_DOMAINS_HTTP_HOST}
+      SMQ_DOMAINS_HTTP_PORT: ${SMQ_DOMAINS_HTTP_PORT}
+      SMQ_DOMAINS_HTTP_SERVER_CERT: ${SMQ_DOMAINS_HTTP_SERVER_CERT}
+      SMQ_DOMAINS_HTTP_SERVER_KEY: ${SMQ_DOMAINS_HTTP_SERVER_KEY}
+      SMQ_DOMAINS_GRPC_HOST: ${SMQ_DOMAINS_GRPC_HOST}
+      SMQ_DOMAINS_GRPC_PORT: ${SMQ_DOMAINS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      SMQ_DOMAINS_GRPC_SERVER_CERT: ${SMQ_DOMAINS_GRPC_SERVER_CERT:+/auth-grpc-server.crt}
+      SMQ_DOMAINS_GRPC_SERVER_KEY: ${SMQ_DOMAINS_GRPC_SERVER_KEY:+/auth-grpc-server.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS: ${SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS:+/auth-grpc-client-ca.crt}
+      SMQ_DOMAINS_DB_HOST: ${SMQ_DOMAINS_DB_HOST}
+      SMQ_DOMAINS_DB_PORT: ${SMQ_DOMAINS_DB_PORT}
+      SMQ_DOMAINS_DB_USER: ${SMQ_DOMAINS_DB_USER}
+      SMQ_DOMAINS_DB_PASS: ${SMQ_DOMAINS_DB_PASS}
+      SMQ_DOMAINS_DB_NAME: ${SMQ_DOMAINS_DB_NAME}
+      SMQ_DOMAINS_DB_SSL_MODE: ${SMQ_DOMAINS_DB_SSL_MODE}
+      SMQ_DOMAINS_DB_SSL_CERT: ${SMQ_DOMAINS_DB_SSL_CERT}
+      SMQ_DOMAINS_DB_SSL_KEY: ${SMQ_DOMAINS_DB_SSL_KEY}
+      SMQ_DOMAINS_DB_SSL_ROOT_CERT: ${SMQ_DOMAINS_DB_SSL_ROOT_CERT}
+      SMQ_DOMAINS_INSTANCE_ID: ${SMQ_DOMAINS_INSTANCE_ID}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_DOMAINS_CACHE_URL: ${SMQ_DOMAINS_CACHE_URL}
+      SMQ_DOMAINS_CACHE_KEY_DURATION: ${SMQ_DOMAINS_CACHE_KEY_DURATION}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_GROUPS_GRPC_URL: ${SMQ_GROUPS_GRPC_URL}
+      SMQ_GROUPS_GRPC_TIMEOUT: ${SMQ_GROUPS_GRPC_TIMEOUT}
+      SMQ_GROUPS_GRPC_CLIENT_CERT: ${SMQ_GROUPS_GRPC_CLIENT_CERT:+/groups-grpc-client.crt}
+      SMQ_GROUPS_GRPC_CLIENT_KEY: ${SMQ_GROUPS_GRPC_CLIENT_KEY:+/groups-grpc-client.key}
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
+      SMQ_CHANNELS_URL: ${SMQ_CHANNELS_URL}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+    ports:
+      - ${SMQ_DOMAINS_HTTP_PORT}:${SMQ_DOMAINS_HTTP_PORT}
+      - ${SMQ_DOMAINS_GRPC_PORT}:${SMQ_DOMAINS_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
+      # Auth gRPC mTLS server certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /auth-grpc-server${SMQ_DOMAINS_GRPC_SERVER_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /auth-grpc-server${SMQ_DOMAINS_GRPC_SERVER_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /auth-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /auth-grpc-client-ca${SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -158,12 +283,12 @@ services:
     image: postgres:16.2-alpine
     container_name: magistrala-invitations-db
     restart: on-failure
-    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MG_INVITATIONS_DB_USER}
-      POSTGRES_PASSWORD: ${MG_INVITATIONS_DB_PASS}
-      POSTGRES_DB: ${MG_INVITATIONS_DB_NAME}
-      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+      POSTGRES_USER: ${SMQ_INVITATIONS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_INVITATIONS_DB_PASS}
+      POSTGRES_DB: ${SMQ_INVITATIONS_DB_NAME}
+      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
     ports:
       - 6021:5432
     networks:
@@ -172,57 +297,62 @@ services:
       - magistrala-invitations-db-volume:/var/lib/postgresql/data
 
   invitations:
-    image: magistrala/invitations:${MG_RELEASE_TAG}
+    image: supermq/invitations:${SMQ_RELEASE_TAG}
     container_name: magistrala-invitations
     restart: on-failure
     depends_on:
       - auth
       - invitations-db
     environment:
-      MG_INVITATIONS_LOG_LEVEL: ${MG_INVITATIONS_LOG_LEVEL}
-      MG_USERS_URL: ${MG_USERS_URL}
-      MG_DOMAINS_URL: ${MG_DOMAINS_URL}
-      MG_INVITATIONS_HTTP_HOST: ${MG_INVITATIONS_HTTP_HOST}
-      MG_INVITATIONS_HTTP_PORT: ${MG_INVITATIONS_HTTP_PORT}
-      MG_INVITATIONS_HTTP_SERVER_CERT: ${MG_INVITATIONS_HTTP_SERVER_CERT}
-      MG_INVITATIONS_HTTP_SERVER_KEY: ${MG_INVITATIONS_HTTP_SERVER_KEY}
-      MG_INVITATIONS_DB_HOST: ${MG_INVITATIONS_DB_HOST}
-      MG_INVITATIONS_DB_USER: ${MG_INVITATIONS_DB_USER}
-      MG_INVITATIONS_DB_PASS: ${MG_INVITATIONS_DB_PASS}
-      MG_INVITATIONS_DB_PORT: ${MG_INVITATIONS_DB_PORT}
-      MG_INVITATIONS_DB_NAME: ${MG_INVITATIONS_DB_NAME}
-      MG_INVITATIONS_DB_SSL_MODE: ${MG_INVITATIONS_DB_SSL_MODE}
-      MG_INVITATIONS_DB_SSL_CERT: ${MG_INVITATIONS_DB_SSL_CERT}
-      MG_INVITATIONS_DB_SSL_KEY: ${MG_INVITATIONS_DB_SSL_KEY}
-      MG_INVITATIONS_DB_SSL_ROOT_CERT: ${MG_INVITATIONS_DB_SSL_ROOT_CERT}
-      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
-      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_INVITATIONS_INSTANCE_ID: ${MG_INVITATIONS_INSTANCE_ID}
+      SMQ_INVITATIONS_LOG_LEVEL: ${SMQ_INVITATIONS_LOG_LEVEL}
+      SMQ_USERS_URL: ${SMQ_USERS_URL}
+      SMQ_DOMAINS_URL: ${SMQ_DOMAINS_URL}
+      SMQ_INVITATIONS_HTTP_HOST: ${SMQ_INVITATIONS_HTTP_HOST}
+      SMQ_INVITATIONS_HTTP_PORT: ${SMQ_INVITATIONS_HTTP_PORT}
+      SMQ_INVITATIONS_HTTP_SERVER_CERT: ${SMQ_INVITATIONS_HTTP_SERVER_CERT}
+      SMQ_INVITATIONS_HTTP_SERVER_KEY: ${SMQ_INVITATIONS_HTTP_SERVER_KEY}
+      SMQ_INVITATIONS_DB_HOST: ${SMQ_INVITATIONS_DB_HOST}
+      SMQ_INVITATIONS_DB_USER: ${SMQ_INVITATIONS_DB_USER}
+      SMQ_INVITATIONS_DB_PASS: ${SMQ_INVITATIONS_DB_PASS}
+      SMQ_INVITATIONS_DB_PORT: ${SMQ_INVITATIONS_DB_PORT}
+      SMQ_INVITATIONS_DB_NAME: ${SMQ_INVITATIONS_DB_NAME}
+      SMQ_INVITATIONS_DB_SSL_MODE: ${SMQ_INVITATIONS_DB_SSL_MODE}
+      SMQ_INVITATIONS_DB_SSL_CERT: ${SMQ_INVITATIONS_DB_SSL_CERT}
+      SMQ_INVITATIONS_DB_SSL_KEY: ${SMQ_INVITATIONS_DB_SSL_KEY}
+      SMQ_INVITATIONS_DB_SSL_ROOT_CERT: ${SMQ_INVITATIONS_DB_SSL_ROOT_CERT}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_INVITATIONS_INSTANCE_ID: ${SMQ_INVITATIONS_INSTANCE_ID}
     ports:
-      - ${MG_INVITATIONS_HTTP_PORT}:${MG_INVITATIONS_HTTP_PORT}
+      - ${SMQ_INVITATIONS_HTTP_PORT}:${SMQ_INVITATIONS_HTTP_PORT}
     networks:
       - magistrala-base-net
     volumes:
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -236,149 +366,281 @@ services:
       - ./nginx/snippets:/etc/nginx/snippets
       - ./ssl/authorization.js:/etc/nginx/authorization.js
       - type: bind
-        source: ${MG_NGINX_SERVER_CERT:-./ssl/certs/magistrala-server.crt}
-        target: /etc/ssl/certs/magistrala-server.crt
+        source: ${SMQ_NGINX_SERVER_CERT:-./ssl/certs/supermq-server.crt}
+        target: /etc/ssl/certs/supermq-server.crt
       - type: bind
-        source: ${MG_NGINX_SERVER_KEY:-./ssl/certs/magistrala-server.key}
-        target: /etc/ssl/private/magistrala-server.key
+        source: ${SMQ_NGINX_SERVER_KEY:-./ssl/certs/supermq-server.key}
+        target: /etc/ssl/private/supermq-server.key
       - type: bind
-        source: ${MG_NGINX_SERVER_CLIENT_CA:-./ssl/certs/ca.crt}
+        source: ${SMQ_NGINX_SERVER_CLIENT_CA:-./ssl/certs/ca.crt}
         target: /etc/ssl/certs/ca.crt
       - type: bind
-        source: ${MG_NGINX_SERVER_DHPARAM:-./ssl/dhparam.pem}
+        source: ${SMQ_NGINX_SERVER_DHPARAM:-./ssl/dhparam.pem}
         target: /etc/ssl/certs/dhparam.pem
     ports:
-      - ${MG_NGINX_HTTP_PORT}:${MG_NGINX_HTTP_PORT}
-      - ${MG_NGINX_SSL_PORT}:${MG_NGINX_SSL_PORT}
-      - ${MG_NGINX_MQTT_PORT}:${MG_NGINX_MQTT_PORT}
-      - ${MG_NGINX_MQTTS_PORT}:${MG_NGINX_MQTTS_PORT}
+      - ${SMQ_NGINX_HTTP_PORT}:${SMQ_NGINX_HTTP_PORT}
+      - ${SMQ_NGINX_SSL_PORT}:${SMQ_NGINX_SSL_PORT}
+      - ${SMQ_NGINX_MQTT_PORT}:${SMQ_NGINX_MQTT_PORT}
+      - ${SMQ_NGINX_MQTTS_PORT}:${SMQ_NGINX_MQTTS_PORT}
     networks:
       - magistrala-base-net
     env_file:
       - .env
     depends_on:
       - auth
-      - things
+      - clients
       - users
       - mqtt-adapter
       - http-adapter
       - ws-adapter
       - coap-adapter
 
-  things-db:
+  clients-db:
     image: postgres:16.2-alpine
-    container_name: magistrala-things-db
+    container_name: magistrala-clients-db
     restart: on-failure
-    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MG_THINGS_DB_USER}
-      POSTGRES_PASSWORD: ${MG_THINGS_DB_PASS}
-      POSTGRES_DB: ${MG_THINGS_DB_NAME}
-      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+      POSTGRES_USER: ${SMQ_CLIENTS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_CLIENTS_DB_PASS}
+      POSTGRES_DB: ${SMQ_CLIENTS_DB_NAME}
+      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
     networks:
       - magistrala-base-net
     ports:
       - 6006:5432
     volumes:
-      - magistrala-things-db-volume:/var/lib/postgresql/data
+      - magistrala-clients-db-volume:/var/lib/postgresql/data
 
-  things-redis:
+  clients-redis:
     image: redis:7.2.4-alpine
-    container_name: magistrala-things-redis
+    container_name: magistrala-clients-redis
     restart: on-failure
     networks:
       - magistrala-base-net
     volumes:
-      - magistrala-things-redis-volume:/data
+      - magistrala-clients-redis-volume:/data
 
-  things:
-    image: magistrala/things:${MG_RELEASE_TAG}
-    container_name: magistrala-things
+  clients:
+    image: supermq/clients:${SMQ_RELEASE_TAG}
+    container_name: magistrala-clients
     depends_on:
-      - things-db
+      - clients-db
       - users
       - auth
       - nats
     restart: on-failure
     environment:
-      MG_THINGS_LOG_LEVEL: ${MG_THINGS_LOG_LEVEL}
-      MG_THINGS_STANDALONE_ID: ${MG_THINGS_STANDALONE_ID}
-      MG_THINGS_STANDALONE_TOKEN: ${MG_THINGS_STANDALONE_TOKEN}
-      MG_THINGS_CACHE_KEY_DURATION: ${MG_THINGS_CACHE_KEY_DURATION}
-      MG_THINGS_HTTP_HOST: ${MG_THINGS_HTTP_HOST}
-      MG_THINGS_HTTP_PORT: ${MG_THINGS_HTTP_PORT}
-      MG_THINGS_AUTH_GRPC_HOST: ${MG_THINGS_AUTH_GRPC_HOST}
-      MG_THINGS_AUTH_GRPC_PORT: ${MG_THINGS_AUTH_GRPC_PORT}
+      SMQ_CLIENTS_LOG_LEVEL: ${SMQ_CLIENTS_LOG_LEVEL}
+      SMQ_CLIENTS_STANDALONE_ID: ${SMQ_CLIENTS_STANDALONE_ID}
+      SMQ_CLIENTS_STANDALONE_TOKEN: ${SMQ_CLIENTS_STANDALONE_TOKEN}
+      SMQ_CLIENTS_CACHE_KEY_DURATION: ${SMQ_CLIENTS_CACHE_KEY_DURATION}
+      SMQ_CLIENTS_HTTP_HOST: ${SMQ_CLIENTS_HTTP_HOST}
+      SMQ_CLIENTS_HTTP_PORT: ${SMQ_CLIENTS_HTTP_PORT}
+      SMQ_CLIENTS_AUTH_GRPC_HOST: ${SMQ_CLIENTS_AUTH_GRPC_HOST}
+      SMQ_CLIENTS_AUTH_GRPC_PORT: ${SMQ_CLIENTS_AUTH_GRPC_PORT}
       ## Compose supports parameter expansion in environment,
       ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
       ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
-      MG_THINGS_AUTH_GRPC_SERVER_CERT: ${MG_THINGS_AUTH_GRPC_SERVER_CERT:+/things-grpc-server.crt}
-      MG_THINGS_AUTH_GRPC_SERVER_KEY: ${MG_THINGS_AUTH_GRPC_SERVER_KEY:+/things-grpc-server.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS: ${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+/things-grpc-client-ca.crt}
-      MG_ES_URL: ${MG_ES_URL}
-      MG_THINGS_CACHE_URL: ${MG_THINGS_CACHE_URL}
-      MG_THINGS_DB_HOST: ${MG_THINGS_DB_HOST}
-      MG_THINGS_DB_PORT: ${MG_THINGS_DB_PORT}
-      MG_THINGS_DB_USER: ${MG_THINGS_DB_USER}
-      MG_THINGS_DB_PASS: ${MG_THINGS_DB_PASS}
-      MG_THINGS_DB_NAME: ${MG_THINGS_DB_NAME}
-      MG_THINGS_DB_SSL_MODE: ${MG_THINGS_DB_SSL_MODE}
-      MG_THINGS_DB_SSL_CERT: ${MG_THINGS_DB_SSL_CERT}
-      MG_THINGS_DB_SSL_KEY: ${MG_THINGS_DB_SSL_KEY}
-      MG_THINGS_DB_SSL_ROOT_CERT: ${MG_THINGS_DB_SSL_ROOT_CERT}
-      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
-      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
-      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
-      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CERT: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CERT:+/clients-grpc-server.crt}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_KEY: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_KEY:+/clients-grpc-server.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS:+/clients-grpc-client-ca.crt}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_CLIENTS_CACHE_URL: ${SMQ_CLIENTS_CACHE_URL}
+      SMQ_CLIENTS_DB_HOST: ${SMQ_CLIENTS_DB_HOST}
+      SMQ_CLIENTS_DB_PORT: ${SMQ_CLIENTS_DB_PORT}
+      SMQ_CLIENTS_DB_USER: ${SMQ_CLIENTS_DB_USER}
+      SMQ_CLIENTS_DB_PASS: ${SMQ_CLIENTS_DB_PASS}
+      SMQ_CLIENTS_DB_NAME: ${SMQ_CLIENTS_DB_NAME}
+      SMQ_CLIENTS_DB_SSL_MODE: ${SMQ_CLIENTS_DB_SSL_MODE}
+      SMQ_CLIENTS_DB_SSL_CERT: ${SMQ_CLIENTS_DB_SSL_CERT}
+      SMQ_CLIENTS_DB_SSL_KEY: ${SMQ_CLIENTS_DB_SSL_KEY}
+      SMQ_CLIENTS_DB_SSL_ROOT_CERT: ${SMQ_CLIENTS_DB_SSL_ROOT_CERT}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_CHANNELS_URL: ${SMQ_CHANNELS_URL}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_GROUPS_URL: ${SMQ_GROUPS_URL}
+      SMQ_GROUPS_GRPC_URL: ${SMQ_GROUPS_GRPC_URL}
+      SMQ_GROUPS_GRPC_TIMEOUT: ${SMQ_GROUPS_GRPC_TIMEOUT}
+      SMQ_GROUPS_GRPC_CLIENT_CERT: ${SMQ_GROUPS_GRPC_CLIENT_CERT:+/groups-grpc-client.crt}
+      SMQ_GROUPS_GRPC_CLIENT_KEY: ${SMQ_GROUPS_GRPC_CLIENT_KEY:+/groups-grpc-client.key}
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
     ports:
-      - ${MG_THINGS_HTTP_PORT}:${MG_THINGS_HTTP_PORT}
-      - ${MG_THINGS_AUTH_GRPC_PORT}:${MG_THINGS_AUTH_GRPC_PORT}
+      - ${SMQ_CLIENTS_HTTP_PORT}:${SMQ_CLIENTS_HTTP_PORT}
+      - ${SMQ_CLIENTS_AUTH_GRPC_PORT}:${SMQ_CLIENTS_AUTH_GRPC_PORT}
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC server certificates
+      # Clients gRPC server certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /things-grpc-server${MG_THINGS_AUTH_GRPC_SERVER_CERT:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /clients-grpc-server${SMQ_CLIENTS_AUTH_GRPC_SERVER_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /things-grpc-server${MG_THINGS_AUTH_GRPC_SERVER_KEY:+.key}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /clients-grpc-server${SMQ_CLIENTS_AUTH_GRPC_SERVER_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /clients-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /things-grpc-client-ca${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /clients-grpc-client-ca${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channel gRPC client certificates
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  channels-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-channels-db
+    restart: on-failure
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${SMQ_CHANNELS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_CHANNELS_DB_PASS}
+      POSTGRES_DB: ${SMQ_CHANNELS_DB_NAME}
+      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
+    networks:
+      - magistrala-base-net
+    ports:
+      - 6005:5432
+    volumes:
+      - magistrala-channels-db-volume:/var/lib/postgresql/data
+
+  channels:
+    image: supermq/channels:${SMQ_RELEASE_TAG}
+    container_name: magistrala-channels
+    depends_on:
+      - channels-db
+      - users
+      - auth
+      - nats
+    restart: on-failure
+    environment:
+      SMQ_CHANNELS_LOG_LEVEL: ${SMQ_CHANNELS_LOG_LEVEL}
+      SMQ_CHANNELS_INSTANCE_ID: ${SMQ_CHANNELS_INSTANCE_ID}
+      SMQ_CHANNELS_HTTP_HOST: ${SMQ_CHANNELS_HTTP_HOST}
+      SMQ_CHANNELS_HTTP_PORT: ${SMQ_CHANNELS_HTTP_PORT}
+      SMQ_CHANNELS_GRPC_HOST: ${SMQ_CHANNELS_GRPC_HOST}
+      SMQ_CHANNELS_GRPC_PORT: ${SMQ_CHANNELS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      SMQ_CHANNELS_GRPC_SERVER_CERT: ${SMQ_CHANNELS_GRPC_SERVER_CERT:+/channels-grpc-server.crt}
+      SMQ_CHANNELS_GRPC_SERVER_KEY: ${SMQ_CHANNELS_GRPC_SERVER_KEY:+/channels-grpc-server.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS: ${SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS:+/channels-grpc-client-ca.crt}
+      SMQ_CHANNELS_DB_HOST: ${SMQ_CHANNELS_DB_HOST}
+      SMQ_CHANNELS_DB_PORT: ${SMQ_CHANNELS_DB_PORT}
+      SMQ_CHANNELS_DB_USER: ${SMQ_CHANNELS_DB_USER}
+      SMQ_CHANNELS_DB_PASS: ${SMQ_CHANNELS_DB_PASS}
+      SMQ_CHANNELS_DB_NAME: ${SMQ_CHANNELS_DB_NAME}
+      SMQ_CHANNELS_DB_SSL_MODE: ${SMQ_CHANNELS_DB_SSL_MODE}
+      SMQ_CHANNELS_DB_SSL_CERT: ${SMQ_CHANNELS_DB_SSL_CERT}
+      SMQ_CHANNELS_DB_SSL_KEY: ${SMQ_CHANNELS_DB_SSL_KEY}
+      SMQ_CHANNELS_DB_SSL_ROOT_CERT: ${SMQ_CHANNELS_DB_SSL_ROOT_CERT}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_GROUPS_GRPC_URL: ${SMQ_GROUPS_GRPC_URL}
+      SMQ_GROUPS_GRPC_TIMEOUT: ${SMQ_GROUPS_GRPC_TIMEOUT}
+      SMQ_GROUPS_GRPC_CLIENT_CERT: ${SMQ_GROUPS_GRPC_CLIENT_CERT:+/groups-grpc-client.crt}
+      SMQ_GROUPS_GRPC_CLIENT_KEY: ${SMQ_GROUPS_GRPC_CLIENT_KEY:+/groups-grpc-client.key}
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+    ports:
+      - ${SMQ_CHANNELS_HTTP_PORT}:${SMQ_CHANNELS_HTTP_PORT}
+      - ${SMQ_CHANNELS_GRPC_PORT}:${SMQ_CHANNELS_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      # Auth gRPC client certificates
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
@@ -386,21 +648,21 @@ services:
     image: postgres:16.2-alpine
     container_name: magistrala-users-db
     restart: on-failure
-    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MG_USERS_DB_USER}
-      POSTGRES_PASSWORD: ${MG_USERS_DB_PASS}
-      POSTGRES_DB: ${MG_USERS_DB_NAME}
-      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+      POSTGRES_USER: ${SMQ_USERS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_USERS_DB_PASS}
+      POSTGRES_DB: ${SMQ_USERS_DB_NAME}
+      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
     ports:
-      - 6000:5432
+      - 6002:5432
     networks:
       - magistrala-base-net
     volumes:
       - magistrala-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: magistrala/users:${MG_RELEASE_TAG}
+    image: supermq/users:${SMQ_RELEASE_TAG}
     container_name: magistrala-users
     depends_on:
       - users-db
@@ -408,292 +670,527 @@ services:
       - nats
     restart: on-failure
     environment:
-      MG_USERS_LOG_LEVEL: ${MG_USERS_LOG_LEVEL}
-      MG_USERS_SECRET_KEY: ${MG_USERS_SECRET_KEY}
-      MG_USERS_ADMIN_EMAIL: ${MG_USERS_ADMIN_EMAIL}
-      MG_USERS_ADMIN_PASSWORD: ${MG_USERS_ADMIN_PASSWORD}
-      MG_USERS_ADMIN_USERNAME: ${MG_USERS_ADMIN_USERNAME}
-      MG_USERS_ADMIN_FIRST_NAME: ${MG_USERS_ADMIN_FIRST_NAME}
-      MG_USERS_ADMIN_LAST_NAME: ${MG_USERS_ADMIN_LAST_NAME}
-      MG_USERS_PASS_REGEX: ${MG_USERS_PASS_REGEX}
-      MG_USERS_ACCESS_TOKEN_DURATION: ${MG_USERS_ACCESS_TOKEN_DURATION}
-      MG_USERS_REFRESH_TOKEN_DURATION: ${MG_USERS_REFRESH_TOKEN_DURATION}
-      MG_TOKEN_RESET_ENDPOINT: ${MG_TOKEN_RESET_ENDPOINT}
-      MG_USERS_HTTP_HOST: ${MG_USERS_HTTP_HOST}
-      MG_USERS_HTTP_PORT: ${MG_USERS_HTTP_PORT}
-      MG_USERS_HTTP_SERVER_CERT: ${MG_USERS_HTTP_SERVER_CERT}
-      MG_USERS_HTTP_SERVER_KEY: ${MG_USERS_HTTP_SERVER_KEY}
-      MG_USERS_DB_HOST: ${MG_USERS_DB_HOST}
-      MG_USERS_DB_PORT: ${MG_USERS_DB_PORT}
-      MG_USERS_DB_USER: ${MG_USERS_DB_USER}
-      MG_USERS_DB_PASS: ${MG_USERS_DB_PASS}
-      MG_USERS_DB_NAME: ${MG_USERS_DB_NAME}
-      MG_USERS_DB_SSL_MODE: ${MG_USERS_DB_SSL_MODE}
-      MG_USERS_DB_SSL_CERT: ${MG_USERS_DB_SSL_CERT}
-      MG_USERS_DB_SSL_KEY: ${MG_USERS_DB_SSL_KEY}
-      MG_USERS_DB_SSL_ROOT_CERT: ${MG_USERS_DB_SSL_ROOT_CERT}
-      MG_USERS_ALLOW_SELF_REGISTER: ${MG_USERS_ALLOW_SELF_REGISTER}
-      MG_EMAIL_HOST: ${MG_EMAIL_HOST}
-      MG_EMAIL_PORT: ${MG_EMAIL_PORT}
-      MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
-      MG_EMAIL_PASSWORD: ${MG_EMAIL_PASSWORD}
-      MG_EMAIL_FROM_ADDRESS: ${MG_EMAIL_FROM_ADDRESS}
-      MG_EMAIL_FROM_NAME: ${MG_EMAIL_FROM_NAME}
-      MG_EMAIL_TEMPLATE: ${MG_EMAIL_TEMPLATE}
-      MG_ES_URL: ${MG_ES_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
-      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
-      MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
-      MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
-      MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
-      MG_OAUTH_UI_REDIRECT_URL: ${MG_OAUTH_UI_REDIRECT_URL}
-      MG_OAUTH_UI_ERROR_URL: ${MG_OAUTH_UI_ERROR_URL}
-      MG_USERS_DELETE_INTERVAL: ${MG_USERS_DELETE_INTERVAL}
-      MG_USERS_DELETE_AFTER: ${MG_USERS_DELETE_AFTER}
-      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
-      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
-      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      SMQ_USERS_LOG_LEVEL: ${SMQ_USERS_LOG_LEVEL}
+      SMQ_USERS_SECRET_KEY: ${SMQ_USERS_SECRET_KEY}
+      SMQ_USERS_ADMIN_EMAIL: ${SMQ_USERS_ADMIN_EMAIL}
+      SMQ_USERS_ADMIN_PASSWORD: ${SMQ_USERS_ADMIN_PASSWORD}
+      SMQ_USERS_ADMIN_USERNAME: ${SMQ_USERS_ADMIN_USERNAME}
+      SMQ_USERS_ADMIN_FIRST_NAME: ${SMQ_USERS_ADMIN_FIRST_NAME}
+      SMQ_USERS_ADMIN_LAST_NAME: ${SMQ_USERS_ADMIN_LAST_NAME}
+      SMQ_USERS_PASS_REGEX: ${SMQ_USERS_PASS_REGEX}
+      SMQ_USERS_ACCESS_TOKEN_DURATION: ${SMQ_USERS_ACCESS_TOKEN_DURATION}
+      SMQ_USERS_REFRESH_TOKEN_DURATION: ${SMQ_USERS_REFRESH_TOKEN_DURATION}
+      SMQ_TOKEN_RESET_ENDPOINT: ${SMQ_TOKEN_RESET_ENDPOINT}
+      SMQ_USERS_HTTP_HOST: ${SMQ_USERS_HTTP_HOST}
+      SMQ_USERS_HTTP_PORT: ${SMQ_USERS_HTTP_PORT}
+      SMQ_USERS_HTTP_SERVER_CERT: ${SMQ_USERS_HTTP_SERVER_CERT}
+      SMQ_USERS_HTTP_SERVER_KEY: ${SMQ_USERS_HTTP_SERVER_KEY}
+      SMQ_USERS_DB_HOST: ${SMQ_USERS_DB_HOST}
+      SMQ_USERS_DB_PORT: ${SMQ_USERS_DB_PORT}
+      SMQ_USERS_DB_USER: ${SMQ_USERS_DB_USER}
+      SMQ_USERS_DB_PASS: ${SMQ_USERS_DB_PASS}
+      SMQ_USERS_DB_NAME: ${SMQ_USERS_DB_NAME}
+      SMQ_USERS_DB_SSL_MODE: ${SMQ_USERS_DB_SSL_MODE}
+      SMQ_USERS_DB_SSL_CERT: ${SMQ_USERS_DB_SSL_CERT}
+      SMQ_USERS_DB_SSL_KEY: ${SMQ_USERS_DB_SSL_KEY}
+      SMQ_USERS_DB_SSL_ROOT_CERT: ${SMQ_USERS_DB_SSL_ROOT_CERT}
+      SMQ_USERS_ALLOW_SELF_REGISTER: ${SMQ_USERS_ALLOW_SELF_REGISTER}
+      SMQ_EMAIL_HOST: ${SMQ_EMAIL_HOST}
+      SMQ_EMAIL_PORT: ${SMQ_EMAIL_PORT}
+      SMQ_EMAIL_USERNAME: ${SMQ_EMAIL_USERNAME}
+      SMQ_EMAIL_PASSWORD: ${SMQ_EMAIL_PASSWORD}
+      SMQ_EMAIL_FROM_ADDRESS: ${SMQ_EMAIL_FROM_ADDRESS}
+      SMQ_EMAIL_FROM_NAME: ${SMQ_EMAIL_FROM_NAME}
+      SMQ_EMAIL_TEMPLATE: ${SMQ_EMAIL_TEMPLATE}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_GOOGLE_CLIENT_ID: ${SMQ_GOOGLE_CLIENT_ID}
+      SMQ_GOOGLE_CLIENT_SECRET: ${SMQ_GOOGLE_CLIENT_SECRET}
+      SMQ_GOOGLE_REDIRECT_URL: ${SMQ_GOOGLE_REDIRECT_URL}
+      SMQ_GOOGLE_STATE: ${SMQ_GOOGLE_STATE}
+      SMQ_OAUTH_UI_REDIRECT_URL: ${SMQ_OAUTH_UI_REDIRECT_URL}
+      SMQ_OAUTH_UI_ERROR_URL: ${SMQ_OAUTH_UI_ERROR_URL}
+      SMQ_USERS_DELETE_INTERVAL: ${SMQ_USERS_DELETE_INTERVAL}
+      SMQ_USERS_DELETE_AFTER: ${SMQ_USERS_DELETE_AFTER}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
     ports:
-      - ${MG_USERS_HTTP_PORT}:${MG_USERS_HTTP_PORT}
+      - ${SMQ_USERS_HTTP_PORT}:${SMQ_USERS_HTTP_PORT}
     networks:
       - magistrala-base-net
     volumes:
-      - ./templates/${MG_USERS_RESET_PWD_TEMPLATE}:/email.tmpl
+      - ./templates/${SMQ_USERS_RESET_PWD_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+
+
+  groups-db:
+    image: postgres:16.2-alpine
+    container_name: magistrala-groups-db
+    restart: on-failure
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${SMQ_GROUPS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_GROUPS_DB_PASS}
+      POSTGRES_DB: ${SMQ_GROUPS_DB_NAME}
+      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
+    ports:
+      - 6004:5432
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-groups-db-volume:/var/lib/postgresql/data
+
+  groups:
+    image: supermq/groups:${SMQ_RELEASE_TAG}
+    container_name: magistrala-groups
+    depends_on:
+      - groups-db
+      - auth
+      - nats
+    restart: on-failure
+    environment:
+      SMQ_GROUPS_LOG_LEVEL: ${SMQ_GROUPS_LOG_LEVEL}
+      SMQ_GROUPS_HTTP_HOST: ${SMQ_GROUPS_HTTP_HOST}
+      SMQ_GROUPS_HTTP_PORT: ${SMQ_GROUPS_HTTP_PORT}
+      SMQ_GROUPS_HTTP_SERVER_CERT: ${SMQ_GROUPS_HTTP_SERVER_CERT}
+      SMQ_GROUPS_HTTP_SERVER_KEY: ${SMQ_GROUPS_HTTP_SERVER_KEY}
+      SMQ_GROUPS_GRPC_HOST: ${SMQ_GROUPS_GRPC_HOST}
+      SMQ_GROUPS_GRPC_PORT: ${SMQ_GROUPS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      SMQ_GROUPS_GRPC_SERVER_CERT: ${SMQ_GROUPS_GRPC_SERVER_CERT:+/groups-grpc-server.crt}
+      SMQ_GROUPS_GRPC_SERVER_KEY: ${SMQ_GROUPS_GRPC_SERVER_KEY:+/groups-grpc-server.key}
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+/groups-grpc-server-ca.crt}
+      SMQ_GROUPS_GRPC_CLIENT_CA_CERTS: ${SMQ_GROUPS_GRPC_CLIENT_CA_CERTS:+/groups-grpc-client-ca.crt}
+      SMQ_GROUPS_DB_HOST: ${SMQ_GROUPS_DB_HOST}
+      SMQ_GROUPS_DB_PORT: ${SMQ_GROUPS_DB_PORT}
+      SMQ_GROUPS_DB_USER: ${SMQ_GROUPS_DB_USER}
+      SMQ_GROUPS_DB_PASS: ${SMQ_GROUPS_DB_PASS}
+      SMQ_GROUPS_DB_NAME: ${SMQ_GROUPS_DB_NAME}
+      SMQ_GROUPS_DB_SSL_MODE: ${SMQ_GROUPS_DB_SSL_MODE}
+      SMQ_GROUPS_DB_SSL_CERT: ${SMQ_GROUPS_DB_SSL_CERT}
+      SMQ_GROUPS_DB_SSL_KEY: ${SMQ_GROUPS_DB_SSL_KEY}
+      SMQ_GROUPS_DB_SSL_ROOT_CERT: ${SMQ_GROUPS_DB_SSL_ROOT_CERT}
+      SMQ_CHANNELS_URL: ${SMQ_CHANNELS_URL}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+    ports:
+      - ${SMQ_GROUPS_HTTP_PORT}:${SMQ_GROUPS_HTTP_PORT}
+      - ${SMQ_GROUPS_GRPC_PORT}:${SMQ_GROUPS_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
+      # Auth gRPC client certificates
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
 
   jaeger:
     image: jaegertracing/all-in-one:1.60
     container_name: magistrala-jaeger
     environment:
-      COLLECTOR_OTLP_ENABLED: ${MG_JAEGER_COLLECTOR_OTLP_ENABLED}
-    command: --memory.max-traces ${MG_JAEGER_MEMORY_MAX_TRACES}
+      COLLECTOR_OTLP_ENABLED: ${SMQ_JAEGER_COLLECTOR_OTLP_ENABLED}
+    command: --memory.max-traces ${SMQ_JAEGER_MEMORY_MAX_TRACES}
     ports:
-      - ${MG_JAEGER_FRONTEND}:${MG_JAEGER_FRONTEND}
-      - ${MG_JAEGER_OLTP_HTTP}:${MG_JAEGER_OLTP_HTTP}
+      - ${SMQ_JAEGER_FRONTEND}:${SMQ_JAEGER_FRONTEND}
+      - ${SMQ_JAEGER_OLTP_HTTP}:${SMQ_JAEGER_OLTP_HTTP}
     networks:
       - magistrala-base-net
 
   mqtt-adapter:
-    image: magistrala/mqtt:${MG_RELEASE_TAG}
+    image: supermq/mqtt:${SMQ_RELEASE_TAG}
     container_name: magistrala-mqtt
     depends_on:
-      - things
+      - clients
       - vernemq
       - nats
     restart: on-failure
     environment:
-      MG_MQTT_ADAPTER_LOG_LEVEL: ${MG_MQTT_ADAPTER_LOG_LEVEL}
-      MG_MQTT_ADAPTER_MQTT_PORT: ${MG_MQTT_ADAPTER_MQTT_PORT}
-      MG_MQTT_ADAPTER_MQTT_TARGET_HOST: ${MG_MQTT_ADAPTER_MQTT_TARGET_HOST}
-      MG_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MG_MQTT_ADAPTER_MQTT_TARGET_PORT}
-      MG_MQTT_ADAPTER_FORWARDER_TIMEOUT: ${MG_MQTT_ADAPTER_FORWARDER_TIMEOUT}
-      MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: ${MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK}
-      MG_MQTT_ADAPTER_MQTT_QOS: ${MG_MQTT_ADAPTER_MQTT_QOS}
-      MG_MQTT_ADAPTER_WS_PORT: ${MG_MQTT_ADAPTER_WS_PORT}
-      MG_MQTT_ADAPTER_INSTANCE_ID: ${MG_MQTT_ADAPTER_INSTANCE_ID}
-      MG_MQTT_ADAPTER_WS_TARGET_HOST: ${MG_MQTT_ADAPTER_WS_TARGET_HOST}
-      MG_MQTT_ADAPTER_WS_TARGET_PORT: ${MG_MQTT_ADAPTER_WS_TARGET_PORT}
-      MG_MQTT_ADAPTER_WS_TARGET_PATH: ${MG_MQTT_ADAPTER_WS_TARGET_PATH}
-      MG_MQTT_ADAPTER_INSTANCE: ${MG_MQTT_ADAPTER_INSTANCE}
-      MG_ES_URL: ${MG_ES_URL}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      SMQ_MQTT_ADAPTER_LOG_LEVEL: ${SMQ_MQTT_ADAPTER_LOG_LEVEL}
+      SMQ_MQTT_ADAPTER_MQTT_PORT: ${SMQ_MQTT_ADAPTER_MQTT_PORT}
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_HOST: ${SMQ_MQTT_ADAPTER_MQTT_TARGET_HOST}
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_PORT: ${SMQ_MQTT_ADAPTER_MQTT_TARGET_PORT}
+      SMQ_MQTT_ADAPTER_FORWARDER_TIMEOUT: ${SMQ_MQTT_ADAPTER_FORWARDER_TIMEOUT}
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: ${SMQ_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK}
+      SMQ_MQTT_ADAPTER_MQTT_QOS: ${SMQ_MQTT_ADAPTER_MQTT_QOS}
+      SMQ_MQTT_ADAPTER_WS_PORT: ${SMQ_MQTT_ADAPTER_WS_PORT}
+      SMQ_MQTT_ADAPTER_INSTANCE_ID: ${SMQ_MQTT_ADAPTER_INSTANCE_ID}
+      SMQ_MQTT_ADAPTER_WS_TARGET_HOST: ${SMQ_MQTT_ADAPTER_WS_TARGET_HOST}
+      SMQ_MQTT_ADAPTER_WS_TARGET_PORT: ${SMQ_MQTT_ADAPTER_WS_TARGET_PORT}
+      SMQ_MQTT_ADAPTER_WS_TARGET_PATH: ${SMQ_MQTT_ADAPTER_WS_TARGET_PATH}
+      SMQ_MQTT_ADAPTER_INSTANCE: ${SMQ_MQTT_ADAPTER_INSTANCE}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   http-adapter:
-    image: magistrala/http:${MG_RELEASE_TAG}
+    image: supermq/http:${SMQ_RELEASE_TAG}
     container_name: magistrala-http
     depends_on:
-      - things
+      - clients
       - nats
     restart: on-failure
     environment:
-      MG_HTTP_ADAPTER_LOG_LEVEL: ${MG_HTTP_ADAPTER_LOG_LEVEL}
-      MG_HTTP_ADAPTER_HOST: ${MG_HTTP_ADAPTER_HOST}
-      MG_HTTP_ADAPTER_PORT: ${MG_HTTP_ADAPTER_PORT}
-      MG_HTTP_ADAPTER_SERVER_CERT: ${MG_HTTP_ADAPTER_SERVER_CERT}
-      MG_HTTP_ADAPTER_SERVER_KEY: ${MG_HTTP_ADAPTER_SERVER_KEY}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_HTTP_ADAPTER_INSTANCE_ID: ${MG_HTTP_ADAPTER_INSTANCE_ID}
+      SMQ_HTTP_ADAPTER_LOG_LEVEL: ${SMQ_HTTP_ADAPTER_LOG_LEVEL}
+      SMQ_HTTP_ADAPTER_HOST: ${SMQ_HTTP_ADAPTER_HOST}
+      SMQ_HTTP_ADAPTER_PORT: ${SMQ_HTTP_ADAPTER_PORT}
+      SMQ_HTTP_ADAPTER_SERVER_CERT: ${SMQ_HTTP_ADAPTER_SERVER_CERT}
+      SMQ_HTTP_ADAPTER_SERVER_KEY: ${SMQ_HTTP_ADAPTER_SERVER_KEY}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_HTTP_ADAPTER_INSTANCE_ID: ${SMQ_HTTP_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MG_HTTP_ADAPTER_PORT}:${MG_HTTP_ADAPTER_PORT}
+      - ${SMQ_HTTP_ADAPTER_PORT}:${SMQ_HTTP_ADAPTER_PORT}
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Auth gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   coap-adapter:
-    image: magistrala/coap:${MG_RELEASE_TAG}
+    image: supermq/coap:${SMQ_RELEASE_TAG}
     container_name: magistrala-coap
     depends_on:
-      - things
+      - clients
       - nats
     restart: on-failure
     environment:
-      MG_COAP_ADAPTER_LOG_LEVEL: ${MG_COAP_ADAPTER_LOG_LEVEL}
-      MG_COAP_ADAPTER_HOST: ${MG_COAP_ADAPTER_HOST}
-      MG_COAP_ADAPTER_PORT: ${MG_COAP_ADAPTER_PORT}
-      MG_COAP_ADAPTER_SERVER_CERT: ${MG_COAP_ADAPTER_SERVER_CERT}
-      MG_COAP_ADAPTER_SERVER_KEY: ${MG_COAP_ADAPTER_SERVER_KEY}
-      MG_COAP_ADAPTER_HTTP_HOST: ${MG_COAP_ADAPTER_HTTP_HOST}
-      MG_COAP_ADAPTER_HTTP_PORT: ${MG_COAP_ADAPTER_HTTP_PORT}
-      MG_COAP_ADAPTER_HTTP_SERVER_CERT: ${MG_COAP_ADAPTER_HTTP_SERVER_CERT}
-      MG_COAP_ADAPTER_HTTP_SERVER_KEY: ${MG_COAP_ADAPTER_HTTP_SERVER_KEY}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_COAP_ADAPTER_INSTANCE_ID: ${MG_COAP_ADAPTER_INSTANCE_ID}
+      SMQ_COAP_ADAPTER_LOG_LEVEL: ${SMQ_COAP_ADAPTER_LOG_LEVEL}
+      SMQ_COAP_ADAPTER_HOST: ${SMQ_COAP_ADAPTER_HOST}
+      SMQ_COAP_ADAPTER_PORT: ${SMQ_COAP_ADAPTER_PORT}
+      SMQ_COAP_ADAPTER_SERVER_CERT: ${SMQ_COAP_ADAPTER_SERVER_CERT}
+      SMQ_COAP_ADAPTER_SERVER_KEY: ${SMQ_COAP_ADAPTER_SERVER_KEY}
+      SMQ_COAP_ADAPTER_HTTP_HOST: ${SMQ_COAP_ADAPTER_HTTP_HOST}
+      SMQ_COAP_ADAPTER_HTTP_PORT: ${SMQ_COAP_ADAPTER_HTTP_PORT}
+      SMQ_COAP_ADAPTER_HTTP_SERVER_CERT: ${SMQ_COAP_ADAPTER_HTTP_SERVER_CERT}
+      SMQ_COAP_ADAPTER_HTTP_SERVER_KEY: ${SMQ_COAP_ADAPTER_HTTP_SERVER_KEY}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_COAP_ADAPTER_INSTANCE_ID: ${SMQ_COAP_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MG_COAP_ADAPTER_PORT}:${MG_COAP_ADAPTER_PORT}/udp
-      - ${MG_COAP_ADAPTER_HTTP_PORT}:${MG_COAP_ADAPTER_HTTP_PORT}/tcp
+      - ${SMQ_COAP_ADAPTER_PORT}:${SMQ_COAP_ADAPTER_PORT}/udp
+      - ${SMQ_COAP_ADAPTER_HTTP_PORT}:${SMQ_COAP_ADAPTER_HTTP_PORT}/tcp
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   ws-adapter:
-    image: magistrala/ws:${MG_RELEASE_TAG}
+    image: supermq/ws:${SMQ_RELEASE_TAG}
     container_name: magistrala-ws
     depends_on:
-      - things
+      - clients
       - nats
     restart: on-failure
     environment:
-      MG_WS_ADAPTER_LOG_LEVEL: ${MG_WS_ADAPTER_LOG_LEVEL}
-      MG_WS_ADAPTER_HTTP_HOST: ${MG_WS_ADAPTER_HTTP_HOST}
-      MG_WS_ADAPTER_HTTP_PORT: ${MG_WS_ADAPTER_HTTP_PORT}
-      MG_WS_ADAPTER_HTTP_SERVER_CERT: ${MG_WS_ADAPTER_HTTP_SERVER_CERT}
-      MG_WS_ADAPTER_HTTP_SERVER_KEY: ${MG_WS_ADAPTER_HTTP_SERVER_KEY}
-      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
-      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
-      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_WS_ADAPTER_INSTANCE_ID: ${MG_WS_ADAPTER_INSTANCE_ID}
+      SMQ_WS_ADAPTER_LOG_LEVEL: ${SMQ_WS_ADAPTER_LOG_LEVEL}
+      SMQ_WS_ADAPTER_HTTP_HOST: ${SMQ_WS_ADAPTER_HTTP_HOST}
+      SMQ_WS_ADAPTER_HTTP_PORT: ${SMQ_WS_ADAPTER_HTTP_PORT}
+      SMQ_WS_ADAPTER_HTTP_SERVER_CERT: ${SMQ_WS_ADAPTER_HTTP_SERVER_CERT}
+      SMQ_WS_ADAPTER_HTTP_SERVER_KEY: ${SMQ_WS_ADAPTER_HTTP_SERVER_KEY}
+      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
+      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_WS_ADAPTER_INSTANCE_ID: ${SMQ_WS_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MG_WS_ADAPTER_HTTP_PORT}:${MG_WS_ADAPTER_HTTP_PORT}
+      - ${SMQ_WS_ADAPTER_HTTP_PORT}:${SMQ_WS_ADAPTER_HTTP_PORT}
     networks:
       - magistrala-base-net
     volumes:
-      # Things gRPC mTLS client certificates
+      # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Auth gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   vernemq:
-    image: magistrala/vernemq:${MG_RELEASE_TAG}
+    image: supermq/vernemq:${SMQ_RELEASE_TAG}
     container_name: magistrala-vernemq
     restart: on-failure
     environment:
-      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${MG_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: ${MG_DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL}
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${SMQ_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: ${SMQ_DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL}
     networks:
       - magistrala-base-net
     volumes:
@@ -705,12 +1202,12 @@ services:
     restart: on-failure
     command: "--config=/etc/nats/nats.conf"
     environment:
-      - MG_NATS_PORT=${MG_NATS_PORT}
-      - MG_NATS_HTTP_PORT=${MG_NATS_HTTP_PORT}
-      - MG_NATS_JETSTREAM_KEY=${MG_NATS_JETSTREAM_KEY}
+      - SMQ_NATS_PORT=${SMQ_NATS_PORT}
+      - SMQ_NATS_HTTP_PORT=${SMQ_NATS_HTTP_PORT}
+      - SMQ_NATS_JETSTREAM_KEY=${SMQ_NATS_JETSTREAM_KEY}
     ports:
-      - ${MG_NATS_PORT}:${MG_NATS_PORT}
-      - ${MG_NATS_HTTP_PORT}:${MG_NATS_HTTP_PORT}
+      - ${SMQ_NATS_PORT}:${SMQ_NATS_PORT}
+      - ${SMQ_NATS_HTTP_PORT}:${SMQ_NATS_HTTP_PORT}
     volumes:
       - magistrala-broker-volume:/data
       - ./nats:/etc/nats
@@ -718,41 +1215,41 @@ services:
       - magistrala-base-net
 
   ui:
-    image: magistrala/ui:${MG_RELEASE_TAG}
+    image: magistrala/ui:${SMQ_RELEASE_TAG}
     container_name: magistrala-ui
     restart: on-failure
     environment:
-      MG_UI_LOG_LEVEL: ${MG_UI_LOG_LEVEL}
-      MG_UI_PORT: ${MG_UI_PORT}
-      MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
-      MG_READER_URL: ${MG_READER_URL}
-      MG_THINGS_URL: ${MG_THINGS_URL}
-      MG_USERS_URL: ${MG_USERS_URL}
-      MG_INVITATIONS_URL: ${MG_INVITATIONS_URL}
-      MG_DOMAINS_URL: ${MG_DOMAINS_URL}
-      MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
-      MG_UI_HOST_URL: ${MG_UI_HOST_URL}
-      MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
-      MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
-      MG_UI_INSTANCE_ID: ${MG_UI_INSTANCE_ID}
-      MG_UI_DB_HOST: ${MG_UI_DB_HOST}
-      MG_UI_DB_PORT: ${MG_UI_DB_PORT}
-      MG_UI_DB_USER: ${MG_UI_DB_USER}
-      MG_UI_DB_PASS: ${MG_UI_DB_PASS}
-      MG_UI_DB_NAME: ${MG_UI_DB_NAME}
-      MG_UI_DB_SSL_MODE: ${MG_UI_DB_SSL_MODE}
-      MG_UI_DB_SSL_CERT: ${MG_UI_DB_SSL_CERT}
-      MG_UI_DB_SSL_KEY: ${MG_UI_DB_SSL_KEY}
-      MG_UI_DB_SSL_ROOT_CERT: ${MG_UI_DB_SSL_ROOT_CERT}
-      MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
-      MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
-      MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
-      MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
-      MG_UI_HASH_KEY: ${MG_UI_HASH_KEY}
-      MG_UI_BLOCK_KEY: ${MG_UI_BLOCK_KEY}
-      MG_UI_PATH_PREFIX: ${MG_UI_PATH_PREFIX}
+      SMQ_UI_LOG_LEVEL: ${SMQ_UI_LOG_LEVEL}
+      SMQ_UI_PORT: ${SMQ_UI_PORT}
+      SMQ_HTTP_ADAPTER_URL: ${SMQ_HTTP_ADAPTER_URL}
+      SMQ_READER_URL: ${SMQ_READER_URL}
+      SMQ_CLIENTS_URL: ${SMQ_CLIENTS_URL}
+      SMQ_USERS_URL: ${SMQ_USERS_URL}
+      SMQ_INVITATIONS_URL: ${SMQ_INVITATIONS_URL}
+      SMQ_DOMAINS_URL: ${SMQ_DOMAINS_URL}
+      SMQ_BOOTSTRAP_URL: ${SMQ_BOOTSTRAP_URL}
+      SMQ_UI_HOST_URL: ${SMQ_UI_HOST_URL}
+      SMQ_UI_VERIFICATION_TLS: ${SMQ_UI_VERIFICATION_TLS}
+      SMQ_UI_CONTENT_TYPE: ${SMQ_UI_CONTENT_TYPE}
+      SMQ_UI_INSTANCE_ID: ${SMQ_UI_INSTANCE_ID}
+      SMQ_UI_DB_HOST: ${SMQ_UI_DB_HOST}
+      SMQ_UI_DB_PORT: ${SMQ_UI_DB_PORT}
+      SMQ_UI_DB_USER: ${SMQ_UI_DB_USER}
+      SMQ_UI_DB_PASS: ${SMQ_UI_DB_PASS}
+      SMQ_UI_DB_NAME: ${SMQ_UI_DB_NAME}
+      SMQ_UI_DB_SSL_MODE: ${SMQ_UI_DB_SSL_MODE}
+      SMQ_UI_DB_SSL_CERT: ${SMQ_UI_DB_SSL_CERT}
+      SMQ_UI_DB_SSL_KEY: ${SMQ_UI_DB_SSL_KEY}
+      SMQ_UI_DB_SSL_ROOT_CERT: ${SMQ_UI_DB_SSL_ROOT_CERT}
+      SMQ_GOOGLE_CLIENT_ID: ${SMQ_GOOGLE_CLIENT_ID}
+      SMQ_GOOGLE_CLIENT_SECRET: ${SMQ_GOOGLE_CLIENT_SECRET}
+      SMQ_GOOGLE_REDIRECT_URL: ${SMQ_GOOGLE_REDIRECT_URL}
+      SMQ_GOOGLE_STATE: ${SMQ_GOOGLE_STATE}
+      SMQ_UI_HASH_KEY: ${SMQ_UI_HASH_KEY}
+      SMQ_UI_BLOCK_KEY: ${SMQ_UI_BLOCK_KEY}
+      SMQ_UI_PATH_PREFIX: ${SMQ_UI_PATH_PREFIX}
     ports:
-      - ${MG_UI_PORT}:${MG_UI_PORT}
+      - ${SMQ_UI_PORT}:${SMQ_UI_PORT}
     networks:
       - magistrala-base-net
 
@@ -760,12 +1257,12 @@ services:
     image: postgres:16.2-alpine
     container_name: magistrala-ui-db
     restart: on-failure
-    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MG_UI_DB_USER}
-      POSTGRES_PASSWORD: ${MG_UI_DB_PASS}
-      POSTGRES_DB: ${MG_UI_DB_NAME}
-      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
+      POSTGRES_USER: ${SMQ_UI_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_UI_DB_PASS}
+      POSTGRES_DB: ${SMQ_UI_DB_NAME}
+      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
     ports:
       - 6007:5432
     networks:

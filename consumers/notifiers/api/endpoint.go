@@ -6,9 +6,9 @@ package api
 import (
 	"context"
 
-	notifiers "github.com/absmach/magistrala/consumers/notifiers"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/pkg/errors"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	notifiers "github.com/absmach/supermq/consumers/notifiers"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-kit/kit/endpoint"
 )
 

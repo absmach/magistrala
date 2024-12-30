@@ -10,11 +10,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/consumers/notifiers"
-	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/supermq"
+	api "github.com/absmach/supermq/api/http"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/consumers/notifiers"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -75,7 +75,7 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 			opts...,
 		), "delete").ServeHTTP)
 	})
-	mux.Get("/health", magistrala.Health("notifier", instanceID))
+	mux.Get("/health", supermq.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

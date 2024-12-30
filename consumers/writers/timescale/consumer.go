@@ -8,10 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/absmach/magistrala/consumers"
-	"github.com/absmach/magistrala/pkg/errors"
-	mgjson "github.com/absmach/magistrala/pkg/transformers/json"
-	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/supermq/consumers"
+	"github.com/absmach/supermq/pkg/errors"
+	smqjson "github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx" // required for DB access
@@ -37,7 +37,7 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 
 func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
-	case mgjson.Messages:
+	case smqjson.Messages:
 		return tr.saveJSON(ctx, m)
 	default:
 		return tr.saveSenml(ctx, m)
@@ -89,7 +89,7 @@ func (tr timescaleRepo) saveSenml(ctx context.Context, messages interface{}) (er
 	return err
 }
 
-func (tr timescaleRepo) saveJSON(ctx context.Context, msgs mgjson.Messages) error {
+func (tr timescaleRepo) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 	if err := tr.insertJSON(ctx, msgs); err != nil {
 		if err == errNoTable {
 			if err := tr.createTable(msgs.Format); err != nil {
@@ -102,7 +102,7 @@ func (tr timescaleRepo) saveJSON(ctx context.Context, msgs mgjson.Messages) erro
 	return nil
 }
 
-func (tr timescaleRepo) insertJSON(ctx context.Context, msgs mgjson.Messages) error {
+func (tr timescaleRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) error {
 	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
@@ -175,7 +175,7 @@ type jsonMessage struct {
 	Payload   []byte `db:"payload"`
 }
 
-func toJSONMessage(msg mgjson.Message) (jsonMessage, error) {
+func toJSONMessage(msg smqjson.Message) (jsonMessage, error) {
 	data := []byte("{}")
 	if msg.Payload != nil {
 		b, err := json.Marshal(msg.Payload)

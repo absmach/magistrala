@@ -11,9 +11,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/magistrala/consumers/notifiers/postgres"
-	pgclient "github.com/absmach/magistrala/pkg/postgres"
-	"github.com/absmach/magistrala/pkg/ulid"
+	"github.com/absmach/supermq/consumers/notifiers/postgres"
+	pgclient "github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/supermq/pkg/ulid"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"

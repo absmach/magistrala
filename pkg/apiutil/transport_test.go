@@ -11,10 +11,10 @@ import (
 	"net/url"
 	"testing"
 
-	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	mglog "github.com/absmach/supermq/logger"
 	"github.com/stretchr/testify/assert"
 )
 

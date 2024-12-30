@@ -7,7 +7,7 @@ package main
 import (
 	"log"
 
-	bench "github.com/absmach/magistrala/tools/mqtt-bench"
+	bench "github.com/absmach/supermq/tools/mqtt-bench"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -19,9 +19,9 @@ func main() {
 	// Command
 	rootCmd := &cobra.Command{
 		Use:   "mqtt-bench",
-		Short: "mqtt-bench is MQTT benchmark tool for Magistrala",
-		Long: `Tool for exctensive load and benchmarking of MQTT brokers used within the Magistrala platform.
-Complete documentation is available at https://docs.magistrala.abstractmachines.fr`,
+		Short: "mqtt-bench is MQTT benchmark tool for SuperMQ",
+		Long: `Tool for exctensive load and benchmarking of MQTT brokers used within the SuperMQ platform.
+Complete documentation is available at https://docs.supermq.abstractmachines.fr`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if confFile != "" {
 				viper.SetConfigFile(confFile)
@@ -69,7 +69,7 @@ Complete documentation is available at https://docs.magistrala.abstractmachines.
 
 	// Config file
 	rootCmd.PersistentFlags().StringVarP(&confFile, "config", "c", "config.toml", "config file for mqtt-bench")
-	rootCmd.PersistentFlags().StringVarP(&bconf.Mg.ConnFile, "magistrala", "m", "connections.toml", "config file for Magistrala connections")
+	rootCmd.PersistentFlags().StringVarP(&bconf.Smq.ConnFile, "supermq", "m", "connections.toml", "config file for SuperMQ connections")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

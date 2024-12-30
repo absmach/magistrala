@@ -6,8 +6,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/absmach/magistrala/readers"
 	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/readers"
 )
 
 var _ supermq.Response = (*pageRes)(nil)

@@ -23,14 +23,14 @@ file = "config.toml"
   port = ""
   server_cert = ""
   server_key = ""
-  things_location = "http://localhost:9000"
+  clients_location = "http://localhost:9006"
   tls = true
   users_location = ""
 
-[[things]]
-  name = "thing"
+[[clients]]
+  name = "client"
 
-  [things.metadata]
+  [client.metadata]
     external_id = "xxxxxx"
 
 

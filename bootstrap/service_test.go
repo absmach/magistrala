@@ -14,9 +14,9 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/supermq/bootstrap"
 	"github.com/absmach/supermq/bootstrap/mocks"
-	"github.com/absmach/supermq/internal/testsutil"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"

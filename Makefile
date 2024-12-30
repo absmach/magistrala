@@ -3,7 +3,7 @@
 
 MG_DOCKER_IMAGE_NAME_PREFIX ?= ghcr.io/absmach/magistrala
 BUILD_DIR = build
-SERVICES =  cli bootstrap provision re
+SERVICES =  bootstrap provision re postgres-writer postgres-reader timescale-writer	timescale-reader 
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0

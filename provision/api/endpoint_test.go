@@ -11,13 +11,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/magistrala/internal/testsutil"
-	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/provision"
-	"github.com/absmach/magistrala/provision/api"
-	"github.com/absmach/magistrala/provision/mocks"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/internal/testsutil"
+	smqlog "github.com/absmach/supermq/logger"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/provision"
+	"github.com/absmach/supermq/provision/api"
+	"github.com/absmach/supermq/provision/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,7 +56,7 @@ func (tr testRequest) make() (*http.Response, error) {
 func newProvisionServer() (*httptest.Server, *mocks.Service) {
 	svc := new(mocks.Service)
 
-	logger := mglog.NewMock()
+	logger := smqlog.NewMock()
 	mux := api.MakeHandler(svc, logger, "test")
 	return httptest.NewServer(mux), svc
 }

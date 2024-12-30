@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/readers"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/readers"
 )
 
 const maxLimitSize = 1000
@@ -20,16 +20,12 @@ type listMessagesReq struct {
 	chanID   string
 	token    string
 	key      string
-	domainID string
 	pageMeta readers.PageMetadata
 }
 
 func (req listMessagesReq) validate() error {
 	if req.token == "" && req.key == "" {
 		return apiutil.ErrBearerToken
-	}
-	if req.token != "" && req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	if req.chanID == "" {

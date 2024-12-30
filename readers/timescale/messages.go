@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/pkg/transformers/senml"
-	"github.com/absmach/magistrala/readers"
+	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/absmach/supermq/readers"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx" // required for DB access

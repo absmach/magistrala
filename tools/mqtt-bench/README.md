@@ -1,11 +1,11 @@
 # MQTT Benchmarking Tool
 
-A simple MQTT benchmarking tool for Magistrala platform.
+A simple MQTT benchmarking tool for SuperMQ platform.
 
-It connects Magistrala things as subscribers over a number of channels and
-uses other Magistrala things to publish messages and create MQTT load.
+It connects SuperMQ clients as subscribers over a number of channels and
+uses other SuperMQ clients to publish messages and create MQTT load.
 
-Magistrala things used must be pre-provisioned first, and Magistrala `provision` tool can be used for this purpose.
+SuperMQ clients used must be pre-provisioned first, and SuperMQ `provision` tool can be used for this purpose.
 
 ## Installation
 
@@ -20,8 +20,8 @@ The tool supports multiple concurrent clients, publishers and subscribers config
 
 ```
 ./mqtt-bench --help
-Tool for extensive load and benchmarking of MQTT brokers used within Magistrala platform.
-Complete documentation is available at https://docs.magistrala.abstractmachines.fr
+Tool for extensive load and benchmarking of MQTT brokers used within SuperMQ platform.
+Complete documentation is available at https://docs.supermq.abstractmachines.fr
 
 Usage:
   mqtt-bench [flags]
@@ -33,7 +33,7 @@ Flags:
   -n, --count int         Number of messages sent per publisher (default 100)
   -f, --format string     Output format: text|json (default "text")
   -h, --help              help for mqtt-bench
-  -m, --magistrala string   config file for Magistrala connections (default "connections.toml")
+  -m, --supermq string   config file for SuperMQ connections (default "connections.toml")
       --mtls              Use mtls for connection
   -p, --pubs int          Number of publishers (default 10)
   -q, --qos int           QoS for published messages, values 0 1 2
@@ -46,11 +46,11 @@ Flags:
 
 Two output formats supported: human-readable plain text and JSON.
 
-Before use you need a `mgconn.toml` - a TOML file that describes Magistrala connection data (channels, thingIDs, thingKeys, certs).
+Before use you need a `mgconn.toml` - a TOML file that describes SuperMQ connection data (channels, clientIDs, clientKeys, certs).
 You can use `provision` tool (in tools/provision) to create this TOML config file.
 
 ```bash
-go run tools/mqtt-bench/cmd/main.go -u test@magistrala.com -p test1234 --host http://127.0.0.1 --num 100 > tools/mqtt-bench/mgconn.toml
+go run tools/mqtt-bench/cmd/main.go -u test@supermq.com -p test1234 --host http://127.0.0.1 --num 100 > tools/mqtt-bench/mgconn.toml
 ```
 
 Example use and output
@@ -58,11 +58,11 @@ Example use and output
 Without mtls:
 
 ```
-go run tools/mqtt-bench/cmd/main.go --broker tcp://localhost:1883 --count 100 --size 100 --qos 0 --format text --pubs 10 --magistrala tools/mqtt-bench/mgconn.toml
+go run tools/mqtt-bench/cmd/main.go --broker tcp://localhost:1883 --count 100 --size 100 --qos 0 --format text --pubs 10 --supermq tools/mqtt-bench/mgconn.toml
 ```
 
 With mtls
-go run tools/mqtt-bench/cmd/main.go --broker tcps://localhost:8883 --count 100 --size 100 --qos 0 --format text --pubs 10 --magistrala tools/mqtt-bench/mgconn.toml --mtls -ca docker/ssl/certs/ca.crt
+go run tools/mqtt-bench/cmd/main.go --broker tcps://localhost:8883 --count 100 --size 100 --qos 0 --format text --pubs 10 --supermq tools/mqtt-bench/mgconn.toml --mtls -ca docker/ssl/certs/ca.crt
 
 ```
 
@@ -100,8 +100,8 @@ count = 100
 [log]
 quiet = false
 
-[magistrala]
-connections_file = "mgconn.toml"
+[supermq]
+connections_file = "smqconn.toml"
 
 ```
 

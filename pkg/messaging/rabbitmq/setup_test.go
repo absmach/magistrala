@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"testing"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/messaging/rabbitmq"
+	mglog "github.com/absmach/supermq/logger"
 	"github.com/ory/dockertest/v3"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/assert"

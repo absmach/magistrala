@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/redis"
+	mglog "github.com/absmach/supermq/logger"
 	"github.com/stretchr/testify/assert"
 )
 

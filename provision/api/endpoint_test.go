@@ -12,12 +12,12 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/provision"
+	"github.com/absmach/magistrala/provision/api"
+	"github.com/absmach/magistrala/provision/mocks"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqlog "github.com/absmach/supermq/logger"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/provision"
-	"github.com/absmach/supermq/provision/api"
-	"github.com/absmach/supermq/provision/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

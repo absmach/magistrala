@@ -13,6 +13,8 @@ import (
 	"reflect"
 
 	chclient "github.com/absmach/callhome/pkg/client"
+	"github.com/absmach/magistrala/provision"
+	httpapi "github.com/absmach/magistrala/provision/api"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/channels"
 	"github.com/absmach/supermq/clients"
@@ -22,8 +24,6 @@ import (
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
 	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/absmach/supermq/provision"
-	httpapi "github.com/absmach/supermq/provision/api"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )

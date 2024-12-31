@@ -9,11 +9,11 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/supermq"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/provision"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

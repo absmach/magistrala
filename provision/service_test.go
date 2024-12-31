@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/provision"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	sdk "github.com/absmach/supermq/pkg/sdk"
 	sdkmocks "github.com/absmach/supermq/pkg/sdk/mocks"
-	"github.com/absmach/supermq/provision"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq/bootstrap"
+	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/supermq/clients"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"

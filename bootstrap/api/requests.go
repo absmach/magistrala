@@ -4,8 +4,8 @@
 package api
 
 import (
+	"github.com/absmach/magistrala/bootstrap"
 	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/bootstrap"
 )
 
 const maxLimitSize = 100

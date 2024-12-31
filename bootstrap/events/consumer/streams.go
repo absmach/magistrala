@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/bootstrap"
+	"github.com/absmach/magistrala/bootstrap"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/events"
 )

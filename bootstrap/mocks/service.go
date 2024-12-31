@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	bootstrap "github.com/absmach/supermq/bootstrap"
+	bootstrap "github.com/absmach/magistrala/bootstrap"
 	authn "github.com/absmach/supermq/pkg/authn"
 
 	context "context"

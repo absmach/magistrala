@@ -11,12 +11,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/supermq"
+	api "github.com/absmach/supermq/api/http"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/bootstrap"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -33,21 +33,21 @@ const (
 )
 
 var (
-	fullMatch    = []string{"state", "external_id", "thing_id", "thing_key"}
+	fullMatch    = []string{"state", "external_id", "client_id", "client_key"}
 	partialMatch = []string{"name"}
 	// ErrBootstrap indicates error in getting bootstrap configuration.
 	ErrBootstrap = errors.New("failed to read bootstrap configuration")
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader bootstrap.ConfigReader, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc bootstrap.Service, authn smqauthn.Authentication, reader bootstrap.ConfigReader, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	r := chi.NewRouter()
 
-	r.Route("/{domainID}/things", func(r chi.Router) {
+	r.Route("/{domainID}/clients", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(api.AuthenticateMiddleware(authn, true))
 
@@ -96,14 +96,14 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 			})
 		})
 
-		r.With(api.AuthenticateMiddleware(authn, true)).Put("/state/{thingID}", otelhttp.NewHandler(kithttp.NewServer(
+		r.With(api.AuthenticateMiddleware(authn, true)).Put("/state/{clientID}", otelhttp.NewHandler(kithttp.NewServer(
 			stateEndpoint(svc),
 			decodeStateRequest,
 			api.EncodeResponse,
 			opts...), "update_state").ServeHTTP)
 	})
 
-	r.Route("/things/bootstrap", func(r chi.Router) {
+	r.Route("/clients/bootstrap", func(r chi.Router) {
 		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 			bootstrapEndpoint(svc, reader, false),
 			decodeBootstrapRequest,
@@ -121,7 +121,7 @@ func MakeHandler(svc bootstrap.Service, authn mgauthn.Authentication, reader boo
 			opts...), "bootstrap_secure").ServeHTTP)
 	})
 
-	r.Get("/health", magistrala.Health("bootstrap", instanceID))
+	r.Get("/health", supermq.Health("bootstrap", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r
@@ -163,7 +163,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := updateCertReq{
-		thingID: chi.URLParam(r, "certID"),
+		clientID: chi.URLParam(r, "certID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
@@ -216,7 +216,7 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := bootstrapReq{
 		id:  chi.URLParam(r, "externalID"),
-		key: apiutil.ExtractThingKey(r),
+		key: apiutil.ExtractClientSecret(r),
 	}
 
 	return req, nil
@@ -229,7 +229,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 	req := changeStateReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "thingID"),
+		id:    chi.URLParam(r, "clientID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))

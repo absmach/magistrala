@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	readers "github.com/absmach/magistrala/readers"
+	readers "github.com/absmach/supermq/readers"
 	mock "github.com/stretchr/testify/mock"
 )
 

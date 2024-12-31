@@ -8,7 +8,7 @@ package api
 import (
 	"time"
 
-	"github.com/absmach/magistrala/readers"
+	"github.com/absmach/supermq/readers"
 	"github.com/go-kit/kit/metrics"
 )
 

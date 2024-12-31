@@ -11,7 +11,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/magistrala/readers/postgres"
+	"github.com/absmach/supermq/readers/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"

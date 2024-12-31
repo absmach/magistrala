@@ -6,8 +6,8 @@ package tracing
 import (
 	"context"
 
-	"github.com/absmach/magistrala/bootstrap"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/supermq/bootstrap"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -25,9 +25,9 @@ func New(svc bootstrap.Service, tracer trace.Tracer) bootstrap.Service {
 }
 
 // Add traces the "Add" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) Add(ctx context.Context, session mgauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
+func (tm *tracingMiddleware) Add(ctx context.Context, session smqauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_register_user", trace.WithAttributes(
-		attribute.String("thing_id", cfg.ThingID),
+		attribute.String("client_id", cfg.ClientID),
 		attribute.String("domain_id ", cfg.DomainID),
 		attribute.String("name", cfg.Name),
 		attribute.String("external_id", cfg.ExternalID),
@@ -40,7 +40,7 @@ func (tm *tracingMiddleware) Add(ctx context.Context, session mgauthn.Session, t
 }
 
 // View traces the "View" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) View(ctx context.Context, session mgauthn.Session, id string) (bootstrap.Config, error) {
+func (tm *tracingMiddleware) View(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_view_user", trace.WithAttributes(
 		attribute.String("id", id),
 	))
@@ -50,11 +50,11 @@ func (tm *tracingMiddleware) View(ctx context.Context, session mgauthn.Session, 
 }
 
 // Update traces the "Update" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) Update(ctx context.Context, session mgauthn.Session, cfg bootstrap.Config) error {
+func (tm *tracingMiddleware) Update(ctx context.Context, session smqauthn.Session, cfg bootstrap.Config) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_user", trace.WithAttributes(
 		attribute.String("name", cfg.Name),
 		attribute.String("content", cfg.Content),
-		attribute.String("thing_id", cfg.ThingID),
+		attribute.String("client_id", cfg.ClientID),
 		attribute.String("domain_id ", cfg.DomainID),
 	))
 	defer span.End()
@@ -63,17 +63,17 @@ func (tm *tracingMiddleware) Update(ctx context.Context, session mgauthn.Session
 }
 
 // UpdateCert traces the "UpdateCert" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) UpdateCert(ctx context.Context, session mgauthn.Session, thingID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+func (tm *tracingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_cert", trace.WithAttributes(
-		attribute.String("thing_id", thingID),
+		attribute.String("client_id", clientID),
 	))
 	defer span.End()
 
-	return tm.svc.UpdateCert(ctx, session, thingID, clientCert, clientKey, caCert)
+	return tm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 }
 
 // UpdateConnections traces the "UpdateConnections" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) UpdateConnections(ctx context.Context, session mgauthn.Session, token, id string, connections []string) error {
+func (tm *tracingMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_connections", trace.WithAttributes(
 		attribute.String("id", id),
 		attribute.StringSlice("connections", connections),
@@ -84,7 +84,7 @@ func (tm *tracingMiddleware) UpdateConnections(ctx context.Context, session mgau
 }
 
 // List traces the "List" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) List(ctx context.Context, session mgauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
+func (tm *tracingMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_users", trace.WithAttributes(
 		attribute.Int64("offset", int64(offset)),
 		attribute.Int64("limit", int64(limit)),
@@ -95,7 +95,7 @@ func (tm *tracingMiddleware) List(ctx context.Context, session mgauthn.Session, 
 }
 
 // Remove traces the "Remove" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) Remove(ctx context.Context, session mgauthn.Session, id string) error {
+func (tm *tracingMiddleware) Remove(ctx context.Context, session smqauthn.Session, id string) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_remove_user", trace.WithAttributes(
 		attribute.String("id", id),
 	))
@@ -117,7 +117,7 @@ func (tm *tracingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 }
 
 // ChangeState traces the "ChangeState" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) ChangeState(ctx context.Context, session mgauthn.Session, token, id string, state bootstrap.State) error {
+func (tm *tracingMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) error {
 	ctx, span := tm.tracer.Start(ctx, "svc_change_state", trace.WithAttributes(
 		attribute.String("id", id),
 		attribute.String("state", state.String()),
@@ -159,24 +159,24 @@ func (tm *tracingMiddleware) RemoveChannelHandler(ctx context.Context, id string
 	return tm.svc.RemoveChannelHandler(ctx, id)
 }
 
-// ConnectThingHandler traces the "ConnectThingHandler" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) ConnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_connect_thing_handler", trace.WithAttributes(
+// ConnectClientHandler traces the "ConnectClientHandler" operation of the wrapped bootstrap.Service.
+func (tm *tracingMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_connect_client_handler", trace.WithAttributes(
 		attribute.String("channel_id", channelID),
-		attribute.String("thing_id", thingID),
+		attribute.String("client_id", clientID),
 	))
 	defer span.End()
 
-	return tm.svc.ConnectThingHandler(ctx, channelID, thingID)
+	return tm.svc.ConnectClientHandler(ctx, channelID, clientID)
 }
 
-// DisconnectThingHandler traces the "DisconnectThingHandler" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_disconnect_thing_handler", trace.WithAttributes(
+// DisconnectClientHandler traces the "DisconnectClientHandler" operation of the wrapped bootstrap.Service.
+func (tm *tracingMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_disconnect_client_handler", trace.WithAttributes(
 		attribute.String("channel_id", channelID),
-		attribute.String("thing_id", thingID),
+		attribute.String("client_id", clientID),
 	))
 	defer span.End()
 
-	return tm.svc.DisconnectThingHandler(ctx, channelID, thingID)
+	return tm.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }

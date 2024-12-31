@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/pkg/apiutil"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/bootstrap"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -151,20 +151,20 @@ func TestUpdateReqValidation(t *testing.T) {
 
 func TestUpdateCertReqValidation(t *testing.T) {
 	cases := []struct {
-		desc    string
-		thingID string
-		err     error
+		desc     string
+		clientID string
+		err      error
 	}{
 		{
-			desc:    "empty thing id",
-			thingID: "",
-			err:     apiutil.ErrMissingID,
+			desc:     "empty client id",
+			clientID: "",
+			err:      apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateCertReq{
-			thingID: tc.thingID,
+			clientID: tc.clientID,
 		}
 
 		err := req.validate()

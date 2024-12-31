@@ -10,13 +10,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/invitations"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/re"
+	"github.com/absmach/supermq"
+	api "github.com/absmach/supermq/api/http"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	mgauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -76,7 +75,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, logger *slog.Logg
 		})
 	})
 
-	mux.Get("/health", magistrala.Health("rule_engine", instanceID))
+	mux.Get("/health", supermq.Health("rule_engine", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -135,7 +134,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 
 func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	id := r.URL.Query().Get(idKey)
-	status, err := apiutil.ReadStringQuery(r, statusKey, invitations.All.String())
+	status, err := apiutil.ReadStringQuery(r, statusKey, re.AllStatus.String())
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}

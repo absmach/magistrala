@@ -7,16 +7,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/consumers"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/consumers"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/pkg/messaging"
 )
 
-// ErrMessage indicates an error converting a message to Magistrala message.
-var ErrMessage = errors.New("failed to convert to Magistrala message")
+// ErrMessage indicates an error converting a message to SuperMQ message.
+var ErrMessage = errors.New("failed to convert to SuperMQ message")
 
 var _ consumers.AsyncConsumer = (*notifierService)(nil)
 
@@ -43,16 +43,16 @@ type Service interface {
 var _ Service = (*notifierService)(nil)
 
 type notifierService struct {
-	authn    mgauthn.Authentication
+	authn    smqauthn.Authentication
 	subs     SubscriptionsRepository
-	idp      magistrala.IDProvider
+	idp      supermq.IDProvider
 	notifier Notifier
 	errCh    chan error
 	from     string
 }
 
 // New instantiates the subscriptions service implementation.
-func New(authn mgauthn.Authentication, subs SubscriptionsRepository, idp magistrala.IDProvider, notifier Notifier, from string) Service {
+func New(authn smqauthn.Authentication, subs SubscriptionsRepository, idp supermq.IDProvider, notifier Notifier, from string) Service {
 	return &notifierService{
 		authn:    authn,
 		subs:     subs,

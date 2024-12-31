@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/re"
+	"github.com/absmach/supermq"
 )
 
 var (
-	_ magistrala.Response = (*viewRuleRes)(nil)
-	_ magistrala.Response = (*addRuleRes)(nil)
-	_ magistrala.Response = (*changeRuleStatusRes)(nil)
-	_ magistrala.Response = (*rulesPageRes)(nil)
-	_ magistrala.Response = (*updateRuleRes)(nil)
-	_ magistrala.Response = (*changeRoleStatusRes)(nil)
+	_ supermq.Response = (*viewRuleRes)(nil)
+	_ supermq.Response = (*addRuleRes)(nil)
+	_ supermq.Response = (*changeRuleStatusRes)(nil)
+	_ supermq.Response = (*rulesPageRes)(nil)
+	_ supermq.Response = (*updateRuleRes)(nil)
+	_ supermq.Response = (*updateRoleStatusRes)(nil)
 )
 
 type pageRes struct {
@@ -118,11 +118,11 @@ func (res changeRuleStatusRes) Empty() bool {
 	return false
 }
 
-type changeRoleStatusRes struct {
+type updateRoleStatusRes struct {
 	deleted bool
 }
 
-func (res changeRoleStatusRes) Code() int {
+func (res updateRoleStatusRes) Code() int {
 	if res.deleted {
 		return http.StatusNoContent
 	}
@@ -130,10 +130,10 @@ func (res changeRoleStatusRes) Code() int {
 	return http.StatusOK
 }
 
-func (res changeRoleStatusRes) Headers() map[string]string {
+func (res updateRoleStatusRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res changeRoleStatusRes) Empty() bool {
+func (res updateRoleStatusRes) Empty() bool {
 	return true
 }

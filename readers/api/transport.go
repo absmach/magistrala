@@ -8,19 +8,19 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	mgauthz "github.com/absmach/magistrala/pkg/authz"
-	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/readers"
+	"github.com/absmach/supermq"
+	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/connections"
+	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/readers"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -47,23 +47,21 @@ const (
 	defFormat      = "messages"
 )
 
-var errUserAccess = errors.New("user has no permission")
-
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, authn mgauthn.Authentication, authz mgauthz.Authorization, things magistrala.ThingsServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
 	mux := chi.NewRouter()
-	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, authn, authz, things),
+	mux.Get("/channels/{chanID}/messages", kithttp.NewServer(
+		listMessagesEndpoint(svc, authn, clients, channels),
 		decodeList,
 		encodeResponse,
 		opts...,
 	).ServeHTTP)
 
-	mux.Get("/health", magistrala.Health(svcName, instanceID))
+	mux.Get("/health", supermq.Health(svcName, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -154,10 +152,9 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := listMessagesReq{
-		chanID:   chi.URLParam(r, "chanID"),
-		token:    apiutil.ExtractBearerToken(r),
-		key:      apiutil.ExtractThingKey(r),
-		domainID: chi.URLParam(r, "domainID"),
+		chanID: chi.URLParam(r, "chanID"),
+		token:  apiutil.ExtractBearerToken(r),
+		key:    apiutil.ExtractClientSecret(r),
 		pageMeta: readers.PageMetadata{
 			Offset:      offset,
 			Limit:       limit,
@@ -183,7 +180,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
-	if ar, ok := response.(magistrala.Response); ok {
+	if ar, ok := response.(supermq.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}
@@ -239,43 +236,54 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, authn mgauthn.Authentication, authz mgauthz.Authorization, things magistrala.ThingsServiceClient) (err error) {
+func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) error {
+	clientID, clientType, err := authenticate(ctx, req, authn, clients)
+	if err != nil {
+		return nil
+	}
+	if err := authorize(ctx, clientID, clientType, req.chanID, channels); err != nil {
+		return err
+	}
+	return nil
+}
+
+func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, err error) {
 	switch {
 	case req.token != "":
 		session, err := authn.Authenticate(ctx, req.token)
 		if err != nil {
-			return errors.Wrap(svcerr.ErrAuthentication, err)
+			return "", "", err
 		}
-		if err = authz.Authorize(ctx, mgauthz.PolicyReq{
-			Domain:      req.domainID,
-			SubjectType: policies.UserType,
-			SubjectKind: policies.UsersKind,
-			Subject:     req.domainID + "_" + session.UserID,
-			Permission:  policies.ViewPermission,
-			ObjectType:  policies.GroupType,
-			Object:      req.chanID,
-		}); err != nil {
-			e, ok := status.FromError(err)
-			if ok && e.Code() == codes.PermissionDenied {
-				return errors.Wrap(errUserAccess, err)
-			}
-			return err
-		}
-		return nil
+
+		return session.DomainUserID, policies.UserType, nil
 	case req.key != "":
-		if _, err = things.Authorize(ctx, &magistrala.ThingsAuthzReq{
-			ThingKey:   req.key,
-			ChannelId:  req.chanID,
-			Permission: policies.SubscribePermission,
-		}); err != nil {
-			e, ok := status.FromError(err)
-			if ok && e.Code() == codes.PermissionDenied {
-				return errors.Wrap(errUserAccess, err)
-			}
-			return err
+		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
+			ClientSecret: req.key,
+		})
+		if err != nil {
+			return "", "", err
 		}
-		return nil
+		if !res.GetAuthenticated() {
+			return "", "", svcerr.ErrAuthentication
+		}
+		return res.GetId(), policies.ClientType, nil
 	default:
+		return "", "", svcerr.ErrAuthentication
+	}
+}
+
+func authorize(ctx context.Context, clientID, clientType, chanID string, channels grpcChannelsV1.ChannelsServiceClient) (err error) {
+	res, err := channels.Authorize(ctx, &grpcChannelsV1.AuthzReq{
+		ClientId:   clientID,
+		ClientType: clientType,
+		Type:       uint32(connections.Subscribe),
+		ChannelId:  chanID,
+	})
+	if err != nil {
+		return errors.Wrap(svcerr.ErrAuthorization, err)
+	}
+	if !res.GetAuthorized() {
 		return svcerr.ErrAuthorization
 	}
+	return nil
 }

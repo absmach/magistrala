@@ -6,18 +6,18 @@ package bootstrap
 import "strconv"
 
 const (
-	// Inactive Thing is created, but not able to exchange messages using Magistrala.
+	// Inactive Client is created, but not able to exchange messages using SuperMQ.
 	Inactive State = iota
-	// Active Thing is created, configured, and whitelisted.
+	// Active Client is created, configured, and whitelisted.
 	Active
 )
 
-// State represents corresponding Magistrala Thing state. The possible Config States
+// State represents corresponding SuperMQ Client state. The possible Config States
 // as well as description of what that State represents are given in the table:
 // | State    | What it means                                                                  |
 // |----------+--------------------------------------------------------------------------------|
-// | Inactive | Thing is created, but isn't able to communicate over Magistrala                  |
-// | Active   | Thing is able to communicate using Magistrala                                    |.
+// | Inactive | Client is created, but isn't able to communicate over SuperMQ                  |
+// | Active   | Client is able to communicate using SuperMQ                                    |.
 type State int
 
 // String returns string representation of State.

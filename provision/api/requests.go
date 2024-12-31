@@ -3,7 +3,7 @@
 
 package api
 
-import "github.com/absmach/magistrala/pkg/apiutil"
+import apiutil "github.com/absmach/supermq/api/http/util"
 
 type provisionReq struct {
 	token       string

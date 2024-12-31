@@ -6,12 +6,12 @@ package api
 import (
 	"context"
 
-	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/internal/api"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	api "github.com/absmach/supermq/api/http"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/bootstrap"
+	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -33,7 +33,7 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		config := bootstrap.Config{
-			ThingID:     req.ThingID,
+			ClientID:    req.ClientID,
 			ExternalID:  req.ExternalID,
 			ExternalKey: req.ExternalKey,
 			Channels:    channels,
@@ -50,7 +50,7 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := configRes{
-			id:      saved.ThingID,
+			id:      saved.ClientID,
 			created: true,
 		}
 
@@ -70,13 +70,13 @@ func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		cfg, err := svc.UpdateCert(ctx, session, req.thingID, req.ClientCert, req.ClientKey, req.CACert)
+		cfg, err := svc.UpdateCert(ctx, session, req.clientID, req.ClientCert, req.ClientKey, req.CACert)
 		if err != nil {
 			return nil, err
 		}
 
 		res := updateConfigRes{
-			ThingID:    cfg.ThingID,
+			ClientID:   cfg.ClientID,
 			ClientCert: cfg.ClientCert,
 			CACert:     cfg.CACert,
 			ClientKey:  cfg.ClientKey,
@@ -113,14 +113,14 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := viewRes{
-			ThingID:     config.ThingID,
-			ThingKey:    config.ThingKey,
-			Channels:    channels,
-			ExternalID:  config.ExternalID,
-			ExternalKey: config.ExternalKey,
-			Name:        config.Name,
-			Content:     config.Content,
-			State:       config.State,
+			ClientID:     config.ClientID,
+			CLientSecret: config.ClientSecret,
+			Channels:     channels,
+			ExternalID:   config.ExternalID,
+			ExternalKey:  config.ExternalKey,
+			Name:         config.Name,
+			Content:      config.Content,
+			State:        config.State,
 		}
 
 		return res, nil
@@ -140,9 +140,9 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		config := bootstrap.Config{
-			ThingID: req.id,
-			Name:    req.Name,
-			Content: req.Content,
+			ClientID: req.id,
+			Name:     req.Name,
+			Content:  req.Content,
 		}
 
 		if err := svc.Update(ctx, session, config); err != nil {
@@ -150,7 +150,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := configRes{
-			id:      config.ThingID,
+			id:      config.ClientID,
 			created: false,
 		}
 
@@ -217,14 +217,14 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			}
 
 			view := viewRes{
-				ThingID:     cfg.ThingID,
-				ThingKey:    cfg.ThingKey,
-				Channels:    channels,
-				ExternalID:  cfg.ExternalID,
-				ExternalKey: cfg.ExternalKey,
-				Name:        cfg.Name,
-				Content:     cfg.Content,
-				State:       cfg.State,
+				ClientID:     cfg.ClientID,
+				CLientSecret: cfg.ClientSecret,
+				Channels:     channels,
+				ExternalID:   cfg.ExternalID,
+				ExternalKey:  cfg.ExternalKey,
+				Name:         cfg.Name,
+				Content:      cfg.Content,
+				State:        cfg.State,
 			}
 			res.Configs = append(res.Configs, view)
 		}

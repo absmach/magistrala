@@ -11,7 +11,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/magistrala/readers/timescale"
+	"github.com/absmach/supermq/readers/timescale"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"

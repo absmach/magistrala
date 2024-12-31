@@ -39,30 +39,30 @@ type logConfig struct {
 	Quiet bool `toml:"quiet" mapstructure:"quiet"`
 }
 
-type magistralaFile struct {
+type smqFile struct {
 	ConnFile string `toml:"connections_file" mapstructure:"connections_file"`
 }
 
-type mgThing struct {
-	ThingID  string `toml:"thing_id" mapstructure:"thing_id"`
-	ThingKey string `toml:"thing_key" mapstructure:"thing_key"`
-	MTLSCert string `toml:"mtls_cert" mapstructure:"mtls_cert"`
-	MTLSKey  string `toml:"mtls_key" mapstructure:"mtls_key"`
+type client struct {
+	ClientID     string `toml:"client_id" mapstructure:"client_id"`
+	ClientSecret string `toml:"client_secret" mapstructure:"client_secret"`
+	MTLSCert     string `toml:"mtls_cert" mapstructure:"mtls_cert"`
+	MTLSKey      string `toml:"mtls_key" mapstructure:"mtls_key"`
 }
 
-type mgChannel struct {
+type channel struct {
 	ChannelID string `toml:"channel_id" mapstructure:"channel_id"`
 }
 
-type magistrala struct {
-	Things   []mgThing   `toml:"things" mapstructure:"things"`
-	Channels []mgChannel `toml:"channels" mapstructure:"channels"`
+type superMQ struct {
+	Clients  []client  `toml:"clients" mapstructure:"clients"`
+	Channels []channel `toml:"channels" mapstructure:"channels"`
 }
 
 // Config struct holds benchmark configuration.
 type Config struct {
-	MQTT mqttConfig     `toml:"mqtt" mapstructure:"mqtt"`
-	Test testConfig     `toml:"test" mapstructure:"test"`
-	Log  logConfig      `toml:"log" mapstructure:"log"`
-	Mg   magistralaFile `toml:"magistrala" mapstructure:"magistrala"`
+	MQTT mqttConfig `toml:"mqtt" mapstructure:"mqtt"`
+	Test testConfig `toml:"test" mapstructure:"test"`
+	Log  logConfig  `toml:"log" mapstructure:"log"`
+	Smq  smqFile    `toml:"supermq" mapstructure:"supermq"`
 }

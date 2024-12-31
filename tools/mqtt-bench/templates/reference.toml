@@ -25,5 +25,5 @@ count = 70
 [log]
 quiet = true
 
-[magistrala]
+[supermq]
 connections_file = "../provision/mgconn.toml"

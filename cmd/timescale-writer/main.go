@@ -13,20 +13,20 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/consumers"
-	consumertracing "github.com/absmach/magistrala/consumers/tracing"
-	"github.com/absmach/magistrala/consumers/writers/api"
-	"github.com/absmach/magistrala/consumers/writers/timescale"
-	mglog "github.com/absmach/magistrala/logger"
-	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/messaging/brokers"
-	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
-	pgclient "github.com/absmach/magistrala/pkg/postgres"
-	"github.com/absmach/magistrala/pkg/prometheus"
-	"github.com/absmach/magistrala/pkg/server"
-	httpserver "github.com/absmach/magistrala/pkg/server/http"
-	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/consumers"
+	consumertracing "github.com/absmach/supermq/consumers/tracing"
+	httpapi "github.com/absmach/supermq/consumers/writers/api"
+	"github.com/absmach/supermq/consumers/writers/timescale"
+	smqlog "github.com/absmach/supermq/logger"
+	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
+	"github.com/absmach/supermq/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	pgclient "github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/supermq/pkg/prometheus"
+	"github.com/absmach/supermq/pkg/server"
+	httpserver "github.com/absmach/supermq/pkg/server/http"
+	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/sync/errgroup"
@@ -34,20 +34,20 @@ import (
 
 const (
 	svcName        = "timescaledb-writer"
-	envPrefixDB    = "MG_TIMESCALE_"
-	envPrefixHTTP  = "MG_TIMESCALE_WRITER_HTTP_"
+	envPrefixDB    = "SMQ_TIMESCALE_"
+	envPrefixHTTP  = "SMQ_TIMESCALE_WRITER_HTTP_"
 	defDB          = "messages"
 	defSvcHTTPPort = "9012"
 )
 
 type config struct {
-	LogLevel      string  `env:"MG_TIMESCALE_WRITER_LOG_LEVEL"    envDefault:"info"`
-	ConfigPath    string  `env:"MG_TIMESCALE_WRITER_CONFIG_PATH"  envDefault:"/config.toml"`
-	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                    envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"                envDefault:"true"`
-	InstanceID    string  `env:"MG_TIMESCALE_WRITER_INSTANCE_ID"  envDefault:""`
-	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"            envDefault:"1.0"`
+	LogLevel      string  `env:"SMQ_TIMESCALE_WRITER_LOG_LEVEL"    envDefault:"info"`
+	ConfigPath    string  `env:"SMQ_TIMESCALE_WRITER_CONFIG_PATH"  envDefault:"/config.toml"`
+	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
+	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"                    envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"                envDefault:"true"`
+	InstanceID    string  `env:"SMQ_TIMESCALE_WRITER_INSTANCE_ID"  envDefault:""`
+	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO"            envDefault:"1.0"`
 }
 
 func main() {
@@ -59,13 +59,13 @@ func main() {
 		log.Fatalf("failed to load %s service configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -127,10 +127,10 @@ func main() {
 		return
 	}
 
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, supermq.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -149,8 +149,8 @@ func main() {
 
 func newService(db *sqlx.DB, logger *slog.Logger) consumers.BlockingConsumer {
 	svc := timescale.New(db)
-	svc = api.LoggingMiddleware(svc, logger)
+	svc = httpapi.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("timescale", "message_writer")
-	svc = api.MetricsMiddleware(svc, counter, latency)
+	svc = httpapi.MetricsMiddleware(svc, counter, latency)
 	return svc
 }

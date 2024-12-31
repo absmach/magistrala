@@ -42,22 +42,22 @@ func (lm *loggingMiddleware) Provision(domainID, token, name, externalID, extern
 	return lm.svc.Provision(domainID, token, name, externalID, externalKey)
 }
 
-func (lm *loggingMiddleware) Cert(domainID, token, thingID, duration string) (cert, key string, err error) {
+func (lm *loggingMiddleware) Cert(domainID, token, clientID, duration string) (cert, key string, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("thing_id", thingID),
+			slog.String("client_id", clientID),
 			slog.String("ttl", duration),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Thing certificate failed to create successfully", args...)
+			lm.logger.Warn("Client certificate failed to create successfully", args...)
 			return
 		}
-		lm.logger.Info("Thing certificate created successfully", args...)
+		lm.logger.Info("Client certificate created successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Cert(domainID, token, thingID, duration)
+	return lm.svc.Cert(domainID, token, clientID, duration)
 }
 
 func (lm *loggingMiddleware) Mapping(token string) (res map[string]interface{}, err error) {

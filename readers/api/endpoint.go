@@ -6,24 +6,24 @@ package api
 import (
 	"context"
 
-	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/pkg/apiutil"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
-	mgauthz "github.com/absmach/magistrala/pkg/authz"
-	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/readers"
+	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/readers"
 	"github.com/go-kit/kit/endpoint"
 )
 
-func listMessagesEndpoint(svc readers.MessageRepository, authn mgauthn.Authentication, authz mgauthz.Authorization, thingsClient magistrala.ThingsServiceClient) endpoint.Endpoint {
+func listMessagesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMessagesReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := authorize(ctx, req, authn, authz, thingsClient); err != nil {
+		if err := authnAuthz(ctx, req, authn, clients, channels); err != nil {
 			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
 

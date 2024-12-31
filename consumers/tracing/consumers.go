@@ -7,10 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/magistrala/consumers"
-	"github.com/absmach/magistrala/pkg/server"
-	mgjson "github.com/absmach/magistrala/pkg/transformers/json"
-	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/supermq/consumers"
+	"github.com/absmach/supermq/pkg/server"
+	smqjson "github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -69,7 +69,7 @@ func NewBlocking(tracer trace.Tracer, consumerBlock consumers.BlockingConsumer, 
 func (tm *tracingMiddlewareBlock) ConsumeBlocking(ctx context.Context, messages interface{}) error {
 	var span trace.Span
 	switch m := messages.(type) {
-	case mgjson.Messages:
+	case smqjson.Messages:
 		if len(m.Data) > 0 {
 			firstMsg := m.Data[0]
 			ctx, span = createSpan(ctx, consumeBlockingOP, firstMsg.Publisher, firstMsg.Channel, firstMsg.Subtopic, len(m.Data), tm.host, trace.SpanKindConsumer, tm.tracer)
@@ -89,7 +89,7 @@ func (tm *tracingMiddlewareBlock) ConsumeBlocking(ctx context.Context, messages 
 func (tm *tracingMiddlewareAsync) ConsumeAsync(ctx context.Context, messages interface{}) {
 	var span trace.Span
 	switch m := messages.(type) {
-	case mgjson.Messages:
+	case smqjson.Messages:
 		if len(m.Data) > 0 {
 			firstMsg := m.Data[0]
 			ctx, span = createSpan(ctx, consumeAsyncOP, firstMsg.Publisher, firstMsg.Channel, firstMsg.Subtopic, len(m.Data), tm.host, trace.SpanKindConsumer, tm.tracer)

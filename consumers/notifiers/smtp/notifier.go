@@ -6,13 +6,13 @@ package smtp
 import (
 	"fmt"
 
-	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/internal/email"
-	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/supermq/consumers/notifiers"
+	"github.com/absmach/supermq/pkg/messaging"
 )
 
 const (
-	footer          = "Sent by Magistrala SMTP Notification"
+	footer          = "Sent by SuperMQ SMTP Notification"
 	contentTemplate = "A publisher with an id %s sent the message over %s with the following values \n %s"
 )
 

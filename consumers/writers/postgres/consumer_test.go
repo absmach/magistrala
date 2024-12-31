@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/magistrala/consumers/writers/postgres"
-	"github.com/absmach/magistrala/pkg/transformers/json"
-	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/supermq/consumers/writers/postgres"
+	"github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
 )

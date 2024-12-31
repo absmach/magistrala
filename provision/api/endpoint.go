@@ -6,9 +6,9 @@ package api
 import (
 	"context"
 
-	"github.com/absmach/magistrala/pkg/apiutil"
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/provision"
+	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -25,7 +25,7 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 		}
 
 		provisionResponse := provisionRes{
-			Things:      res.Things,
+			Clients:     res.Clients,
 			Channels:    res.Channels,
 			ClientCert:  res.ClientCert,
 			ClientKey:   res.ClientKey,

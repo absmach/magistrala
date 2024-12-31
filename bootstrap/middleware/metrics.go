@@ -9,8 +9,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala/bootstrap"
-	mgauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/supermq/bootstrap"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/go-kit/kit/metrics"
 )
 
@@ -32,7 +32,7 @@ func MetricsMiddleware(svc bootstrap.Service, counter metrics.Counter, latency m
 }
 
 // Add instruments Add method with metrics.
-func (mm *metricsMiddleware) Add(ctx context.Context, session mgauthn.Session, token string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
+func (mm *metricsMiddleware) Add(ctx context.Context, session smqauthn.Session, token string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "add").Add(1)
 		mm.latency.With("method", "add").Observe(time.Since(begin).Seconds())
@@ -42,7 +42,7 @@ func (mm *metricsMiddleware) Add(ctx context.Context, session mgauthn.Session, t
 }
 
 // View instruments View method with metrics.
-func (mm *metricsMiddleware) View(ctx context.Context, session mgauthn.Session, id string) (saved bootstrap.Config, err error) {
+func (mm *metricsMiddleware) View(ctx context.Context, session smqauthn.Session, id string) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "view").Add(1)
 		mm.latency.With("method", "view").Observe(time.Since(begin).Seconds())
@@ -52,7 +52,7 @@ func (mm *metricsMiddleware) View(ctx context.Context, session mgauthn.Session, 
 }
 
 // Update instruments Update method with metrics.
-func (mm *metricsMiddleware) Update(ctx context.Context, session mgauthn.Session, cfg bootstrap.Config) (err error) {
+func (mm *metricsMiddleware) Update(ctx context.Context, session smqauthn.Session, cfg bootstrap.Config) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update").Add(1)
 		mm.latency.With("method", "update").Observe(time.Since(begin).Seconds())
@@ -62,17 +62,17 @@ func (mm *metricsMiddleware) Update(ctx context.Context, session mgauthn.Session
 }
 
 // UpdateCert instruments UpdateCert method with metrics.
-func (mm *metricsMiddleware) UpdateCert(ctx context.Context, session mgauthn.Session, thingKey, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
+func (mm *metricsMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_cert").Add(1)
 		mm.latency.With("method", "update_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateCert(ctx, session, thingKey, clientCert, clientKey, caCert)
+	return mm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 }
 
 // UpdateConnections instruments UpdateConnections method with metrics.
-func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, session mgauthn.Session, token, id string, connections []string) (err error) {
+func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_connections").Add(1)
 		mm.latency.With("method", "update_connections").Observe(time.Since(begin).Seconds())
@@ -82,7 +82,7 @@ func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, session mgau
 }
 
 // List instruments List method with metrics.
-func (mm *metricsMiddleware) List(ctx context.Context, session mgauthn.Session, filter bootstrap.Filter, offset, limit uint64) (saved bootstrap.ConfigsPage, err error) {
+func (mm *metricsMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (saved bootstrap.ConfigsPage, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "list").Add(1)
 		mm.latency.With("method", "list").Observe(time.Since(begin).Seconds())
@@ -92,7 +92,7 @@ func (mm *metricsMiddleware) List(ctx context.Context, session mgauthn.Session, 
 }
 
 // Remove instruments Remove method with metrics.
-func (mm *metricsMiddleware) Remove(ctx context.Context, session mgauthn.Session, id string) (err error) {
+func (mm *metricsMiddleware) Remove(ctx context.Context, session smqauthn.Session, id string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove").Add(1)
 		mm.latency.With("method", "remove").Observe(time.Since(begin).Seconds())
@@ -112,7 +112,7 @@ func (mm *metricsMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 }
 
 // ChangeState instruments ChangeState method with metrics.
-func (mm *metricsMiddleware) ChangeState(ctx context.Context, session mgauthn.Session, token, id string, state bootstrap.State) (err error) {
+func (mm *metricsMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "change_state").Add(1)
 		mm.latency.With("method", "change_state").Observe(time.Since(begin).Seconds())
@@ -151,22 +151,22 @@ func (mm *metricsMiddleware) RemoveChannelHandler(ctx context.Context, id string
 	return mm.svc.RemoveChannelHandler(ctx, id)
 }
 
-// ConnectThingHandler instruments ConnectThingHandler method with metrics.
-func (mm *metricsMiddleware) ConnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
+// ConnectClientHandler instruments ConnectClientHandler method with metrics.
+func (mm *metricsMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "connect_thing_handler").Add(1)
-		mm.latency.With("method", "connect_thing_handler").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "connect_client_handler").Add(1)
+		mm.latency.With("method", "connect_client_handler").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ConnectThingHandler(ctx, channelID, thingID)
+	return mm.svc.ConnectClientHandler(ctx, channelID, clientID)
 }
 
-// DisconnectThingHandler instruments DisconnectThingHandler method with metrics.
-func (mm *metricsMiddleware) DisconnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
+// DisconnectClientHandler instruments DisconnectClientHandler method with metrics.
+func (mm *metricsMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "disconnect_thing_handler").Add(1)
-		mm.latency.With("method", "disconnect_thing_handler").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "disconnect_client_handler").Add(1)
+		mm.latency.With("method", "disconnect_client_handler").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.DisconnectThingHandler(ctx, channelID, thingID)
+	return mm.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }

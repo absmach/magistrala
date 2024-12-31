@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	messaging "github.com/absmach/magistrala/pkg/messaging"
+	messaging "github.com/absmach/supermq/pkg/messaging"
 	mock "github.com/stretchr/testify/mock"
 )
 

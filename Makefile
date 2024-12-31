@@ -3,10 +3,7 @@
 
 MG_DOCKER_IMAGE_NAME_PREFIX ?= ghcr.io/absmach/magistrala
 BUILD_DIR = build
-SERVICES = auth users things http coap ws postgres-writer postgres-reader timescale-writer \
-	timescale-reader cli bootstrap mqtt provision certs invitations journal re
-TEST_API_SERVICES = journal auth bootstrap certs http invitations notifiers provision readers things users
-TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
+SERVICES =  bootstrap provision re postgres-writer postgres-reader timescale-writer	timescale-reader 
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
@@ -18,7 +15,7 @@ USER_REPO ?= $(shell git remote get-url origin | sed -e 's/.*\/\([^/]*\)\/\([^/]
 empty:=
 space:= $(empty) $(empty)
 # Docker compose project name should follow this guidelines: https://docs.docker.com/compose/reference/#use--p-to-specify-a-project-name
-DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | tr -c -s '[:alnum:][=-=]' '_' | tr '[:upper:]' '[:lower:]')
+DOCKER_PROJECT ?= test #$(shell echo $(subst $(space),,$(USER_REPO)) | tr -c -s '[:alnum:][=-=]' '_' | tr '[:upper:]' '[:lower:]')
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0

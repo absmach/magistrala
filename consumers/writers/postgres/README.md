@@ -8,39 +8,39 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                            | Description                                                                       | Default                       |
-| ----------------------------------- | --------------------------------------------------------------------------------- | ----------------------------- |
-| MG_POSTGRES_WRITER_LOG_LEVEL        | Service log level                                                                 | info                          |
-| MG_POSTGRES_WRITER_CONFIG_PATH      | Config file path with Message broker subjects list, payload type and content-type | /config.toml                  |
-| MG_POSTGRES_WRITER_HTTP_HOST        | Service HTTP host                                                                 | localhost                     |
-| MG_POSTGRES_WRITER_HTTP_PORT        | Service HTTP port                                                                 | 9010                          |
-| MG_POSTGRES_WRITER_HTTP_SERVER_CERT | Service HTTP server certificate path                                              | ""                            |
-| MG_POSTGRES_WRITER_HTTP_SERVER_KEY  | Service HTTP server key                                                           | ""                            |
-| MG_POSTGRES_HOST                    | Postgres DB host                                                                  | postgres                      |
-| MG_POSTGRES_PORT                    | Postgres DB port                                                                  | 5432                          |
-| MG_POSTGRES_USER                    | Postgres user                                                                     | magistrala                    |
-| MG_POSTGRES_PASS                    | Postgres password                                                                 | magistrala                    |
-| MG_POSTGRES_NAME                    | Postgres database name                                                            | messages                      |
-| MG_POSTGRES_SSL_MODE                | Postgres SSL mode                                                                 | disabled                      |
-| MG_POSTGRES_SSL_CERT                | Postgres SSL certificate path                                                     | ""                            |
-| MG_POSTGRES_SSL_KEY                 | Postgres SSL key                                                                  | ""                            |
-| MG_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path                                                | ""                            |
-| MG_MESSAGE_BROKER_URL               | Message broker instance URL                                                       | nats://localhost:4222         |
-| MG_JAEGER_URL                       | Jaeger server URL                                                                 | http://jaeger:4318/v1/traces |
-| MG_SEND_TELEMETRY                   | Send telemetry to magistrala call home server                                     | true                          |
-| MG_POSTGRES_WRITER_INSTANCE_ID      | Service instance ID                                                               | ""                            |
+| Variable                             | Description                                                                       | Default                      |
+| ------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------- |
+| SMQ_POSTGRES_WRITER_LOG_LEVEL        | Service log level                                                                 | info                         |
+| SMQ_POSTGRES_WRITER_CONFIG_PATH      | Config file path with Message broker subjects list, payload type and content-type | /config.toml                 |
+| SMQ_POSTGRES_WRITER_HTTP_HOST        | Service HTTP host                                                                 | localhost                    |
+| SMQ_POSTGRES_WRITER_HTTP_PORT        | Service HTTP port                                                                 | 9010                         |
+| SMQ_POSTGRES_WRITER_HTTP_SERVER_CERT | Service HTTP server certificate path                                              | ""                           |
+| SMQ_POSTGRES_WRITER_HTTP_SERVER_KEY  | Service HTTP server key                                                           | ""                           |
+| SMQ_POSTGRES_HOST                    | Postgres DB host                                                                  | postgres                     |
+| SMQ_POSTGRES_PORT                    | Postgres DB port                                                                  | 5432                         |
+| SMQ_POSTGRES_USER                    | Postgres user                                                                     | supermq                      |
+| SMQ_POSTGRES_PASS                    | Postgres password                                                                 | supermq                      |
+| SMQ_POSTGRES_NAME                    | Postgres database name                                                            | messages                     |
+| SMQ_POSTGRES_SSL_MODE                | Postgres SSL mode                                                                 | disabled                     |
+| SMQ_POSTGRES_SSL_CERT                | Postgres SSL certificate path                                                     | ""                           |
+| SMQ_POSTGRES_SSL_KEY                 | Postgres SSL key                                                                  | ""                           |
+| SMQ_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path                                                | ""                           |
+| SMQ_MESSAGE_BROKER_URL               | Message broker instance URL                                                       | nats://localhost:4222        |
+| SMQ_JAEGER_URL                       | Jaeger server URL                                                                 | http://jaeger:4318/v1/traces |
+| SMQ_SEND_TELEMETRY                   | Send telemetry to supermq call home server                                        | true                         |
+| SMQ_POSTGRES_WRITER_INSTANCE_ID      | Service instance ID                                                               | ""                           |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`postgres-writer`](https://github.com/absmach/magistrala/blob/main/docker/addons/postgres-writer/docker-compose.yml#L34-L59) service section in docker-compose file to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`postgres-writer`](https://github.com/absmach/supermq/blob/main/docker/addons/postgres-writer/docker-compose.yml#L34-L59) service section in docker-compose file to see how service is deployed.
 
 To start the service, execute the following shell script:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/absmach/magistrala
+git clone https://github.com/absmach/supermq
 
-cd magistrala
+cd supermq
 
 # compile the postgres writer
 make postgres-writer
@@ -49,27 +49,27 @@ make postgres-writer
 make install
 
 # Set the environment variables and run the service
-MG_POSTGRES_WRITER_LOG_LEVEL=[Service log level] \
-MG_POSTGRES_WRITER_CONFIG_PATH=[Config file path with Message broker subjects list, payload type and content-type] \
-MG_POSTGRES_WRITER_HTTP_HOST=[Service HTTP host] \
-MG_POSTGRES_WRITER_HTTP_PORT=[Service HTTP port] \
-MG_POSTGRES_WRITER_HTTP_SERVER_CERT=[Service HTTP server cert] \
-MG_POSTGRES_WRITER_HTTP_SERVER_KEY=[Service HTTP server key] \
-MG_POSTGRES_HOST=[Postgres host] \
-MG_POSTGRES_PORT=[Postgres port] \
-MG_POSTGRES_USER=[Postgres user] \
-MG_POSTGRES_PASS=[Postgres password] \
-MG_POSTGRES_NAME=[Postgres database name] \
-MG_POSTGRES_SSL_MODE=[Postgres SSL mode] \
-MG_POSTGRES_SSL_CERT=[Postgres SSL cert] \
-MG_POSTGRES_SSL_KEY=[Postgres SSL key] \
-MG_POSTGRES_SSL_ROOT_CERT=[Postgres SSL Root cert] \
-MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
-MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
-MG_POSTGRES_WRITER_INSTANCE_ID=[Service instance ID] \
+SMQ_POSTGRES_WRITER_LOG_LEVEL=[Service log level] \
+SMQ_POSTGRES_WRITER_CONFIG_PATH=[Config file path with Message broker subjects list, payload type and content-type] \
+SMQ_POSTGRES_WRITER_HTTP_HOST=[Service HTTP host] \
+SMQ_POSTGRES_WRITER_HTTP_PORT=[Service HTTP port] \
+SMQ_POSTGRES_WRITER_HTTP_SERVER_CERT=[Service HTTP server cert] \
+SMQ_POSTGRES_WRITER_HTTP_SERVER_KEY=[Service HTTP server key] \
+SMQ_POSTGRES_HOST=[Postgres host] \
+SMQ_POSTGRES_PORT=[Postgres port] \
+SMQ_POSTGRES_USER=[Postgres user] \
+SMQ_POSTGRES_PASS=[Postgres password] \
+SMQ_POSTGRES_NAME=[Postgres database name] \
+SMQ_POSTGRES_SSL_MODE=[Postgres SSL mode] \
+SMQ_POSTGRES_SSL_CERT=[Postgres SSL cert] \
+SMQ_POSTGRES_SSL_KEY=[Postgres SSL key] \
+SMQ_POSTGRES_SSL_ROOT_CERT=[Postgres SSL Root cert] \
+SMQ_MESSAGE_BROKER_URL=[Message broker instance URL] \
+SMQ_JAEGER_URL=[Jaeger server URL] \
+SMQ_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
+SMQ_POSTGRES_WRITER_INSTANCE_ID=[Service instance ID] \
 
-$GOBIN/magistrala-postgres-writer
+$GOBIN/supermq-postgres-writer
 ```
 
 ## Usage

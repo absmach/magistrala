@@ -9,7 +9,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/supermq/consumers"
 	"github.com/go-kit/kit/metrics"
 )
 

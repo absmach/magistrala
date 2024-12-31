@@ -13,17 +13,17 @@ import (
 	"reflect"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/magistrala"
-	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/errors"
-	mggroups "github.com/absmach/magistrala/pkg/groups"
-	mgsdk "github.com/absmach/magistrala/pkg/sdk/go"
-	"github.com/absmach/magistrala/pkg/server"
-	httpserver "github.com/absmach/magistrala/pkg/server/http"
-	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/absmach/magistrala/provision"
-	"github.com/absmach/magistrala/provision/api"
-	"github.com/absmach/magistrala/things"
+	httpapi "github.com/absmach/magistrala/provision/api"
+	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/channels"
+	"github.com/absmach/supermq/clients"
+	smqlog "github.com/absmach/supermq/logger"
+	"github.com/absmach/supermq/pkg/errors"
+	mgsdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/supermq/pkg/server"
+	httpserver "github.com/absmach/supermq/pkg/server/http"
+	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -48,13 +48,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := mglog.New(os.Stdout, cfg.Server.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.Server.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -75,7 +75,7 @@ func main() {
 
 	SDKCfg := mgsdk.Config{
 		UsersURL:        cfg.Server.UsersURL,
-		ThingsURL:       cfg.Server.ThingsURL,
+		ClientsURL:      cfg.Server.ClientsURL,
 		BootstrapURL:    cfg.Server.MgBSURL,
 		CertsURL:        cfg.Server.MgCertsURL,
 		MsgContentType:  contentType,
@@ -84,13 +84,13 @@ func main() {
 	SDK := mgsdk.NewSDK(SDKCfg)
 
 	svc := provision.New(cfg, SDK, logger)
-	svc = api.NewLoggingMiddleware(svc, logger)
+	svc = httpapi.NewLoggingMiddleware(svc, logger)
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.HTTPPort, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
+		chc := chclient.New(svcName, supermq.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -138,7 +138,7 @@ func loadConfig() (provision.Config, error) {
 
 	cfg.Bootstrap.Content = content
 	// This is default conf for provision if there is no config file
-	cfg.Channels = []mggroups.Group{
+	cfg.Channels = []channels.Channel{
 		{
 			Name:     "control-channel",
 			Metadata: map[string]interface{}{"type": "control"},
@@ -147,9 +147,9 @@ func loadConfig() (provision.Config, error) {
 			Metadata: map[string]interface{}{"type": "data"},
 		},
 	}
-	cfg.Things = []things.Client{
+	cfg.Clients = []clients.Client{
 		{
-			Name:     "thing",
+			Name:     "client",
 			Metadata: map[string]interface{}{"external_id": "xxxxxx"},
 		},
 	}

@@ -1,191 +1,119 @@
-# Magistrala
+<div align="center">
 
-[![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
-[![Check the consistency of generated files](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yml)
-[![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yml)
-[![go report card][grc-badge]][grc-url]
-[![coverage][cov-badge]][cov-url]
-[![license][license]](LICENSE)
-[![chat][gitter-badge]][gitter]
+  # Magistrala
+  
+  **A Modern IoT Platform Built on SuperMQ**
+  
+  **Scalable • Secure • Open-Source**
+  
+  [![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
+  [![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yml)
+  [![Go Report Card](https://goreportcard.com/badge/github.com/absmach/magistrala)](https://goreportcard.com/report/github.com/absmach/magistrala)
+  [![Coverage](https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=SEMDAO3L09)](https://codecov.io/gh/absmach/magistrala)
+  [![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
+  [![Matrix](https://img.shields.io/matrix/magistrala:matrix.org?style=flat-square)](https://matrix.to/#/#magistrala:matrix.org)
+  
+  ### [Guide](https://docs.magistrala.abstractmachines.fr) | [Contributing](CONTRIBUTING.md) | [Website](https://abstractmachines.fr/magistrala.html) | [Chat](https://matrix.to/#/#magistrala:matrix.org)
 
-![banner][banner]
+  Made with ❤️ by [Abstract Machines](https://abstractmachines.fr/)
 
-Magistrala is modern, scalable, secure, open-source, and patent-free IoT cloud platform written in Go.
+</div>
 
-It accepts user and thing (sensor, actuator, application) connections over various network protocols (i.e. HTTP, MQTT, WebSocket, CoAP), thus making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
-For more details, check out the [official documentation][docs].
-For extra bits and services see [our contrib repository][contrib].
+## Introduction 🌍
 
-## Features
+Magistrala is a cutting-edge, open-source IoT cloud platform built on top of [SuperMQ](https://github.com/absmach/supermq). It serves as a robust middleware solution for building complex IoT applications. With Magistrala, you can connect and manage IoT devices seamlessly using multi-protocol support, all while ensuring security and scalability.
 
-- Multi-protocol connectivity and bridging (HTTP, MQTT, WebSocket and CoAP; see [contrib repository][contrib] for LoRa and OPC UA)
-- Device management and provisioning (Zero Touch provisioning)
-- Mutual TLS Authentication (mTLS) using X.509 Certificates
-- Fine-grained access control (policies, ABAC/RBAC)
-- Message persistence (Timescale and PostgresSQL - see [contrib repository][contrib] for Cassandra, InfluxDB, and MongoDB support)
-- Platform logging and instrumentation support (Prometheus and OpenTelemetry)
-- Event sourcing
-- Container-based deployment using [Docker][docker] and [Kubernetes][kubernetes]
-- Edge [Agent][agent] and [Export][export] services for remote IoT gateway management and edge computing
-- SDK
-- CLI
-- Small memory footprint and fast execution
-- Domain-driven design architecture, high-quality code and test coverage
+### Key Benefits:
+- **Unified IoT Management**: Connect sensors, actuators, and applications over various network protocols.
+- **Scalability and Performance**: Designed to handle enterprise-grade IoT deployments.
+- **Secure by Design**: Features such as mutual TLS authentication and fine-grained access control.
+- **Open-Source Freedom**: Patent-free, community-driven, and designed for extensibility.
 
-## Prerequisites
 
-The following are needed to run Magistrala:
+## ✨ Features
 
-- [Docker](https://docs.docker.com/install/) (version 26.0.0)
+- 🏢 **Multi-Tenancy**: Support for managing multiple independent domains seamlessly.
+- 👥 **Multi-User Platform**: Unlimited organizational hierarchies and user roles for streamlined collaboration.
+- 🌐 **Multi-Protocol Connectivity**: HTTP, MQTT, WebSocket, CoAP, and more (see [contrib repository](https://www.github.com/absmach/mg-contrib) for LoRa and OPC UA).
+- 💻 **Device Management and Provisioning**: Including Zero-Touch provisioning for seamless device onboarding.
+- 🛡️ **Mutual TLS Authentication (mTLS)**: Secure communication using X.509 certificates.
+- 📜 **Fine-Grained Access Control**: Support for ABAC and RBAC policies.
+- 💾 **Message Persistence**: Timescale and PostgreSQL support (see [contrib repository](https://www.github.com/absmach/mg-contrib) for Cassandra, InfluxDB, and MongoDB).
+- 🔄 **Rules Engine (RE)**: Automate processes with flexible rules for decision-making.
+- 🚨 **Alarms and Triggers**: Immediate notifications for critical IoT events.
+- 📅 **Scheduled Actions**: Plan and execute tasks at predefined times.
+- 📝 **Audit Logs**: Maintain a detailed history of platform activities for compliance and debugging.
+- 📊 **Platform Logging and Instrumentation**: Integrated with Prometheus and OpenTelemetry.
+- ⚡ **Event Sourcing**: Streamlined architecture for real-time IoT event processing.
+- 🐳 **Container-Based Deployment**: Fully compatible with Docker and Kubernetes.
+- 🌍 **Edge and IoT Ready**: Agent and Export services for managing remote IoT gateways.
+- 🛠️ **Developer Tools**: Comprehensive SDK and CLI for efficient development.
+- 🏗️ **Domain-Driven Design**: High-quality codebase and extensive test coverage.
 
-Developing Magistrala will also require:
 
-- [Go](https://golang.org/doc/install) (version 1.21)
-- [Protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) (version 25.1)
+## 🔧 Install
 
-## Install
-
-Once the prerequisites are installed, execute the following commands from the project's root:
+Clone the repository and start the services:
 
 ```bash
-docker compose -f docker/docker-compose.yml --env-file docker/.env -p git_github_com_absmach_magistrala_git_  up
+git clone https://github.com/absmach/magistrala.git
+cd magistrala
+docker compose -f docker/docker-compose.yml --env-file docker/.env up
 ```
 
-This will bring up the Magistrala docker services and interconnect them. This command can also be executed using the project's included Makefile:
+Alternatively, use the Makefile for a simpler command:
 
 ```bash
 make run
 ```
 
-If you want to run services from specific release checkout code from github and make sure that
-`MG_RELEASE_TAG` in [.env](.env) is being set to match the release version
 
-```bash
-git checkout tags/<release_number> -b <release_number>
-# e.g. `git checkout tags/0.13.0 -b 0.13.0`
-```
+## 📤 Usage
 
-Check that `.env` file contains:
+#### Using the CLI:
 
-```bash
-MG_RELEASE_TAG=<release_number>
-```
-
-> `docker-compose` should be used for development and testing deployments. For production we suggest using [Kubernetes](https://docs.magistrala.abstractmachines.fr/kubernetes).
-
-## Usage
-
-The quickest way to start using Magistrala is via the CLI. The latest version can be downloaded from the [official releases page][releases].
-
-It can also be built and used from the project's root directory:
+Check the health of a specific service using the CLI:
 
 ```bash
 make cli
-./build/cli version
+./build/cli health <service>
 ```
 
-Additional details on using the CLI can be found in the [CLI documentation](https://docs.magistrala.abstractmachines.fr/cli).
+Replace `<service>` with the name of the service you want to check.
 
-## Documentation
+#### Using Curl:
 
-Official documentation is hosted at [Magistrala official docs page][docs]. Documentation is auto-generated, checkout the instructions on [official docs repository](https://github.com/absmach/magistrala-docs):
+Alternatively, use a simple HTTP GET request to check the platform's health:
 
-If you spot an error or a need for corrections, please let us know - or even better: send us a PR.
+```bash
+curl -X GET http://localhost:8080/health
+```
 
-## Authors
+For additional usage examples and advanced configurations, visit the [official documentation](https://docs.magistrala.abstractmachines.fr).
 
-Main architect and BDFL of Magistrala project is [@drasko][drasko].
 
-Additionally, [@nmarcetic][nikola] and [@janko-isidorovic][janko] assured overall architecture and design, while [@manuio][manu] and [@darkodraskovic][darko] helped with crafting initial implementation and continuously worked on the project evolutions.
+## 📚 Documentation
 
-Besides them, Magistrala is constantly improved and actively developed by [@anovakovic01][alex], [@dusanb94][dusan], [@srados][sava], [@gsaleh][george], [@blokovi][iva], [@chombium][kole], [@mteodor][mirko], [@rodneyosodo][rodneyosodo] and a large set of contributors.
+Complete documentation is available at the [Magistrala official docs page](https://docs.magistrala.abstractmachines.fr).
 
-Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
+For CLI usage details, visit the [CLI Documentation](https://docs.magistrala.abstractmachines.fr/cli).
 
-The Magistrala team would like to give special thanks to [@mijicd][dejan] for his monumental work on designing and implementing a highly improved and optimized version of the platform, and [@malidukica][dusanm] for his effort on implementing the initial user interface.
 
-## Professional Support
+## 🌐 Community and Contributing
 
-There are many companies offering professional support for the Magistrala system.
+Join the community and contribute to the future of IoT middleware:
 
-If you need this kind of support, best is to reach out to [@drasko][drasko] directly, and he will point you out to the best-matching support team.
+- [Open Issues](https://github.com/absmach/magistrala/issues)
+- [Contribution Guide](CONTRIBUTING.md)
+- [Matrix Chat](https://matrix.to/#/#magistrala:matrix.org)
 
-## Contributing
 
-Thank you for your interest in Magistrala and the desire to contribute!
+## 📜 License
 
-1. Take a look at our [open issues](https://github.com/absmach/magistrala/issues). The [good-first-issue](https://github.com/absmach/magistrala/labels/good-first-issue) label is specifically for issues that are great for getting started.
-2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
-3. Make your changes compatible to our workflow.
+Magistrala is open-source software licensed under the [Apache-2.0](LICENSE) license. Contributions are welcome and encouraged!
 
-Also, explore our [contrib][contrib] repository for extra services such as Cassandra, InfluxDB, MongoDB readers and writers, LoRa, OPC UA support, Digital Twins, and more. If you have a contribution that is not a good fit for the core monorepo (it's specific to your use case, it's an additional feature or a new service, it's optional or an add-on), this is a great place to submit the pull request.
 
-### We're Hiring
+## 💼 Professional Support
 
-You like Magistrala and you would like to make it your day job? We're always looking for talented engineers interested in open-source, IoT and distributed systems. If you recognize yourself, reach out to [@drasko][drasko] - he will contact you back.
-
-> The best way to grab our attention is, of course, by sending PRs :sunglasses:.
-
-## Community
-
-- [Google group][forum]
-- [Gitter][gitter]
-- [Twitter][twitter]
-
-## License
-
-[Apache-2.0](LICENSE)
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fabsmach%2Fmagistrala.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fabsmach%2Fmagistrala?ref=badge_large&issueType=license)
-## Data Collection for Magistrala
-
-Magistrala is committed to continuously improving its services and ensuring a seamless experience for its users. To achieve this, we collect certain data from your deployments. Rest assured, this data is collected solely for the purpose of enhancing Magistrala and is not used with any malicious intent. The deployment summary can be found on our [website][callhome].
-
-The collected data includes:
-
-- **IP Address** - Used for approximate location information on deployments.
-- **Services Used** - To understand which features are popular and prioritize future developments.
-- **Last Seen Time** - To ensure the stability and availability of Magistrala.
-- **Magistrala Version** - To track the software version and deliver relevant updates.
-
-We take your privacy and data security seriously. All data collected is handled in accordance with our stringent privacy policies and industry best practices.
-
-Data collection is on by default and can be disabled by setting the env variable:
-`MG_SEND_TELEMETRY=false`
-
-By utilizing Magistrala, you actively contribute to its improvement. Together, we can build a more robust and efficient IoT platform. Thank you for your trust in Magistrala!
-
-[banner]: https://github.com/absmach/magistrala-docs/blob/main/docs/img/gopherBanner.jpg
-[docs]: https://docs.magistrala.abstractmachines.fr
-[docker]: https://www.docker.com
-[forum]: https://groups.google.com/forum/#!forum/mainflux
-[gitter]: https://gitter.im/absmach/magistrala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-[gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
-[grc-badge]: https://goreportcard.com/badge/github.com/absmach/magistrala
-[grc-url]: https://goreportcard.com/report/github.com/absmach/magistrala
-[cov-badge]: https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=SEMDAO3L09
-[cov-url]: https://codecov.io/gh/absmach/magistrala
-[license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
-[twitter]: https://twitter.com/absmach
-[agent]: https://github.com/absmach/agent
-[export]: https://github.com/absmach/export
-[kubernetes]: https://kubernetes.io/
-[releases]: https://github.com/absmach/magistrala/releases
-[drasko]: https://github.com/drasko
-[nikola]: https://github.com/nmarcetic
-[dejan]: https://github.com/mijicd
-[manu]: https://github.com/manuIO
-[darko]: https://github.com/darkodraskovic
-[janko]: https://github.com/janko-isidorovic
-[alex]: https://github.com/anovakovic01
-[dusan]: https://github.com/dborovcanin
-[sava]: https://github.com/srados
-[george]: https://github.com/gesaleh
-[iva]: https://github.com/blokovi
-[kole]: https://github.com/chombium
-[dusanm]: https://github.com/malidukica
-[mirko]: https://github.com/mteodor
-[rodneyosodo]: https://github.com/rodneyosodo
-[callhome]: https://deployments.magistrala.abstractmachines.fr/
-[contrib]: https://www.github.com/absmach/mg-contrib
+Need help deploying Magistrala or integrating it into your systems? Contact **[Abstract Machines](https://abstractmachines.fr/)** for expert guidance and support.

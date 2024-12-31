@@ -160,16 +160,6 @@ jobs:
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-events.out ./pkg/events/...
 
-      - name: Run pkg ulid tests
-        if: steps.changes.outputs.pkg-ulid == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-ulid.out ./pkg/ulid/...
-
-      - name: Run pkg uuid tests
-        if: steps.changes.outputs.pkg-uuid == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-uuid.out ./pkg/uuid/...
-
       - name: Run provision tests
         if: steps.changes.outputs.provision == 'true' || steps.changes.outputs.workflow == 'true'
         run: |

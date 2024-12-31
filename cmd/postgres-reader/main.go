@@ -12,6 +12,7 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
+	"github.com/absmach/magistrala/readers/postgres"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
@@ -23,7 +24,6 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/absmach/supermq/readers"
 	httpapi "github.com/absmach/supermq/readers/api"
-	"github.com/absmach/supermq/readers/postgres"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/sync/errgroup"

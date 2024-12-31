@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/supermq/consumers/notifiers"
-	"github.com/absmach/supermq/consumers/notifiers/mocks"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"

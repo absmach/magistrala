@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/bootstrap/events/producer"
+	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/supermq/bootstrap"
-	"github.com/absmach/supermq/bootstrap/events/producer"
-	"github.com/absmach/supermq/bootstrap/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"

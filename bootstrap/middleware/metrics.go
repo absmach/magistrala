@@ -9,7 +9,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/bootstrap"
+	"github.com/absmach/magistrala/bootstrap"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/go-kit/kit/metrics"
 )

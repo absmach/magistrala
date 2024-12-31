@@ -11,7 +11,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/supermq/consumers/writers/postgres"
+	"github.com/absmach/magistrala/consumers/writers/postgres"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"

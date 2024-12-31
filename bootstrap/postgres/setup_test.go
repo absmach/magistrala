@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/supermq/bootstrap/postgres"
+	"github.com/absmach/magistrala/bootstrap/postgres"
 	smqlog "github.com/absmach/supermq/logger"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/jmoiron/sqlx"

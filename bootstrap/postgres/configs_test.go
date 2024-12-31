@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/supermq/bootstrap"
-	"github.com/absmach/supermq/bootstrap/postgres"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/gofrs/uuid/v5"

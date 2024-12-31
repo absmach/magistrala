@@ -40,17 +40,9 @@ var (
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	g, ctx := errgroup.WithContext(ctx)
-
 	cfg, err := loadConfig()
 	if err != nil {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
-	}
-
-	logger, err := smqlog.New(os.Stdout, cfg.Server.LogLevel)
-	if err != nil {
-		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
@@ -58,10 +50,17 @@ func main() {
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
-			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
+			log.Fatalf("failed to generate instanceID: %s", err)
 			exitCode = 1
 			return
 		}
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
+
+	logger, err := smqlog.New(os.Stdout, cfg.Server.LogLevel)
+	if err != nil {
+		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	if cfgFromFile, err := loadConfigFromFile(cfg.File); err != nil {

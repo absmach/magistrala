@@ -14,7 +14,7 @@ import (
 	"github.com/absmach/supermq/pkg/postgres"
 )
 
-// SQL Queries as Strings
+// SQL Queries as Strings.
 const (
 	addRuleQuery = `
 		INSERT INTO rules (id, domain_id, input_channel, input_topic, logic_type, logic_value,

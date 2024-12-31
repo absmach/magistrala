@@ -19,7 +19,7 @@ import (
 	repg "github.com/absmach/magistrala/re/postgres"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/consumers"
-	mglog "github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/supermq/pkg/authz"
 	authzsvc "github.com/absmach/supermq/pkg/authz/authsvc"
@@ -70,13 +70,13 @@ func main() {
 	}
 
 	var logger *slog.Logger
-	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
+	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer mglog.ExitWithError(&exitCode)
+	defer smqlog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {

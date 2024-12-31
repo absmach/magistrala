@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/supermq/internal/testsutil"
+	"github.com/absmach/magistrala/internal/testsutil"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains provision main function to start the provision service.
-package main
+package provision
 
 import (
 	"context"

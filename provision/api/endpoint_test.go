@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/absmach/magistrala/internal/testsutil"
 	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/internal/testsutil"
 	smqlog "github.com/absmach/supermq/logger"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/provision"

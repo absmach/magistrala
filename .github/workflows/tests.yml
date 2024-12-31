@@ -75,15 +75,6 @@ jobs:
             workflow:
               - ".github/workflows/tests.yml"
 
-            auth:
-              - "auth/**"
-              - "cmd/auth/**"
-              - "auth.proto"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "pkg/ulid/**"
-              - "pkg/uuid/**"
-
             bootstrap:
               - "bootstrap/**"
               - "cmd/bootstrap/**"
@@ -92,27 +83,6 @@ jobs:
               - "auth/**"
               - "pkg/sdk/**"
               - "pkg/events/**"
-
-            certs:
-              - "certs/**"
-              - "cmd/certs/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "auth/**"
-              - "pkg/sdk/**"
-
-            cli:
-              - "cli/**"
-              - "cmd/cli/**"
-              - "pkg/sdk/**"
-
-            coap:
-              - "coap/**"
-              - "cmd/coap/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "things/**"
-              - "pkg/messaging/**"
 
             consumers:
               - "consumers/**"
@@ -127,46 +97,8 @@ jobs:
               - "pkg/uuid/**"
               - "pkg/messaging/**"
 
-            journal:
-              - "journal/**"
-              - "cmd/journal/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "auth/**"
-              - "pkg/events/**"
-
-            http:
-              - "http/**"
-              - "cmd/http/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "things/**"
-              - "pkg/messaging/**"
-              - "logger/**"
-
             internal:
               - "internal/**"
-
-            invitations:
-              - "invitations/**"
-              - "cmd/invitations/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "auth/**"
-              - "pkg/sdk/**"
-
-            logger:
-              - "logger/**"
-
-            mqtt:
-              - "mqtt/**"
-              - "cmd/mqtt/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "things/**"
-              - "pkg/messaging/**"
-              - "logger/**"
-              - "pkg/events/**"
 
             pkg-errors:
               - "pkg/errors/**"
@@ -177,31 +109,6 @@ jobs:
 
             pkg-grpcclient:
               - "pkg/grpcclient/**"
-
-            pkg-messaging:
-              - "pkg/messaging/**"
-
-            pkg-sdk:
-              - "pkg/sdk/**"
-              - "pkg/errors/**"
-              - "pkg/groups/**"
-              - "auth/**"
-              - "bootstrap/**"
-              - "certs/**"
-              - "consumers/**"
-              - "http/**"
-              - "internal/*"
-              - "internal/api/**"
-              - "internal/apiutil/**"
-              - "internal/groups/**"
-              - "invitations/**"
-              - "provision/**"
-              - "readers/**"
-              - "things/**"
-              - "users/**"
-
-            pkg-transformers:
-              - "pkg/transformers/**"
 
             pkg-ulid:
               - "pkg/ulid/**"
@@ -224,97 +131,24 @@ jobs:
               - "things/**"
               - "auth/**"
 
-            things:
-              - "things/**"
-              - "cmd/things/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "auth/**"
-              - "pkg/ulid/**"
-              - "pkg/uuid/**"
-              - "pkg/events/**"
-
-            users:
-              - "users/**"
-              - "cmd/users/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "auth/**"
-              - "pkg/ulid/**"
-              - "pkg/uuid/**"
-              - "pkg/events/**"
-
-            ws:
-              - "ws/**"
-              - "cmd/ws/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "things/**"
-              - "pkg/messaging/**"
-
       - name: Create coverage directory
         run: |
           mkdir coverage
-
-      - name: Run Journal tests
-        if: steps.changes.outputs.journal == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/journal.out ./journal/...
-
-      - name: Run auth tests
-        if: steps.changes.outputs.auth == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/auth.out ./auth/...
 
       - name: Run bootstrap tests
         if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/bootstrap.out ./bootstrap/...
 
-      - name: Run certs tests
-        if: steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/certs.out ./certs/...
-
-      - name: Run cli tests
-        if: steps.changes.outputs.cli == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/cli.out ./cli/...
-
-      - name: Run CoAP tests
-        if: steps.changes.outputs.coap == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/coap.out ./coap/...
-
       - name: Run consumers tests
         if: steps.changes.outputs.consumers == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/consumers.out ./consumers/...
 
-      - name: Run HTTP tests
-        if: steps.changes.outputs.http == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/http.out ./http/...
-
       - name: Run internal tests
         if: steps.changes.outputs.internal == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/internal.out ./internal/...
-
-      - name: Run invitations tests
-        if: steps.changes.outputs.invitations == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/invitations.out ./invitations/...
-
-      - name: Run logger tests
-        if: steps.changes.outputs.logger == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/logger.out ./logger/...
-
-      - name: Run MQTT tests
-        if: steps.changes.outputs.mqtt == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/mqtt.out ./mqtt/...
 
       - name: Run pkg errors tests
         if: steps.changes.outputs.pkg-errors == 'true' || steps.changes.outputs.workflow == 'true'
@@ -325,26 +159,6 @@ jobs:
         if: steps.changes.outputs.pkg-events == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-events.out ./pkg/events/...
-
-      - name: Run pkg grpcclient tests
-        if: steps.changes.outputs.pkg-grpcclient == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-grpcclient.out ./pkg/grpcclient/...
-
-      - name: Run pkg messaging tests
-        if: steps.changes.outputs.pkg-messaging == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-messaging.out ./pkg/messaging/...
-
-      - name: Run pkg sdk tests
-        if: steps.changes.outputs.pkg-sdk == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-sdk.out ./pkg/sdk/...
-
-      - name: Run pkg transformers tests
-        if: steps.changes.outputs.pkg-transformers == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-transformers.out ./pkg/transformers/...
 
       - name: Run pkg ulid tests
         if: steps.changes.outputs.pkg-ulid == 'true' || steps.changes.outputs.workflow == 'true'
@@ -365,21 +179,6 @@ jobs:
         if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/readers.out ./readers/...
-
-      - name: Run things tests
-        if: steps.changes.outputs.things == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/things.out ./things/...
-
-      - name: Run users tests
-        if: steps.changes.outputs.users == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/users.out ./users/...
-
-      - name: Run WebSocket tests
-        if: steps.changes.outputs.ws == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/ws.out ./ws/...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5

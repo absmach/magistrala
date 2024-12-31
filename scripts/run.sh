@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ###
-# Runs all Magistrala microservices (must be previously built and installed).
+# Runs all SuperMQ microservices (must be previously built and installed).
 #
 # Expects that PostgreSQL and needed messaging DB are alredy running.
 # Additionally, MQTT microservice demands that Redis is up and running.
@@ -12,9 +12,9 @@
 
 BUILD_DIR=../build
 
-# Kill all magistrala-* stuff
+# Kill all supermq-* stuff
 function cleanup {
-    pkill magistrala
+    pkill supermq
     pkill nats
 }
 
@@ -38,32 +38,32 @@ done
 ###
 # Users
 ###
-MG_USERS_LOG_LEVEL=info MG_USERS_HTTP_PORT=9002 MG_USERS_GRPC_PORT=7001 MG_USERS_ADMIN_EMAIL=admin@magistrala.com MG_USERS_ADMIN_PASSWORD=12345678 MG_USERS_ADMIN_USERNAME=admin MG_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/magistrala-users &
+SMQ_USERS_LOG_LEVEL=info SMQ_USERS_HTTP_PORT=9002 SMQ_USERS_GRPC_PORT=7001 SMQ_USERS_ADMIN_EMAIL=admin@supermq.com SMQ_USERS_ADMIN_PASSWORD=12345678 SMQ_USERS_ADMIN_USERNAME=admin SMQ_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/supermq-users &
 
 ###
-# Things
+# Clients
 ###
-MG_THINGS_LOG_LEVEL=info MG_THINGS_HTTP_PORT=9000 MG_THINGS_AUTH_GRPC_PORT=7000 MG_THINGS_AUTH_HTTP_PORT=9002 $BUILD_DIR/magistrala-things &
+SMQ_CLIENTS_LOG_LEVEL=info SMQ_CLIENTS_HTTP_PORT=9000 SMQ_CLIENTS_AUTH_GRPC_PORT=7000 SMQ_CLIENTS_AUTH_HTTP_PORT=9002 $BUILD_DIR/supermq-clients &
 
 ###
 # HTTP
 ###
-MG_HTTP_ADAPTER_LOG_LEVEL=info MG_HTTP_ADAPTER_PORT=8008 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-http &
+SMQ_HTTP_ADAPTER_LOG_LEVEL=info SMQ_HTTP_ADAPTER_PORT=8008 SMQ_CLIENTS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/supermq-http &
 
 ###
 # WS
 ###
-MG_WS_ADAPTER_LOG_LEVEL=info MG_WS_ADAPTER_HTTP_PORT=8190 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-ws &
+SMQ_WS_ADAPTER_LOG_LEVEL=info SMQ_WS_ADAPTER_HTTP_PORT=8190 SMQ_CLIENTS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/supermq-ws &
 
 ###
 # MQTT
 ###
-MG_MQTT_ADAPTER_LOG_LEVEL=info MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-mqtt &
+SMQ_MQTT_ADAPTER_LOG_LEVEL=info SMQ_CLIENTS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/supermq-mqtt &
 
 ###
 # CoAP
 ###
-MG_COAP_ADAPTER_LOG_LEVEL=info MG_COAP_ADAPTER_PORT=5683 MG_THINGS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/magistrala-coap &
+SMQ_COAP_ADAPTER_LOG_LEVEL=info SMQ_COAP_ADAPTER_PORT=5683 SMQ_CLIENTS_AUTH_GRPC_URL=localhost:7000 $BUILD_DIR/supermq-coap &
 
 trap cleanup EXIT
 

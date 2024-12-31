@@ -49,7 +49,7 @@ setup_protoc() {
 }
 
 setup_mg() {
-    echo "Setting up Magistrala..."
+    echo "Setting up SuperMQ..."
     for p in $(ls *.pb.go); do
         mv $p $p.tmp
     done
@@ -70,15 +70,15 @@ setup_mg() {
         fi
     done
     echo "Compile check for rabbitmq..."
-    MG_MESSAGE_BROKER_TYPE=rabbitmq make http
+    SMQ_MESSAGE_BROKER_TYPE=rabbitmq make http
     echo "Compile check for redis..."
-    MG_ES_TYPE=redis make http
+    SMQ_ES_TYPE=redis make http
     make -j$NPROC
 }
 
 setup_lint() {
     # binary will be $(go env GOBIN)/golangci-lint
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOBIN) $GOLANGCI_LINT_VERSION
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/main/install.sh | sh -s -- -b $(go env GOBIN) $GOLANGCI_LINT_VERSION
 }
 
 setup() {
@@ -105,7 +105,7 @@ run_test() {
 }
 
 push() {
-    if test -n "$BRANCH_NAME" && test "$BRANCH_NAME" = "master"; then
+    if test -n "$BRANCH_NAME" && test "$BRANCH_NAME" = "main"; then
         echo "Pushing Docker images..."
         make -j$NPROC latest
     fi

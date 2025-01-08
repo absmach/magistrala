@@ -13,6 +13,12 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 )
 
+const (
+	updatePermission = "update_permission"
+	readPermission   = "read_permission"
+	deletePermission = "delete_permission"
+)
+
 var _ bootstrap.Service = (*authorizationMiddleware)(nil)
 
 type authorizationMiddleware struct {
@@ -37,7 +43,7 @@ func (am *authorizationMiddleware) Add(ctx context.Context, session smqauthn.Ses
 }
 
 func (am *authorizationMiddleware) View(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.ViewPermission, policies.ClientType, id); err != nil {
+	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, readPermission, policies.ClientType, id); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -45,7 +51,7 @@ func (am *authorizationMiddleware) View(ctx context.Context, session smqauthn.Se
 }
 
 func (am *authorizationMiddleware) Update(ctx context.Context, session smqauthn.Session, cfg bootstrap.Config) error {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.ClientType, cfg.ClientID); err != nil {
+	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, cfg.ClientID); err != nil {
 		return err
 	}
 
@@ -53,7 +59,7 @@ func (am *authorizationMiddleware) Update(ctx context.Context, session smqauthn.
 }
 
 func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.ClientType, clientID); err != nil {
+	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, clientID); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -61,7 +67,7 @@ func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqau
 }
 
 func (am *authorizationMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.EditPermission, policies.ClientType, id); err != nil {
+	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, id); err != nil {
 		return err
 	}
 
@@ -80,7 +86,7 @@ func (am *authorizationMiddleware) List(ctx context.Context, session smqauthn.Se
 }
 
 func (am *authorizationMiddleware) Remove(ctx context.Context, session smqauthn.Session, id string) error {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, policies.DeletePermission, policies.ClientType, id); err != nil {
+	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, deletePermission, policies.ClientType, id); err != nil {
 		return err
 	}
 

@@ -65,7 +65,8 @@ type config struct {
 	LogLevel            string  `env:"SMQ_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
 	EncKey              string  `env:"SMQ_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
 	ESConsumerName      string  `env:"SMQ_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	ClientsURL          string  `env:"SMQ_CLIENTS_URL"                envDefault:"http://localhost:9000"`
+	ClientsURL          string  `env:"SMQ_CLIENTS_URL"                envDefault:"http://localhost:9006"`
+	ChannelsURL         string  `env:"SMQ_CHANNELS_URL"               envDefault:"http://localhost:9005"`
 	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"             envDefault:"true"`
 	InstanceID          string  `env:"SMQ_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
@@ -221,7 +222,8 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 
 	config := mgsdk.Config{
-		ClientsURL: cfg.ClientsURL,
+		ClientsURL:  cfg.ClientsURL,
+		ChannelsURL: cfg.ChannelsURL,
 	}
 
 	sdk := mgsdk.NewSDK(config)

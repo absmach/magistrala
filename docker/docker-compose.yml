@@ -175,7 +175,7 @@ services:
       - magistrala-base-net
     volumes:
       - magistrala-domains-db-volume:/var/lib/postgresql/data
-  
+
   domains-redis:
     image: redis:7.2.4-alpine
     container_name: magistrala-domains-redis
@@ -366,11 +366,11 @@ services:
       - ./nginx/snippets:/etc/nginx/snippets
       - ./ssl/authorization.js:/etc/nginx/authorization.js
       - type: bind
-        source: ${SMQ_NGINX_SERVER_CERT:-./ssl/certs/supermq-server.crt}
-        target: /etc/ssl/certs/supermq-server.crt
+        source: ${SMQ_NGINX_SERVER_CERT:-./ssl/certs/magistrala-server.crt}
+        target: /etc/ssl/certs/magistrala-server.crt
       - type: bind
-        source: ${SMQ_NGINX_SERVER_KEY:-./ssl/certs/supermq-server.key}
-        target: /etc/ssl/private/supermq-server.key
+        source: ${SMQ_NGINX_SERVER_KEY:-./ssl/certs/magistrala-server.key}
+        target: /etc/ssl/private/magistrala-server.key
       - type: bind
         source: ${SMQ_NGINX_SERVER_CLIENT_CA:-./ssl/certs/ca.crt}
         target: /etc/ssl/certs/ca.crt
@@ -750,7 +750,6 @@ services:
         bind:
           create_host_path: true
 
-
   groups-db:
     image: postgres:16.2-alpine
     container_name: magistrala-groups-db
@@ -852,7 +851,6 @@ services:
         target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
-
 
   jaeger:
     image: jaegertracing/all-in-one:1.60

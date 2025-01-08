@@ -18,9 +18,9 @@ services:
     container_name: magistrala-bootstrap-db
     restart: on-failure
     environment:
-      POSTGRES_USER: ${MG_BOOTSTRAP_DB_USER}
-      POSTGRES_PASSWORD: ${MG_BOOTSTRAP_DB_PASS}
-      POSTGRES_DB: ${MG_BOOTSTRAP_DB_NAME}
+      POSTGRES_USER: ${SMQ_BOOTSTRAP_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_BOOTSTRAP_DB_PASS}
+      POSTGRES_DB: ${SMQ_BOOTSTRAP_DB_NAME}
     networks:
       - magistrala-base-net
     volumes:
@@ -33,7 +33,7 @@ services:
       - bootstrap-db
     restart: on-failure
     ports:
-      - ${MG_BOOTSTRAP_HTTP_PORT}:${MG_BOOTSTRAP_HTTP_PORT}
+      - ${SMQ_BOOTSTRAP_HTTP_PORT}:${SMQ_BOOTSTRAP_HTTP_PORT}
     environment:
       MG_BOOTSTRAP_LOG_LEVEL: ${MG_BOOTSTRAP_LOG_LEVEL}
       MG_BOOTSTRAP_ENCRYPT_KEY: ${MG_BOOTSTRAP_ENCRYPT_KEY}

@@ -16,7 +16,7 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	mgauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -66,9 +66,9 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, logger *slog.Logg
 				opts...,
 			), "update_rule").ServeHTTP)
 
-			r.Put("/{ruleID}/status", otelhttp.NewHandler(kithttp.NewServer(
-				upadateRuleStatusEndpoint(svc),
-				decodeUpdateRuleStatusRequest,
+			r.Delete("/{ruleID}/delete", otelhttp.NewHandler(kithttp.NewServer(
+				deleteRuleEndpoint(svc),
+				decodeDeleteRuleRequest,
 				api.EncodeResponse,
 				opts...,
 			), "update_rule_status").ServeHTTP)
@@ -132,15 +132,8 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	}, nil
 }
 
-func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := r.URL.Query().Get(idKey)
-	status, err := apiutil.ReadStringQuery(r, statusKey, re.AllStatus.String())
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	s, err := re.ToStatus(status)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	return changeRuleStatusReq{id: id, status: s}, nil
+func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	id := chi.URLParam(r, idKey)
+
+	return deleteRuleReq{id: id}, nil
 }

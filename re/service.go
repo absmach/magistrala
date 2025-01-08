@@ -33,13 +33,14 @@ const (
 )
 
 type Schedule struct {
-	Time            []time.Time `json:"date,omitempty"`
-	RecurringType   ReccuringType
-	RecurringPeriod uint // 1 meaning every Recurring value, 2 meaning every other, and so on.
+	Time            []time.Time   `json:"date,omitempty"`
+	RecurringType   ReccuringType `json:"recurring_type"`
+	RecurringPeriod uint          `json:"recurring_period"` // 1 meaning every Recurring value, 2 meaning every other, and so on.
 }
 
 type Rule struct {
 	ID            string    `json:"id"`
+	Name          string    `json:"name"`
 	DomainID      string    `json:"domain"`
 	InputChannel  string    `json:"input_channel"`
 	InputTopic    string    `json:"input_topic"`

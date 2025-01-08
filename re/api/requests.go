@@ -61,12 +61,11 @@ func (req updateRuleReq) validate() error {
 	return nil
 }
 
-type changeRuleStatusReq struct {
-	id     string
-	status re.Status
+type deleteRuleReq struct {
+	id string
 }
 
-func (req changeRuleStatusReq) validate() error {
+func (req deleteRuleReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}

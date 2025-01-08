@@ -92,21 +92,21 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 	}
 }
 
-func upadateRuleStatusEndpoint(s re.Service) endpoint.Endpoint {
+func deleteRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(changeRuleStatusReq)
+		req := request.(deleteRuleReq)
 		if err := req.validate(); err != nil {
-			return updateRoleStatusRes{}, err
+			return deleteRuleRes{}, err
 		}
 		err := s.RemoveRule(ctx, session, req.id)
 		if err != nil {
-			return updateRoleStatusRes{false}, err
+			return deleteRuleRes{false}, err
 		}
-		return updateRoleStatusRes{true}, nil
+		return deleteRuleRes{true}, nil
 	}
 }

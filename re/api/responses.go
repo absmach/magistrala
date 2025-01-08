@@ -17,7 +17,7 @@ var (
 	_ supermq.Response = (*changeRuleStatusRes)(nil)
 	_ supermq.Response = (*rulesPageRes)(nil)
 	_ supermq.Response = (*updateRuleRes)(nil)
-	_ supermq.Response = (*updateRoleStatusRes)(nil)
+	_ supermq.Response = (*deleteRuleRes)(nil)
 )
 
 type pageRes struct {
@@ -118,11 +118,11 @@ func (res changeRuleStatusRes) Empty() bool {
 	return false
 }
 
-type updateRoleStatusRes struct {
+type deleteRuleRes struct {
 	deleted bool
 }
 
-func (res updateRoleStatusRes) Code() int {
+func (res deleteRuleRes) Code() int {
 	if res.deleted {
 		return http.StatusNoContent
 	}
@@ -130,10 +130,10 @@ func (res updateRoleStatusRes) Code() int {
 	return http.StatusOK
 }
 
-func (res updateRoleStatusRes) Headers() map[string]string {
+func (res deleteRuleRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res updateRoleStatusRes) Empty() bool {
+func (res deleteRuleRes) Empty() bool {
 	return true
 }

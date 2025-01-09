@@ -25,6 +25,7 @@ import (
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	supermqSDK "github.com/absmach/supermq/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -78,7 +79,7 @@ var (
 	sdkBootsrapConfigRes = sdk.BootstrapConfig{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
-		Channels: []sdk.Channel{
+		Channels: []supermqSDK.Channel{
 			{
 				ID: channel1Id,
 			},
@@ -274,7 +275,7 @@ func TestListBootstraps(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	configRes := sdk.BootstrapConfig{
-		Channels: []sdk.Channel{
+		Channels: []supermqSDK.Channel{
 			{
 				ID: channel1Id,
 			},
@@ -324,7 +325,7 @@ func TestListBootstraps(t *testing.T) {
 				Configs: []bootstrap.Config{bootstrapConfig},
 			},
 			response: sdk.BootstrapPage{
-				PageRes: sdk.PageRes{
+				PageRes: supermqSDK.PageRes{
 					Total: 1,
 				},
 				Configs: []sdk.BootstrapConfig{configRes},
@@ -724,7 +725,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ClientID: invalid,
-				Channels: []sdk.Channel{
+				Channels: []supermqSDK.Channel{
 					{
 						ID: channel1Id,
 					},
@@ -748,7 +749,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ClientID: "",
-				Channels: []sdk.Channel{
+				Channels: []supermqSDK.Channel{
 					{
 						ID: channel1Id,
 					},

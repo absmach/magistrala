@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/absmach/supermq/pkg/errors"
+	supermqSDK "github.com/absmach/supermq/pkg/sdk"
 	"moul.io/http2curl"
 )
 
@@ -49,13 +50,15 @@ type PageMetadata struct {
 	Total    uint64   `json:"total"`
 	Offset   uint64   `json:"offset"`
 	Limit    uint64   `json:"limit"`
-	Metadata Metadata `json:"metadata,omitempty"`
+	Metadata supermqSDK.Metadata `json:"metadata,omitempty"`
 }
 
-// SDK contains SuperMQ API.
+// SDK contains Magistrala API.
 //
 //go:generate mockery --name SDK --output=./mocks --filename sdk.go --quiet --note "Copyright (c) Abstract Machines"
 type SDK interface {
+	supermqSDK.SDK
+
 	// AddBootstrap add bootstrap configuration
 	//
 	// example:
@@ -124,7 +127,7 @@ type SDK interface {
 	// example:
 	//  bootstrap, _ := sdk.BootstrapSecure("externalID", "externalKey", "cryptoKey")
 	//  fmt.Println(bootstrap)
-	BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
+	//BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
 
 	// Bootstraps retrieves a list of managed configs.
 	//
@@ -135,7 +138,7 @@ type SDK interface {
 	//  }
 	//  bootstraps, _ := sdk.Bootstraps(pm, "domainID", "token")
 	//  fmt.Println(bootstraps)
-	Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
+	//Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
 
 	// Whitelist updates Client state Config with given ID belonging to the user identified by the given token.
 	//
@@ -147,24 +150,55 @@ type SDK interface {
 
 type mgSDK struct {
 	bootstrapURL   string
-	msgContentType ContentType
+	msgContentType supermqSDK.ContentType
 	client         *http.Client
 	curlFlag       bool
+
+	supermqSDK.SDK
 }
 
 // Config contains sdk configuration parameters.
 type Config struct {
-	BootstrapURL    string
-	MsgContentType  ContentType
+	BootstrapURL   string
+	CertsURL       string
+	HTTPAdapterURL string
+	ReaderURL      string
+	ClientsURL     string
+	UsersURL       string
+	GroupsURL      string
+	ChannelsURL    string
+	DomainsURL     string
+	InvitationsURL string
+	JournalURL     string
+	HostURL        string
+
+	MsgContentType  supermqSDK.ContentType
 	TLSVerification bool
 	CurlFlag        bool
 }
 
 // NewSDK returns new supermq SDK instance.
 func NewSDK(conf Config) SDK {
+	supermqSDK := supermqSDK.NewSDK(supermqSDK.Config{
+		CertsURL:       conf.CertsURL,
+		HTTPAdapterURL: conf.HTTPAdapterURL,
+		ReaderURL:      conf.ReaderURL,
+		ClientsURL:     conf.ClientsURL,
+		UsersURL:       conf.UsersURL,
+		GroupsURL:      conf.GroupsURL,
+		ChannelsURL:    conf.ChannelsURL,
+		DomainsURL:     conf.DomainsURL,
+		InvitationsURL: conf.InvitationsURL,
+		JournalURL:     conf.JournalURL,
+		HostURL:        conf.HostURL,
+
+		MsgContentType:  conf.MsgContentType,
+		TLSVerification: conf.TLSVerification,
+		CurlFlag:        conf.CurlFlag,
+	})
+
 	return &mgSDK{
 		bootstrapURL:   conf.BootstrapURL,
-		msgContentType: conf.MsgContentType,
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -173,6 +207,7 @@ func NewSDK(conf Config) SDK {
 			},
 		},
 		curlFlag: conf.CurlFlag,
+		SDK:      supermqSDK,
 	}
 }
 
@@ -186,15 +221,15 @@ func (sdk mgSDK) processRequest(method, reqUrl, token string, data []byte, heade
 
 	// Sets a default value for the Content-Type.
 	// Overridden if Content-Type is passed in the headers arguments.
-	req.Header.Add("Content-Type", string(CTJSON))
+	req.Header.Add("Content-Type", string(supermqSDK.CTJSON))
 
 	for key, value := range headers {
 		req.Header.Add(key, value)
 	}
 
 	if token != "" {
-		if !strings.Contains(token, ClientPrefix) {
-			token = BearerPrefix + token
+		if !strings.Contains(token, supermqSDK.ClientPrefix) {
+			token = supermqSDK.BearerPrefix + token
 		}
 		req.Header.Set("Authorization", token)
 	}

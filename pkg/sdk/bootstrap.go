@@ -13,10 +13,10 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
+	supermqSDK "github.com/absmach/supermq/pkg/sdk"
 )
 
 const (
@@ -47,23 +47,6 @@ type BootstrapConfig struct {
 	State        int         `json:"state,omitempty"`
 }
 
-type Metadata map[string]interface{}
-
-// Channel represents supermq channel.
-type Channel struct {
-	ID          string    `json:"id,omitempty"`
-	Name        string    `json:"name,omitempty"`
-	Tags        []string  `json:"tags,omitempty"`
-	ParentGroup string    `json:"parent_group_id,omitempty"`
-	DomainID    string    `json:"domain_id,omitempty"`
-	Metadata    Metadata  `json:"metadata,omitempty"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
-	UpdatedBy   string    `json:"updated_by,omitempty"`
-	Status      string    `json:"status,omitempty"`
-	Permissions []string  `json:"permissions,omitempty"`
-}
-
 func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {
 	var rawData map[string]json.RawMessage
 	if err := json.Unmarshal(data, &rawData); err != nil {
@@ -75,7 +58,7 @@ func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(channelData, &stringData); err == nil {
 			ts.Channels = stringData
 		} else {
-			var channels []Channel
+			var channels []supermqSDK.Channel
 			if err := json.Unmarshal(channelData, &channels); err == nil {
 				ts.Channels = channels
 			} else {
@@ -265,7 +248,7 @@ func (sdk mgSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, err
 	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
 
-	_, body, err := sdk.processRequest(http.MethodGet, url, ClientPrefix+externalKey, nil, nil, http.StatusOK)
+	_, body, err := sdk.processRequest(http.MethodGet, url, supermqSDK.ClientPrefix+externalKey, nil, nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err
 	}
@@ -289,7 +272,7 @@ func (sdk mgSDK) BootstrapSecure(externalID, externalKey, cryptoKey string) (Boo
 		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
-	_, body, sdkErr := sdk.processRequest(http.MethodGet, url, ClientPrefix+encExtKey, nil, nil, http.StatusOK)
+	_, body, sdkErr := sdk.processRequest(http.MethodGet, url, supermqSDK.ClientPrefix+encExtKey, nil, nil, http.StatusOK)
 	if sdkErr != nil {
 		return BootstrapConfig{}, sdkErr
 	}

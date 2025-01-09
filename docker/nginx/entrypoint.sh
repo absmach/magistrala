@@ -2,13 +2,12 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-if [ -z "$SMQ_MQTT_CLUSTER" ]
-then
-      envsubst '${SMQ_MQTT_ADAPTER_MQTT_PORT}' < /etc/nginx/snippets/mqtt-upstream-single.conf > /etc/nginx/snippets/mqtt-upstream.conf
-      envsubst '${SMQ_MQTT_ADAPTER_WS_PORT}' < /etc/nginx/snippets/mqtt-ws-upstream-single.conf > /etc/nginx/snippets/mqtt-ws-upstream.conf
+if [ -z "$SMQ_MQTT_CLUSTER" ]; then
+      envsubst '${SMQ_MQTT_ADAPTER_MQTT_PORT}' </etc/nginx/snippets/mqtt-upstream-single.conf >/etc/nginx/snippets/mqtt-upstream.conf
+      envsubst '${SMQ_MQTT_ADAPTER_WS_PORT}' </etc/nginx/snippets/mqtt-ws-upstream-single.conf >/etc/nginx/snippets/mqtt-ws-upstream.conf
 else
-      envsubst '${SMQ_MQTT_ADAPTER_MQTT_PORT}' < /etc/nginx/snippets/mqtt-upstream-cluster.conf > /etc/nginx/snippets/mqtt-upstream.conf
-      envsubst '${SMQ_MQTT_ADAPTER_WS_PORT}' < /etc/nginx/snippets/mqtt-ws-upstream-cluster.conf > /etc/nginx/snippets/mqtt-ws-upstream.conf
+      envsubst '${SMQ_MQTT_ADAPTER_MQTT_PORT}' </etc/nginx/snippets/mqtt-upstream-cluster.conf >/etc/nginx/snippets/mqtt-upstream.conf
+      envsubst '${SMQ_MQTT_ADAPTER_WS_PORT}' </etc/nginx/snippets/mqtt-ws-upstream-cluster.conf >/etc/nginx/snippets/mqtt-ws-upstream.conf
 fi
 
 envsubst '
@@ -23,6 +22,6 @@ envsubst '
     ${SMQ_NGINX_MQTT_PORT}
     ${SMQ_NGINX_MQTTS_PORT}
     ${SMQ_INVITATIONS_HTTP_PORT}
-    ${SMQ_WS_ADAPTER_HTTP_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+    ${SMQ_WS_ADAPTER_HTTP_PORT}' </etc/nginx/nginx.conf.template >/etc/nginx/nginx.conf
 
 exec nginx -g "daemon off;"

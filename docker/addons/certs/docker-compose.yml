@@ -12,7 +12,6 @@ networks:
 volumes:
   magistrala-certs-db-volume:
 
-
 services:
   certs:
     image: magistrala/certs:${MG_RELEASE_TAG}
@@ -118,7 +117,7 @@ services:
       AM_JAEGER_URL: ${MG_JAEGER_URL}
       AM_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
     volumes:
-     - ./config.yml:/config/config.yml
+      - ./config.yml:/config/config.yml
     ports:
       - 9010:9010
       - 7012:7012

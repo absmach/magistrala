@@ -17,27 +17,30 @@ import (
 // SQL Queries as Strings.
 const (
 	addRuleQuery = `
-		INSERT INTO rules (id, domain_id, input_channel, input_topic, logic_type, logic_value,
-			output_channel, output_topic, recurring_time, recurring_type, recurring_period, status)
-		VALUES (:id, :domain_id, :input_channel, :input_topic, :logic_type, :logic_value,
-			:output_channel, :output_topic, :recurring_time, :recurring_type, :recurring_period, :status)
-		RETURNING id;
+		INSERT INTO rules (id, name, domain_id, input_channel, input_topic, logic_type, logic_value,
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status)
+		VALUES (:id, :name, :domain_id, :input_channel, :input_topic, :logic_type, :logic_value,
+			:output_channel, :output_topic, :recurring_time, :recurring_type, :recurring_period, :created_at, :updated_at, :updated_by, :status)
+		RETURNING id, name, domain_id, input_channel, input_topic, logic_type, logic_value,
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status;
 	`
 
 	viewRuleQuery = `
-		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
-			output_topic, recurring_time, recurring_type, recurring_period, status
+		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
+			output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status
 		FROM rules
 		WHERE id = $1;
 	`
 
 	updateRuleQuery = `
 		UPDATE rules
-		SET input_channel = :input_channel, input_topic = :input_topic, logic_type = :logic_type, 
+		SET name = :name, input_channel = :input_channel, input_topic = :input_topic, logic_type = :logic_type, 
 			logic_value = :logic_value, output_channel = :output_channel, output_topic = :output_topic, 
 			recurring_time = :recurring_time, recurring_type = :recurring_type, 
-			recurring_period = :recurring_period, status = :status
-		WHERE id = :id;
+			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by, status = :status
+		WHERE id = :id
+		RETURNING id, name, domain_id, input_channel, input_topic, logic_type, logic_value,
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status;
 	`
 
 	removeRuleQuery = `
@@ -45,10 +48,18 @@ const (
 		WHERE id = $1;
 	`
 
+	updateRuleStatusQuery = `
+		UPDATE rules
+		SET status = $2
+		WHERE id = $1
+		RETURNING id, name, domain_id, input_channel, input_topic, logic_type, logic_value,
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status;  
+	`
+
 	listRulesQuery = `
-		SELECT id, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
-			output_topic, recurring_time, recurring_type, recurring_period, status
-		FROM rules r %s %s; 
+		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
+			output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status
+		FROM rules r %s %s;
 	`
 
 	totalQuery = `SELECT COUNT(*) FROM rules r %s;`
@@ -64,11 +75,22 @@ func NewRepository(db postgres.Database) re.Repository {
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	dbr := ruleToDb(r)
-	_, err := repo.DB.NamedExecContext(ctx, addRuleQuery, dbr)
+	row, err := repo.DB.NamedQueryContext(ctx, addRuleQuery, dbr)
 	if err != nil {
 		return re.Rule{}, err
 	}
-	return r, nil
+	defer row.Close()
+
+	var dbRule dbRule
+	if row.Next() {
+		if err := row.StructScan(&dbRule); err != nil {
+			return re.Rule{}, err
+		}
+	}
+
+	rule := dbToRule(dbRule)
+
+	return rule, nil
 }
 
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
@@ -77,8 +99,7 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 		return re.Rule{}, err
 	}
 	var dbr dbRule
-	err := row.StructScan(&dbr)
-	if err != nil {
+	if err := row.StructScan(&dbr); err != nil {
 		return re.Rule{}, err
 	}
 	ret := dbToRule(dbr)
@@ -86,18 +107,39 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 	return ret, nil
 }
 
-func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
-	dbr := ruleToDb(r)
-	result, err := repo.DB.NamedExecContext(ctx, updateRuleQuery, dbr)
-	if err != nil {
+func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, id string, status re.Status) (re.Rule, error) {
+	row := repo.DB.QueryRowxContext(ctx, updateRuleStatusQuery, id, status)
+	if err := row.Err(); err != nil {
 		return re.Rule{}, err
 	}
 
-	if _, err := result.RowsAffected(); err != nil {
-		return re.Rule{}, repoerr.ErrNotFound
+	var dbr dbRule
+	if err := row.StructScan(&dbr); err != nil {
+		return re.Rule{}, err
 	}
 
-	return r, nil
+	rule := dbToRule(dbr)
+
+	return rule, nil
+}
+
+func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
+	dbr := ruleToDb(r)
+	row, err := repo.DB.NamedQueryContext(ctx, updateRuleQuery, dbr)
+	if err != nil {
+		return re.Rule{}, err
+	}
+	defer row.Close()
+
+	var dbRule dbRule
+	if row.Next() {
+		if err := row.StructScan(&dbRule); err != nil {
+			return re.Rule{}, err
+		}
+	}
+	rule := dbToRule(dbRule)
+
+	return rule, nil
 }
 
 func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error {
@@ -119,7 +161,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 		pgData = "LIMIT :limit"
 	}
 	if pm.Offset != 0 {
-		pgData += " OFFEST :offset"
+		pgData += " OFFSET :offset"
 	}
 	pq := pageQuery(pm)
 	q := fmt.Sprintf(listRulesQuery, pq, pgData)

@@ -14,6 +14,7 @@ import (
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
 	ID              string                `db:"id"`
+	Name            string                `db:"name"`
 	DomainID        string                `db:"domain_id"`
 	InputChannel    string                `db:"input_channel"`
 	InputTopic      sql.NullString        `db:"input_topic"`
@@ -34,6 +35,7 @@ type dbRule struct {
 func ruleToDb(r re.Rule) dbRule {
 	return dbRule{
 		ID:              r.ID,
+		Name:            r.Name,
 		DomainID:        r.DomainID,
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
@@ -55,6 +57,7 @@ func ruleToDb(r re.Rule) dbRule {
 func dbToRule(dto dbRule) re.Rule {
 	return re.Rule{
 		ID:           dto.ID,
+		Name:         dto.Name,
 		DomainID:     dto.DomainID,
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),

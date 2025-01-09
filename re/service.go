@@ -60,6 +60,7 @@ type Repository interface {
 	ViewRule(ctx context.Context, id string) (Rule, error)
 	UpdateRule(ctx context.Context, r Rule) (Rule, error)
 	RemoveRule(ctx context.Context, id string) error
+	UpdateRuleStatus(ctx context.Context, id string, status Status) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
 }
 
@@ -87,6 +88,8 @@ type Service interface {
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error)
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
+	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 }
 
 type re struct {
@@ -123,6 +126,8 @@ func (re *re) ViewRule(ctx context.Context, session authn.Session, id string) (R
 }
 
 func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
+	r.UpdatedAt = time.Now()
+	r.UpdatedBy = session.UserID
 	return re.repo.UpdateRule(ctx, r)
 }
 
@@ -132,6 +137,22 @@ func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta)
 
 func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) error {
 	return re.repo.RemoveRule(ctx, id)
+}
+
+func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error) {
+	status, err := ToStatus(Enabled)
+	if err != nil {
+		return Rule{}, err
+	}
+	return re.repo.UpdateRuleStatus(ctx, id, status)
+}
+
+func (re *re) DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error) {
+	status, err := ToStatus(Disabled)
+	if err != nil {
+		return Rule{}, err
+	}
+	return re.repo.UpdateRuleStatus(ctx, id, status)
 }
 
 func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {

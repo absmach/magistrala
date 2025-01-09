@@ -9,7 +9,7 @@
 # inspection and data visualization.
 
 networks:
-  magistrala-base-net:
+  supermq-base-net:
     driver: bridge
 
 volumes:
@@ -28,7 +28,7 @@ services:
     ports:
       - 6009:5432
     networks:
-      - magistrala-base-net
+      - supermq-base-net
     volumes:
       - magistrala-re-db-volume:/var/lib/postgresql/data
 
@@ -69,7 +69,7 @@ services:
     ports:
       - ${MG_RE_HTTP_PORT}:${MG_RE_HTTP_PORT}
     networks:
-      - magistrala-base-net
+      - supermq-base-net
     volumes:
       # Auth gRPC client certificates
       - type: bind

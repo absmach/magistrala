@@ -66,12 +66,26 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, logger *slog.Logg
 				opts...,
 			), "update_rule").ServeHTTP)
 
-			r.Delete("/{ruleID}/delete", otelhttp.NewHandler(kithttp.NewServer(
+			r.Delete("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
 				deleteRuleEndpoint(svc),
 				decodeDeleteRuleRequest,
 				api.EncodeResponse,
 				opts...,
-			), "update_rule_status").ServeHTTP)
+			), "delete_rule").ServeHTTP)
+
+			r.Put("/{ruleID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+				enableRuleEndpoint(svc),
+				decodeUpdateRuleStatusRequest,
+				api.EncodeResponse,
+				opts...,
+			), "enable_rule").ServeHTTP)
+
+			r.Put("/{ruleID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+				disableRuleEndpoint(svc),
+				decodeUpdateRuleStatusRequest,
+				api.EncodeResponse,
+				opts...,
+			), "disable_rule").ServeHTTP)
 		})
 	})
 
@@ -105,6 +119,13 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	return updateRuleReq{Rule: rule}, nil
 }
 
+func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := updateRuleStatusReq{
+		id: chi.URLParam(r, idKey),
+	}
+	return req, nil
+}
+
 func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
@@ -122,12 +143,21 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefStatus)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	st, err := re.ToStatus(s)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	return listRulesReq{
 		PageMeta: re.PageMeta{
 			Offset:        offset,
 			Limit:         limit,
 			InputChannel:  ic,
 			OutputChannel: oc,
+			Status:        st,
 		},
 	}, nil
 }

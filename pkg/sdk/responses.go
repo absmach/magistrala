@@ -14,3 +14,19 @@ type BootstrapPage struct {
 	Configs []BootstrapConfig `json:"configs"`
 	PageRes
 }
+
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+package sdk
+
+type PageRes struct {
+	Total  uint64 `json:"total"`
+	Offset uint64 `json:"offset"`
+	Limit  uint64 `json:"limit"`
+}
+
+type SubscriptionPage struct {
+	Subscriptions []Subscription `json:"subscriptions"`
+	PageRes
+}

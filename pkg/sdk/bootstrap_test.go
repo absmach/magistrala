@@ -325,7 +325,7 @@ func TestListBootstraps(t *testing.T) {
 				Configs: []bootstrap.Config{bootstrapConfig},
 			},
 			response: sdk.BootstrapPage{
-				PageRes: sdk.PageRes{
+				PageRes: supermqSDK.PageRes{
 					Total: 1,
 				},
 				Configs: []sdk.BootstrapConfig{configRes},

@@ -28,7 +28,7 @@ type PageMetadata struct {
 	Total    uint64   `json:"total"`
 	Offset   uint64   `json:"offset"`
 	Limit    uint64   `json:"limit"`
-	Metadata Metadata `json:"metadata,omitempty"`
+	Metadata supermqSDK.Metadata `json:"metadata,omitempty"`
 }
 
 // SDK contains Magistrala API.
@@ -105,7 +105,7 @@ type SDK interface {
 	// example:
 	//  bootstrap, _ := sdk.BootstrapSecure("externalID", "externalKey", "cryptoKey")
 	//  fmt.Println(bootstrap)
-	BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
+	//BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
 
 	// Bootstraps retrieves a list of managed configs.
 	//
@@ -116,7 +116,7 @@ type SDK interface {
 	//  }
 	//  bootstraps, _ := sdk.Bootstraps(pm, "domainID", "token")
 	//  fmt.Println(bootstraps)
-	Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
+	//Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
 
 	// Whitelist updates Client state Config with given ID belonging to the user identified by the given token.
 	//

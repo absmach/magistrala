@@ -14,10 +14,10 @@ import (
 var (
 	_ supermq.Response = (*viewRuleRes)(nil)
 	_ supermq.Response = (*addRuleRes)(nil)
-	_ supermq.Response = (*changeRuleStatusRes)(nil)
+	_ supermq.Response = (*updateRuleStatusRes)(nil)
 	_ supermq.Response = (*rulesPageRes)(nil)
 	_ supermq.Response = (*updateRuleRes)(nil)
-	_ supermq.Response = (*updateRoleStatusRes)(nil)
+	_ supermq.Response = (*deleteRuleRes)(nil)
 )
 
 type pageRes struct {
@@ -102,27 +102,27 @@ func (res rulesPageRes) Empty() bool {
 	return false
 }
 
-type changeRuleStatusRes struct {
+type updateRuleStatusRes struct {
 	re.Rule `json:",inline"`
 }
 
-func (res changeRuleStatusRes) Code() int {
+func (res updateRuleStatusRes) Code() int {
 	return http.StatusOK
 }
 
-func (res changeRuleStatusRes) Headers() map[string]string {
+func (res updateRuleStatusRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res changeRuleStatusRes) Empty() bool {
+func (res updateRuleStatusRes) Empty() bool {
 	return false
 }
 
-type updateRoleStatusRes struct {
+type deleteRuleRes struct {
 	deleted bool
 }
 
-func (res updateRoleStatusRes) Code() int {
+func (res deleteRuleRes) Code() int {
 	if res.deleted {
 		return http.StatusNoContent
 	}
@@ -130,10 +130,10 @@ func (res updateRoleStatusRes) Code() int {
 	return http.StatusOK
 }
 
-func (res updateRoleStatusRes) Headers() map[string]string {
+func (res deleteRuleRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res updateRoleStatusRes) Empty() bool {
+func (res deleteRuleRes) Empty() bool {
 	return true
 }

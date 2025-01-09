@@ -9,13 +9,19 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 )
 
-const maxLimitSize = 1000
+const (
+	maxLimitSize = 1000
+	MaxNameSize  = 1024
+)
 
 type addRuleReq struct {
 	re.Rule
 }
 
 func (req addRuleReq) validate() error {
+	if len(req.Name) > api.MaxNameSize || req.Name == "" {
+		return apiutil.ErrNameSize
+	}
 	return nil
 }
 
@@ -57,16 +63,30 @@ func (req updateRuleReq) validate() error {
 	if len(req.Rule.Logic.Value) == 0 {
 		return apiutil.ErrEmptyList
 	}
+	if len(req.Rule.Name) > api.MaxNameSize || req.Rule.Name == "" {
+		return apiutil.ErrNameSize
+	}
 
 	return nil
 }
 
-type changeRuleStatusReq struct {
-	id     string
-	status re.Status
+type updateRuleStatusReq struct {
+	id string
 }
 
-func (req changeRuleStatusReq) validate() error {
+func (req updateRuleStatusReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}
+
+type deleteRuleReq struct {
+	id string
+}
+
+func (req deleteRuleReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}

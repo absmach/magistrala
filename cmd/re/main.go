@@ -39,23 +39,23 @@ import (
 
 const (
 	svcName        = "rules_engine"
-	envPrefixDB    = "SMQ_RE_DB_"
-	envPrefixHTTP  = "SMQ_RE_HTTP_"
+	envPrefixDB    = "MG_RE_DB_"
+	envPrefixHTTP  = "MG_RE_HTTP_"
 	envPrefixAuth  = "SMQ_AUTH_GRPC_"
 	defDB          = "r"
 	defSvcHTTPPort = "9008"
 )
 
 type config struct {
-	LogLevel         string        `env:"SMQ_RE_LOG_LEVEL"           envDefault:"info"`
-	InstanceID       string        `env:"SMQ_RE_INSTANCE_ID"         envDefault:""`
+	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
+	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
 	JaegerURL        url.URL       `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry    bool          `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
 	ESURL            string        `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
-	CacheURL         string        `env:"SMQ_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration time.Duration `env:"SMQ_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
+	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	ConfigPath       string        `env:"SMQ_RE_CONFIG_PATH"         envDefault:"/config.toml"`
+	ConfigPath       string        `env:"MG_RE_CONFIG_PATH"         envDefault:"/config.toml"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 }
 

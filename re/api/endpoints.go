@@ -86,27 +86,74 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 			return rulesPageRes{}, nil
 		}
 		ret := rulesPageRes{
+			pageRes: pageRes{
+				Limit:  page.Limit,
+				Offset: page.Offset,
+				Total:  page.Total,
+			},
 			Rules: page.Rules,
 		}
 		return ret, nil
 	}
 }
 
-func upadateRuleStatusEndpoint(s re.Service) endpoint.Endpoint {
+func deleteRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(changeRuleStatusReq)
+		req := request.(deleteRuleReq)
 		if err := req.validate(); err != nil {
-			return updateRoleStatusRes{}, err
+			return deleteRuleRes{}, err
 		}
 		err := s.RemoveRule(ctx, session, req.id)
 		if err != nil {
-			return updateRoleStatusRes{false}, err
+			return deleteRuleRes{false}, err
 		}
-		return updateRoleStatusRes{true}, nil
+		return deleteRuleRes{true}, nil
+	}
+}
+
+func enableRuleEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateRuleStatusReq)
+		if err := req.validate(); err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		rule, err := s.EnableRule(ctx, session, req.id)
+		if err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		return updateRuleStatusRes{Rule: rule}, err
+	}
+}
+
+func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateRuleStatusReq)
+		if err := req.validate(); err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		rule, err := s.DisableRule(ctx, session, req.id)
+		if err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		return updateRuleStatusRes{Rule: rule}, err
 	}
 }

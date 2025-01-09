@@ -16,7 +16,7 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	mgauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -66,12 +66,26 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, logger *slog.Logg
 				opts...,
 			), "update_rule").ServeHTTP)
 
-			r.Put("/{ruleID}/status", otelhttp.NewHandler(kithttp.NewServer(
-				upadateRuleStatusEndpoint(svc),
+			r.Delete("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
+				deleteRuleEndpoint(svc),
+				decodeDeleteRuleRequest,
+				api.EncodeResponse,
+				opts...,
+			), "delete_rule").ServeHTTP)
+
+			r.Put("/{ruleID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+				enableRuleEndpoint(svc),
 				decodeUpdateRuleStatusRequest,
 				api.EncodeResponse,
 				opts...,
-			), "update_rule_status").ServeHTTP)
+			), "enable_rule").ServeHTTP)
+
+			r.Put("/{ruleID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+				disableRuleEndpoint(svc),
+				decodeUpdateRuleStatusRequest,
+				api.EncodeResponse,
+				opts...,
+			), "disable_rule").ServeHTTP)
 		})
 	})
 
@@ -105,6 +119,13 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	return updateRuleReq{Rule: rule}, nil
 }
 
+func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := updateRuleStatusReq{
+		id: chi.URLParam(r, idKey),
+	}
+	return req, nil
+}
+
 func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
@@ -122,25 +143,27 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefStatus)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	st, err := re.ToStatus(s)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	return listRulesReq{
 		PageMeta: re.PageMeta{
 			Offset:        offset,
 			Limit:         limit,
 			InputChannel:  ic,
 			OutputChannel: oc,
+			Status:        st,
 		},
 	}, nil
 }
 
-func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := r.URL.Query().Get(idKey)
-	status, err := apiutil.ReadStringQuery(r, statusKey, re.AllStatus.String())
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	s, err := re.ToStatus(status)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	return changeRuleStatusReq{id: id, status: s}, nil
+func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	id := chi.URLParam(r, idKey)
+
+	return deleteRuleReq{id: id}, nil
 }

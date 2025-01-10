@@ -3,10 +3,10 @@
 
 package sdk
 
-import supermqSDK "github.com/absmach/supermq/pkg/sdk"
+import smqSDK "github.com/absmach/supermq/pkg/sdk"
 
 // bootstrapsPage contains list of bootstrap configs in a page with proper metadata.
 type BootstrapPage struct {
 	Configs []BootstrapConfig `json:"configs"`
-	supermqSDK.PageRes
+	smqSDK.PageRes
 }

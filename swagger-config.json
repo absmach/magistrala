@@ -1,1 +1,1 @@
-{"urls":[{"name":"bootstrap.yml","url":"apis/api/openapi/bootstrap.yml"},{"name":"notifiers.yml","url":"apis/api/openapi/notifiers.yml"},{"name":"readers.yml","url":"apis/api/openapi/readers.yml"}]}
+{"urls":[{"name":"api/bootstrap.yml","url":"apis/apidocs/openapi/bootstrap.yml"},{"name":"api/notifiers.yml","url":"apis/apidocs/openapi/notifiers.yml"},{"name":"api/readers.yml","url":"apis/apidocs/openapi/readers.yml"}]}

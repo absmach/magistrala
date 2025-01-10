@@ -19,7 +19,7 @@ jobs:
         id: swagger-ui-action
         uses: blokovi/swagger-ui-action@main
         with:
-          dir: "./api/openapi"
+          dir: "./apidocs/openapi"
           pattern: "*.yml"
           debug: "true"
 

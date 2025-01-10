@@ -50,8 +50,8 @@ import (
 
 const (
 	svcName          = "bootstrap"
-	envPrefixDB      = "SMQ_BOOTSTRAP_DB_"
-	envPrefixHTTP    = "SMQ_BOOTSTRAP_HTTP_"
+	envPrefixDB      = "MG_BOOTSTRAP_DB_"
+	envPrefixHTTP    = "MG_BOOTSTRAP_HTTP_"
 	envPrefixAuth    = "SMQ_AUTH_GRPC_"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 	defDB            = "bootstrap"
@@ -62,18 +62,19 @@ const (
 )
 
 type config struct {
-	LogLevel            string  `env:"SMQ_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
-	EncKey              string  `env:"SMQ_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
-	ESConsumerName      string  `env:"SMQ_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	ClientsURL          string  `env:"SMQ_CLIENTS_URL"                envDefault:"http://localhost:9000"`
-	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID          string  `env:"SMQ_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL               string  `env:"SMQ_ES_URL"                     envDefault:"nats://localhost:4222"`
-	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
-	SpicedbHost         string  `env:"SMQ_SPICEDB_HOST"               envDefault:"localhost"`
-	SpicedbPort         string  `env:"SMQ_SPICEDB_PORT"               envDefault:"50051"`
-	SpicedbPreSharedKey string  `env:"SMQ_SPICEDB_PRE_SHARED_KEY"     envDefault:"12345678"`
+	LogLevel            string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
+	EncKey              string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
+	ESConsumerName      string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
+	ClientsURL          string  `env:"SMQ_CLIENTS_URL"               envDefault:"http://localhost:9006"`
+	ChannelsURL         string  `env:"SMQ_CHANNELS_URL"              envDefault:"http://localhost:9005"`
+	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"            envDefault:"true"`
+	InstanceID          string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
+	ESURL               string  `env:"SMQ_ES_URL"                    envDefault:"nats://localhost:4222"`
+	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
+	SpicedbHost         string  `env:"SMQ_SPICEDB_HOST"              envDefault:"localhost"`
+	SpicedbPort         string  `env:"SMQ_SPICEDB_PORT"              envDefault:"50051"`
+	SpicedbPreSharedKey string  `env:"SMQ_SPICEDB_PRE_SHARED_KEY"    envDefault:"12345678"`
 }
 
 func main() {
@@ -221,7 +222,8 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 
 	config := mgsdk.Config{
-		ClientsURL: cfg.ClientsURL,
+		ClientsURL:  cfg.ClientsURL,
+		ChannelsURL: cfg.ChannelsURL,
 	}
 
 	sdk := mgsdk.NewSDK(config)

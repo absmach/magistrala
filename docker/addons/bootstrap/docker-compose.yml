@@ -27,7 +27,7 @@ services:
       - magistrala-bootstrap-db-volume:/var/lib/postgresql/data
 
   bootstrap:
-    image: magistrala/bootstrap:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/bootstrap:${SMQ_RELEASE_TAG}
     container_name: magistrala-bootstrap
     depends_on:
       - bootstrap-db
@@ -38,7 +38,7 @@ services:
       MG_BOOTSTRAP_LOG_LEVEL: ${MG_BOOTSTRAP_LOG_LEVEL}
       MG_BOOTSTRAP_ENCRYPT_KEY: ${MG_BOOTSTRAP_ENCRYPT_KEY}
       MG_BOOTSTRAP_EVENT_CONSUMER: ${MG_BOOTSTRAP_EVENT_CONSUMER}
-      MG_ES_URL: ${MG_ES_URL}
+      SMQ_ES_URL: ${SMQ_ES_URL}
       MG_BOOTSTRAP_HTTP_HOST: ${MG_BOOTSTRAP_HTTP_HOST}
       MG_BOOTSTRAP_HTTP_PORT: ${MG_BOOTSTRAP_HTTP_PORT}
       MG_BOOTSTRAP_HTTP_SERVER_CERT: ${MG_BOOTSTRAP_HTTP_SERVER_CERT}
@@ -52,34 +52,40 @@ services:
       MG_BOOTSTRAP_DB_SSL_CERT: ${MG_BOOTSTRAP_DB_SSL_CERT}
       MG_BOOTSTRAP_DB_SSL_KEY: ${MG_BOOTSTRAP_DB_SSL_KEY}
       MG_BOOTSTRAP_DB_SSL_ROOT_CERT: ${MG_BOOTSTRAP_DB_SSL_ROOT_CERT}
-      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
-      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_THINGS_URL: ${MG_THINGS_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
       MG_BOOTSTRAP_INSTANCE_ID: ${MG_BOOTSTRAP_INSTANCE_ID}
-      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
-      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
-      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_CLIENTS_URL: ${SMQ_CLIENTS_URL}
+      SMQ_CHANNELS_URL: ${SMQ_CHANNELS_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
     networks:
       - magistrala-base-net
     volumes:
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

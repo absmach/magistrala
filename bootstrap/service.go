@@ -35,6 +35,9 @@ var (
 	// ErrAddBootstrap indicates error in adding bootstrap configuration.
 	ErrAddBootstrap = errors.New("failed to add bootstrap configuration")
 
+	// ErrBootstrapState indicates an invalid bootstrap state.
+	ErrBootstrapState = errors.New("invalid bootstrap state")
+
 	// ErrNotInSameDomain indicates entities are not in the same domain.
 	errNotInSameDomain = errors.New("entities are not in the same domain")
 

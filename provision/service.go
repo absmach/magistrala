@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/absmach/magistrala/pkg/sdk"
 	"github.com/absmach/supermq/pkg/errors"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	smqSDK "github.com/absmach/supermq/pkg/sdk"
 )
 
 const (
@@ -78,8 +79,8 @@ type provisionService struct {
 
 // Result represent what is created with additional info.
 type Result struct {
-	Clients     []sdk.Client      `json:"clients,omitempty"`
-	Channels    []sdk.Channel     `json:"channels,omitempty"`
+	Clients     []smqSDK.Client   `json:"clients,omitempty"`
+	Channels    []smqSDK.Channel  `json:"channels,omitempty"`
 	ClientCert  map[string]string `json:"client_cert,omitempty"`
 	ClientKey   map[string]string `json:"client_key,omitempty"`
 	CACert      string            `json:"ca_cert,omitempty"`
@@ -98,7 +99,7 @@ func New(cfg Config, mgsdk sdk.SDK, logger *slog.Logger) Service {
 
 // Mapping retrieves current configuration.
 func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
-	pm := sdk.PageMetadata{
+	pm := smqSDK.PageMetadata{
 		Offset: uint64(offset),
 		Limit:  uint64(limit),
 	}
@@ -113,8 +114,8 @@ func (ps *provisionService) Mapping(token string) (map[string]interface{}, error
 // Provision is provision method for creating setup according to
 // provision layout specified in config.toml.
 func (ps *provisionService) Provision(domainID, token, name, externalID, externalKey string) (res Result, err error) {
-	var channels []sdk.Channel
-	var clients []sdk.Client
+	var channels []smqSDK.Channel
+	var clients []smqSDK.Client
 	defer ps.recover(&err, &clients, &channels, &domainID, &token)
 
 	token, err = ps.createTokenIfEmpty(token)
@@ -135,7 +136,7 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			c.Metadata[externalIDKey] = externalID
 		}
 
-		cli := sdk.Client{
+		cli := smqSDK.Client{
 			Metadata: c.Metadata,
 		}
 		if name == "" {
@@ -158,9 +159,9 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 	}
 
 	for _, channel := range ps.conf.Channels {
-		ch := sdk.Channel{
+		ch := smqSDK.Channel{
 			Name:     name + "_" + channel.Name,
-			Metadata: sdk.Metadata(channel.Metadata),
+			Metadata: smqSDK.Metadata(channel.Metadata),
 		}
 		ch, err := ps.sdk.CreateChannel(ch, domainID, token)
 		if err != nil {
@@ -182,7 +183,7 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 		ClientKey:   map[string]string{},
 	}
 
-	var cert sdk.Cert
+	var cert smqSDK.Cert
 	var bsConfig sdk.BootstrapConfig
 	for _, c := range clients {
 		var chanIDs []string
@@ -218,7 +219,7 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 		}
 
 		if ps.conf.Bootstrap.X509Provision {
-			var cert sdk.Cert
+			var cert smqSDK.Cert
 
 			cert, err = ps.sdk.IssueCert(c.ID, ps.conf.Cert.TTL, domainID, token)
 			if err != nil {
@@ -293,7 +294,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 		return token, ErrMissingCredentials
 	}
 
-	u := sdk.Login{
+	u := smqSDK.Login{
 		Username: ps.conf.Server.MgUsername,
 		Password: ps.conf.Server.MgPass,
 	}
@@ -305,7 +306,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	return tkn.AccessToken, nil
 }
 
-func (ps *provisionService) updateGateway(domainID, token string, bs sdk.BootstrapConfig, channels []sdk.Channel) error {
+func (ps *provisionService) updateGateway(domainID, token string, bs sdk.BootstrapConfig, channels []smqSDK.Channel) error {
 	var gw Gateway
 	for _, ch := range channels {
 		switch ch.Metadata["type"] {
@@ -345,7 +346,7 @@ func (ps *provisionService) errLog(err error) {
 	}
 }
 
-func clean(ps *provisionService, clients []sdk.Client, channels []sdk.Channel, domainID, token string) {
+func clean(ps *provisionService, clients []smqSDK.Client, channels []smqSDK.Channel, domainID, token string) {
 	for _, t := range clients {
 		err := ps.sdk.DeleteClient(t.ID, domainID, token)
 		ps.errLog(err)
@@ -356,7 +357,7 @@ func clean(ps *provisionService, clients []sdk.Client, channels []sdk.Channel, d
 	}
 }
 
-func (ps *provisionService) recover(e *error, ths *[]sdk.Client, chs *[]sdk.Channel, dm, tkn *string) {
+func (ps *provisionService) recover(e *error, ths *[]smqSDK.Client, chs *[]smqSDK.Channel, dm, tkn *string) {
 	if e == nil {
 		return
 	}
@@ -413,7 +414,7 @@ func (ps *provisionService) recover(e *error, ths *[]sdk.Client, chs *[]sdk.Chan
 	}
 }
 
-func needsBootstrap(th sdk.Client) bool {
+func needsBootstrap(th smqSDK.Client) bool {
 	if th.Metadata == nil {
 		return false
 	}

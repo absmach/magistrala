@@ -296,7 +296,7 @@ func TestChangeStateReqValidation(t *testing.T) {
 			token: "token",
 			id:    "id",
 			state: bootstrap.State(14),
-			err:   apiutil.ErrBootstrapState,
+			err:   bootstrap.ErrBootstrapState,
 		},
 	}
 

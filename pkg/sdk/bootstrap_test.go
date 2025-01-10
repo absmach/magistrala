@@ -25,7 +25,7 @@ import (
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	supermqSDK "github.com/absmach/supermq/pkg/sdk"
+	smqSDK "github.com/absmach/supermq/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -79,7 +79,7 @@ var (
 	sdkBootsrapConfigRes = sdk.BootstrapConfig{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
-		Channels: []supermqSDK.Channel{
+		Channels: []smqSDK.Channel{
 			{
 				ID: channel1Id,
 			},
@@ -275,7 +275,7 @@ func TestListBootstraps(t *testing.T) {
 	mgsdk := sdk.NewSDK(conf)
 
 	configRes := sdk.BootstrapConfig{
-		Channels: []supermqSDK.Channel{
+		Channels: []smqSDK.Channel{
 			{
 				ID: channel1Id,
 			},
@@ -325,7 +325,7 @@ func TestListBootstraps(t *testing.T) {
 				Configs: []bootstrap.Config{bootstrapConfig},
 			},
 			response: sdk.BootstrapPage{
-				PageRes: supermqSDK.PageRes{
+				PageRes: smqSDK.PageRes{
 					Total: 1,
 				},
 				Configs: []sdk.BootstrapConfig{configRes},
@@ -484,7 +484,7 @@ func TestWhiteList(t *testing.T) {
 			state:    -1,
 			svcReq:   bootstrap.Active,
 			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBootstrapState), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, bootstrap.ErrBootstrapState), http.StatusBadRequest),
 		},
 		{
 			desc:     "whitelist with empty client Id",
@@ -725,7 +725,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ClientID: invalid,
-				Channels: []supermqSDK.Channel{
+				Channels: []smqSDK.Channel{
 					{
 						ID: channel1Id,
 					},
@@ -749,7 +749,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
 				ClientID: "",
-				Channels: []supermqSDK.Channel{
+				Channels: []smqSDK.Channel{
 					{
 						ID: channel1Id,
 					},

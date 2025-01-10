@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	mgapi "github.com/absmach/magistrala/api"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/supermq"
 	api "github.com/absmach/supermq/api/http"
@@ -42,7 +43,7 @@ var (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc bootstrap.Service, authn smqauthn.Authentication, reader bootstrap.ConfigReader, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, mgapi.EncodeError)),
 	}
 
 	r := chi.NewRouter()

@@ -16,7 +16,7 @@ import (
 
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
-	supermqSDK "github.com/absmach/supermq/pkg/sdk"
+	smqSDK "github.com/absmach/supermq/pkg/sdk"
 )
 
 const (
@@ -58,7 +58,7 @@ func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(channelData, &stringData); err == nil {
 			ts.Channels = stringData
 		} else {
-			var channels []supermqSDK.Channel
+			var channels []smqSDK.Channel
 			if err := json.Unmarshal(channelData, &channels); err == nil {
 				ts.Channels = channels
 			} else {
@@ -248,7 +248,7 @@ func (sdk mgSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, err
 	}
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
 
-	_, body, err := sdk.processRequest(http.MethodGet, url, supermqSDK.ClientPrefix+externalKey, nil, nil, http.StatusOK)
+	_, body, err := sdk.processRequest(http.MethodGet, url, smqSDK.ClientPrefix+externalKey, nil, nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err
 	}
@@ -272,7 +272,7 @@ func (sdk mgSDK) BootstrapSecure(externalID, externalKey, cryptoKey string) (Boo
 		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
-	_, body, sdkErr := sdk.processRequest(http.MethodGet, url, supermqSDK.ClientPrefix+encExtKey, nil, nil, http.StatusOK)
+	_, body, sdkErr := sdk.processRequest(http.MethodGet, url, smqSDK.ClientPrefix+encExtKey, nil, nil, http.StatusOK)
 	if sdkErr != nil {
 		return BootstrapConfig{}, sdkErr
 	}

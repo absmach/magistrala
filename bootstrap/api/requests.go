@@ -156,7 +156,7 @@ func (req changeStateReq) validate() error {
 
 	if req.State != bootstrap.Inactive &&
 		req.State != bootstrap.Active {
-		return apiutil.ErrBootstrapState
+		return bootstrap.ErrBootstrapState
 	}
 
 	return nil

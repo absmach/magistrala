@@ -13,6 +13,7 @@ import (
 	"reflect"
 
 	chclient "github.com/absmach/callhome/pkg/client"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/absmach/magistrala/provision"
 	httpapi "github.com/absmach/magistrala/provision/api"
 	"github.com/absmach/supermq"
@@ -20,7 +21,6 @@ import (
 	"github.com/absmach/supermq/clients"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/errors"
-	mgsdk "github.com/absmach/supermq/pkg/sdk"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
 	"github.com/absmach/supermq/pkg/uuid"

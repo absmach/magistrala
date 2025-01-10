@@ -16,48 +16,26 @@ import (
 	"strings"
 
 	"github.com/absmach/supermq/pkg/errors"
-	supermqSDK "github.com/absmach/supermq/pkg/sdk"
+	smqSDK "github.com/absmach/supermq/pkg/sdk"
 	"moul.io/http2curl"
 )
 
-const (
-	// CTJSON represents JSON content type.
-	CTJSON ContentType = "application/json"
-
-	// CTJSONSenML represents JSON SenML content type.
-	CTJSONSenML ContentType = "application/senml+json"
-
-	// CTBinary represents binary content type.
-	CTBinary ContentType = "application/octet-stream"
-
-	// EnabledStatus represents enable status for a client.
-	EnabledStatus = "enabled"
-
-	// DisabledStatus represents disabled status for a client.
-	DisabledStatus = "disabled"
-
-	BearerPrefix = "Bearer "
-
-	ClientPrefix = "Client "
-)
-
-// ContentType represents all possible content types.
-type ContentType string
-
 var _ SDK = (*mgSDK)(nil)
+
+type Metadata map[string]interface{}
 
 type PageMetadata struct {
 	Total    uint64   `json:"total"`
 	Offset   uint64   `json:"offset"`
 	Limit    uint64   `json:"limit"`
-	Metadata supermqSDK.Metadata `json:"metadata,omitempty"`
+	Metadata Metadata `json:"metadata,omitempty"`
 }
 
 // SDK contains Magistrala API.
 //
 //go:generate mockery --name SDK --output=./mocks --filename sdk.go --quiet --note "Copyright (c) Abstract Machines"
 type SDK interface {
-	supermqSDK.SDK
+	smqSDK.SDK
 
 	// AddBootstrap add bootstrap configuration
 	//
@@ -127,7 +105,7 @@ type SDK interface {
 	// example:
 	//  bootstrap, _ := sdk.BootstrapSecure("externalID", "externalKey", "cryptoKey")
 	//  fmt.Println(bootstrap)
-	//BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
+	BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
 
 	// Bootstraps retrieves a list of managed configs.
 	//
@@ -138,7 +116,7 @@ type SDK interface {
 	//  }
 	//  bootstraps, _ := sdk.Bootstraps(pm, "domainID", "token")
 	//  fmt.Println(bootstraps)
-	//Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
+	Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
 
 	// Whitelist updates Client state Config with given ID belonging to the user identified by the given token.
 	//
@@ -149,12 +127,11 @@ type SDK interface {
 }
 
 type mgSDK struct {
-	bootstrapURL   string
-	msgContentType supermqSDK.ContentType
-	client         *http.Client
-	curlFlag       bool
+	bootstrapURL string
+	client       *http.Client
+	curlFlag     bool
 
-	supermqSDK.SDK
+	smqSDK.SDK
 }
 
 // Config contains sdk configuration parameters.
@@ -172,14 +149,14 @@ type Config struct {
 	JournalURL     string
 	HostURL        string
 
-	MsgContentType  supermqSDK.ContentType
+	MsgContentType  smqSDK.ContentType
 	TLSVerification bool
 	CurlFlag        bool
 }
 
 // NewSDK returns new supermq SDK instance.
 func NewSDK(conf Config) SDK {
-	supermqSDK := supermqSDK.NewSDK(supermqSDK.Config{
+	smqSDK := smqSDK.NewSDK(smqSDK.Config{
 		CertsURL:       conf.CertsURL,
 		HTTPAdapterURL: conf.HTTPAdapterURL,
 		ReaderURL:      conf.ReaderURL,
@@ -198,7 +175,7 @@ func NewSDK(conf Config) SDK {
 	})
 
 	return &mgSDK{
-		bootstrapURL:   conf.BootstrapURL,
+		bootstrapURL: conf.BootstrapURL,
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -207,7 +184,7 @@ func NewSDK(conf Config) SDK {
 			},
 		},
 		curlFlag: conf.CurlFlag,
-		SDK:      supermqSDK,
+		SDK:      smqSDK,
 	}
 }
 
@@ -221,15 +198,15 @@ func (sdk mgSDK) processRequest(method, reqUrl, token string, data []byte, heade
 
 	// Sets a default value for the Content-Type.
 	// Overridden if Content-Type is passed in the headers arguments.
-	req.Header.Add("Content-Type", string(supermqSDK.CTJSON))
+	req.Header.Add("Content-Type", string(smqSDK.CTJSON))
 
 	for key, value := range headers {
 		req.Header.Add(key, value)
 	}
 
 	if token != "" {
-		if !strings.Contains(token, supermqSDK.ClientPrefix) {
-			token = supermqSDK.BearerPrefix + token
+		if !strings.Contains(token, smqSDK.ClientPrefix) {
+			token = smqSDK.BearerPrefix + token
 		}
 		req.Header.Set("Authorization", token)
 	}

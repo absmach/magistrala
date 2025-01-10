@@ -21,7 +21,8 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
+	supermqSDK "github.com/absmach/supermq/pkg/sdk"
 )
 
 const (
@@ -60,7 +61,7 @@ func Provision(conf Config) error {
 		ttl     = "2400h"
 	)
 
-	msgContentType := string(sdk.CTJSONSenML)
+	msgContentType := string(supermqSDK.CTJSONSenML)
 	sdkConf := sdk.Config{
 		ClientsURL:      conf.Host,
 		UsersURL:        conf.Host,
@@ -68,15 +69,15 @@ func Provision(conf Config) error {
 		HTTPAdapterURL:  fmt.Sprintf("%s/http", conf.Host),
 		BootstrapURL:    conf.Host,
 		CertsURL:        conf.Host,
-		MsgContentType:  sdk.ContentType(msgContentType),
+		MsgContentType:  supermqSDK.ContentType(msgContentType),
 		TLSVerification: false,
 	}
 
 	s := sdk.NewSDK(sdkConf)
 
-	user := sdk.User{
+	user := supermqSDK.User{
 		Email: conf.Email,
-		Credentials: sdk.Credentials{
+		Credentials: supermqSDK.Credentials{
 			Username: conf.Username,
 			Secret:   conf.Password,
 		},
@@ -95,14 +96,14 @@ func Provision(conf Config) error {
 	var err error
 
 	// Login user
-	token, err := s.CreateToken(sdk.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
+	token, err := s.CreateToken(supermqSDK.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
 	if err != nil {
 		return fmt.Errorf("unable to login user: %s", err.Error())
 	}
 
 	// Create new domain
 	dname := fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate())
-	domain := sdk.Domain{
+	domain := supermqSDK.Domain{
 		Name:       dname,
 		Alias:      strings.ToLower(dname),
 		Permission: "admin",
@@ -113,7 +114,7 @@ func Provision(conf Config) error {
 		return fmt.Errorf("unable to create domain: %w", err)
 	}
 	// Login to domain
-	token, err = s.CreateToken(sdk.Login{
+	token, err = s.CreateToken(supermqSDK.Login{
 		Username: user.Credentials.Username,
 		Password: user.Credentials.Secret,
 	})
@@ -147,16 +148,16 @@ func Provision(conf Config) error {
 	}
 
 	//  Create clients and channels
-	clients := make([]sdk.Client, conf.Num)
-	channels := make([]sdk.Channel, conf.Num)
+	clients := make([]supermqSDK.Client, conf.Num)
+	channels := make([]supermqSDK.Channel, conf.Num)
 	cIDs := []string{}
 	tIDs := []string{}
 
 	fmt.Println("# List of clients that can be connected to MQTT broker")
 
 	for i := 0; i < conf.Num; i++ {
-		clients[i] = sdk.Client{Name: fmt.Sprintf("%s-client-%d", conf.Prefix, i)}
-		channels[i] = sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
+		clients[i] = supermqSDK.Client{Name: fmt.Sprintf("%s-client-%d", conf.Prefix, i)}
+		channels[i] = supermqSDK.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
 	clients, err = s.CreateClients(clients, domain.ID, token.AccessToken)
@@ -164,7 +165,7 @@ func Provision(conf Config) error {
 		return fmt.Errorf("failed to create the clients: %s", err.Error())
 	}
 
-	var chs []sdk.Channel
+	var chs []supermqSDK.Channel
 	for _, c := range channels {
 		c, err = s.CreateChannel(c, domain.ID, token.AccessToken)
 		if err != nil {
@@ -257,7 +258,7 @@ func Provision(conf Config) error {
 
 	for _, cID := range cIDs {
 		for _, tID := range tIDs {
-			conIDs := sdk.Connection{
+			conIDs := supermqSDK.Connection{
 				ClientIDs:  []string{tID},
 				ChannelIDs: []string{cID},
 				Types:      []string{"publish", "subscribe"},

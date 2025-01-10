@@ -9,7 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/absmach/magistrala/internal/testsutil"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
+	readersapi "github.com/absmach/magistrala/readers/api"
 	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	chmocks "github.com/absmach/supermq/channels/mocks"
@@ -18,10 +19,8 @@ import (
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	sdk "github.com/absmach/supermq/pkg/sdk"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
-	readersapi "github.com/absmach/supermq/readers/api"
 	readersmocks "github.com/absmach/supermq/readers/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -30,7 +29,6 @@ import (
 var (
 	channelsGRPCClient *chmocks.ChannelsServiceClient
 	clientsGRPCClient  *climocks.ClientsServiceClient
-	validID            = testsutil.GenerateUUID(&testing.T{})
 )
 
 func setupReaders() (*httptest.Server, *authnmocks.Authentication, *readersmocks.MessageRepository) {
@@ -226,6 +224,7 @@ func TestReadMessages(t *testing.T) {
 			err:      errors.NewSDKError(errors.New("json: cannot unmarshal string into Go struct field MessagesPage.messages of type senml.Message")),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			authCall1 := authn.On("Authenticate", mock.Anything, tc.token).Return(smqauthn.Session{UserID: validID}, tc.authnErr)

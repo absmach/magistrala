@@ -13,7 +13,7 @@ info:
   license:
     name: Apache 2.0
     url: https://github.com/absmach/magistrala/blob/main/LICENSE
-  version: 0.14.0
+  version: 0.15.1
 
 servers:
   - url: http://localhost:9014
@@ -44,7 +44,7 @@ paths:
         "400":
           description: Failed due to malformed JSON.
         "401":
-          description: Missing or invalid access token provided.          
+          description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
         "409":
@@ -278,7 +278,7 @@ components:
       content:
         application/health+json:
           schema:
-            $ref: "./schemas/HealthInfo.yml"
+            $ref: "./schemas/health_info.yml"
 
   securitySchemes:
     bearerAuth:

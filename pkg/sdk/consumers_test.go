@@ -46,11 +46,9 @@ var (
 		OwnerID: ownerID,
 		ID:      subID,
 	}
-	validToken   = "validToken"
-	invalidToken = "invalidToken"
-	wrongID      = "wrongID"
-	instanceID   = "instanceID"
-	contentType  = supermqSDK.CTJSON
+	wrongID     = "wrongID"
+	instanceID  = "instanceID"
+	contentType = supermqSDK.CTJSON
 )
 
 func setupSubscriptions() (*httptest.Server, *notmocks.Service) {

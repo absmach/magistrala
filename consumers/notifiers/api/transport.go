@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/supermq"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/consumers/notifiers"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"

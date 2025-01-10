@@ -29,6 +29,26 @@ type PageMetadata struct {
 	Offset   uint64   `json:"offset"`
 	Limit    uint64   `json:"limit"`
 	Metadata Metadata `json:"metadata,omitempty"`
+	Topic    string   `json:"topic,omitempty"`
+	Contact  string   `json:"contact,omitempty"`
+	DomainID string   `json:"domain_id,omitempty"`
+	Level    uint64   `json:"level,omitempty"`
+}
+
+type MessagePageMetadata struct {
+	PageMetadata
+	Subtopic    string  `json:"subtopic,omitempty"`
+	Publisher   string  `json:"publisher,omitempty"`
+	Comparator  string  `json:"comparator,omitempty"`
+	BoolValue   *bool   `json:"vb,omitempty"`
+	StringValue string  `json:"vs,omitempty"`
+	DataValue   string  `json:"vd,omitempty"`
+	From        float64 `json:"from,omitempty"`
+	To          float64 `json:"to,omitempty"`
+	Aggregation string  `json:"aggregation,omitempty"`
+	Interval    string  `json:"interval,omitempty"`
+	Value       float64 `json:"value,omitempty"`
+	Protocol    string  `json:"protocol,omitempty"`
 }
 
 // SDK contains Magistrala API.
@@ -124,12 +144,58 @@ type SDK interface {
 	//  err := sdk.Whitelist("clientID", 1, "domainID", "token")
 	//  fmt.Println(err)
 	Whitelist(clientID string, state int, domainID, token string) errors.SDKError
+
+	// ReadMessages read messages of specified channel.
+	//
+	// example:
+	//  pm := sdk.MessagePageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//  }
+	//  msgs, _ := sdk.ReadMessages(pm,"channelID", "domainID", "token")
+	//  fmt.Println(msgs)
+	ReadMessages(pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, errors.SDKError)
+
+	// CreateSubscription creates a new subscription
+	//
+	// example:
+	//  subscription, _ := sdk.CreateSubscription("topic", "contact", "token")
+	//  fmt.Println(subscription)
+	CreateSubscription(topic, contact, token string) (string, errors.SDKError)
+
+	// ListSubscriptions list subscriptions given list parameters.
+	//
+	// example:
+	//  pm := sdk.PageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//  }
+	//  subscriptions, _ := sdk.ListSubscriptions(pm, "token")
+	//  fmt.Println(subscriptions)
+	ListSubscriptions(pm PageMetadata, token string) (SubscriptionPage, errors.SDKError)
+
+	// ViewSubscription retrieves a subscription with the provided id.
+	//
+	// example:
+	//  subscription, _ := sdk.ViewSubscription("id", "token")
+	//  fmt.Println(subscription)
+	ViewSubscription(id, token string) (Subscription, errors.SDKError)
+
+	// DeleteSubscription removes a subscription with the provided id.
+	//
+	// example:
+	//  err := sdk.DeleteSubscription("id", "token")
+	//  fmt.Println(err)
+	DeleteSubscription(id, token string) errors.SDKError
 }
 
 type mgSDK struct {
-	bootstrapURL string
-	client       *http.Client
-	curlFlag     bool
+	bootstrapURL   string
+	readersURL     string
+	usersURL       string
+	client         *http.Client
+	curlFlag       bool
+	msgContentType smqSDK.ContentType
 
 	smqSDK.SDK
 }
@@ -159,7 +225,6 @@ func NewSDK(conf Config) SDK {
 	smqSDK := smqSDK.NewSDK(smqSDK.Config{
 		CertsURL:       conf.CertsURL,
 		HTTPAdapterURL: conf.HTTPAdapterURL,
-		ReaderURL:      conf.ReaderURL,
 		ClientsURL:     conf.ClientsURL,
 		UsersURL:       conf.UsersURL,
 		GroupsURL:      conf.GroupsURL,
@@ -175,7 +240,11 @@ func NewSDK(conf Config) SDK {
 	})
 
 	return &mgSDK{
-		bootstrapURL: conf.BootstrapURL,
+		bootstrapURL:   conf.BootstrapURL,
+		readersURL:     conf.ReaderURL,
+		usersURL:       conf.UsersURL,
+		msgContentType: conf.MsgContentType,
+
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -264,6 +333,18 @@ func (pm PageMetadata) query() (string, error) {
 			return "", errors.NewSDKError(err)
 		}
 		q.Add("metadata", string(md))
+	}
+	if pm.Topic != "" {
+		q.Add("topic", pm.Topic)
+	}
+	if pm.Contact != "" {
+		q.Add("contact", pm.Contact)
+	}
+	if pm.DomainID != "" {
+		q.Add("domain_id", pm.DomainID)
+	}
+	if pm.Level != 0 {
+		q.Add("level", strconv.FormatUint(pm.Level, 10))
 	}
 
 	return q.Encode(), nil

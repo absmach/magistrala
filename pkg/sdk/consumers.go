@@ -12,9 +12,7 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 )
 
-const (
-	subscriptionEndpoint = "subscriptions"
-)
+const subscriptionEndpoint = "subscriptions"
 
 type Subscription struct {
 	ID      string `json:"id,omitempty"`

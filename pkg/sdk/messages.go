@@ -12,12 +12,11 @@ import (
 	"strings"
 
 	"github.com/absmach/supermq/pkg/errors"
-	supermqSDK "github.com/absmach/supermq/pkg/sdk"
 )
 
 const channelParts = 2
 
-func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token string) (supermqSDK.MessagesPage, errors.SDKError) {
+func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token string) (MessagesPage, errors.SDKError) {
 	chanNameParts := strings.SplitN(chanName, ".", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
@@ -25,9 +24,9 @@ func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token 
 		subtopicPart = fmt.Sprintf("?subtopic=%s", chanNameParts[1])
 	}
 
-	msgURL, err := sdk.withMessageQueryParams(sdk.readerURL, fmt.Sprintf("channels/%s/messages%s", chanID, subtopicPart), pm)
+	msgURL, err := sdk.withMessageQueryParams(sdk.readersURL, fmt.Sprintf("channels/%s/messages%s", chanID, subtopicPart), pm)
 	if err != nil {
-		return supermqSDK.MessagesPage{}, errors.NewSDKError(err)
+		return MessagesPage{}, errors.NewSDKError(err)
 	}
 
 	header := make(map[string]string)
@@ -35,12 +34,12 @@ func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token 
 
 	_, body, sdkerr := sdk.processRequest(http.MethodGet, msgURL, token, nil, header, http.StatusOK)
 	if sdkerr != nil {
-		return supermqSDK.MessagesPage{}, sdkerr
+		return MessagesPage{}, sdkerr
 	}
 
-	var mp supermqSDK.MessagesPage
+	var mp MessagesPage
 	if err := json.Unmarshal(body, &mp); err != nil {
-		return supermqSDK.MessagesPage{}, errors.NewSDKError(err)
+		return MessagesPage{}, errors.NewSDKError(err)
 	}
 
 	return mp, nil

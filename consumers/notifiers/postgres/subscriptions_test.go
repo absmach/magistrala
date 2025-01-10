@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/postgres"
-	"github.com/absmach/supermq/consumers/notifiers"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/stretchr/testify/assert"

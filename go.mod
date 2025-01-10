@@ -6,13 +6,12 @@ require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
 	github.com/absmach/certs v0.0.0-20241209153600-91270de67b5a
-	github.com/absmach/supermq v0.16.1-0.20250110085603-df5d752c4b50
+	github.com/absmach/supermq v0.16.1-0.20250110102639-a9169276e54c
 	github.com/authzed/authzed-go v1.2.1
 	github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/fiorix/go-smpp v0.0.0-20210403173735-2894b96e70ba
-	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/go-kit/kit v0.13.0
 	github.com/gofrs/uuid/v5 v5.3.0

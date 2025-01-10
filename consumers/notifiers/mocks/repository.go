@@ -7,7 +7,7 @@ package mocks
 import (
 	context "context"
 
-	notifiers "github.com/absmach/supermq/consumers/notifiers"
+	notifiers "github.com/absmach/magistrala/consumers/notifiers"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -11,6 +11,8 @@ import (
 	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/supermq/consumers"
+	smqmocks "github.com/absmach/supermq/consumers/mocks"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"
@@ -20,7 +22,6 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	smqmocks "github.com/absmach/supermq/consumers/notifiers/mocks"
 )
 
 const (
@@ -347,7 +348,7 @@ func TestConsume(t *testing.T) {
 		{
 			desc: "test fail",
 			msg:  &errMsg,
-			err:  notifiers.ErrNotify,
+			err:  consumers.ErrNotify,
 		},
 	}
 

@@ -15,12 +15,14 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-type ScriptType uint
-
-type Script struct {
-	Type  ScriptType `json:"type"`
-	Value string     `json:"value"`
-}
+type (
+	ScriptType uint
+	Metadata   map[string]interface{}
+	Script     struct {
+		Type  ScriptType `json:"type"`
+		Value string     `json:"value"`
+	}
+)
 
 // Type can be daily, weekly or monthly.
 type ReccuringType uint
@@ -42,6 +44,7 @@ type Rule struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`
 	DomainID      string    `json:"domain"`
+	Metadata      Metadata  `json:"metadata,omitempty"`
 	InputChannel  string    `json:"input_channel"`
 	InputTopic    string    `json:"input_topic"`
 	Logic         Script    `json:"logic"`

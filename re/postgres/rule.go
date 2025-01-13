@@ -5,9 +5,11 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/absmach/magistrala/re"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -16,6 +18,7 @@ type dbRule struct {
 	ID              string                `db:"id"`
 	Name            string                `db:"name"`
 	DomainID        string                `db:"domain_id"`
+	Metadata        []byte                `db:"metadata,omitempty"`
 	InputChannel    string                `db:"input_channel"`
 	InputTopic      sql.NullString        `db:"input_topic"`
 	LogicType       re.ScriptType         `db:"logic_type"`
@@ -32,11 +35,20 @@ type dbRule struct {
 	UpdatedBy       string                `db:"updated_by"`
 }
 
-func ruleToDb(r re.Rule) dbRule {
+func ruleToDb(r re.Rule) (dbRule, error) {
+	metadata := []byte("{}")
+	if len(r.Metadata) > 0 {
+		b, err := json.Marshal(r.Metadata)
+		if err != nil {
+			return dbRule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+		metadata = b
+	}
 	return dbRule{
 		ID:              r.ID,
 		Name:            r.Name,
 		DomainID:        r.DomainID,
+		Metadata:        metadata,
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
 		LogicType:       r.Logic.Type,
@@ -51,14 +63,21 @@ func ruleToDb(r re.Rule) dbRule {
 		CreatedBy:       r.CreatedBy,
 		UpdatedAt:       r.UpdatedAt,
 		UpdatedBy:       r.UpdatedBy,
-	}
+	}, nil
 }
 
-func dbToRule(dto dbRule) re.Rule {
+func dbToRule(dto dbRule) (re.Rule, error) {
+	var metadata re.Metadata
+	if dto.Metadata != nil {
+		if err := json.Unmarshal(dto.Metadata, &metadata); err != nil {
+			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
 	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
 		DomainID:     dto.DomainID,
+		Metadata:     metadata,
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),
 		Logic: re.Script{
@@ -77,7 +96,7 @@ func dbToRule(dto dbRule) re.Rule {
 		CreatedBy: dto.CreatedBy,
 		UpdatedAt: dto.UpdatedAt,
 		UpdatedBy: dto.UpdatedBy,
-	}
+	}, nil
 }
 
 func toNullString(value string) sql.NullString {

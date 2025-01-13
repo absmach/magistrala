@@ -21,6 +21,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						name			 VARCHAR(1024),
 						domain_id		 VARCHAR(36) NOT NULL,
 						metadata	 	 JSONB,
+						created_by   VARCHAR(254),
 						created_at		 TIMESTAMP,
 						updated_at		 TIMESTAMP,
 						updated_by  	 VARCHAR(254),

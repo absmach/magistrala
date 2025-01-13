@@ -6,7 +6,7 @@ package smpp
 import (
 	"time"
 
-	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/supermq/consumers/notifiers"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers"
 	"github.com/absmach/supermq/pkg/transformers/json"

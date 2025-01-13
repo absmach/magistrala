@@ -46,7 +46,7 @@ type notifierService struct {
 	authn    smqauthn.Authentication
 	subs     SubscriptionsRepository
 	idp      supermq.IDProvider
-	notifier Notifier
+	notifier consumers.Notifier
 	errCh    chan error
 	from     string
 }

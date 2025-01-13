@@ -20,6 +20,7 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	smqmocks "github.com/absmach/supermq/consumers/notifiers/mocks"
 )
 
 const (
@@ -32,7 +33,7 @@ const (
 func newService() (notifiers.Service, *authnmocks.Authentication, *mocks.SubscriptionsRepository) {
 	repo := new(mocks.SubscriptionsRepository)
 	auth := new(authnmocks.Authentication)
-	notifier := new(mocks.Notifier)
+	notifier := new(smqmocks.Notifier)
 	idp := uuid.NewMock()
 	from := "exampleFrom"
 	return notifiers.New(auth, repo, idp, notifier, from), auth, repo

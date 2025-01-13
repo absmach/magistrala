@@ -18,16 +18,16 @@ import (
 const (
 	addRuleQuery = `
 		INSERT INTO rules (id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
-			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status)
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status)
 		VALUES (:id, :name, :domain_id, :metadata, :input_channel, :input_topic, :logic_type, :logic_value,
 			:output_channel, :output_topic, :recurring_time, :recurring_type, :recurring_period, :created_at, :updated_at, :updated_by, :status)
 		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
-			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status;
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
 
 	viewRuleQuery = `
 		SELECT id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value, output_channel, 
-			output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status
+			output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules
 		WHERE id = $1;
 	`
@@ -40,7 +40,7 @@ const (
 			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by, status = :status
 		WHERE id = :id
 		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
-			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status;
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
 
 	removeRuleQuery = `
@@ -53,12 +53,12 @@ const (
 		SET status = $2
 		WHERE id = $1
 		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
-			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status;  
+			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status;  
 	`
 
 	listRulesQuery = `
 		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
-			output_topic, recurring_time, recurring_type, recurring_period, created_at, updated_at, updated_by, status
+			output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules r %s %s;
 	`
 

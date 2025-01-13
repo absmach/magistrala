@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/supermq/consumers/notifiers"
+	"github.com/absmach/supermq/consumers"
+	smqmocks "github.com/absmach/supermq/consumers/mocks"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"
@@ -32,7 +34,7 @@ const (
 func newService() (notifiers.Service, *authnmocks.Authentication, *mocks.SubscriptionsRepository) {
 	repo := new(mocks.SubscriptionsRepository)
 	auth := new(authnmocks.Authentication)
-	notifier := new(mocks.Notifier)
+	notifier := new(smqmocks.Notifier)
 	idp := uuid.NewMock()
 	from := "exampleFrom"
 	return notifiers.New(auth, repo, idp, notifier, from), auth, repo
@@ -346,7 +348,7 @@ func TestConsume(t *testing.T) {
 		{
 			desc: "test fail",
 			msg:  &errMsg,
-			err:  notifiers.ErrNotify,
+			err:  consumers.ErrNotify,
 		},
 	}
 

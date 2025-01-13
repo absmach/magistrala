@@ -13,11 +13,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/api"
 	"github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/consumers/notifiers"
 	smqlog "github.com/absmach/supermq/logger"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/uuid"

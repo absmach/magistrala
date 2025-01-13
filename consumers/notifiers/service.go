@@ -9,7 +9,6 @@ import (
 
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/consumers"
-	notif "github.com/absmach/supermq/consumers/notifiers"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
@@ -47,13 +46,13 @@ type notifierService struct {
 	authn    smqauthn.Authentication
 	subs     SubscriptionsRepository
 	idp      supermq.IDProvider
-	notifier notif.Notifier
+	notifier consumers.Notifier
 	errCh    chan error
 	from     string
 }
 
 // New instantiates the subscriptions service implementation.
-func New(authn smqauthn.Authentication, subs SubscriptionsRepository, idp supermq.IDProvider, notifier notif.Notifier, from string) Service {
+func New(authn smqauthn.Authentication, subs SubscriptionsRepository, idp supermq.IDProvider, notifier consumers.Notifier, from string) Service {
 	return &notifierService{
 		authn:    authn,
 		subs:     subs,
@@ -132,7 +131,7 @@ func (ns *notifierService) ConsumeBlocking(ctx context.Context, message interfac
 	if len(to) > 0 {
 		err := ns.notifier.Notify(ns.from, to, msg)
 		if err != nil {
-			return errors.Wrap(notif.ErrNotify, err)
+			return errors.Wrap(consumers.ErrNotify, err)
 		}
 	}
 
@@ -166,7 +165,7 @@ func (ns *notifierService) ConsumeAsync(ctx context.Context, message interface{}
 	}
 	if len(to) > 0 {
 		if err := ns.notifier.Notify(ns.from, to, msg); err != nil {
-			ns.errCh <- errors.Wrap(notif.ErrNotify, err)
+			ns.errCh <- errors.Wrap(consumers.ErrNotify, err)
 		}
 	}
 }

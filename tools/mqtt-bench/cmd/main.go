@@ -7,7 +7,7 @@ package main
 import (
 	"log"
 
-	bench "github.com/absmach/supermq/tools/mqtt-bench"
+	bench "github.com/absmach/magistrala/tools/mqtt-bench"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

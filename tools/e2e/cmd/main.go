@@ -7,7 +7,7 @@ package main
 import (
 	"log"
 
-	"github.com/absmach/supermq/tools/e2e"
+	"github.com/absmach/magistrala/tools/e2e"
 	cc "github.com/ivanpirog/coloredcobra"
 	"github.com/spf13/cobra"
 )

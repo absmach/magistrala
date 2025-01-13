@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala/internal/email"
-	"github.com/absmach/supermq/consumers/notifiers"
+	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
@@ -16,14 +16,14 @@ const (
 	contentTemplate = "A publisher with an id %s sent the message over %s with the following values \n %s"
 )
 
-var _ notifiers.Notifier = (*notifier)(nil)
+var _ consumers.Notifier = (*notifier)(nil)
 
 type notifier struct {
 	agent *email.Agent
 }
 
 // New instantiates SMTP message notifier.
-func New(agent *email.Agent) notifiers.Notifier {
+func New(agent *email.Agent) consumers.Notifier {
 	return &notifier{agent: agent}
 }
 

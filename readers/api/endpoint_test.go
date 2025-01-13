@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/readers/api"
 	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
 	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -22,7 +23,6 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
-	"github.com/absmach/supermq/readers/api"
 	"github.com/absmach/supermq/readers/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

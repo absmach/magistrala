@@ -33,6 +33,8 @@ type PageMetadata struct {
 	Contact  string   `json:"contact,omitempty"`
 	DomainID string   `json:"domain_id,omitempty"`
 	Level    uint64   `json:"level,omitempty"`
+	State    string   `json:"state,omitempty"`
+	Name     string   `json:"name,omitempty"`
 }
 
 type MessagePageMetadata struct {

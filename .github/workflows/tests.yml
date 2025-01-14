@@ -68,6 +68,11 @@ jobs:
               - "pkg/sdk/**"
               - "pkg/events/**"
 
+            cli:
+              - "cli/**"
+              - "cmd/cli/**"
+              - "pkg/sdk/**"
+
             consumers:
               - "consumers/**"
               - "cmd/postgres-writer/**"
@@ -108,6 +113,11 @@ jobs:
         if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/bootstrap.out ./bootstrap/...
+
+      - name: Run cli tests
+        if: steps.changes.outputs.cli == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/cli.out ./cli/...
 
       - name: Run consumers tests
         if: steps.changes.outputs.consumers == 'true' || steps.changes.outputs.workflow == 'true'

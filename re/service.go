@@ -77,6 +77,7 @@ type PageMeta struct {
 	InputChannel  string `json:"input_channel,omitempty" db:"input_channel"`
 	OutputChannel string `json:"output_channel,omitempty" db:"output_channel"`
 	Status        Status `json:"status,omitempty" db:"status"`
+	Domain        string `json:"domain_id,omitempty" db:"domain_id"`
 }
 
 type Page struct {
@@ -135,6 +136,7 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 }
 
 func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error) {
+	pm.Domain = session.DomainID
 	return re.repo.ListRules(ctx, pm)
 }
 

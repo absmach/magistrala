@@ -20,7 +20,7 @@ const (
 		INSERT INTO rules (id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
 			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status)
 		VALUES (:id, :name, :domain_id, :metadata, :input_channel, :input_topic, :logic_type, :logic_value,
-			:output_channel, :output_topic, :recurring_time, :recurring_type, :recurring_period, :created_at, :updated_at, :updated_by, :status)
+			:output_channel, :output_topic, :recurring_time, :recurring_type, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)
 		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
 			output_channel, output_topic, recurring_time, recurring_type, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
@@ -227,6 +227,10 @@ func pageQuery(pm re.PageMeta) string {
 	}
 	if pm.Status != re.AllStatus {
 		query = append(query, "r.status = :status")
+	}
+
+	if pm.Domain != "" {
+		query = append(query, "r.domain_id = :domain_id")
 	}
 
 	var q string

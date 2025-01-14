@@ -229,6 +229,10 @@ func pageQuery(pm re.PageMeta) string {
 		query = append(query, "r.status = :status")
 	}
 
+	if pm.Domain != "" {
+		query = append(query, "r.domain_id = :domain_id")
+	}
+
 	var q string
 	if len(query) > 0 {
 		q = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))

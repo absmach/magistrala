@@ -181,6 +181,12 @@ func main() {
 		go chc.CallHome(ctx)
 	}
 
+	// Start scheduler
+	g.Go(func() error {
+		svc.StartScheduler(ctx)
+		return nil
+	})
+
 	// Start all servers
 	g.Go(func() error {
 		return httpSvc.Start()

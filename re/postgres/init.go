@@ -41,6 +41,15 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS rules`,
 				},
 			},
+			{
+				Id: "rules_02",
+				Up: []string{
+					`ALTER TABLE rules ADD COLUMN start_datetime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+				},
+				Down: []string{
+					`ALTER TABLE rules DROP COLUMN start_datetime`,
+				},
+			},
 		},
 	}
 }

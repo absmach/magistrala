@@ -35,8 +35,9 @@ const (
 )
 
 type Schedule struct {
-	Time            []time.Time   `json:"date,omitempty"`
-	RecurringType   ReccuringType `json:"recurring_type"`
+	StartDateTime   time.Time     `json:"start_datetime"`   // When the schedule becomes active
+	Time            []time.Time   `json:"date,omitempty"`   // Specific times for the rule to run
+	RecurringType   ReccuringType `json:"recurring_type"`   // None, Daily, Weekly, Monthly
 	RecurringPeriod uint          `json:"recurring_period"` // 1 meaning every Recurring value, 2 meaning every other, and so on.
 }
 
@@ -69,15 +70,18 @@ type Repository interface {
 
 // PageMeta contains page metadata that helps navigation.
 type PageMeta struct {
-	Total         uint64 `json:"total" db:"total"`
-	Offset        uint64 `json:"offset" db:"offset"`
-	Limit         uint64 `json:"limit" db:"limit"`
-	Dir           string `json:"dir" db:"dir"`
-	Name          string `json:"name" db:"name"`
-	InputChannel  string `json:"input_channel,omitempty" db:"input_channel"`
-	OutputChannel string `json:"output_channel,omitempty" db:"output_channel"`
-	Status        Status `json:"status,omitempty" db:"status"`
-	Domain        string `json:"domain_id,omitempty" db:"domain_id"`
+	Total           uint64         `json:"total" db:"total"`
+	Offset          uint64         `json:"offset" db:"offset"`
+	Limit           uint64         `json:"limit" db:"limit"`
+	Dir             string         `json:"dir" db:"dir"`
+	Name            string         `json:"name" db:"name"`
+	InputChannel    string         `json:"input_channel,omitempty" db:"input_channel"`
+	OutputChannel   string         `json:"output_channel,omitempty" db:"output_channel"`
+	Status          Status         `json:"status,omitempty" db:"status"`
+	Domain          string         `json:"domain_id,omitempty" db:"domain_id"`
+	ScheduledBefore *time.Time     `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
+	ScheduledAfter  *time.Time     `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
+	RecurringType   *ReccuringType `json:"recurring_type,omitempty" db:"recurring_type"`     // Filter by recurring type
 }
 
 type Page struct {
@@ -94,6 +98,7 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	StartScheduler(ctx context.Context)
 }
 
 type re struct {
@@ -104,12 +109,13 @@ type re struct {
 }
 
 func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub) Service {
-	return &re{
+	svc := &re{
 		repo:   repo,
 		idp:    idp,
 		pubSub: pubSub,
 		errors: make(chan error),
 	}
+	return svc
 }
 
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
@@ -226,4 +232,84 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 		}
 		return re.pubSub.Publish(ctx, m.Channel, m)
 	}
+}
+
+func (re *re) StartScheduler(ctx context.Context) {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			now := time.Now()
+
+			pm := PageMeta{
+				Status:          EnabledStatus,
+				ScheduledBefore: &now,
+			}
+
+			page, err := re.repo.ListRules(ctx, pm)
+			if err != nil {
+				re.errors <- err
+				continue
+			}
+
+			for _, rule := range page.Rules {
+				if re.shouldRunRule(rule, now) {
+					go func(r Rule) {
+						msg := &messaging.Message{
+							Channel: r.InputChannel,
+							Created: now.Unix(),
+						}
+						re.errors <- re.process(ctx, r, msg)
+					}(rule)
+				}
+			}
+		}
+	}
+}
+
+func (re *re) shouldRunRule(rule Rule, now time.Time) bool {
+	if rule.Schedule.StartDateTime.After(now) {
+		return false
+	}
+
+	for _, t := range rule.Schedule.Time {
+		if t.Year() == now.Year() &&
+			t.Month() == now.Month() &&
+			t.Day() == now.Day() &&
+			t.Hour() == now.Hour() &&
+			t.Minute() == now.Minute() {
+			return true
+		}
+	}
+
+	switch rule.Schedule.RecurringType {
+	case Daily:
+		if rule.Schedule.RecurringPeriod > 0 {
+			daysSinceStart := now.Sub(rule.Schedule.StartDateTime).Hours() / 24
+			if int(daysSinceStart)%int(rule.Schedule.RecurringPeriod) == 0 {
+				return true
+			}
+		}
+	case Weekly:
+		if rule.Schedule.RecurringPeriod > 0 {
+			weeksSinceStart := now.Sub(rule.Schedule.StartDateTime).Hours() / (24 * 7)
+			if int(weeksSinceStart)%int(rule.Schedule.RecurringPeriod) == 0 {
+				return true
+			}
+		}
+	case Monthly:
+		if rule.Schedule.RecurringPeriod > 0 {
+			monthsSinceStart := (now.Year()-rule.Schedule.StartDateTime.Year())*12 +
+				int(now.Month()-rule.Schedule.StartDateTime.Month())
+			if monthsSinceStart%int(rule.Schedule.RecurringPeriod) == 0 {
+				return true
+			}
+		}
+	}
+
+	return false
 }

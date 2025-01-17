@@ -25,6 +25,7 @@ type dbRule struct {
 	LogicValue      string                `db:"logic_value"`
 	OutputChannel   sql.NullString        `db:"output_channel"`
 	OutputTopic     sql.NullString        `db:"output_topic"`
+	StartDateTime   time.Time             `db:"start_datetime"`
 	RecurringTime   *pgtype.Array[string] `db:"recurring_time"`
 	RecurringType   re.ReccuringType      `db:"recurring_type"`
 	RecurringPeriod uint                  `db:"recurring_period"`
@@ -55,6 +56,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		LogicValue:      r.Logic.Value,
 		OutputChannel:   toNullString(r.OutputChannel),
 		OutputTopic:     toNullString(r.OutputTopic),
+		StartDateTime:   r.Schedule.StartDateTime,
 		RecurringTime:   toStringArray(r.Schedule.Time),
 		RecurringType:   r.Schedule.RecurringType,
 		RecurringPeriod: r.Schedule.RecurringPeriod,
@@ -87,6 +89,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		OutputChannel: fromNullString(dto.OutputChannel),
 		OutputTopic:   fromNullString(dto.OutputTopic),
 		Schedule: re.Schedule{
+			StartDateTime:   dto.StartDateTime,
 			Time:            toTimeSlice(dto.RecurringTime),
 			RecurringType:   dto.RecurringType,
 			RecurringPeriod: dto.RecurringPeriod,

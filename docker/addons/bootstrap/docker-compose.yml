@@ -27,7 +27,7 @@ services:
       - magistrala-bootstrap-db-volume:/var/lib/postgresql/data
 
   bootstrap:
-    image: ghcr.io/absmach/magistrala/bootstrap:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/bootstrap:${MG_RELEASE_TAG}
     container_name: magistrala-bootstrap
     depends_on:
       - bootstrap-db

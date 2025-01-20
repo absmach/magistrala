@@ -32,7 +32,7 @@ services:
       - magistrala-timescale-writer-volume:/var/lib/timescalesql/data
 
   timescale-writer:
-    image: magistrala/timescale-writer:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-writer
     depends_on:
       - timescale
@@ -53,10 +53,10 @@ services:
       MG_TIMESCALE_SSL_CERT: ${MG_TIMESCALE_SSL_CERT}
       MG_TIMESCALE_SSL_KEY: ${MG_TIMESCALE_SSL_KEY}
       MG_TIMESCALE_SSL_ROOT_CERT: ${MG_TIMESCALE_SSL_ROOT_CERT}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
       MG_TIMESCALE_WRITER_INSTANCE_ID: ${MG_TIMESCALE_WRITER_INSTANCE_ID}
     ports:
       - ${MG_TIMESCALE_WRITER_HTTP_PORT}:${MG_TIMESCALE_WRITER_HTTP_PORT}

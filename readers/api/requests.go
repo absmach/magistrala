@@ -19,6 +19,7 @@ var validAggregations = []string{"MAX", "MIN", "AVG", "SUM", "COUNT"}
 type listMessagesReq struct {
 	chanID   string
 	token    string
+	domain   string
 	key      string
 	pageMeta readers.PageMetadata
 }

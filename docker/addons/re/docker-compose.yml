@@ -33,7 +33,7 @@ services:
       - magistrala-re-db-volume:/var/lib/postgresql/data
 
   re:
-    image: ghcr.io/absmach/magistrala/re:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/re:${MG_RELEASE_TAG}
     container_name: magistrala-re
     depends_on:
       - re-db

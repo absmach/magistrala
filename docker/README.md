@@ -54,7 +54,7 @@ MG_MESSAGE_BROKER_TYPE=rabbitmq make dockers
 
 ```env
 MG_MESSAGE_BROKER_TYPE=rabbitmq
-MG_MESSAGE_BROKER_URL=${MG_RABBITMQ_URL}
+SMQ_MESSAGE_BROKER_URL=${MG_RABBITMQ_URL}
 ```
 
 For Redis as an events store, you would need to run RabbitMQ or NATS as a message broker. For example, to use Redis as an events store with rabbitmq as a message broker:
@@ -65,7 +65,7 @@ MG_ES_TYPE=redis MG_MESSAGE_BROKER_TYPE=rabbitmq make dockers
 
 ```env
 MG_MESSAGE_BROKER_TYPE=rabbitmq
-MG_MESSAGE_BROKER_URL=${MG_RABBITMQ_URL}
+SMQ_MESSAGE_BROKER_URL=${MG_RABBITMQ_URL}
 MG_ES_TYPE=redis
 MG_ES_URL=${MG_REDIS_URL}
 ```

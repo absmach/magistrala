@@ -86,7 +86,7 @@ services:
       - magistrala-auth-db-volume:/var/lib/postgresql/data
 
   auth:
-    image: supermq/auth:${SMQ_RELEASE_TAG}
+    image: supermq/auth:${MG_RELEASE_TAG}
     container_name: magistrala-auth
     depends_on:
       - auth-db
@@ -186,7 +186,7 @@ services:
       - magistrala-domains-redis-volume:/data
 
   domains:
-    image: supermq/domains:${SMQ_RELEASE_TAG}
+    image: supermq/domains:${MG_RELEASE_TAG}
     container_name: magistrala-domains
     depends_on:
       - domains-db
@@ -297,7 +297,7 @@ services:
       - magistrala-invitations-db-volume:/var/lib/postgresql/data
 
   invitations:
-    image: supermq/invitations:${SMQ_RELEASE_TAG}
+    image: supermq/invitations:${MG_RELEASE_TAG}
     container_name: magistrala-invitations
     restart: on-failure
     depends_on:
@@ -422,7 +422,7 @@ services:
       - magistrala-clients-redis-volume:/data
 
   clients:
-    image: supermq/clients:${SMQ_RELEASE_TAG}
+    image: supermq/clients:${MG_RELEASE_TAG}
     container_name: magistrala-clients
     depends_on:
       - clients-db
@@ -563,7 +563,7 @@ services:
       - magistrala-channels-db-volume:/var/lib/postgresql/data
 
   channels:
-    image: supermq/channels:${SMQ_RELEASE_TAG}
+    image: supermq/channels:${MG_RELEASE_TAG}
     container_name: magistrala-channels
     depends_on:
       - channels-db
@@ -662,7 +662,7 @@ services:
       - magistrala-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: supermq/users:${SMQ_RELEASE_TAG}
+    image: supermq/users:${MG_RELEASE_TAG}
     container_name: magistrala-users
     depends_on:
       - users-db
@@ -768,7 +768,7 @@ services:
       - magistrala-groups-db-volume:/var/lib/postgresql/data
 
   groups:
-    image: supermq/groups:${SMQ_RELEASE_TAG}
+    image: supermq/groups:${MG_RELEASE_TAG}
     container_name: magistrala-groups
     depends_on:
       - groups-db
@@ -865,7 +865,7 @@ services:
       - magistrala-base-net
 
   mqtt-adapter:
-    image: supermq/mqtt:${SMQ_RELEASE_TAG}
+    image: supermq/mqtt:${MG_RELEASE_TAG}
     container_name: magistrala-mqtt
     depends_on:
       - clients
@@ -938,7 +938,7 @@ services:
           create_host_path: true
 
   http-adapter:
-    image: supermq/http:${SMQ_RELEASE_TAG}
+    image: supermq/http:${MG_RELEASE_TAG}
     container_name: magistrala-http
     depends_on:
       - clients
@@ -1025,7 +1025,7 @@ services:
           create_host_path: true
 
   coap-adapter:
-    image: supermq/coap:${SMQ_RELEASE_TAG}
+    image: supermq/coap:${MG_RELEASE_TAG}
     container_name: magistrala-coap
     depends_on:
       - clients
@@ -1096,7 +1096,7 @@ services:
           create_host_path: true
 
   ws-adapter:
-    image: supermq/ws:${SMQ_RELEASE_TAG}
+    image: supermq/ws:${MG_RELEASE_TAG}
     container_name: magistrala-ws
     depends_on:
       - clients
@@ -1183,7 +1183,7 @@ services:
           create_host_path: true
 
   vernemq:
-    image: supermq/vernemq:${SMQ_RELEASE_TAG}
+    image: supermq/vernemq:${MG_RELEASE_TAG}
     container_name: magistrala-vernemq
     restart: on-failure
     environment:

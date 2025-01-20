@@ -31,8 +31,8 @@ import (
 
 const (
 	svcName           = "timescaledb-reader"
-	envPrefixDB       = "SMQ_TIMESCALE_"
-	envPrefixHTTP     = "SMQ_TIMESCALE_READER_HTTP_"
+	envPrefixDB       = "MG_TIMESCALE_"
+	envPrefixHTTP     = "MG_TIMESCALE_READER_HTTP_"
 	envPrefixAuth     = "SMQ_AUTH_GRPC_"
 	envPrefixClients  = "SMQ_CLIENTS_AUTH_GRPC_"
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
@@ -41,9 +41,9 @@ const (
 )
 
 type config struct {
-	LogLevel      string `env:"SMQ_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
-	SendTelemetry bool   `env:"SMQ_SEND_TELEMETRY"                envDefault:"true"`
-	InstanceID    string `env:"SMQ_TIMESCALE_READER_INSTANCE_ID"  envDefault:""`
+	LogLevel      string `env:"MG_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
+	SendTelemetry bool   `env:"SMQ_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID    string `env:"MG_TIMESCALE_READER_INSTANCE_ID"  envDefault:""`
 }
 
 func main() {
@@ -100,7 +100,7 @@ func main() {
 	}
 	defer clientsHandler.Close()
 
-	logger.Info("ClientsService gRPC client successfully connected to clients gRPC server " + clientsHandler.Secure())
+	logger.Info("Clients service gRPC client successfully connected to clients gRPC server " + clientsHandler.Secure())
 
 	channelsClientCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&channelsClientCfg, env.Options{Prefix: envPrefixChannels}); err != nil {

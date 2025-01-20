@@ -11,7 +11,7 @@ networks:
 
 services:
   provision:
-    image: magistrala/provision:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/provision:${MG_RELEASE_TAG}
     container_name: magistrala-provision
     restart: on-failure
     networks:
@@ -38,7 +38,7 @@ services:
       MG_PROVISION_BS_AUTO_WHITELIST: ${MG_PROVISION_BS_AUTO_WHITELIST}
       MG_PROVISION_BS_CONTENT: ${MG_PROVISION_BS_CONTENT}
       MG_PROVISION_CERTS_HOURS_VALID: ${MG_PROVISION_CERTS_HOURS_VALID}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
       MG_PROVISION_INSTANCE_ID: ${MG_PROVISION_INSTANCE_ID}
     volumes:
       - ./configs:/configs

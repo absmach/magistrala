@@ -15,15 +15,15 @@ const defTable = "messages"
 
 // Config defines the options that are used when connecting to a TimescaleSQL instance.
 type Config struct {
-	Host        string
-	Port        string
-	User        string
-	Pass        string
-	Name        string
-	SSLMode     string
-	SSLCert     string
-	SSLKey      string
-	SSLRootCert string
+	Host        string `env:"HOST"           envDefault:"localhost"`
+	Port        string `env:"PORT"           envDefault:"5432"`
+	User        string `env:"USER"           envDefault:"supermq"`
+	Pass        string `env:"PASS"           envDefault:"supermq"`
+	Name        string `env:"NAME"           envDefault:""`
+	SSLMode     string `env:"SSL_MODE"       envDefault:"disable"`
+	SSLCert     string `env:"SSL_CERT"       envDefault:""`
+	SSLKey      string `env:"SSL_KEY"        envDefault:""`
+	SSLRootCert string `env:"SSL_ROOT_CERT"  envDefault:""`
 }
 
 // Connect creates a connection to the TimescaleSQL instance and applies any

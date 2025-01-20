@@ -10,7 +10,7 @@ import (
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgtype"
 )
 
 // dbRule represents the database structure for a Rule.
@@ -26,7 +26,7 @@ type dbRule struct {
 	OutputChannel   sql.NullString        `db:"output_channel"`
 	OutputTopic     sql.NullString        `db:"output_topic"`
 	StartDateTime   time.Time             `db:"start_datetime"`
-	RecurringTime   *pgtype.Array[string] `db:"recurring_time"`
+	RecurringTime   pgtype.TimestampArray `db:"recurring_time"`
 	RecurringType   re.ReccuringType      `db:"recurring_type"`
 	RecurringPeriod uint                  `db:"recurring_period"`
 	Status          re.Status             `db:"status"`
@@ -57,7 +57,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		OutputChannel:   toNullString(r.OutputChannel),
 		OutputTopic:     toNullString(r.OutputTopic),
 		StartDateTime:   r.Schedule.StartDateTime,
-		RecurringTime:   toStringArray(r.Schedule.Time),
+		RecurringTime:   toTimeArray(r.Schedule.RecurringTime),
 		RecurringType:   r.Schedule.RecurringType,
 		RecurringPeriod: r.Schedule.RecurringPeriod,
 		Status:          r.Status,
@@ -90,7 +90,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		OutputTopic:   fromNullString(dto.OutputTopic),
 		Schedule: re.Schedule{
 			StartDateTime:   dto.StartDateTime,
-			Time:            toTimeSlice(dto.RecurringTime),
+			RecurringTime:   toTimeSlice(dto.RecurringTime),
 			RecurringType:   dto.RecurringType,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
@@ -116,28 +116,21 @@ func fromNullString(nullString sql.NullString) string {
 	return nullString.String
 }
 
-func toStringArray(times []time.Time) *pgtype.Array[string] {
-	var strArray []string
-	for _, t := range times {
-		strArray = append(strArray, t.Format(time.RFC3339))
+func toTimeArray(times []time.Time) pgtype.TimestampArray {
+	var time pgtype.TimestampArray
+	if err := time.Set(times); err != nil {
+		return pgtype.TimestampArray{}
 	}
-	ret := pgtype.Array[string]{
-		Elements: strArray,
-		Valid:    true,
-	}
-	return &ret
+	return time
 }
 
-func toTimeSlice(strArray *pgtype.Array[string]) []time.Time {
-	if strArray == nil || !strArray.Valid {
+func toTimeSlice(timeArray pgtype.TimestampArray) []time.Time {
+	if timeArray.Status != pgtype.Present {
 		return []time.Time{}
 	}
-	var times []time.Time
-	for _, s := range strArray.Elements {
-		t, err := time.Parse(time.RFC3339, s)
-		if err == nil {
-			times = append(times, t)
-		}
+	times := make([]time.Time, 0, len(timeArray.Elements))
+	for _, timeStr := range timeArray.Elements {
+		times = append(times, timeStr.Time)
 	}
 	return times
 }

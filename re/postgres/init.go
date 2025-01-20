@@ -32,22 +32,14 @@ func Migration() *migrate.MemoryMigrationSource {
 						status            SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						logic_type        SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						logic_value       BYTEA,
-						recurring_time    TIMESTAMP[],
+						recurring_time    TEXT[],
 						recurring_type    SMALLINT,
-						recurring_period  SMALLINT
+						recurring_period  SMALLINT,
+						start_datetime    TIMESTAMP
 					)`,
 				},
 				Down: []string{
 					`DROP TABLE IF EXISTS rules`,
-				},
-			},
-			{
-				Id: "rules_02",
-				Up: []string{
-					`ALTER TABLE rules ADD COLUMN start_datetime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP`,
-				},
-				Down: []string{
-					`ALTER TABLE rules DROP COLUMN start_datetime`,
 				},
 			},
 		},

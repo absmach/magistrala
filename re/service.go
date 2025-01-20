@@ -17,7 +17,8 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// ErrInvalidRecurringType indicates that the recurring type string is not valid
+const timeFormat = "2000-01-01T13:00"
+
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
 type (
@@ -77,9 +78,6 @@ func (rt *ReccuringType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-
-const timeFormat = "2006-01-02T15:04" // Custom time format for Schedule
-
 type Schedule struct {
 	StartDateTime   time.Time     `json:"start_datetime"`   // When the schedule becomes active
 	Time            []time.Time   `json:"date,omitempty"`   // Specific times for the rule to run
@@ -113,7 +111,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &times); err != nil {
 		return err
 	}
-	
+
 	s.Time = make([]time.Time, len(times.Time))
 	for i, timeStr := range times.Time {
 		t, err := time.Parse(timeFormat, timeStr)

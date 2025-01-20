@@ -1,0 +1,322 @@
+openapi: 3.0.1
+info:
+  title: Magistrala Rules Engine API
+  description: |
+    Rules Engine API for Magistrala IoT platform.
+    Enables creation and management of rules for processing and routing messages.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:9021
+    description: Local development server
+
+paths:
+  /{domainID}/rules:
+    post:
+      summary: Create Rule
+      description: Creates a new rule for message processing
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+      responses:
+        '201':
+          description: Rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '400':
+          description: Failed due to malformed JSON
+        '401':
+          description: Missing or invalid access token
+        '415':
+          description: Missing or invalid content type
+    get:
+      summary: List Rules
+      description: Retrieves a list of rules with optional filtering
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit' 
+        - $ref: '#/components/parameters/InputChannel'
+        - $ref: '#/components/parameters/OutputChannel'
+        - $ref: '#/components/parameters/Status'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: Total number of rules
+                  offset:
+                    type: integer
+                    description: Number of items to skip
+                  limit:
+                    type: integer
+                    description: Size of the subset
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Rule'
+        '400':
+          description: Failed due to malformed query parameters
+        '401':
+          description: Missing or invalid access token
+
+  /{domainID}/rules/{ruleID}:
+    get:
+      summary: View Rule
+      description: Retrieves a rule by ID
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Rule retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Rule not found
+    put:
+      summary: Update Rule
+      description: Updates an existing rule
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+      responses:
+        '200':
+          description: Rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '400':
+          description: Failed due to malformed JSON
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Rule not found
+    delete:
+      summary: Delete Rule
+      description: Deletes a rule
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Rule deleted successfully
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Rule not found
+
+  /{domainID}/rules/{ruleID}/enable:
+    put:
+      summary: Enable Rule
+      description: Enables a rule for processing
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Rule enabled successfully
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Rule not found
+
+  /{domainID}/rules/{ruleID}/disable:
+    put:
+      summary: Disable Rule
+      description: Disables a rule from processing
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Rule disabled successfully
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Rule not found
+
+components:
+  parameters:
+    DomainID:
+      name: domainID
+      description: Domain ID
+      in: path
+      required: true
+      schema:
+        type: string
+    RuleID:
+      name: ruleID
+      description: Rule ID
+      in: path
+      required: true
+      schema:
+        type: string
+    Offset:
+      name: offset
+      description: Number of items to skip
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    Limit:
+      name: limit
+      description: Size of the subset
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+    InputChannel:
+      name: input_channel
+      description: Filter by input channel
+      in: query
+      required: false
+      schema:
+        type: string
+    OutputChannel:
+      name: output_channel
+      description: Filter by output channel
+      in: query
+      required: false
+      schema:
+        type: string
+    Status:
+      name: status
+      description: Filter by rule status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [enabled, disabled]
+        default: enabled
+
+  schemas:
+    Rule:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique rule identifier
+          readOnly: true
+        name:
+          type: string
+          description: Rule name
+        description:
+          type: string
+          description: Rule description
+        input_channel:
+          type: string
+          description: Channel to receive messages from
+        output_channel:
+          type: string
+          description: Channel to send processed messages to
+        conditions:
+          type: array
+          description: List of conditions that trigger the rule
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Message field to evaluate
+              operation:
+                type: string
+                description: Comparison operation
+              value:
+                type: string
+                description: Value to compare against
+        transformations:
+          type: array
+          description: List of transformations to apply to messages
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Message field to transform
+              operation:
+                type: string
+                description: Transformation operation
+              value:
+                type: string
+                description: Value for transformation
+        status:
+          type: string
+          description: Rule status
+          enum: [enabled, disabled]
+          default: enabled
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          readOnly: true
+      required:
+        - name
+        - input_channel
+        - output_channel
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

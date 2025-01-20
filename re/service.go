@@ -78,11 +78,51 @@ func (rt *ReccuringType) UnmarshalJSON(data []byte) error {
 }
 
 
+const timeFormat = "2006-01-02T15:04" // Custom time format for Schedule
+
 type Schedule struct {
 	StartDateTime   time.Time     `json:"start_datetime"`   // When the schedule becomes active
 	Time            []time.Time   `json:"date,omitempty"`   // Specific times for the rule to run
 	RecurringType   ReccuringType `json:"recurring_type"`   // None, Daily, Weekly, Monthly
 	RecurringPeriod uint          `json:"recurring_period"` // 1 meaning every Recurring value, 2 meaning every other, and so on.
+}
+
+func (s Schedule) MarshalJSON() ([]byte, error) {
+	type Alias Schedule
+	times := make([]string, len(s.Time))
+	for i, t := range s.Time {
+		times[i] = t.Format(timeFormat)
+	}
+	return json.Marshal(&struct {
+		Time []string `json:"date,omitempty"`
+		*Alias
+	}{
+		Time:  times,
+		Alias: (*Alias)(&s),
+	})
+}
+
+func (s *Schedule) UnmarshalJSON(data []byte) error {
+	type Alias Schedule
+	times := &struct {
+		Time []string `json:"date,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	}
+	if err := json.Unmarshal(data, &times); err != nil {
+		return err
+	}
+	
+	s.Time = make([]time.Time, len(times.Time))
+	for i, timeStr := range times.Time {
+		t, err := time.Parse(timeFormat, timeStr)
+		if err != nil {
+			return err
+		}
+		s.Time[i] = t
+	}
+	return nil
 }
 
 type Rule struct {

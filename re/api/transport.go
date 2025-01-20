@@ -101,7 +101,7 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
 	return addRuleReq{Rule: rule}, nil
 }

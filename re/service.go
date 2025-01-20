@@ -5,6 +5,8 @@ package re
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -14,6 +16,9 @@ import (
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
 	lua "github.com/yuin/gopher-lua"
 )
+
+// ErrInvalidRecurringType indicates that the recurring type string is not valid
+var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
 type (
 	ScriptType uint
@@ -33,6 +38,45 @@ const (
 	Weekly
 	Monthly
 )
+
+func (rt ReccuringType) String() string {
+	switch rt {
+	case Daily:
+		return "daily"
+	case Weekly:
+		return "weekly"
+	case Monthly:
+		return "monthly"
+	default:
+		return "none"
+	}
+}
+
+func (rt ReccuringType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rt.String())
+}
+
+func (rt *ReccuringType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	switch s {
+	case "daily":
+		*rt = Daily
+	case "weekly":
+		*rt = Weekly
+	case "monthly":
+		*rt = Monthly
+	case "none":
+		*rt = None
+	default:
+		return ErrInvalidRecurringType
+	}
+	return nil
+}
+
 
 type Schedule struct {
 	StartDateTime   time.Time     `json:"start_datetime"`   // When the schedule becomes active

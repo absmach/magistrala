@@ -183,8 +183,8 @@ func main() {
 
 	// Start scheduler
 	g.Go(func() error {
-		svc.StartScheduler(ctx)
-		return nil
+		err = svc.StartScheduler(ctx)
+		return err
 	})
 
 	// Start all servers

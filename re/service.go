@@ -157,6 +157,7 @@ type Rule struct {
 	UpdatedBy     string    `json:"updated_by,omitempty"`
 }
 
+//go:generate mockery --name Repository --output=./mocks --filename repo.go --quiet --note "Copyright (c) Abstract Machines"
 type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, id string) (Rule, error)
@@ -187,6 +188,7 @@ type Page struct {
 	Rules []Rule `json:"rules"`
 }
 
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	consumers.AsyncConsumer
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
@@ -196,7 +198,7 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
-	StartScheduler(ctx context.Context)
+	StartScheduler(ctx context.Context) error
 }
 
 type re struct {
@@ -204,16 +206,17 @@ type re struct {
 	repo   Repository
 	pubSub messaging.PubSub
 	errors chan error
+	ticker *time.Ticker
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub) Service {
-	svc := &re{
+func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tc *time.Ticker) Service {
+	return &re{
 		repo:   repo,
 		idp:    idp,
 		pubSub: pubSub,
 		errors: make(chan error),
+		ticker: tc,
 	}
-	return svc
 }
 
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
@@ -343,14 +346,14 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	}
 }
 
-func (re *re) StartScheduler(ctx context.Context) {
-	ticker := time.NewTicker(time.Minute)
+func (re *re) StartScheduler(ctx context.Context) error {
+	ticker := re.newTicker(time.Minute)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		case <-ticker.C:
 			startDateTime := time.Now().Add(timeZone)
 
@@ -378,6 +381,13 @@ func (re *re) StartScheduler(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (re *re) newTicker(t time.Duration) *time.Ticker {
+	if re.ticker != nil {
+		return re.ticker
+	}
+	return time.NewTicker(t)
 }
 
 func (re *re) shouldRunRule(rule Rule, startTime time.Time) bool {

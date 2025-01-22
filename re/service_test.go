@@ -32,7 +32,7 @@ var (
 			StartDateTime:   time.Now().Add(-time.Hour), // Started an hour ago
 			RecurringType:   re.Daily,
 			RecurringPeriod: 1,
-			RecurringTime:   []time.Time{time.Now().Add(-time.Hour)},
+			RecurringTime:   time.Now().Add(-time.Hour),
 		},
 	}
 	futureRule = re.Rule{
@@ -47,20 +47,18 @@ var (
 	}
 )
 
-const timeZone = 3 * time.Hour
-
-func newService(t *testing.T) (re.Service, *mocks.Repository, chan time.Time) {
+func newService(t *testing.T) (re.Service, *mocks.Repository, *mocks.Ticker) {
 	repo := new(mocks.Repository)
-	mockC := make(chan time.Time)
-	mockTicker := &time.Ticker{C: mockC}
+	mockTicker := new(mocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
-	return re.NewService(repo, idProvider, pubsub, mockTicker), repo, mockC
+	return re.NewService(repo, idProvider, pubsub, mockTicker), repo, mockTicker
 }
 
 func TestStartScheduler(t *testing.T) {
-	now := time.Now().Add(timeZone).Truncate(time.Minute)
-	svc, repo, mockC := newService(t)
+	now := time.Now().Truncate(time.Minute)
+	svc, repo, ticker := newService(t)
+
 	cases := []struct {
 		desc     string
 		err      error
@@ -119,7 +117,7 @@ func TestStartScheduler(t *testing.T) {
 		},
 		{
 			desc: "start scheduler with list error",
-			err:  context.Canceled,
+			err:  repoerr.ErrViewEntity,
 			pageMeta: re.PageMeta{
 				Status:          re.EnabledStatus,
 				ScheduledBefore: &now,
@@ -149,6 +147,9 @@ func TestStartScheduler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("ListRules", mock.Anything, mock.Anything).Return(tc.page, tc.listErr)
+			tickChan := make(chan time.Time)
+			tickCall := ticker.On("Tick").Return((<-chan time.Time)(tickChan))
+			tickCall1 := ticker.On("Stop").Return()
 			ctx, cancel := tc.setupCtx()
 			defer cancel()
 			errc := make(chan error)
@@ -160,19 +161,28 @@ func TestStartScheduler(t *testing.T) {
 			switch tc.desc {
 			case "start scheduler with canceled context":
 				cancel()
-			case "start scheduler successfully processes rules", "start scheduler with rule to be run in the future":
-				mockC <- time.Now()
+			case "start scheduler successfully processes rules":
+				tickChan <- time.Now()
+				time.Sleep(100 * time.Millisecond)
+				cancel()
+			case "start scheduler with rule to be run in the future":
+				tickChan <- time.Now()
+				time.Sleep(100 * time.Millisecond)
 				cancel()
 			case "start scheduler with list error":
-				mockC <- time.Now()
-				if err := <-svc.Errors(); err != nil {
-					cancel()
+				tickChan <- time.Now()
+				time.Sleep(100 * time.Millisecond)
+				// err := <-errc
+				if err := svc.Errors();err != nil {
+				cancel()
 				}
 			}
 
 			err := <-errc
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v but got %v", tc.err, err))
 			repoCall.Unset()
+			tickCall.Unset()
+			tickCall1.Unset()
 		})
 	}
 }

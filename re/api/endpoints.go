@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
@@ -24,8 +25,11 @@ func addRuleEndpoint(s re.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return addRuleRes{}, err
 		}
+		fmt.Printf("req is %+v\n", req)
 		rule, err := s.AddRule(ctx, session, req.Rule)
 		if err != nil {
+			fmt.Printf("error is %+v\n", err)
+
 			return addRuleRes{}, err
 		}
 		return addRuleRes{Rule: rule, created: true}, nil

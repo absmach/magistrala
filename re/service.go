@@ -5,7 +5,6 @@ package re
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -17,10 +16,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-const (
-	timeFormat = "2006-01-02T15:04"
-	timeZone   = 3 * time.Hour
-)
+const timeFormat = "2006-01-02T15:04"
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
@@ -32,112 +28,6 @@ type (
 		Value string     `json:"value"`
 	}
 )
-
-// Type can be daily, weekly or monthly.
-type ReccuringType uint
-
-const (
-	None ReccuringType = iota
-	Daily
-	Weekly
-	Monthly
-)
-
-func (rt ReccuringType) String() string {
-	switch rt {
-	case Daily:
-		return "daily"
-	case Weekly:
-		return "weekly"
-	case Monthly:
-		return "monthly"
-	default:
-		return "none"
-	}
-}
-
-func (rt ReccuringType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(rt.String())
-}
-
-func (rt *ReccuringType) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	switch s {
-	case "daily":
-		*rt = Daily
-	case "weekly":
-		*rt = Weekly
-	case "monthly":
-		*rt = Monthly
-	case "none":
-		*rt = None
-	default:
-		return ErrInvalidRecurringType
-	}
-	return nil
-}
-
-type Schedule struct {
-	StartDateTime   time.Time     `json:"start_datetime"`           // When the schedule becomes active
-	RecurringTime   []time.Time   `json:"recurring_time,omitempty"` // Specific times for the rule to run
-	RecurringType   ReccuringType `json:"recurring_type"`           // None, Daily, Weekly, Monthly
-	RecurringPeriod uint          `json:"recurring_period"`         // 1 meaning every Recurring value, 2 meaning every other, and so on.
-}
-
-func (s Schedule) MarshalJSON() ([]byte, error) {
-	type Alias Schedule
-	jTimes := struct {
-		StartDateTime string   `json:"start_datetime"`
-		RecurringTime []string `json:"recurring_time,omitempty"`
-		*Alias
-	}{
-		StartDateTime: s.StartDateTime.Format(timeFormat),
-		Alias:         (*Alias)(&s),
-	}
-	jTimes.RecurringTime = make([]string, len(s.RecurringTime))
-	for i, t := range s.RecurringTime {
-		jTimes.RecurringTime[i] = t.Format(timeFormat)
-	}
-	return json.Marshal(jTimes)
-}
-
-func (s *Schedule) UnmarshalJSON(data []byte) error {
-	type Alias Schedule
-	aux := struct {
-		StartDateTime string   `json:"start_datetime"`
-		RecurringTime []string `json:"recurring_time,omitempty"`
-		*Alias
-	}{
-		Alias: (*Alias)(s),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if aux.StartDateTime != "" {
-		startDateTime, err := time.Parse(timeFormat, aux.StartDateTime)
-		if err != nil {
-			return err
-		}
-		s.StartDateTime = startDateTime
-	}
-
-	s.RecurringTime = make([]time.Time, 0, len(aux.RecurringTime))
-	for _, timeStr := range aux.RecurringTime {
-		if timeStr != "" {
-			t, err := time.Parse(timeFormat, timeStr)
-			if err != nil {
-				return err
-			}
-			s.RecurringTime = append(s.RecurringTime, t)
-		}
-	}
-	return nil
-}
 
 type Rule struct {
 	ID            string    `json:"id"`
@@ -206,16 +96,16 @@ type re struct {
 	repo   Repository
 	pubSub messaging.PubSub
 	errors chan error
-	ticker *time.Ticker
+	ticker Ticker
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tc *time.Ticker) Service {
+func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker) Service {
 	return &re{
 		repo:   repo,
 		idp:    idp,
 		pubSub: pubSub,
 		errors: make(chan error),
-		ticker: tc,
+		ticker: tck,
 	}
 }
 
@@ -224,7 +114,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	if err != nil {
 		return Rule{}, err
 	}
-	now := time.Now().Add(timeZone)
+	now := time.Now()
 	r.CreatedAt = now
 	r.ID = id
 	r.CreatedBy = session.UserID
@@ -347,15 +237,14 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {
-	ticker := re.newTicker(time.Minute)
-	defer ticker.Stop()
+	defer re.ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-ticker.C:
-			startDateTime := time.Now().Add(timeZone)
+		case <-re.ticker.Tick():
+			startDateTime := time.Now()
 
 			pm := PageMeta{
 				Status:          EnabledStatus,
@@ -364,8 +253,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 
 			page, err := re.repo.ListRules(ctx, pm)
 			if err != nil {
-				re.errors <- err
-				continue
+				return err
 			}
 
 			for _, rule := range page.Rules {
@@ -383,15 +271,8 @@ func (re *re) StartScheduler(ctx context.Context) error {
 	}
 }
 
-func (re *re) newTicker(t time.Duration) *time.Ticker {
-	if re.ticker != nil {
-		return re.ticker
-	}
-	return time.NewTicker(t)
-}
-
 func (re *re) shouldRunRule(rule Rule, startTime time.Time) bool {
-	now := time.Now().Add(timeZone).Truncate(time.Minute)
+	now := time.Now().Truncate(time.Minute)
 
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
@@ -399,27 +280,26 @@ func (re *re) shouldRunRule(rule Rule, startTime time.Time) bool {
 		return false
 	}
 
-	for _, t := range rule.Schedule.RecurringTime {
-		if t.Year() == now.Year() &&
-			t.Month() == now.Month() &&
-			t.Day() == now.Day() &&
-			t.Hour() == now.Hour() &&
-			t.Minute() == now.Minute() {
-			return true
-		}
+	t := rule.Schedule.RecurringTime
+	if t.Year() == now.Year() &&
+		t.Month() == now.Month() &&
+		t.Day() == now.Day() &&
+		t.Hour() == now.Hour() &&
+		t.Minute() == now.Minute() {
+		return true
 	}
 
 	switch rule.Schedule.RecurringType {
 	case Daily:
 		if rule.Schedule.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(rule.Schedule.StartDateTime.Add(timeZone)).Hours() / 24
+			daysSinceStart := startTime.Sub(rule.Schedule.StartDateTime).Hours() / 24
 			if int(daysSinceStart)%int(rule.Schedule.RecurringPeriod) == 0 {
 				return true
 			}
 		}
 	case Weekly:
 		if rule.Schedule.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(rule.Schedule.StartDateTime.Add(timeZone)).Hours() / (24 * 7)
+			weeksSinceStart := startTime.Sub(rule.Schedule.StartDateTime).Hours() / (24 * 7)
 			if int(weeksSinceStart)%int(rule.Schedule.RecurringPeriod) == 0 {
 				return true
 			}

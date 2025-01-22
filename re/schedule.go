@@ -9,10 +9,10 @@ import (
 )
 
 type Schedule struct {
-	StartDateTime   time.Time     `json:"start_datetime"`          // When the schedule becomes active
-	RecurringTime   time.Time     `json:"recurring_time"`          // Specific time for the rule to run
-	RecurringType   ReccuringType `json:"recurring_type"`          // None, Daily, Weekly, Monthly
-	RecurringPeriod uint          `json:"recurring_period"`        // Controls how many intervals to skip between executions: 1 runs at every interval, 2 runs at every second interval, etc.
+	StartDateTime   time.Time     `json:"start_datetime"`   // When the schedule becomes active
+	RecurringTime   time.Time     `json:"recurring_time"`   // Specific time for the rule to run
+	RecurringType   ReccuringType `json:"recurring_type"`   // None, Daily, Weekly, Monthly
+	RecurringPeriod uint          `json:"recurring_period"` // Controls how many intervals to skip between executions: 1 runs at every interval, 2 runs at every second interval, etc.
 }
 
 func (s Schedule) MarshalJSON() ([]byte, error) {

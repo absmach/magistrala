@@ -14,25 +14,25 @@ import (
 
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
-	ID              string                `db:"id"`
-	Name            string                `db:"name"`
-	DomainID        string                `db:"domain_id"`
-	Metadata        []byte                `db:"metadata,omitempty"`
-	InputChannel    string                `db:"input_channel"`
-	InputTopic      sql.NullString        `db:"input_topic"`
-	LogicType       re.ScriptType         `db:"logic_type"`
-	LogicValue      string                `db:"logic_value"`
-	OutputChannel   sql.NullString        `db:"output_channel"`
-	OutputTopic     sql.NullString        `db:"output_topic"`
+	ID              string           `db:"id"`
+	Name            string           `db:"name"`
+	DomainID        string           `db:"domain_id"`
+	Metadata        []byte           `db:"metadata,omitempty"`
+	InputChannel    string           `db:"input_channel"`
+	InputTopic      sql.NullString   `db:"input_topic"`
+	LogicType       re.ScriptType    `db:"logic_type"`
+	LogicValue      string           `db:"logic_value"`
+	OutputChannel   sql.NullString   `db:"output_channel"`
+	OutputTopic     sql.NullString   `db:"output_topic"`
 	StartDateTime   time.Time        `db:"start_datetime"`
 	RecurringTime   time.Time        `db:"recurring_time"`
 	RecurringType   re.ReccuringType `db:"recurring_type"`
-	RecurringPeriod uint                  `db:"recurring_period"`
-	Status          re.Status             `db:"status"`
-	CreatedAt       time.Time             `db:"created_at"`
-	CreatedBy       string                `db:"created_by"`
-	UpdatedAt       time.Time             `db:"updated_at"`
-	UpdatedBy       string                `db:"updated_by"`
+	RecurringPeriod uint             `db:"recurring_period"`
+	Status          re.Status        `db:"status"`
+	CreatedAt       time.Time        `db:"created_at"`
+	CreatedBy       string           `db:"created_by"`
+	UpdatedAt       time.Time        `db:"updated_at"`
+	UpdatedBy       string           `db:"updated_by"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {

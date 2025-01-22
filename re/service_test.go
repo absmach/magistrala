@@ -172,9 +172,8 @@ func TestStartScheduler(t *testing.T) {
 			case "start scheduler with list error":
 				tickChan <- time.Now()
 				time.Sleep(100 * time.Millisecond)
-				// err := <-errc
-				if err := svc.Errors();err != nil {
-				cancel()
+				if err := svc.Errors(); err != nil {
+					cancel()
 				}
 			}
 

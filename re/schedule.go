@@ -11,7 +11,7 @@ import (
 type Schedule struct {
 	StartDateTime   time.Time `json:"start_datetime"`   // When the schedule becomes active
 	Time            time.Time `json:"time"`             // Specific time for the rule to run
-	Recurring       Reccuring `json:"recurring"`        // None, Daily, Weekly, Monthly
+	Recurring       Recurring `json:"recurring"`        // None, Daily, Weekly, Monthly
 	RecurringPeriod uint      `json:"recurring_period"` // Controls how many intervals to skip between executions: 1 = every interval, 2 = every second interval, etc.
 }
 
@@ -61,16 +61,16 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 }
 
 // Type can be daily, weekly or monthly.
-type Reccuring uint
+type Recurring uint
 
 const (
-	None Reccuring = iota
+	None Recurring = iota
 	Daily
 	Weekly
 	Monthly
 )
 
-func (rt Reccuring) String() string {
+func (rt Recurring) String() string {
 	switch rt {
 	case Daily:
 		return "daily"
@@ -83,11 +83,11 @@ func (rt Reccuring) String() string {
 	}
 }
 
-func (rt Reccuring) MarshalJSON() ([]byte, error) {
+func (rt Recurring) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rt.String())
 }
 
-func (rt *Reccuring) UnmarshalJSON(data []byte) error {
+func (rt *Recurring) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err

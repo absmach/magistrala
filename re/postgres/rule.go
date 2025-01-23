@@ -26,7 +26,7 @@ type dbRule struct {
 	OutputTopic     sql.NullString `db:"output_topic"`
 	StartDateTime   time.Time      `db:"start_datetime"`
 	Time            time.Time      `db:"time"`
-	Recurring       re.Reccuring   `db:"recurring"`
+	Recurring       re.Recurring   `db:"recurring"`
 	RecurringPeriod uint           `db:"recurring_period"`
 	Status          re.Status      `db:"status"`
 	CreatedAt       time.Time      `db:"created_at"`

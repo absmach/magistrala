@@ -70,7 +70,7 @@ type PageMeta struct {
 	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
 	ScheduledBefore *time.Time `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
 	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
-	Recurring       *Reccuring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type
+	Recurring       *Recurring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type
 }
 
 type Page struct {

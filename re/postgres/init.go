@@ -32,8 +32,8 @@ func Migration() *migrate.MemoryMigrationSource {
 						status            SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						logic_type        SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						logic_value       BYTEA,
-						recurring_time    TIMESTAMP,
-						recurring_type    SMALLINT,
+						time              TIMESTAMP,
+						recurring         SMALLINT,
 						recurring_period  SMALLINT,
 						start_datetime    TIMESTAMP
 					)`,

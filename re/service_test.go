@@ -30,9 +30,9 @@ var (
 		Status:       re.EnabledStatus,
 		Schedule: re.Schedule{
 			StartDateTime:   time.Now().Add(-time.Hour), // Started an hour ago
-			RecurringType:   re.Daily,
+			Recurring:       re.Daily,
 			RecurringPeriod: 1,
-			RecurringTime:   time.Now().Add(-time.Hour),
+			Time:            time.Now().Add(-time.Hour),
 		},
 	}
 	futureRule = re.Rule{
@@ -42,7 +42,7 @@ var (
 		Status:       re.EnabledStatus,
 		Schedule: re.Schedule{
 			StartDateTime: time.Now().Add(24 * time.Hour),
-			RecurringType: re.None,
+			Recurring:     re.None,
 		},
 	}
 )

@@ -59,18 +59,18 @@ type Repository interface {
 
 // PageMeta contains page metadata that helps navigation.
 type PageMeta struct {
-	Total           uint64         `json:"total" db:"total"`
-	Offset          uint64         `json:"offset" db:"offset"`
-	Limit           uint64         `json:"limit" db:"limit"`
-	Dir             string         `json:"dir" db:"dir"`
-	Name            string         `json:"name" db:"name"`
-	InputChannel    string         `json:"input_channel,omitempty" db:"input_channel"`
-	OutputChannel   string         `json:"output_channel,omitempty" db:"output_channel"`
-	Status          Status         `json:"status,omitempty" db:"status"`
-	Domain          string         `json:"domain_id,omitempty" db:"domain_id"`
-	ScheduledBefore *time.Time     `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
-	ScheduledAfter  *time.Time     `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
-	RecurringType   *ReccuringType `json:"recurring_type,omitempty" db:"recurring_type"`     // Filter by recurring type
+	Total           uint64     `json:"total" db:"total"`
+	Offset          uint64     `json:"offset" db:"offset"`
+	Limit           uint64     `json:"limit" db:"limit"`
+	Dir             string     `json:"dir" db:"dir"`
+	Name            string     `json:"name" db:"name"`
+	InputChannel    string     `json:"input_channel,omitempty" db:"input_channel"`
+	OutputChannel   string     `json:"output_channel,omitempty" db:"output_channel"`
+	Status          Status     `json:"status,omitempty" db:"status"`
+	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
+	ScheduledBefore *time.Time `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
+	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
+	Recurring       *Reccuring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type
 }
 
 type Page struct {
@@ -257,7 +257,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, rule := range page.Rules {
-				if re.shouldRunRule(rule, startDateTime) {
+				if re.shouldRunRule(rule.Schedule, startDateTime) {
 					go func(r Rule) {
 						msg := &messaging.Message{
 							Channel: r.InputChannel,
@@ -271,44 +271,40 @@ func (re *re) StartScheduler(ctx context.Context) error {
 	}
 }
 
-func (re *re) shouldRunRule(rule Rule, startTime time.Time) bool {
+func (re *re) shouldRunRule(s Schedule, startTime time.Time) bool {
 	now := time.Now().Truncate(time.Minute)
 
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
-	if rule.Schedule.StartDateTime.After(now) {
+	if s.StartDateTime.After(now) {
 		return false
 	}
 
-	t := rule.Schedule.RecurringTime
-	if t.Year() == now.Year() &&
-		t.Month() == now.Month() &&
-		t.Day() == now.Day() &&
-		t.Hour() == now.Hour() &&
-		t.Minute() == now.Minute() {
+	t := s.Time.Truncate(time.Minute)
+	if t.Equal(now) {
 		return true
 	}
 
-	switch rule.Schedule.RecurringType {
+	switch s.Recurring {
 	case Daily:
-		if rule.Schedule.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(rule.Schedule.StartDateTime).Hours() / 24
-			if int(daysSinceStart)%int(rule.Schedule.RecurringPeriod) == 0 {
+		if s.RecurringPeriod > 0 {
+			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / 24
+			if int(daysSinceStart)%int(s.RecurringPeriod) == 0 {
 				return true
 			}
 		}
 	case Weekly:
-		if rule.Schedule.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(rule.Schedule.StartDateTime).Hours() / (24 * 7)
-			if int(weeksSinceStart)%int(rule.Schedule.RecurringPeriod) == 0 {
+		if s.RecurringPeriod > 0 {
+			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (24 * 7)
+			if int(weeksSinceStart)%int(s.RecurringPeriod) == 0 {
 				return true
 			}
 		}
 	case Monthly:
-		if rule.Schedule.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-rule.Schedule.StartDateTime.Year())*12 +
-				int(startTime.Month()-rule.Schedule.StartDateTime.Month())
-			if monthsSinceStart%int(rule.Schedule.RecurringPeriod) == 0 {
+		if s.RecurringPeriod > 0 {
+			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*12 +
+				int(startTime.Month()-s.StartDateTime.Month())
+			if monthsSinceStart%int(s.RecurringPeriod) == 0 {
 				return true
 			}
 		}

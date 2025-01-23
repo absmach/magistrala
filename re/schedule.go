@@ -9,21 +9,21 @@ import (
 )
 
 type Schedule struct {
-	StartDateTime   time.Time     `json:"start_datetime"`   // When the schedule becomes active
-	RecurringTime   time.Time     `json:"recurring_time"`   // Specific time for the rule to run
-	RecurringType   ReccuringType `json:"recurring_type"`   // None, Daily, Weekly, Monthly
-	RecurringPeriod uint          `json:"recurring_period"` // Controls how many intervals to skip between executions: 1 runs at every interval, 2 runs at every second interval, etc.
+	StartDateTime   time.Time `json:"start_datetime"`   // When the schedule becomes active
+	Time            time.Time `json:"time"`             // Specific time for the rule to run
+	Recurring       Reccuring `json:"recurring"`        // None, Daily, Weekly, Monthly
+	RecurringPeriod uint      `json:"recurring_period"` // Controls how many intervals to skip between executions: 1 = every interval, 2 = every second interval, etc.
 }
 
 func (s Schedule) MarshalJSON() ([]byte, error) {
 	type Alias Schedule
 	jTimes := struct {
 		StartDateTime string `json:"start_datetime"`
-		RecurringTime string `json:"recurring_time"`
+		Time          string `json:"time"`
 		*Alias
 	}{
 		StartDateTime: s.StartDateTime.Format(timeFormat),
-		RecurringTime: s.RecurringTime.Format(timeFormat),
+		Time:          s.Time.Format(timeFormat),
 		Alias:         (*Alias)(&s),
 	}
 	return json.Marshal(jTimes)
@@ -33,7 +33,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	type Alias Schedule
 	aux := struct {
 		StartDateTime string `json:"start_datetime"`
-		RecurringTime string `json:"recurring_time"`
+		Time          string `json:"time"`
 		*Alias
 	}{
 		Alias: (*Alias)(s),
@@ -50,27 +50,27 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		s.StartDateTime = startDateTime
 	}
 
-	if aux.RecurringTime != "" {
-		recurringTime, err := time.Parse(timeFormat, aux.RecurringTime)
+	if aux.Time != "" {
+		time, err := time.Parse(timeFormat, aux.Time)
 		if err != nil {
 			return err
 		}
-		s.RecurringTime = recurringTime
+		s.Time = time
 	}
 	return nil
 }
 
 // Type can be daily, weekly or monthly.
-type ReccuringType uint
+type Reccuring uint
 
 const (
-	None ReccuringType = iota
+	None Reccuring = iota
 	Daily
 	Weekly
 	Monthly
 )
 
-func (rt ReccuringType) String() string {
+func (rt Reccuring) String() string {
 	switch rt {
 	case Daily:
 		return "daily"
@@ -83,11 +83,11 @@ func (rt ReccuringType) String() string {
 	}
 }
 
-func (rt ReccuringType) MarshalJSON() ([]byte, error) {
+func (rt Reccuring) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rt.String())
 }
 
-func (rt *ReccuringType) UnmarshalJSON(data []byte) error {
+func (rt *Reccuring) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err

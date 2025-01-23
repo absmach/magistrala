@@ -78,9 +78,51 @@ The Rules Engine service provides the following operations:
 - `EnableRule` - Activate a rule
 - `DisableRule` - Deactivate a rule
 
-## Example Rule
+## Using the API
 
-Here's an example rule that processes temperature readings and publishes alerts:
+### Adding a Rule
+
+You can create a new rule using the Rules Engine API. Here's an example using curl:
+
+```bash
+curl --location 'http://localhost:9008/8353542f-d8f1-4dce-b787-4af3712f117e/rules' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <access_token>' \
+--data '{
+  "name": "High Temperature Alert",
+  "input_channel": "sensors",
+  "input_topic": "temperature",
+  "logic": {
+    "type": 0,
+    "value": "if message.payload > 30 then return '\''Temperature too high!'\'' end"
+  },
+  "output_channel": "alerts",
+  "output_topic": "temperature",
+  "schedule": {
+    "start_datetime": "2024-01-01T00:00",
+    "time": "2024-01-01T09:00",
+    "recurring": "daily",
+    "recurring_period": 1
+  }
+}'
+```
+
+This request:
+- Creates a temperature monitoring rule
+- Processes messages from the "sensors" channel
+- Checks for temperatures above 30 degrees
+- Publishes alerts to the "alerts" channel
+- Runs daily at 9 AM
+
+The API endpoint follows the format: `http://localhost:9008/{domain_id}/rules`
+
+Required headers:
+- `Content-Type: application/json` - Specifies the request body format
+- `Authorization: Bearer <access_token>` - Your authentication token
+
+### Example Rule Structure
+
+Here's a breakdown of the rule structure:
 
 ```json
 {

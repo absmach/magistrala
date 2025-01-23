@@ -1,5 +1,127 @@
-# Magistrala Rule Engine
+# Magistrala Rules Engine
 
+The Magistrala Rules Engine (RE) is a service that enables real-time message processing and transformation through user-defined rules. It allows you to create rules that process incoming messages using Lua scripts and publish the results to output channels.
+
+## Architecture
+
+The Rules Engine operates by:
+1. Listening for messages on configured input channels
+2. Processing these messages through Lua scripts
+3. Optionally publishing results to output channels
+4. Supporting scheduled rule execution based on various recurring patterns
+
+## Core Concepts
+
+### Rules
+
+A rule consists of:
+
+- `id` - Unique identifier
+- `name` - Human-readable name
+- `domain` - Domain the rule belongs to
+- `input_channel` - Channel to listen for incoming messages
+- `input_topic` - Specific topic within the input channel
+- `logic` - Lua script that processes the message
+- `output_channel` - (Optional) Channel to publish results to
+- `output_topic` - (Optional) Topic within the output channel
+- `schedule` - (Optional) Scheduling configuration
+- `status` - Rule state (enabled/disabled/deleted)
+- `metadata` - Additional rule metadata
+
+A rule can be in one of these states:
+- `enabled` - Rule is active and processing messages
+- `disabled` - Rule is inactive and won't process messages
+- `deleted` - Rule is marked for deletion
+
+### Message Processing
+
+When a message arrives on a rule's input channel, the Rules Engine:
+
+1. Creates a Lua environment
+2. Injects the message as a global variable with the following structure:
+   ```lua
+   message = {
+     channel = "channel_name",
+     subtopic = "subtopic_name",
+     publisher = "publisher_id",
+     protocol = "protocol_name",
+     created = timestamp,
+     payload = [byte_array]
+   }
+   ```
+3. Executes the rule's Lua script
+4. If the script returns a non-nil value and an output channel is configured, publishes the result
+
+### Scheduling
+
+Rules can be scheduled to run at specific times with various recurring patterns:
+
+- `start_datetime` - When the schedule becomes active
+- `time` - Specific time for the rule to run
+- `recurring` - Pattern: none, daily, weekly, or monthly
+- `recurring_period` - Interval between executions (1 = every interval, 2 = every second interval, etc.)
+
+For example, to run a rule:
+- Every day at 9 AM: Set recurring to "daily" with recurring_period = 1
+- Every other week: Set recurring to "weekly" with recurring_period = 2
+- Monthly on the 1st: Set recurring to "monthly" with recurring_period = 1
+
+## API Operations
+
+The Rules Engine service provides the following operations:
+
+- `AddRule` - Create a new rule
+- `ViewRule` - Retrieve a specific rule
+- `UpdateRule` - Modify an existing rule
+- `ListRules` - Query rules with filtering options
+- `RemoveRule` - Delete a rule
+- `EnableRule` - Activate a rule
+- `DisableRule` - Deactivate a rule
+
+## Example Rule
+
+Here's an example rule that processes temperature readings and publishes alerts:
+
+```json
+{
+  "name": "High Temperature Alert",
+  "input_channel": "sensors",
+  "input_topic": "temperature",
+  "logic": {
+    "type": 0,
+    "value": "if message.payload > 30 then return 'Temperature too high!' end"
+  },
+  "output_channel": "alerts",
+  "output_topic": "temperature",
+  "schedule": {
+    "start_datetime": "2024-01-01T00:00",
+    "time": "2024-01-01T09:00",
+    "recurring": "daily",
+    "recurring_period": 1
+  }
+}
+```
+
+This rule:
+1. Listens on the "sensors" channel, "temperature" topic
+2. Checks if temperature exceeds 30 degrees
+3. If true, publishes an alert message
+4. Runs daily at 9 AM
+
+## Running the Service
+
+To start the Rules Engine service, run:
+
+```bash
+make run_addons re
+```
+
+This command starts the Rules Engine service using Docker Compose with the configuration defined in [docker-compose.yml][compose].
+
+## For More Information
+
+- [Magistrala Documentation][doc]
+- [Docker Compose][compose]
 
 [doc]: https://docs.magistrala.abstractmachines.fr
 [compose]: ../docker/docker-compose.yml

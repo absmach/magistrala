@@ -262,7 +262,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, rule := range page.Rules {
-				if rule.shouldRunRule(startTime) {
+				if rule.shouldRun(startTime) {
 					go func(r Rule) {
 						msg := &messaging.Message{
 							Channel: r.InputChannel,
@@ -276,7 +276,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 	}
 }
 
-func (r Rule) shouldRunRule(startTime time.Time) bool {
+func (r Rule) shouldRun(startTime time.Time) bool {
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
 	if r.Schedule.StartDateTime.After(startTime) {

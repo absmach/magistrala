@@ -5,6 +5,7 @@ package re
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -15,6 +16,15 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+const (
+	timeFormat   = "2006-01-02T15:04"
+	hoursInDay   = 24
+	daysInWeek   = 7
+	monthsInYear = 12
+)
+
+var ErrInvalidRecurringType = errors.New("invalid recurring type")
+
 type (
 	ScriptType uint
 	Metadata   map[string]interface{}
@@ -23,22 +33,6 @@ type (
 		Value string     `json:"value"`
 	}
 )
-
-// Type can be daily, weekly or monthly.
-type ReccuringType uint
-
-const (
-	None ReccuringType = iota
-	Daily
-	Weekly
-	Monthly
-)
-
-type Schedule struct {
-	Time            []time.Time   `json:"date,omitempty"`
-	RecurringType   ReccuringType `json:"recurring_type"`
-	RecurringPeriod uint          `json:"recurring_period"` // 1 meaning every Recurring value, 2 meaning every other, and so on.
-}
 
 type Rule struct {
 	ID            string    `json:"id"`
@@ -58,6 +52,7 @@ type Rule struct {
 	UpdatedBy     string    `json:"updated_by,omitempty"`
 }
 
+//go:generate mockery --name Repository --output=./mocks --filename repo.go --quiet --note "Copyright (c) Abstract Machines"
 type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, id string) (Rule, error)
@@ -69,15 +64,18 @@ type Repository interface {
 
 // PageMeta contains page metadata that helps navigation.
 type PageMeta struct {
-	Total         uint64 `json:"total" db:"total"`
-	Offset        uint64 `json:"offset" db:"offset"`
-	Limit         uint64 `json:"limit" db:"limit"`
-	Dir           string `json:"dir" db:"dir"`
-	Name          string `json:"name" db:"name"`
-	InputChannel  string `json:"input_channel,omitempty" db:"input_channel"`
-	OutputChannel string `json:"output_channel,omitempty" db:"output_channel"`
-	Status        Status `json:"status,omitempty" db:"status"`
-	Domain        string `json:"domain_id,omitempty" db:"domain_id"`
+	Total           uint64     `json:"total" db:"total"`
+	Offset          uint64     `json:"offset" db:"offset"`
+	Limit           uint64     `json:"limit" db:"limit"`
+	Dir             string     `json:"dir" db:"dir"`
+	Name            string     `json:"name" db:"name"`
+	InputChannel    string     `json:"input_channel,omitempty" db:"input_channel"`
+	OutputChannel   string     `json:"output_channel,omitempty" db:"output_channel"`
+	Status          Status     `json:"status,omitempty" db:"status"`
+	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
+	ScheduledBefore *time.Time `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
+	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
+	Recurring       *Recurring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type
 }
 
 type Page struct {
@@ -85,6 +83,7 @@ type Page struct {
 	Rules []Rule `json:"rules"`
 }
 
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	consumers.AsyncConsumer
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
@@ -94,6 +93,7 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	StartScheduler(ctx context.Context) error
 }
 
 type re struct {
@@ -101,14 +101,16 @@ type re struct {
 	repo   Repository
 	pubSub messaging.PubSub
 	errors chan error
+	ticker Ticker
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub) Service {
+func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker) Service {
 	return &re{
 		repo:   repo,
 		idp:    idp,
 		pubSub: pubSub,
 		errors: make(chan error),
+		ticker: tck,
 	}
 }
 
@@ -117,12 +119,23 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	if err != nil {
 		return Rule{}, err
 	}
-	r.CreatedAt = time.Now()
+	now := time.Now()
+	r.CreatedAt = now
 	r.ID = id
 	r.CreatedBy = session.UserID
 	r.DomainID = session.DomainID
 	r.Status = EnabledStatus
-	return re.repo.AddRule(ctx, r)
+
+	if r.Schedule.StartDateTime.IsZero() {
+		r.Schedule.StartDateTime = now
+	}
+
+	rule, err := re.repo.AddRule(ctx, r)
+	if err != nil {
+		return Rule{}, err
+	}
+
+	return rule, nil
 }
 
 func (re *re) ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error) {
@@ -226,4 +239,85 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 		}
 		return re.pubSub.Publish(ctx, m.Channel, m)
 	}
+}
+
+func (re *re) StartScheduler(ctx context.Context) error {
+	defer re.ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-re.ticker.Tick():
+			startTime := time.Now()
+
+			pm := PageMeta{
+				Status:          EnabledStatus,
+				ScheduledBefore: &startTime,
+			}
+
+			page, err := re.repo.ListRules(ctx, pm)
+			if err != nil {
+				return err
+			}
+
+			for _, rule := range page.Rules {
+				if rule.shouldRun(startTime) {
+					go func(r Rule) {
+						msg := &messaging.Message{
+							Channel: r.InputChannel,
+							Created: startTime.Unix(),
+						}
+						re.errors <- re.process(ctx, r, msg)
+					}(rule)
+				}
+			}
+		}
+	}
+}
+
+func (r Rule) shouldRun(startTime time.Time) bool {
+	// Don't run if the rule's start time is in the future
+	// This allows scheduling rules to start at a specific future time
+	if r.Schedule.StartDateTime.After(startTime) {
+		return false
+	}
+
+	t := r.Schedule.Time.Truncate(time.Minute)
+	if t.Equal(startTime) {
+		return true
+	}
+
+	if r.Schedule.RecurringPeriod == 0 {
+		return false
+	}
+
+	period := int(r.Schedule.RecurringPeriod)
+
+	switch r.Schedule.Recurring {
+	case Daily:
+		if r.Schedule.RecurringPeriod > 0 {
+			daysSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / hoursInDay
+			if int(daysSinceStart)%period == 0 {
+				return true
+			}
+		}
+	case Weekly:
+		if r.Schedule.RecurringPeriod > 0 {
+			weeksSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / (hoursInDay * daysInWeek)
+			if int(weeksSinceStart)%period == 0 {
+				return true
+			}
+		}
+	case Monthly:
+		if r.Schedule.RecurringPeriod > 0 {
+			monthsSinceStart := (startTime.Year()-r.Schedule.StartDateTime.Year())*monthsInYear +
+				int(startTime.Month()-r.Schedule.StartDateTime.Month())
+			if monthsSinceStart%period == 0 {
+				return true
+			}
+		}
+	}
+
+	return false
 }

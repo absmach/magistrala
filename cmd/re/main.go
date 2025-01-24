@@ -181,6 +181,11 @@ func main() {
 		go chc.CallHome(ctx)
 	}
 
+	// Start scheduler
+	g.Go(func() error {
+		return svc.StartScheduler(ctx)
+	})
+
 	// Start all servers
 	g.Go(func() error {
 		return httpSvc.Start()
@@ -201,7 +206,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	idp := uuid.New()
 
 	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
-	csvc := re.NewService(repo, idp, nil)
+	csvc := re.NewService(repo, idp, nil, re.NewTicker(time.Minute))
 
 	return csvc, nil
 }

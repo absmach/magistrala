@@ -54,12 +54,44 @@ When a message arrives on a rule's input channel, the Rules Engine:
 
 ### Scheduling
 
-Rules can be scheduled to run at specific times with various recurring patterns:
+Rules can be scheduled to run at specific times with various recurring patterns. The scheduler works through several key components:
 
-- `start_datetime` - When the schedule becomes active
-- `time` - Specific time for the rule to run
-- `recurring` - Pattern: none, daily, weekly, or monthly
-- `recurring_period` - Interval between executions (1 = every interval, 2 = every second interval, etc.)
+#### Schedule Structure
+```go
+type Schedule struct {
+    StartDateTime   time.Time  // When the schedule becomes active
+    Time            time.Time  // Specific time for the rule to run
+    Recurring       Recurring  // None, Daily, Weekly, Monthly
+    RecurringPeriod uint      // Interval between executions: 1 = every interval, 2 = every second interval, etc.
+}
+```
+
+#### How Scheduling Works
+
+1. **Initialization**:
+   - The scheduler starts when the service begins running via `StartScheduler()`
+   - It uses a ticker to check for rules that need to be executed at regular intervals
+
+2. **Rule Evaluation**:
+   - For each tick, the scheduler:
+     - Gets all enabled rules scheduled before the current time
+     - For each rule, checks if it should run using `shouldRunRule()`
+     - If a rule should run, processes it asynchronously
+
+3. **Execution Timing**:
+   The `shouldRunRule()` function determines if a rule should run by checking:
+   - If the rule's start time has been reached
+   - If the current time matches the scheduled execution time
+   - For recurring rules:
+     - **Daily**: Checks if the correct number of days have passed since start
+     - **Weekly**: Checks if the correct number of weeks have passed since start
+     - **Monthly**: Checks if the correct number of months have passed since start
+
+4. **Recurring Patterns**:
+   - `None`: Rule runs once at the specified time
+   - `Daily`: Rule runs every N days where N is the RecurringPeriod
+   - `Weekly`: Rule runs every N weeks
+   - `Monthly`: Rule runs every N months
 
 For example, to run a rule:
 - Every day at 9 AM: Set recurring to "daily" with recurring_period = 1

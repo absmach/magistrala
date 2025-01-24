@@ -256,7 +256,7 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 			return "", "", err
 		}
 
-		return req.domain + "_" + session.UserID, policies.UserType, nil
+		return session.UserID, policies.UserType, nil
 	case req.key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
 			ClientSecret: req.key,

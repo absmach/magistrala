@@ -90,6 +90,11 @@ jobs:
               - "pkg/events/**"
               - "pkg/messaging/**"
 
+            pkg-sdk:
+              - "pkg/sdk/**"
+              - "bootstrap/api/**"
+              - "consumers/notifiers/api/**"
+
             provision:
               - "provision/**"
               - "cmd/provision/**"
@@ -133,6 +138,11 @@ jobs:
         if: steps.changes.outputs.pkg-errors == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/pkg-errors.out ./pkg/errors/...
+
+      - name: Run pkg sdk tests
+        if: steps.changes.outputs.pkg-sdk == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/pkg-sdk.out ./pkg/sdk/...
 
       - name: Run provision tests
         if: steps.changes.outputs.provision == 'true' || steps.changes.outputs.workflow == 'true'

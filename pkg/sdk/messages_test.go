@@ -4,7 +4,6 @@
 package sdk_test
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -231,7 +230,6 @@ func TestReadMessages(t *testing.T) {
 			authzCall := channelsGRPCClient.On("Authorize", mock.Anything, mock.Anything).Return(&grpcChannelsV1.AuthzRes{Authorized: true}, tc.authzErr)
 			repoCall := repo.On("ReadAll", channelID, mock.Anything).Return(tc.repoRes, tc.repoErr)
 			response, err := mgsdk.ReadMessages(tc.messagePageMeta, tc.chanName, tc.domainID, tc.token)
-			fmt.Println(err)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, response)
 			if tc.err == nil {

@@ -257,7 +257,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, rule := range page.Rules {
-				if re.shouldRunRule(rule.Schedule, startDateTime) {
+				if re.shouldRunRule(rule.Schedule) {
 					go func(r Rule) {
 						msg := &messaging.Message{
 							Channel: r.InputChannel,
@@ -271,7 +271,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 	}
 }
 
-func (re *re) shouldRunRule(s Schedule, startTime time.Time) bool {
+func (re *re) shouldRunRule(s Schedule) bool {
 	now := time.Now().Truncate(time.Minute)
 
 	// Don't run if the rule's start time is in the future
@@ -288,22 +288,22 @@ func (re *re) shouldRunRule(s Schedule, startTime time.Time) bool {
 	switch s.Recurring {
 	case Daily:
 		if s.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / 24
+			daysSinceStart := now.Sub(s.StartDateTime).Hours() / 24
 			if int(daysSinceStart)%int(s.RecurringPeriod) == 0 {
 				return true
 			}
 		}
 	case Weekly:
 		if s.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (24 * 7)
+			weeksSinceStart := now.Sub(s.StartDateTime).Hours() / (24 * 7)
 			if int(weeksSinceStart)%int(s.RecurringPeriod) == 0 {
 				return true
 			}
 		}
 	case Monthly:
 		if s.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*12 +
-				int(startTime.Month()-s.StartDateTime.Month())
+			monthsSinceStart := (now.Year()-s.StartDateTime.Year())*12 +
+				int(now.Month()-s.StartDateTime.Month())
 			if monthsSinceStart%int(s.RecurringPeriod) == 0 {
 				return true
 			}

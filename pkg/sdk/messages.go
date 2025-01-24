@@ -24,7 +24,7 @@ func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token 
 		subtopicPart = fmt.Sprintf("?subtopic=%s", chanNameParts[1])
 	}
 
-	msgURL, err := sdk.withMessageQueryParams(sdk.readersURL, fmt.Sprintf("channels/%s/messages%s", chanID, subtopicPart), pm)
+	msgURL, err := sdk.withMessageQueryParams(sdk.readersURL, fmt.Sprintf("/%s/channels/%s/messages%s", domainID, chanID, subtopicPart), pm)
 	if err != nil {
 		return MessagesPage{}, errors.NewSDKError(err)
 	}

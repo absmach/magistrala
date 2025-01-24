@@ -16,7 +16,12 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-const timeFormat = "2006-01-02T15:04"
+const (
+	timeFormat   = "2006-01-02T15:04"
+	hoursInDay   = 24
+	daysInWeek   = 7
+	monthsInYear = 12
+)
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
@@ -285,26 +290,32 @@ func (re *re) shouldRunRule(s Schedule) bool {
 		return true
 	}
 
+	if s.RecurringPeriod == 0 {
+		return false
+	}
+
+	period := int(s.RecurringPeriod)
+
 	switch s.Recurring {
 	case Daily:
 		if s.RecurringPeriod > 0 {
-			daysSinceStart := now.Sub(s.StartDateTime).Hours() / 24
-			if int(daysSinceStart)%int(s.RecurringPeriod) == 0 {
+			daysSinceStart := now.Sub(s.StartDateTime).Hours() / hoursInDay
+			if int(daysSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Weekly:
 		if s.RecurringPeriod > 0 {
-			weeksSinceStart := now.Sub(s.StartDateTime).Hours() / (24 * 7)
-			if int(weeksSinceStart)%int(s.RecurringPeriod) == 0 {
+			weeksSinceStart := now.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
+			if int(weeksSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Monthly:
 		if s.RecurringPeriod > 0 {
-			monthsSinceStart := (now.Year()-s.StartDateTime.Year())*12 +
+			monthsSinceStart := (now.Year()-s.StartDateTime.Year())*monthsInYear +
 				int(now.Month()-s.StartDateTime.Month())
-			if monthsSinceStart%int(s.RecurringPeriod) == 0 {
+			if monthsSinceStart%period == 0 {
 				return true
 			}
 		}

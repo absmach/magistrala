@@ -5,7 +5,6 @@ go 1.23.4
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
-	github.com/absmach/certs v0.0.0-20241209153600-91270de67b5a
 	github.com/absmach/supermq v0.16.1-0.20250113091433-3a11b54394b2
 	github.com/authzed/authzed-go v1.2.1
 	github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b
@@ -40,6 +39,8 @@ require (
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	moul.io/http2curl v1.0.0
 )
+
+require github.com/absmach/certs v0.0.0-20241209153600-91270de67b5a // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

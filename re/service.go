@@ -249,11 +249,11 @@ func (re *re) StartScheduler(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-re.ticker.Tick():
-			startDateTime := time.Now()
+			startTime := time.Now()
 
 			pm := PageMeta{
 				Status:          EnabledStatus,
-				ScheduledBefore: &startDateTime,
+				ScheduledBefore: &startTime,
 			}
 
 			page, err := re.repo.ListRules(ctx, pm)
@@ -262,11 +262,11 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, rule := range page.Rules {
-				if re.shouldRunRule(rule.Schedule) {
+				if rule.shouldRunRule(startTime) {
 					go func(r Rule) {
 						msg := &messaging.Message{
 							Channel: r.InputChannel,
-							Created: startDateTime.Unix(),
+							Created: startTime.Unix(),
 						}
 						re.errors <- re.process(ctx, r, msg)
 					}(rule)
@@ -276,45 +276,43 @@ func (re *re) StartScheduler(ctx context.Context) error {
 	}
 }
 
-func (re *re) shouldRunRule(s Schedule) bool {
-	now := time.Now().Truncate(time.Minute)
-
+func (r Rule) shouldRunRule(startTime time.Time) bool {
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
-	if s.StartDateTime.After(now) {
+	if r.Schedule.StartDateTime.After(startTime) {
 		return false
 	}
 
-	t := s.Time.Truncate(time.Minute)
-	if t.Equal(now) {
+	t := r.Schedule.Time.Truncate(time.Minute)
+	if t.Equal(startTime) {
 		return true
 	}
 
-	if s.RecurringPeriod == 0 {
+	if r.Schedule.RecurringPeriod == 0 {
 		return false
 	}
 
-	period := int(s.RecurringPeriod)
+	period := int(r.Schedule.RecurringPeriod)
 
-	switch s.Recurring {
+	switch r.Schedule.Recurring {
 	case Daily:
-		if s.RecurringPeriod > 0 {
-			daysSinceStart := now.Sub(s.StartDateTime).Hours() / hoursInDay
+		if r.Schedule.RecurringPeriod > 0 {
+			daysSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / hoursInDay
 			if int(daysSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Weekly:
-		if s.RecurringPeriod > 0 {
-			weeksSinceStart := now.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
+		if r.Schedule.RecurringPeriod > 0 {
+			weeksSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / (hoursInDay * daysInWeek)
 			if int(weeksSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Monthly:
-		if s.RecurringPeriod > 0 {
-			monthsSinceStart := (now.Year()-s.StartDateTime.Year())*monthsInYear +
-				int(now.Month()-s.StartDateTime.Month())
+		if r.Schedule.RecurringPeriod > 0 {
+			monthsSinceStart := (startTime.Year()-r.Schedule.StartDateTime.Year())*monthsInYear +
+				int(startTime.Month()-r.Schedule.StartDateTime.Month())
 			if monthsSinceStart%period == 0 {
 				return true
 			}

@@ -54,7 +54,7 @@ func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, c
 	}
 
 	mux := chi.NewRouter()
-	mux.Get("/channels/{chanID}/messages", kithttp.NewServer(
+	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
 		listMessagesEndpoint(svc, authn, clients, channels),
 		decodeList,
 		encodeResponse,
@@ -154,6 +154,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	req := listMessagesReq{
 		chanID: chi.URLParam(r, "chanID"),
 		token:  apiutil.ExtractBearerToken(r),
+		domain: chi.URLParam(r, "domainID"),
 		key:    apiutil.ExtractClientSecret(r),
 		pageMeta: readers.PageMetadata{
 			Offset:      offset,
@@ -241,7 +242,7 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 	if err != nil {
 		return nil
 	}
-	if err := authorize(ctx, clientID, clientType, req.chanID, channels); err != nil {
+	if err := authorize(ctx, clientID, clientType, req.chanID, req.domain, channels); err != nil {
 		return err
 	}
 	return nil
@@ -255,7 +256,7 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 			return "", "", err
 		}
 
-		return session.DomainUserID, policies.UserType, nil
+		return session.UserID, policies.UserType, nil
 	case req.key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
 			ClientSecret: req.key,
@@ -272,12 +273,13 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 	}
 }
 
-func authorize(ctx context.Context, clientID, clientType, chanID string, channels grpcChannelsV1.ChannelsServiceClient) (err error) {
+func authorize(ctx context.Context, clientID, clientType, chanID, domain string, channels grpcChannelsV1.ChannelsServiceClient) (err error) {
 	res, err := channels.Authorize(ctx, &grpcChannelsV1.AuthzReq{
 		ClientId:   clientID,
 		ClientType: clientType,
 		Type:       uint32(connections.Subscribe),
 		ChannelId:  chanID,
+		DomainId:   domain,
 	})
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)

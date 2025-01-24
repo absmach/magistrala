@@ -15,7 +15,7 @@ var _ supermq.Response = (*pageRes)(nil)
 type pageRes struct {
 	readers.PageMetadata
 	Total    uint64            `json:"total"`
-	Messages []readers.Message `json:"messages,omitempty"`
+	Messages []readers.Message `json:"messages"`
 }
 
 func (res pageRes) Headers() map[string]string {

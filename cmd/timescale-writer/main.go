@@ -34,19 +34,19 @@ import (
 
 const (
 	svcName        = "timescaledb-writer"
-	envPrefixDB    = "SMQ_TIMESCALE_"
-	envPrefixHTTP  = "SMQ_TIMESCALE_WRITER_HTTP_"
+	envPrefixDB    = "MG_TIMESCALE_"
+	envPrefixHTTP  = "MG_TIMESCALE_WRITER_HTTP_"
 	defDB          = "messages"
 	defSvcHTTPPort = "9012"
 )
 
 type config struct {
-	LogLevel      string  `env:"SMQ_TIMESCALE_WRITER_LOG_LEVEL"    envDefault:"info"`
-	ConfigPath    string  `env:"SMQ_TIMESCALE_WRITER_CONFIG_PATH"  envDefault:"/config.toml"`
+	LogLevel      string  `env:"MG_TIMESCALE_WRITER_LOG_LEVEL"     envDefault:"info"`
+	ConfigPath    string  `env:"MG_TIMESCALE_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
 	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
 	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"                    envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"                envDefault:"true"`
-	InstanceID    string  `env:"SMQ_TIMESCALE_WRITER_INSTANCE_ID"  envDefault:""`
+	InstanceID    string  `env:"MG_TIMESCALE_WRITER_INSTANCE_ID"   envDefault:""`
 	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO"            envDefault:"1.0"`
 }
 

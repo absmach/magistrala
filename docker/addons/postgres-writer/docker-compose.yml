@@ -29,7 +29,7 @@ services:
       - magistrala-postgres-writer-volume:/var/lib/postgresql/data
 
   postgres-writer:
-    image: magistrala/postgres-writer:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/postgres-writer:${MG_RELEASE_TAG}
     container_name: magistrala-postgres-writer
     depends_on:
       - postgres
@@ -50,10 +50,10 @@ services:
       MG_POSTGRES_SSL_CERT: ${MG_POSTGRES_SSL_CERT}
       MG_POSTGRES_SSL_KEY: ${MG_POSTGRES_SSL_KEY}
       MG_POSTGRES_SSL_ROOT_CERT: ${MG_POSTGRES_SSL_ROOT_CERT}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
       MG_POSTGRES_WRITER_INSTANCE_ID: ${MG_POSTGRES_WRITER_INSTANCE_ID}
     ports:
       - ${MG_POSTGRES_WRITER_HTTP_PORT}:${MG_POSTGRES_WRITER_HTTP_PORT}

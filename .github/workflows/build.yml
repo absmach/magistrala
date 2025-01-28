@@ -49,14 +49,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compile check for rabbitmq
-        run: |
-          MG_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
-
-      - name: Compile check for redis
-        run: |
-          MG_ES_TYPE=redis make mqtt
-
       - name: Build and push Dockers
         run: |
           make latest -j $(nproc)

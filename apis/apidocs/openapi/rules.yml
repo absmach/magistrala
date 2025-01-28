@@ -1,0 +1,527 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.0.1
+info:
+  title: Magistrala Rules Engine API
+  description: |
+    HTTP API for managing rules engine service.
+    Some useful links:
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
+  contact:
+    email: info@abstractmachines.fr
+  license:
+    name: Apache 2.0
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
+  version: 0.15.1
+
+servers:
+  - url: http://localhost:9008
+  - url: http://localhost:9008
+
+tags:
+  - name: rules engine
+    description: Everything about your Rules Engine
+    externalDocs:
+      description: Find out more about rules engine
+      url: https://docs.magistrala.abstractmachines.fr/
+
+paths:
+  /{domainID}/rules:
+    post:
+      operationId: createRule
+      summary: Create Rule
+      description: |
+        Creates a new rule for message processing
+      tags:
+        - rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        - $ref: '#/components/requestBodies/RuleCreateReq'
+      responses:
+        '201':
+          $ref: '#/components/responses/RuleCreateRes'
+        '400':
+          description: Failed due to malformed JSON
+        '401':
+          description: Missing or invalid access token
+        '415':
+          description: Missing or invalid content type
+        "500":
+          $ref: "#/components/responses/ServiceError"
+        "503":
+          description: Failed to receive response from the clients service.
+    get:
+      operationId: getRules
+      summary: List Rules
+      description: |
+        Retrieves a list of rules with optional filtering
+      tags:
+        - rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit' 
+        - $ref: '#/components/parameters/InputChannel'
+        - $ref: '#/components/parameters/OutputChannel'
+        - $ref: '#/components/parameters/Status'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/RuleListRes'
+        '400':
+          description: Failed due to malformed query parameters
+        '401':
+          description: Missing or invalid access token
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/rules/{ruleID}:
+    get:
+      operationId: getRule
+      summary: View Rule
+      description: Retrieves a rule by ID
+      tags:
+        - rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/RuleRes'
+        "400":
+          description: Missing or invalid rule
+        "403":
+          description: Failed to perform authorization over the entity
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Rule does not exist
+        "422":
+          description: Database can't process request
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    put:
+      operationId: updateRule
+      summary: Update Rule
+      description: Updates an existing rule
+      tags:
+        - rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/schemas/Rule'
+      responses:
+        '200':
+          $ref: '#/components/responses/RuleRes'
+        '400':
+          description: Failed due to malformed JSON
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Rule does not exist
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      operationId: removeRule
+      summary: Delete Rule
+      description: Deletes a rule
+      tags:
+        - rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Rule deleted successfully
+        "400":
+          description: Failed due to malformed rule ID
+        '401':
+          description: Missing or invalid access token
+        "403":
+          description: Failed to perform authorization over the entity
+        "422":
+          description: Database can't process request
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/rules/{ruleID}/enable:
+    put:
+      operationId: enableRule
+      summary: Enable Rule
+      description: Enables a rule for processing
+      tags:
+        - rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Rule enabled successfully
+        "400":
+          description: Failed due to malformed JSON
+        '401':
+          description: Missing or invalid access token
+        "403":
+          description: Failed to perform authorization over the entity
+        '404':
+          description: Rule does not exist
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/rules/{ruleID}/disable:
+    put:
+      operationId: disableRule
+      summary: Disable Rule
+      description: Disables a rule from processing
+      tags:
+        - Rules
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/RuleID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Rule disabled successfully
+        "400":
+          description: Failed due to malformed JSON
+        '401':
+          description: Missing or invalid access token
+        "403":
+          description: Failed to perform authorization over the entity
+        '404':
+          description: Rule does not exist
+        "422":
+          description: Database can't process request
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthRes"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  schemas:
+    RulesListRes:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of results
+          minimum: 0
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval
+          minimum: 0
+          default: 0
+        limit:
+          type: integer
+          description: Size of the subset to retrieve
+          maximum: 100
+          default: 10
+        rules:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Rule'
+      required:
+        - rules
+
+    Rule:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique rule identifier
+        name:
+          type: string
+          description: Rule name
+        domain:
+          type: string
+          description: Domain ID this rule belongs to
+        metadata:
+          type: object
+          description: Custom metadata
+          additionalProperties:
+            type: string
+        input_channel:
+          type: string
+          description: Input channel for receiving messages
+        input_topic:
+          type: string
+          description: Input topic for receiving messages
+        logic:
+          type: object
+          description: Rule processing logic script
+          properties:
+            script:
+              type: string
+              description: Script content
+        output_channel:
+          type: string
+          description: Output channel for processed messages
+        output_topic:
+          type: string
+          description: Output topic for processed messages
+        schedule:
+          type: object
+          description: Rule execution schedule
+          properties:
+            start_datetime:
+              type: string
+              format: date-time
+              description: When the schedule becomes active
+            time:
+              type: string
+              format: date-time
+              description: Specific time for the rule to run
+            recurring:
+              type: string
+              description: Schedule recurrence pattern
+              enum: [None, Daily, Weekly, Monthly]
+            recurring_period:
+              type: integer
+              minimum: 1
+              description: Controls how many intervals to skip between executions (1 = every interval, 2 = every second interval, etc.)
+        status:
+          type: string
+          description: Rule status
+          enum: [enabled, disabled]
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          readOnly: true
+        created_by:
+          type: string
+          description: User who created the rule
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          readOnly: true
+        updated_by:
+          type: string
+          description: User who last updated the rule
+      required:
+        - name
+        - domain
+        - input_channel
+        - input_topic
+        - logic
+        - status
+
+  parameters:
+    DomainID:
+      name: domainID
+      description: Domain ID
+      in: path
+      required: true
+      schema:
+        type: string
+    RuleID:
+      name: ruleID
+      description: Rule ID
+      in: path
+      required: true
+      schema:
+        type: string
+    Offset:
+      name: offset
+      description: Number of items to skip
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    Limit:
+      name: limit
+      description: Size of the subset
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+    InputChannel:
+      name: input_channel
+      description: Filter by input channel
+      in: query
+      required: false
+      schema:
+        type: string
+    OutputChannel:
+      name: output_channel
+      description: Filter by output channel
+      in: query
+      required: false
+      schema:
+        type: string
+    Status:
+      name: status
+      description: Filter by rule status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [enabled, disabled]
+        default: enabled
+
+  requestBodies:
+    RuleCreateReq:
+      description: JSON-formatted document describing the new rule
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Rule name
+              domain:
+                type: string
+                description: Domain ID this rule belongs to
+              metadata:
+                type: object
+                description: Custom metadata
+                additionalProperties:
+                  type: string
+              input_channel:
+                type: string
+                description: Input channel for receiving messages
+              input_topic:
+                type: string
+                description: Input topic for receiving messages
+              logic:
+                type: object
+                description: Rule processing logic script
+                properties:
+                  script:
+                    type: string
+                    description: Script content
+              output_channel:
+                type: string
+                description: Output channel for processed messages
+              output_topic:
+                type: string
+                description: Output topic for processed messages
+              schedule:
+                type: object
+                description: Rule execution schedule
+                properties:
+                  start_datetime:
+                    type: string
+                    format: date-time
+                    description: When the schedule becomes active
+                  time:
+                    type: string
+                    format: date-time
+                    description: Specific time for the rule to run
+                  recurring:
+                    type: string
+                    description: Schedule recurrence pattern
+                    enum: [None, Daily, Weekly, Monthly]
+                  recurring_period:
+                    type: integer
+                    minimum: 1
+                    description: Controls how many intervals to skip between executions
+              status:
+                type: string
+                description: Rule status
+                enum: [enabled, disabled]
+            required:
+              - name
+              - domain
+              - input_channel
+              - input_topic
+              - logic
+              - schedule
+
+  responses:
+    RuleCreateRes:
+      description: Rule registered
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Created rule's relative URL (i.e. /rules/{ruleID})
+    RuleListRes:
+      description: Data retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RulesListRes'
+    RuleRes:
+      description: Data retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Rule'
+      links:
+        update:
+          operationId: updateRule
+          parameters:
+            ruleID: $response.body#/id
+        enable:
+          operationId: enableRule
+          parameters:
+            ruleID: $response.body#/id
+        disable:
+          operationId: disableRule
+          parameters:
+            ruleID: $response.body#/id
+        delete:
+          operationId: removeRule
+          parameters:
+            ruleID: $response.body#/id
+    ServiceError:
+      description: Unexpected server-side error occurred
+    HealthRes:
+      description: Service Health Check
+      content:
+        application/health+json:
+          schema:
+            $ref: "./schemas/health_info.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"

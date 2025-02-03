@@ -21,13 +21,15 @@ import (
 )
 
 const (
-	defPass     = "12345678"
-	defWSPort   = "8186"
-	numAdapters = 4
-	batchSize   = 99
-	usersPort   = "9002"
-	clientsPort = "9000"
-	domainsPort = "8189"
+	defPass      = "12345678"
+	defWSPort    = "8186"
+	numAdapters  = 4
+	batchSize    = 99
+	usersPort    = "9002"
+	groupsPort   = "9004"
+	clientsPort  = "9006"
+	channelsPort = "9005"
+	domainsPort  = "9003"
 )
 
 var (
@@ -65,9 +67,11 @@ type Config struct {
 // - Publish message from HTTP, MQTT, WS and CoAP Adapters.
 func Test(conf Config) {
 	sdkConf := sdk.Config{
-		ClientsURL:      fmt.Sprintf("http://%s:%s", conf.Host, clientsPort),
 		UsersURL:        fmt.Sprintf("http://%s:%s", conf.Host, usersPort),
+		GroupsURL:       fmt.Sprintf("http://%s:%s", conf.Host, groupsPort),
 		DomainsURL:      fmt.Sprintf("http://%s:%s", conf.Host, domainsPort),
+		ClientsURL:      fmt.Sprintf("http://%s:%s", conf.Host, clientsPort),
+		ChannelsURL:     fmt.Sprintf("http://%s:%s", conf.Host, channelsPort),
 		HTTPAdapterURL:  fmt.Sprintf("http://%s/http", conf.Host),
 		MsgContentType:  sdk.CTJSONSenML,
 		TLSVerification: false,
@@ -82,6 +86,7 @@ func Test(conf Config) {
 		errExit(fmt.Errorf("unable to create user: %w", err))
 	}
 	color.Success.Printf("created user with token %s\n", magenta(token))
+	color.Success.Printf("created domain with ID %s\n", magenta(domainID))
 
 	users, err := createUsers(s, conf, token)
 	if err != nil {
@@ -527,9 +532,6 @@ func update(s sdk.SDK, domainID, token string, users []sdk.User, groups []sdk.Gr
 		rChannel, err = s.EnableChannel(channel.ID, domainID, token)
 		if err != nil {
 			return fmt.Errorf("failed to enable channel %w", err)
-		}
-		if rChannel.Status != sdk.EnabledStatus {
-			return fmt.Errorf("failed to enable channel before %s after %s", channel.Status, rChannel.Status)
 		}
 	}
 

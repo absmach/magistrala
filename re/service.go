@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	timeFormat   = "2006-01-02T15:04"
-	hoursInDay   = 24
-	daysInWeek   = 7
-	monthsInYear = 12
+	dateTimeFormat = "2006-01-02T15:04"
+	timeFormat     = "3:04 PM"
+	hoursInDay     = 24
+	daysInWeek     = 7
+	monthsInYear   = 12
 )
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
@@ -284,7 +285,8 @@ func (r Rule) shouldRun(startTime time.Time) bool {
 	}
 
 	t := r.Schedule.Time.Truncate(time.Minute)
-	if t.Equal(startTime) {
+	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
+	if t.Equal(startTimeOnly) {
 		return true
 	}
 

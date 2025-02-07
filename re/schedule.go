@@ -18,11 +18,11 @@ type Schedule struct {
 func (s Schedule) MarshalJSON() ([]byte, error) {
 	type Alias Schedule
 	jTimes := struct {
-		StartDateTime int64  `json:"start_datetime"`
+		StartDateTime string `json:"start_datetime"`
 		Time          string `json:"time"`
 		*Alias
 	}{
-		StartDateTime: s.StartDateTime.Unix(),
+		StartDateTime: s.StartDateTime.Format(time.RFC3339),
 		Time:          s.Time.Format(timeFormat),
 		Alias:         (*Alias)(&s),
 	}
@@ -32,7 +32,7 @@ func (s Schedule) MarshalJSON() ([]byte, error) {
 func (s *Schedule) UnmarshalJSON(data []byte) error {
 	type Alias Schedule
 	aux := struct {
-		StartDateTime int64  `json:"start_datetime"`
+		StartDateTime string `json:"start_datetime"`
 		Time          string `json:"time"`
 		*Alias
 	}{
@@ -42,7 +42,11 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	s.StartDateTime = time.Unix(aux.StartDateTime, 0)
+	startDateTime, err := time.Parse(time.RFC3339, aux.StartDateTime)
+	if err != nil {
+		return err
+	}
+	s.StartDateTime = startDateTime
 
 	if aux.Time != "" {
 		time, err := time.Parse(timeFormat, aux.Time)

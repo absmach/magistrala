@@ -23,7 +23,7 @@ func (s Schedule) MarshalJSON() ([]byte, error) {
 		*Alias
 	}{
 		StartDateTime: s.StartDateTime.Unix(),
-		Time:          s.Time.Format("3:04 PM"),
+		Time:          s.Time.Format(timeFormat),
 		Alias:         (*Alias)(&s),
 	}
 	return json.Marshal(jTimes)

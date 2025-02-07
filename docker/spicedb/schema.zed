@@ -186,7 +186,7 @@ definition group {
 	permission remove_role_users_permission = remove_role_users + parent_group->subgroup_remove_role_users_permission + domain->group_remove_role_users_permission
 	permission view_role_users_permission = view_role_users + parent_group->subgroup_view_role_users_permission + domain->group_view_role_users_permission
 
-	// Subgroup clients permisssion
+	// Subgroup clients permission
 	permission subgroup_client_update_permission = subgroup_client_update + parent_group->subgroup_client_update_permission
 	permission subgroup_client_read_permission = subgroup_client_read + parent_group->subgroup_client_read_permission
 	permission subgroup_client_delete_permission = subgroup_client_delete + parent_group->subgroup_client_delete_permission
@@ -198,7 +198,7 @@ definition group {
 	permission subgroup_client_remove_role_users_permission = subgroup_client_remove_role_users + parent_group->subgroup_client_remove_role_users_permission
 	permission subgroup_client_view_role_users_permission = subgroup_client_view_role_users + parent_group->subgroup_client_view_role_users_permission
 
-	// Group clients permisssion
+	// Group clients permission
 	permission client_create_permission = client_create + parent_group->subgroup_client_create + domain->client_create_permission
 	permission client_update_permission = client_update + parent_group->subgroup_client_update + domain->client_update_permission
 	permission client_read_permission = client_read + parent_group->subgroup_client_read + domain->client_read_permission
@@ -211,7 +211,7 @@ definition group {
 	permission client_remove_role_users_permission = client_remove_role_users + parent_group->subgroup_client_remove_role_users + domain->client_remove_role_users_permission
 	permission client_view_role_users_permission = client_view_role_users + parent_group->subgroup_client_view_role_users + domain->client_view_role_users_permission
 
-	// Subgroup channels permisssion
+	// Subgroup channels permission
 	permission subgroup_channel_update_permission = subgroup_channel_update + parent_group->subgroup_channel_update_permission
 	permission subgroup_channel_read_permission = subgroup_channel_read + parent_group->subgroup_channel_read_permission
 	permission subgroup_channel_delete_permission =  subgroup_channel_delete + parent_group->subgroup_channel_delete_permission
@@ -225,7 +225,7 @@ definition group {
 	permission subgroup_channel_remove_role_users_permission = subgroup_channel_remove_role_users + parent_group->subgroup_channel_remove_role_users_permission
 	permission subgroup_channel_view_role_users_permission = subgroup_channel_view_role_users + parent_group->subgroup_channel_view_role_users_permission
 
-	// Group channels permisssion
+	// Group channels permission
 	permission channel_create_permission = channel_create + parent_group->subgroup_channel_create_permission + domain->channel_create_permission
 	permission channel_update_permission = channel_update + parent_group->subgroup_channel_update + domain->channel_update_permission
 	permission channel_read_permission = channel_read + parent_group->subgroup_channel_read + domain->channel_read_permission
@@ -244,7 +244,7 @@ definition group {
 }
 
 definition domain {
-	//Replace platoform with organization in future
+	//Replace platform with organization in future
 	relation organization: platform
 	relation team: team
 
@@ -310,7 +310,16 @@ definition domain {
 	permission remove_role_users_permission = remove_role_users + team->domain_remove_role_users + organization->admin
 	permission view_role_users_permission = view_role_users + team->domain_view_role_users + organization->admin
 
-	permission membership = read + update + enable + disable + delete + manage_role + add_role_users + remove_role_users + view_role_users
+	permission membership = read + update + enable + disable + delete +
+	manage_role + add_role_users + remove_role_users + view_role_users +
+	client_create + channel_create + group_create +
+	client_update + client_read + client_delete + client_set_parent_group + client_connect_to_channel +
+	client_manage_role + client_add_role_users + client_remove_role_users + client_view_role_users +
+	channel_update + channel_read + channel_delete + channel_set_parent_group + channel_connect_to_client + channel_publish + channel_subscribe +
+	channel_manage_role + channel_add_role_users + channel_remove_role_users + channel_view_role_users +
+	group_update + group_membership + group_read + group_delete + group_set_child + group_set_parent +
+	group_manage_role + group_add_role_users + group_remove_role_users + group_view_role_users
+
 	permission admin = read & update & enable & disable & delete & manage_role & add_role_users & remove_role_users & view_role_users
 
 	permission client_create_permission = client_create + team->client_create + organization->admin
@@ -355,7 +364,7 @@ definition domain {
 
 }
 
-// Add this realtion and permission in future while adding orgnaization
+// Add this relation and permission in future while adding organization
 definition team {
 	relation organization: organization
 	relation parent_team: team

@@ -15,7 +15,22 @@ const (
 )
 
 type addRuleReq struct {
-	re.Rule
+	ID            string      `json:"id"`
+	Name          string      `json:"name"`
+	Metadata      re.Metadata `json:"metadata,omitempty"`
+	InputChannel  string      `json:"input_channel"`
+	InputTopic    string      `json:"input_topic"`
+	Logic         re.Script   `json:"logic"`
+	OutputChannel string      `json:"output_channel,omitempty"`
+	OutputTopic   string      `json:"output_topic,omitempty"`
+	Schedule      Schedule    `json:"schedule,omitempty"`
+}
+
+type Schedule struct {
+	StartDateTime   int64        `json:"start_datetime"`
+	Time            int64        `json:"time"`
+	Recurring       re.Recurring `json:"recurring"`
+	RecurringPeriod uint         `json:"recurring_period"`
 }
 
 func (req addRuleReq) validate() error {
@@ -53,7 +68,7 @@ func (req listRulesReq) validate() error {
 }
 
 type updateRuleReq struct {
-	Rule re.Rule `json:",inline"`
+	Rule addRuleReq `json:",inline"`
 }
 
 func (req updateRuleReq) validate() error {

@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
@@ -24,7 +25,8 @@ func addRuleEndpoint(s re.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return addRuleRes{}, err
 		}
-		rule, err := s.AddRule(ctx, session, req.Rule)
+
+		rule, err := s.AddRule(ctx, session, toRules(req))
 		if err != nil {
 			return addRuleRes{}, err
 		}
@@ -62,7 +64,7 @@ func updateRuleEndpoint(s re.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return updateRuleRes{}, err
 		}
-		rule, err := s.UpdateRule(ctx, session, req.Rule)
+		rule, err := s.UpdateRule(ctx, session, toRules(req.Rule))
 		if err != nil {
 			return updateRuleRes{}, err
 		}
@@ -155,5 +157,33 @@ func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
 		}
 
 		return updateRuleStatusRes{Rule: rule}, err
+	}
+}
+
+func toRules(req addRuleReq) re.Rule {
+	var startDateTime time.Time
+	var schTime time.Time
+
+	if req.Schedule.StartDateTime != 0 {
+		startDateTime = time.Unix(req.Schedule.StartDateTime, 0)
+	}
+	if req.Schedule.Time != 0 {
+		schTime = time.Unix(req.Schedule.Time, 0)
+	}
+	return re.Rule{
+		ID:            req.ID,
+		Name:          req.Name,
+		Metadata:      req.Metadata,
+		InputChannel:  req.InputChannel,
+		InputTopic:    req.InputTopic,
+		Logic:         req.Logic,
+		OutputChannel: req.OutputChannel,
+		OutputTopic:   req.OutputTopic,
+		Schedule: re.Schedule{
+			Recurring:       req.Schedule.Recurring,
+			RecurringPeriod: req.Schedule.RecurringPeriod,
+			StartDateTime:   startDateTime,
+			Time:            schTime,
+		},
 	}
 }

@@ -99,11 +99,11 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
-	var rule re.Rule
-	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
+	var req addRuleReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
-	return addRuleReq{Rule: rule}, nil
+	return req, nil
 }
 
 func decodeViewRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
@@ -112,11 +112,11 @@ func decodeViewRuleRequest(_ context.Context, r *http.Request) (interface{}, err
 }
 
 func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var rule re.Rule
-	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
+	var req addRuleReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
-	return updateRuleReq{Rule: rule}, nil
+	return updateRuleReq{Rule: req}, nil
 }
 
 func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {

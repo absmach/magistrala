@@ -15,51 +15,6 @@ type Schedule struct {
 	RecurringPeriod uint      `json:"recurring_period"` // Controls how many intervals to skip between executions: 1 = every interval, 2 = every second interval, etc.
 }
 
-func (s Schedule) MarshalJSON() ([]byte, error) {
-	type Alias Schedule
-	jTimes := struct {
-		StartDateTime string `json:"start_datetime"`
-		Time          string `json:"time"`
-		*Alias
-	}{
-		StartDateTime: s.StartDateTime.Format(timeFormat),
-		Time:          s.Time.Format(timeFormat),
-		Alias:         (*Alias)(&s),
-	}
-	return json.Marshal(jTimes)
-}
-
-func (s *Schedule) UnmarshalJSON(data []byte) error {
-	type Alias Schedule
-	aux := struct {
-		StartDateTime string `json:"start_datetime"`
-		Time          string `json:"time"`
-		*Alias
-	}{
-		Alias: (*Alias)(s),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	if aux.StartDateTime != "" {
-		startDateTime, err := time.Parse(timeFormat, aux.StartDateTime)
-		if err != nil {
-			return err
-		}
-		s.StartDateTime = startDateTime
-	}
-
-	if aux.Time != "" {
-		time, err := time.Parse(timeFormat, aux.Time)
-		if err != nil {
-			return err
-		}
-		s.Time = time
-	}
-	return nil
-}
-
 // Type can be daily, weekly or monthly.
 type Recurring uint
 

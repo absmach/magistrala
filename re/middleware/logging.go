@@ -30,13 +30,15 @@ func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session,
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("domain_id", session.DomainID),
+			slog.String("rule_name", r.Name),
+			slog.String("channel", r.InputChannel),
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
-			lm.logger.Warn(fmt.Sprintf("Add %s rule failed", r.Name), args...)
+			lm.logger.Warn("Add rule failed", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("Add %s rule completed successfully", r.Name), args...)
+		lm.logger.Info("Add rule completed successfully", args...)
 	}(time.Now())
 	return lm.svc.AddRule(ctx, session, r)
 }
@@ -46,14 +48,17 @@ func (lm *loggingMiddleware) ViewRule(ctx context.Context, session authn.Session
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("domain_id", session.DomainID),
-			slog.String("rule_id", id),
+			slog.Group("rule",
+				slog.String("id", res.ID),
+				slog.String("name", res.Name),
+			),
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
-			lm.logger.Warn(fmt.Sprintf("View %s rule failed", id), args...)
+			lm.logger.Warn("View rule failed", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("View %s rule successful", id), args...)
+		lm.logger.Info("View rule completed successful", args...)
 	}(time.Now())
 	return lm.svc.ViewRule(ctx, session, id)
 }
@@ -70,10 +75,10 @@ func (lm *loggingMiddleware) UpdateRule(ctx context.Context, session authn.Sessi
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
-			lm.logger.Warn(fmt.Sprintf("Update %s rule failed", r.ID), args...)
+			lm.logger.Warn("Update rule failed", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("Update %s rule successful", r.ID), args...)
+		lm.logger.Info("Update rule completed successful", args...)
 	}(time.Now())
 	return lm.svc.UpdateRule(ctx, session, r)
 }
@@ -94,7 +99,7 @@ func (lm *loggingMiddleware) ListRules(ctx context.Context, session authn.Sessio
 			lm.logger.Warn("List rules failed", args...)
 			return
 		}
-		lm.logger.Info("List rules successful", args...)
+		lm.logger.Info("List rules completed successful", args...)
 	}(time.Now())
 	return lm.svc.ListRules(ctx, session, pm)
 }
@@ -108,10 +113,10 @@ func (lm *loggingMiddleware) RemoveRule(ctx context.Context, session authn.Sessi
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
-			lm.logger.Warn(fmt.Sprintf("Remove %s rule failed", id), args...)
+			lm.logger.Warn("Remove rule failed", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("Remove %s rule successful", id), args...)
+		lm.logger.Info("Remove rule completed successful", args...)
 	}(time.Now())
 	return lm.svc.RemoveRule(ctx, session, id)
 }
@@ -125,10 +130,10 @@ func (lm *loggingMiddleware) EnableRule(ctx context.Context, session authn.Sessi
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
-			lm.logger.Warn(fmt.Sprintf("Enable %s rule failed", id), args...)
+			lm.logger.Warn("Enable rule failed", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("Enable %s rule successful", id), args...)
+		lm.logger.Info("Enable rule successful", args...)
 	}(time.Now())
 	return lm.svc.EnableRule(ctx, session, id)
 }
@@ -142,10 +147,10 @@ func (lm *loggingMiddleware) DisableRule(ctx context.Context, session authn.Sess
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
-			lm.logger.Warn(fmt.Sprintf("Disable %s rule failed", id), args...)
+			lm.logger.Warn("Disable rule failed", args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("Disable %s rule successful", id), args...)
+		lm.logger.Info("Disable rule successful", args...)
 	}(time.Now())
 	return lm.svc.DisableRule(ctx, session, id)
 }

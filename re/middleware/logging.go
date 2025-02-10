@@ -146,7 +146,7 @@ func (lm *loggingMiddleware) DisableRule(ctx context.Context, session authn.Sess
 			lm.logger.Warn(fmt.Sprintf("Disable %s rule failed", id), args...)
 			return
 		}
-		lm.logger.Info(fmt.Sprintf("Disable %s rule sucessful", id), args...)
+		lm.logger.Info(fmt.Sprintf("Disable %s rule successful", id), args...)
 	}(time.Now())
 	return lm.svc.DisableRule(ctx, session, id)
 }

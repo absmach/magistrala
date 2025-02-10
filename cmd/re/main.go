@@ -16,6 +16,7 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
+	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/consumers"
@@ -207,6 +208,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 
 	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
 	csvc := re.NewService(repo, idp, nil, re.NewTicker(time.Minute))
+	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil
 }

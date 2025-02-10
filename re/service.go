@@ -17,11 +17,9 @@ import (
 )
 
 const (
-	dateTimeFormat = "2006-01-02T15:04"
-	timeFormat     = "3:04 PM"
-	hoursInDay     = 24
-	daysInWeek     = 7
-	monthsInYear   = 12
+	hoursInDay   = 24
+	daysInWeek   = 7
+	monthsInYear = 12
 )
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")

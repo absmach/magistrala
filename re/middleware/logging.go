@@ -37,7 +37,7 @@ func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session,
 			lm.logger.Warn("Add rule failed", args...)
 			return
 		}
-		lm.logger.Info("Add rule completed successfullyly", args...)
+		lm.logger.Info("Add rule completed successfully", args...)
 	}(time.Now())
 	return lm.svc.AddRule(ctx, session, r)
 }
@@ -135,7 +135,7 @@ func (lm *loggingMiddleware) EnableRule(ctx context.Context, session authn.Sessi
 			lm.logger.Warn("Enable rule failed", args...)
 			return
 		}
-		lm.logger.Info("Enable rule successfully", args...)
+		lm.logger.Info("Enable rule completed successfully", args...)
 	}(time.Now())
 	return lm.svc.EnableRule(ctx, session, id)
 }
@@ -155,7 +155,7 @@ func (lm *loggingMiddleware) DisableRule(ctx context.Context, session authn.Sess
 			lm.logger.Warn("Disable rule failed", args...)
 			return
 		}
-		lm.logger.Info("Disable rule successfully", args...)
+		lm.logger.Info("Disable rule completed successfully", args...)
 	}(time.Now())
 	return lm.svc.DisableRule(ctx, session, id)
 }
@@ -170,7 +170,7 @@ func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
 			lm.logger.Warn("Start scheduler failed", args...)
 			return
 		}
-		lm.logger.Info("Start scheduler successfully", args...)
+		lm.logger.Info("Start scheduler completed successfully", args...)
 	}(time.Now())
 	return lm.svc.StartScheduler(ctx)
 }

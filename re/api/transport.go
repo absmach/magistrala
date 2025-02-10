@@ -116,8 +116,7 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		return nil, err
 	}
-	id := chi.URLParam(r, idKey)
-	rule.ID = id
+	rule.ID = chi.URLParam(r, idKey)
 	return updateRuleReq{Rule: rule}, nil
 }
 

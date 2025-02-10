@@ -31,7 +31,6 @@ func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session,
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("domain_id", session.DomainID),
 			slog.String("rule_name", r.Name),
-			slog.String("channel", r.InputChannel),
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))

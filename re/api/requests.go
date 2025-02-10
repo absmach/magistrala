@@ -53,7 +53,7 @@ func (req listRulesReq) validate() error {
 }
 
 type updateRuleReq struct {
-	Rule re.Rule `json:",inline"`
+	Rule re.Rule
 }
 
 func (req updateRuleReq) validate() error {

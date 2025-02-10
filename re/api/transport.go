@@ -59,7 +59,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, logger *slog.Logg
 				opts...,
 			), "list_rules").ServeHTTP)
 
-			r.Put("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
+			r.Patch("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
 				updateRuleEndpoint(svc),
 				decodeUpdateRuleRequest,
 				api.EncodeResponse,
@@ -73,14 +73,14 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, logger *slog.Logg
 				opts...,
 			), "delete_rule").ServeHTTP)
 
-			r.Put("/{ruleID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+			r.Post("/{ruleID}/enable", otelhttp.NewHandler(kithttp.NewServer(
 				enableRuleEndpoint(svc),
 				decodeUpdateRuleStatusRequest,
 				api.EncodeResponse,
 				opts...,
 			), "enable_rule").ServeHTTP)
 
-			r.Put("/{ruleID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+			r.Post("/{ruleID}/disable", otelhttp.NewHandler(kithttp.NewServer(
 				disableRuleEndpoint(svc),
 				decodeUpdateRuleStatusRequest,
 				api.EncodeResponse,
@@ -116,6 +116,7 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		return nil, err
 	}
+	rule.ID = chi.URLParam(r, idKey)
 	return updateRuleReq{Rule: rule}, nil
 }
 

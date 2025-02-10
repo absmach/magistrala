@@ -54,7 +54,6 @@ func (lm *loggingMiddleware) ViewRule(ctx context.Context, session authn.Session
 			return
 		}
 		lm.logger.Info(fmt.Sprintf("View %s rule successful", id), args...)
-
 	}(time.Now())
 	return lm.svc.ViewRule(ctx, session, id)
 }

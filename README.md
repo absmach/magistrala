@@ -59,7 +59,7 @@ Clone the repository and start the services:
 ```bash
 git clone https://github.com/absmach/magistrala.git
 cd magistrala
-docker compose -f docker/docker-compose.yml --env-file docker/.env up
+make run args=-d
 ```
 
 Alternatively, use the Makefile for a simpler command:

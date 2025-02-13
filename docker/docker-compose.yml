@@ -19,7 +19,6 @@ volumes:
   magistrala-pat-db-volume:
   magistrala-domains-db-volume:
   magistrala-domains-redis-volume:
-  magistrala-invitations-db-volume:
   magistrala-journal-volume:
   magistrala-ui-backend-db-volume:
   magistrala-re-db-volume:
@@ -279,83 +278,6 @@ services:
         target: /auth-grpc-client-ca${SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
-      - type: bind
-        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
-        bind:
-          create_host_path: true
-
-  invitations-db:
-    image: postgres:16.2-alpine
-    container_name: magistrala-invitations-db
-    restart: on-failure
-    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
-    environment:
-      POSTGRES_USER: ${SMQ_INVITATIONS_DB_USER}
-      POSTGRES_PASSWORD: ${SMQ_INVITATIONS_DB_PASS}
-      POSTGRES_DB: ${SMQ_INVITATIONS_DB_NAME}
-      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
-    ports:
-      - 6021:5432
-    networks:
-      - magistrala-base-net
-    volumes:
-      - magistrala-invitations-db-volume:/var/lib/postgresql/data
-
-  invitations:
-    image: supermq/invitations:${MG_RELEASE_TAG}
-    container_name: magistrala-invitations
-    restart: on-failure
-    depends_on:
-      - auth
-      - invitations-db
-    environment:
-      SMQ_INVITATIONS_LOG_LEVEL: ${SMQ_INVITATIONS_LOG_LEVEL}
-      SMQ_USERS_URL: ${SMQ_USERS_URL}
-      SMQ_DOMAINS_URL: ${SMQ_DOMAINS_URL}
-      SMQ_INVITATIONS_HTTP_HOST: ${SMQ_INVITATIONS_HTTP_HOST}
-      SMQ_INVITATIONS_HTTP_PORT: ${SMQ_INVITATIONS_HTTP_PORT}
-      SMQ_INVITATIONS_HTTP_SERVER_CERT: ${SMQ_INVITATIONS_HTTP_SERVER_CERT}
-      SMQ_INVITATIONS_HTTP_SERVER_KEY: ${SMQ_INVITATIONS_HTTP_SERVER_KEY}
-      SMQ_INVITATIONS_DB_HOST: ${SMQ_INVITATIONS_DB_HOST}
-      SMQ_INVITATIONS_DB_USER: ${SMQ_INVITATIONS_DB_USER}
-      SMQ_INVITATIONS_DB_PASS: ${SMQ_INVITATIONS_DB_PASS}
-      SMQ_INVITATIONS_DB_PORT: ${SMQ_INVITATIONS_DB_PORT}
-      SMQ_INVITATIONS_DB_NAME: ${SMQ_INVITATIONS_DB_NAME}
-      SMQ_INVITATIONS_DB_SSL_MODE: ${SMQ_INVITATIONS_DB_SSL_MODE}
-      SMQ_INVITATIONS_DB_SSL_CERT: ${SMQ_INVITATIONS_DB_SSL_CERT}
-      SMQ_INVITATIONS_DB_SSL_KEY: ${SMQ_INVITATIONS_DB_SSL_KEY}
-      SMQ_INVITATIONS_DB_SSL_ROOT_CERT: ${SMQ_INVITATIONS_DB_SSL_ROOT_CERT}
-      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
-      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
-      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
-      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
-      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
-      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
-      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
-      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
-      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
-      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
-      SMQ_INVITATIONS_INSTANCE_ID: ${SMQ_INVITATIONS_INSTANCE_ID}
-    ports:
-      - ${SMQ_INVITATIONS_HTTP_PORT}:${SMQ_INVITATIONS_HTTP_PORT}
-    networks:
-      - magistrala-base-net
-    volumes:
-      # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
         target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
@@ -1373,7 +1295,6 @@ services:
       MG_CERTS_URL: ${MG_CERTS_URL}
       MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
       MG_READER_URL: ${MG_READER_URL}
-      MG_INVITATIONS_URL: ${MG_INVITATIONS_URL}
       MG_BACKEND_URL: ${MG_UI_BACKEND_URL}
       MG_JOURNAL_URL: ${MG_JOURNAL_URL}
       MG_BILLING_URL: ${MG_BILLING_URL}

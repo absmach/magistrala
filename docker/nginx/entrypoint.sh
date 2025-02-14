@@ -21,7 +21,6 @@ envsubst '
     ${SMQ_HTTP_ADAPTER_PORT}
     ${SMQ_NGINX_MQTT_PORT}
     ${SMQ_NGINX_MQTTS_PORT}
-    ${SMQ_INVITATIONS_HTTP_PORT}
     ${SMQ_WS_ADAPTER_HTTP_PORT}' </etc/nginx/nginx.conf.template >/etc/nginx/nginx.conf
 
 exec nginx -g "daemon off;"

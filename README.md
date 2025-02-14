@@ -59,15 +59,14 @@ Clone the repository and start the services:
 ```bash
 git clone https://github.com/absmach/magistrala.git
 cd magistrala
-make run args=-d
+docker compose -f docker/docker-compose.yml --env-file docker/.env up
 ```
 
 Alternatively, use the Makefile for a simpler command:
 
 ```bash
-make run
+make run args=-d
 ```
-
 
 ## 📤 Usage
 

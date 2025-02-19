@@ -1278,111 +1278,111 @@ services:
     networks:
       - magistrala-base-net
 
-  ui:
-    image: ghcr.io/absmach/magistrala/ui-mg:latest
-    container_name: magistrala-ui
-    ports:
-      - 3000:3000
-    networks:
-      - magistrala-base-net
-    environment:
-      MG_DOMAINS_URL: ${MG_DOMAINS_URL}
-      MG_USERS_URL: ${MG_USERS_URL}
-      MG_CLIENTS_URL: ${MG_CLIENTS_URL}
-      MG_CHANNELS_URL: ${MG_CHANNELS_URL}
-      MG_GROUPS_URL: ${MG_GROUPS_URL}
-      MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
-      MG_CERTS_URL: ${MG_CERTS_URL}
-      MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
-      MG_READER_URL: ${MG_READER_URL}
-      MG_BACKEND_URL: ${MG_UI_BACKEND_URL}
-      MG_JOURNAL_URL: ${MG_JOURNAL_URL}
-      MG_BILLING_URL: ${MG_BILLING_URL}
-      MG_RE_URL: ${MG_RE_URL}
-      MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
-      MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
-      MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
-      MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
-      MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
-      MG_UI_NAME: ${MG_UI_NAME}
-      MG_UI_BASE_PATH: ${MG_UI_BASE_PATH}
-      NEXT_PUBLIC_MG_UI_BASE_PATH: ${NEXT_PUBLIC_MG_UI_BASE_PATH}
-      MG_UI_TYPE: mg
-      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      RUNTIME_ENV: ${RUNTIME_ENV}
-      MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+  # ui:
+  #   image: ghcr.io/absmach/magistrala/ui-mg:latest
+  #   container_name: magistrala-ui
+  #   ports:
+  #     - 3000:3000
+  #   networks:
+  #     - magistrala-base-net
+  #   environment:
+  #     MG_DOMAINS_URL: ${MG_DOMAINS_URL}
+  #     MG_USERS_URL: ${MG_USERS_URL}
+  #     MG_CLIENTS_URL: ${MG_CLIENTS_URL}
+  #     MG_CHANNELS_URL: ${MG_CHANNELS_URL}
+  #     MG_GROUPS_URL: ${MG_GROUPS_URL}
+  #     MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
+  #     MG_CERTS_URL: ${MG_CERTS_URL}
+  #     MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
+  #     MG_READER_URL: ${MG_READER_URL}
+  #     MG_BACKEND_URL: ${MG_UI_BACKEND_URL}
+  #     MG_JOURNAL_URL: ${MG_JOURNAL_URL}
+  #     MG_BILLING_URL: ${MG_BILLING_URL}
+  #     MG_RE_URL: ${MG_RE_URL}
+  #     MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
+  #     MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
+  #     MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
+  #     MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
+  #     MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
+  #     MG_UI_NAME: ${MG_UI_NAME}
+  #     MG_UI_BASE_PATH: ${MG_UI_BASE_PATH}
+  #     NEXT_PUBLIC_MG_UI_BASE_PATH: ${NEXT_PUBLIC_MG_UI_BASE_PATH}
+  #     MG_UI_TYPE: mg
+  #     NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+  #     NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+  #     RUNTIME_ENV: ${RUNTIME_ENV}
+  #     MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
 
-  ui-backend:
-    image: ghcr.io/absmach/magistrala/ui-backend:latest
-    container_name: magistrala-ui-backend
-    ports:
-      - ${MG_UI_BACKEND_HTTP_PORT}:${MG_UI_BACKEND_HTTP_PORT}
-    networks:
-      - magistrala-base-net
-    restart: on-failure:3
-    environment:
-      MG_BACKEND_LOG_LEVEL: ${MG_UI_BACKEND_LOG_LEVEL}
-      MG_BACKEND_HTTP_HOST: ${MG_UI_BACKEND_HTTP_HOST}
-      MG_BACKEND_HTTP_PORT: ${MG_UI_BACKEND_HTTP_PORT}
-      MG_BACKEND_HTTP_SERVER_CERT: ${MG_UI_BACKEND_HTTP_SERVER_CERT}
-      MG_BACKEND_HTTP_SERVER_KEY: ${MG_UI_BACKEND_HTTP_SERVER_KEY}
-      MG_BACKEND_DB_HOST: ${MG_UI_BACKEND_DB_HOST}
-      MG_BACKEND_DB_PORT: ${MG_UI_BACKEND_DB_PORT}
-      MG_BACKEND_DB_USER: ${MG_UI_BACKEND_DB_USER}
-      MG_BACKEND_DB_PASS: ${MG_UI_BACKEND_DB_PASS}
-      MG_BACKEND_DB_NAME: ${MG_UI_BACKEND_DB_NAME}
-      MG_BACKEND_DB_SSL_MODE: ${MG_UI_BACKEND_DB_SSL_MODE}
-      MG_BACKEND_DB_SSL_CERT: ${MG_UI_BACKEND_DB_SSL_CERT}
-      MG_BACKEND_DB_SSL_KEY: ${MG_UI_BACKEND_DB_SSL_KEY}
-      MG_BACKEND_DB_SSL_ROOT_CERT: ${MG_UI_BACKEND_DB_SSL_ROOT_CERT}
-      MG_BACKEND_INSTANCE_ID: ${MG_UI_BACKEND_INSTANCE_ID}
-      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
-      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
-      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
-      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
-      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
-      MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
-      MG_READER_URL: ${MG_READER_URL}
-      MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
-      MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
-    depends_on:
-      - ui-backend-db
-    volumes:
-      # Auth gRPC client certificates
-      - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
-        bind:
-          create_host_path: true
+  # ui-backend:
+  #   image: ghcr.io/absmach/magistrala/ui-backend:latest
+  #   container_name: magistrala-ui-backend
+  #   ports:
+  #     - ${MG_UI_BACKEND_HTTP_PORT}:${MG_UI_BACKEND_HTTP_PORT}
+  #   networks:
+  #     - magistrala-base-net
+  #   restart: on-failure:3
+  #   environment:
+  #     MG_BACKEND_LOG_LEVEL: ${MG_UI_BACKEND_LOG_LEVEL}
+  #     MG_BACKEND_HTTP_HOST: ${MG_UI_BACKEND_HTTP_HOST}
+  #     MG_BACKEND_HTTP_PORT: ${MG_UI_BACKEND_HTTP_PORT}
+  #     MG_BACKEND_HTTP_SERVER_CERT: ${MG_UI_BACKEND_HTTP_SERVER_CERT}
+  #     MG_BACKEND_HTTP_SERVER_KEY: ${MG_UI_BACKEND_HTTP_SERVER_KEY}
+  #     MG_BACKEND_DB_HOST: ${MG_UI_BACKEND_DB_HOST}
+  #     MG_BACKEND_DB_PORT: ${MG_UI_BACKEND_DB_PORT}
+  #     MG_BACKEND_DB_USER: ${MG_UI_BACKEND_DB_USER}
+  #     MG_BACKEND_DB_PASS: ${MG_UI_BACKEND_DB_PASS}
+  #     MG_BACKEND_DB_NAME: ${MG_UI_BACKEND_DB_NAME}
+  #     MG_BACKEND_DB_SSL_MODE: ${MG_UI_BACKEND_DB_SSL_MODE}
+  #     MG_BACKEND_DB_SSL_CERT: ${MG_UI_BACKEND_DB_SSL_CERT}
+  #     MG_BACKEND_DB_SSL_KEY: ${MG_UI_BACKEND_DB_SSL_KEY}
+  #     MG_BACKEND_DB_SSL_ROOT_CERT: ${MG_UI_BACKEND_DB_SSL_ROOT_CERT}
+  #     MG_BACKEND_INSTANCE_ID: ${MG_UI_BACKEND_INSTANCE_ID}
+  #     MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+  #     MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+  #     MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+  #     MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+  #     MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+  #     MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
+  #     MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
+  #     MG_READER_URL: ${MG_READER_URL}
+  #     MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
+  #     MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+  #   depends_on:
+  #     - ui-backend-db
+  #   volumes:
+  #     # Auth gRPC client certificates
+  #     - type: bind
+  #       source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+  #       target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+  #       bind:
+  #         create_host_path: true
+  #     - type: bind
+  #       source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+  #       target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+  #       bind:
+  #         create_host_path: true
+  #     - type: bind
+  #       source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+  #       target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+  #       bind:
+  #         create_host_path: true
 
-  ui-backend-db:
-    image: postgres:16.2-alpine
-    container_name: magistrala-ui-backend-db
-    restart: on-failure
-    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
-    environment:
-      POSTGRES_USER: ${MG_UI_BACKEND_DB_USER}
-      POSTGRES_PASSWORD: ${MG_UI_BACKEND_DB_PASS}
-      POSTGRES_DB: ${MG_UI_BACKEND_DB_NAME}
-      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
-    ports:
-      - 6008:5432
-    networks:
-      - magistrala-base-net
-    volumes:
-      - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
+  # ui-backend-db:
+  #   image: postgres:16.2-alpine
+  #   container_name: magistrala-ui-backend-db
+  #   restart: on-failure
+  #   command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
+  #   environment:
+  #     POSTGRES_USER: ${MG_UI_BACKEND_DB_USER}
+  #     POSTGRES_PASSWORD: ${MG_UI_BACKEND_DB_PASS}
+  #     POSTGRES_DB: ${MG_UI_BACKEND_DB_NAME}
+  #     SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
+  #   ports:
+  #     - 6008:5432
+  #   networks:
+  #     - magistrala-base-net
+  #   volumes:
+  #     - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
 
   re-db:
     image: postgres:16.2-alpine

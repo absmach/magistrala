@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/provision"
 	"github.com/absmach/supermq/channels"
 	"github.com/absmach/supermq/clients"
+	"github.com/absmach/supermq/pkg/connections"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +40,9 @@ var (
 				Metadata: map[string]interface{}{
 					"test": "test",
 				},
-				Permissions: []string{"test"},
+				Actions:                   []string{},
+				AccessProviderRoleActions: []string{},
+				ConnectionTypes:           []connections.ConnType{},
 			},
 		},
 		Channels: []channels.Channel{
@@ -50,7 +53,9 @@ var (
 				Metadata: map[string]interface{}{
 					"test": "test",
 				},
-				Permissions: []string{"test"},
+				Actions:                   []string{},
+				AccessProviderRoleActions: []string{},
+				ConnectionTypes:           []connections.ConnType{},
 			},
 		},
 		Cert:          provision.Cert{},

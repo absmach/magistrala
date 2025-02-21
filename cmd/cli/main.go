@@ -141,14 +141,6 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&mgsdkConf.InvitationsURL,
-		"invitations-url",
-		"v",
-		mgsdkConf.InvitationsURL,
-		"Inivitations URL",
-	)
-
-	rootCmd.PersistentFlags().StringVarP(
 		&mgsdkConf.JournalURL,
 		"journal-url",
 		"a",

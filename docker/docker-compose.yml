@@ -332,6 +332,8 @@ services:
       - http-adapter
       - ws-adapter
       - coap-adapter
+      - ui
+      - ui-backend
 
   clients-db:
     image: postgres:16.2-alpine
@@ -1312,6 +1314,11 @@ services:
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       RUNTIME_ENV: ${RUNTIME_ENV}
       MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+      MG_PROTOCOL: ${MG_PROTOCOL}
+      MG_HOSTNAME: ${MG_HOSTNAME}
+      MG_PORT: ${MG_PORT}
+      MG_PATHNAME: ${MG_PATHNAME}
+      MG_UI_HTTP_PORT: ${MG_UI_HTTP_PORT}
 
   ui-backend:
     image: ghcr.io/absmach/magistrala/ui-backend:latest
@@ -1347,6 +1354,7 @@ services:
       MG_READER_URL: ${MG_READER_URL}
       MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
       MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+      MG_UI_BACKEND_HTTP_PORT: ${MG_UI_BACKEND_HTTP_PORT}
     depends_on:
       - ui-backend-db
     volumes:

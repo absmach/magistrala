@@ -63,7 +63,6 @@ type testRequest struct {
 	url         string
 	contentType string
 	token       string
-	key         string
 	body        io.Reader
 }
 

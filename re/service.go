@@ -5,12 +5,14 @@ package re
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
 	lua "github.com/yuin/gopher-lua"
@@ -131,29 +133,47 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
-		return Rule{}, err
+		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	return rule, nil
 }
 
 func (re *re) ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error) {
-	return re.repo.ViewRule(ctx, id)
+	rule, err := re.repo.ViewRule(ctx, id)
+	if err != nil {
+		return Rule{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	return rule, nil
 }
 
 func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
 	r.UpdatedAt = time.Now()
 	r.UpdatedBy = session.UserID
-	return re.repo.UpdateRule(ctx, r)
+	rule, err := re.repo.UpdateRule(ctx, r)
+	if err != nil {
+		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return rule, nil
 }
 
 func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error) {
 	pm.Domain = session.DomainID
-	return re.repo.ListRules(ctx, pm)
+	page, err := re.repo.ListRules(ctx, pm)
+	if err != nil {
+		return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	return page, nil
 }
 
 func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) error {
-	return re.repo.RemoveRule(ctx, id)
+	if err := re.repo.RemoveRule(ctx, id); err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	return nil
 }
 
 func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error) {
@@ -161,7 +181,11 @@ func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) 
 	if err != nil {
 		return Rule{}, err
 	}
-	return re.repo.UpdateRuleStatus(ctx, id, status)
+	rule, err := re.repo.UpdateRuleStatus(ctx, id, status)
+	if err != nil {
+		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return rule, nil
 }
 
 func (re *re) DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error) {
@@ -169,7 +193,11 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	if err != nil {
 		return Rule{}, err
 	}
-	return re.repo.UpdateRuleStatus(ctx, id, status)
+	rule, err := re.repo.UpdateRuleStatus(ctx, id, status)
+	if err != nil {
+		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return rule, nil
 }
 
 func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
@@ -181,7 +209,7 @@ func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
 		}
 		page, err := re.repo.ListRules(ctx, pm)
 		if err != nil {
-			re.errors <- err
+			re.errors <- errors.Wrap(svcerr.ErrViewEntity, err)
 			return
 		}
 		for _, r := range page.Rules {
@@ -278,15 +306,23 @@ func (re *re) StartScheduler(ctx context.Context) error {
 func (r Rule) shouldRun(startTime time.Time) bool {
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
+	fmt.Printf("start time is %+v\n", startTime)
+	fmt.Printf("schedule startDatetime is %+v\n", r.Schedule.StartDateTime)
 	if r.Schedule.StartDateTime.After(startTime) {
 		return false
 	}
 
-	t := r.Schedule.Time.Truncate(time.Minute)
+	t := r.Schedule.Time.Truncate(time.Minute).UTC()
 	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
+	
+	fmt.Printf("t is %+v\n", t)
+	fmt.Printf("startTimeOnly is %+v\n", startTimeOnly)
+
 	if t.Equal(startTimeOnly) {
 		return true
 	}
+
+	fmt.Println("am here 1")
 
 	if r.Schedule.RecurringPeriod == 0 {
 		return false

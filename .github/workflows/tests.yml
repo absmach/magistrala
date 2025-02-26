@@ -113,6 +113,7 @@ jobs:
             re:
               - "re/**"
               - "cmd/re/**"
+              - "re/api/**"
 
       - name: Create coverage directory
         run: |

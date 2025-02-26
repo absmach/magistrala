@@ -138,7 +138,6 @@ func TestAddRule(t *testing.T) {
 			}
 			defer repoCall.Unset()
 		})
-
 	}
 }
 
@@ -197,7 +196,6 @@ func TestViewRule(t *testing.T) {
 			}
 			defer repoCall.Unset()
 		})
-
 	}
 }
 

@@ -5,7 +5,6 @@ package re
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -306,23 +305,15 @@ func (re *re) StartScheduler(ctx context.Context) error {
 func (r Rule) shouldRun(startTime time.Time) bool {
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
-	fmt.Printf("start time is %+v\n", startTime)
-	fmt.Printf("schedule startDatetime is %+v\n", r.Schedule.StartDateTime)
 	if r.Schedule.StartDateTime.After(startTime) {
 		return false
 	}
 
 	t := r.Schedule.Time.Truncate(time.Minute).UTC()
 	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
-	
-	fmt.Printf("t is %+v\n", t)
-	fmt.Printf("startTimeOnly is %+v\n", startTimeOnly)
-
 	if t.Equal(startTimeOnly) {
 		return true
 	}
-
-	fmt.Println("am here 1")
 
 	if r.Schedule.RecurringPeriod == 0 {
 		return false

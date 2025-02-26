@@ -17,7 +17,6 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
-
 	"github.com/absmach/supermq/pkg/messaging"
 	pubsubmocks "github.com/absmach/supermq/pkg/messaging/mocks"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"

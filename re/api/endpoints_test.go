@@ -39,7 +39,7 @@ var (
 	validID      = testsutil.GenerateUUID(&testing.T{})
 	validToken   = "valid"
 	invalidToken = "invalid"
-	now          = time.Now().Truncate(time.Minute)
+	now          = time.Now().UTC().Truncate(time.Minute)
 	schedule     = re.Schedule{
 		StartDateTime:   now.Add(-1 * time.Hour),
 		Recurring:       re.Daily,

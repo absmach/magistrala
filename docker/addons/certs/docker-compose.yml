@@ -10,8 +10,7 @@ networks:
   magistrala-base-net:
 
 volumes:
-  supermq-certs-db-volume:
-
+  magistrala-certs-db-volume:
 
 services:
   certs:
@@ -111,14 +110,14 @@ services:
       AM_CERTS_DB_PASS: ${SMQ_CERTS_DB_PASS}
       AM_CERTS_DB: ${SMQ_CERTS_DB_NAME}
       AM_CERTS_DB_SSL_MODE: ${SMQ_CERTS_DB_SSL_MODE}
-      AM_CERTS_HTTP_HOST: supermq-am-certs
-      AM_CERTS_HTTP_PORT: 9010
-      AM_CERTS_GRPC_HOST: supermq-am-certs
-      AM_CERTS_GRPC_PORT: 7012
+      AM_CERTS_HTTP_HOST: ${AM_CERTS_HOST}
+      AM_CERTS_HTTP_PORT: ${AM_CERTS_HTTP_PORT}
+      AM_CERTS_GRPC_HOST: ${AM_CERTS_HOST}
+      AM_CERTS_GRPC_PORT: ${AM_CERTS_GRPC_PORT}
       AM_JAEGER_URL: ${SMQ_JAEGER_URL}
       AM_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
     volumes:
-     - ./config.yml:/config/config.yml
+      - ./config.yml:/config/config.yml
     ports:
       - 9010:9010
       - 7012:7012

@@ -30,11 +30,11 @@ services:
       MG_TIMESCALE_SSL_CERT: ${MG_TIMESCALE_SSL_CERT}
       MG_TIMESCALE_SSL_KEY: ${MG_TIMESCALE_SSL_KEY}
       MG_TIMESCALE_SSL_ROOT_CERT: ${MG_TIMESCALE_SSL_ROOT_CERT}
-      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
-      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
-      SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      SMQ_CLIENTS_GRPC_URL: ${SMQ_CLIENTS_GRPC_URL}
+      SMQ_CLIENTS_GRPC_TIMEOUT: ${SMQ_CLIENTS_GRPC_TIMEOUT}
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
       SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
       SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
@@ -69,17 +69,17 @@ services:
           create_host_path: true
       # Things gRPC mTLS client certificates
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /things-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /things-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /things-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

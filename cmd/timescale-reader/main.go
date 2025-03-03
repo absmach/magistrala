@@ -34,7 +34,7 @@ const (
 	envPrefixDB       = "MG_TIMESCALE_"
 	envPrefixHTTP     = "MG_TIMESCALE_READER_HTTP_"
 	envPrefixAuth     = "SMQ_AUTH_GRPC_"
-	envPrefixClients  = "SMQ_CLIENTS_AUTH_GRPC_"
+	envPrefixClients  = "SMQ_CLIENTS_GRPC_"
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
 	defDB             = "messages"
 	defSvcHTTPPort    = "9011"

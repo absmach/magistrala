@@ -24,10 +24,10 @@ default values.
 | MG_TIMESCALE_SSL_CERT                | Timescale SSL certificate path               | ""                           |
 | MG_TIMESCALE_SSL_KEY                 | Timescale SSL key                            | ""                           |
 | MG_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path          | ""                           |
-| SMQ_CLIENTS_AUTH_GRPC_URL             | Clients service Auth gRPC URL                | localhost:7000               |
-| SMQ_CLIENTS_AUTH_GRPC_TIMEOUT         | Clients service Auth gRPC timeout in seconds | 1s                           |
-| SMQ_CLIENTS_AUTH_GRPC_CLIENT_TLS      | Clients service Auth gRPC TLS enabled flag   | false                        |
-| SMQ_CLIENTS_AUTH_GRPC_CA_CERTS        | Clients service Auth gRPC CA certificates    | ""                           |
+| SMQ_CLIENTS_GRPC_URL             | Clients service Auth gRPC URL                | localhost:7000               |
+| SMQ_CLIENTS_GRPC_TIMEOUT         | Clients service Auth gRPC timeout in seconds | 1s                           |
+| SMQ_CLIENTS_GRPC_CLIENT_TLS      | Clients service Auth gRPC TLS enabled flag   | false                        |
+| SMQ_CLIENTS_GRPC_CA_CERTS        | Clients service Auth gRPC CA certificates    | ""                           |
 | SMQ_AUTH_GRPC_URL                     | Auth service gRPC URL                        | localhost:7001               |
 | SMQ_AUTH_GRPC_TIMEOUT                 | Auth service gRPC timeout in seconds         | 1s                           |
 | SMQ_AUTH_GRPC_CLIENT_TLS              | Auth service gRPC TLS enabled flag           | false                        |
@@ -69,10 +69,10 @@ MG_TIMESCALE_SSL_MODE=[Timescale SSL mode] \
 MG_TIMESCALE_SSL_CERT=[Timescale SSL cert] \
 MG_TIMESCALE_SSL_KEY=[Timescale SSL key] \
 MG_TIMESCALE_SSL_ROOT_CERT=[Timescale SSL Root cert] \
-SMQ_CLIENTS_AUTH_GRPC_URL=[Clients service Auth GRPC URL] \
-SMQ_CLIENTS_AUTH_GRPC_TIMEOUT=[Clients  service Auth gRPC request timeout in seconds] \
-SMQ_CLIENTS_AUTH_GRPC_CLIENT_TLS=[Clients  service Auth gRPC TLS enabled flag] \
-SMQ_CLIENTS_AUTH_GRPC_CA_CERTS=[Clients  service Auth gRPC CA certificates] \
+SMQ_CLIENTS_GRPC_URL=[Clients service Auth GRPC URL] \
+SMQ_CLIENTS_GRPC_TIMEOUT=[Clients  service Auth gRPC request timeout in seconds] \
+SMQ_CLIENTS_GRPC_CLIENT_TLS=[Clients  service Auth gRPC TLS enabled flag] \
+SMQ_CLIENTS_GRPC_CA_CERTS=[Clients  service Auth gRPC CA certificates] \
 SMQ_AUTH_GRPC_URL=[Auth service Auth gRPC URL] \
 SMQ_AUTH_GRPC_TIMEOUT=[Auth service Auth gRPC request timeout in seconds] \
 SMQ_AUTH_GRPC_CLIENT_TLS=[Auth service Auth gRPC TLS enabled flag] \

@@ -34,7 +34,7 @@ const (
 	envPrefixDB       = "SMQ_POSTGRES_"
 	envPrefixHTTP     = "SMQ_POSTGRES_READER_HTTP_"
 	envPrefixAuth     = "SMQ_AUTH_GRPC_"
-	envPrefixClients  = "SMQ_CLIENTS_AUTH_GRPC_"
+	envPrefixClients  = "SMQ_CLIENTS_GRPC_"
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
 	defDB             = "supermq"
 	defSvcHTTPPort    = "9009"

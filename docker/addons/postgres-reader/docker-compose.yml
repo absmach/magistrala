@@ -30,11 +30,11 @@ services:
       MG_POSTGRES_SSL_CERT: ${MG_POSTGRES_SSL_CERT}
       MG_POSTGRES_SSL_KEY: ${MG_POSTGRES_SSL_KEY}
       MG_POSTGRES_SSL_ROOT_CERT: ${MG_POSTGRES_SSL_ROOT_CERT}
-      SMQ_CLIENTS_AUTH_GRPC_URL: ${SMQ_CLIENTS_AUTH_GRPC_URL}
-      SMQ_CLIENTS_AUTH_GRPC_TIMEOUT: ${SMQ_CLIENTS_AUTH_GRPC_TIMEOUT}
+      SMQ_CLIENTS_GRPC_URL: ${SMQ_CLIENTS_GRPC_URL}
+      SMQ_CLIENTS_GRPC_TIMEOUT: ${SMQ_CLIENTS_GRPC_TIMEOUT}
       MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
       SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
@@ -69,12 +69,12 @@ services:
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /things-grpc-client${SMQ_CLIENTS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /things-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${SMQ_CLIENTS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /things-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

@@ -1,23 +1,20 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-name: "supermq"
+name: "magistrala"
+
+include:
+  - path:
+      - ../supermq/docker/docker-compose.yml
+      - ../docker/supermq-docker-compose.override.yml
+    env_file:
+      - ../supermq/docker/.env
 
 networks:
   magistrala-base-net:
     driver: bridge
 
 volumes:
-  magistrala-users-db-volume:
-  magistrala-groups-db-volume:
-  magistrala-clients-db-volume:
-  magistrala-channels-db-volume:
-  magistrala-clients-redis-volume:
-  magistrala-broker-volume:
-  magistrala-spicedb-db-volume:
-  magistrala-auth-db-volume:
-  magistrala-domains-db-volume:
-  magistrala-domains-redis-volume:
   magistrala-journal-volume:
   magistrala-ui-backend-db-volume:
   magistrala-re-db-volume:

@@ -16,12 +16,12 @@ volumes:
   magistrala-broker-volume:
   magistrala-spicedb-db-volume:
   magistrala-auth-db-volume:
-  magistrala-pat-db-volume:
   magistrala-domains-db-volume:
   magistrala-domains-redis-volume:
   magistrala-journal-volume:
   magistrala-ui-backend-db-volume:
   magistrala-re-db-volume:
+  magistrala-auth-redis-volume:
 
 services:
   spicedb:
@@ -85,6 +85,15 @@ services:
     volumes:
       - magistrala-auth-db-volume:/var/lib/postgresql/data
 
+  auth-redis:
+    image: redis:7.2.4-alpine
+    container_name: magistrala-auth-redis
+    restart: on-failure
+    networks:
+      - magistrala-base-net
+    volumes:
+      - magistrala-auth-redis-volume:/data
+
   auth:
     image: supermq/auth:${MG_RELEASE_TAG}
     container_name: magistrala-auth
@@ -131,6 +140,8 @@ services:
       SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
       SMQ_AUTH_ADAPTER_INSTANCE_ID: ${SMQ_AUTH_ADAPTER_INSTANCE_ID}
       SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_AUTH_CACHE_URL: ${SMQ_AUTH_CACHE_URL}
+      SMQ_AUTH_CACHE_KEY_DURATION: ${SMQ_AUTH_CACHE_KEY_DURATION}
     ports:
       - ${SMQ_AUTH_HTTP_PORT}:${SMQ_AUTH_HTTP_PORT}
       - ${SMQ_AUTH_GRPC_PORT}:${SMQ_AUTH_GRPC_PORT}
@@ -138,7 +149,6 @@ services:
       - magistrala-base-net
     volumes:
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
-      - magistrala-pat-db-volume:/supermq-data
       # Auth gRPC mTLS server certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}

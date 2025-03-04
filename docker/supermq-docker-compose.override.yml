@@ -103,14 +103,8 @@ services:
       - magistrala-base-net
 
   nginx:
-    image: nginx:1.25.4-alpine
     container_name: magistrala-nginx
-    restart: on-failure
     volumes:
-      - ../../nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
-      - ../../nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
-      - ../../nginx/snippets:/etc/nginx/snippets
-      - ../../ssl/authorization.js:/etc/nginx/authorization.js
       - type: bind
         source: ${SMQ_NGINX_SERVER_CERT:-../../docker/ssl/certs/magistrala-server.crt}
         target: /etc/ssl/certs/magistrala-server.crt
@@ -125,5 +119,3 @@ services:
         target: /etc/ssl/certs/dhparam.pem
     networks:
       - magistrala-base-net
-    env_file:
-      - ../../docker/.env

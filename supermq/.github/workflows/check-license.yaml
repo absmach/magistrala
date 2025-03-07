@@ -1,0 +1,40 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+name: Check License Header
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-license:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check License Header
+        run: |
+          CHECK=""
+          for file in $(grep -rl --exclude-dir={.git,build} \
+            --exclude=\*.{crt,key,pem,zed,hcl,md,json,csv,mod,sum,tmpl,args} \
+            --exclude={CODEOWNERS,LICENSE,MAINTAINERS,enabled_plugins,rabbitmq.conf} \
+            .); do
+              
+              if ! head -n 5 "$file" | grep -q "Copyright (c) Abstract Machines"; then
+                CHECK="$CHECK $file"
+              fi
+          done
+
+          if [ "$CHECK" ]; then
+            echo "License header check failed. Fix the following files:"
+            echo "$CHECK"
+            exit 1
+          else
+            echo "All files have the correct license header!"
+          fi

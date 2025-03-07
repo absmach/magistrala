@@ -1,0 +1,39 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+name: Feature Request
+description: File a feature request. Make sure to search to see if a request already exists for the feature you are requesting.
+title: "Feature: <title>"
+labels: ["enchancement", "needs-review"]
+body:
+  - type: textarea
+    attributes:
+      label: Is your feature request related to a problem? Please describe.
+      description: A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Describe the feature you are requesting, as well as the possible use case(s) for it.
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Indicate the importance of this feature to you.
+      description: This will help us prioritize the feature request.
+      options:
+        - Must-have
+        - Should-have
+        - Nice-to-have
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Anything else?
+      description: |
+        Links? References? Anything that will give us more context about the feature that you are requesting.
+
+        Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
+    validations:
+      required: false

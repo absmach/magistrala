@@ -1,0 +1,208 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+name: Property Based Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/api-tests.yml"
+      - "api/**"
+      - "auth/api/http/**"
+      - "certs/api/**"
+      - "channels/api/http/**"
+      - "clients/api/http/**"
+      - "domains/api/http/**"
+      - "groups/api/http/**"
+      - "http/api/**"
+      - "journal/api/**"
+      - "users/api/**"
+
+env:
+  TOKENS_URL: http://localhost:9002/users/tokens/issue
+  CREATE_DOMAINS_URL: http://localhost:9003/domains
+  USER_IDENTITY: admin@example.com
+  USER_SECRET: 12345678
+  DOMAIN_NAME: demo-test
+  USERS_URL: http://localhost:9002
+  DOMAIN_URL: http://localhost:9003
+  CLIENTS_URL: http://localhost:9006
+  CHANNELS_URL: http://localhost:9005
+  GROUPS_URL: http://localhost:9004
+  HTTP_ADAPTER_URL: http://localhost:8008
+  AUTH_URL: http://localhost:9001
+  CERTS_URL: http://localhost:9019
+  JOURNAL_URL: http://localhost:9021
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23.x
+          cache-dependency-path: "go.sum"
+
+      - name: Build images
+        run: make all -j $(nproc) && make dockers_dev -j $(nproc)
+
+      - name: Start containers
+        run: make run up args="-d" && make run_addons up args="-d"
+
+      - name: Set access token
+        run: |
+          export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\"}" | jq -r .access_token)
+          export DOMAIN_ID=$(curl -sSX POST $CREATE_DOMAINS_URL -H "Content-Type: application/json" -H "Authorization: Bearer $USER_TOKEN" -d "{\"name\":\"$DOMAIN_NAME\",\"alias\":\"$DOMAIN_NAME\"}" | jq -r .id)
+          echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
+          export CLIENT_SECRET=$(supermq-cli provision test | /usr/bin/grep -Eo '"secret": "[^"]+"' | awk 'NR % 2 == 0' | sed 's/"secret": "\(.*\)"/\1/')
+          echo "CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
+
+      - name: Check for changes in specific paths
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            journal:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/journal.yml"
+              - "journal/api/**"
+
+            auth:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/auth.yml"
+              - "auth/api/http/**"
+
+            certs:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/certs.yml"
+              - "certs/api/**"
+
+            domains:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/domains.yml"
+              - "domains/api/http/**"
+
+            http:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/http.yml"
+              - "http/api/**"
+
+            clients:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/clients.yml"
+              - "clients/api/http/**"
+
+            channels:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/channels.yml"
+              - "channels/api/http/**"
+
+            groups:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/groups.yml"
+              - "groups/api/http/**"
+
+            users:
+              - ".github/workflows/api-tests.yml"
+              - "apidocs/openapi/users.yml"
+              - "users/api/**"
+
+      - name: Run Users API tests
+        if: steps.changes.outputs.users == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/users.yml
+          base-url: ${{ env.USERS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Groups API tests
+        if: steps.changes.outputs.groups == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/groups.yml
+          base-url: ${{ env.GROUPS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Clients API tests
+        if: steps.changes.outputs.clients == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/clients.yml
+          base-url: ${{ env.CLIENTS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Channels API tests
+        if: steps.changes.outputs.channels == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/channels.yml
+          base-url: ${{ env.CHANNELS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run HTTP Adapter API tests
+        if: steps.changes.outputs.http == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/http.yml
+          base-url: ${{ env.HTTP_ADAPTER_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Client ${{ env.CLIENT_SECRET }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Auth API tests
+        if: steps.changes.outputs.auth == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/auth.yml
+          base-url: ${{ env.AUTH_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Domains API tests
+        if: steps.changes.outputs.domains == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/domains.yml
+          base-url: ${{ env.DOMAIN_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Journal API tests
+        if: steps.changes.outputs.journal == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/journal.yml
+          base-url: ${{ env.JOURNAL_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Run Certs API tests
+        if: steps.changes.outputs.certs == 'true'
+        uses: schemathesis/action@v1
+        with:
+          schema: apidocs/openapi/certs.yml
+          base-url: ${{ env.CERTS_URL }}
+          checks: all
+          report: false
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --contrib-openapi-formats-uuid --hypothesis-suppress-health-check=filter_too_much --stateful=links'
+
+      - name: Stop containers
+        if: always()
+        run: make run down args="-v" && make run_addons down args="-v"

@@ -1,0 +1,370 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+components:
+  schemas:
+    NewRole:
+      type: object
+      properties:
+        role_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Role unique identifier.
+        role_name:
+          type: string
+          description: Role's name.
+          example: "roleName"
+        entity_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Entity unique identifier.
+        created_by:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Role creator unique identifier.
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+        updated_by:
+          type: string
+          format: uuid
+          example: ""
+          description: Role updater unique identifier.
+        updated_at:
+          type: string
+          format: date-time
+          example: ""
+          description: Time when the channel was created.
+
+    Role:
+      type: object
+      properties:
+        role_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Role unique identifier.
+        role_name:
+          type: string
+          description: Role's name.
+          example: "roleName"
+        entity_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Entity unique identifier.
+        created_by:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Role creator unique identifier.
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+        updated_by:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Role updater unique identifier.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+
+    CreateRoleObj:
+      type: object
+      properties:
+        role_name:
+          type: string
+          description: Role's name.
+          example: "roleName"
+        optional_actions:
+          type: array
+          description: List of optional actions.
+          items:
+            type: string
+          example:
+            [
+              "read",
+              "update",
+            ]
+        optional_members:
+          type: array
+          minItems: 0
+          description: List of optional members.
+          items:
+            type: string
+          example:
+            [
+              "5dc1ce4b-7cc9-4f12-98a6-9d74cc4980bb",
+              "c01ed106-e52d-4aa4-bed3-39f360177cfa",
+            ]
+
+    UpdateRoleObj:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Role's name.
+
+    RolesPage:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+          description: List of roles.
+        total:
+          type: integer
+          description: Total number of roles.
+          example: 1
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+
+    EntityMembersPage:
+      type: object
+      properties:
+        groups:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/EntityMembersObj"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - groups
+        - total
+        - offset
+
+    RoleActionsObj:
+      type: object
+      properties:
+        actions:
+          type: array
+          description: List of actions to be added to a role.
+          items:
+            type: string
+          example:
+            [
+              "read",
+              "update",
+            ]
+
+    RoleMembersObj:
+      type: object
+      properties:
+        members:
+          type: array
+          description: List of members to be added to a role.
+          items:
+            type: string
+          example:
+            [
+              "5dc1ce4b-7cc9-4f12-98a6-9d74cc4980bb",
+              "c01ed106-e52d-4aa4-bed3-39f360177cfa",
+            ]
+
+    EntityMembersObj:
+      type: object
+      properties:
+        members:
+          type: array
+          description: List of members with assigned roles and actions.
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of the member.
+              roles:
+                type: array
+                description: List of roles assigned to the member.
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: Unique identifier of the role.
+                    name:
+                      type: string
+                      description: Name of the role.
+                    actions:
+                      type: array
+                      description: List of actions the member can perform.
+                      items:
+                        type: string
+                    access_type:
+                      type: string
+                      description: Type of access granted.
+                      enum: [read, write, admin] # Adjust based on your actual access types.
+          example:
+            members:
+              - id: "5dc1ce4b-7cc9-4f12-98a6-9d74cc4980bb"
+                roles:
+                  - id: "a1b2c3d4-e5f6-7890-1234-56789abcdef0"
+                    name: "Admin"
+                    actions: ["create", "update", "delete"]
+                    access_type: "admin"
+              - id: "c01ed106-e52d-4aa4-bed3-39f360177cfa"
+                roles:
+                  - id: "b2c3d4e5-f678-9012-3456-789abcdef012"
+                    name: "Editor"
+                    actions: ["read", "update"]
+                    access_type: "write"
+
+
+    AvailableActionsObj:
+      type: object
+      properties:
+        available_actions:
+          type: array
+          description: List of all available actions.
+          items:
+            type: string
+          example:
+            [
+              "read",
+              "update",
+            ]
+
+  parameters:
+    RoleName:
+      name: roleName
+      description: Role's name.
+      in: path
+      schema:
+        type: string
+      required: true
+      example: "roleName"
+    RoleID:
+      name: roleID
+      description: Role ID.
+      in: path
+      schema:
+        type: string
+      required: true
+      example: "roleID"
+
+  requestBodies:
+    CreateRoleReq:
+      description: JSON- formatted object decsribing a new role to be created.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateRoleObj'
+
+    UpdateRoleReq:
+      description: JSON- formatted object decsribing a role to be updated.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateRoleObj'
+
+    AddRoleActionsReq:
+      description: JSON- formatted object decsribing an action to be added to a role.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleActionsObj'
+
+    AddRoleMembersReq:
+      description: JSON- formatted object decsribing a member to be added to a role.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleMembersObj'
+
+  responses:
+    CreateRoleRes:
+      description: Role created successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NewRole'
+
+    ListRolesRes:
+      description: Role retrieved successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RolesPage'
+
+    GetRoleRes:
+      description: Role retrieved successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Role'
+
+    AddRoleActionsRes:
+      description: Action added to role successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleActionsObj'
+
+    ListRoleActionsRes:
+      description: Role actions retrieved successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleActionsObj'
+
+    AddRoleMembersRes:
+      description: Member added to role successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleMembersObj'
+
+    ListRoleMembersRes:
+      description: Role members retrieved successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RoleMembersObj'
+
+    ListAvailableActionsRes:
+      description: Available actions retrieved successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AvailableActionsObj'
+
+
+    ListEntityMembersRes:
+      description: Entity members retrieved successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EntityMembersObj'

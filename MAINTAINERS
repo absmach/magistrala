@@ -1,0 +1,30 @@
+# SuperMQ follows the timeless, highly efficient and totally unfair system
+# known as [Benevolent dictator for
+# life](https://en.wikipedia.org/wiki/Benevolent_Dictator_for_Life), with
+# Drasko DRASKOVIC in the role of BDFL.
+
+[bdfl]
+	
+	[[drasko]]
+	Name	= "Drasko Draskovic"
+	Email	= "drasko@abstractmachines.fr"
+	GitHub	= "drasko"
+
+# However, this role serves only in dead-lock events, or in a special and very rare cases
+# when BDFL completely disagrees with the decisions made.
+# In the normal flow of events, decisions on the project design are made through discussions,
+# most often on the Pull Requests.
+#
+# Maintainers have the special role in the project in managing and accepting PRs,
+# overall leading the project and making design decisions on the maintained subsystems.
+#
+# A reference list of all maintainers of the SuperMQ project.
+
+# ADD YOURSELF HERE IN ALPHABETICAL ORDER
+
+[maintainers]
+ 
+ 	[[dusan]]
+	Name	= "Dusan Borovcanin"
+	Email	= "dusan.borovcanin@abstractmachines.fr"
+	GitHub	= "dborovcanin"

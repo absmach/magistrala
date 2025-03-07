@@ -1,0 +1,30 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+type: object
+properties:
+  status:
+    type: string
+    description: Service status.
+    enum:
+      - pass
+  version:
+    type: string
+    description: Service version.
+    example: v0.14.0
+  commit:
+    type: string
+    description: Service commit hash.
+    example: 73362210dd2e04e389eaddb802cab3fe03976593
+  description:
+    type: string
+    description: Service description.
+    example: <service_name> service
+  build_time:
+    type: string
+    description: Service build time.
+    example: 2024-02-01_12:18:15
+  instance_id:
+    type: string
+    description: Service instance ID.
+    example: 8edbf8af-7db7-4218-bb4f-a8a929ff5266

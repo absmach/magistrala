@@ -1,0 +1,62 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+name: Continuous Delivery
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch tags for the build
+        run: |
+          git fetch --prune --unshallow --tags
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23.x
+          cache-dependency-path: "go.sum"
+
+      - name: Run tests
+        run: |
+          make test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV }}
+          files: ./coverage/*.out
+          codecov_yml_path: tools/config/codecov.yml
+          verbose: true
+
+      - name: Set up Docker Build
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Compile check for rabbitmq
+        run: |
+          SMQ_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
+
+      - name: Compile check for redis
+        run: |
+          SMQ_ES_TYPE=redis make mqtt
+
+      - name: Build and push Dockers
+        run: |
+          make latest -j $(nproc)

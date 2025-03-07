@@ -1,2 +1,0 @@
-# Short identity provider
-

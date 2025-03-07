@@ -20,6 +20,8 @@ DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
 MOCKERY_VERSION=v2.43.2
+SUPERMQ_REMOTE_PATH=https://github.com/absmach/supermq.git
+SUPERMQ_SUBTREE_DIR=supermq
 ifneq ($(MG_MESSAGE_BROKER_TYPE),)
     MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
 else
@@ -245,6 +247,10 @@ ifeq ($(filter $(DEFAULT_DOCKER_COMPOSE_COMMAND),$(DOCKER_COMPOSE_COMMAND)),$(DE
 endif
 endif
 endif
+
+pull_supermq:
+	@git subtree add --prefix=$(SUPERMQ_SUBTREE_DIR) $(SUPERMQ_REMOTE_PATH) main --squash
+	@find $(SUPERMQ_SUBTREE_DIR) -mindepth 1 ! -path 'supermq/docker*' -exec rm -rf {} +
 
 run: check_certs
 	docker compose -f docker/docker-compose.yml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)

@@ -213,7 +213,6 @@ type Config struct {
 	GroupsURL      string
 	ChannelsURL    string
 	DomainsURL     string
-	InvitationsURL string
 	JournalURL     string
 	HostURL        string
 
@@ -232,7 +231,6 @@ func NewSDK(conf Config) SDK {
 		GroupsURL:      conf.GroupsURL,
 		ChannelsURL:    conf.ChannelsURL,
 		DomainsURL:     conf.DomainsURL,
-		InvitationsURL: conf.InvitationsURL,
 		JournalURL:     conf.JournalURL,
 		HostURL:        conf.HostURL,
 

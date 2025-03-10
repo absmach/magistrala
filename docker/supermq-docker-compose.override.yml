@@ -3,103 +3,103 @@
 
 services:
   spicedb:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   spicedb-migrate:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   spicedb-db:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   auth-db:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   auth-redis:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   auth:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   domains-db:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   domains-redis:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   domains:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   clients-db:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   clients-redis:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   clients:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   channels-db:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   channels:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   users-db:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   users:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   groups-db:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   groups:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   jaeger:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   mqtt-adapter:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   http-adapter:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   coap-adapter:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   ws-adapter:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   rabbitmq:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   nats:
-    networks: !override
+    networks:
       - magistrala-base-net
 
   nginx:

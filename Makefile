@@ -248,8 +248,12 @@ endif
 endif
 endif
 
-pull_supermq:
+fetch_supermq:
 	@git subtree add --prefix=$(SUPERMQ_SUBTREE_DIR) $(SUPERMQ_REMOTE_PATH) main --squash
+	@find $(SUPERMQ_SUBTREE_DIR) -mindepth 1 ! -path 'supermq/docker*' -exec rm -rf {} +
+
+update_supermq:
+	@git subtree pull --prefix=$(SUPERMQ_SUBTREE_DIR) $(SUPERMQ_REMOTE_PATH) main --squash
 	@find $(SUPERMQ_SUBTREE_DIR) -mindepth 1 ! -path 'supermq/docker*' -exec rm -rf {} +
 
 run: check_certs

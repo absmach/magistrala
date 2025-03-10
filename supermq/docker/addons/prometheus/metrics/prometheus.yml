@@ -1,0 +1,22 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'supermq'
+    honor_timestamps: true
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    follow_redirects: true
+    enable_http2: true
+    static_configs:
+    - targets: 
+      - supermq-clients:9000
+      - supermq-users:9002
+      - supermq-http:8008
+      - supermq-ws:8186
+      - supermq-coap:5683

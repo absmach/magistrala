@@ -1,0 +1,121 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  spicedb:
+    networks:
+      - magistrala-base-net
+
+  spicedb-migrate:
+    networks:
+      - magistrala-base-net
+
+  spicedb-db:
+    networks:
+      - magistrala-base-net
+
+  auth-db:
+    networks:
+      - magistrala-base-net
+
+  auth-redis:
+    networks:
+      - magistrala-base-net
+
+  auth:
+    networks:
+      - magistrala-base-net
+
+  domains-db:
+    networks:
+      - magistrala-base-net
+
+  domains-redis:
+    networks:
+      - magistrala-base-net
+
+  domains:
+    networks:
+      - magistrala-base-net
+
+  clients-db:
+    networks:
+      - magistrala-base-net
+
+  clients-redis:
+    networks:
+      - magistrala-base-net
+
+  clients:
+    networks:
+      - magistrala-base-net
+
+  channels-db:
+    networks:
+      - magistrala-base-net
+
+  channels:
+    networks:
+      - magistrala-base-net
+
+  users-db:
+    networks:
+      - magistrala-base-net
+
+  users:
+    networks:
+      - magistrala-base-net
+
+  groups-db:
+    networks:
+      - magistrala-base-net
+
+  groups:
+    networks:
+      - magistrala-base-net
+
+  jaeger:
+    networks:
+      - magistrala-base-net
+
+  mqtt-adapter:
+    networks:
+      - magistrala-base-net
+
+  http-adapter:
+    networks:
+      - magistrala-base-net
+
+  coap-adapter:
+    networks:
+      - magistrala-base-net
+
+  ws-adapter:
+    networks:
+      - magistrala-base-net
+
+  rabbitmq:
+    networks:
+      - magistrala-base-net
+
+  nats:
+    networks:
+      - magistrala-base-net
+
+  nginx:
+    container_name: magistrala-nginx
+    volumes:
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_CERT:-../../docker/ssl/certs/magistrala-server.crt}
+        target: /etc/ssl/certs/magistrala-server.crt
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_KEY:-../../docker/ssl/certs/magistrala-server.key}
+        target: /etc/ssl/private/magistrala-server.key
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_CLIENT_CA:-../../docker/ssl/certs/ca.crt}
+        target: /etc/ssl/certs/ca.crt
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_DHPARAM:-../../docker/ssl/dhparam.pem}
+        target: /etc/ssl/certs/dhparam.pem
+    networks:
+      - magistrala-base-net

@@ -1,0 +1,8 @@
+To: {{range $index, $v := .To}}{{if $index}},{{end}}{{$v}}{{end}}
+From: {{.From}}
+Subject: {{.Subject}}
+{{.Header}}
+You have a new message:
+{{.Content}}
+{{.Footer}}
+

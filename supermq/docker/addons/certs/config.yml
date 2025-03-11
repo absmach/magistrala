@@ -1,0 +1,20 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+common_name: "AbstractMachines_Selfsigned_ca"
+organization:
+  - "AbstractMacines"
+organizational_unit:
+  - "AbstractMachines_ca"
+country:
+  - "France"
+province:
+  - "Paris"
+locality:
+  - "Quai de Valmy"
+postal_code:
+  - "75010 Paris"
+dns_names:
+  - "localhost"
+ip_addresses:
+  - "localhost"

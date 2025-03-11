@@ -248,20 +248,6 @@ endif
 endif
 endif
 
-fetch_supermq:
-	@git subtree add --prefix=$(SUPERMQ_SUBTREE_DIR) $(SUPERMQ_REMOTE_PATH) main --squash
-	@find $(SUPERMQ_SUBTREE_DIR) -mindepth 1 ! -path 'supermq/docker*' -exec rm -rf {} +
-	@git add $(SUPERMQ_SUBTREE_DIR)
-	@git commit --amend --no-edit
-
-update_supermq:
-	@git subtree pull --prefix=$(SUPERMQ_SUBTREE_DIR) $(SUPERMQ_REMOTE_PATH) main --squash
-	@find $(SUPERMQ_SUBTREE_DIR) -mindepth 1 ! -path 'supermq/docker*' -exec rm -rf {} +
-	@git add $(SUPERMQ_SUBTREE_DIR)
-	@if ! git diff --cached --quiet; then \
-		git commit --amend --no-edit; \
-	fi
-
 run: check_certs
 	docker compose -f docker/docker-compose.yml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 

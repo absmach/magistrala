@@ -7,8 +7,9 @@ include:
   - path:
       - ../supermq/docker/docker-compose.yml
       - ./supermq-docker-compose.override.yml
+    project_directory: ../supermq/docker
     env_file:
-      - ./supermq/docker/.env
+      - ../supermq/docker/.env
 
 networks:
   magistrala-base-net:

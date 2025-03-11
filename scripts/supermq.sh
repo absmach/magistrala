@@ -39,8 +39,3 @@ if [ -d "$DEST_FOLDER" ]; then
 fi
 mkdir -p "$DEST_FOLDER"
 mv -f "$EXTRACTED_FOLDER/$DOCKER_FOLDER" "$DEST_FOLDER/$DOCKER_FOLDER"
-
-git add "$DEST_FOLDER/$DOCKER_FOLDER"
-if [ -n "$(git status --porcelain "$DEST_FOLDER/$DOCKER_FOLDER")" ]; then
-    git commit -m "chore: update SuperMQ dependency files"
-fi

@@ -107,8 +107,6 @@ services:
     volumes:
       - ../../docker/nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
       - ../../docker/nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
-      - ./nginx/snippets:/etc/nginx/snippets
-      - ./ssl/authorization.js:/etc/nginx/authorization.js
       - type: bind
         source: ${SMQ_NGINX_SERVER_CERT:-../../docker/ssl/certs/magistrala-server.crt}
         target: /etc/ssl/certs/magistrala-server.crt
@@ -125,4 +123,4 @@ services:
       - magistrala-base-net
     env_file: !override
       - ./.env
-      - ../docker/.env
+      - ../../docker/.env

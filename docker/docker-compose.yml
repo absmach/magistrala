@@ -7,7 +7,7 @@ include:
   - path:
       - ../supermq/docker/docker-compose.yml
       - ./supermq-docker-compose.override.yml
-    project_directory: ../supermq
+    project_directory: ../supermq/docker
     env_file:
       - ../supermq/docker/.env
 

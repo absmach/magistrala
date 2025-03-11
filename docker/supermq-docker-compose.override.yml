@@ -7,71 +7,71 @@ services:
       - magistrala-base-net
 
   spicedb-migrate:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   spicedb-db:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   auth-db:
-    networks:
+    networks:  !override
       - magistrala-base-net
 
   auth-redis:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   auth:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   domains-db:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   domains-redis:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   domains:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   clients-db:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   clients-redis:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   clients:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   channels-db:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   channels:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   users-db:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   users:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   groups-db:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   groups:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   jaeger:
@@ -79,33 +79,50 @@ services:
       - magistrala-base-net
 
   mqtt-adapter:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   http-adapter:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   coap-adapter:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   ws-adapter:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   rabbitmq:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   nats:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   nginx:
     container_name: magistrala-nginx
-    networks:
+    volumes:
+      - ../../docker/nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
+      - ../../docker/nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
+      - ./nginx/snippets:/etc/nginx/snippets
+      - ./ssl/authorization.js:/etc/nginx/authorization.js
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_CERT:-../../docker/ssl/certs/magistrala-server.crt}
+        target: /etc/ssl/certs/magistrala-server.crt
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_KEY:-../../docker/ssl/certs/magistrala-server.key}
+        target: /etc/ssl/private/magistrala-server.key
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_CLIENT_CA:-../../docker/ssl/certs/ca.crt}
+        target: /etc/ssl/certs/ca.crt
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_DHPARAM:-../../docker/ssl/dhparam.pem}
+        target: /etc/ssl/certs/dhparam.pem
+    networks: !override
       - magistrala-base-net
     env_file: !override
-      - ./docker/.env
+      - ./.env
       - ../docker/.env

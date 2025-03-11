@@ -100,15 +100,11 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 	}
 	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, err)
-		}
-
 		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	if ok := row.Next(); !ok {
-		return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
+	if !row.Next() {
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, sql.ErrNoRows)
 	}
 
 	if err := row.StructScan(&dbcfg); err != nil {
@@ -205,14 +201,11 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 
 	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, err)
-		}
 		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	if ok := row.Next(); !ok {
-		return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, row.Err())
+	if !row.Next() {
+		return bootstrap.Config{}, errors.Wrap(repoerr.ErrNotFound, sql.ErrNoRows)
 	}
 
 	if err := row.StructScan(&dbcfg); err != nil {

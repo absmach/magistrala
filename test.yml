@@ -1,0 +1,2092 @@
+GRPC_MTLS=
+GRPC_TLS=
+docker compose -f docker/docker-compose.yml --env-file docker/.env -p git_github_com_absmach_magistrala_git_  config 
+name: git_github_com_absmach_magistrala_git_
+services:
+  auth:
+    container_name: supermq-auth
+    depends_on:
+      auth-db:
+        condition: service_started
+        required: true
+      spicedb:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_ACCESS_TOKEN_DURATION: 1h
+      SMQ_AUTH_ADAPTER_INSTANCE_ID: ""
+      SMQ_AUTH_CACHE_KEY_DURATION: 10m
+      SMQ_AUTH_CACHE_URL: redis://auth-redis:6379/0
+      SMQ_AUTH_CALLOUT_CA_CERT: ""
+      SMQ_AUTH_CALLOUT_CERT: ""
+      SMQ_AUTH_CALLOUT_KEY: ""
+      SMQ_AUTH_CALLOUT_METHOD: POST
+      SMQ_AUTH_CALLOUT_TIMEOUT: 10s
+      SMQ_AUTH_CALLOUT_TLS_VERIFICATION: "false"
+      SMQ_AUTH_CALLOUT_URLS: ""
+      SMQ_AUTH_DB_HOST: auth-db
+      SMQ_AUTH_DB_NAME: auth
+      SMQ_AUTH_DB_PASS: supermq
+      SMQ_AUTH_DB_PORT: "5432"
+      SMQ_AUTH_DB_SSL_CERT: ""
+      SMQ_AUTH_DB_SSL_KEY: ""
+      SMQ_AUTH_DB_SSL_MODE: disable
+      SMQ_AUTH_DB_SSL_ROOT_CERT: ""
+      SMQ_AUTH_DB_USER: supermq
+      SMQ_AUTH_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_AUTH_GRPC_HOST: auth
+      SMQ_AUTH_GRPC_PORT: "7001"
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_SERVER_CERT: ""
+      SMQ_AUTH_GRPC_SERVER_KEY: ""
+      SMQ_AUTH_HTTP_HOST: auth
+      SMQ_AUTH_HTTP_PORT: "9001"
+      SMQ_AUTH_HTTP_SERVER_CERT: ""
+      SMQ_AUTH_HTTP_SERVER_KEY: ""
+      SMQ_AUTH_INVITATION_DURATION: 168h
+      SMQ_AUTH_LOG_LEVEL: debug
+      SMQ_AUTH_REFRESH_TOKEN_DURATION: 24h
+      SMQ_AUTH_SECRET_KEY: HyE2D4RUt9nnKG6v8zKEqAp6g6ka8hhZsqUpzgKvnwpXrNVQSH
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+      SMQ_SPICEDB_SCHEMA_FILE: /schema.zed
+    expose:
+      - "7001"
+    image: supermq/auth:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 9001
+        published: "9001"
+        protocol: tcp
+      - mode: ingress
+        target: 7001
+        published: "7001"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/spicedb/schema.zed
+        target: /schema.zed
+        bind:
+          create_host_path: true
+      - type: volume
+        source: supermq-pat-db-volume
+        target: /supermq-data
+        volume: {}
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_key
+        target: /auth-grpc-server
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca_certs
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_ca_certs
+        target: /auth-grpc-client-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-callout-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_ca_certs
+        target: /auth-callout-client-ca
+        bind:
+          create_host_path: true
+  auth-db:
+    container_name: supermq-auth-db
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6001"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-auth-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  auth-redis:
+    container_name: supermq-auth-redis
+    image: redis:7.2.4-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-auth-redis-volume
+        target: /data
+        volume: {}
+  channels:
+    container_name: supermq-channels
+    depends_on:
+      auth:
+        condition: service_started
+        required: true
+      channels-db:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+      users:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_CHANNELS_DB_HOST: channels-db
+      SMQ_CHANNELS_DB_NAME: channels
+      SMQ_CHANNELS_DB_PASS: supermq
+      SMQ_CHANNELS_DB_PORT: "5432"
+      SMQ_CHANNELS_DB_SSL_CERT: ""
+      SMQ_CHANNELS_DB_SSL_KEY: ""
+      SMQ_CHANNELS_DB_SSL_MODE: disable
+      SMQ_CHANNELS_DB_SSL_ROOT_CERT: ""
+      SMQ_CHANNELS_DB_USER: supermq
+      SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_HOST: channels
+      SMQ_CHANNELS_GRPC_PORT: "7005"
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_SERVER_CERT: ""
+      SMQ_CHANNELS_GRPC_SERVER_KEY: ""
+      SMQ_CHANNELS_HTTP_HOST: channels
+      SMQ_CHANNELS_HTTP_PORT: "9005"
+      SMQ_CHANNELS_INSTANCE_ID: ""
+      SMQ_CHANNELS_LOG_LEVEL: debug
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ""
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ""
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ""
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_TIMEOUT: 300s
+      SMQ_DOMAINS_GRPC_URL: domains:7003
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_GROUPS_GRPC_CLIENT_CERT: ""
+      SMQ_GROUPS_GRPC_CLIENT_KEY: ""
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_GROUPS_GRPC_TIMEOUT: 300s
+      SMQ_GROUPS_GRPC_URL: groups:7004
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+      SMQ_SPICEDB_SCHEMA_FILE: /schema.zed
+    image: supermq/channels:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 9005
+        published: "9005"
+        protocol: tcp
+      - mode: ingress
+        target: 7005
+        published: "7005"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/spicedb/schema.zed
+        target: /schema.zed
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /clients-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /clients-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /groups-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /groups-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /channels-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_key
+        target: /channels-grpc-server
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /channels-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_ca
+        target: /channels-grpc-client-ca
+        bind:
+          create_host_path: true
+  channels-db:
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    container_name: supermq-channels-db
+    environment:
+      POSTGRES_DB: channels
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+      SMQ_POSTGRES_MAX_CONNECTIONS: "100"
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6005"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-channels-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  clients:
+    container_name: supermq-clients
+    depends_on:
+      auth:
+        condition: service_started
+        required: true
+      clients-db:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+      users:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CHANNELS_URL: http://channels:9005
+      SMQ_CLIENTS_CACHE_KEY_DURATION: 10m
+      SMQ_CLIENTS_CACHE_URL: redis://clients-redis:6379/0
+      SMQ_CLIENTS_DB_HOST: clients-db
+      SMQ_CLIENTS_DB_NAME: clients
+      SMQ_CLIENTS_DB_PASS: supermq
+      SMQ_CLIENTS_DB_PORT: "5432"
+      SMQ_CLIENTS_DB_SSL_CERT: ""
+      SMQ_CLIENTS_DB_SSL_KEY: ""
+      SMQ_CLIENTS_DB_SSL_MODE: disable
+      SMQ_CLIENTS_DB_SSL_ROOT_CERT: ""
+      SMQ_CLIENTS_DB_USER: supermq
+      SMQ_CLIENTS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_HOST: clients
+      SMQ_CLIENTS_GRPC_PORT: "7006"
+      SMQ_CLIENTS_GRPC_R_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_R_KEY: ""
+      SMQ_CLIENTS_GRPC_SERVER_CERT: ""
+      SMQ_CLIENTS_HTTP_HOST: clients
+      SMQ_CLIENTS_HTTP_PORT: "9006"
+      SMQ_CLIENTS_LOG_LEVEL: debug
+      SMQ_CLIENTS_STANDALONE_ID: ""
+      SMQ_CLIENTS_STANDALONE_TOKEN: ""
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ""
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ""
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_TIMEOUT: 300s
+      SMQ_DOMAINS_GRPC_URL: domains:7003
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_GROUPS_GRPC_CLIENT_CERT: ""
+      SMQ_GROUPS_GRPC_CLIENT_KEY: ""
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_GROUPS_GRPC_TIMEOUT: 300s
+      SMQ_GROUPS_GRPC_URL: groups:7004
+      SMQ_GROUPS_URL: groups:9004
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+      SMQ_SPICEDB_SCHEMA_FILE: /schema.zed
+    image: supermq/clients:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 9006
+        published: "9006"
+        protocol: tcp
+      - mode: ingress
+        target: 7006
+        published: "7006"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/spicedb/schema.zed
+        target: /schema.zed
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_key
+        target: /clients-grpc-server
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca_certs
+        target: /clients-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_ca_certs
+        target: /clients-grpc-client-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /channels-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /channels-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /groups-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /groups-grpc-server-ca
+        bind:
+          create_host_path: true
+  clients-db:
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    container_name: supermq-clients-db
+    environment:
+      POSTGRES_DB: clients
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+      SMQ_POSTGRES_MAX_CONNECTIONS: "100"
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6006"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-clients-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  clients-redis:
+    container_name: supermq-clients-redis
+    image: redis:7.2.4-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-clients-redis-volume
+        target: /data
+        volume: {}
+  coap-adapter:
+    container_name: supermq-coap
+    depends_on:
+      clients:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ""
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_COAP_ADAPTER_HOST: coap-adapter
+      SMQ_COAP_ADAPTER_HTTP_HOST: coap-adapter
+      SMQ_COAP_ADAPTER_HTTP_PORT: "5683"
+      SMQ_COAP_ADAPTER_HTTP_SERVER_CERT: ""
+      SMQ_COAP_ADAPTER_HTTP_SERVER_KEY: ""
+      SMQ_COAP_ADAPTER_INSTANCE_ID: ""
+      SMQ_COAP_ADAPTER_LOG_LEVEL: debug
+      SMQ_COAP_ADAPTER_PORT: "5683"
+      SMQ_COAP_ADAPTER_SERVER_CERT: ""
+      SMQ_COAP_ADAPTER_SERVER_KEY: ""
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_MESSAGE_BROKER_URL: nats://nats:4222
+      SMQ_SEND_TELEMETRY: "true"
+    image: supermq/coap:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5683
+        published: "5683"
+        protocol: udp
+      - mode: ingress
+        target: 5683
+        published: "5683"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /clients-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /clients-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /channels-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /channels-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_ca
+        target: /channels-grpc-client-ca
+        bind:
+          create_host_path: true
+  domains:
+    container_name: supermq-domains
+    depends_on:
+      domains-db:
+        condition: service_started
+        required: true
+      spicedb:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CHANNELS_URL: http://channels:9005
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ""
+      SMQ_CLIENTS_GRPC_R_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_DOMAINS_CACHE_KEY_DURATION: 10m
+      SMQ_DOMAINS_CACHE_URL: redis://domains-redis:6379/0
+      SMQ_DOMAINS_DB_HOST: domains-db
+      SMQ_DOMAINS_DB_NAME: domains
+      SMQ_DOMAINS_DB_PASS: supermq
+      SMQ_DOMAINS_DB_PORT: "5432"
+      SMQ_DOMAINS_DB_SSL_CERT: ""
+      SMQ_DOMAINS_DB_SSL_KEY: ""
+      SMQ_DOMAINS_DB_SSL_MODE: ""
+      SMQ_DOMAINS_DB_SSL_ROOT_CERT: ""
+      SMQ_DOMAINS_DB_USER: supermq
+      SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_HOST: domains
+      SMQ_DOMAINS_GRPC_PORT: "7003"
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_SERVER_CERT: ""
+      SMQ_DOMAINS_GRPC_SERVER_KEY: ""
+      SMQ_DOMAINS_HTTP_HOST: domains
+      SMQ_DOMAINS_HTTP_PORT: "9003"
+      SMQ_DOMAINS_HTTP_SERVER_CERT: ""
+      SMQ_DOMAINS_HTTP_SERVER_KEY: ""
+      SMQ_DOMAINS_INSTANCE_ID: ""
+      SMQ_DOMAINS_LOG_LEVEL: debug
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_GROUPS_GRPC_CLIENT_CERT: ""
+      SMQ_GROUPS_GRPC_CLIENT_KEY: ""
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_GROUPS_GRPC_TIMEOUT: 300s
+      SMQ_GROUPS_GRPC_URL: groups:7004
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+      SMQ_SPICEDB_SCHEMA_FILE: /schema.zed
+    expose:
+      - "7003"
+    image: supermq/domains:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 9003
+        published: "9003"
+        protocol: tcp
+      - mode: ingress
+        target: 7003
+        published: "7003"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/spicedb/schema.zed
+        target: /schema.zed
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_key
+        target: /auth-grpc-server
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_ca_certs
+        target: /auth-grpc-client-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+  domains-db:
+    container_name: supermq-domains-db
+    environment:
+      POSTGRES_DB: domains
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6003"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-domains-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  domains-redis:
+    container_name: supermq-domains-redis
+    image: redis:7.2.4-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-domains-redis-volume
+        target: /data
+        volume: {}
+  groups:
+    container_name: supermq-groups
+    depends_on:
+      auth:
+        condition: service_started
+        required: true
+      groups-db:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CHANNELS_URL: http://channels:9005
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ""
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ""
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ""
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_TIMEOUT: 300s
+      SMQ_DOMAINS_GRPC_URL: domains:7003
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_GROUPS_DB_HOST: groups-db
+      SMQ_GROUPS_DB_NAME: groups
+      SMQ_GROUPS_DB_PASS: supermq
+      SMQ_GROUPS_DB_PORT: "5432"
+      SMQ_GROUPS_DB_SSL_CERT: ""
+      SMQ_GROUPS_DB_SSL_KEY: ""
+      SMQ_GROUPS_DB_SSL_MODE: disable
+      SMQ_GROUPS_DB_SSL_ROOT_CERT: ""
+      SMQ_GROUPS_DB_USER: supermq
+      SMQ_GROUPS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_GROUPS_GRPC_HOST: groups
+      SMQ_GROUPS_GRPC_PORT: "7004"
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_GROUPS_GRPC_SERVER_CERT: ""
+      SMQ_GROUPS_GRPC_SERVER_KEY: ""
+      SMQ_GROUPS_HTTP_HOST: groups
+      SMQ_GROUPS_HTTP_PORT: "9004"
+      SMQ_GROUPS_HTTP_SERVER_CERT: ""
+      SMQ_GROUPS_HTTP_SERVER_KEY: ""
+      SMQ_GROUPS_LOG_LEVEL: debug
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+      SMQ_SPICEDB_SCHEMA_FILE: /schema.zed
+    image: supermq/groups:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 9004
+        published: "9004"
+        protocol: tcp
+      - mode: ingress
+        target: 7004
+        published: "7004"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/spicedb/schema.zed
+        target: /schema.zed
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+  groups-db:
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    container_name: supermq-groups-db
+    environment:
+      POSTGRES_DB: groups
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+      SMQ_POSTGRES_MAX_CONNECTIONS: "100"
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6004"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-groups-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  http-adapter:
+    container_name: supermq-http
+    depends_on:
+      clients:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_T_KEY: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_HTTP_ADAPTER_HOST: http-adapter
+      SMQ_HTTP_ADAPTER_INSTANCE_ID: ""
+      SMQ_HTTP_ADAPTER_LOG_LEVEL: debug
+      SMQ_HTTP_ADAPTER_PORT: "8008"
+      SMQ_HTTP_ADAPTER_SERVER_CERT: ""
+      SMQ_HTTP_ADAPTER_SERVER_KEY: ""
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_MESSAGE_BROKER_URL: nats://nats:4222
+      SMQ_SEND_TELEMETRY: "true"
+    image: supermq/http:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 8008
+        published: "8008"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /clients-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /clients-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /channels-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /channels-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+  jaeger:
+    command:
+      - --memory.max-traces
+      - "5000"
+    container_name: supermq-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    image: jaegertracing/all-in-one:1.66.0
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 16686
+        published: "16686"
+        protocol: tcp
+      - mode: ingress
+        target: 4318
+        published: "4318"
+        protocol: tcp
+  journal:
+    container_name: magistrala-journal
+    depends_on:
+      journal-db:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ""
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ""
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_TIMEOUT: 300s
+      SMQ_DOMAINS_GRPC_URL: domains:7003
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_JOURNAL_DB_HOST: journal-db
+      SMQ_JOURNAL_DB_NAME: journal
+      SMQ_JOURNAL_DB_PASS: supermq
+      SMQ_JOURNAL_DB_PORT: "5432"
+      SMQ_JOURNAL_DB_SSL_CERT: ""
+      SMQ_JOURNAL_DB_SSL_KEY: ""
+      SMQ_JOURNAL_DB_SSL_MODE: disable
+      SMQ_JOURNAL_DB_SSL_ROOT_CERT: ""
+      SMQ_JOURNAL_DB_USER: supermq
+      SMQ_JOURNAL_HTTP_HOST: journal
+      SMQ_JOURNAL_HTTP_PORT: "9021"
+      SMQ_JOURNAL_HTTP_SERVER_CERT: ""
+      SMQ_JOURNAL_HTTP_SERVER_KEY: ""
+      SMQ_JOURNAL_INSTANCE_ID: ""
+      SMQ_JOURNAL_LOG_LEVEL: info
+      SMQ_SEND_TELEMETRY: "true"
+    image: supermq/journal:latest
+    networks:
+      magistrala-base-net: null
+    ports:
+      - mode: ingress
+        target: 9021
+        published: "9021"
+        protocol: tcp
+    restart: on-failure
+  journal-db:
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    container_name: magistrala-journal-db
+    environment:
+      POSTGRES_DB: journal
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+      SMQ_POSTGRES_MAX_CONNECTIONS: "100"
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: magistrala-journal-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  mqtt-adapter:
+    container_name: supermq-mqtt
+    depends_on:
+      clients:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+      rabbitmq:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ""
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_MESSAGE_BROKER_URL: nats://nats:4222
+      SMQ_MQTT_ADAPTER_FORWARDER_TIMEOUT: 30s
+      SMQ_MQTT_ADAPTER_INSTANCE: ""
+      SMQ_MQTT_ADAPTER_INSTANCE_ID: ""
+      SMQ_MQTT_ADAPTER_LOG_LEVEL: debug
+      SMQ_MQTT_ADAPTER_MQTT_PORT: "1883"
+      SMQ_MQTT_ADAPTER_MQTT_QOS: "0"
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: ""
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_HOST: rabbitmq
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_PASSWORD: supermq
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_PORT: "1883"
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_USERNAME: supermq
+      SMQ_MQTT_ADAPTER_WS_PORT: "8080"
+      SMQ_MQTT_ADAPTER_WS_TARGET_HOST: rabbitmq
+      SMQ_MQTT_ADAPTER_WS_TARGET_PATH: /ws
+      SMQ_MQTT_ADAPTER_WS_TARGET_PORT: "15675"
+      SMQ_SEND_TELEMETRY: "true"
+    image: supermq/mqtt:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /clients-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /clients-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /channels-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /channels-grpc-server-ca
+        bind:
+          create_host_path: true
+  nats:
+    command:
+      - --config=/etc/nats/nats.conf
+    container_name: supermq-nats
+    environment:
+      SMQ_NATS_HTTP_PORT: "8222"
+      SMQ_NATS_JETSTREAM_KEY: u7wFoAPgXpDueXOFldBnXDh4xjnSOyEJ2Cb8Z5SZvGLzIZ3U4exWhhoIBZHzuNvh
+      SMQ_NATS_PORT: "4222"
+    image: nats:2.10.25-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 4222
+        published: "4222"
+        protocol: tcp
+      - mode: ingress
+        target: 8222
+        published: "8222"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-broker-volume
+        target: /data
+        volume: {}
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/nats
+        target: /etc/nats
+        bind:
+          create_host_path: true
+  nginx:
+    container_name: magistrala-nginx
+    depends_on:
+      auth:
+        condition: service_started
+        required: true
+      clients:
+        condition: service_started
+        required: true
+      coap-adapter:
+        condition: service_started
+        required: true
+      http-adapter:
+        condition: service_started
+        required: true
+      mqtt-adapter:
+        condition: service_started
+        required: true
+      users:
+        condition: service_started
+        required: true
+      ws-adapter:
+        condition: service_started
+        required: true
+    environment:
+      GRPC_MTLS: ""
+      SMQ_AUTH_ACCESS_TOKEN_DURATION: 1h
+      SMQ_AUTH_ADAPTER_INSTANCE_ID: ""
+      SMQ_AUTH_CACHE_KEY_DURATION: 10m
+      SMQ_AUTH_CACHE_URL: redis://auth-redis:6379/0
+      SMQ_AUTH_CALLOUT_CA_CERT: ""
+      SMQ_AUTH_CALLOUT_CERT: ""
+      SMQ_AUTH_CALLOUT_KEY: ""
+      SMQ_AUTH_CALLOUT_METHOD: POST
+      SMQ_AUTH_CALLOUT_TIMEOUT: 10s
+      SMQ_AUTH_CALLOUT_TLS_VERIFICATION: "false"
+      SMQ_AUTH_CALLOUT_URLS: ""
+      SMQ_AUTH_DB_HOST: auth-db
+      SMQ_AUTH_DB_NAME: auth
+      SMQ_AUTH_DB_PASS: supermq
+      SMQ_AUTH_DB_PORT: "5432"
+      SMQ_AUTH_DB_SSL_CERT: ""
+      SMQ_AUTH_DB_SSL_KEY: ""
+      SMQ_AUTH_DB_SSL_MODE: disable
+      SMQ_AUTH_DB_SSL_ROOT_CERT: ""
+      SMQ_AUTH_DB_USER: supermq
+      SMQ_AUTH_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_HOST: auth
+      SMQ_AUTH_GRPC_PORT: "7001"
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_SERVER_CERT: ""
+      SMQ_AUTH_GRPC_SERVER_KEY: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_AUTH_HTTP_HOST: auth
+      SMQ_AUTH_HTTP_PORT: "9001"
+      SMQ_AUTH_HTTP_SERVER_CERT: ""
+      SMQ_AUTH_HTTP_SERVER_KEY: ""
+      SMQ_AUTH_INVITATION_DURATION: 168h
+      SMQ_AUTH_LOG_LEVEL: debug
+      SMQ_AUTH_REFRESH_TOKEN_DURATION: 24h
+      SMQ_AUTH_SECRET_KEY: HyE2D4RUt9nnKG6v8zKEqAp6g6ka8hhZsqUpzgKvnwpXrNVQSH
+      SMQ_AUTH_URL: auth:9001
+      SMQ_CERTS_DB_HOST: am-certs-db
+      SMQ_CERTS_DB_NAME: certs
+      SMQ_CERTS_DB_PASS: supermq
+      SMQ_CERTS_DB_PORT: "5432"
+      SMQ_CERTS_DB_SSL_CERT: ""
+      SMQ_CERTS_DB_SSL_KEY: ""
+      SMQ_CERTS_DB_SSL_MODE: ""
+      SMQ_CERTS_DB_SSL_ROOT_CERT: ""
+      SMQ_CERTS_DB_USER: supermq
+      SMQ_CERTS_GRPC_HOST: ""
+      SMQ_CERTS_GRPC_PORT: ""
+      SMQ_CERTS_HTTP_HOST: certs
+      SMQ_CERTS_HTTP_PORT: "9019"
+      SMQ_CERTS_HTTP_SERVER_CERT: ""
+      SMQ_CERTS_HTTP_SERVER_KEY: ""
+      SMQ_CERTS_INSTANCE_ID: ""
+      SMQ_CERTS_LOG_LEVEL: debug
+      SMQ_CERTS_SDK_CERTS_URL: http://supermq-am-certs:9010
+      SMQ_CERTS_SDK_HOST: http://supermq-am-certs
+      SMQ_CERTS_SDK_TLS_VERIFICATION: "false"
+      SMQ_CERTS_SIGN_CA_KEY_PATH: /etc/ssl/certs/ca.key
+      SMQ_CERTS_SIGN_CA_PATH: /etc/ssl/certs/ca.crt
+      SMQ_CERTS_VAULT_APPROLE_ROLEID: supermq
+      SMQ_CERTS_VAULT_APPROLE_SECRET: supermq
+      SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_PATH: pki_int
+      SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_ROLE_NAME: supermq_clients_certs
+      SMQ_CERTS_VAULT_HOST: http://vault:8200
+      SMQ_CERTS_VAULT_NAMESPACE: supermq
+      SMQ_CHANNELS_DB_HOST: channels-db
+      SMQ_CHANNELS_DB_NAME: channels
+      SMQ_CHANNELS_DB_PASS: supermq
+      SMQ_CHANNELS_DB_PORT: "5432"
+      SMQ_CHANNELS_DB_SSL_CERT: ""
+      SMQ_CHANNELS_DB_SSL_KEY: ""
+      SMQ_CHANNELS_DB_SSL_MODE: disable
+      SMQ_CHANNELS_DB_SSL_ROOT_CERT: ""
+      SMQ_CHANNELS_DB_USER: supermq
+      SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_HOST: channels
+      SMQ_CHANNELS_GRPC_PORT: "7005"
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_SERVER_CERT: ""
+      SMQ_CHANNELS_GRPC_SERVER_KEY: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CHANNELS_HTTP_HOST: channels
+      SMQ_CHANNELS_HTTP_PORT: "9005"
+      SMQ_CHANNELS_INSTANCE_ID: ""
+      SMQ_CHANNELS_LOG_LEVEL: debug
+      SMQ_CHANNELS_URL: http://channels:9005
+      SMQ_CLIENTS_CACHE_KEY_DURATION: 10m
+      SMQ_CLIENTS_CACHE_URL: redis://clients-redis:6379/0
+      SMQ_CLIENTS_DB_HOST: clients-db
+      SMQ_CLIENTS_DB_NAME: clients
+      SMQ_CLIENTS_DB_PASS: supermq
+      SMQ_CLIENTS_DB_PORT: "5432"
+      SMQ_CLIENTS_DB_SSL_CERT: ""
+      SMQ_CLIENTS_DB_SSL_KEY: ""
+      SMQ_CLIENTS_DB_SSL_MODE: disable
+      SMQ_CLIENTS_DB_SSL_ROOT_CERT: ""
+      SMQ_CLIENTS_DB_USER: supermq
+      SMQ_CLIENTS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ""
+      SMQ_CLIENTS_GRPC_HOST: clients
+      SMQ_CLIENTS_GRPC_PORT: "7006"
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_SERVER_CERT: ""
+      SMQ_CLIENTS_GRPC_SERVER_KEY: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_CLIENTS_HTTP_HOST: clients
+      SMQ_CLIENTS_HTTP_PORT: "9006"
+      SMQ_CLIENTS_INSTANCE_ID: ""
+      SMQ_CLIENTS_LOG_LEVEL: debug
+      SMQ_CLIENTS_STANDALONE_ID: ""
+      SMQ_CLIENTS_STANDALONE_TOKEN: ""
+      SMQ_CLIENTS_URL: http://clients:9006
+      SMQ_COAP_ADAPTER_HOST: coap-adapter
+      SMQ_COAP_ADAPTER_HTTP_HOST: coap-adapter
+      SMQ_COAP_ADAPTER_HTTP_PORT: "5683"
+      SMQ_COAP_ADAPTER_HTTP_SERVER_CERT: ""
+      SMQ_COAP_ADAPTER_HTTP_SERVER_KEY: ""
+      SMQ_COAP_ADAPTER_INSTANCE_ID: ""
+      SMQ_COAP_ADAPTER_LOG_LEVEL: debug
+      SMQ_COAP_ADAPTER_PORT: "5683"
+      SMQ_COAP_ADAPTER_SERVER_CERT: ""
+      SMQ_COAP_ADAPTER_SERVER_KEY: ""
+      SMQ_DOMAINS_CACHE_KEY_DURATION: 10m
+      SMQ_DOMAINS_CACHE_URL: redis://domains-redis:6379/0
+      SMQ_DOMAINS_DB_HOST: domains-db
+      SMQ_DOMAINS_DB_NAME: domains
+      SMQ_DOMAINS_DB_PASS: supermq
+      SMQ_DOMAINS_DB_PORT: "5432"
+      SMQ_DOMAINS_DB_SSL_CERT: ""
+      SMQ_DOMAINS_DB_SSL_KEY: ""
+      SMQ_DOMAINS_DB_SSL_MODE: ""
+      SMQ_DOMAINS_DB_SSL_ROOT_CERT: ""
+      SMQ_DOMAINS_DB_USER: supermq
+      SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ""
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ""
+      SMQ_DOMAINS_GRPC_HOST: domains
+      SMQ_DOMAINS_GRPC_PORT: "7003"
+      SMQ_DOMAINS_GRPC_TIMEOUT: 300s
+      SMQ_DOMAINS_GRPC_URL: domains:7003
+      SMQ_DOMAINS_HTTP_HOST: domains
+      SMQ_DOMAINS_HTTP_PORT: "9003"
+      SMQ_DOMAINS_HTTP_SERVER_CERT: ""
+      SMQ_DOMAINS_HTTP_SERVER_KEY: ""
+      SMQ_DOMAINS_INSTANCE_ID: ""
+      SMQ_DOMAINS_LOG_LEVEL: debug
+      SMQ_DOMAINS_URL: http://domains:9003
+      SMQ_EMAIL_FROM_ADDRESS: from@example.com
+      SMQ_EMAIL_FROM_NAME: Example
+      SMQ_EMAIL_HOST: smtp.mailtrap.io
+      SMQ_EMAIL_PASSWORD: 2b0d302e775b1e
+      SMQ_EMAIL_PORT: "2525"
+      SMQ_EMAIL_TEMPLATE: email.tmpl
+      SMQ_EMAIL_USERNAME: 18bf7f70705139
+      SMQ_ES_TYPE: nats
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_GOOGLE_CLIENT_ID: ""
+      SMQ_GOOGLE_CLIENT_SECRET: ""
+      SMQ_GOOGLE_REDIRECT_URL: ""
+      SMQ_GOOGLE_STATE: ""
+      SMQ_GRAFANA_ADMIN_PASSWORD: supermq
+      SMQ_GRAFANA_ADMIN_USER: supermq
+      SMQ_GRAFANA_PORT: "3000"
+      SMQ_GROUPS_DB_HOST: groups-db
+      SMQ_GROUPS_DB_NAME: groups
+      SMQ_GROUPS_DB_PASS: supermq
+      SMQ_GROUPS_DB_PORT: "5432"
+      SMQ_GROUPS_DB_SSL_CERT: ""
+      SMQ_GROUPS_DB_SSL_KEY: ""
+      SMQ_GROUPS_DB_SSL_MODE: disable
+      SMQ_GROUPS_DB_SSL_ROOT_CERT: ""
+      SMQ_GROUPS_DB_USER: supermq
+      SMQ_GROUPS_GRPC_CLIENT_CA_CERTS: ""
+      SMQ_GROUPS_GRPC_CLIENT_CERT: ""
+      SMQ_GROUPS_GRPC_CLIENT_KEY: ""
+      SMQ_GROUPS_GRPC_HOST: groups
+      SMQ_GROUPS_GRPC_PORT: "7004"
+      SMQ_GROUPS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_GROUPS_GRPC_SERVER_CERT: ""
+      SMQ_GROUPS_GRPC_SERVER_KEY: ""
+      SMQ_GROUPS_GRPC_TIMEOUT: 300s
+      SMQ_GROUPS_GRPC_URL: groups:7004
+      SMQ_GROUPS_HTTP_HOST: groups
+      SMQ_GROUPS_HTTP_PORT: "9004"
+      SMQ_GROUPS_HTTP_SERVER_CERT: ""
+      SMQ_GROUPS_HTTP_SERVER_KEY: ""
+      SMQ_GROUPS_INSTANCE_ID: ""
+      SMQ_GROUPS_LOG_LEVEL: debug
+      SMQ_GROUPS_URL: groups:9004
+      SMQ_HTTP_ADAPTER_HOST: http-adapter
+      SMQ_HTTP_ADAPTER_INSTANCE_ID: ""
+      SMQ_HTTP_ADAPTER_LOG_LEVEL: debug
+      SMQ_HTTP_ADAPTER_PORT: "8008"
+      SMQ_HTTP_ADAPTER_SERVER_CERT: ""
+      SMQ_HTTP_ADAPTER_SERVER_KEY: ""
+      SMQ_HTTP_ADAPTER_URL: http://http-adapter:8008
+      SMQ_INVITATIONS_URL: http://invitations:9020
+      SMQ_JAEGER_COLLECTOR_OTLP_ENABLED: "true"
+      SMQ_JAEGER_FRONTEND: "16686"
+      SMQ_JAEGER_MEMORY_MAX_TRACES: "5000"
+      SMQ_JAEGER_OLTP_HTTP: "4318"
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_JOURNAL_DB_HOST: journal-db
+      SMQ_JOURNAL_DB_NAME: journal
+      SMQ_JOURNAL_DB_PASS: supermq
+      SMQ_JOURNAL_DB_PORT: "5432"
+      SMQ_JOURNAL_DB_SSL_CERT: ""
+      SMQ_JOURNAL_DB_SSL_KEY: ""
+      SMQ_JOURNAL_DB_SSL_MODE: disable
+      SMQ_JOURNAL_DB_SSL_ROOT_CERT: ""
+      SMQ_JOURNAL_DB_USER: supermq
+      SMQ_JOURNAL_HTTP_HOST: journal
+      SMQ_JOURNAL_HTTP_PORT: "9021"
+      SMQ_JOURNAL_HTTP_SERVER_CERT: ""
+      SMQ_JOURNAL_HTTP_SERVER_KEY: ""
+      SMQ_JOURNAL_INSTANCE_ID: ""
+      SMQ_JOURNAL_LOG_LEVEL: info
+      SMQ_MESSAGE_BROKER_TYPE: nats
+      SMQ_MESSAGE_BROKER_URL: nats://nats:4222
+      SMQ_MQTT_ADAPTER_ES_DB: "0"
+      SMQ_MQTT_ADAPTER_FORWARDER_TIMEOUT: 30s
+      SMQ_MQTT_ADAPTER_INSTANCE: ""
+      SMQ_MQTT_ADAPTER_INSTANCE_ID: ""
+      SMQ_MQTT_ADAPTER_LOG_LEVEL: debug
+      SMQ_MQTT_ADAPTER_MQTT_PORT: "1883"
+      SMQ_MQTT_ADAPTER_MQTT_QOS: "0"
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: ""
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_HOST: rabbitmq
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_PASSWORD: supermq
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_PORT: "1883"
+      SMQ_MQTT_ADAPTER_MQTT_TARGET_USERNAME: supermq
+      SMQ_MQTT_ADAPTER_WS_PORT: "8080"
+      SMQ_MQTT_ADAPTER_WS_TARGET_HOST: rabbitmq
+      SMQ_MQTT_ADAPTER_WS_TARGET_PATH: /ws
+      SMQ_MQTT_ADAPTER_WS_TARGET_PORT: "15675"
+      SMQ_MQTT_BROKER_HEALTH_CHECK: ""
+      SMQ_MQTT_BROKER_TYPE: rabbitmq
+      SMQ_NATS_HEALTH_CHECK: http://nats:8222/healthz
+      SMQ_NATS_HTTP_PORT: "8222"
+      SMQ_NATS_JETSTREAM_KEY: u7wFoAPgXpDueXOFldBnXDh4xjnSOyEJ2Cb8Z5SZvGLzIZ3U4exWhhoIBZHzuNvh
+      SMQ_NATS_MQTT_QOS: "0"
+      SMQ_NATS_PORT: "4222"
+      SMQ_NATS_URL: nats://nats:4222
+      SMQ_NATS_WS_TARGET_PATH: ""
+      SMQ_NGINX_HTTP_PORT: "80"
+      SMQ_NGINX_MQTT_PORT: "1883"
+      SMQ_NGINX_MQTTS_PORT: "8883"
+      SMQ_NGINX_SSL_PORT: "443"
+      SMQ_OAUTH_UI_ERROR_URL: http://localhost:9095/ui/error
+      SMQ_OAUTH_UI_REDIRECT_URL: http://localhost:9095/ui/tokens/secure
+      SMQ_POSTGRES_HOST: supermq-postgres
+      SMQ_POSTGRES_MAX_CONNECTIONS: "100"
+      SMQ_POSTGRES_NAME: messages
+      SMQ_POSTGRES_PASS: supermq
+      SMQ_POSTGRES_PORT: "5432"
+      SMQ_POSTGRES_SSL_CERT: ""
+      SMQ_POSTGRES_SSL_KEY: ""
+      SMQ_POSTGRES_SSL_MODE: disable
+      SMQ_POSTGRES_SSL_ROOT_CERT: ""
+      SMQ_POSTGRES_USER: supermq
+      SMQ_PROMETHEUS_PORT: "9090"
+      SMQ_RABBITMQ_COOKIE: supermq
+      SMQ_RABBITMQ_HTTP_PORT: "15672"
+      SMQ_RABBITMQ_MQTT_QOS: "0"
+      SMQ_RABBITMQ_PASS: supermq
+      SMQ_RABBITMQ_PORT: "5672"
+      SMQ_RABBITMQ_URL: amqp://supermq:supermq@rabbitmq:5672/
+      SMQ_RABBITMQ_USER: supermq
+      SMQ_RABBITMQ_VHOST: /
+      SMQ_RABBITMQ_WS_PORT: "15675"
+      SMQ_RABBITMQ_WS_TARGET_PATH: /ws
+      SMQ_REDIS_TCP_PORT: "6379"
+      SMQ_REDIS_URL: redis://es-redis:6379/0
+      SMQ_RELEASE_TAG: latest
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_DATASTORE_ENGINE: postgres
+      SMQ_SPICEDB_DB_NAME: spicedb
+      SMQ_SPICEDB_DB_PASS: supermq
+      SMQ_SPICEDB_DB_PORT: "5432"
+      SMQ_SPICEDB_DB_USER: supermq
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+      SMQ_SPICEDB_SCHEMA_FILE: /schema.zed
+      SMQ_TIMESCALE_HOST: supermq-timescale
+      SMQ_TIMESCALE_NAME: supermq
+      SMQ_TIMESCALE_PASS: supermq
+      SMQ_TIMESCALE_PORT: "5432"
+      SMQ_TIMESCALE_SSL_CERT: ""
+      SMQ_TIMESCALE_SSL_KEY: ""
+      SMQ_TIMESCALE_SSL_MODE: disable
+      SMQ_TIMESCALE_SSL_ROOT_CERT: ""
+      SMQ_TIMESCALE_USER: supermq
+      SMQ_TOKEN_RESET_ENDPOINT: /reset-request
+      SMQ_UI_BLOCK_KEY: UtgZjr92jwRY6SPUndHXiyl9QY8qTUyZ
+      SMQ_UI_CONTENT_TYPE: application/senml+json
+      SMQ_UI_DB_HOST: ui-db
+      SMQ_UI_DB_NAME: ui
+      SMQ_UI_DB_PASS: supermq
+      SMQ_UI_DB_PORT: "5432"
+      SMQ_UI_DB_SSL_CERT: ""
+      SMQ_UI_DB_SSL_KEY: ""
+      SMQ_UI_DB_SSL_MODE: disable
+      SMQ_UI_DB_SSL_ROOT_CERT: ""
+      SMQ_UI_DB_USER: supermq
+      SMQ_UI_HASH_KEY: 5jx4x2Qg9OUmzpP5dbveWQ
+      SMQ_UI_HOST_URL: http://localhost:9095
+      SMQ_UI_INSTANCE_ID: ""
+      SMQ_UI_LOG_LEVEL: debug
+      SMQ_UI_PATH_PREFIX: /ui
+      SMQ_UI_PORT: "9095"
+      SMQ_UI_VERIFICATION_TLS: "false"
+      SMQ_USERS_ACCESS_TOKEN_DURATION: 15m
+      SMQ_USERS_ADMIN_EMAIL: admin@example.com
+      SMQ_USERS_ADMIN_FIRST_NAME: super
+      SMQ_USERS_ADMIN_LAST_NAME: admin
+      SMQ_USERS_ADMIN_PASSWORD: "12345678"
+      SMQ_USERS_ADMIN_USERNAME: admin
+      SMQ_USERS_ALLOW_SELF_REGISTER: "true"
+      SMQ_USERS_DB_HOST: users-db
+      SMQ_USERS_DB_NAME: users
+      SMQ_USERS_DB_PASS: supermq
+      SMQ_USERS_DB_PORT: "5432"
+      SMQ_USERS_DB_SSL_CERT: ""
+      SMQ_USERS_DB_SSL_KEY: ""
+      SMQ_USERS_DB_SSL_MODE: disable
+      SMQ_USERS_DB_SSL_ROOT_CERT: ""
+      SMQ_USERS_DB_USER: supermq
+      SMQ_USERS_DELETE_AFTER: 720h
+      SMQ_USERS_DELETE_INTERVAL: 24h
+      SMQ_USERS_HTTP_HOST: users
+      SMQ_USERS_HTTP_PORT: "9002"
+      SMQ_USERS_HTTP_SERVER_CERT: ""
+      SMQ_USERS_HTTP_SERVER_KEY: ""
+      SMQ_USERS_INSTANCE_ID: ""
+      SMQ_USERS_LOG_LEVEL: debug
+      SMQ_USERS_PASS_REGEX: ^.{8,}$$
+      SMQ_USERS_REFRESH_TOKEN_DURATION: 24h
+      SMQ_USERS_RESET_PWD_TEMPLATE: users.tmpl
+      SMQ_USERS_SECRET_KEY: HyE2D4RUt9nnKG6v8zKEqAp6g6ka8hhZsqUpzgKvnwpXrNVQSH
+      SMQ_USERS_URL: users:9002
+      SMQ_VAULT_ADDR: http://vault:8200
+      SMQ_VAULT_CLIENTS_CERTS_ISSUER_ROLEID: supermq
+      SMQ_VAULT_CLIENTS_CERTS_ISSUER_SECRET: supermq
+      SMQ_VAULT_HOST: vault
+      SMQ_VAULT_NAMESPACE: supermq
+      SMQ_VAULT_PKI_CA_ADDR: 5 Av. Anatole
+      SMQ_VAULT_PKI_CA_C: FRANCE
+      SMQ_VAULT_PKI_CA_CN: SuperMQ Root Certificate Authority
+      SMQ_VAULT_PKI_CA_L: PARIS
+      SMQ_VAULT_PKI_CA_O: SuperMQ
+      SMQ_VAULT_PKI_CA_OU: SuperMQ
+      SMQ_VAULT_PKI_CA_PO: "75007"
+      SMQ_VAULT_PKI_CA_ST: PARIS
+      SMQ_VAULT_PKI_CLUSTER_AIA_PATH: http://localhost
+      SMQ_VAULT_PKI_CLUSTER_PATH: http://localhost
+      SMQ_VAULT_PKI_FILE_NAME: mg_root
+      SMQ_VAULT_PKI_INT_CA_ADDR: 5 Av. Anatole
+      SMQ_VAULT_PKI_INT_CA_C: FRANCE
+      SMQ_VAULT_PKI_INT_CA_CN: SuperMQ Intermediate Certificate Authority
+      SMQ_VAULT_PKI_INT_CA_L: PARIS
+      SMQ_VAULT_PKI_INT_CA_O: SuperMQ
+      SMQ_VAULT_PKI_INT_CA_OU: SuperMQ
+      SMQ_VAULT_PKI_INT_CA_PO: "75007"
+      SMQ_VAULT_PKI_INT_CA_ST: PARIS
+      SMQ_VAULT_PKI_INT_CLIENTS_CERTS_ROLE_NAME: supermq_clients_certs
+      SMQ_VAULT_PKI_INT_CLUSTER_AIA_PATH: http://localhost
+      SMQ_VAULT_PKI_INT_CLUSTER_PATH: http://localhost
+      SMQ_VAULT_PKI_INT_FILE_NAME: mg_int
+      SMQ_VAULT_PKI_INT_PATH: pki_int
+      SMQ_VAULT_PKI_INT_SERVER_CERTS_ROLE_NAME: supermq_server_certs
+      SMQ_VAULT_PKI_PATH: pki
+      SMQ_VAULT_PKI_ROLE_NAME: supermq_int_ca
+      SMQ_VAULT_PORT: "8200"
+      SMQ_VAULT_TOKEN: ""
+      SMQ_VAULT_UNSEAL_KEY_1: ""
+      SMQ_VAULT_UNSEAL_KEY_2: ""
+      SMQ_VAULT_UNSEAL_KEY_3: ""
+      SMQ_WS_ADAPTER_HTTP_HOST: ws-adapter
+      SMQ_WS_ADAPTER_HTTP_PORT: "8186"
+      SMQ_WS_ADAPTER_HTTP_SERVER_CERT: ""
+      SMQ_WS_ADAPTER_HTTP_SERVER_KEY: ""
+      SMQ_WS_ADAPTER_INSTANCE_ID: ""
+      SMQ_WS_ADAPTER_LOG_LEVEL: debug
+    image: nginx:1.25.4-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "80"
+        protocol: tcp
+      - mode: ingress
+        target: 443
+        published: "443"
+        protocol: tcp
+      - mode: ingress
+        target: 1883
+        published: "1883"
+        protocol: tcp
+      - mode: ingress
+        target: 8883
+        published: "8883"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/nginx/nginx-key.conf
+        target: /etc/nginx/nginx.conf.template
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/nginx/entrypoint.sh
+        target: /docker-entrypoint.d/entrypoint.sh
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/nginx/snippets
+        target: /etc/nginx/snippets
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/authorization.js
+        target: /etc/nginx/authorization.js
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/supermq-server.crt
+        target: /etc/ssl/certs/supermq-server.crt
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/supermq-server.key
+        target: /etc/ssl/private/supermq-server.key
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/certs/ca.crt
+        target: /etc/ssl/certs/ca.crt
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/dhparam.pem
+        target: /etc/ssl/certs/dhparam.pem
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/certs/magistrala-server.crt
+        target: /etc/ssl/certs/magistrala-server.crt
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/certs/magistrala-server.key
+        target: /etc/ssl/private/magistrala-server.key
+  rabbitmq:
+    container_name: supermq-rabbitmq
+    environment:
+      RABBITMQ_CONFIG_FILES: /etc/rabbitmq/conf.d/
+      RABBITMQ_DEFAULT_PASS: supermq
+      RABBITMQ_DEFAULT_USER: supermq
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_ERLANG_COOKIE: supermq
+    image: rabbitmq:4.0.5-management-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5672
+        published: "5672"
+        protocol: tcp
+      - mode: ingress
+        target: 15672
+        published: "15672"
+        protocol: tcp
+      - mode: ingress
+        target: 15675
+        published: "15675"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/rabbitmq/enabled_plugins
+        target: /etc/rabbitmq/enabled_plugins
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/rabbitmq/rabbitmq.conf
+        target: /etc/rabbitmq/conf.d/10-defaults.conf
+        bind:
+          create_host_path: true
+      - type: volume
+        source: supermq-mqtt-broker-volume
+        target: /var/lib/rabbitmq
+        volume: {}
+  re:
+    container_name: magistrala-re
+    depends_on:
+      re-db:
+        condition: service_started
+        required: true
+    environment:
+      MG_RE_DB_HOST: re-db
+      MG_RE_DB_NAME: rules_engine
+      MG_RE_DB_PASS: magistrala
+      MG_RE_DB_PORT: "5432"
+      MG_RE_DB_SSL_CERT: ""
+      MG_RE_DB_SSL_KEY: ""
+      MG_RE_DB_SSL_MODE: disable
+      MG_RE_DB_SSL_ROOT_CERT: ""
+      MG_RE_DB_USER: magistrala
+      MG_RE_HTTP_HOST: re
+      MG_RE_HTTP_PORT: "9008"
+      MG_RE_HTTP_SERVER_CERT: ""
+      MG_RE_HTTP_SERVER_KEY: ""
+      MG_RE_INSTANCE_ID: ""
+      MG_RE_LOG_LEVEL: debug
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_MESSAGE_BROKER_URL: nats://nats:4222
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+    image: ghcr.io/absmach/magistrala/re:latest
+    networks:
+      magistrala-base-net: null
+    ports:
+      - mode: ingress
+        target: 9008
+        published: "9008"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/config.toml
+        target: /config.toml
+        bind:
+          create_host_path: true
+  re-db:
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    container_name: magistrala-re-db
+    environment:
+      POSTGRES_DB: rules_engine
+      POSTGRES_PASSWORD: magistrala
+      POSTGRES_USER: magistrala
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6009"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: magistrala-re-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  spicedb:
+    command:
+      - serve
+    container_name: supermq-spicedb
+    depends_on:
+      spicedb-migrate:
+        condition: service_started
+        required: true
+    environment:
+      SPICEDB_DATASTORE_CONN_URI: postgres://supermq:supermq@spicedb-db:5432/spicedb?sslmode=disable
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_GRPC_PRESHARED_KEY: "12345678"
+    image: authzed/spicedb:v1.37.0
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+      - mode: ingress
+        target: 9090
+        published: "9091"
+        protocol: tcp
+      - mode: ingress
+        target: 50051
+        published: "50051"
+        protocol: tcp
+    restart: always
+  spicedb-db:
+    command:
+      - postgres
+      - -c
+      - track_commit_timestamp=on
+    container_name: supermq-spicedb-db
+    environment:
+      POSTGRES_DB: spicedb
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6010"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: supermq-spicedb-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  spicedb-migrate:
+    command:
+      - migrate
+      - head
+    container_name: supermq-spicedb-migrate
+    depends_on:
+      spicedb-db:
+        condition: service_started
+        required: true
+    environment:
+      SPICEDB_DATASTORE_CONN_URI: postgres://supermq:supermq@spicedb-db:5432/spicedb?sslmode=disable
+      SPICEDB_DATASTORE_ENGINE: postgres
+    image: authzed/spicedb:v1.37.0
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    restart: on-failure
+  ui:
+    container_name: magistrala-ui
+    environment:
+      MG_BACKEND_URL: http://ui-backend:9097
+      MG_BILLING_URL: http://billing:9022
+      MG_BOOTSTRAP_URL: http://bootstrap:9013
+      MG_CERTS_URL: http://certs:9019
+      MG_CHANNELS_URL: http://channels:9005
+      MG_CLIENTS_URL: http://clients:9006
+      MG_DOMAINS_URL: http://domains:9003
+      MG_GOOGLE_CLIENT_ID: ""
+      MG_GOOGLE_CLIENT_SECRET: ""
+      MG_GOOGLE_REDIRECT_URL: http://localhost:3000/oauth/callback/google
+      MG_GOOGLE_STATE: pGXVNhEeKfycuBzk5InlSfMlEU9UrhlkTUOSqhsgDzXP2Y4RsN
+      MG_GROUPS_URL: http://groups:9004
+      MG_HTTP_ADAPTER_URL: http://http-adapter:8008
+      MG_JOURNAL_URL: http://journal:9021
+      MG_PROFILE_PICTURE_URL: http://ui-backend:9097
+      MG_RE_URL: http://re:9008
+      MG_READER_URL: http://timescale-reader:9011
+      MG_UI_BASE_PATH: /
+      MG_UI_DOCKER_ACCEPT_EULA: "false"
+      MG_UI_NAME: Magistrala UI
+      MG_UI_TYPE: mg
+      MG_USERS_URL: http://users:9002
+      NEXT_PUBLIC_BACKEND_URL: http://ui-backend:9097
+      NEXT_PUBLIC_MG_UI_BASE_PATH: /
+      NEXTAUTH_SECRET: 4WdW0Z0tAOyQ/ZAI3YLVV/wNu+yUZXBLDDQ3AGrgfJ4=
+      RUNTIME_ENV: production
+    image: ghcr.io/absmach/magistrala/ui-mg:latest
+    networks:
+      magistrala-base-net: null
+    ports:
+      - mode: ingress
+        target: 3000
+        published: "3000"
+        protocol: tcp
+  ui-backend:
+    container_name: magistrala-ui-backend
+    depends_on:
+      ui-backend-db:
+        condition: service_started
+        required: true
+    environment:
+      MG_AUTH_GRPC_CLIENT_CERT: ""
+      MG_AUTH_GRPC_CLIENT_KEY: ""
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ""
+      MG_AUTH_GRPC_TIMEOUT: 300s
+      MG_AUTH_GRPC_URL: auth:7001
+      MG_BACKEND_DB_HOST: ui-backend-db
+      MG_BACKEND_DB_NAME: supermq
+      MG_BACKEND_DB_PASS: supermq
+      MG_BACKEND_DB_PORT: "5432"
+      MG_BACKEND_DB_SSL_CERT: ""
+      MG_BACKEND_DB_SSL_KEY: ""
+      MG_BACKEND_DB_SSL_MODE: disable
+      MG_BACKEND_DB_SSL_ROOT_CERT: ""
+      MG_BACKEND_DB_USER: supermq
+      MG_BACKEND_HTTP_HOST: ui-backend
+      MG_BACKEND_HTTP_PORT: "9097"
+      MG_BACKEND_HTTP_SERVER_CERT: ""
+      MG_BACKEND_HTTP_SERVER_KEY: ""
+      MG_BACKEND_INSTANCE_ID: ""
+      MG_BACKEND_LOG_LEVEL: debug
+      MG_PROFILE_PICTURE_URL: http://ui-backend:9097
+      MG_READER_URL: http://timescale-reader:9011
+      MG_UI_CONTENT_TYPE: application/senml+json
+      MG_UI_DOCKER_ACCEPT_EULA: "false"
+      MG_UI_VERIFICATION_TLS: "false"
+    image: ghcr.io/absmach/magistrala/ui-backend:latest
+    networks:
+      magistrala-base-net: null
+    ports:
+      - mode: ingress
+        target: 9097
+        published: "9097"
+        protocol: tcp
+    restart: on-failure:3
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+  ui-backend-db:
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    container_name: magistrala-ui-backend-db
+    environment:
+      POSTGRES_DB: supermq
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+      SMQ_POSTGRES_MAX_CONNECTIONS: "100"
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6008"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: magistrala-ui-backend-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  users:
+    container_name: supermq-users
+    depends_on:
+      auth:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+      users-db:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ""
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ""
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_DOMAINS_GRPC_TIMEOUT: 300s
+      SMQ_DOMAINS_GRPC_URL: domains:7003
+      SMQ_EMAIL_FROM_ADDRESS: from@example.com
+      SMQ_EMAIL_FROM_NAME: Example
+      SMQ_EMAIL_HOST: smtp.mailtrap.io
+      SMQ_EMAIL_PASSWORD: 2b0d302e775b1e
+      SMQ_EMAIL_PORT: "2525"
+      SMQ_EMAIL_TEMPLATE: email.tmpl
+      SMQ_EMAIL_USERNAME: 18bf7f70705139
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_GOOGLE_CLIENT_ID: ""
+      SMQ_GOOGLE_CLIENT_SECRET: ""
+      SMQ_GOOGLE_REDIRECT_URL: ""
+      SMQ_GOOGLE_STATE: ""
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_OAUTH_UI_ERROR_URL: http://localhost:9095/ui/error
+      SMQ_OAUTH_UI_REDIRECT_URL: http://localhost:9095/ui/tokens/secure
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_SPICEDB_HOST: supermq-spicedb
+      SMQ_SPICEDB_PORT: "50051"
+      SMQ_SPICEDB_PRE_SHARED_KEY: "12345678"
+      SMQ_TOKEN_RESET_ENDPOINT: /reset-request
+      SMQ_USERS_ACCESS_TOKEN_DURATION: 15m
+      SMQ_USERS_ADMIN_EMAIL: admin@example.com
+      SMQ_USERS_ADMIN_FIRST_NAME: super
+      SMQ_USERS_ADMIN_LAST_NAME: admin
+      SMQ_USERS_ADMIN_PASSWORD: "12345678"
+      SMQ_USERS_ADMIN_USERNAME: admin
+      SMQ_USERS_ALLOW_SELF_REGISTER: "true"
+      SMQ_USERS_DB_HOST: users-db
+      SMQ_USERS_DB_NAME: users
+      SMQ_USERS_DB_PASS: supermq
+      SMQ_USERS_DB_PORT: "5432"
+      SMQ_USERS_DB_SSL_CERT: ""
+      SMQ_USERS_DB_SSL_KEY: ""
+      SMQ_USERS_DB_SSL_MODE: disable
+      SMQ_USERS_DB_SSL_ROOT_CERT: ""
+      SMQ_USERS_DB_USER: supermq
+      SMQ_USERS_DELETE_AFTER: 720h
+      SMQ_USERS_DELETE_INTERVAL: 24h
+      SMQ_USERS_HTTP_HOST: users
+      SMQ_USERS_HTTP_PORT: "9002"
+      SMQ_USERS_HTTP_SERVER_CERT: ""
+      SMQ_USERS_HTTP_SERVER_KEY: ""
+      SMQ_USERS_LOG_LEVEL: debug
+      SMQ_USERS_PASS_REGEX: ^.{8,}$$
+      SMQ_USERS_REFRESH_TOKEN_DURATION: 24h
+      SMQ_USERS_SECRET_KEY: HyE2D4RUt9nnKG6v8zKEqAp6g6ka8hhZsqUpzgKvnwpXrNVQSH
+    image: supermq/users:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 9002
+        published: "9002"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/templates/users.tmpl
+        target: /email.tmpl
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+  users-db:
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+    container_name: supermq-users-db
+    environment:
+      POSTGRES_DB: users
+      POSTGRES_PASSWORD: supermq
+      POSTGRES_USER: supermq
+      SMQ_POSTGRES_MAX_CONNECTIONS: "100"
+    image: postgres:16.2-alpine
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "6002"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: supermq-users-db-volume
+        target: /var/lib/postgresql/data
+        volume: {}
+  ws-adapter:
+    container_name: supermq-ws
+    depends_on:
+      clients:
+        condition: service_started
+        required: true
+      nats:
+        condition: service_started
+        required: true
+    environment:
+      SMQ_AUTH_GRPC_CLIENT_CERT: ""
+      SMQ_AUTH_GRPC_CLIENT_KEY: ""
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ""
+      SMQ_AUTH_GRPC_TIMEOUT: 300s
+      SMQ_AUTH_GRPC_URL: auth:7001
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ""
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ""
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CHANNELS_GRPC_TIMEOUT: 300s
+      SMQ_CHANNELS_GRPC_URL: channels:7005
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ""
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ""
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ""
+      SMQ_CLIENTS_GRPC_TIMEOUT: 300s
+      SMQ_CLIENTS_GRPC_URL: clients:7006
+      SMQ_ES_URL: nats://nats:4222
+      SMQ_JAEGER_TRACE_RATIO: "1.0"
+      SMQ_JAEGER_URL: http://jaeger:4318/v1/traces
+      SMQ_MESSAGE_BROKER_URL: nats://nats:4222
+      SMQ_SEND_TELEMETRY: "true"
+      SMQ_WS_ADAPTER_HTTP_HOST: ws-adapter
+      SMQ_WS_ADAPTER_HTTP_PORT: "8186"
+      SMQ_WS_ADAPTER_HTTP_SERVER_CERT: ""
+      SMQ_WS_ADAPTER_HTTP_SERVER_KEY: ""
+      SMQ_WS_ADAPTER_INSTANCE_ID: ""
+      SMQ_WS_ADAPTER_LOG_LEVEL: debug
+    image: supermq/ws:latest
+    networks:
+      magistrala-base-net: null
+      supermq-base-net: null
+    ports:
+      - mode: ingress
+        target: 8186
+        published: "8186"
+        protocol: tcp
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /clients-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /clients-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /channels-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /channels-grpc-server-ca
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/client_key
+        target: /auth-grpc-client
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /home/felixgateru/Documents/daily/magistrala/supermq/docker/ssl/certs/dummy/server_ca
+        target: /auth-grpc-server-ca
+        bind:
+          create_host_path: true
+networks:
+  magistrala-base-net:
+    name: git_github_com_absmach_magistrala_git__magistrala-base-net
+    driver: bridge
+  supermq-base-net:
+    name: git_github_com_absmach_magistrala_git__supermq-base-net
+    driver: bridge
+volumes:
+  magistrala-journal-volume:
+    name: git_github_com_absmach_magistrala_git__magistrala-journal-volume
+  magistrala-re-db-volume:
+    name: git_github_com_absmach_magistrala_git__magistrala-re-db-volume
+  magistrala-ui-backend-db-volume:
+    name: git_github_com_absmach_magistrala_git__magistrala-ui-backend-db-volume
+  supermq-auth-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-auth-db-volume
+  supermq-auth-redis-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-auth-redis-volume
+  supermq-broker-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-broker-volume
+  supermq-channels-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-channels-db-volume
+  supermq-clients-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-clients-db-volume
+  supermq-clients-redis-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-clients-redis-volume
+  supermq-domains-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-domains-db-volume
+  supermq-domains-redis-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-domains-redis-volume
+  supermq-groups-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-groups-db-volume
+  supermq-mqtt-broker-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-mqtt-broker-volume
+  supermq-pat-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-pat-db-volume
+  supermq-spicedb-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-spicedb-db-volume
+  supermq-users-db-volume:
+    name: git_github_com_absmach_magistrala_git__supermq-users-db-volume
+make: 'config' is up to date.

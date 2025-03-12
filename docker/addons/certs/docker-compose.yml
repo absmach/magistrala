@@ -14,7 +14,7 @@ volumes:
 
 services:
   certs:
-    image: ghcr.io/absmach/magistrala/certs:${MG_RELEASE_TAG}
+    image: supermq/certs:${SMQ_RELEASE_TAG}
     container_name: magistrala-certs
     depends_on:
       - am-certs
@@ -22,58 +22,58 @@ services:
     networks:
       - magistrala-base-net
     ports:
-      - ${MG_CERTS_HTTP_PORT}:${MG_CERTS_HTTP_PORT}
+      - ${SMQ_CERTS_HTTP_PORT}:${SMQ_CERTS_HTTP_PORT}
     environment:
-      MG_CERTS_LOG_LEVEL: ${MG_CERTS_LOG_LEVEL}
-      MG_CERTS_SIGN_CA_PATH: ${MG_CERTS_SIGN_CA_PATH}
-      MG_CERTS_SIGN_CA_KEY_PATH: ${MG_CERTS_SIGN_CA_KEY_PATH}
-      MG_CERTS_VAULT_HOST: ${MG_CERTS_VAULT_HOST}
-      MG_CERTS_VAULT_NAMESPACE: ${MG_CERTS_VAULT_NAMESPACE}
-      MG_CERTS_VAULT_APPROLE_ROLEID: ${MG_CERTS_VAULT_APPROLE_ROLEID}
-      MG_CERTS_VAULT_APPROLE_SECRET: ${MG_CERTS_VAULT_APPROLE_SECRET}
-      MG_CERTS_VAULT_THINGS_CERTS_PKI_PATH: ${MG_CERTS_VAULT_THINGS_CERTS_PKI_PATH}
-      MG_CERTS_VAULT_THINGS_CERTS_PKI_ROLE_NAME: ${MG_CERTS_VAULT_THINGS_CERTS_PKI_ROLE_NAME}
-      MG_CERTS_HTTP_HOST: ${MG_CERTS_HTTP_HOST}
-      MG_CERTS_HTTP_PORT: ${MG_CERTS_HTTP_PORT}
-      MG_CERTS_HTTP_SERVER_CERT: ${MG_CERTS_HTTP_SERVER_CERT}
-      MG_CERTS_HTTP_SERVER_KEY: ${MG_CERTS_HTTP_SERVER_KEY}
-      MG_CERTS_DB_HOST: ${MG_CERTS_DB_HOST}
-      MG_CERTS_DB_PORT: ${MG_CERTS_DB_PORT}
-      MG_CERTS_DB_PASS: ${MG_CERTS_DB_PASS}
-      MG_CERTS_DB_USER: ${MG_CERTS_DB_USER}
-      MG_CERTS_DB_NAME: ${MG_CERTS_DB_NAME}
-      MG_CERTS_DB_SSL_MODE: ${MG_CERTS_DB_SSL_MODE}
-      MG_CERTS_DB_SSL_CERT: ${MG_CERTS_DB_SSL_CERT}
-      MG_CERTS_DB_SSL_KEY: ${MG_CERTS_DB_SSL_KEY}
-      MG_CERTS_DB_SSL_ROOT_CERT: ${MG_CERTS_DB_SSL_ROOT_CERT}
-      MG_CERTS_SDK_HOST: ${MG_CERTS_SDK_HOST}
-      MG_CERTS_SDK_CERTS_URL: ${MG_CERTS_SDK_CERTS_URL}
-      MG_CERTS_SDK_TLS_VERIFICATION: ${MG_CERTS_SDK_TLS_VERIFICATION}
+      SMQ_CERTS_LOG_LEVEL: ${SMQ_CERTS_LOG_LEVEL}
+      SMQ_CERTS_SIGN_CA_PATH: ${SMQ_CERTS_SIGN_CA_PATH}
+      SMQ_CERTS_SIGN_CA_KEY_PATH: ${SMQ_CERTS_SIGN_CA_KEY_PATH}
+      SMQ_CERTS_VAULT_HOST: ${SMQ_CERTS_VAULT_HOST}
+      SMQ_CERTS_VAULT_NAMESPACE: ${SMQ_CERTS_VAULT_NAMESPACE}
+      SMQ_CERTS_VAULT_APPROLE_ROLEID: ${SMQ_CERTS_VAULT_APPROLE_ROLEID}
+      SMQ_CERTS_VAULT_APPROLE_SECRET: ${SMQ_CERTS_VAULT_APPROLE_SECRET}
+      SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_PATH: ${SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_PATH}
+      SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_ROLE_NAME: ${SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_ROLE_NAME}
+      SMQ_CERTS_HTTP_HOST: ${SMQ_CERTS_HTTP_HOST}
+      SMQ_CERTS_HTTP_PORT: ${SMQ_CERTS_HTTP_PORT}
+      SMQ_CERTS_HTTP_SERVER_CERT: ${SMQ_CERTS_HTTP_SERVER_CERT}
+      SMQ_CERTS_HTTP_SERVER_KEY: ${SMQ_CERTS_HTTP_SERVER_KEY}
+      SMQ_CERTS_DB_HOST: ${SMQ_CERTS_DB_HOST}
+      SMQ_CERTS_DB_PORT: ${SMQ_CERTS_DB_PORT}
+      SMQ_CERTS_DB_PASS: ${SMQ_CERTS_DB_PASS}
+      SMQ_CERTS_DB_USER: ${SMQ_CERTS_DB_USER}
+      SMQ_CERTS_DB_NAME: ${SMQ_CERTS_DB_NAME}
+      SMQ_CERTS_DB_SSL_MODE: ${SMQ_CERTS_DB_SSL_MODE}
+      SMQ_CERTS_DB_SSL_CERT: ${SMQ_CERTS_DB_SSL_CERT}
+      SMQ_CERTS_DB_SSL_KEY: ${SMQ_CERTS_DB_SSL_KEY}
+      SMQ_CERTS_DB_SSL_ROOT_CERT: ${SMQ_CERTS_DB_SSL_ROOT_CERT}
+      SMQ_CERTS_SDK_HOST: ${SMQ_CERTS_SDK_HOST}
+      SMQ_CERTS_SDK_CERTS_URL: ${SMQ_CERTS_SDK_CERTS_URL}
+      SMQ_CERTS_SDK_TLS_VERIFICATION: ${SMQ_CERTS_SDK_TLS_VERIFICATION}
       SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
       SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
-      MG_THINGS_URL: ${MG_THINGS_URL}
+      SMQ_CLIENTS_URL: ${SMQ_CLIENTS_URL}
       SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
       SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
       SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
-      MG_CERTS_INSTANCE_ID: ${MG_CERTS_INSTANCE_ID}
+      SMQ_CERTS_INSTANCE_ID: ${SMQ_CERTS_INSTANCE_ID}
     volumes:
       - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key
       - ../../ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
         target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
         target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
         target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
@@ -84,18 +84,18 @@ services:
     restart: on-failure
     networks:
       - magistrala-base-net
-    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MG_CERTS_DB_USER}
-      POSTGRES_PASSWORD: ${MG_CERTS_DB_PASS}
-      POSTGRES_DB: ${MG_CERTS_DB_NAME}
+      POSTGRES_USER: ${SMQ_CERTS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_CERTS_DB_PASS}
+      POSTGRES_DB: ${SMQ_CERTS_DB_NAME}
     ports:
       - 5454:5432
     volumes:
       - magistrala-certs-db-volume:/var/lib/postgresql/data
 
   am-certs:
-    image: ghcr.io/absmach/certs:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/certs:${SMQ_RELEASE_TAG}
     container_name: magistrala-am-certs
     depends_on:
       - am-certs-db
@@ -103,17 +103,17 @@ services:
     networks:
       - magistrala-base-net
     environment:
-      AM_CERTS_LOG_LEVEL: ${MG_CERTS_LOG_LEVEL}
-      AM_CERTS_DB_HOST: ${MG_CERTS_DB_HOST}
-      AM_CERTS_DB_PORT: ${MG_CERTS_DB_PORT}
-      AM_CERTS_DB_USER: ${MG_CERTS_DB_USER}
-      AM_CERTS_DB_PASS: ${MG_CERTS_DB_PASS}
-      AM_CERTS_DB: ${MG_CERTS_DB_NAME}
-      AM_CERTS_DB_SSL_MODE: ${MG_CERTS_DB_SSL_MODE}
-      AM_CERTS_HTTP_HOST: magistrala-am-certs
-      AM_CERTS_HTTP_PORT: 9010
-      AM_CERTS_GRPC_HOST: magistrala-am-certs
-      AM_CERTS_GRPC_PORT: 7012
+      AM_CERTS_LOG_LEVEL: ${SMQ_CERTS_LOG_LEVEL}
+      AM_CERTS_DB_HOST: ${SMQ_CERTS_DB_HOST}
+      AM_CERTS_DB_PORT: ${SMQ_CERTS_DB_PORT}
+      AM_CERTS_DB_USER: ${SMQ_CERTS_DB_USER}
+      AM_CERTS_DB_PASS: ${SMQ_CERTS_DB_PASS}
+      AM_CERTS_DB: ${SMQ_CERTS_DB_NAME}
+      AM_CERTS_DB_SSL_MODE: ${SMQ_CERTS_DB_SSL_MODE}
+      AM_CERTS_HTTP_HOST: ${AM_CERTS_HOST}
+      AM_CERTS_HTTP_PORT: ${AM_CERTS_HTTP_PORT}
+      AM_CERTS_GRPC_HOST: ${AM_CERTS_HOST}
+      AM_CERTS_GRPC_PORT: ${AM_CERTS_GRPC_PORT}
       AM_JAEGER_URL: ${SMQ_JAEGER_URL}
       AM_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
     volumes:

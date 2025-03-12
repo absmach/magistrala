@@ -15,7 +15,7 @@ services:
       - magistrala-base-net
 
   auth-db:
-    networks:  !override
+    networks: !override
       - magistrala-base-net
 
   auth-redis:
@@ -99,6 +99,31 @@ services:
       - magistrala-base-net
 
   nats:
+    networks: !override
+      - magistrala-base-net
+
+  journal-db:
+    networks: !override
+      - magistrala-base-net
+
+  journal:
+    networks: !override
+      - magistrala-base-net
+
+  am-certs-db:
+    networks: !override
+      - magistrala-base-net
+
+  am-certs:
+    volumes:
+      - ./addons/certs/config.yml:/config/config.yml
+    networks: !override
+      - magistrala-base-net
+
+  certs:
+    volumes:
+      - ../../docker/ssl/certs/ca.key:/etc/ssl/certs/ca.key
+      - ../../docker/ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
     networks: !override
       - magistrala-base-net
 

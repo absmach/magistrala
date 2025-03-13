@@ -1,0 +1,151 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  spicedb:
+    networks:
+      - magistrala-base-net
+
+  spicedb-migrate:
+    networks: !override
+      - magistrala-base-net
+
+  spicedb-db:
+    networks: !override
+      - magistrala-base-net
+
+  auth-db:
+    networks: !override
+      - magistrala-base-net
+
+  auth-redis:
+    networks: !override
+      - magistrala-base-net
+
+  auth:
+    networks: !override
+      - magistrala-base-net
+
+  domains-db:
+    networks: !override
+      - magistrala-base-net
+
+  domains-redis:
+    networks: !override
+      - magistrala-base-net
+
+  domains:
+    networks: !override
+      - magistrala-base-net
+
+  clients-db:
+    networks: !override
+      - magistrala-base-net
+
+  clients-redis:
+    networks: !override
+      - magistrala-base-net
+
+  clients:
+    networks: !override
+      - magistrala-base-net
+
+  channels-db:
+    networks: !override
+      - magistrala-base-net
+
+  channels:
+    networks: !override
+      - magistrala-base-net
+
+  users-db:
+    networks: !override
+      - magistrala-base-net
+
+  users:
+    networks: !override
+      - magistrala-base-net
+
+  groups-db:
+    networks: !override
+      - magistrala-base-net
+
+  groups:
+    networks: !override
+      - magistrala-base-net
+
+  jaeger:
+    networks:
+      - magistrala-base-net
+
+  mqtt-adapter:
+    networks: !override
+      - magistrala-base-net
+
+  http-adapter:
+    networks: !override
+      - magistrala-base-net
+
+  coap-adapter:
+    networks: !override
+      - magistrala-base-net
+
+  ws-adapter:
+    networks: !override
+      - magistrala-base-net
+
+  rabbitmq:
+    networks: !override
+      - magistrala-base-net
+
+  nats:
+    networks: !override
+      - magistrala-base-net
+
+  journal-db:
+    networks: !override
+      - magistrala-base-net
+
+  journal:
+    networks: !override
+      - magistrala-base-net
+
+  am-certs-db:
+    networks: !override
+      - magistrala-base-net
+
+  am-certs:
+    volumes:
+      - ./addons/certs/config.yml:/config/config.yml
+    networks: !override
+      - magistrala-base-net
+
+  certs:
+    volumes:
+      - ../../docker/ssl/certs/ca.key:/etc/ssl/certs/ca.key
+      - ../../docker/ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
+    networks: !override
+      - magistrala-base-net
+
+  nginx:
+    container_name: magistrala-nginx
+    volumes:
+      - ../../docker/nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
+      - ../../docker/nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_CERT:-../../docker/ssl/certs/magistrala-server.crt}
+        target: /etc/ssl/certs/magistrala-server.crt
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_KEY:-../../docker/ssl/certs/magistrala-server.key}
+        target: /etc/ssl/private/magistrala-server.key
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_CLIENT_CA:-../../docker/ssl/certs/ca.crt}
+        target: /etc/ssl/certs/ca.crt
+      - type: bind
+        source: ${SMQ_NGINX_SERVER_DHPARAM:-../../docker/ssl/dhparam.pem}
+        target: /etc/ssl/certs/dhparam.pem
+    networks: !override
+      - magistrala-base-net
+    env_file: !override
+      - ./.env
+      - ../../docker/.env

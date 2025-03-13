@@ -110,6 +110,11 @@ jobs:
               - "things/**"
               - "auth/**"
 
+            re:
+              - "re/**"
+              - "cmd/re/**"
+              - "re/api/**"
+
       - name: Create coverage directory
         run: |
           mkdir coverage
@@ -154,6 +159,12 @@ jobs:
         run: |
           go test --race -v -count=1 -coverprofile=coverage/readers.out ./readers/...
 
+      - name: Run rule engine tests
+        if: steps.changes.outputs.re == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+            go test --race -v -count=1 -coverprofile=coverage/re.out ./re/...
+  
+      
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:

@@ -27,7 +27,6 @@ const (
 	defBootstrapURL    string = defURL + ":9013"
 	defDomainsURL      string = defURL + ":9003"
 	defCertsURL        string = defURL + ":9019"
-	defInvitationsURL  string = defURL + ":9020"
 	defHTTPURL         string = defURL + ":8008"
 	defJournalURL      string = defURL + ":9021"
 	defTLSVerification bool   = false
@@ -47,7 +46,6 @@ type remotes struct {
 	HTTPAdapterURL  string `toml:"http_adapter_url"`
 	BootstrapURL    string `toml:"bootstrap_url"`
 	CertsURL        string `toml:"certs_url"`
-	InvitationsURL  string `toml:"invitations_url"`
 	JournalURL      string `toml:"journal_url"`
 	HostURL         string `toml:"host_url"`
 	TLSVerification bool   `toml:"tls_verification"`
@@ -120,7 +118,6 @@ func ParseConfig(sdkConf mgsdk.Config) (mgsdk.Config, error) {
 				HTTPAdapterURL:  defHTTPURL,
 				BootstrapURL:    defBootstrapURL,
 				CertsURL:        defCertsURL,
-				InvitationsURL:  defInvitationsURL,
 				JournalURL:      defJournalURL,
 				HostURL:         defURL,
 				TLSVerification: defTLSVerification,
@@ -203,10 +200,6 @@ func ParseConfig(sdkConf mgsdk.Config) (mgsdk.Config, error) {
 
 	if sdkConf.CertsURL == "" && config.Remotes.CertsURL != "" {
 		sdkConf.CertsURL = config.Remotes.CertsURL
-	}
-
-	if sdkConf.InvitationsURL == "" && config.Remotes.InvitationsURL != "" {
-		sdkConf.InvitationsURL = config.Remotes.InvitationsURL
 	}
 
 	if sdkConf.JournalURL == "" && config.Remotes.JournalURL != "" {

@@ -314,7 +314,7 @@ func TestListRules(t *testing.T) {
 		err      error
 	}{
 		{
-			desc: "list rule successfully",
+			desc: "list rules successfully",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
@@ -331,7 +331,7 @@ func TestListRules(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "list rule successfully with limit",
+			desc: "list rules successfully with limit",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
@@ -350,7 +350,7 @@ func TestListRules(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "list rule successfully with offset",
+			desc: "list rules successfully with offset",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
@@ -370,7 +370,7 @@ func TestListRules(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc: "list rule with failed repo",
+			desc: "list rules with failed repo",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,

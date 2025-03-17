@@ -30,11 +30,10 @@ const (
 )
 
 // MakeHandler creates an HTTP handler for the service endpoints.
-func MakeHandler(svc re.Service, authn mgauthn.Authentication, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-	mux := chi.NewRouter()
 	mux.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn, true))
 		r.Route("/{domainID}/rules", func(r chi.Router) {
@@ -112,6 +111,9 @@ func decodeViewRuleRequest(_ context.Context, r *http.Request) (interface{}, err
 }
 
 func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		return nil, err
@@ -148,6 +150,10 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	st, err := re.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -159,6 +165,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 			InputChannel:  ic,
 			OutputChannel: oc,
 			Status:        st,
+			Dir:           dir,
 		},
 	}, nil
 }

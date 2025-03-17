@@ -2,6 +2,8 @@ module github.com/absmach/magistrala
 
 go 1.23.4
 
+toolchain go1.24.1
+
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
@@ -35,7 +37,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0
 	golang.org/x/sync v0.11.0
 	gonum.org/v1/gonum v0.15.1
-	google.golang.org/grpc v1.70.0
+	google.golang.org/grpc v1.71.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	moul.io/http2curl v1.0.0
 )

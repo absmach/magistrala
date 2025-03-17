@@ -35,6 +35,6 @@ if [ -d "$DEST_FOLDER" ]; then
     rm -r "$DEST_FOLDER"
 fi
 mkdir -p "$DEST_FOLDER"
-mv -f "$DOCKER_FOLDER"/* "$DEST_FOLDER"
+mv -f "$DOCKER_FOLDER"/{*,.*} "$DEST_FOLDER"
 cd ..
 rm -rf "$TEMP_DIR"

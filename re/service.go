@@ -5,7 +5,6 @@ package re
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -241,7 +240,6 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 
 	switch m := msg.(type) {
 	case messaging.Message:
-		fmt.Println("message as message: ", m.Channel)
 		{
 			l.RawSet(message, lua.LString("channel"), lua.LString(m.Channel))
 			l.RawSet(message, lua.LString("subtopic"), lua.LString(m.Subtopic))
@@ -257,7 +255,6 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 		}
 
 	case senml.Message:
-		fmt.Println("message as SEnml: ", m)
 		l.RawSet(message, lua.LString("channel"), lua.LString(m.Channel))
 		l.RawSet(message, lua.LString("subtopic"), lua.LString(m.Subtopic))
 		l.RawSet(message, lua.LString("publisher"), lua.LString(m.Publisher))

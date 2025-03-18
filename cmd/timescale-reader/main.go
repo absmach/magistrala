@@ -12,7 +12,10 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	httpapi "github.com/absmach/magistrala/readers/api"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	middleapi "github.com/absmach/magistrala/readers/api"
+	readersgrpcapi "github.com/absmach/magistrala/readers/api/grpc"
+	httpapi "github.com/absmach/magistrala/readers/api/http"
 	"github.com/absmach/magistrala/readers/timescale"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
@@ -21,12 +24,15 @@ import (
 	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/prometheus"
 	"github.com/absmach/supermq/pkg/server"
+	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/absmach/supermq/readers"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -38,7 +44,11 @@ const (
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
 	defDB             = "messages"
 	defSvcHTTPPort    = "9011"
+	defSvcGRPCPort    = "7011"
+	envPrefixGrpc     = "MG_READERS_GRPC_"
 )
+
+// Add the last two to env file as well as docker-compose files
 
 type config struct {
 	LogLevel      string `env:"MG_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
@@ -84,6 +94,23 @@ func main() {
 	defer db.Close()
 
 	repo := newService(db, logger)
+
+	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
+	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
+		exitCode = 1
+		return
+	}
+	registerReadersServiceServer := func(srv *grpc.Server) {
+		reflection.Register(srv)
+		grpcReadersV1.RegisterReadersServiceServer(srv, readersgrpcapi.NewReadersServer(repo))
+	}
+
+	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerReadersServiceServer, logger)
+
+	g.Go(func() error {
+		return gs.Start()
+	})
 
 	clientsClientCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&clientsClientCfg, env.Options{Prefix: envPrefixClients}); err != nil {
@@ -162,9 +189,9 @@ func main() {
 
 func newService(db *sqlx.DB, logger *slog.Logger) readers.MessageRepository {
 	svc := timescale.New(db)
-	svc = httpapi.LoggingMiddleware(svc, logger)
+	svc = middleapi.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("timescale", "message_reader")
-	svc = httpapi.MetricsMiddleware(svc, counter, latency)
+	svc = middleapi.MetricsMiddleware(svc, counter, latency)
 
 	return svc
 }

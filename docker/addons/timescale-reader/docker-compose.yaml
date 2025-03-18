@@ -9,6 +9,7 @@
 
 networks:
   magistrala-base-net:
+    driver: bridge
 
 services:
   timescale-reader:

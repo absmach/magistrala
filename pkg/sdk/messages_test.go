@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	sdk "github.com/absmach/magistrala/pkg/sdk"
-	readersapi "github.com/absmach/magistrala/readers/api"
+	readersapi "github.com/absmach/magistrala/readers/api/http"
 	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	chmocks "github.com/absmach/supermq/channels/mocks"

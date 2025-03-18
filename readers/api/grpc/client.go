@@ -68,9 +68,6 @@ func decodeReadMessagesResponse(_ context.Context, grpcRes interface{}) (interfa
 	}, nil
 }
 
-// addd more page metadata to the request
-// describe the pgm a bit more iedefine type page metadata and use that for all the other pgms
-
 func encodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(readMessagesReq)
 	return &grpcReadersV1.ReadMessagesReq{

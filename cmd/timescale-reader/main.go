@@ -48,8 +48,6 @@ const (
 	envPrefixGrpc     = "MG_READERS_GRPC_"
 )
 
-// Add the last two to env file as well as docker-compose files
-
 type config struct {
 	LogLevel      string `env:"MG_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
 	SendTelemetry bool   `env:"SMQ_SEND_TELEMETRY"               envDefault:"true"`

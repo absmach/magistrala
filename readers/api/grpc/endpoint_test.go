@@ -15,7 +15,6 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/readers"
 
-	// domains "github.com/absmach/supermq/domains/private"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,6 +26,7 @@ const (
 	port         = 7071
 	channelID    = "testChannelID"
 	domain       = "testDomain"
+	validID      = "validID"
 	validToken   = "valid"
 	inValidToken = "invalid"
 	testOffset   = 0
@@ -52,6 +52,10 @@ func TestReadMessages(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
 
+	testMessages := []readers.Message{
+		map[string]interface{}{"key": "value"},
+	}
+
 	cases := []struct {
 		desc            string
 		token           string
@@ -65,45 +69,42 @@ func TestReadMessages(t *testing.T) {
 			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
 				ChannelId: channelID,
 				DomainId:  domain,
+				Offset:    testOffset,
+				Limit:     testLimit,
 			},
 			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
-				Total: 1,
-				Messages: []*grpcReadersV1.Message{
-					{
-						Value:     1.6,
-						Publisher: validID,
-					},
-				},
+				Total:    uint64(len(testMessages)),
+				Messages: []*grpcReadersV1.Message{{Data: []byte(`{"key":"value"}`)}},
 			},
-			{
-				desc:            "read invalid req with invalid token",
-				token:           inValidToken,
-				ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{},
-				ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
-					Total:    0,
-					Messages: []*grpcReadersV1.Message{},
-				},
-				err: apiutil.ErrMissingID,
+		},
+		{
+			desc:            "read invalid req with invalid token",
+			token:           inValidToken,
+			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{},
+			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
+				Total:    0,
+				Messages: []*grpcReadersV1.Message{},
 			},
-			{
-				desc:  "read invalid req with invalid token and missing domainID",
-				token: inValidToken,
-				ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
-					channelId: channelID,
-				},
-				ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
-					Total:    0,
-					Messages: []*grpcReadersV1.Message{},
-				},
-				err: apiutil.ErrMissingID,
+			err: apiutil.ErrMissingID,
+		},
+		{
+			desc:  "read invalid req with invalid token and missing domainID",
+			token: inValidToken,
+			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
+				ChannelId: channelID,
 			},
+			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
+				Total:    0,
+				Messages: []*grpcReadersV1.Message{},
+			},
+			err: apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := svc.On("ReadAll", mock.Anything, tc.ReadMessagesReq.ChannelId).Return(tc.err)
 		dpr, err := grpcClient.ReadMessages(context.Background(), tc.ReadMessagesReq)
-		assert.Equal(t, tc.ReadMessagesReq.GetChannelId(), dpr.GetDomain(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ReadMessagesReq.GetChannelId(), dpr.GetDomain()))
+		assert.Equal(t, tc.ReadMessagesReq.GetChannelId(), dpr.Messages, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ReadMessagesReq.GetChannelId(), dpr.Messages))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}

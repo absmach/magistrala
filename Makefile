@@ -174,8 +174,8 @@ $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))
 
 proto:
-	protoc -I. --go_out=. --go_opt=paths=source_relative pkg/messaging/*.proto
-	protoc -I. --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./*.proto
+	mkdir -p $(PKG_PROTO_GEN_OUT_DIR)
+	protoc -I $(INTERNAL_PROTO_DIR) --go_out=$(PKG_PROTO_GEN_OUT_DIR) --go_opt=paths=source_relative --go-grpc_out=$(PKG_PROTO_GEN_OUT_DIR) --go-grpc_opt=paths=source_relative $(INTERNAL_PROTO_FILES)
 
 $(FILTERED_SERVICES):
 	$(call compile_service,$(@))

@@ -1,0 +1,64 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package readers.v1;
+
+option go_package = "github.com/absmach/magistrala/internal/grpc/readers/v1";
+
+
+// ReadersService is a service that provides access to
+// readers functionalities for SuperMQ services.
+service ReadersService {
+  rpc ReadMessages(ReadMessagesReq)
+    returns (ReadMessagesRes) {}
+}
+
+message ReadMessagesRes {
+  uint64 offset              = 1;
+  uint64 limit               = 2;
+  string subtopic            = 3;
+  string publisher           = 4;
+  string protocol            = 5;
+  string name                = 6;
+  double value               = 7;
+  string comparator          = 8;
+  bool bool_value            = 9;
+  string string_value        = 10;
+  string data_value          = 11;
+  double from                = 12;
+  double to                  = 13;
+  string format              = 14;
+  string aggregation         = 15;
+  string interval            = 16;
+  uint64 total               = 17;
+  repeated Message messages  = 18;
+  bool read                  = 19;
+}
+
+message Message {
+  bytes data = 1;
+}
+
+message ReadMessagesReq {
+  string channel_id          = 1;
+  string domain_id           = 2;
+  uint64 offset              = 3;
+  uint64 limit               = 4;
+  string subtopic            = 5;
+  string publisher           = 6;
+  string protocol            = 7;
+  string name                = 8;
+  double value               = 9;
+  string comparator          = 10;
+  bool bool_value            = 11;
+  string string_value        = 12;
+  string data_value          = 13;
+  double from                = 14;
+  double to                  = 15;
+  string format              = 16;
+  string aggregation         = 17;
+  string interval            = 18;
+}
+

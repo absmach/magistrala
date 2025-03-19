@@ -44,8 +44,8 @@ const (
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
 	defDB             = "supermq"
 	defSvcHTTPPort    = "9009"
-	defSvcGRPCPort    = "7011"
-	envPrefixGrpc     = "MG_READERS_GRPC_"
+	defSvcGRPCPort    = "7009"
+	envPrefixGrpc     = "MG_POSTGRES_GRPC_"
 )
 
 type config struct {
@@ -105,12 +105,6 @@ func main() {
 		reflection.Register(srv)
 		grpcReadersV1.RegisterReadersServiceServer(srv, readersgrpcapi.NewReadersServer(repo))
 	}
-
-	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerReadersServiceServer, logger)
-
-	g.Go(func() error {
-		return gs.Start()
-	})
 
 	clientsClientCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&clientsClientCfg, env.Options{Prefix: envPrefixClients}); err != nil {
@@ -172,6 +166,12 @@ func main() {
 		chc := chclient.New(svcName, supermq.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
+
+	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerReadersServiceServer, logger)
+
+	g.Go(func() error {
+		return gs.Start()
+	})
 
 	g.Go(func() error {
 		return hs.Start()

@@ -102,7 +102,7 @@ func TestReadMessages(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("ReadAll", mock.Anything, tc.ReadMessagesReq.ChannelId).Return(tc.err)
+		repoCall := svc.On("ReadAll", mock.Anything, mock.Anything).Return(readers.MessagesPage{}, tc.err)
 		dpr, err := grpcClient.ReadMessages(context.Background(), tc.ReadMessagesReq)
 		assert.Equal(t, tc.ReadMessagesReq.GetChannelId(), dpr.Messages, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ReadMessagesReq.GetChannelId(), dpr.Messages))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

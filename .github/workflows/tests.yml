@@ -29,6 +29,17 @@ jobs:
           version: v1.60.3
           args: --config ./tools/config/golangci.yml
 
+      - name: Fetch supermq
+        run: |
+          make fetch_supermq
+          if [[ -n $(git status --porcelain docker/supermq-docker) ]]; then
+            echo "SuperMQ docker file is not up to date. Please update it"
+            git diff docker/supermq-docker
+            exit 1
+          else
+            exit 0
+          fi
+
       - name: Build all Binaries
         run: |
           make all -j $(nproc)
@@ -162,9 +173,8 @@ jobs:
       - name: Run rule engine tests
         if: steps.changes.outputs.re == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
-            go test --race -v -count=1 -coverprofile=coverage/re.out ./re/...
-  
-      
+          go test --race -v -count=1 -coverprofile=coverage/re.out ./re/...
+
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:

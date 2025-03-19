@@ -2,8 +2,6 @@ module github.com/absmach/magistrala
 
 go 1.23.4
 
-toolchain go1.24.1
-
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0

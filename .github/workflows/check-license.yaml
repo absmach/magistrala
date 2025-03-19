@@ -23,7 +23,7 @@ jobs:
           CHECK=""
           for file in $(grep -rl --exclude-dir={.git,build,**vernemq**} \
             --exclude=\*.{crt,key,pem,zed,hcl,md,json,csv,mod,sum,tmpl,args} \
-            --exclude={CODEOWNERS,LICENSE,MAINTAINERS} \
+            --exclude={CODEOWNERS,LICENSE,MAINTAINERS,enabled_plugins,rabbitmq.conf} \
             .); do
               
               if ! head -n 5 "$file" | grep -q "Copyright (c) Abstract Machines"; then

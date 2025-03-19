@@ -27,6 +27,17 @@ jobs:
           go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
+      - name: Fetch supermq
+        run: |
+          make fetch_supermq
+          if [[ -n $(git status --porcelain docker/supermq-docker) ]]; then
+            echo "SuperMQ docker file is not up to date. Please update it"
+            git diff docker/supermq-docker
+            exit 1
+          else
+            exit 0
+          fi
+
       - name: Run tests
         run: |
           make test

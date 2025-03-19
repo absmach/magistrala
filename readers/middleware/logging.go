@@ -3,7 +3,7 @@
 
 //go:build !test
 
-package api
+package middleware
 
 import (
 	"log/slog"

@@ -13,7 +13,7 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
-	middleapi "github.com/absmach/magistrala/readers/api"
+	middleware "github.com/absmach/magistrala/readers/middleware"
 	readersgrpcapi "github.com/absmach/magistrala/readers/api/grpc"
 	httpapi "github.com/absmach/magistrala/readers/api/http"
 	"github.com/absmach/magistrala/readers/timescale"
@@ -187,9 +187,9 @@ func main() {
 
 func newService(db *sqlx.DB, logger *slog.Logger) readers.MessageRepository {
 	svc := timescale.New(db)
-	svc = middleapi.LoggingMiddleware(svc, logger)
+	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("timescale", "message_reader")
-	svc = middleapi.MetricsMiddleware(svc, counter, latency)
+	svc = middleware.MetricsMiddleware(svc, counter, latency)
 
 	return svc
 }

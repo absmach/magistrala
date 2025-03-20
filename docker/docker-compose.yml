@@ -24,40 +24,40 @@ volumes:
   magistrala-auth-redis-volume:
 
 services:
-  ui:
-    image: ghcr.io/absmach/magistrala/ui-mg:latest
-    container_name: magistrala-ui
-    ports:
-      - 3000:3000
-    networks:
-      - magistrala-base-net
-    environment:
-      MG_DOMAINS_URL: ${MG_DOMAINS_URL}
-      MG_USERS_URL: ${MG_USERS_URL}
-      MG_CLIENTS_URL: ${MG_CLIENTS_URL}
-      MG_CHANNELS_URL: ${MG_CHANNELS_URL}
-      MG_GROUPS_URL: ${MG_GROUPS_URL}
-      MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
-      MG_CERTS_URL: ${MG_CERTS_URL}
-      MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
-      MG_READER_URL: ${MG_READER_URL}
-      MG_BACKEND_URL: ${MG_UI_BACKEND_URL}
-      MG_JOURNAL_URL: ${MG_JOURNAL_URL}
-      MG_BILLING_URL: ${MG_BILLING_URL}
-      MG_RE_URL: ${MG_RE_URL}
-      MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
-      MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
-      MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
-      MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
-      MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
-      MG_UI_NAME: ${MG_UI_NAME}
-      MG_UI_BASE_PATH: ${MG_UI_BASE_PATH}
-      NEXT_PUBLIC_MG_UI_BASE_PATH: ${NEXT_PUBLIC_MG_UI_BASE_PATH}
-      MG_UI_TYPE: mg
-      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      RUNTIME_ENV: ${RUNTIME_ENV}
-      MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+  # ui:
+  #   image: ghcr.io/absmach/magistrala/ui-mg:latest
+  #   container_name: magistrala-ui
+  #   ports:
+  #     - 3000:3000
+  #   networks:
+  #     - magistrala-base-net
+  #   environment:
+  #     MG_DOMAINS_URL: ${MG_DOMAINS_URL}
+  #     MG_USERS_URL: ${MG_USERS_URL}
+  #     MG_CLIENTS_URL: ${MG_CLIENTS_URL}
+  #     MG_CHANNELS_URL: ${MG_CHANNELS_URL}
+  #     MG_GROUPS_URL: ${MG_GROUPS_URL}
+  #     MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
+  #     MG_CERTS_URL: ${MG_CERTS_URL}
+  #     MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
+  #     MG_READER_URL: ${MG_READER_URL}
+  #     MG_BACKEND_URL: ${MG_UI_BACKEND_URL}
+  #     MG_JOURNAL_URL: ${MG_JOURNAL_URL}
+  #     MG_BILLING_URL: ${MG_BILLING_URL}
+  #     MG_RE_URL: ${MG_RE_URL}
+  #     MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
+  #     MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
+  #     MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
+  #     MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
+  #     MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
+  #     MG_UI_NAME: ${MG_UI_NAME}
+  #     MG_UI_BASE_PATH: ${MG_UI_BASE_PATH}
+  #     NEXT_PUBLIC_MG_UI_BASE_PATH: ${NEXT_PUBLIC_MG_UI_BASE_PATH}
+  #     MG_UI_TYPE: mg
+  #     NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+  #     NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+  #     RUNTIME_ENV: ${RUNTIME_ENV}
+  #     MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
 
   ui-backend:
     image: ghcr.io/absmach/magistrala/ui-backend:latest

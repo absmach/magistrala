@@ -13,9 +13,9 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
-	middleware "github.com/absmach/magistrala/readers/middleware"
 	readersgrpcapi "github.com/absmach/magistrala/readers/api/grpc"
 	httpapi "github.com/absmach/magistrala/readers/api/http"
+	middleware "github.com/absmach/magistrala/readers/middleware"
 	"github.com/absmach/magistrala/readers/timescale"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"

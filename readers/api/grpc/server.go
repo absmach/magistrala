@@ -42,10 +42,10 @@ func encodeReadMessagesResponse(_ context.Context, grpcRes interface{}) (interfa
 	res := grpcRes.(readMessagesRes)
 
 	return &grpcReadersV1.ReadMessagesRes{
-		Total: res.Total,
+		Total:    res.Total,
 		Messages: toResponseMessages(res.Messages),
-		Offset: res.Offset,
-		Limit:  res.Limit,
+		Offset:   res.Offset,
+		Limit:    res.Limit,
 	}, nil
 }
 
@@ -60,7 +60,10 @@ func (s *readersGrpcServer) ReadMessages(ctx context.Context, req *grpcReadersV1
 func toResponseMessages(messages []readers.Message) []*grpcReadersV1.Message {
 	var res []*grpcReadersV1.Message
 	for _, m := range messages {
-		data, _ := json.Marshal(m)
+		data, err := json.Marshal(m)
+		if err != nil {
+			continue
+		}
 		res = append(res, &grpcReadersV1.Message{
 			Data: data,
 		})

@@ -4,12 +4,11 @@
 package grpc
 
 import (
-
 	"github.com/absmach/supermq/readers"
 )
 
 type readMessagesRes struct {
-	Total uint64 `json:"total"`
+	Total    uint64            `json:"total"`
 	Messages []readers.Message `json:"messages"`
 	readers.PageMetadata
 }

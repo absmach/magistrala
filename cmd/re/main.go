@@ -14,8 +14,10 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
+	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
+	"github.com/absmach/magistrala/re/emailer"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
 	"github.com/absmach/supermq"
@@ -86,6 +88,13 @@ func main() {
 			exitCode = 1
 			return
 		}
+	}
+
+	ec := email.Config{}
+	if err := env.Parse(&ec); err != nil {
+		logger.Error(fmt.Sprintf("failed to load email configuration : %s", err))
+		exitCode = 1
+		return
 	}
 
 	// Create new database for rule engine.
@@ -164,7 +173,7 @@ func main() {
 	defer authzClient.Close()
 	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
-	svc, err := newService(ctx, db, dbConfig, authz, cfg.ESURL, tracer, logger)
+	svc, err := newService(ctx, db, dbConfig, authz, cfg.ESURL, tracer, ec, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -204,13 +213,18 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, logger *slog.Logger) (re.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, ec email.Config, logger *slog.Logger) (re.Service, error) {
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	repo := repg.NewRepository(database)
 	idp := uuid.New()
 
+	emailerClient, err := emailer.New(&ec)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
+	}
+
 	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
-	csvc := re.NewService(repo, idp, nil, re.NewTicker(time.Minute))
+	csvc := re.NewService(repo, idp, nil, re.NewTicker(time.Minute), emailerClient)
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

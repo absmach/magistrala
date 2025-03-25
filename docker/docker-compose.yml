@@ -184,11 +184,19 @@ services:
       SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
       SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
       MG_RE_INSTANCE_ID: ${MG_RE_INSTANCE_ID}
+      MG_EMAIL_HOST: ${MG_EMAIL_HOST}
+      MG_EMAIL_PORT: ${MG_EMAIL_PORT}
+      MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
+      MG_EMAIL_PASSWORD: ${MG_EMAIL_PASSWORD}
+      MG_EMAIL_FROM_ADDRESS: ${MG_EMAIL_FROM_ADDRESS}
+      MG_EMAIL_FROM_NAME: ${MG_EMAIL_FROM_NAME}
+      MG_EMAIL_TEMPLATE: ${MG_EMAIL_TEMPLATE}
     ports:
       - ${MG_RE_HTTP_PORT}:${MG_RE_HTTP_PORT}
     networks:
       - magistrala-base-net
     volumes:
+      - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}

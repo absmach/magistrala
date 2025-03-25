@@ -101,15 +101,17 @@ type re struct {
 	pubSub messaging.PubSub
 	errors chan error
 	ticker Ticker
+	email  Emailer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker) Service {
+func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
 	return &re{
 		repo:   repo,
 		idp:    idp,
 		pubSub: pubSub,
 		errors: make(chan error),
 		ticker: tck,
+		email:  emailer,
 	}
 }
 
@@ -254,34 +256,39 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			l.RawSet(message, lua.LString("payload"), pld)
 		}
 
-	case senml.Message:
-		l.RawSet(message, lua.LString("channel"), lua.LString(m.Channel))
-		l.RawSet(message, lua.LString("subtopic"), lua.LString(m.Subtopic))
-		l.RawSet(message, lua.LString("publisher"), lua.LString(m.Publisher))
-		l.RawSet(message, lua.LString("protocol"), lua.LString(m.Protocol))
-		l.RawSet(message, lua.LString("name"), lua.LString(m.Name))
-		l.RawSet(message, lua.LString("unit"), lua.LString(m.Unit))
-		l.RawSet(message, lua.LString("time"), lua.LNumber(m.Time))
-		l.RawSet(message, lua.LString("update_time"), lua.LNumber(m.UpdateTime))
+	case []senml.Message:
+		msg := m[0]
+		l.RawSet(message, lua.LString("channel"), lua.LString(msg.Channel))
+		l.RawSet(message, lua.LString("subtopic"), lua.LString(msg.Subtopic))
+		l.RawSet(message, lua.LString("publisher"), lua.LString(msg.Publisher))
+		l.RawSet(message, lua.LString("protocol"), lua.LString(msg.Protocol))
+		l.RawSet(message, lua.LString("name"), lua.LString(msg.Name))
+		l.RawSet(message, lua.LString("unit"), lua.LString(msg.Unit))
+		l.RawSet(message, lua.LString("time"), lua.LNumber(msg.Time))
+		l.RawSet(message, lua.LString("update_time"), lua.LNumber(msg.UpdateTime))
 
-		if m.Value != nil {
-			l.RawSet(message, lua.LString("value"), lua.LNumber(*m.Value))
+		if msg.Value != nil {
+			l.RawSet(message, lua.LString("value"), lua.LNumber(*msg.Value))
 		}
-		if m.StringValue != nil {
-			l.RawSet(message, lua.LString("string_value"), lua.LString(*m.StringValue))
+		if msg.StringValue != nil {
+			l.RawSet(message, lua.LString("string_value"), lua.LString(*msg.StringValue))
 		}
-		if m.DataValue != nil {
-			l.RawSet(message, lua.LString("data_value"), lua.LString(*m.DataValue))
+		if msg.DataValue != nil {
+			l.RawSet(message, lua.LString("data_value"), lua.LString(*msg.DataValue))
 		}
-		if m.BoolValue != nil {
-			l.RawSet(message, lua.LString("bool_value"), lua.LBool(*m.BoolValue))
+		if msg.BoolValue != nil {
+			l.RawSet(message, lua.LString("bool_value"), lua.LBool(*msg.BoolValue))
 		}
-		if m.Sum != nil {
-			l.RawSet(message, lua.LString("sum"), lua.LNumber(*m.Sum))
+		if msg.Sum != nil {
+			l.RawSet(message, lua.LString("sum"), lua.LNumber(*msg.Sum))
 		}
 	}
+
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
+
+	// set the email function as a Lua global function
+	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err
@@ -385,4 +392,20 @@ func (r Rule) shouldRun(startTime time.Time) bool {
 	}
 
 	return false
+}
+
+func (re *re) sendEmail(L *lua.LState) int {
+	recipientsTable := L.ToTable(1)
+	subject := L.ToString(2)
+	content := L.ToString(3)
+
+	var recipients []string
+	recipientsTable.ForEach(func(_, value lua.LValue) {
+		if str, ok := value.(lua.LString); ok {
+			recipients = append(recipients, string(str))
+		}
+	})
+
+	re.email.SendEmailNotification(recipients, "", subject, "", "", content, "")
+	return 1
 }

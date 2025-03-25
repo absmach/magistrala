@@ -31,10 +31,6 @@ func (req readMessagesReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
 	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
 	}

@@ -7,6 +7,29 @@ package readers.v1;
 
 option go_package = "github.com/absmach/magistrala/internal/grpc/readers/v1";
 
+// Enum for resusable references to message fields
+enum Field {
+  FIELD_UNSPECIFIED       = 0;
+  FIELD_OFFSET            = 1;
+  FIELD_LIMIT             = 2;
+  FIELD_SUBTOPIC          = 3;
+  FIELD_PUBLISHER         = 4;
+  FIELD_PROTOCOL          = 5;
+  FIELD_NAME              = 6;
+  FIELD_VALUE             = 7;
+  FIELD_COMPARATOR        = 8;
+  FIELD_BOOL_VALUE        = 9;
+  FIELD_STRING_VALUE      = 10;
+  FIELD_DATA_VALUE        = 11;
+  FIELD_FROM              = 12;
+  FIELD_TO                = 13;
+  FIELD_FORMAT            = 14;
+  FIELD_AGGREGATION       = 15;
+  FIELD_INTERVAL          = 16;
+  FIELD_TOTAL             = 17;
+  FIELD_MESSAGES          = 18;
+  FIELD_READ              = 19;
+}
 
 // ReadersService is a service that provides access to
 // readers functionalities for SuperMQ services.

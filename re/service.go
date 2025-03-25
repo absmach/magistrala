@@ -408,6 +408,8 @@ func (re *re) sendEmail(L *lua.LState) int {
 		}
 	})
 
-	re.email.SendEmailNotification(recipients, "", subject, "", "", content, "")
+	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, ""); err != nil {
+		return 0
+	}
 	return 1
 }

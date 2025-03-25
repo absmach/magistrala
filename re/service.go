@@ -208,10 +208,15 @@ func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
 		inputChannel = m.Channel
 
 	case []senml.Message:
+		if len(m) == 0 {
+			return
+		}
 		message := m[0]
 		inputChannel = message.Channel
 	case mgjson.Message:
+		return
 	default:
+		return
 	}
 
 	pm := PageMeta{

@@ -12,13 +12,14 @@ set -o pipefail
 REPO_URL=https://github.com/absmach/supermq
 TEMP_DIR="supermq"
 DOCKER_DIR="docker"
+DOCKER_DST_DIR="../docker"
 DEST_DIR="../../docker/supermq-docker"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
 
-if [ -n "$(git status --porcelain)" ]; then
-    echo "There are uncommitted changes. Please commit or stash them before running this script."
+if [ -n "$(git status --porcelain "$DOCKER_DST_DIR")" ]; then
+    echo "There are uncommitted changes in '$DOCKER_DIR' dir. Please commit or stash them before running this script."
     exit 1
 fi
 

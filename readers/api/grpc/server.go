@@ -35,6 +35,24 @@ func decodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interfac
 	return readMessagesReq{
 		chanID: req.GetChannelId(),
 		domain: req.GetDomainId(),
+		pageMeta: readers.PageMetadata{
+			Offset:      req.GetOffset(),
+			Limit:       req.GetLimit(),
+			Comparator:  req.GetComparator(),
+			Aggregation: req.GetAggregation(),
+			From:        req.GetFrom(),
+			To:          req.GetTo(),
+			Interval:    req.GetInterval(),
+			Subtopic:    req.GetSubtopic(),
+			Publisher:   req.GetPublisher(),
+			Protocol:    req.GetProtocol(),
+			Name:        req.GetName(),
+			Value:       req.GetValue(),
+			BoolValue:   req.GetBoolValue(),
+			StringValue: req.GetStringValue(),
+			DataValue:   req.GetDataValue(),
+			Format:      req.GetFormat(),
+		},
 	}, nil
 }
 

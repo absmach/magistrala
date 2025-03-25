@@ -47,6 +47,24 @@ func (client readersGrpcClient) ReadMessages(ctx context.Context, in *grpcReader
 	res, err := client.readMessages(ctx, readMessagesReq{
 		chanID: in.GetChannelId(),
 		domain: in.GetDomainId(),
+		pageMeta: readers.PageMetadata{
+			Offset:      in.GetOffset(),
+			Limit:       in.GetLimit(),
+			Comparator:  in.GetComparator(),
+			Aggregation: in.GetAggregation(),
+			From:        in.GetFrom(),
+			To:          in.GetTo(),
+			Interval:    in.GetInterval(),
+			Subtopic:    in.GetSubtopic(),
+			Publisher:   in.GetPublisher(),
+			Protocol:    in.GetProtocol(),
+			Name:        in.GetName(),
+			Value:       in.GetValue(),
+			BoolValue:   in.GetBoolValue(),
+			StringValue: in.GetStringValue(),
+			DataValue:   in.GetDataValue(),
+			Format:      in.GetFormat(),
+		},
 	})
 	if err != nil {
 		return &grpcReadersV1.ReadMessagesRes{}, grpcapi.DecodeError(err)
@@ -57,6 +75,7 @@ func (client readersGrpcClient) ReadMessages(ctx context.Context, in *grpcReader
 		Total:    dpr.Total,
 		Messages: toResponseMessages(dpr.Messages),
 		Offset:   dpr.Offset,
+		Limit:    dpr.Limit,
 	}, nil
 }
 

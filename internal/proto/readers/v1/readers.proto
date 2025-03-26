@@ -68,4 +68,5 @@ enum Aggregation {
   MIN = 2;
   SUM = 3;
   COUNT = 4;
+  AVG= 5;
 }

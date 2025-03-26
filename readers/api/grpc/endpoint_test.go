@@ -91,6 +91,7 @@ func TestReadMessages(t *testing.T) {
 			token: inValidToken,
 			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
 				ChannelId: channelID,
+				DomainId: "",
 			},
 			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
 				Total:    0,
@@ -103,7 +104,7 @@ func TestReadMessages(t *testing.T) {
 	for _, tc := range cases {
 		repoCall := svc.On("ReadAll", mock.Anything, mock.Anything).Return(readers.MessagesPage{}, tc.err)
 		dpr, err := grpcClient.ReadMessages(context.Background(), tc.ReadMessagesReq)
-		assert.Equal(t, tc.ReadMessagesReq.GetChannelId(), dpr.Messages, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ReadMessagesReq.GetChannelId(), dpr.Messages))
+		assert.Equal(t, tc.ReadMessagesRes.Messages, dpr.Messages, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ReadMessagesRes.Messages, dpr.Messages))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}

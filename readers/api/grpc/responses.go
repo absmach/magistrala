@@ -8,8 +8,8 @@ import (
 )
 
 type readMessagesRes struct {
-	Total    uint64            `json:"total"`
-	Messages []readers.Message `json:"messages"`
+	Total    uint64
+	Messages []readers.Message
 	readers.PageMetadata
 }
 

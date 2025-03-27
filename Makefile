@@ -253,7 +253,7 @@ endif
 fetch_supermq:
 	@./scripts/supermq.sh
 
-run: check_certs fetch_supermq
+run: check_certs
 	docker compose -f docker/docker-compose.yml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs

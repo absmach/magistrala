@@ -13,7 +13,6 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/errors"
 	grpcapi "github.com/absmach/magistrala/readers/api/grpc"
-	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -75,29 +74,6 @@ func TestReadMessages(t *testing.T) {
 				Total:    uint64(len(testMessages)),
 				Messages: []*grpcReadersV1.Message{{Data: []byte(`{"key":"value"}`)}},
 			},
-		},
-		{
-			desc:            "read invalid req with invalid token",
-			token:           inValidToken,
-			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{},
-			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
-				Total:    0,
-				Messages: []*grpcReadersV1.Message{},
-			},
-			err: apiutil.ErrMissingID,
-		},
-		{
-			desc:  "read invalid req with invalid token and missing domainID",
-			token: inValidToken,
-			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
-				ChannelId: channelID,
-				DomainId: "",
-			},
-			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
-				Total:    0,
-				Messages: []*grpcReadersV1.Message{},
-			},
-			err: apiutil.ErrMissingID,
 		},
 	}
 

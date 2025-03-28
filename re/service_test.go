@@ -62,7 +62,8 @@ func newService(t *testing.T) (re.Service, *mocks.Repository, *pubsubmocks.PubSu
 	mockTicker := new(mocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
-	return re.NewService(repo, idProvider, pubsub, mockTicker), repo, pubsub, mockTicker
+	e := new(mocks.Emailer)
+	return re.NewService(repo, idProvider, pubsub, mockTicker, e), repo, pubsub, mockTicker
 }
 
 func TestAddRule(t *testing.T) {

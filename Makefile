@@ -114,7 +114,7 @@ install:
 mocks:
 	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
 	@unset MOCKERY_VERSION && go generate ./...
-	mockery --config ./tools/config/mockery.yaml
+	mockery --config ./tools/config/.mockery.yaml
 
 
 DIRS = consumers readers postgres internal

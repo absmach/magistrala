@@ -36,7 +36,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV }}
           files: ./coverage/*.out
-          codecov_yml_path: tools/codecov.yml
+          codecov_yml_path: tools/.codecov.yml
           verbose: true
 
       - name: Set up Docker Build

@@ -1,0 +1,125 @@
+version: "2"
+run:
+  build-tags:
+    - nats
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - contextcheck
+    - copyloopvar
+    - decorder
+    - dogsled
+    - dupword
+    - errcheck
+    - errchkjson
+    - errname
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - goconst
+    - gocritic
+    - godot
+    - godox
+    - goheader
+    - goprintffuncname
+    - govet
+    - importas
+    - ineffassign
+    - loggercheck
+    - makezero
+    - mirror
+    - misspell
+    - nakedret
+    - staticcheck
+    - unused
+    - whitespace
+  settings:
+    gocritic:
+      enabled-checks:
+        - importShadow
+        - httpNoBody
+        - paramTypeCombine
+        - emptyStringTest
+        - builtinShadow
+        - exposedSyncMutex
+      disabled-checks:
+        - appendAssign
+      enabled-tags:
+        - diagnostic
+      disabled-tags:
+        - performance
+        - style
+        - experimental
+        - opinionated
+    goheader:
+      template: |-
+        Copyright (c) Abstract Machines
+        SPDX-License-Identifier: Apache-2.0
+    importas:
+      alias:
+        - pkg: github.com/absmach/callhome/pkg/client
+          alias: chclient
+        - pkg: github.com/absmach/supermq/logger
+          alias: smqlog
+        - pkg: github.com/absmach/supermq/pkg/errors/service
+          alias: svcerr
+        - pkg: github.com/absmach/supermq/pkg/errors/repository
+          alias: repoerr
+        - pkg: github.com/absmach/supermq/pkg/sdk/mocks
+          alias: sdkmocks
+        - pkg: github.com/absmach/supermq/api/http/util
+          alias: apiutil
+        - pkg: github.com/absmach/supermq/api/http
+          alias: api
+      no-unaliased: true
+      no-extra-aliases: false
+    misspell:
+      ignore-rules:
+        - mosquitto
+    staticcheck:
+      checks:
+        - -ST1000
+        - -ST1003
+        - -ST1020
+        - -ST1021
+        - -ST1022
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - godot
+        path: cli/commands_test.go
+      - path: (.+)\.go$
+        text: |-
+          string `Usage:
+          ` has (\d+) occurrences, make it a constant
+      - path: (.+)\.go$
+        text: |-
+          string `For example:
+          ` has (\d+) occurrences, make it a constant
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 100
+  max-same-issues: 100
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

@@ -11,7 +11,7 @@ GOARCH ?= amd64
 VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo 'unknown')
 COMMIT ?= $(shell git rev-parse HEAD)
 TIME ?= $(shell date +%F_%T)
-USER_REPO ?= $(shell git remote get-url origin | sed -e 's/.*\/\([^/]*\)\/\([^/]*\).*/\1_\2/' )
+USER_REPO ?= $(shell git remote get-url origin | sed -E 's#.*[:/]([^/:]+)/([^/.]+)(\.git)?#\1_\2#')
 empty:=
 space:= $(empty) $(empty)
 # Docker compose project name should follow this guidelines: https://docs.docker.com/compose/reference/#use--p-to-specify-a-project-name
@@ -114,7 +114,7 @@ install:
 mocks:
 	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
 	@unset MOCKERY_VERSION && go generate ./...
-	mockery --config ./tools/config/mockery.yaml
+	mockery --config ./tools/config/.mockery.yaml
 
 
 DIRS = consumers readers postgres internal
@@ -249,8 +249,11 @@ endif
 fetch_supermq:
 	@./scripts/supermq.sh
 
-run: check_certs fetch_supermq
-	docker compose -f docker/docker-compose.yml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+ run:
+	docker compose -f docker/docker-compose.yml \
+		-f docker/addons/timescale-reader/docker-compose.yml \
+		-f docker/addons/timescale-writer/docker-compose.yml \
+		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))

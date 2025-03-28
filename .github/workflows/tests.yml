@@ -24,10 +24,10 @@ jobs:
           cache-dependency-path: "go.sum"
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: v1.60.3
-          args: --config ./tools/config/golangci.yml
+          version: v2.0.2
+          args: --config ./tools/config/.golangci.yml
 
       - name: Fetch supermq
         run: |
@@ -180,5 +180,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV }}
           files: ./coverage/*.out
-          codecov_yml_path: tools/codecov.yml
+          codecov_yml_path: tools/.codecov.yml
           verbose: true

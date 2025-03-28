@@ -32,7 +32,7 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`postgres-writer`](https://github.com/absmach/supermq/blob/main/docker/addons/postgres-writer/docker-compose.yml#L34-L59) service section in docker-compose file to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`postgres-writer`](https://github.com/absmach/supermq/blob/main/docker/addons/postgres-writer/docker-compose.yaml#L34-L59) service section in docker-compose file to see how service is deployed.
 
 To start the service, execute the following shell script:
 

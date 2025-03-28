@@ -190,7 +190,7 @@ To start the Rules Engine service, run:
 make run_addons re
 ```
 
-This command starts the Rules Engine service using Docker Compose with the configuration defined in [docker-compose.yml][compose].
+This command starts the Rules Engine service using Docker Compose with the configuration defined in [docker-compose.yaml][compose].
 
 ## For More Information
 
@@ -198,4 +198,4 @@ This command starts the Rules Engine service using Docker Compose with the confi
 - [Docker Compose][compose]
 
 [doc]: https://docs.magistrala.abstractmachines.fr
-[compose]: ../docker/docker-compose.yml
+[compose]: ../docker/docker-compose.yaml

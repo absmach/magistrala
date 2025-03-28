@@ -27,7 +27,7 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.0.2
-          args: --config ./tools/config/.golangci.yml
+          args: --config ./tools/config/.golangci.yaml
 
       - name: Fetch supermq
         run: |
@@ -68,7 +68,7 @@ jobs:
           base: main
           filters: |
             workflow:
-              - ".github/workflows/tests.yml"
+              - ".github/workflows/tests.yaml"
 
             bootstrap:
               - "bootstrap/**"
@@ -180,5 +180,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV }}
           files: ./coverage/*.out
-          codecov_yml_path: tools/.codecov.yml
+          codecov_yml_path: tools/.codecov.yaml
           verbose: true

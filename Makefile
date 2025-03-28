@@ -99,7 +99,7 @@ clean:
 
 cleandocker:
 	# Stops containers and removes containers, networks, volumes, and images created by up
-	docker compose -f docker/docker-compose.yml -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
+	docker compose -f docker/docker-compose.yaml -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
 
 ifdef pv
 	# Remove unused volumes
@@ -142,7 +142,7 @@ define test_api_service
 	fi
 
 	@if [ "$(svc)" = "http" ]; then \
-		st run api/openapi/$(svc).yml \
+		st run api/openapi/$(svc).yaml \
 		--checks all \
 		--base-url $(2) \
 		--header "Authorization: Thing $(THING_SECRET)" \
@@ -150,7 +150,7 @@ define test_api_service
 		--hypothesis-suppress-health-check=filter_too_much \
 		--stateful=links; \
 	else \
-		st run api/openapi/$(svc).yml \
+		st run api/openapi/$(svc).yaml \
 		--checks all \
 		--base-url $(2) \
 		--header "Authorization: Bearer $(USER_TOKEN)" \
@@ -250,13 +250,13 @@ fetch_supermq:
 	@./scripts/supermq.sh
 
  run:
-	docker compose -f docker/docker-compose.yml \
-		-f docker/addons/timescale-reader/docker-compose.yml \
-		-f docker/addons/timescale-writer/docker-compose.yml \
+	docker compose -f docker/docker-compose.yaml \
+		-f docker/addons/timescale-reader/docker-compose.yaml \
+		-f docker/addons/timescale-writer/docker-compose.yaml \
 		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done

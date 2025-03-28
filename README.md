@@ -7,7 +7,7 @@
   **Scalable • Secure • Open-Source**
   
   [![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
-  [![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yml)
+  [![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yaml)
   [![Go Report Card](https://goreportcard.com/badge/github.com/absmach/magistrala)](https://goreportcard.com/report/github.com/absmach/magistrala)
   [![Coverage](https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=SEMDAO3L09)](https://codecov.io/gh/absmach/magistrala)
   [![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
@@ -59,7 +59,7 @@ Clone the repository and start the services:
 ```bash
 git clone https://github.com/absmach/magistrala.git
 cd magistrala
-docker compose -f docker/docker-compose.yml --env-file docker/.env up
+docker compose -f docker/docker-compose.yaml --env-file docker/.env up
 ```
 
 Alternatively, use the Makefile for a simpler command:

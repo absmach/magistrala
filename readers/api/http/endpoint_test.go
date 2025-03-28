@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package api_test
+package http_test
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/readers/api"
+	customhttp "github.com/absmach/magistrala/readers/api/http"
 	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
 	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -55,7 +55,7 @@ var (
 )
 
 func newServer(repo *mocks.MessageRepository, authn *authnmocks.Authentication, clients *climocks.ClientsServiceClient, channels *chmocks.ChannelsServiceClient) *httptest.Server {
-	mux := api.MakeHandler(repo, authn, clients, channels, svcName, instanceID)
+	mux := customhttp.MakeHandler(repo, authn, clients, channels, svcName, instanceID)
 	return httptest.NewServer(mux)
 }
 

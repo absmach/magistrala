@@ -45,11 +45,11 @@ packages:
     interfaces:
       Service:
         config:
-          dir: "./notifiers/mocks"
+          dir: "./consumers/notifiers/mocks"
           filename: "service.go"
       SubscriptionsRepository:
         config:
-          dir: "./notifiers/mocks"
+          dir: "./consumers/notifiers/mocks"
           filename: "repository.go"
   github.com/absmach/magistrala/provision:
     interfaces:

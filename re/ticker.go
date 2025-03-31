@@ -5,7 +5,6 @@ package re
 
 import "time"
 
-//go:generate mockery --name Ticker --output=./mocks --filename ticker.go --quiet --note "Copyright (c) Abstract Machines"
 type Ticker interface {
 	Tick() <-chan time.Time
 	Stop()

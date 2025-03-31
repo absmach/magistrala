@@ -52,7 +52,6 @@ type Rule struct {
 	UpdatedBy     string    `json:"updated_by,omitempty"`
 }
 
-//go:generate mockery --name Repository --output=./mocks --filename repo.go --quiet --note "Copyright (c) Abstract Machines"
 type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, id string) (Rule, error)
@@ -83,7 +82,6 @@ type Page struct {
 	Rules []Rule `json:"rules"`
 }
 
-//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	consumers.AsyncConsumer
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)

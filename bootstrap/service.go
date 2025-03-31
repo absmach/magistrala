@@ -60,8 +60,6 @@ var _ Service = (*bootstrapService)(nil)
 
 // Service specifies an API that must be fulfilled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
-//
-//go:generate mockery --name Service --output=./mocks --filename service.go --quiet --note "Copyright (c) Abstract Machines"
 type Service interface {
 	// Add adds new Client Config to the user identified by the provided token.
 	Add(ctx context.Context, session smqauthn.Session, token string, cfg Config) (Config, error)
@@ -115,8 +113,6 @@ type Service interface {
 // as a JSON and consumed from the client side. The purpose of this interface
 // is to provide convenient way to generate custom configuration response
 // based on the specific Config which will be consumed by the client.
-//
-//go:generate mockery --name ConfigReader --output=./mocks --filename config_reader.go --quiet --note "Copyright (c) Abstract Machines"
 type ConfigReader interface {
 	ReadConfig(Config, bool) (interface{}, error)
 }

@@ -3,7 +3,7 @@
 
 # This docker-compose file contains optional certs services. Since it's optional, this file is
 # dependent of docker-compose file from <project_root>/docker. In order to run this services, execute command:
-# docker compose -f docker/docker-compose.yml -f docker/addons/certs/docker-compose.yml up
+# docker compose -f docker/docker-compose.yaml -f docker/addons/certs/docker-compose.yaml up
 # from project root.
 
 networks:
@@ -118,7 +118,7 @@ services:
       AM_JAEGER_URL: ${SMQ_JAEGER_URL}
       AM_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
     volumes:
-     - ./config.yml:/config/config.yml
+     - ./config.yaml:/config/config.yaml
     ports:
       - 9010:9010
       - 7012:7012

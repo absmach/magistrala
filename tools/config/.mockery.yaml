@@ -13,3 +13,47 @@ packages:
           dir: "./pkg/sdk/mocks"
           mockname: "SDK"
           filename: "sdk.go"
+  github.com/absmach/magistrala/re:
+    interfaces:
+      Repository:
+        config:
+          dir: "./re/mocks"
+          filename: "repository.go"
+      Service:
+        config:  
+          dir: "./re/mocks"
+          filename: "service.go"
+      Ticker:
+        config:
+          dir: "./re/mocks"
+          filename: "ticker.go"
+  github.com/absmach/magistrala/bootstrap:
+    interfaces:
+      ConfigRepository:
+        config:
+          dir: "./bootstrap/mocks"
+          filename: "repository.go"
+      ConfigReader:
+        config:
+          dir: "./bootstrap/mocks"
+          filename: "reader.go"
+      Service:
+        config:
+          dir: "./bootstrap/mocks"
+          filename: "service.go"
+  github.com/absmach/magistrala/consumers/notifiers:
+    interfaces:
+      Service:
+        config:
+          dir: "./consumers/notifiers/mocks"
+          filename: "service.go"
+      SubscriptionsRepository:
+        config:
+          dir: "./consumers/notifiers/mocks"
+          filename: "repository.go"
+  github.com/absmach/magistrala/provision:
+    interfaces:
+      Service:
+        config:
+          dir: "./provision/mocks"
+          filename: "service.go"

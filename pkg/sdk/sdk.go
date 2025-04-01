@@ -54,8 +54,6 @@ type MessagePageMetadata struct {
 }
 
 // SDK contains Magistrala API.
-//
-//go:generate mockery --name SDK --output=./mocks --filename sdk.go --quiet --note "Copyright (c) Abstract Machines"
 type SDK interface {
 	smqSDK.SDK
 

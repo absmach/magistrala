@@ -15,7 +15,7 @@ USER_REPO ?= $(shell git remote get-url origin | sed -E 's#.*[:/]([^/:]+)/([^/.]
 empty:=
 space:= $(empty) $(empty)
 # Docker compose project name should follow this guidelines: https://docs.docker.com/compose/reference/#use--p-to-specify-a-project-name
-DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | tr -c -s '[:alnum:][=-=]' '_' | tr '[:upper:]' '[:lower:]')
+DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | sed -E 's/[^a-zA-Z0-9]/_/g' | tr '[:upper:]' '[:lower:]')
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
@@ -99,7 +99,7 @@ clean:
 
 cleandocker:
 	# Stops containers and removes containers, networks, volumes, and images created by up
-	docker compose -f docker/docker-compose.yml -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
+	docker compose -f docker/docker-compose.yaml -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
 
 ifdef pv
 	# Remove unused volumes
@@ -113,7 +113,11 @@ install:
 
 mocks:
 	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
-	@unset MOCKERY_VERSION && go generate ./...
+	rm -r pkg/sdk/mocks \
+		bootstrap/mocks \
+		consumers/notifiers/mocks \
+		re/mocks \
+		provision/mocks
 	mockery --config ./tools/config/.mockery.yaml
 
 
@@ -142,7 +146,7 @@ define test_api_service
 	fi
 
 	@if [ "$(svc)" = "http" ]; then \
-		st run api/openapi/$(svc).yml \
+		st run api/openapi/$(svc).yaml \
 		--checks all \
 		--base-url $(2) \
 		--header "Authorization: Thing $(THING_SECRET)" \
@@ -150,7 +154,7 @@ define test_api_service
 		--hypothesis-suppress-health-check=filter_too_much \
 		--stateful=links; \
 	else \
-		st run api/openapi/$(svc).yml \
+		st run api/openapi/$(svc).yaml \
 		--checks all \
 		--base-url $(2) \
 		--header "Authorization: Bearer $(USER_TOKEN)" \
@@ -250,13 +254,13 @@ fetch_supermq:
 	@./scripts/supermq.sh
 
  run:
-	docker compose -f docker/docker-compose.yml \
-		-f docker/addons/timescale-reader/docker-compose.yml \
-		-f docker/addons/timescale-writer/docker-compose.yml \
+	docker compose -f docker/docker-compose.yaml \
+		-f docker/addons/timescale-reader/docker-compose.yaml \
+		-f docker/addons/timescale-writer/docker-compose.yaml \
 		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done

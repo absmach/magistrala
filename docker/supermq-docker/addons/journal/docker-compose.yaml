@@ -4,7 +4,7 @@
 # This docker-compose file contains optional Postgres and journal services
 # for SuperMQ platform. Since these are optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run these services, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/journal/docker-compose.yml up
+# docker-compose -f docker/docker-compose.yaml -f docker/addons/journal/docker-compose.yaml up
 # from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
 # inspection and data visualization.
 

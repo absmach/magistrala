@@ -20,7 +20,7 @@ jobs:
         uses: blokovi/swagger-ui-action@main
         with:
           dir: "./apidocs/openapi"
-          pattern: "*.yml"
+          pattern: "*.yaml"
           debug: "true"
 
       - name: Deploy to GitHub Pages

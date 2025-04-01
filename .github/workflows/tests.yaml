@@ -23,13 +23,7 @@ jobs:
           go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.0.2
-          args: --config ./tools/config/.golangci.yml
-
-      - name: Fetch supermq
+      - name: Fetch SuperMQ
         run: |
           make fetch_supermq
           if [[ -n $(git status --porcelain docker/supermq-docker) ]]; then
@@ -43,6 +37,13 @@ jobs:
       - name: Build all Binaries
         run: |
           make all -j $(nproc)
+
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.0.2
+          args: --config ./tools/config/.golangci.yaml
+
 
   run-tests:
     name: Run tests
@@ -68,7 +69,7 @@ jobs:
           base: main
           filters: |
             workflow:
-              - ".github/workflows/tests.yml"
+              - ".github/workflows/tests.yaml"
 
             bootstrap:
               - "bootstrap/**"
@@ -180,5 +181,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV }}
           files: ./coverage/*.out
-          codecov_yml_path: tools/.codecov.yml
+          codecov_yml_path: tools/.codecov.yaml
           verbose: true

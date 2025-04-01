@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/bootstrap/mocks"
+	mocks "github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -60,13 +60,13 @@ var (
 )
 
 var (
-	boot     *mocks.ConfigRepository
+	boot     *mocks.MockConfigRepository
 	policies *policymocks.Service
 	sdk      *sdkmocks.SDK
 )
 
 func newService() bootstrap.Service {
-	boot = new(mocks.ConfigRepository)
+	boot = new(mocks.MockConfigRepository)
 	policies = new(policymocks.Service)
 	sdk = new(sdkmocks.SDK)
 	idp := uuid.NewMock()

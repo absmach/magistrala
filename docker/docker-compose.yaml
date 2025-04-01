@@ -5,10 +5,10 @@ name: "magistrala"
 
 include:
   - path:
-      - ./supermq-docker/docker-compose.yml
-      - ./supermq-docker/addons/journal/docker-compose.yml
-      - ./supermq-docker/addons/certs/docker-compose.yml
-      - ./supermq-docker-compose.override.yml
+      - ./supermq-docker/docker-compose.yaml
+      - ./supermq-docker/addons/journal/docker-compose.yaml
+      - ./supermq-docker/addons/certs/docker-compose.yaml
+      - ./supermq-docker-compose.override.yaml
     project_directory: ./supermq-docker
     env_file:
       - ./supermq-docker/.env

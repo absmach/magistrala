@@ -13,11 +13,11 @@ Follow the [official documentation](https://docs.docker.com/compose/install/).
 Run the following commands from the project root directory.
 
 ```bash
-docker compose -f docker/docker-compose.yml up
+docker compose -f docker/docker-compose.yaml up
 ```
 
 ```bash
-docker compose -f docker/addons/<path>/docker-compose.yml up
+docker compose -f docker/addons/<path>/docker-compose.yaml up
 ```
 
 To pull docker images from a specific release you need to change the value of `SMQ_RELEASE_TAG` in `.env` before running these commands.
@@ -33,7 +33,7 @@ Events store: This is used by SuperMQ services to store events for distributed p
 
 This is the same as MESSAGE_BROKER. This can either be 'NATS' or 'RabbitMQ' or 'Redis'.  If Redis is used as an events store, then RabbitMQ or NATS is used as a message broker.
 
-The current deployment strategy for SuperMQ in `docker/docker-compose.yml` is to use RabbitMQ as a MQTT_BROKER and NATS as a MESSAGE_BROKER and EVENTS_STORE.
+The current deployment strategy for SuperMQ in `docker/docker-compose.yaml` is to use RabbitMQ as a MQTT_BROKER and NATS as a MESSAGE_BROKER and EVENTS_STORE.
 
 Therefore, the following combinations are possible:
 

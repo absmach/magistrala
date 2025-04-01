@@ -662,7 +662,7 @@ components:
       content:
         application/health+json:
           schema:
-            $ref: "./schemas/health_info.yml"
+            $ref: "./schemas/health_info.yaml"
     ConfigUpdateCertsRes:
       description: Data retrieved. Config certs updated.
       content:

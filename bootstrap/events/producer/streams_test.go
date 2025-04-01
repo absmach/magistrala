@@ -13,7 +13,7 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
-	"github.com/absmach/magistrala/bootstrap/mocks"
+	mocks "github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
@@ -87,13 +87,13 @@ var (
 
 type testVariable struct {
 	svc      bootstrap.Service
-	boot     *mocks.ConfigRepository
+	boot     *mocks.MockConfigRepository
 	policies *policymocks.Service
 	sdk      *sdkmocks.SDK
 }
 
 func newTestVariable(t *testing.T, redisURL string) testVariable {
-	boot := new(mocks.ConfigRepository)
+	boot := new(mocks.MockConfigRepository)
 	policies := new(policymocks.Service)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()

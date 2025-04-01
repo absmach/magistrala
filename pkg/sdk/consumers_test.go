@@ -51,8 +51,8 @@ var (
 	contentType = supermqSDK.CTJSON
 )
 
-func setupSubscriptions() (*httptest.Server, *notmocks.MockService) {
-	nsvc := new(notmocks.MockService)
+func setupSubscriptions() (*httptest.Server, *notmocks.Service) {
+	nsvc := new(notmocks.Service)
 	logger := smqlog.NewMock()
 	mux := httpapi.MakeHandler(nsvc, logger, instanceID)
 

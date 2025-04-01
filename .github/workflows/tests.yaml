@@ -44,7 +44,6 @@ jobs:
           version: v2.0.2
           args: --config ./tools/config/.golangci.yaml
 
-
   run-tests:
     name: Run tests
     runs-on: ubuntu-latest

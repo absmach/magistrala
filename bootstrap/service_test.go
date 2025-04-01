@@ -60,13 +60,13 @@ var (
 )
 
 var (
-	boot     *mocks.MockConfigRepository
+	boot     *mocks.ConfigRepository
 	policies *policymocks.Service
 	sdk      *sdkmocks.SDK
 )
 
 func newService() bootstrap.Service {
-	boot = new(mocks.MockConfigRepository)
+	boot = new(mocks.ConfigRepository)
 	policies = new(policymocks.Service)
 	sdk = new(sdkmocks.SDK)
 	idp := uuid.NewMock()

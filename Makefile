@@ -113,7 +113,11 @@ install:
 
 mocks:
 	@which mockery > /dev/null || go install github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
-	@unset MOCKERY_VERSION && go generate ./...
+	rm -r pkg/sdk/mocks \
+		bootstrap/mocks \
+		consumers/notifiers/mocks \
+		re/mocks \
+		provision/mocks
 	mockery --config ./tools/config/.mockery.yaml
 
 

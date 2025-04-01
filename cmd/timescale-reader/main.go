@@ -46,6 +46,7 @@ const (
 	defSvcHTTPPort    = "9011"
 	defSvcGRPCPort    = "7011"
 	envPrefixGrpc     = "MG_TIMESCALE_GRPC_"
+	defSvcGRPCHost    = "0.0.0.0"
 )
 
 type config struct {
@@ -93,7 +94,10 @@ func main() {
 
 	repo := newService(db, logger)
 
-	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
+	grpcServerConfig := server.Config{
+		Port: defSvcGRPCPort,
+		Host: defSvcGRPCHost,
+	}
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
 		exitCode = 1
@@ -166,6 +170,7 @@ func main() {
 		go chc.CallHome(ctx)
 	}
 
+	logger.Info("Starting gRPC server...", slog.String("port", grpcServerConfig.Port))
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerReadersServiceServer, logger)
 
 	g.Go(func() error {

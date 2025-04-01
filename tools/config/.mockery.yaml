@@ -5,6 +5,7 @@ template: testify
 mockname: "{{.InterfaceName}}"
 filename: "{{snakecase .InterfaceName}}.go"
 dir: "{{.InterfaceDirRelative}}/mocks"
+force-file-write: true
 template-data:
   boilerplate-file: ./tools/config/boilerplate.txt
   with-expecter: true

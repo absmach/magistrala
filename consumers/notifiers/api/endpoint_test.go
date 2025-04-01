@@ -15,7 +15,7 @@ import (
 
 	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/api"
-	"github.com/absmach/magistrala/consumers/notifiers/mocks"
+	mocks "github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqlog "github.com/absmach/supermq/logger"
@@ -67,9 +67,9 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newServer() (*httptest.Server, *mocks.Service) {
+func newServer() (*httptest.Server, *mocks.MockService) {
 	logger := smqlog.NewMock()
-	svc := new(mocks.Service)
+	svc := new(mocks.MockService)
 	mux := api.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux), svc
 }

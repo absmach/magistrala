@@ -23,7 +23,7 @@ jobs:
           go-version: 1.22.x
           cache-dependency-path: "go.sum"
 
-      - name: Fetch Supermq
+      - name: Fetch SuperMQ
         run: |
           make fetch_supermq
           if [[ -n $(git status --porcelain docker/supermq-docker) ]]; then

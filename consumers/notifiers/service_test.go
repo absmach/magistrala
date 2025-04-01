@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/consumers/notifiers"
-	"github.com/absmach/magistrala/consumers/notifiers/mocks"
+	mocks "github.com/absmach/magistrala/consumers/notifiers/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/supermq/consumers"
 	smqmocks "github.com/absmach/supermq/consumers/mocks"
@@ -31,8 +31,8 @@ const (
 	validID      = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
-func newService() (notifiers.Service, *authnmocks.Authentication, *mocks.SubscriptionsRepository) {
-	repo := new(mocks.SubscriptionsRepository)
+func newService() (notifiers.Service, *authnmocks.Authentication, *mocks.MockSubscriptionsRepository) {
+	repo := new(mocks.MockSubscriptionsRepository)
 	auth := new(authnmocks.Authentication)
 	notifier := new(smqmocks.Notifier)
 	idp := uuid.NewMock()

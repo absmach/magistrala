@@ -20,7 +20,7 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	bsapi "github.com/absmach/magistrala/bootstrap/api"
-	"github.com/absmach/magistrala/bootstrap/mocks"
+	mocks "github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqlog "github.com/absmach/supermq/logger"
@@ -176,9 +176,9 @@ func dec(in []byte) ([]byte, error) {
 	return in, nil
 }
 
-func newBootstrapServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
+func newBootstrapServer() (*httptest.Server, *mocks.MockService, *authnmocks.Authentication) {
 	logger := smqlog.NewMock()
-	svc := new(mocks.Service)
+	svc := new(mocks.MockService)
 	authn := new(authnmocks.Authentication)
 	mux := bsapi.MakeHandler(svc, authn, bootstrap.NewConfigReader(encKey), logger, instanceID)
 	return httptest.NewServer(mux), svc, authn

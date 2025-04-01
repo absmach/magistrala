@@ -18,7 +18,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/api"
-	"github.com/absmach/magistrala/re/mocks"
+	mocks "github.com/absmach/magistrala/re/mocks"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/auth"
 	smqlog "github.com/absmach/supermq/logger"
@@ -85,8 +85,8 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newRuleEngineServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
-	svc := new(mocks.Service)
+func newRuleEngineServer() (*httptest.Server, *mocks.MockService, *authnmocks.Authentication) {
+	svc := new(mocks.MockService)
 	authn := new(authnmocks.Authentication)
 
 	logger := smqlog.NewMock()

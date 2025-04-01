@@ -132,9 +132,9 @@ type readerChannelRes struct {
 	Metadata interface{} `json:"metadata,omitempty"`
 }
 
-func setupBootstrap() (*httptest.Server, *bmocks.MockService, *bmocks.MockConfigReader, *authnmocks.Authentication) {
-	bsvc := new(bmocks.MockService)
-	reader := new(bmocks.MockConfigReader)
+func setupBootstrap() (*httptest.Server, *bmocks.Service, *bmocks.ConfigReader, *authnmocks.Authentication) {
+	bsvc := new(bmocks.Service)
+	reader := new(bmocks.ConfigReader)
 	logger := smqlog.NewMock()
 	authn := new(authnmocks.Authentication)
 	mux := api.MakeHandler(bsvc, authn, reader, logger, "")

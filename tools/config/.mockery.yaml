@@ -1,10 +1,13 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
+pkgname: mocks
+template: testify
+mockname: "{{.InterfaceName}}"
+filename: "{{snakecase .InterfaceName}}.go"
 
-with-expecter: true
-filename: "{{.InterfaceName}}.go"
-outpkg: "mocks"
-boilerplate-file: "./tools/config/boilerplate.txt"
+template-data:
+  boilerplate-file: ./tools/config/boilerplate.txt
+  with-expecter: true
 packages:
   github.com/absmach/magistrala/pkg/sdk:
     interfaces:
@@ -18,42 +21,33 @@ packages:
       Repository:
         config:
           dir: "./re/mocks"
-          filename: "repository.go"
       Service:
         config:  
           dir: "./re/mocks"
-          filename: "service.go"
       Ticker:
         config:
           dir: "./re/mocks"
-          filename: "ticker.go"
   github.com/absmach/magistrala/bootstrap:
     interfaces:
       ConfigRepository:
         config:
           dir: "./bootstrap/mocks"
-          filename: "repository.go"
       ConfigReader:
         config:
           dir: "./bootstrap/mocks"
-          filename: "reader.go"
       Service:
         config:
-          dir: "./bootstrap/mocks"
-          filename: "service.go"
+         dir: "./bootstrap/mocks"
   github.com/absmach/magistrala/consumers/notifiers:
     interfaces:
       Service:
         config:
           dir: "./consumers/notifiers/mocks"
-          filename: "service.go"
       SubscriptionsRepository:
         config:
           dir: "./consumers/notifiers/mocks"
-          filename: "repository.go"
   github.com/absmach/magistrala/provision:
     interfaces:
       Service:
         config:
           dir: "./provision/mocks"
-          filename: "service.go"

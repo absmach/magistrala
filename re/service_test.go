@@ -12,7 +12,7 @@ import (
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/re"
-	mocks "github.com/absmach/magistrala/re/mocks"
+	"github.com/absmach/magistrala/re/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
@@ -57,9 +57,9 @@ var (
 	}
 )
 
-func newService(t *testing.T) (re.Service, *mocks.MockRepository, *pubsubmocks.PubSub, *mocks.MockTicker) {
-	repo := new(mocks.MockRepository)
-	mockTicker := new(mocks.MockTicker)
+func newService(t *testing.T) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
+	repo := new(mocks.Repository)
+	mockTicker := new(mocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
 	return re.NewService(repo, idProvider, pubsub, mockTicker), repo, pubsub, mockTicker

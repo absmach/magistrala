@@ -53,8 +53,8 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newProvisionServer() (*httptest.Server, *mocks.MockService) {
-	svc := new(mocks.MockService)
+func newProvisionServer() (*httptest.Server, *mocks.Service) {
+	svc := new(mocks.Service)
 
 	logger := smqlog.NewMock()
 	mux := api.MakeHandler(svc, logger, "test")

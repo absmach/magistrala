@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
+	libs "github.com/vadv/gopher-lua-libs"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -242,6 +243,7 @@ func (re *re) Errors() <-chan error {
 func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	l := lua.NewState()
 	defer l.Close()
+	libs.Preload(l)
 
 	message := l.NewTable()
 

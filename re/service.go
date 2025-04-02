@@ -14,6 +14,7 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -100,15 +101,17 @@ type re struct {
 	pubSub messaging.PubSub
 	errors chan error
 	ticker Ticker
+	email  Emailer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker) Service {
+func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
 	return &re{
 		repo:   repo,
 		idp:    idp,
 		pubSub: pubSub,
 		errors: make(chan error),
 		ticker: tck,
+		email:  emailer,
 	}
 }
 
@@ -198,24 +201,37 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 }
 
 func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
+	var inputChannel string
+
 	switch m := msgs.(type) {
 	case *messaging.Message:
-		pm := PageMeta{
-			InputChannel: m.Channel,
-			Status:       EnabledStatus,
-		}
-		page, err := re.repo.ListRules(ctx, pm)
-		if err != nil {
-			re.errors <- errors.Wrap(svcerr.ErrViewEntity, err)
+		inputChannel = m.Channel
+
+	case []senml.Message:
+		if len(m) == 0 {
 			return
 		}
-		for _, r := range page.Rules {
-			go func(ctx context.Context) {
-				re.errors <- re.process(ctx, r, m)
-			}(ctx)
-		}
+		message := m[0]
+		inputChannel = message.Channel
 	case mgjson.Message:
+		return
 	default:
+		return
+	}
+
+	pm := PageMeta{
+		InputChannel: inputChannel,
+		Status:       EnabledStatus,
+	}
+	page, err := re.repo.ListRules(ctx, pm)
+	if err != nil {
+		re.errors <- err
+		return
+	}
+	for _, r := range page.Rules {
+		go func(ctx context.Context) {
+			re.errors <- re.process(ctx, r, msgs)
+		}(ctx)
 	}
 }
 
@@ -223,26 +239,61 @@ func (re *re) Errors() <-chan error {
 	return re.errors
 }
 
-func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error {
+func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	l := lua.NewState()
 	defer l.Close()
 
 	message := l.NewTable()
 
-	l.RawSet(message, lua.LString("channel"), lua.LString(msg.Channel))
-	l.RawSet(message, lua.LString("subtopic"), lua.LString(msg.Subtopic))
-	l.RawSet(message, lua.LString("publisher"), lua.LString(msg.Publisher))
-	l.RawSet(message, lua.LString("protocol"), lua.LString(msg.Protocol))
-	l.RawSet(message, lua.LString("created"), lua.LNumber(msg.Created))
+	switch m := msg.(type) {
+	case messaging.Message:
+		{
+			l.RawSet(message, lua.LString("channel"), lua.LString(m.Channel))
+			l.RawSet(message, lua.LString("subtopic"), lua.LString(m.Subtopic))
+			l.RawSet(message, lua.LString("publisher"), lua.LString(m.Publisher))
+			l.RawSet(message, lua.LString("protocol"), lua.LString(m.Protocol))
+			l.RawSet(message, lua.LString("created"), lua.LNumber(m.Created))
 
-	pld := l.NewTable()
-	for i, b := range msg.Payload {
-		l.RawSet(pld, lua.LNumber(i+1), lua.LNumber(b)) // Lua tables are 1-indexed
+			pld := l.NewTable()
+			for i, b := range m.Payload {
+				l.RawSet(pld, lua.LNumber(i+1), lua.LNumber(b)) // Lua tables are 1-indexed
+			}
+			l.RawSet(message, lua.LString("payload"), pld)
+		}
+
+	case []senml.Message:
+		msg := m[0]
+		l.RawSet(message, lua.LString("channel"), lua.LString(msg.Channel))
+		l.RawSet(message, lua.LString("subtopic"), lua.LString(msg.Subtopic))
+		l.RawSet(message, lua.LString("publisher"), lua.LString(msg.Publisher))
+		l.RawSet(message, lua.LString("protocol"), lua.LString(msg.Protocol))
+		l.RawSet(message, lua.LString("name"), lua.LString(msg.Name))
+		l.RawSet(message, lua.LString("unit"), lua.LString(msg.Unit))
+		l.RawSet(message, lua.LString("time"), lua.LNumber(msg.Time))
+		l.RawSet(message, lua.LString("update_time"), lua.LNumber(msg.UpdateTime))
+
+		if msg.Value != nil {
+			l.RawSet(message, lua.LString("value"), lua.LNumber(*msg.Value))
+		}
+		if msg.StringValue != nil {
+			l.RawSet(message, lua.LString("string_value"), lua.LString(*msg.StringValue))
+		}
+		if msg.DataValue != nil {
+			l.RawSet(message, lua.LString("data_value"), lua.LString(*msg.DataValue))
+		}
+		if msg.BoolValue != nil {
+			l.RawSet(message, lua.LString("bool_value"), lua.LBool(*msg.BoolValue))
+		}
+		if msg.Sum != nil {
+			l.RawSet(message, lua.LString("sum"), lua.LNumber(*msg.Sum))
+		}
 	}
-	l.RawSet(message, lua.LString("payload"), pld)
 
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
+
+	// set the email function as a Lua global function
+	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err
@@ -260,6 +311,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 			Publisher: "magistrala.re",
 			Created:   time.Now().Unix(),
 			Payload:   []byte(result.String()),
+			Channel:   r.OutputChannel,
 		}
 		return re.pubSub.Publish(ctx, m.Channel, m)
 	}
@@ -345,4 +397,22 @@ func (r Rule) shouldRun(startTime time.Time) bool {
 	}
 
 	return false
+}
+
+func (re *re) sendEmail(L *lua.LState) int {
+	recipientsTable := L.ToTable(1)
+	subject := L.ToString(2)
+	content := L.ToString(3)
+
+	var recipients []string
+	recipientsTable.ForEach(func(_, value lua.LValue) {
+		if str, ok := value.(lua.LString); ok {
+			recipients = append(recipients, string(str))
+		}
+	})
+
+	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, ""); err != nil {
+		return 0
+	}
+	return 1
 }

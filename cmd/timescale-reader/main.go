@@ -45,8 +45,7 @@ const (
 	defDB             = "messages"
 	defSvcHTTPPort    = "9011"
 	defSvcGRPCPort    = "7011"
-	envPrefixGrpc     = "MG_TIMESCALE_GRPC_"
-	defSvcGRPCHost    = "0.0.0.0"
+	envPrefixGrpc     = "MG_TIMESCALE_READER_GRPC_"
 )
 
 type config struct {
@@ -96,11 +95,8 @@ func main() {
 
 	grpcServerConfig := server.Config{
 		Port: defSvcGRPCPort,
-		Host: defSvcGRPCHost,
 	}
-	fmt.Println("grpcServerConfig", grpcServerConfig)
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
-		fmt.Printf("Parsewithoptions %s", err)
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return

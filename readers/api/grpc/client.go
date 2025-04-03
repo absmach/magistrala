@@ -6,15 +6,19 @@ package grpc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
-	grpcapi "github.com/absmach/supermq/auth/api/grpc"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	readers "github.com/absmach/supermq/readers"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const readersSvcName = "readers.v1.ReadersService"
@@ -68,7 +72,7 @@ func (client readersGrpcClient) ReadMessages(ctx context.Context, in *grpcReader
 		},
 	})
 	if err != nil {
-		return &grpcReadersV1.ReadMessagesRes{}, grpcapi.DecodeError(err)
+		return &grpcReadersV1.ReadMessagesRes{}, decodeError(err)
 	}
 
 	dpr := res.(readMessagesRes)
@@ -147,4 +151,31 @@ func parseAggregation(agg string) grpcReadersV1.Aggregation {
 	default:
 		return grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
 	}
+}
+
+func decodeError(err error) error {
+	if st, ok := status.FromError(err); ok {
+		switch st.Code() {
+		case codes.Unauthenticated:
+			return errors.Wrap(svcerr.ErrAuthentication, errors.New(st.Message()))
+		case codes.PermissionDenied:
+			return errors.Wrap(svcerr.ErrAuthorization, errors.New(st.Message()))
+		case codes.InvalidArgument:
+			return errors.Wrap(errors.ErrMalformedEntity, errors.New(st.Message()))
+		case codes.FailedPrecondition:
+			return errors.Wrap(errors.ErrMalformedEntity, errors.New(st.Message()))
+		case codes.NotFound:
+			return errors.Wrap(svcerr.ErrNotFound, errors.New(st.Message()))
+		case codes.AlreadyExists:
+			return errors.Wrap(svcerr.ErrConflict, errors.New(st.Message()))
+		case codes.OK:
+			if msg := st.Message(); msg != "" {
+				return errors.Wrap(errors.ErrUnidentified, errors.New(msg))
+			}
+			return nil
+		default:
+			return errors.Wrap(fmt.Errorf("unexpected gRPC status: %s (status code:%v)", st.Code().String(), st.Code()), errors.New(st.Message()))
+		}
+	}
+	return err
 }

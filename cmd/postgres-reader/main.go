@@ -120,6 +120,7 @@ func main() {
 		return
 	}
 	defer clientsHandler.Close()
+
 	logger.Info("Clients service gRPC client successfully connected to clients gRPC server " + clientsHandler.Secure())
 
 	channelsClientCfg := grpcclient.Config{}
@@ -167,6 +168,7 @@ func main() {
 		go chc.CallHome(ctx)
 	}
 
+	logger.Info("Starting gRPC server...", slog.String("port", grpcServerConfig.Port))
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerReadersServiceServer, logger)
 
 	g.Go(func() error {

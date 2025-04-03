@@ -14,6 +14,7 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/errors"
 	grpcapi "github.com/absmach/magistrala/readers/api/grpc"
+	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -103,12 +104,27 @@ func TestReadMessages(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  " read missing channel id",
+			token: validToken,
+			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
+				ChannelId: "",
+				DomainId:  domain,
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{},
+			err:             apiutil.ErrMissingID,
+		},
 	}
 
 	for _, tc := range cases {
 		repoCall := svc.On("ReadAll", mock.Anything, mock.Anything).Return(tc.svcRes, tc.err)
 		dpr, err := grpcClient.ReadMessages(context.Background(), tc.ReadMessagesReq)
 		assert.Equal(t, tc.ReadMessagesRes.Messages, dpr.Messages, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ReadMessagesRes.Messages, dpr.Messages))
+
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}

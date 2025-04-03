@@ -39,7 +39,7 @@ func decodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interfac
 			Offset:      req.GetPageMetadata().GetOffset(),
 			Limit:       req.GetPageMetadata().GetLimit(),
 			Comparator:  req.GetPageMetadata().GetComparator(),
-			Aggregation: req.GetPageMetadata().GetAggregation().String(),
+			Aggregation: stringigyAggreation(req.GetPageMetadata().GetAggregation()),
 			From:        req.GetPageMetadata().GetFrom(),
 			To:          req.GetPageMetadata().GetTo(),
 			Interval:    req.GetPageMetadata().GetInterval(),
@@ -90,4 +90,23 @@ func toResponseMessages(messages []readers.Message) []*grpcReadersV1.Message {
 		})
 	}
 	return res
+}
+
+func stringigyAggreation(agg grpcReadersV1.Aggregation) string {
+	switch agg {
+	case grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED:
+		return ""
+	case grpcReadersV1.Aggregation_MAX:
+		return "MAX"
+	case grpcReadersV1.Aggregation_MIN:
+		return "MIN"
+	case grpcReadersV1.Aggregation_AVG:
+		return "AVG"
+	case grpcReadersV1.Aggregation_SUM:
+		return "SUM"
+	case grpcReadersV1.Aggregation_COUNT:
+		return "COUNT"
+	default:
+		return ""
+	}
 }

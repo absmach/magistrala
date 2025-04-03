@@ -30,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // ReadersService is a service that provides access to
-// readers functionalities for SuperMQ services.
+// readers functionalities for Magistrala services.
 type ReadersServiceClient interface {
 	ReadMessages(ctx context.Context, in *ReadMessagesReq, opts ...grpc.CallOption) (*ReadMessagesRes, error)
 }
@@ -58,7 +58,7 @@ func (c *readersServiceClient) ReadMessages(ctx context.Context, in *ReadMessage
 // for forward compatibility.
 //
 // ReadersService is a service that provides access to
-// readers functionalities for SuperMQ services.
+// readers functionalities for Magistrala services.
 type ReadersServiceServer interface {
 	ReadMessages(context.Context, *ReadMessagesReq) (*ReadMessagesRes, error)
 	mustEmbedUnimplementedReadersServiceServer()

@@ -98,7 +98,9 @@ func main() {
 		Port: defSvcGRPCPort,
 		Host: defSvcGRPCHost,
 	}
+	fmt.Println("grpcServerConfig", grpcServerConfig)
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
+		fmt.Printf("Parsewithoptions %s", err)
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return

@@ -6,6 +6,7 @@ package grpc
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
@@ -48,22 +49,22 @@ func (client readersGrpcClient) ReadMessages(ctx context.Context, in *grpcReader
 		chanID: in.GetChannelId(),
 		domain: in.GetDomainId(),
 		pageMeta: readers.PageMetadata{
-			Offset:      in.GetOffset(),
-			Limit:       in.GetLimit(),
-			Comparator:  in.GetComparator(),
-			Aggregation: in.GetAggregation(),
-			From:        in.GetFrom(),
-			To:          in.GetTo(),
-			Interval:    in.GetInterval(),
-			Subtopic:    in.GetSubtopic(),
-			Publisher:   in.GetPublisher(),
-			Protocol:    in.GetProtocol(),
-			Name:        in.GetName(),
-			Value:       in.GetValue(),
-			BoolValue:   in.GetBoolValue(),
-			StringValue: in.GetStringValue(),
-			DataValue:   in.GetDataValue(),
-			Format:      in.GetFormat(),
+			Offset:      in.GetPageMetadata().GetOffset(),
+			Limit:       in.GetPageMetadata().GetLimit(),
+			Comparator:  in.GetPageMetadata().GetComparator(),
+			Aggregation: in.GetPageMetadata().GetAggregation().String(),
+			From:        in.GetPageMetadata().GetFrom(),
+			To:          in.GetPageMetadata().GetTo(),
+			Interval:    in.GetPageMetadata().GetInterval(),
+			Subtopic:    in.GetPageMetadata().GetSubtopic(),
+			Publisher:   in.GetPageMetadata().GetPublisher(),
+			Protocol:    in.GetPageMetadata().GetProtocol(),
+			Name:        in.GetPageMetadata().GetName(),
+			Value:       in.GetPageMetadata().GetValue(),
+			BoolValue:   in.GetPageMetadata().GetBoolValue(),
+			StringValue: in.GetPageMetadata().GetStringValue(),
+			DataValue:   in.GetPageMetadata().GetDataValue(),
+			Format:      in.GetPageMetadata().GetFormat(),
 		},
 	})
 	if err != nil {
@@ -74,8 +75,10 @@ func (client readersGrpcClient) ReadMessages(ctx context.Context, in *grpcReader
 	return &grpcReadersV1.ReadMessagesRes{
 		Total:    dpr.Total,
 		Messages: toResponseMessages(dpr.Messages),
-		Offset:   dpr.Offset,
-		Limit:    dpr.Limit,
+		PageMetadata: &grpcReadersV1.PageMetadata{
+			Offset: dpr.PageMetadata.Offset,
+			Limit:  dpr.PageMetadata.Limit,
+		},
 	}, nil
 }
 
@@ -84,6 +87,10 @@ func decodeReadMessagesResponse(_ context.Context, grpcRes interface{}) (interfa
 	return readMessagesRes{
 		Total:    res.Total,
 		Messages: fromResponseMessages(res.Messages),
+		PageMetadata: readers.PageMetadata{
+			Offset: res.GetPageMetadata().GetOffset(),
+			Limit:  res.GetPageMetadata().GetLimit(),
+		},
 	}, nil
 }
 
@@ -92,6 +99,24 @@ func encodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interfac
 	return &grpcReadersV1.ReadMessagesReq{
 		ChannelId: req.chanID,
 		DomainId:  req.domain,
+		PageMetadata: &grpcReadersV1.PageMetadata{
+			Offset:      req.pageMeta.Offset,
+			Limit:       req.pageMeta.Limit,
+			Comparator:  req.pageMeta.Comparator,
+			Aggregation: parseAggregation(req.pageMeta.Aggregation),
+			From:        req.pageMeta.From,
+			To:          req.pageMeta.To,
+			Interval:    req.pageMeta.Interval,
+			Subtopic:    req.pageMeta.Subtopic,
+			Publisher:   req.pageMeta.Publisher,
+			Protocol:    req.pageMeta.Protocol,
+			Name:        req.pageMeta.Name,
+			Value:       req.pageMeta.Value,
+			BoolValue:   req.pageMeta.BoolValue,
+			StringValue: req.pageMeta.StringValue,
+			DataValue:   req.pageMeta.DataValue,
+			Format:      req.pageMeta.Format,
+		},
 	}, nil
 }
 
@@ -105,4 +130,21 @@ func fromResponseMessages(protoMessages []*grpcReadersV1.Message) []readers.Mess
 		messages = append(messages, m)
 	}
 	return messages
+}
+
+func parseAggregation(agg string) grpcReadersV1.Aggregation {
+	switch strings.ToUpper(agg) {
+	case "MAX":
+		return grpcReadersV1.Aggregation_MAX
+	case "MIN":
+		return grpcReadersV1.Aggregation_MIN
+	case "SUM":
+		return grpcReadersV1.Aggregation_SUM
+	case "COUNT":
+		return grpcReadersV1.Aggregation_COUNT
+	case "AVG":
+		return grpcReadersV1.Aggregation_AVG
+	default:
+		return grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
+	}
 }

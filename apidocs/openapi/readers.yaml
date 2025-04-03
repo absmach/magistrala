@@ -20,8 +20,6 @@ servers:
   - url: https://localhost:9003
   - url: http://localhost:9005
   - url: https://localhost:9005
-  - url: http://localhost:9007
-  - url: https://localhost:9007
   - url: http://localhost:9009
   - url: https://localhost:9009
   - url: http://localhost:9011

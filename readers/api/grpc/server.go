@@ -36,22 +36,22 @@ func decodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interfac
 		chanID: req.GetChannelId(),
 		domain: req.GetDomainId(),
 		pageMeta: readers.PageMetadata{
-			Offset:      req.GetOffset(),
-			Limit:       req.GetLimit(),
-			Comparator:  req.GetComparator(),
-			Aggregation: req.GetAggregation(),
-			From:        req.GetFrom(),
-			To:          req.GetTo(),
-			Interval:    req.GetInterval(),
-			Subtopic:    req.GetSubtopic(),
-			Publisher:   req.GetPublisher(),
-			Protocol:    req.GetProtocol(),
-			Name:        req.GetName(),
-			Value:       req.GetValue(),
-			BoolValue:   req.GetBoolValue(),
-			StringValue: req.GetStringValue(),
-			DataValue:   req.GetDataValue(),
-			Format:      req.GetFormat(),
+			Offset:      req.GetPageMetadata().GetOffset(),
+			Limit:       req.GetPageMetadata().GetLimit(),
+			Comparator:  req.GetPageMetadata().GetComparator(),
+			Aggregation: req.GetPageMetadata().GetAggregation().String(),
+			From:        req.GetPageMetadata().GetFrom(),
+			To:          req.GetPageMetadata().GetTo(),
+			Interval:    req.GetPageMetadata().GetInterval(),
+			Subtopic:    req.GetPageMetadata().GetSubtopic(),
+			Publisher:   req.GetPageMetadata().GetPublisher(),
+			Protocol:    req.GetPageMetadata().GetProtocol(),
+			Name:        req.GetPageMetadata().GetName(),
+			Value:       req.GetPageMetadata().GetValue(),
+			BoolValue:   req.GetPageMetadata().GetBoolValue(),
+			StringValue: req.GetPageMetadata().GetStringValue(),
+			DataValue:   req.GetPageMetadata().GetDataValue(),
+			Format:      req.GetPageMetadata().GetFormat(),
 		},
 	}, nil
 }
@@ -59,12 +59,15 @@ func decodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interfac
 func encodeReadMessagesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(readMessagesRes)
 
-	return &grpcReadersV1.ReadMessagesRes{
+	resp := &grpcReadersV1.ReadMessagesRes{
 		Total:    res.Total,
 		Messages: toResponseMessages(res.Messages),
-		Offset:   res.Offset,
-		Limit:    res.Limit,
-	}, nil
+		PageMetadata: &grpcReadersV1.PageMetadata{
+			Offset: res.PageMetadata.Offset,
+			Limit:  res.PageMetadata.Limit,
+		},
+	}
+	return resp, nil
 }
 
 func (s *readersGrpcServer) ReadMessages(ctx context.Context, req *grpcReadersV1.ReadMessagesReq) (*grpcReadersV1.ReadMessagesRes, error) {

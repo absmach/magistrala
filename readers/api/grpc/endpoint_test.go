@@ -5,6 +5,7 @@ package grpc_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"github.com/absmach/supermq/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -50,13 +52,33 @@ func TestReadMessages(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
 
-	testMessages := []readers.Message{
-		map[string]interface{}{"key": "value"},
+	tmp := readers.MessagesPage{
+		Total: 1,
+		PageMetadata: readers.PageMetadata{
+			Offset: 0,
+			Limit:  10,
+		},
+		Messages: []readers.Message{
+			map[string]interface{}{
+				"publisher": "testPublisher",
+				"subtopic":  "testSubtopic",
+				"protocol":  "testProtocol",
+				"time":      "2021-01-01T00:00:00Z",
+				"channel":   1234,
+				"name":      "testName",
+				"unit":      "testUnit",
+				"value":     30,
+			},
+		},
 	}
+
+	expectedData, err := json.Marshal(tmp.Messages[0])
+	require.NoError(t, err)
 
 	cases := []struct {
 		desc            string
 		token           string
+		svcRes          readers.MessagesPage
 		ReadMessagesReq *grpcReadersV1.ReadMessagesReq
 		ReadMessagesRes *grpcReadersV1.ReadMessagesRes
 		err             error
@@ -67,18 +89,24 @@ func TestReadMessages(t *testing.T) {
 			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
 				ChannelId: channelID,
 				DomainId:  domain,
-				Offset:    testOffset,
-				Limit:     testLimit,
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
 			},
+			svcRes: tmp,
+
 			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
-				Total:    uint64(len(testMessages)),
-				Messages: []*grpcReadersV1.Message{{Data: []byte(`{"key":"value"}`)}},
+				Total: 1,
+				Messages: []*grpcReadersV1.Message{
+					{Data: expectedData},
+				},
 			},
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := svc.On("ReadAll", mock.Anything, mock.Anything).Return(readers.MessagesPage{}, tc.err)
+		repoCall := svc.On("ReadAll", mock.Anything, mock.Anything).Return(tc.svcRes, tc.err)
 		dpr, err := grpcClient.ReadMessages(context.Background(), tc.ReadMessagesReq)
 		assert.Equal(t, tc.ReadMessagesRes.Messages, dpr.Messages, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ReadMessagesRes.Messages, dpr.Messages))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

@@ -43,7 +43,8 @@ func (req readMessagesReq) validate() error {
 		return apiutil.ErrInvalidComparator
 	}
 
-	if req.pageMeta.Aggregation != "" {
+	if agg := strings.ToUpper(req.pageMeta.Aggregation); agg != "" && agg != "AGGREGATION_UNSPECIFIED" {
+
 		if req.pageMeta.From == 0 {
 			return apiutil.ErrMissingFrom
 		}

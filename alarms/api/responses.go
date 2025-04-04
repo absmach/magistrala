@@ -11,43 +11,9 @@ import (
 )
 
 var (
-	_ supermq.Response = (*ruleRes)(nil)
-	_ supermq.Response = (*rulesPageRes)(nil)
 	_ supermq.Response = (*alarmRes)(nil)
 	_ supermq.Response = (*alarmsPageRes)(nil)
 )
-
-type ruleRes struct {
-	alarms.Rule `json:",inline"`
-}
-
-func (res ruleRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res ruleRes) Code() int {
-	return http.StatusOK
-}
-
-func (res ruleRes) Empty() bool {
-	return false
-}
-
-type rulesPageRes struct {
-	alarms.RulesPage `json:",inline"`
-}
-
-func (res rulesPageRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res rulesPageRes) Code() int {
-	return http.StatusOK
-}
-
-func (res rulesPageRes) Empty() bool {
-	return false
-}
 
 type alarmRes struct {
 	alarms.Alarm `json:",inline"`

@@ -30,10 +30,10 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 	mux.Group(func(r chi.Router) {
 		r.Use(sapi.AuthenticateMiddleware(authn, true))
 		r.Use(sapi.RequestIDMiddleware(idp))
-		r.Route("/rules", func(r chi.Router) {
+		r.Route("/alarms", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				createRuleEndpoint(svc),
-				decodeCreateRuleReq,
+				createAlarmEndpoint(svc),
+				decodeCreateAlarmReq,
 				sapi.EncodeResponse,
 				opts...,
 			), "create_client").ServeHTTP)
@@ -43,12 +43,12 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 	return mux
 }
 
-func decodeCreateRuleReq(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeCreateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), sapi.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var req createRuleReq
+	var req createAlarmReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}

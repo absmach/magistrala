@@ -28,51 +28,6 @@ func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, se
 	}
 }
 
-func (mm *metricsMiddleware) CreateRule(ctx context.Context, session authn.Session, rule alarms.Rule) (alarms.Rule, error) {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "create_rule").Add(1)
-		mm.latency.With("method", "create_rule").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.service.CreateRule(ctx, session, rule)
-}
-
-func (mm *metricsMiddleware) UpdateRule(ctx context.Context, session authn.Session, rule alarms.Rule) (alarms.Rule, error) {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "update_rule").Add(1)
-		mm.latency.With("method", "update_rule").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.service.UpdateRule(ctx, session, rule)
-}
-
-func (mm *metricsMiddleware) ViewRule(ctx context.Context, session authn.Session, id string) (alarms.Rule, error) {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "get_rule").Add(1)
-		mm.latency.With("method", "get_rule").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.service.ViewRule(ctx, session, id)
-}
-
-func (mm *metricsMiddleware) ListRules(ctx context.Context, session authn.Session, pm alarms.PageMetadata) (alarms.RulesPage, error) {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "list_rules").Add(1)
-		mm.latency.With("method", "list_rules").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.service.ListRules(ctx, session, pm)
-}
-
-func (mm *metricsMiddleware) DeleteRule(ctx context.Context, session authn.Session, id string) error {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "delete_rule").Add(1)
-		mm.latency.With("method", "delete_rule").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.service.DeleteRule(ctx, session, id)
-}
-
 func (mm *metricsMiddleware) CreateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_alarm").Add(1)

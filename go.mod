@@ -41,8 +41,26 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/VividCortex/ewma v1.1.1 // indirect
 	github.com/absmach/certs v0.0.0-20250303232207-ef00d309ca02 // indirect
+	github.com/alessio/shellescape v1.4.1 // indirect
+	github.com/aws/aws-sdk-go v1.40.45 // indirect
+	github.com/cbroglie/mustache v1.0.1 // indirect
+	github.com/cheggaaa/pb/v3 v3.0.5 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/lib/pq v1.10.9 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
+	github.com/montanaflynn/stats v0.6.3 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+	github.com/vadv/gopher-lua-libs v0.5.0 // indirect
+	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7 // indirect
+	gopkg.in/xmlpath.v2 v2.0.0-20150820204837-860cbeca3ebc // indirect
 )
 
 require (

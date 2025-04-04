@@ -23,6 +23,8 @@ services:
       POSTGRES_USER: ${MG_POSTGRES_USER}
       POSTGRES_PASSWORD: ${MG_POSTGRES_PASS}
       POSTGRES_DB: ${MG_POSTGRES_NAME}
+    ports:
+      - 5434:5432
     networks:
       - magistrala-base-net
     volumes:

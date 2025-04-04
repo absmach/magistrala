@@ -86,14 +86,14 @@ func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 
 func listAlarmsEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(alarms.PageMetadata)
+		req := request.(listAlarmsReq)
 
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		alarms, err := svc.ListAlarms(ctx, session, req)
+		alarms, err := svc.ListAlarms(ctx, session, req.PageMetadata)
 		if err != nil {
 			return nil, err
 		}

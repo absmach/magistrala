@@ -39,7 +39,7 @@ func (s *service) CreateAlarm(ctx context.Context, session authn.Session, alarm 
 }
 
 func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID string) (Alarm, error) {
-	return s.repo.ViewAlarm(ctx, alarmID)
+	return s.repo.ViewAlarm(ctx, alarmID, session.DomainID)
 }
 
 func (s *service) ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error) {

@@ -27,16 +27,40 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 	}
 
 	mux := chi.NewRouter()
-	mux.Group(func(r chi.Router) {
-		r.Use(sapi.AuthenticateMiddleware(authn, true))
-		r.Use(sapi.RequestIDMiddleware(idp))
-		r.Route("/alarms", func(r chi.Router) {
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				createAlarmEndpoint(svc),
-				decodeCreateAlarmReq,
+	mux.Use(sapi.AuthenticateMiddleware(authn, true))
+	mux.Use(sapi.RequestIDMiddleware(idp))
+	mux.Route("/{domainID}/alarms", func(r chi.Router) {
+		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+			createAlarmEndpoint(svc),
+			decodeCreateAlarmReq,
+			sapi.EncodeResponse,
+			opts...,
+		), "create_client").ServeHTTP)
+		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+			listAlarmsEndpoint(svc),
+			decodeListAlarmsReq,
+			sapi.EncodeResponse,
+			opts...,
+		), "list_alarms").ServeHTTP)
+		r.Route("/{alarmID}", func(r chi.Router) {
+			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+				viewAlarmEndpoint(svc),
+				decodeAlarmReq,
 				sapi.EncodeResponse,
 				opts...,
-			), "create_client").ServeHTTP)
+			), "get_alarm").ServeHTTP)
+			r.Put("/", otelhttp.NewHandler(kithttp.NewServer(
+				updateAlarmEndpoint(svc),
+				decodeUpdateAlarmReq,
+				sapi.EncodeResponse,
+				opts...,
+			), "update_alarm").ServeHTTP)
+			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+				deleteAlarmEndpoint(svc),
+				decodeAlarmReq,
+				sapi.EncodeResponse,
+				opts...,
+			), "delete_alarm").ServeHTTP)
 		})
 	})
 
@@ -45,13 +69,92 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 
 func decodeCreateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), sapi.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	var req createAlarmReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 
 	return req, nil
+}
+
+func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error) {
+	offset, err := apiutil.ReadNumQuery[uint64](r, sapi.OffsetKey, sapi.DefOffset)
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	limit, err := apiutil.ReadNumQuery[uint64](r, sapi.LimitKey, sapi.DefLimit)
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	domainID, err := apiutil.ReadStringQuery(r, "domain_id", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	channelID, err := apiutil.ReadStringQuery(r, "channel_id", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	ruleID, err := apiutil.ReadStringQuery(r, "rule_id", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	s, err := apiutil.ReadStringQuery(r, sapi.StatusKey, alarms.AllStatus.String())
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	status, err := alarms.ToStatus(s)
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	assigneeID, err := apiutil.ReadStringQuery(r, "assignee_id", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return listAlarmsReq{
+		PageMetadata: alarms.PageMetadata{
+			Offset:     offset,
+			Limit:      limit,
+			DomainID:   domainID,
+			ChannelID:  channelID,
+			RuleID:     ruleID,
+			Status:     status,
+			AssigneeID: assigneeID,
+		},
+	}, nil
+}
+
+func decodeAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
+	alarmID, err := apiutil.ReadStringQuery(r, "alarm_id", "")
+	if err != nil {
+		return entityReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return entityReq{
+		ID: alarmID,
+	}, nil
+}
+
+func decodeUpdateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), sapi.ContentType) {
+		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := createAlarmReq{}
+	if err := json.NewDecoder(r.Body).Decode(&req.Alarm); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	alarmID, err := apiutil.ReadStringQuery(r, "alarm_id", "")
+	if err != nil {
+		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	req.Alarm.ID = alarmID
+
+	return createAlarmReq{
+		Alarm: req.Alarm,
+	}, nil
 }

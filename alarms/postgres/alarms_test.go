@@ -247,25 +247,34 @@ func TestViewAlarm(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
-		desc string
-		id   string
-		err  error
+		desc     string
+		id       string
+		domainID string
+		err      error
 	}{
 		{
-			desc: "valid alarm",
-			id:   alarm.ID,
-			err:  nil,
+			desc:     "valid alarm",
+			id:       alarm.ID,
+			domainID: alarm.DomainID,
+			err:      nil,
 		},
 		{
-			desc: "non existing alarm",
-			id:   generateUUID(&testing.T{}),
-			err:  repoerr.ErrNotFound,
+			desc:     "non existing alarm id",
+			id:       generateUUID(&testing.T{}),
+			domainID: alarm.DomainID,
+			err:      repoerr.ErrNotFound,
+		},
+		{
+			desc:     "non existing domain id",
+			id:       alarm.ID,
+			domainID: generateUUID(&testing.T{}),
+			err:      repoerr.ErrNotFound,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			alarm, err := repo.ViewAlarm(context.Background(), tc.id)
+			alarm, err := repo.ViewAlarm(context.Background(), tc.id, tc.domainID)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 

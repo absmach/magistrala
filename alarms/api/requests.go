@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/absmach/magistrala/alarms"
+	sapi "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 )
 
@@ -37,16 +38,13 @@ func (req createAlarmReq) validate() error {
 	return nil
 }
 
-type assignAlarmReq struct {
-	alarms.Alarm `json:",inline"`
+type listAlarmsReq struct {
+	alarms.PageMetadata
 }
 
-func (req assignAlarmReq) validate() error {
-	if req.Alarm.ID == "" {
-		return errors.New("missing alarm id")
-	}
-	if req.Alarm.AssigneeID == "" {
-		return errors.New("missing assignee id")
+func (req listAlarmsReq) validate() error {
+	if req.Limit > sapi.MaxLimitSize || req.Limit < 1 {
+		return apiutil.ErrLimitSize
 	}
 
 	return nil

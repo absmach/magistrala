@@ -44,7 +44,3 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
 	return am.svc.ViewAlarm(ctx, session, id)
 }
-
-func (am *authorizationMiddleware) AssignAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (err error) {
-	return am.svc.AssignAlarm(ctx, session, alarm)
-}

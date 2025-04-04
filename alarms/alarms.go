@@ -53,8 +53,6 @@ type Service interface {
 	ViewAlarm(ctx context.Context, session authn.Session, id string) (Alarm, error)
 	ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, session authn.Session, id string) error
-
-	AssignAlarm(ctx context.Context, session authn.Session, alarm Alarm) error
 }
 
 type Repository interface {
@@ -63,6 +61,4 @@ type Repository interface {
 	ViewAlarm(ctx context.Context, id string) (Alarm, error)
 	ListAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, id string) error
-
-	AssignAlarm(ctx context.Context, alarm Alarm) error
 }

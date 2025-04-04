@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -29,9 +30,9 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, message, status, domain_id, assignee_id, metadata, created_by, created_at)
-				VALUES (:id, :rule_id, :message, :status, :domain_id, :assignee_id, :metadata, :created_by, :created_at)
-				RETURNING id, rule_id, message, status, domain_id, assignee_id, metadata, created_by, created_at;`
+	query := `INSERT INTO alarms (id, rule_id, message, status, severity, domain_id, assignee_id, metadata, created_by, created_at)
+				VALUES (:id, :rule_id, :message, :status, :severity, :domain_id, :assignee_id, :metadata, :created_by, :created_at)
+				RETURNING id, rule_id, message, status, severity, domain_id, assignee_id, metadata, created_by, created_at;`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -62,6 +63,9 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	}
 	if alarm.Status != 0 {
 		query = append(query, "status = :status,")
+	}
+	if alarm.Severity != 0 {
+		query = append(query, "severity = :severity,")
 	}
 	if alarm.AssigneeID != "" {
 		query = append(query, "assignee_id = :assignee_id,")
@@ -197,6 +201,7 @@ type dbAlarm struct {
 	RuleID     string        `db:"rule_id"`
 	Message    string        `db:"message"`
 	Status     alarms.Status `db:"status"`
+	Severity   uint8         `db:"severity"`
 	DomainID   string        `db:"domain_id"`
 	AssigneeID string        `db:"assignee_id"`
 	CreatedAt  time.Time     `db:"created_at"`
@@ -244,6 +249,7 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 		RuleID:     a.RuleID,
 		Message:    a.Message,
 		Status:     a.Status,
+		Severity:   a.Severity,
 		DomainID:   a.DomainID,
 		AssigneeID: a.AssigneeID,
 		CreatedAt:  a.CreatedAt,
@@ -316,6 +322,15 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	}
 	if pm.AssigneeID != "" {
 		query = append(query, "assignee_id = :assignee_id")
+	}
+	if pm.Severity != math.MaxUint8 {
+		query = append(query, "severity = :severity")
+	}
+	if pm.UpdatedBy != "" {
+		query = append(query, "updated_by = :updated_by")
+	}
+	if pm.ResolvedBy != "" {
+		query = append(query, "resolved_by = :resolved_by")
 	}
 
 	var emq string

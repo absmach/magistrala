@@ -1,0 +1,62 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package readers.v1;
+
+option go_package = "github.com/absmach/magistrala/internal/grpc/readers/v1";
+
+// ReadersService is a service that provides access to
+// readers functionalities for Magistrala services.
+service ReadersService {
+  rpc ReadMessages(ReadMessagesReq)
+    returns (ReadMessagesRes) {}
+}
+
+message PageMetadata {
+  uint64 limit               = 1;
+  uint64 offset              = 2;
+  string protocol            = 3;
+  string name                = 4;
+  double value               = 5;
+  string publisher           = 6;
+  bool bool_value            = 7;
+  string string_value        = 8;
+  string data_value          = 9;
+  double from                = 10;
+  double to                  = 11;
+  string subtopic            = 12;
+  string interval            = 13;
+  bool read                  = 14;
+  Aggregation aggregation    = 15;
+  string comparator          = 16;
+  string format              = 17;
+}
+
+message ReadMessagesRes {
+  uint64 total                        = 1;
+  PageMetadata page_metadata          = 2;
+  repeated Message messages           = 3;
+}
+
+message Message {
+  bytes data = 1;
+}
+
+message ReadMessagesReq {
+  string channel_id                   = 1;
+  string domain_id                    = 2;
+  repeated Message messages           = 3;
+  PageMetadata page_metadata          = 4;
+}
+
+// Aggregation defines supported data aggregations.
+enum Aggregation {
+  AGGREGATION_UNSPECIFIED = 0;
+  MAX                     = 1;
+  MIN                     = 2;
+  SUM                     = 3;
+  COUNT                   = 4;
+  AVG                     = 5;
+}

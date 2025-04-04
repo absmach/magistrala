@@ -21,6 +21,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						rule_id		VARCHAR(36) NOT NULL CHECK (length(rule_id) > 0),
 						message		TEXT NULL,
 						status      SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
+						severity    SMALLINT NOT NULL DEFAULT 0 CHECK (severity >= 0),
 						domain_id	VARCHAR(36) NOT NULL,
 						assignee_id	VARCHAR(36),
 						created_by	VARCHAR(36) NOT NULL,

@@ -35,6 +35,10 @@ func (s *service) CreateAlarm(ctx context.Context, session authn.Session, alarm 
 	alarm.CreatedBy = session.UserID
 	alarm.DomainID = session.DomainID
 
+	if err := alarm.Validate(); err != nil {
+		return Alarm{}, err
+	}
+
 	return s.repo.CreateAlarm(ctx, alarm)
 }
 
@@ -53,6 +57,10 @@ func (s *service) DeleteAlarm(ctx context.Context, session authn.Session, alarmI
 func (s *service) UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error) {
 	alarm.UpdatedAt = time.Now()
 	alarm.UpdatedBy = session.UserID
+
+	if err := alarm.Validate(); err != nil {
+		return Alarm{}, err
+	}
 
 	return s.repo.UpdateAlarm(ctx, alarm)
 }

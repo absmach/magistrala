@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"math"
 	"net/http"
 	"strings"
 
@@ -113,6 +114,18 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	serverity, err := apiutil.ReadNumQuery(r, "severity", uint64(math.MaxUint8))
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	updatedBy, err := apiutil.ReadStringQuery(r, "updated_by", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	resolvedBy, err := apiutil.ReadStringQuery(r, "resolved_by", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	return listAlarmsReq{
 		PageMetadata: alarms.PageMetadata{
@@ -123,6 +136,9 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 			RuleID:     ruleID,
 			Status:     status,
 			AssigneeID: assigneeID,
+			ResolvedBy: resolvedBy,
+			Severity:   uint8(serverity),
+			UpdatedBy:  updatedBy,
 		},
 	}, nil
 }

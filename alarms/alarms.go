@@ -19,7 +19,7 @@ var ErrInvalidSeverity = errors.New("invalid severity. Must be between 0 and 100
 
 type Metadata map[string]interface{}
 
-// Alarm represents an alarm instance
+// Alarm represents an alarm instance.
 type Alarm struct {
 	ID         string    `json:"id"`
 	RuleID     string    `json:"rule_id"`
@@ -67,7 +67,7 @@ func (a Alarm) Validate() error {
 	return nil
 }
 
-// Service specifies an API that must be fulfilled by the domain service
+// Service specifies an API that must be fulfilled by the domain service.
 type Service interface {
 	CreateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error)
 	UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error)

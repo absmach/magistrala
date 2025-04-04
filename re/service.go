@@ -15,7 +15,18 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
-	libs "github.com/vadv/gopher-lua-libs"
+	"github.com/vadv/gopher-lua-libs/argparse"
+	"github.com/vadv/gopher-lua-libs/base64"
+	"github.com/vadv/gopher-lua-libs/crypto"
+	"github.com/vadv/gopher-lua-libs/db"
+	"github.com/vadv/gopher-lua-libs/filepath"
+	"github.com/vadv/gopher-lua-libs/ioutil"
+	"github.com/vadv/gopher-lua-libs/json"
+	"github.com/vadv/gopher-lua-libs/regexp"
+	"github.com/vadv/gopher-lua-libs/storage"
+	"github.com/vadv/gopher-lua-libs/strings"
+	luatime "github.com/vadv/gopher-lua-libs/time"
+	"github.com/vadv/gopher-lua-libs/yaml"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -243,7 +254,7 @@ func (re *re) Errors() <-chan error {
 func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	l := lua.NewState()
 	defer l.Close()
-	libs.Preload(l)
+	preload(l)
 
 	message := l.NewTable()
 
@@ -417,4 +428,19 @@ func (re *re) sendEmail(L *lua.LState) int {
 		return 0
 	}
 	return 1
+}
+
+func preload(l *lua.LState) {
+	db.Preload(l)
+	ioutil.Preload(l)
+	json.Preload(l)
+	yaml.Preload(l)
+	crypto.Preload(l)
+	regexp.Preload(l)
+	luatime.Preload(l)
+	storage.Preload(l)
+	base64.Preload(l)
+	argparse.Preload(l)
+	strings.Preload(l)
+	filepath.Preload(l)
 }

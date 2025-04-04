@@ -127,24 +127,3 @@ func (lm *loggingMiddleware) DeleteAlarm(ctx context.Context, session authn.Sess
 
 	return lm.service.DeleteAlarm(ctx, session, id)
 }
-
-func (lm *loggingMiddleware) AssignAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("request_id", middleware.GetReqID(ctx)),
-			slog.Group("alarm",
-				slog.String("id", alarm.ID),
-				slog.String("assignee_id", alarm.AssigneeID),
-			),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Assign alarm failed", args...)
-			return
-		}
-		lm.logger.Info("Assign alarm completed successfully", args...)
-	}(time.Now())
-
-	return lm.service.AssignAlarm(ctx, session, alarm)
-}

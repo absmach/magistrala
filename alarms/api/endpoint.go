@@ -123,23 +123,3 @@ func deleteAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 		return nil, nil
 	}
 }
-
-func assignAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignAlarmReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-
-		if err := svc.AssignAlarm(ctx, session, req.Alarm); err != nil {
-			return nil, err
-		}
-
-		return nil, nil
-	}
-}

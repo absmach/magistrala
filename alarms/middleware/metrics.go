@@ -72,12 +72,3 @@ func (mm *metricsMiddleware) DeleteAlarm(ctx context.Context, session authn.Sess
 
 	return mm.service.DeleteAlarm(ctx, session, id)
 }
-
-func (mm *metricsMiddleware) AssignAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) error {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "assign_alarm").Add(1)
-		mm.latency.With("method", "assign_alarm").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.service.AssignAlarm(ctx, session, alarm)
-}

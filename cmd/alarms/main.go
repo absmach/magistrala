@@ -32,7 +32,6 @@ import (
 const (
 	svcName          = "alarms"
 	envPrefixDB      = "MG_ALARMS_DB_"
-	envPrefixES      = "MG_ALARMS_ES_"
 	envPrefixHTTP    = "MG_ALARMS_HTTP_"
 	envPrefixAuth    = "SMQ_AUTH_GRPC_"
 	defDB            = "alarms"

@@ -104,9 +104,11 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	return toAlarm(dba)
 }
 
-func (r *repository) ViewAlarm(ctx context.Context, id string) (alarms.Alarm, error) {
-	query := `SELECT * FROM alarms WHERE id = :id;`
-	row, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{"id": id})
+func (r *repository) ViewAlarm(ctx context.Context, alarmID, domainID string) (alarms.Alarm, error) {
+	query := `SELECT * FROM alarms WHERE id = :id AND domain_id = :domain_id;`
+	row, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{
+		"id": alarmID, "domain_id": domainID,
+	})
 	if err != nil {
 		return alarms.Alarm{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}

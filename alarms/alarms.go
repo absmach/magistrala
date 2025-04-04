@@ -58,7 +58,7 @@ type Service interface {
 type Repository interface {
 	CreateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	UpdateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
-	ViewAlarm(ctx context.Context, id string) (Alarm, error)
+	ViewAlarm(ctx context.Context, alarmID, domainID string) (Alarm, error)
 	ListAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, id string) error
 }

@@ -5,10 +5,17 @@ package alarms
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/absmach/supermq/pkg/authn"
 )
+
+const (
+	SeverityMax uint8 = 100
+)
+
+var ErrInvalidSeverity = errors.New("invalid severity. Must be between 0 and 100")
 
 type Metadata map[string]interface{}
 
@@ -18,6 +25,7 @@ type Alarm struct {
 	RuleID     string    `json:"rule_id"`
 	Message    string    `json:"message"`
 	Status     Status    `json:"status"`
+	Severity   uint8     `json:"severity"`
 	DomainID   string    `json:"domain_id"`
 	AssigneeID string    `json:"assignee_id"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -37,13 +45,26 @@ type AlarmsPage struct {
 }
 
 type PageMetadata struct {
-	Offset     uint64 `json:"offset"      db:"offset"`
-	Limit      uint64 `json:"limit"       db:"limit"`
-	DomainID   string `json:"domain_id"   db:"domain_id"`
-	ChannelID  string `json:"channel_id"  db:"channel_id"`
-	RuleID     string `json:"rule_id"     db:"rule_id"`
-	Status     Status `json:"status"      db:"status"`
-	AssigneeID string `json:"assignee_id" db:"assignee_id"`
+	Offset     uint64    `json:"offset"      db:"offset"`
+	Limit      uint64    `json:"limit"       db:"limit"`
+	DomainID   string    `json:"domain_id"   db:"domain_id"`
+	ChannelID  string    `json:"channel_id"  db:"channel_id"`
+	RuleID     string    `json:"rule_id"     db:"rule_id"`
+	Status     Status    `json:"status"      db:"status"`
+	AssigneeID string    `json:"assignee_id" db:"assignee_id"`
+	Severity   uint8     `json:"severity"    db:"severity"`
+	UpdatedBy  string    `json:"updated_by"  db:"updated_by"`
+	ResolvedBy string    `json:"resolved_by" db:"resolved_by"`
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+	ResolvedAt time.Time `json:"resolved_at" db:"resolved_at"`
+}
+
+func (a Alarm) Validate() error {
+	if a.Severity > SeverityMax {
+		return ErrInvalidSeverity
+	}
+
+	return nil
 }
 
 // Service specifies an API that must be fulfilled by the domain service

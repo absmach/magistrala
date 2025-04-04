@@ -27,56 +27,6 @@ func NewTracingMiddleware(tracer trace.Tracer, svc alarms.Service) alarms.Servic
 	}
 }
 
-func (tm *tracingMiddleware) CreateRule(ctx context.Context, session authn.Session, rule alarms.Rule) (alarms.Rule, error) {
-	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "create_rule", trace.WithAttributes(
-		attribute.String("name", rule.Name),
-		attribute.String("condition", rule.Condition),
-		attribute.String("channel", rule.Channel),
-	))
-	defer span.End()
-
-	return tm.svc.CreateRule(ctx, session, rule)
-}
-
-func (tm *tracingMiddleware) UpdateRule(ctx context.Context, session authn.Session, rule alarms.Rule) (alarms.Rule, error) {
-	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "update_rule", trace.WithAttributes(
-		attribute.String("name", rule.Name),
-		attribute.String("condition", rule.Condition),
-		attribute.String("channel", rule.Channel),
-	))
-	defer span.End()
-
-	return tm.svc.UpdateRule(ctx, session, rule)
-}
-
-func (tm *tracingMiddleware) ViewRule(ctx context.Context, session authn.Session, id string) (alarms.Rule, error) {
-	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "get_rule", trace.WithAttributes(
-		attribute.String("id", id),
-	))
-	defer span.End()
-
-	return tm.svc.ViewRule(ctx, session, id)
-}
-
-func (tm *tracingMiddleware) ListRules(ctx context.Context, session authn.Session, pm alarms.PageMetadata) (alarms.RulesPage, error) {
-	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "list_rules", trace.WithAttributes(
-		attribute.Int("offset", int(pm.Offset)),
-		attribute.Int("limit", int(pm.Limit)),
-	))
-	defer span.End()
-
-	return tm.svc.ListRules(ctx, session, pm)
-}
-
-func (tm *tracingMiddleware) DeleteRule(ctx context.Context, session authn.Session, id string) error {
-	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "delete_rule", trace.WithAttributes(
-		attribute.String("id", id),
-	))
-	defer span.End()
-
-	return tm.svc.DeleteRule(ctx, session, id)
-}
-
 func (tm *tracingMiddleware) CreateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
 	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "create_alarm", trace.WithAttributes(
 		attribute.String("rule_id", alarm.RuleID),

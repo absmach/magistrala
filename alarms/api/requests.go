@@ -10,18 +10,6 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 )
 
-type createRuleReq struct {
-	alarms.Rule `json:",inline"`
-}
-
-func (req createRuleReq) validate() error {
-	if req.Rule.Name == "" {
-		return apiutil.ErrMissingName
-	}
-
-	return nil
-}
-
 type entityReq struct {
 	ID string
 }

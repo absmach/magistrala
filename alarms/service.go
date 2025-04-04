@@ -25,38 +25,6 @@ func NewService(idp supermq.IDProvider, repo Repository) Service {
 	}
 }
 
-func (s *service) CreateRule(ctx context.Context, session authn.Session, rule Rule) (Rule, error) {
-	id, err := s.idp.ID()
-	if err != nil {
-		return Rule{}, err
-	}
-	rule.ID = id
-	rule.CreatedAt = time.Now()
-	rule.CreatedBy = session.UserID
-	rule.DomainID = session.DomainID
-
-	return s.repo.CreateRule(ctx, rule)
-}
-
-func (s *service) UpdateRule(ctx context.Context, session authn.Session, rule Rule) (Rule, error) {
-	rule.UpdatedAt = time.Now()
-	rule.UpdatedBy = session.UserID
-
-	return s.repo.UpdateRule(ctx, rule)
-}
-
-func (s *service) ViewRule(ctx context.Context, session authn.Session, ruleID string) (Rule, error) {
-	return s.repo.ViewRule(ctx, ruleID)
-}
-
-func (s *service) ListRules(ctx context.Context, session authn.Session, pm PageMetadata) (RulesPage, error) {
-	return s.repo.ListRules(ctx, pm)
-}
-
-func (s *service) DeleteRule(ctx context.Context, session authn.Session, ruleID string) error {
-	return s.repo.DeleteRule(ctx, ruleID)
-}
-
 func (s *service) CreateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error) {
 	id, err := s.idp.ID()
 	if err != nil {

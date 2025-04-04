@@ -63,9 +63,6 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	if alarm.Status != 0 {
 		query = append(query, "status = :status,")
 	}
-	if alarm.DomainID != "" {
-		query = append(query, "domain_id = :domain_id,")
-	}
 	if alarm.AssigneeID != "" {
 		query = append(query, "assignee_id = :assignee_id,")
 	}
@@ -177,31 +174,6 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 func (r *repository) DeleteAlarm(ctx context.Context, id string) error {
 	query := `DELETE FROM alarms WHERE id = :id;`
 	result, err := r.db.NamedExecContext(ctx, query, map[string]interface{}{"id": id})
-	if err != nil {
-		return errors.Wrap(repoerr.ErrFailedOpDB, err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return errors.Wrap(repoerr.ErrFailedOpDB, err)
-	}
-
-	if rowsAffected == 0 {
-		return errors.Wrap(repoerr.ErrFailedOpDB, repoerr.ErrNotFound)
-	}
-
-	return nil
-}
-
-func (r *repository) AssignAlarm(ctx context.Context, alarm alarms.Alarm) error {
-	query := `UPDATE alarms SET
-				assignee_id = :assignee_id, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id;`
-	result, err := r.db.NamedExecContext(ctx, query, map[string]interface{}{
-		"id":          alarm.ID,
-		"assignee_id": alarm.AssigneeID,
-		"updated_at":  alarm.UpdatedAt,
-		"updated_by":  alarm.UpdatedBy,
-	})
 	if err != nil {
 		return errors.Wrap(repoerr.ErrFailedOpDB, err)
 	}

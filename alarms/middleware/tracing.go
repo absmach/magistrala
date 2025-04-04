@@ -76,13 +76,3 @@ func (tm *tracingMiddleware) DeleteAlarm(ctx context.Context, session authn.Sess
 
 	return tm.svc.DeleteAlarm(ctx, session, id)
 }
-
-func (tm *tracingMiddleware) AssignAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) error {
-	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "assign_alarm", trace.WithAttributes(
-		attribute.String("id", alarm.ID),
-		attribute.String("assignee_id", alarm.AssigneeID),
-	))
-	defer span.End()
-
-	return tm.svc.AssignAlarm(ctx, session, alarm)
-}

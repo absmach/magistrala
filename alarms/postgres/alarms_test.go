@@ -80,6 +80,23 @@ func TestCreateAlarm(t *testing.T) {
 			err: repoerr.ErrCreateEntity,
 		},
 		{
+			desc: "invalid alarm",
+			alarm: alarms.Alarm{
+				ID:      generateUUID(&testing.T{}),
+				Message: namegen.Generate(),
+				Status:  0,
+
+				DomainID:   generateUUID(&testing.T{}),
+				AssigneeID: generateUUID(&testing.T{}),
+				CreatedAt:  time.Now().Local(),
+				CreatedBy:  generateUUID(&testing.T{}),
+				Metadata: map[string]interface{}{
+					"key": make(chan int),
+				},
+			},
+			err: repoerr.ErrCreateEntity,
+		},
+		{
 			desc:  "empty alarm",
 			alarm: alarms.Alarm{},
 			err:   repoerr.ErrCreateEntity,
@@ -137,9 +154,21 @@ func TestUpdateAlarm(t *testing.T) {
 		err   error
 	}{
 		{
-			desc:  "valid alarm",
-			alarm: alarm,
-			err:   nil,
+			desc: "valid alarm",
+			alarm: alarms.Alarm{
+				ID:         alarm.ID,
+				Message:    namegen.Generate(),
+				Status:     alarms.AssignedStatus,
+				AssigneeID: generateUUID(&testing.T{}),
+				UpdatedAt:  time.Now().Local(),
+				UpdatedBy:  generateUUID(&testing.T{}),
+				ResolvedAt: time.Now().Local(),
+				ResolvedBy: generateUUID(&testing.T{}),
+				Metadata: map[string]interface{}{
+					"key": "value",
+				},
+			},
+			err: nil,
 		},
 		{
 			desc: "non existing alarm",

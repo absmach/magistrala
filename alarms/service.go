@@ -56,10 +56,3 @@ func (s *service) UpdateAlarm(ctx context.Context, session authn.Session, alarm 
 
 	return s.repo.UpdateAlarm(ctx, alarm)
 }
-
-func (s *service) AssignAlarm(ctx context.Context, session authn.Session, alarm Alarm) error {
-	alarm.UpdatedAt = time.Now()
-	alarm.UpdatedBy = session.UserID
-
-	return s.repo.AssignAlarm(ctx, alarm)
-}

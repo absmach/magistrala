@@ -14,12 +14,14 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
 	"github.com/absmach/magistrala/re/emailer"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
+	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/consumers"
 	smqlog "github.com/absmach/supermq/logger"
@@ -48,6 +50,7 @@ const (
 	envPrefixAuth  = "SMQ_AUTH_GRPC_"
 	defDB          = "r"
 	defSvcHTTPPort = "9008"
+	envPrefixGrpc  = "MG_TIMESCALE_READER_GRPC_"
 )
 
 type config struct {
@@ -174,7 +177,29 @@ func main() {
 	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-	svc, err := newService(ctx, database, pubSub, authz, cfg.ESURL, tracer, ec, logger)
+	regrpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load clients gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+
+	client, err := grpcclient.NewHandler(regrpcCfg)
+	if err != nil {
+		exitCode = 1
+		return
+	}
+
+	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to readers gRPC server: %s", err))
+		exitCode = 1
+		return
+	}
+	defer client.Close()
+	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
+
+	svc, err := newService(ctx, database, pubSub, authz, cfg.ESURL, tracer, ec, logger, readersClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -214,7 +239,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db pgclient.Database, pubsub messaging.PubSub, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, ec email.Config, logger *slog.Logger) (re.Service, error) {
+func newService(ctx context.Context, db pgclient.Database, pubsub messaging.PubSub, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -224,7 +249,7 @@ func newService(ctx context.Context, db pgclient.Database, pubsub messaging.PubS
 	}
 
 	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
-	csvc := re.NewService(repo, idp, pubsub, re.NewTicker(time.Minute), emailerClient)
+	csvc := re.NewService(repo, idp, pubsub, re.NewTicker(time.Minute), emailerClient, readersClient)
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

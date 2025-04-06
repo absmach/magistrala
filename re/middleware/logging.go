@@ -195,3 +195,19 @@ func (lm *loggingMiddleware) ConsumeAsync(ctx context.Context, msgs interface{})
 func (lm *loggingMiddleware) Errors() <-chan error {
 	return lm.svc.Errors()
 }
+
+func (lm *loggingMiddleware) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig) (page re.ReportPage, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Generate report failed", args...)
+			return
+		}
+		lm.logger.Info("Generate report completed", args...)
+	}(time.Now())
+
+	return lm.svc.GenerateReport(ctx, session, config)
+}

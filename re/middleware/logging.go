@@ -220,3 +220,19 @@ func (lm *loggingMiddleware) Handle(msg *messaging.Message) (err error) {
 func (lm *loggingMiddleware) Cancel() error {
 	return lm.Cancel()
 }
+
+func (lm *loggingMiddleware) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig) (page re.ReportPage, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Generate report failed", args...)
+			return
+		}
+		lm.logger.Info("Generate report completed", args...)
+	}(time.Now())
+
+	return lm.svc.GenerateReport(ctx, session, config)
+}

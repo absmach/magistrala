@@ -43,6 +43,25 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS rules`,
 				},
 			},
+			{
+				Id: "rules_02",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS report_config (
+						id          	 	VARCHAR(36) REFERENCES rules(id) ON DELETE CASCADE PRIMARY KEY,
+						name				TEXT NOT NULL,
+						channel_ids 	  	TEXT[],
+						client_ids 		  	TEXT[],
+						aggregation			TEXT,
+						metrics				TEXT[],
+						"to" 				TEXT[],
+						"from" 				TEXT,
+						subject 			TEXT
+					);`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS report_config;`,
+				},
+			},
 		},
 	}
 }

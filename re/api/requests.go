@@ -103,3 +103,14 @@ func (req deleteRuleReq) validate() error {
 
 	return nil
 }
+
+type generateReportReq struct {
+	*re.ReportConfig
+}
+
+func (req generateReportReq) validate() error {
+	if req.ReportConfig == nil {
+		return apiutil.ErrValidation
+	}
+	return nil
+}

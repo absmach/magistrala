@@ -177,3 +177,50 @@ func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
 		return updateRuleStatusRes{Rule: rule}, err
 	}
 }
+
+func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(generateReportReq)
+		if err := req.validate(); err != nil {
+			return generateReportResp{}, err
+		}
+
+		reportPage, err := svc.GenerateReport(ctx, session, *req.ReportConfig)
+		if err != nil {
+			return generateReportResp{}, nil
+		}
+
+		return generateReportResp{reportPage}, nil
+	}
+}
+
+func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(generateReportReq)
+		if err := req.validate(); err != nil {
+			return downloadReportResp{}, err
+		}
+
+		page, err := svc.GenerateReport(ctx, session, *req.ReportConfig)
+		if err != nil {
+			return downloadReportResp{}, err
+		}
+
+		return downloadReportResp{
+			PDF:         page.PDF,
+			CSV:         page.CSV,
+			Filename:    "Reports.zip",
+			ContentType: "application/zip",
+		}, nil
+	}
+}

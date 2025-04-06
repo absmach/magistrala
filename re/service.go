@@ -4,9 +4,16 @@
 package re
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -58,6 +65,7 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 }
 
@@ -70,9 +78,10 @@ type re struct {
 	alarmsPub  messaging.Publisher
 	ticker     Ticker
 	email      Emailer
+	readers    grpcReadersV1.ReadersServiceClient
 }
 
-func NewService(repo Repository, errors chan (error), idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, errors chan (error), idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
 	return &re{
 		repo:       repo,
 		idp:        idp,
@@ -188,3 +197,4 @@ func (re *re) Cancel() error {
 func (re *re) Errors() <-chan error {
 	return re.errors
 }
+

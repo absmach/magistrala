@@ -22,6 +22,7 @@ import (
 	"github.com/absmach/magistrala/re/emailer"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
+	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
@@ -36,6 +37,7 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
+	"github.com/nats-io/nats.go/jetstream"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -46,15 +48,42 @@ const (
 	envPrefixAuth  = "SMQ_AUTH_GRPC_"
 	defDB          = "r"
 	defSvcHTTPPort = "9008"
+	envPrefixGrpc  = "MG_TIMESCALE_READER_GRPC_"
 )
 
 type config struct {
-	LogLevel      string  `env:"MG_RE_LOG_LEVEL"        envDefault:"info"`
-	InstanceID    string  `env:"MG_RE_INSTANCE_ID"      envDefault:""`
-	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"     envDefault:"true"`
-	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
+	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
+	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
+	JaegerURL        url.URL       `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry    bool          `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
+	ESURL            string        `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
+	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
+	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
+	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+}
+
+const (
+	writersCfgName = "writers"
+	alarmsCfgName  = "alarms"
+
+	alarmsPrefix  = "alarms"
+	writersPrefix = "writers"
+)
+
+var (
+	writersSubjects = []string{"writers.>"}
+	alarmsSubjects  = []string{"alarms.>"}
+)
+
+var jsStreamConfig = jetstream.StreamConfig{
+	Retention:         jetstream.LimitsPolicy,
+	Description:       "SuperMQ Rules Engine stream for handling internal messages",
+	MaxMsgsPerSubject: 1e6,
+	MaxAge:            time.Hour * 24,
+	MaxMsgSize:        1024 * 1024,
+	Discard:           jetstream.DiscardOld,
+	Storage:           jetstream.FileStorage,
 }
 
 func main() {
@@ -178,7 +207,29 @@ func main() {
 	errs := make(chan error)
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, ec, logger)
+	regrpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load clients gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+
+	client, err := grpcclient.NewHandler(regrpcCfg)
+	if err != nil {
+		exitCode = 1
+		return
+	}
+
+	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to readers gRPC server: %s", err))
+		exitCode = 1
+		return
+	}
+	defer client.Close()
+	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
+
+	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, ec, logger, readersClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -236,7 +287,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, ec email.Config, logger *slog.Logger) (re.Service, error) {
+func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -245,7 +296,7 @@ func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, errs, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient)
+	csvc := re.NewService(repo, errs, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient, readersClient)
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

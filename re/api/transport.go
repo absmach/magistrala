@@ -4,8 +4,11 @@
 package api
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -93,6 +96,22 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 					api.EncodeResponse,
 					opts...,
 				), "disable_rule").ServeHTTP)
+			})
+
+			r.Route("/reports", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					generateReportEndpoint(svc),
+					decodeGenerateReportRequest,
+					api.EncodeResponse,
+					opts...,
+				), "generate_report").ServeHTTP)
+
+				r.Get("/download", otelhttp.NewHandler(kithttp.NewServer(
+					downloadReportEndpoint(svc),
+					decodeGenerateReportRequest,
+					encodeFileDownloadResponse,
+					opts...,
+				), "download_report").ServeHTTP)
 			})
 		})
 	})
@@ -198,4 +217,50 @@ func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	id := chi.URLParam(r, idKey)
 
 	return deleteRuleReq{id: id}, nil
+}
+
+func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+	var config re.ReportConfig
+	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+	return generateReportReq{ReportConfig: &config}, nil
+}
+
+func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	resp := response.(downloadReportResp)
+	var buffer bytes.Buffer
+	zw := zip.NewWriter(&buffer)
+
+	f, err := zw.Create("Report.pdf")
+	if err != nil {
+		return err
+	}
+
+	if _, err = f.Write(resp.PDF); err != nil {
+		return err
+	}
+
+	f, err = zw.Create("Report.csv")
+	if err != nil {
+		return err
+	}
+
+	if _, err = f.Write(resp.CSV); err != nil {
+		return err
+	}
+
+	if err := zw.Close(); err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", resp.Filename))
+	w.Header().Set("Content-Type", resp.ContentType)
+
+	_, err = w.Write(buffer.Bytes())
+
+	return err
 }

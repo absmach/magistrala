@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/absmach/magistrala/re"
+	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
@@ -54,6 +55,102 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 	}
 
 	return rule, nil
+}
+
+func (repo *PostgresRepository) addRule(ctx context.Context, dbr dbRule) (re.Rule, error) {
+	row, err := repo.DB.NamedQueryContext(ctx, addRuleQuery, dbr)
+	if err != nil {
+		return re.Rule{}, err
+	}
+	defer row.Close()
+
+	var dbRule dbRule
+	if row.Next() {
+		if err := row.StructScan(&dbRule); err != nil {
+			return re.Rule{}, err
+		}
+	}
+
+	rule, err := dbToRule(dbRule)
+	if err != nil {
+		return re.Rule{}, err
+	}
+	return rule, nil
+}
+
+func (repo *PostgresRepository) addReport(ctx context.Context, r dbRule) (rpt re.Rule, resErr error) {
+	reportQuery := `INSERT INTO report_config (id, name, channel_ids, client_ids, aggregation, metrics, to, from, subject)
+	VALUES (:id, :name, :channel_ids, :client_ids, :aggregation, :metrics, :to, :from, :subject)
+	RETURNING id, name, channel_ids, client_ids, aggregation, metrics, to, from, subject;`
+
+	tx, err := repo.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return re.Rule{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
+
+	defer func() {
+		if resErr != nil {
+			if errRollBack := tx.Rollback(); errRollBack != nil {
+				resErr = errors.Wrap(resErr, errors.Wrap(apiutil.ErrRollbackTx, errRollBack))
+			}
+		}
+	}()
+
+	row, err := tx.NamedQuery(addRuleQuery, r)
+	if err != nil {
+		return re.Rule{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
+	}
+	defer row.Close()
+
+	var dbRule dbRule
+	if row.Next() {
+		if err := row.StructScan(&dbRule); err != nil {
+			return re.Rule{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		}
+	} else {
+		return re.Rule{}, errors.Wrap(repoerr.ErrCreateEntity, errors.New("failed to retrieve created rule"))
+	}
+
+	reportRow, err := tx.NamedQuery(reportQuery, r)
+	if err != nil {
+		return re.Rule{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
+	}
+	defer reportRow.Close()
+
+	if reportRow.Next() {
+	} else {
+		return re.Rule{}, errors.Wrap(repoerr.ErrCreateEntity, errors.New("failed to retrieve created report configuration"))
+	}
+
+	if err := tx.Commit(); err != nil {
+		return re.Rule{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
+
+	rule, err := dbToRule(dbRule)
+	if err != nil {
+		return re.Rule{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
+
+	// rule.ReportConfig = &re.ReportConfig{
+	// 	Name:            r.Name,
+	// 	DomainID:        r.DomainID,
+	// 	ChannelIDs:      fromNullStringSlice(r.ChannelIDs),
+	// 	ClientIDs:       fromNullStringSlice(r.ClientIDs),
+	// 	StartDateTime:   r.StartDateTime,
+	// 	Time:            r.Time,
+	// 	Recurring:       r.Recurring,
+	// 	RecurringPeriod: r.RecurringPeriod,
+	// 	Aggregation:     fromNullString(r.Aggregation),
+	// 	Metrics:         r.Metrics,
+	// 	Email: &re.Email{
+	// 		To:      fromNullStringSlice(r.To),
+	// 		From:    fromNullString(r.From),
+	// 		Subject: fromNullString(r.Subject),
+	// 	},
+	// }
+
+	return rule, nil
+
 }
 
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {

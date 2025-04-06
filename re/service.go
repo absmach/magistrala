@@ -4,14 +4,23 @@
 package re
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/jung-kurt/gofpdf"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -35,21 +44,22 @@ type (
 )
 
 type Rule struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	DomainID      string    `json:"domain"`
-	Metadata      Metadata  `json:"metadata,omitempty"`
-	InputChannel  string    `json:"input_channel"`
-	InputTopic    string    `json:"input_topic"`
-	Logic         Script    `json:"logic"`
-	OutputChannel string    `json:"output_channel,omitempty"`
-	OutputTopic   string    `json:"output_topic,omitempty"`
-	Schedule      Schedule  `json:"schedule,omitempty"`
-	Status        Status    `json:"status"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
-	CreatedBy     string    `json:"created_by,omitempty"`
-	UpdatedAt     time.Time `json:"updated_at,omitempty"`
-	UpdatedBy     string    `json:"updated_by,omitempty"`
+	ID            string        `json:"id"`
+	Name          string        `json:"name"`
+	DomainID      string        `json:"domain"`
+	Metadata      Metadata      `json:"metadata,omitempty"`
+	InputChannel  string        `json:"input_channel"`
+	InputTopic    string        `json:"input_topic"`
+	Logic         Script        `json:"logic"`
+	OutputChannel string        `json:"output_channel,omitempty"`
+	OutputTopic   string        `json:"output_topic,omitempty"`
+	Schedule      Schedule      `json:"schedule,omitempty"`
+	Status        Status        `json:"status"`
+	CreatedAt     time.Time     `json:"created_at,omitempty"`
+	CreatedBy     string        `json:"created_by,omitempty"`
+	UpdatedAt     time.Time     `json:"updated_at,omitempty"`
+	UpdatedBy     string        `json:"updated_by,omitempty"`
+	ReportConfig  *ReportConfig `json:"report_config,omitempty"`
 }
 
 type Repository interface {
@@ -96,6 +106,7 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 	Errors() <-chan error
 }
@@ -109,9 +120,10 @@ type re struct {
 	errors     chan error
 	ticker     Ticker
 	email      Emailer
+	readers    grpcReadersV1.ReadersServiceClient
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
 	return &re{
 		writersPub: writersPub,
 		alarmsPub:  alarmsPub,
@@ -253,6 +265,10 @@ func (re *re) Errors() <-chan error {
 }
 
 func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error {
+	if r.ReportConfig != nil {
+		return re.processReport(ctx, r)
+	}
+
 	l := lua.NewState()
 	defer l.Close()
 	preload(l)
@@ -289,6 +305,50 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 		}
 		return re.rePubSub.Publish(ctx, m.Channel, m)
 	}
+}
+
+func (re *re) processReport(ctx context.Context, r Rule) error {
+	reportPage, err := re.generateReport(ctx, *r.ReportConfig)
+	if err != nil {
+		return err
+	}
+
+	if r.ReportConfig.Email != nil && len(r.ReportConfig.Email.To) > 0 {
+		reportContent, err := json.Marshal(reportPage)
+		if err != nil {
+			return err
+		}
+
+		err = re.email.SendEmailNotification(
+			r.ReportConfig.Email.To,
+			r.ReportConfig.Email.From,
+			r.ReportConfig.Email.Subject,
+			"",
+			"",
+			string(reportContent),
+			"",
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(r.OutputChannel) > 0 {
+		reportData, err := json.Marshal(reportPage)
+		if err != nil {
+			return err
+		}
+
+		m := &messaging.Message{
+			Publisher: "magistrala.re",
+			Created:   time.Now().Unix(),
+			Payload:   reportData,
+			Channel:   r.OutputChannel,
+		}
+		return re.rePubSub.Publish(ctx, m.Channel, m)
+	}
+
+	return nil
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {
@@ -371,4 +431,246 @@ func (r Rule) shouldRun(startTime time.Time) bool {
 	}
 
 	return false
+}
+func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error) {
+	config.DomainID = session.DomainID
+
+	_, err := re.AddRule(ctx, session, Rule{ReportConfig: &config})
+	if err != nil {
+		return ReportPage{}, err
+	}
+
+	page, err := re.generateReport(ctx, config)
+	if err != nil {
+		return ReportPage{}, err
+	}
+
+	return page, nil
+}
+
+func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage, error) {
+	reportPage := ReportPage{
+		Reports: make([]Report, 0),
+	}
+
+	report := Report{
+		ClientMessages: make(map[string][]senml.Message),
+	}
+
+	for _, ch := range cfg.ChannelIDs {
+		agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
+		switch cfg.Aggregation {
+		case "MAX":
+			agg = grpcReadersV1.Aggregation_MAX
+		case "MIN":
+			agg = grpcReadersV1.Aggregation_MIN
+		case "COUNT":
+			agg = grpcReadersV1.Aggregation_COUNT
+		case "AVG":
+			agg = grpcReadersV1.Aggregation_AVG
+		case "SUM":
+			agg = grpcReadersV1.Aggregation_SUM
+		}
+
+		msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+			ChannelId:    ch,
+			DomainId:     cfg.DomainID,
+			PageMetadata: &grpcReadersV1.PageMetadata{Aggregation: agg},
+		})
+		if err != nil {
+			return ReportPage{}, err
+		}
+
+		for _, msg := range msgs.Messages {
+			var message senml.Message
+			err := json.Unmarshal(msg.Data, &message)
+			if err != nil {
+				return reportPage, err
+			}
+
+			publisher := message.Publisher
+
+			if contains(cfg.ClientIDs, publisher) && shouldIncludeMessage(message, cfg.Metrics) {
+				report.ClientMessages[publisher] = append(report.ClientMessages[publisher], message)
+			}
+		}
+	}
+
+	reportPage.Reports = append(reportPage.Reports, report)
+	reportPage.Total = uint64(len(reportPage.Reports))
+	reportPage.Offset = 0
+	reportPage.Limit = reportPage.Total
+
+	var err error
+	reportPage.PDF, err = re.generatePDFReport(report)
+	if err != nil {
+		return reportPage, err
+	}
+
+	reportPage.CSV, err = re.generateCSVReport(report)
+	if err != nil {
+		return reportPage, err
+	}
+
+	return reportPage, nil
+}
+
+func contains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
+func shouldIncludeMessage(message senml.Message, metrics []string) bool {
+	if len(metrics) == 0 {
+		return true
+	}
+
+	for _, metric := range metrics {
+		if strings.Contains(message.Name, metric) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (re *re) generatePDFReport(report Report) ([]byte, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(40, 10, "Device Metrics Report")
+	pdf.Ln(15)
+
+	for publisher, messages := range report.ClientMessages {
+		if len(messages) == 0 {
+			continue
+		}
+
+		pdf.SetFont("Arial", "B", 12)
+		pdf.Cell(40, 10, fmt.Sprintf("Device: %s", publisher))
+		pdf.Ln(10)
+
+		pdf.SetFont("Arial", "B", 10)
+		pdf.SetFillColor(200, 200, 200)
+
+		headers := []string{"Metric Name", "Value", "Unit", "Time"}
+		widths := []float64{60, 40, 30, 40}
+
+		for i, header := range headers {
+			pdf.Cell(widths[i], 8, header)
+		}
+		pdf.Ln(-1)
+
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetFillColor(255, 255, 255)
+
+		fill := false
+
+		sort.Slice(messages, func(i, j int) bool {
+			return messages[i].Time < messages[j].Time
+		})
+
+		for _, msg := range messages {
+			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+
+			var valueStr string
+			if msg.Value != nil {
+				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+			} else if msg.StringValue != nil {
+				valueStr = *msg.StringValue
+			} else if msg.BoolValue != nil {
+				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+			} else if msg.DataValue != nil {
+				valueStr = *msg.DataValue
+			} else {
+				valueStr = "N/A"
+			}
+
+			pdf.Cell(widths[0], 8, msg.Name)
+			pdf.Cell(widths[1], 8, valueStr)
+			pdf.Cell(widths[2], 8, msg.Unit)
+			pdf.Cell(widths[3], 8, timeStr)
+			pdf.Ln(-1)
+
+			fill = !fill
+		}
+
+		pdf.Ln(10)
+	}
+
+	var buf bytes.Buffer
+	err := pdf.Output(&buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (re *re) generateCSVReport(report Report) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+
+	for publisher, messages := range report.ClientMessages {
+		if len(messages) == 0 {
+			continue
+		}
+
+		if err := writer.Write([]string{fmt.Sprintf("Device: %s", publisher)}); err != nil {
+			return nil, err
+		}
+
+		if err := writer.Write([]string{"Metric Name", "Value", "Unit", "Time", "Channel", "Subtopic"}); err != nil {
+			return nil, err
+		}
+
+		sort.Slice(messages, func(i, j int) bool {
+			return messages[i].Time < messages[j].Time
+		})
+
+		for _, msg := range messages {
+			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+
+			var valueStr string
+			if msg.Value != nil {
+				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+			} else if msg.StringValue != nil {
+				valueStr = *msg.StringValue
+			} else if msg.BoolValue != nil {
+				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+			} else if msg.DataValue != nil {
+				valueStr = *msg.DataValue
+			} else {
+				valueStr = "N/A"
+			}
+
+			row := []string{
+				msg.Name,
+				valueStr,
+				msg.Unit,
+				timeStr,
+				msg.Channel,
+				msg.Subtopic,
+			}
+
+			if err := writer.Write(row); err != nil {
+				return nil, err
+			}
+		}
+
+		if err := writer.Write([]string{}); err != nil {
+			return nil, err
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }

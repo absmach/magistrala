@@ -136,3 +136,26 @@ func (res deleteRuleRes) Headers() map[string]string {
 func (res deleteRuleRes) Empty() bool {
 	return true
 }
+
+type generateReportResp struct {
+	re.ReportPage `json:",inline"`
+}
+
+func (res generateReportResp) Code() int {
+	return http.StatusCreated
+}
+
+func (res generateReportResp) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res generateReportResp) Empty() bool {
+	return false
+}
+
+type downloadReportResp struct {
+	PDF         []byte
+	CSV         []byte
+	ContentType string
+	Filename    string
+}

@@ -13,7 +13,7 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq"
-	sapi "github.com/absmach/supermq/api/http"
+	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -24,45 +24,45 @@ import (
 
 func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider, instanceID string, authn smqauthn.Authentication) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, sapi.EncodeError)),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	mux := chi.NewRouter()
 
 	mux.Route("/{domainID}/alarms", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(sapi.AuthenticateMiddleware(authn, true))
-			r.Use(sapi.RequestIDMiddleware(idp))
+			r.Use(api.AuthenticateMiddleware(authn, true))
+			r.Use(api.RequestIDMiddleware(idp))
 
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				createAlarmEndpoint(svc),
 				decodeCreateAlarmReq,
-				sapi.EncodeResponse,
+				api.EncodeResponse,
 				opts...,
 			), "create_alarm").ServeHTTP)
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				listAlarmsEndpoint(svc),
 				decodeListAlarmsReq,
-				sapi.EncodeResponse,
+				api.EncodeResponse,
 				opts...,
 			), "list_alarms").ServeHTTP)
 			r.Route("/{alarmID}", func(r chi.Router) {
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					viewAlarmEndpoint(svc),
 					decodeAlarmReq,
-					sapi.EncodeResponse,
+					api.EncodeResponse,
 					opts...,
 				), "get_alarm").ServeHTTP)
 				r.Put("/", otelhttp.NewHandler(kithttp.NewServer(
 					updateAlarmEndpoint(svc),
 					decodeUpdateAlarmReq,
-					sapi.EncodeResponse,
+					api.EncodeResponse,
 					opts...,
 				), "update_alarm").ServeHTTP)
 				r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
 					deleteAlarmEndpoint(svc),
 					decodeAlarmReq,
-					sapi.EncodeResponse,
+					api.EncodeResponse,
 					opts...,
 				), "delete_alarm").ServeHTTP)
 			})
@@ -73,7 +73,7 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 }
 
 func decodeCreateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), sapi.ContentType) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
@@ -86,11 +86,11 @@ func decodeCreateAlarmReq(_ context.Context, r *http.Request) (interface{}, erro
 }
 
 func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error) {
-	offset, err := apiutil.ReadNumQuery[uint64](r, sapi.OffsetKey, sapi.DefOffset)
+	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	limit, err := apiutil.ReadNumQuery[uint64](r, sapi.LimitKey, sapi.DefLimit)
+	limit, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -106,7 +106,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	s, err := apiutil.ReadStringQuery(r, sapi.StatusKey, alarms.AllStatus.String())
+	s, err := apiutil.ReadStringQuery(r, api.StatusKey, alarms.AllStatus.String())
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -154,7 +154,7 @@ func decodeAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeUpdateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), sapi.ContentType) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 

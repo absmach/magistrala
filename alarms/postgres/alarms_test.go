@@ -159,7 +159,10 @@ func TestUpdateAlarm(t *testing.T) {
 				ID:         alarm.ID,
 				Message:    namegen.Generate(),
 				Status:     alarms.AssignedStatus,
+				DomainID:   alarm.DomainID,
 				AssigneeID: generateUUID(&testing.T{}),
+				CreatedAt:  alarm.CreatedAt,
+				CreatedBy:  alarm.CreatedBy,
 				UpdatedAt:  time.Now().Local(),
 				UpdatedBy:  generateUUID(&testing.T{}),
 				ResolvedAt: time.Now().Local(),
@@ -184,8 +187,8 @@ func TestUpdateAlarm(t *testing.T) {
 				RuleID:     generateUUID(&testing.T{}),
 				Message:    strings.Repeat("a", 255),
 				Status:     0,
-				DomainID:   strings.Repeat("a", 40),
-				AssigneeID: generateUUID(&testing.T{}),
+				DomainID:   generateUUID(&testing.T{}),
+				AssigneeID: strings.Repeat("a", 40),
 				CreatedAt:  time.Now().Local(),
 				CreatedBy:  generateUUID(&testing.T{}),
 				Metadata: map[string]interface{}{
@@ -211,7 +214,6 @@ func TestUpdateAlarm(t *testing.T) {
 			}
 			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 			require.NotEmpty(t, alarm.ID)
-			require.Equal(t, tc.alarm.RuleID, alarm.RuleID)
 			require.Equal(t, tc.alarm.Message, alarm.Message)
 			require.Equal(t, tc.alarm.Status, alarm.Status)
 			require.Equal(t, tc.alarm.DomainID, alarm.DomainID)

@@ -19,6 +19,7 @@ import (
 	smqlog "github.com/absmach/supermq/logger"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -140,7 +141,7 @@ func TestProvision(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repocall := svc.On("Provision", validID, tc.token, "test", validID, validID).Return(provision.Result{}, tc.svcErr)
+			repocall := svc.On("Provision", mock.Anything, validID, tc.token, "test", validID, validID).Return(provision.Result{}, tc.svcErr)
 			req := testRequest{
 				client:      is.Client(),
 				method:      http.MethodPost,
@@ -205,7 +206,7 @@ func TestMapping(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repocall := svc.On("Mapping", tc.token).Return(map[string]interface{}{}, tc.svcErr)
+			repocall := svc.On("Mapping", mock.Anything, tc.token).Return(map[string]interface{}{}, tc.svcErr)
 			req := testRequest{
 				client:      is.Client(),
 				method:      http.MethodGet,

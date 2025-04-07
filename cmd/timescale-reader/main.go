@@ -168,7 +168,6 @@ func main() {
 		go chc.CallHome(ctx)
 	}
 
-	logger.Info("Starting gRPC server...", slog.String("port", grpcServerConfig.Port))
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerReadersServiceServer, logger)
 
 	g.Go(func() error {

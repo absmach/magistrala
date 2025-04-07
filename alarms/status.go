@@ -30,6 +30,7 @@ const (
 	Resolved = "resolved"
 	Ignored  = "ignored"
 	Unknown  = "unknown"
+	All      = "all"
 )
 
 // String converts alarm status to string literal.
@@ -59,6 +60,8 @@ func ToStatus(status string) (Status, error) {
 		return ResolvedStatus, nil
 	case Ignored:
 		return IgnoredStatus, nil
+	case All:
+		return AllStatus, nil
 	default:
 		return Status(0), svcerr.ErrInvalidStatus
 	}

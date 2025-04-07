@@ -106,7 +106,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	s, err := apiutil.ReadStringQuery(r, api.StatusKey, alarms.AllStatus.String())
+	s, err := apiutil.ReadStringQuery(r, api.StatusKey, alarms.All)
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -148,24 +148,24 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func decodeAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
-	return entityReq{
-		ID: chi.URLParam(r, "alarmID"),
+	return alarmReq{
+		Alarm: alarms.Alarm{
+			ID: chi.URLParam(r, "alarmID"),
+		},
 	}, nil
 }
 
 func decodeUpdateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return alarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	req := createAlarmReq{}
+	req := alarmReq{}
 	if err := json.NewDecoder(r.Body).Decode(&req.Alarm); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return alarmReq{}, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 
 	req.Alarm.ID = chi.URLParam(r, "alarmID")
 
-	return createAlarmReq{
-		Alarm: req.Alarm,
-	}, nil
+	return req, nil
 }

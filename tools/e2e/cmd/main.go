@@ -30,8 +30,8 @@ func main() {
 			"go run tools/e2e/cmd/main.go\n" +
 			"go run tools/e2e/cmd/main.go --host 142.93.118.47\n" +
 			"go run tools/e2e/cmd/main.go --host localhost --num 10 --num_of_messages 100 --prefix e2e",
-		Run: func(_ *cobra.Command, _ []string) {
-			e2e.Test(econf)
+		Run: func(cmd *cobra.Command, _ []string) {
+			e2e.Test(cmd.Context(), econf)
 		},
 	}
 

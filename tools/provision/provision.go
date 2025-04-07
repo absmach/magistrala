@@ -56,8 +56,7 @@ type Config struct {
 }
 
 // Provision - function that does actual provisiong.
-func Provision(conf Config) error {
-	ctx := context.Background()
+func Provision(ctx context.Context, conf Config) error {
 	const (
 		rsaBits = 4096
 		ttl     = "2400h"

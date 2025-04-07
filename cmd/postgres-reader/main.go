@@ -45,7 +45,7 @@ const (
 	defDB             = "supermq"
 	defSvcHTTPPort    = "9009"
 	defSvcGRPCPort    = "7009"
-	envPrefixGrpc     = "MG_POSTGRES_GRPC_"
+	envPrefixGrpc     = "MG_POSTGRES_READER_GRPC_"
 )
 
 type config struct {

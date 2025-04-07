@@ -148,13 +148,8 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func decodeAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
-	alarmID, err := apiutil.ReadStringQuery(r, "alarm_id", "")
-	if err != nil {
-		return entityReq{}, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
 	return entityReq{
-		ID: alarmID,
+		ID: chi.URLParam(r, "alarmID"),
 	}, nil
 }
 
@@ -168,11 +163,7 @@ func decodeUpdateAlarmReq(_ context.Context, r *http.Request) (interface{}, erro
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 
-	alarmID, err := apiutil.ReadStringQuery(r, "alarm_id", "")
-	if err != nil {
-		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	req.Alarm.ID = alarmID
+	req.Alarm.ID = chi.URLParam(r, "alarmID")
 
 	return createAlarmReq{
 		Alarm: req.Alarm,

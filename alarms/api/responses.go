@@ -4,6 +4,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/absmach/magistrala/alarms"
@@ -17,18 +18,39 @@ var (
 
 type alarmRes struct {
 	alarms.Alarm `json:",inline"`
+	created      bool
+	deleted      bool
 }
 
 func (res alarmRes) Headers() map[string]string {
-	return map[string]string{}
+	switch {
+	case res.created:
+		return map[string]string{
+			"Location": fmt.Sprintf("/%s/alarms/%s", res.DomainID, res.ID),
+		}
+	default:
+		return map[string]string{}
+	}
 }
 
 func (res alarmRes) Code() int {
-	return http.StatusOK
+	switch {
+	case res.created:
+		return http.StatusCreated
+	case res.deleted:
+		return http.StatusNoContent
+	default:
+		return http.StatusOK
+	}
 }
 
 func (res alarmRes) Empty() bool {
-	return false
+	switch {
+	case res.deleted:
+		return true
+	default:
+		return false
+	}
 }
 
 type alarmsPageRes struct {

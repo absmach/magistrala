@@ -11,13 +11,13 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 )
 
-type entityReq struct {
-	ID string
+type alarmReq struct {
+	alarms.Alarm `json:",inline"`
 }
 
-func (req entityReq) validate() error {
-	if req.ID == "" {
-		return apiutil.ErrMissingID
+func (req alarmReq) validate() error {
+	if req.Alarm.ID == "" {
+		return errors.New("missing alarm id")
 	}
 
 	return nil

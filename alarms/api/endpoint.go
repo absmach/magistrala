@@ -19,40 +19,41 @@ func createAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createAlarmReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
-			return nil, svcerr.ErrAuthorization
+			return alarmRes{}, svcerr.ErrAuthorization
 		}
 
 		alarm, err := svc.CreateAlarm(ctx, session, req.Alarm)
 		if err != nil {
-			return nil, err
+			return alarmRes{}, err
 		}
 
 		return alarmRes{
-			Alarm: alarm,
+			Alarm:   alarm,
+			created: true,
 		}, nil
 	}
 }
 
 func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(createAlarmReq)
+		req := request.(alarmReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
-			return nil, svcerr.ErrAuthorization
+			return alarmRes{}, svcerr.ErrAuthorization
 		}
 
 		alarm, err := svc.UpdateAlarm(ctx, session, req.Alarm)
 		if err != nil {
-			return nil, err
+			return alarmRes{}, err
 		}
 
 		return alarmRes{
@@ -63,19 +64,19 @@ func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 
 func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(entityReq)
+		req := request.(alarmReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
-			return nil, svcerr.ErrAuthorization
+			return alarmRes{}, svcerr.ErrAuthorization
 		}
 
 		alarm, err := svc.ViewAlarm(ctx, session, req.ID)
 		if err != nil {
-			return nil, err
+			return alarmRes{}, err
 		}
 
 		return alarmRes{
@@ -88,17 +89,17 @@ func listAlarmsEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listAlarmsReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return alarmsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
-			return nil, svcerr.ErrAuthorization
+			return alarmsPageRes{}, svcerr.ErrAuthorization
 		}
 
 		alarms, err := svc.ListAlarms(ctx, session, req.PageMetadata)
 		if err != nil {
-			return nil, err
+			return alarmsPageRes{}, err
 		}
 
 		return alarmsPageRes{
@@ -109,20 +110,20 @@ func listAlarmsEndpoint(svc alarms.Service) endpoint.Endpoint {
 
 func deleteAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(entityReq)
+		req := request.(alarmReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
+			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
-			return nil, svcerr.ErrAuthorization
+			return alarmRes{}, svcerr.ErrAuthorization
 		}
 
 		if err := svc.DeleteAlarm(ctx, session, req.ID); err != nil {
-			return nil, err
+			return alarmRes{}, err
 		}
 
-		return nil, nil
+		return alarmRes{deleted: true}, nil
 	}
 }

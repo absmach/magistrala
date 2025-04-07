@@ -4,6 +4,7 @@
 package sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,7 +22,7 @@ type Subscription struct {
 	Contact string `json:"contact,omitempty"`
 }
 
-func (sdk mgSDK) CreateSubscription(topic, contact, token string) (string, errors.SDKError) {
+func (sdk mgSDK) CreateSubscription(ctx context.Context, topic, contact, token string) (string, errors.SDKError) {
 	sub := Subscription{
 		Topic:   topic,
 		Contact: contact,
@@ -33,7 +34,7 @@ func (sdk mgSDK) CreateSubscription(topic, contact, token string) (string, error
 
 	url := fmt.Sprintf("%s/%s", sdk.usersURL, subscriptionEndpoint)
 
-	headers, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusCreated)
+	headers, _, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusCreated)
 	if sdkerr != nil {
 		return "", sdkerr
 	}
@@ -43,13 +44,13 @@ func (sdk mgSDK) CreateSubscription(topic, contact, token string) (string, error
 	return id, nil
 }
 
-func (sdk mgSDK) ListSubscriptions(pm PageMetadata, token string) (SubscriptionPage, errors.SDKError) {
+func (sdk mgSDK) ListSubscriptions(ctx context.Context, pm PageMetadata, token string) (SubscriptionPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.usersURL, subscriptionEndpoint, pm)
 	if err != nil {
 		return SubscriptionPage{}, errors.NewSDKError(err)
 	}
 
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return SubscriptionPage{}, sdkerr
 	}
@@ -62,10 +63,10 @@ func (sdk mgSDK) ListSubscriptions(pm PageMetadata, token string) (SubscriptionP
 	return sp, nil
 }
 
-func (sdk mgSDK) ViewSubscription(id, token string) (Subscription, errors.SDKError) {
+func (sdk mgSDK) ViewSubscription(ctx context.Context, id, token string) (Subscription, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, subscriptionEndpoint, id)
 
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	_, body, err := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {
 		return Subscription{}, err
 	}
@@ -78,10 +79,10 @@ func (sdk mgSDK) ViewSubscription(id, token string) (Subscription, errors.SDKErr
 	return sub, nil
 }
 
-func (sdk mgSDK) DeleteSubscription(id, token string) errors.SDKError {
+func (sdk mgSDK) DeleteSubscription(ctx context.Context, id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, subscriptionEndpoint, id)
 
-	_, _, err := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
+	_, _, err := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 
 	return err
 }

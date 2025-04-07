@@ -19,8 +19,8 @@ func main() {
 		Short: "provision is provisioning tool for SuperMQ",
 		Long: `Tool for provisioning series of SuperMQ channels and clients and connecting them together.
 Complete documentation is available at https://docs.supermq.abstractmachines.fr`,
-		Run: func(_ *cobra.Command, _ []string) {
-			if err := provision.Provision(pconf); err != nil {
+		Run: func(cmd *cobra.Command, _ []string) {
+			if err := provision.Provision(cmd.Context(), pconf); err != nil {
 				log.Fatal(err)
 			}
 		},

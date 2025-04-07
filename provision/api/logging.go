@@ -6,6 +6,7 @@
 package api
 
 import (
+	"context"
 	"log/slog"
 	"time"
 
@@ -24,7 +25,7 @@ func NewLoggingMiddleware(svc provision.Service, logger *slog.Logger) provision.
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Provision(domainID, token, name, externalID, externalKey string) (res provision.Result, err error) {
+func (lm *loggingMiddleware) Provision(ctx context.Context, domainID, token, name, externalID, externalKey string) (res provision.Result, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -39,10 +40,10 @@ func (lm *loggingMiddleware) Provision(domainID, token, name, externalID, extern
 		lm.logger.Info("Provision completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Provision(domainID, token, name, externalID, externalKey)
+	return lm.svc.Provision(ctx, domainID, token, name, externalID, externalKey)
 }
 
-func (lm *loggingMiddleware) Cert(domainID, token, clientID, duration string) (cert, key string, err error) {
+func (lm *loggingMiddleware) Cert(ctx context.Context, domainID, token, clientID, duration string) (cert, key string, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -57,10 +58,10 @@ func (lm *loggingMiddleware) Cert(domainID, token, clientID, duration string) (c
 		lm.logger.Info("Client certificate created successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Cert(domainID, token, clientID, duration)
+	return lm.svc.Cert(ctx, domainID, token, clientID, duration)
 }
 
-func (lm *loggingMiddleware) Mapping(token string) (res map[string]interface{}, err error) {
+func (lm *loggingMiddleware) Mapping(ctx context.Context, token string) (res map[string]interface{}, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -73,5 +74,5 @@ func (lm *loggingMiddleware) Mapping(token string) (res map[string]interface{}, 
 		lm.logger.Info("Mapping completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Mapping(token)
+	return lm.svc.Mapping(ctx, token)
 }

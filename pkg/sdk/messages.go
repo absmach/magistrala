@@ -4,6 +4,7 @@
 package sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 
 const channelParts = 2
 
-func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token string) (MessagesPage, errors.SDKError) {
+func (sdk mgSDK) ReadMessages(ctx context.Context, pm MessagePageMetadata, chanName, domainID, token string) (MessagesPage, errors.SDKError) {
 	chanNameParts := strings.SplitN(chanName, ".", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
@@ -32,7 +33,7 @@ func (sdk mgSDK) ReadMessages(pm MessagePageMetadata, chanName, domainID, token 
 	header := make(map[string]string)
 	header["Content-Type"] = string(sdk.msgContentType)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, msgURL, token, nil, header, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, msgURL, token, nil, header, http.StatusOK)
 	if sdkerr != nil {
 		return MessagesPage{}, sdkerr
 	}

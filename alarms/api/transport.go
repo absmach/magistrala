@@ -36,7 +36,7 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 			decodeCreateAlarmReq,
 			sapi.EncodeResponse,
 			opts...,
-		), "create_client").ServeHTTP)
+		), "create_alarm").ServeHTTP)
 		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 			listAlarmsEndpoint(svc),
 			decodeListAlarmsReq,

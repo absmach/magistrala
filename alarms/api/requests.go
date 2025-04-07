@@ -7,7 +7,7 @@ import (
 	"errors"
 
 	"github.com/absmach/magistrala/alarms"
-	sapi "github.com/absmach/supermq/api/http"
+	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 )
 
@@ -43,7 +43,7 @@ type listAlarmsReq struct {
 }
 
 func (req listAlarmsReq) validate() error {
-	if req.Limit > sapi.MaxLimitSize || req.Limit < 1 {
+	if req.Limit > api.MaxLimitSize || req.Limit < 1 {
 		return apiutil.ErrLimitSize
 	}
 

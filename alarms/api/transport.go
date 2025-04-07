@@ -28,40 +28,44 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 	}
 
 	mux := chi.NewRouter()
-	mux.Use(sapi.AuthenticateMiddleware(authn, true))
-	mux.Use(sapi.RequestIDMiddleware(idp))
+
 	mux.Route("/{domainID}/alarms", func(r chi.Router) {
-		r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-			createAlarmEndpoint(svc),
-			decodeCreateAlarmReq,
-			sapi.EncodeResponse,
-			opts...,
-		), "create_alarm").ServeHTTP)
-		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			listAlarmsEndpoint(svc),
-			decodeListAlarmsReq,
-			sapi.EncodeResponse,
-			opts...,
-		), "list_alarms").ServeHTTP)
-		r.Route("/{alarmID}", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			r.Use(sapi.AuthenticateMiddleware(authn, true))
+			r.Use(sapi.RequestIDMiddleware(idp))
+
+			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+				createAlarmEndpoint(svc),
+				decodeCreateAlarmReq,
+				sapi.EncodeResponse,
+				opts...,
+			), "create_alarm").ServeHTTP)
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				viewAlarmEndpoint(svc),
-				decodeAlarmReq,
+				listAlarmsEndpoint(svc),
+				decodeListAlarmsReq,
 				sapi.EncodeResponse,
 				opts...,
-			), "get_alarm").ServeHTTP)
-			r.Put("/", otelhttp.NewHandler(kithttp.NewServer(
-				updateAlarmEndpoint(svc),
-				decodeUpdateAlarmReq,
-				sapi.EncodeResponse,
-				opts...,
-			), "update_alarm").ServeHTTP)
-			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
-				deleteAlarmEndpoint(svc),
-				decodeAlarmReq,
-				sapi.EncodeResponse,
-				opts...,
-			), "delete_alarm").ServeHTTP)
+			), "list_alarms").ServeHTTP)
+			r.Route("/{alarmID}", func(r chi.Router) {
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					viewAlarmEndpoint(svc),
+					decodeAlarmReq,
+					sapi.EncodeResponse,
+					opts...,
+				), "get_alarm").ServeHTTP)
+				r.Put("/", otelhttp.NewHandler(kithttp.NewServer(
+					updateAlarmEndpoint(svc),
+					decodeUpdateAlarmReq,
+					sapi.EncodeResponse,
+					opts...,
+				), "update_alarm").ServeHTTP)
+				r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+					deleteAlarmEndpoint(svc),
+					decodeAlarmReq,
+					sapi.EncodeResponse,
+					opts...,
+				), "delete_alarm").ServeHTTP)
+			})
 		})
 	})
 

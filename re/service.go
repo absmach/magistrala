@@ -30,8 +30,9 @@ const (
 	monthsInYear = 12
 
 	publisher = "magistrala.re"
-	from         = 1735689600 //January 1, 2025 at 00:00:00 UTC
-	interval     = "1s"
+	//January 1, 2025 at 00:00:00 UTC
+	from     = 1735689600
+	interval = "1s"
 )
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")

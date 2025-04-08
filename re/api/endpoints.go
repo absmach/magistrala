@@ -192,10 +192,167 @@ func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
 
 		reportPage, err := svc.GenerateReport(ctx, session, *req.ReportConfig)
 		if err != nil {
-			return generateReportResp{}, nil
+			return generateReportResp{}, err
 		}
 
 		return generateReportResp{reportPage}, nil
+	}
+}
+
+func listReportsConfigEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(listReportsConfigReq)
+		if err := req.validate(); err != nil {
+			return listReportsConfigRes{}, err
+		}
+
+		page, err := svc.ListReportsConfig(ctx, session, req.PageMeta)
+		if err != nil {
+			return listReportsConfigRes{}, err
+		}
+
+		return listReportsConfigRes{
+			pageRes: pageRes{
+				Limit:  page.Limit,
+				Offset: page.Offset,
+				Total:  page.Total,
+			},
+			Reports: page.ReportConfigs,
+		}, nil
+	}
+}
+
+func deleteReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(deleteReportConfigReq)
+		if err := req.validate(); err != nil {
+			return deleteReportConfigRes{}, err
+		}
+
+		err := svc.RemoveReportConfig(ctx, session, req.ID)
+		if err != nil {
+			return deleteReportConfigRes{false}, err
+		}
+
+		return deleteReportConfigRes{true}, nil
+	}
+}
+
+func updateReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateReportConfigReq)
+		if err := req.validate(); err != nil {
+			return updateReportConfigRes{}, err
+		}
+
+		cfg, err := svc.UpdateReportConfig(ctx, session, req.ReportConfig)
+		if err != nil {
+			return updateReportConfigRes{}, err
+		}
+
+		return updateReportConfigRes{ReportConfig: cfg}, nil
+	}
+}
+
+func viewReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(viewReportConfigReq)
+		if err := req.validate(); err != nil {
+			return viewReportConfigRes{}, err
+		}
+
+		cfg, err := svc.ViewReportConfig(ctx, session, req.ID)
+		if err != nil {
+			return viewReportConfigRes{}, err
+		}
+
+		return viewReportConfigRes{ReportConfig: cfg}, nil
+	}
+}
+
+func addReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(addReportConfigReq)
+		if err := req.validate(); err != nil {
+			return addReportConfigRes{}, err
+		}
+
+		cfg, err := svc.AddReportConfig(ctx, session, req.ReportConfig)
+		if err != nil {
+			return addReportConfigRes{}, err
+		}
+
+		return addReportConfigRes{
+			ReportConfig: cfg,
+			created:      true,
+		}, nil
+	}
+}
+
+func enableReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateRuleStatusReq)
+		if err := req.validate(); err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		cfg, err := svc.EnableReportConfig(ctx, session, req.id)
+		if err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		return updateRuleStatusRes{Rule: re.Rule{ID: cfg.ID, Name: cfg.Name}}, nil
+	}
+}
+
+func disableReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateRuleStatusReq)
+		if err := req.validate(); err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		cfg, err := svc.DisableReportConfig(ctx, session, req.id)
+		if err != nil {
+			return updateRuleStatusRes{}, err
+		}
+
+		return updateRuleStatusRes{Rule: re.Rule{ID: cfg.ID, Name: cfg.Name}}, nil
 	}
 }
 
@@ -206,7 +363,7 @@ func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(generateReportReq)
+		req := request.(downloadReportReq)
 		if err := req.validate(); err != nil {
 			return downloadReportResp{}, err
 		}

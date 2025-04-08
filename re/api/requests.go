@@ -7,6 +7,7 @@ import (
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 )
 
 const (
@@ -101,6 +102,81 @@ func (req deleteRuleReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
+	return nil
+}
+
+type updateReportConfigReq struct {
+	re.ReportConfig `json:",inline"`
+}
+
+func (req updateReportConfigReq) validate() error {
+	if req.ID == "" {
+		return svcerr.ErrMalformedEntity
+	}
+	if req.Name == "" {
+		return svcerr.ErrMalformedEntity
+	}
+	if len(req.ChannelIDs) == 0 {
+		return svcerr.ErrMalformedEntity
+	}
+	return nil
+}
+
+type downloadReportReq struct {
+	ReportConfig *re.ReportConfig `json:"report_config"`
+}
+
+func (req downloadReportReq) validate() error {
+	if req.ReportConfig == nil {
+		return svcerr.ErrMalformedEntity
+	}
+	return nil
+}
+
+type addReportConfigReq struct {
+	re.ReportConfig `json:",inline"`
+}
+
+func (req addReportConfigReq) validate() error {
+	if req.Name == "" {
+		return svcerr.ErrMalformedEntity
+	}
+	if len(req.ChannelIDs) == 0 {
+		return svcerr.ErrMalformedEntity
+	}
+	return nil
+}
+
+type viewReportConfigReq struct {
+	ID string `json:"id"`
+}
+
+func (req viewReportConfigReq) validate() error {
+	if req.ID == "" {
+		return svcerr.ErrMalformedEntity
+	}
+	return nil
+}
+
+type listReportsConfigReq struct {
+	re.PageMeta `json:",inline"`
+}
+
+func (req listReportsConfigReq) validate() error {
+	if req.Limit > maxLimitSize {
+		return svcerr.ErrMalformedEntity
+	}
+	return nil
+}
+
+type deleteReportConfigReq struct {
+	ID string `json:"id"`
+}
+
+func (req deleteReportConfigReq) validate() error {
+	if req.ID == "" {
+		return svcerr.ErrMalformedEntity
+	}
 	return nil
 }
 

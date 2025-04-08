@@ -112,6 +112,57 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 					encodeFileDownloadResponse,
 					opts...,
 				), "download_report").ServeHTTP)
+
+				r.Route("/configs", func(r chi.Router) {
+					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+						addReportConfigEndpoint(svc),
+						decodeAddReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "add_report_config").ServeHTTP)
+
+					r.Get("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+						viewReportConfigEndpoint(svc),
+						decodeViewReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "view_report_config").ServeHTTP)
+
+					r.Put("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+						updateReportConfigEndpoint(svc),
+						decodeUpdateReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_report_config").ServeHTTP)
+
+					r.Delete("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+						deleteReportConfigEndpoint(svc),
+						decodeDeleteReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "delete_report_config").ServeHTTP)
+
+					r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+						listReportsConfigEndpoint(svc),
+						decodeListReportsConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "list_reports_config").ServeHTTP)
+
+					r.Post("/{id}/enable", otelhttp.NewHandler(kithttp.NewServer(
+						enableReportConfigEndpoint(svc),
+						decodeUpdateRuleStatusRequest,
+						api.EncodeResponse,
+						opts...,
+					), "enable_report_config").ServeHTTP)
+
+					r.Post("/{id}/disable", otelhttp.NewHandler(kithttp.NewServer(
+						disableReportConfigEndpoint(svc),
+						decodeUpdateRuleStatusRequest,
+						api.EncodeResponse,
+						opts...,
+					), "disable_report_config").ServeHTTP)
+				})
 			})
 		})
 	})
@@ -223,11 +274,63 @@ func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
+
 	var config re.ReportConfig
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
 		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
+
 	return generateReportReq{ReportConfig: &config}, nil
+}
+
+func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+	var config re.ReportConfig
+	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+	return addReportConfigReq{ReportConfig: config}, nil
+}
+
+func decodeViewReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	id := chi.URLParam(r, "id")
+	return viewReportConfigReq{ID: id}, nil
+}
+
+func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+	var config re.ReportConfig
+	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+	config.ID = chi.URLParam(r, "id")
+	return updateReportConfigReq{ReportConfig: config}, nil
+}
+
+func decodeDeleteReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	id := chi.URLParam(r, "id")
+	return deleteReportConfigReq{ID: id}, nil
+}
+
+func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	limit, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	return listReportsConfigReq{
+		PageMeta: re.PageMeta{
+			Offset: offset,
+			Limit:  limit,
+		},
+	}, nil
 }
 
 func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {

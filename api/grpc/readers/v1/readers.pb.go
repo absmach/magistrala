@@ -316,8 +316,12 @@ func (x *ReadMessagesRes) GetMessages() []*Message {
 }
 
 type Message struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*Message_Senml
+	//	*Message_Json
+	Payload       isMessage_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -352,9 +356,267 @@ func (*Message) Descriptor() ([]byte, []int) {
 	return file_readers_v1_readers_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Message) GetData() []byte {
+func (x *Message) GetPayload() isMessage_Payload {
 	if x != nil {
-		return x.Data
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *Message) GetSenml() *SenMLMessage {
+	if x != nil {
+		if x, ok := x.Payload.(*Message_Senml); ok {
+			return x.Senml
+		}
+	}
+	return nil
+}
+
+func (x *Message) GetJson() *JsonStructuredMessage {
+	if x != nil {
+		if x, ok := x.Payload.(*Message_Json); ok {
+			return x.Json
+		}
+	}
+	return nil
+}
+
+type isMessage_Payload interface {
+	isMessage_Payload()
+}
+
+type Message_Senml struct {
+	Senml *SenMLMessage `protobuf:"bytes,1,opt,name=senml,proto3,oneof"`
+}
+
+type Message_Json struct {
+	Json *JsonStructuredMessage `protobuf:"bytes,2,opt,name=json,proto3,oneof"`
+}
+
+func (*Message_Senml) isMessage_Payload() {}
+
+func (*Message_Json) isMessage_Payload() {}
+
+type SenMLMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Channel       string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
+	Subtopic      string                 `protobuf:"bytes,2,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
+	Publisher     string                 `protobuf:"bytes,3,opt,name=publisher,proto3" json:"publisher,omitempty"`
+	Protocol      string                 `protobuf:"bytes,4,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	Name          string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
+	Unit          string                 `protobuf:"bytes,6,opt,name=unit,proto3" json:"unit,omitempty"`
+	Time          float64                `protobuf:"fixed64,7,opt,name=time,proto3" json:"time,omitempty"`
+	UpdateTime    float64                `protobuf:"fixed64,8,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	Value         float64                `protobuf:"fixed64,9,opt,name=value,proto3" json:"value,omitempty"`
+	StringValue   string                 `protobuf:"bytes,10,opt,name=string_value,json=stringValue,proto3" json:"string_value,omitempty"`
+	DataValue     string                 `protobuf:"bytes,11,opt,name=data_value,json=dataValue,proto3" json:"data_value,omitempty"`
+	BoolValue     bool                   `protobuf:"varint,12,opt,name=bool_value,json=boolValue,proto3" json:"bool_value,omitempty"`
+	Sum           float64                `protobuf:"fixed64,13,opt,name=sum,proto3" json:"sum,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SenMLMessage) Reset() {
+	*x = SenMLMessage{}
+	mi := &file_readers_v1_readers_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SenMLMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SenMLMessage) ProtoMessage() {}
+
+func (x *SenMLMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_readers_v1_readers_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SenMLMessage.ProtoReflect.Descriptor instead.
+func (*SenMLMessage) Descriptor() ([]byte, []int) {
+	return file_readers_v1_readers_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SenMLMessage) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetSubtopic() string {
+	if x != nil {
+		return x.Subtopic
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetPublisher() string {
+	if x != nil {
+		return x.Publisher
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetProtocol() string {
+	if x != nil {
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetTime() float64 {
+	if x != nil {
+		return x.Time
+	}
+	return 0
+}
+
+func (x *SenMLMessage) GetUpdateTime() float64 {
+	if x != nil {
+		return x.UpdateTime
+	}
+	return 0
+}
+
+func (x *SenMLMessage) GetValue() float64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
+func (x *SenMLMessage) GetStringValue() string {
+	if x != nil {
+		return x.StringValue
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetDataValue() string {
+	if x != nil {
+		return x.DataValue
+	}
+	return ""
+}
+
+func (x *SenMLMessage) GetBoolValue() bool {
+	if x != nil {
+		return x.BoolValue
+	}
+	return false
+}
+
+func (x *SenMLMessage) GetSum() float64 {
+	if x != nil {
+		return x.Sum
+	}
+	return 0
+}
+
+type JsonStructuredMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Channel       string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
+	Created       int64                  `protobuf:"varint,2,opt,name=created,proto3" json:"created,omitempty"`
+	Subtopic      string                 `protobuf:"bytes,3,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
+	Publisher     string                 `protobuf:"bytes,4,opt,name=publisher,proto3" json:"publisher,omitempty"`
+	Protocol      string                 `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	Payload       []byte                 `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JsonStructuredMessage) Reset() {
+	*x = JsonStructuredMessage{}
+	mi := &file_readers_v1_readers_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JsonStructuredMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JsonStructuredMessage) ProtoMessage() {}
+
+func (x *JsonStructuredMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_readers_v1_readers_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JsonStructuredMessage.ProtoReflect.Descriptor instead.
+func (*JsonStructuredMessage) Descriptor() ([]byte, []int) {
+	return file_readers_v1_readers_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *JsonStructuredMessage) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *JsonStructuredMessage) GetCreated() int64 {
+	if x != nil {
+		return x.Created
+	}
+	return 0
+}
+
+func (x *JsonStructuredMessage) GetSubtopic() string {
+	if x != nil {
+		return x.Subtopic
+	}
+	return ""
+}
+
+func (x *JsonStructuredMessage) GetPublisher() string {
+	if x != nil {
+		return x.Publisher
+	}
+	return ""
+}
+
+func (x *JsonStructuredMessage) GetProtocol() string {
+	if x != nil {
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *JsonStructuredMessage) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
 	}
 	return nil
 }
@@ -371,7 +633,7 @@ type ReadMessagesReq struct {
 
 func (x *ReadMessagesReq) Reset() {
 	*x = ReadMessagesReq{}
-	mi := &file_readers_v1_readers_proto_msgTypes[3]
+	mi := &file_readers_v1_readers_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -383,7 +645,7 @@ func (x *ReadMessagesReq) String() string {
 func (*ReadMessagesReq) ProtoMessage() {}
 
 func (x *ReadMessagesReq) ProtoReflect() protoreflect.Message {
-	mi := &file_readers_v1_readers_proto_msgTypes[3]
+	mi := &file_readers_v1_readers_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -396,7 +658,7 @@ func (x *ReadMessagesReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadMessagesReq.ProtoReflect.Descriptor instead.
 func (*ReadMessagesReq) Descriptor() ([]byte, []int) {
-	return file_readers_v1_readers_proto_rawDescGZIP(), []int{3}
+	return file_readers_v1_readers_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ReadMessagesReq) GetChannelId() string {
@@ -459,9 +721,36 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\x0fReadMessagesRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x04R\x05total\x12=\n" +
 	"\rpage_metadata\x18\x02 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata\x12/\n" +
-	"\bmessages\x18\x03 \x03(\v2\x13.readers.v1.MessageR\bmessages\"\x1d\n" +
-	"\aMessage\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\fR\x04data\"\xbd\x01\n" +
+	"\bmessages\x18\x03 \x03(\v2\x13.readers.v1.MessageR\bmessages\"\x7f\n" +
+	"\aMessage\x120\n" +
+	"\x05senml\x18\x01 \x01(\v2\x18.readers.v1.SenMLMessageH\x00R\x05senml\x127\n" +
+	"\x04json\x18\x02 \x01(\v2!.readers.v1.JsonStructuredMessageH\x00R\x04jsonB\t\n" +
+	"\apayload\"\xe4\x02\n" +
+	"\fSenMLMessage\x12\x18\n" +
+	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1a\n" +
+	"\bsubtopic\x18\x02 \x01(\tR\bsubtopic\x12\x1c\n" +
+	"\tpublisher\x18\x03 \x01(\tR\tpublisher\x12\x1a\n" +
+	"\bprotocol\x18\x04 \x01(\tR\bprotocol\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\x12\x12\n" +
+	"\x04unit\x18\x06 \x01(\tR\x04unit\x12\x12\n" +
+	"\x04time\x18\a \x01(\x01R\x04time\x12\x1f\n" +
+	"\vupdate_time\x18\b \x01(\x01R\n" +
+	"updateTime\x12\x14\n" +
+	"\x05value\x18\t \x01(\x01R\x05value\x12!\n" +
+	"\fstring_value\x18\n" +
+	" \x01(\tR\vstringValue\x12\x1d\n" +
+	"\n" +
+	"data_value\x18\v \x01(\tR\tdataValue\x12\x1d\n" +
+	"\n" +
+	"bool_value\x18\f \x01(\bR\tboolValue\x12\x10\n" +
+	"\x03sum\x18\r \x01(\x01R\x03sum\"\xbb\x01\n" +
+	"\x15JsonStructuredMessage\x12\x18\n" +
+	"\achannel\x18\x01 \x01(\tR\achannel\x12\x18\n" +
+	"\acreated\x18\x02 \x01(\x03R\acreated\x12\x1a\n" +
+	"\bsubtopic\x18\x03 \x01(\tR\bsubtopic\x12\x1c\n" +
+	"\tpublisher\x18\x04 \x01(\tR\tpublisher\x12\x1a\n" +
+	"\bprotocol\x18\x05 \x01(\tR\bprotocol\x12\x18\n" +
+	"\apayload\x18\x06 \x01(\fR\apayload\"\xbd\x01\n" +
 	"\x0fReadMessagesReq\x12\x1d\n" +
 	"\n" +
 	"channel_id\x18\x01 \x01(\tR\tchannelId\x12\x1b\n" +
@@ -491,27 +780,31 @@ func file_readers_v1_readers_proto_rawDescGZIP() []byte {
 }
 
 var file_readers_v1_readers_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_readers_v1_readers_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_readers_v1_readers_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_readers_v1_readers_proto_goTypes = []any{
-	(Aggregation)(0),        // 0: readers.v1.Aggregation
-	(*PageMetadata)(nil),    // 1: readers.v1.PageMetadata
-	(*ReadMessagesRes)(nil), // 2: readers.v1.ReadMessagesRes
-	(*Message)(nil),         // 3: readers.v1.Message
-	(*ReadMessagesReq)(nil), // 4: readers.v1.ReadMessagesReq
+	(Aggregation)(0),              // 0: readers.v1.Aggregation
+	(*PageMetadata)(nil),          // 1: readers.v1.PageMetadata
+	(*ReadMessagesRes)(nil),       // 2: readers.v1.ReadMessagesRes
+	(*Message)(nil),               // 3: readers.v1.Message
+	(*SenMLMessage)(nil),          // 4: readers.v1.SenMLMessage
+	(*JsonStructuredMessage)(nil), // 5: readers.v1.JsonStructuredMessage
+	(*ReadMessagesReq)(nil),       // 6: readers.v1.ReadMessagesReq
 }
 var file_readers_v1_readers_proto_depIdxs = []int32{
 	0, // 0: readers.v1.PageMetadata.aggregation:type_name -> readers.v1.Aggregation
 	1, // 1: readers.v1.ReadMessagesRes.page_metadata:type_name -> readers.v1.PageMetadata
 	3, // 2: readers.v1.ReadMessagesRes.messages:type_name -> readers.v1.Message
-	3, // 3: readers.v1.ReadMessagesReq.messages:type_name -> readers.v1.Message
-	1, // 4: readers.v1.ReadMessagesReq.page_metadata:type_name -> readers.v1.PageMetadata
-	4, // 5: readers.v1.ReadersService.ReadMessages:input_type -> readers.v1.ReadMessagesReq
-	2, // 6: readers.v1.ReadersService.ReadMessages:output_type -> readers.v1.ReadMessagesRes
-	6, // [6:7] is the sub-list for method output_type
-	5, // [5:6] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	4, // 3: readers.v1.Message.senml:type_name -> readers.v1.SenMLMessage
+	5, // 4: readers.v1.Message.json:type_name -> readers.v1.JsonStructuredMessage
+	3, // 5: readers.v1.ReadMessagesReq.messages:type_name -> readers.v1.Message
+	1, // 6: readers.v1.ReadMessagesReq.page_metadata:type_name -> readers.v1.PageMetadata
+	6, // 7: readers.v1.ReadersService.ReadMessages:input_type -> readers.v1.ReadMessagesReq
+	2, // 8: readers.v1.ReadersService.ReadMessages:output_type -> readers.v1.ReadMessagesRes
+	8, // [8:9] is the sub-list for method output_type
+	7, // [7:8] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_readers_v1_readers_proto_init() }
@@ -519,13 +812,17 @@ func file_readers_v1_readers_proto_init() {
 	if File_readers_v1_readers_proto != nil {
 		return
 	}
+	file_readers_v1_readers_proto_msgTypes[2].OneofWrappers = []any{
+		(*Message_Senml)(nil),
+		(*Message_Json)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_readers_v1_readers_proto_rawDesc), len(file_readers_v1_readers_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -13,6 +13,7 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	readers "github.com/absmach/supermq/readers"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
@@ -126,12 +127,41 @@ func encodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interfac
 
 func fromResponseMessages(protoMessages []*grpcReadersV1.Message) []readers.Message {
 	var messages []readers.Message
-	for _, pm := range protoMessages {
-		var m readers.Message
-		if err := json.Unmarshal(pm.Data, &m); err != nil {
-			return nil
+	for _, m := range protoMessages {
+		switch msg := m.Payload.(type) {
+		case *grpcReadersV1.Message_Senml:
+			s := msg.Senml
+			typed := senml.Message{
+				Channel:     s.GetChannel(),
+				Subtopic:    s.GetSubtopic(),
+				Publisher:   s.GetPublisher(),
+				Protocol:    s.GetProtocol(),
+				Name:        s.GetName(),
+				Unit:        s.GetUnit(),
+				Time:        s.GetTime(),
+				UpdateTime:  s.GetUpdateTime(),
+				Value:       optionalFloat64(s.GetValue()),
+				StringValue: optionalString(s.GetStringValue()),
+				DataValue:   optionalString(s.GetDataValue()),
+				BoolValue:   optionalBool(s.GetBoolValue()),
+				Sum:         optionalFloat64(s.GetSum()),
+			}
+			messages = append(messages, typed)
+		case *grpcReadersV1.Message_Json:
+			j := msg.Json
+			var p map[string]interface{}
+			if err := json.Unmarshal(j.GetPayload(), &p); err != nil {
+				continue
+			}
+			messages = append(messages, map[string]interface{}{
+				"channel":   j.GetChannel(),
+				"created":   j.GetCreated(),
+				"subtopic":  j.GetSubtopic(),
+				"publisher": j.GetPublisher(),
+				"protocol":  j.GetProtocol(),
+				"payload":   p,
+			})
 		}
-		messages = append(messages, m)
 	}
 	return messages
 }
@@ -178,4 +208,25 @@ func decodeError(err error) error {
 		}
 	}
 	return err
+}
+
+func optionalString(v string) *string {
+	if v == "" {
+		return nil
+	}
+	return &v
+}
+
+func optionalFloat64(v float64) *float64 {
+	if v == 0 {
+		return nil
+	}
+	return &v
+}
+
+func optionalBool(v bool) *bool {
+	if !v {
+		return nil
+	}
+	return &v
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	grpcapi "github.com/absmach/magistrala/readers/api/grpc"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -61,20 +62,42 @@ func TestReadMessages(t *testing.T) {
 		},
 		Messages: []readers.Message{
 			map[string]interface{}{
-				"publisher": "testPublisher",
+				"channel":   "testChannel",
+				"created":   int64(123456789),
 				"subtopic":  "testSubtopic",
+				"publisher": "testPublisher",
 				"protocol":  "testProtocol",
-				"time":      "2021-01-01T00:00:00Z",
-				"channel":   1234,
-				"name":      "testName",
-				"unit":      "testUnit",
-				"value":     30,
+				"payload": map[string]interface{}{
+					"temp": 23.5,
+				},
 			},
 		},
 	}
 
-	expectedData, err := json.Marshal(tmp.Messages[0])
+	expectedPayload, err := json.Marshal(tmp.Messages[0].(map[string]interface{})["payload"])
 	require.NoError(t, err)
+
+	expectedRes := &grpcReadersV1.ReadMessagesRes{
+		Total: 1,
+		Messages: []*grpcReadersV1.Message{
+			{
+				Payload: &grpcReadersV1.Message_Json{
+					Json: &grpcReadersV1.JsonStructuredMessage{
+						Channel:   "testChannel",
+						Created:   123456789,
+						Subtopic:  "testSubtopic",
+						Publisher: "testPublisher",
+						Protocol:  "testProtocol",
+						Payload:   expectedPayload,
+					},
+				},
+			},
+		},
+		PageMetadata: &grpcReadersV1.PageMetadata{
+			Offset: 0,
+			Limit:  10,
+		},
+	}
 
 	cases := []struct {
 		desc            string
@@ -97,12 +120,8 @@ func TestReadMessages(t *testing.T) {
 			},
 			svcRes: tmp,
 
-			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
-				Total: 1,
-				Messages: []*grpcReadersV1.Message{
-					{Data: expectedData},
-				},
-			},
+			ReadMessagesRes: expectedRes,
+			err:             nil,
 		},
 		{
 			desc:  " read missing channel id",
@@ -118,6 +137,70 @@ func TestReadMessages(t *testing.T) {
 			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{},
 			err:             apiutil.ErrMissingID,
 		},
+		{
+			desc:  "read valid SenML message",
+			token: validToken,
+			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
+				ChannelId: channelID,
+				DomainId:  domain,
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+			svcRes: readers.MessagesPage{
+				Total: 1,
+				PageMetadata: readers.PageMetadata{
+					Offset: 0,
+					Limit:  10,
+				},
+				Messages: []readers.Message{
+					senml.Message{
+						Channel:     "senmlChannel",
+						Subtopic:    "senmlSub",
+						Publisher:   "senmlPublisher",
+						Protocol:    "mqtt",
+						Name:        "temperature",
+						Unit:        "C",
+						Time:        1672531200,
+						UpdateTime:  1672531300,
+						Value:       float64Ptr(22.5),
+						StringValue: stringPtr("ok"),
+						DataValue:   stringPtr("binary"),
+						BoolValue:   boolPtr(true),
+						Sum:         float64Ptr(123.4),
+					},
+				},
+			},
+			ReadMessagesRes: &grpcReadersV1.ReadMessagesRes{
+				Total: 1,
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: 0,
+					Limit:  10,
+				},
+				Messages: []*grpcReadersV1.Message{
+					{
+						Payload: &grpcReadersV1.Message_Senml{
+							Senml: &grpcReadersV1.SenMLMessage{
+								Channel:     "senmlChannel",
+								Subtopic:    "senmlSub",
+								Publisher:   "senmlPublisher",
+								Protocol:    "mqtt",
+								Name:        "temperature",
+								Unit:        "C",
+								Time:        1672531200,
+								UpdateTime:  1672531300,
+								Value:       22.5,
+								StringValue: "ok",
+								DataValue:   "binary",
+								BoolValue:   true,
+								Sum:         123.4,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -128,4 +211,16 @@ func TestReadMessages(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}
+}
+
+func float64Ptr(v float64) *float64 {
+	return &v
+}
+
+func stringPtr(v string) *string {
+	return &v
+}
+
+func boolPtr(v bool) *bool {
+	return &v
 }

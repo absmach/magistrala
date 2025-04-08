@@ -503,7 +503,7 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm re.Pag
 		pgData += " OFFSET :offset"
 	}
 	pq := pageReportQuery(pm)
-	q := fmt.Sprintf(listRulesQuery, pq, pgData)
+	q := fmt.Sprintf(listReportsQuery, pq, pgData)
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return re.ReportConfigPage{}, err

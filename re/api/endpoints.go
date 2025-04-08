@@ -363,7 +363,7 @@ func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(downloadReportReq)
+		req := request.(generateReportReq)
 		if err := req.validate(); err != nil {
 			return downloadReportResp{}, err
 		}

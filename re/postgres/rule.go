@@ -15,33 +15,49 @@ import (
 
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
-	ID              string           `db:"id"`
-	Name            string           `db:"name"`
-	DomainID        string           `db:"domain_id"`
-	Metadata        []byte           `db:"metadata,omitempty"`
-	InputChannel    string           `db:"input_channel"`
-	InputTopic      sql.NullString   `db:"input_topic"`
-	LogicType       re.ScriptType    `db:"logic_type"`
+	ID              string         `db:"id"`
+	Name            string         `db:"name"`
+	DomainID        string         `db:"domain_id"`
+	Metadata        []byte         `db:"metadata,omitempty"`
+	InputChannel    string         `db:"input_channel"`
+	InputTopic      sql.NullString `db:"input_topic"`
+	LogicType       re.ScriptType  `db:"logic_type"`
 	LogicOutputs    pq.Int32Array  `db:"logic_output"`
-	LogicValue      string           `db:"logic_value"`
-	OutputChannel   sql.NullString   `db:"output_channel"`
-	OutputTopic     sql.NullString   `db:"output_topic"`
-	StartDateTime   time.Time        `db:"start_datetime"`
-	Time            time.Time        `db:"time"`
-	Recurring       re.Recurring     `db:"recurring"`
-	RecurringPeriod uint             `db:"recurring_period"`
-	Status          re.Status        `db:"status"`
-	CreatedAt       time.Time        `db:"created_at"`
-	CreatedBy       string           `db:"created_by"`
-	UpdatedAt       time.Time        `db:"updated_at"`
-	UpdatedBy       string           `db:"updated_by"`
-	ChannelIDs      []sql.NullString `db:"channel_ids"`
-	ClientIDs       []sql.NullString `db:"client_ids"`
-	Metrics         []sql.NullString `db:"metrics"`
-	To              []sql.NullString `db:"to"`
-	From            sql.NullString   `db:"from"`
-	Subject         sql.NullString   `db:"subject"`
-	Aggregation     sql.NullString   `db:"aggregation"`
+	LogicValue      string         `db:"logic_value"`
+	OutputChannel   sql.NullString `db:"output_channel"`
+	OutputTopic     sql.NullString `db:"output_topic"`
+	StartDateTime   time.Time      `db:"start_datetime"`
+	Time            time.Time      `db:"time"`
+	Recurring       re.Recurring   `db:"recurring"`
+	RecurringPeriod uint           `db:"recurring_period"`
+	Status          re.Status      `db:"status"`
+	CreatedAt       time.Time      `db:"created_at"`
+	CreatedBy       string         `db:"created_by"`
+	UpdatedAt       time.Time      `db:"updated_at"`
+	UpdatedBy       string         `db:"updated_by"`
+}
+
+// dbReport represents the database structure for a Rule.
+type dbReport struct {
+	ID              string         `db:"id"`
+	Name            string         `db:"name"`
+	DomainID        string         `db:"domain_id"`
+	ChannelIDs      pq.StringArray `db:"channel_ids"`
+	ClientIDs       pq.StringArray `db:"client_ids"`
+	Aggregation     sql.NullString `db:"aggregation"`
+	Metrics         pq.StringArray `db:"metrics"`
+	To              pq.StringArray `db:"to"`
+	From            sql.NullString `db:"from"`
+	Subject         sql.NullString `db:"subject"`
+	StartDateTime   time.Time      `db:"start_datetime"`
+	Time            time.Time      `db:"time"`
+	Recurring       re.Recurring   `db:"recurring"`
+	RecurringPeriod uint           `db:"recurring_period"`
+	Status          re.Status      `db:"status"`
+	CreatedAt       time.Time      `db:"created_at"`
+	CreatedBy       string         `db:"created_by"`
+	UpdatedAt       time.Time      `db:"updated_at"`
+	UpdatedBy       string         `db:"updated_by"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -56,29 +72,6 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	lo := pq.Int32Array{}
 	for _, v := range r.Logic.Outputs {
 		lo = append(lo, int32(v))
-	}
-	if r.ReportConfig != nil {
-		return dbRule{
-			ID:              r.ID,
-			Name:            r.ReportConfig.Name,
-			DomainID:        r.ReportConfig.DomainID,
-			StartDateTime:   r.ReportConfig.StartDateTime,
-			Time:            r.ReportConfig.Time,
-			Recurring:       r.ReportConfig.Recurring,
-			RecurringPeriod: r.ReportConfig.RecurringPeriod,
-			Status:          r.Status,
-			CreatedAt:       r.CreatedAt,
-			CreatedBy:       r.CreatedBy,
-			UpdatedAt:       r.UpdatedAt,
-			UpdatedBy:       r.UpdatedBy,
-			ChannelIDs:      toNullStringSlice(r.ReportConfig.ChannelIDs),
-			ClientIDs:       toNullStringSlice(r.ReportConfig.ClientIDs),
-			Metrics:         toNullStringSlice(r.ReportConfig.Metrics),
-			Aggregation:     toNullString(r.ReportConfig.Aggregation),
-			To:              toNullStringSlice(r.ReportConfig.Email.To),
-			From:            toNullString(r.ReportConfig.Email.From),
-			Subject:         toNullString(r.ReportConfig.Email.Subject),
-		}, nil
 	}
 	return dbRule{
 		ID:              r.ID,
@@ -115,8 +108,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 	for _, v := range dto.LogicOutputs {
 		lo = append(lo, re.ScriptOutput(v))
 	}
-
-	rule := re.Rule{
+	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
 		DomainID:     dto.DomainID,
@@ -141,32 +133,61 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		CreatedBy: dto.CreatedBy,
 		UpdatedAt: dto.UpdatedAt,
 		UpdatedBy: dto.UpdatedBy,
-	}
+	}, nil
+}
 
-	if dto.ChannelIDs != nil && len(dto.ChannelIDs) > 0 {
-		rule.ReportConfig = &re.ReportConfig{
-			Name:            dto.Name,
-			DomainID:        dto.DomainID,
-			ChannelIDs:      fromNullStringSlice(dto.ChannelIDs),
-			ClientIDs:       fromNullStringSlice(dto.ClientIDs),
+func reportToDb(r re.ReportConfig) (dbReport, error) {
+	return dbReport{
+		ID:              r.ID,
+		Name:            r.Name,
+		DomainID:        r.DomainID,
+		StartDateTime:   r.Schedule.StartDateTime,
+		Time:            r.Schedule.Time,
+		Recurring:       r.Schedule.Recurring,
+		RecurringPeriod: r.Schedule.RecurringPeriod,
+		Status:          r.Status,
+		CreatedAt:       r.CreatedAt,
+		CreatedBy:       r.CreatedBy,
+		UpdatedAt:       r.UpdatedAt,
+		UpdatedBy:       r.UpdatedBy,
+		ChannelIDs:      r.ChannelIDs,
+		ClientIDs:       r.ClientIDs,
+		Metrics:         r.Metrics,
+		Aggregation:     toNullString(r.Aggregation),
+		To:              r.Email.To,
+		From:            toNullString(r.Email.From),
+		Subject:         toNullString(r.Email.Subject),
+	}, nil
+}
+
+func dbToReport(dto dbReport) (re.ReportConfig, error) {
+	rpt := re.ReportConfig{
+		ID:          dto.ID,
+		Name:        dto.Name,
+		DomainID:    dto.DomainID,
+		ChannelIDs:  dto.ChannelIDs,
+		ClientIDs:   dto.ClientIDs,
+		Aggregation: fromNullString(dto.Aggregation),
+		Metrics:     dto.Metrics,
+		Schedule: re.Schedule{
 			StartDateTime:   dto.StartDateTime,
 			Time:            dto.Time,
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
-			Aggregation:     fromNullString(dto.Aggregation),
-			Metrics:         fromNullStringSlice(dto.Metrics),
-		}
-
-		if (dto.To != nil && len(dto.To) > 0) || dto.From.Valid || dto.Subject.Valid {
-			rule.ReportConfig.Email = &re.Email{
-				To:      fromNullStringSlice(dto.To),
-				From:    fromNullString(dto.From),
-				Subject: fromNullString(dto.Subject),
-			}
-		}
+		},
+		Email: &re.Email{
+			To:      dto.To,
+			From:    fromNullString(dto.From),
+			Subject: fromNullString(dto.Subject),
+		},
+		Status:    re.Status(dto.Status),
+		CreatedAt: dto.CreatedAt,
+		CreatedBy: dto.CreatedBy,
+		UpdatedAt: dto.UpdatedAt,
+		UpdatedBy: dto.UpdatedBy,
 	}
 
-	return rule, nil
+	return rpt, nil
 }
 
 func toNullString(value string) sql.NullString {

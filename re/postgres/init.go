@@ -47,15 +47,25 @@ func Migration() *migrate.MemoryMigrationSource {
 				Id: "rules_02",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS report_config (
-						id          	 	VARCHAR(36) REFERENCES rules(id) ON DELETE CASCADE PRIMARY KEY,
-						name				TEXT NOT NULL,
+						id          	 	VARCHAR(36) PRIMARY KEY,
+						name				VARCHAR(1024),
+						domain_id         	VARCHAR(36) NOT NULL,
 						channel_ids 	  	TEXT[],
 						client_ids 		  	TEXT[],
 						aggregation			TEXT,
 						metrics				TEXT[],
 						"to" 				TEXT[],
 						"from" 				TEXT,
-						subject 			TEXT
+						subject 			TEXT,
+						status				SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
+						created_at			TIMESTAMP,
+						created_by			VARCHAR(254),
+						updated_at			TIMESTAMP,
+						updated_by			VARCHAR(254),
+						time              	TIMESTAMP,
+						recurring         	SMALLINT,
+						recurring_period  	SMALLINT,
+						start_datetime    	TIMESTAMP
 					);`,
 				},
 				Down: []string{

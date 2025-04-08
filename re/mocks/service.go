@@ -43,6 +43,62 @@ func (_m *Service) EXPECT() *Service_Expecter {
 	return &Service_Expecter{mock: &_m.Mock}
 }
 
+// AddReportConfig provides a mock function for the type Service
+func (_mock *Service) AddReportConfig(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, session, cfg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddReportConfig")
+	}
+
+	var r0 re.ReportConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, session, cfg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, session, cfg)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.ReportConfig) error); ok {
+		r1 = returnFunc(ctx, session, cfg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_AddReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddReportConfig'
+type Service_AddReportConfig_Call struct {
+	*mock.Call
+}
+
+// AddReportConfig is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - cfg
+func (_e *Service_Expecter) AddReportConfig(ctx interface{}, session interface{}, cfg interface{}) *Service_AddReportConfig_Call {
+	return &Service_AddReportConfig_Call{Call: _e.mock.On("AddReportConfig", ctx, session, cfg)}
+}
+
+func (_c *Service_AddReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, cfg re.ReportConfig)) *Service_AddReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.ReportConfig))
+	})
+	return _c
+}
+
+func (_c *Service_AddReportConfig_Call) Return(reportConfig re.ReportConfig, err error) *Service_AddReportConfig_Call {
+	_c.Call.Return(reportConfig, err)
+	return _c
+}
+
+func (_c *Service_AddReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error)) *Service_AddReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddRule provides a mock function for the type Service
 func (_mock *Service) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	ret := _mock.Called(ctx, session, r)
@@ -199,6 +255,62 @@ func (_c *Service_DisableRule_Call) RunAndReturn(run func(ctx context.Context, s
 	return _c
 }
 
+// EnableReportConfig provides a mock function for the type Service
+func (_mock *Service) EnableReportConfig(ctx context.Context, session authn.Session, id string) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, session, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnableReportConfig")
+	}
+
+	var r0 re.ReportConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, session, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_EnableReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableReportConfig'
+type Service_EnableReportConfig_Call struct {
+	*mock.Call
+}
+
+// EnableReportConfig is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - id
+func (_e *Service_Expecter) EnableReportConfig(ctx interface{}, session interface{}, id interface{}) *Service_EnableReportConfig_Call {
+	return &Service_EnableReportConfig_Call{Call: _e.mock.On("EnableReportConfig", ctx, session, id)}
+}
+
+func (_c *Service_EnableReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_EnableReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *Service_EnableReportConfig_Call) Return(reportConfig re.ReportConfig, err error) *Service_EnableReportConfig_Call {
+	_c.Call.Return(reportConfig, err)
+	return _c
+}
+
+func (_c *Service_EnableReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (re.ReportConfig, error)) *Service_EnableReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnableRule provides a mock function for the type Service
 func (_mock *Service) EnableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
 	ret := _mock.Called(ctx, session, id)
@@ -300,6 +412,118 @@ func (_c *Service_Handle_Call) RunAndReturn(run func(msg *messaging.Message) err
 	return _c
 }
 
+// GenerateReport provides a mock function for the type Service
+func (_mock *Service) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig) (re.ReportPage, error) {
+	ret := _mock.Called(ctx, session, config)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GenerateReport")
+	}
+
+	var r0 re.ReportPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig) (re.ReportPage, error)); ok {
+		return returnFunc(ctx, session, config)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig) re.ReportPage); ok {
+		r0 = returnFunc(ctx, session, config)
+	} else {
+		r0 = ret.Get(0).(re.ReportPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.ReportConfig) error); ok {
+		r1 = returnFunc(ctx, session, config)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_GenerateReport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateReport'
+type Service_GenerateReport_Call struct {
+	*mock.Call
+}
+
+// GenerateReport is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - config
+func (_e *Service_Expecter) GenerateReport(ctx interface{}, session interface{}, config interface{}) *Service_GenerateReport_Call {
+	return &Service_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, session, config)}
+}
+
+func (_c *Service_GenerateReport_Call) Run(run func(ctx context.Context, session authn.Session, config re.ReportConfig)) *Service_GenerateReport_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.ReportConfig))
+	})
+	return _c
+}
+
+func (_c *Service_GenerateReport_Call) Return(reportPage re.ReportPage, err error) *Service_GenerateReport_Call {
+	_c.Call.Return(reportPage, err)
+	return _c
+}
+
+func (_c *Service_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, config re.ReportConfig) (re.ReportPage, error)) *Service_GenerateReport_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListReportsConfig provides a mock function for the type Service
+func (_mock *Service) ListReportsConfig(ctx context.Context, session authn.Session, pm re.PageMeta) (re.ReportConfigPage, error) {
+	ret := _mock.Called(ctx, session, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReportsConfig")
+	}
+
+	var r0 re.ReportConfigPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.PageMeta) (re.ReportConfigPage, error)); ok {
+		return returnFunc(ctx, session, pm)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.PageMeta) re.ReportConfigPage); ok {
+		r0 = returnFunc(ctx, session, pm)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfigPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.PageMeta) error); ok {
+		r1 = returnFunc(ctx, session, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ListReportsConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListReportsConfig'
+type Service_ListReportsConfig_Call struct {
+	*mock.Call
+}
+
+// ListReportsConfig is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - pm
+func (_e *Service_Expecter) ListReportsConfig(ctx interface{}, session interface{}, pm interface{}) *Service_ListReportsConfig_Call {
+	return &Service_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, session, pm)}
+}
+
+func (_c *Service_ListReportsConfig_Call) Run(run func(ctx context.Context, session authn.Session, pm re.PageMeta)) *Service_ListReportsConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.PageMeta))
+	})
+	return _c
+}
+
+func (_c *Service_ListReportsConfig_Call) Return(reportConfigPage re.ReportConfigPage, err error) *Service_ListReportsConfig_Call {
+	_c.Call.Return(reportConfigPage, err)
+	return _c
+}
+
+func (_c *Service_ListReportsConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, pm re.PageMeta) (re.ReportConfigPage, error)) *Service_ListReportsConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListRules provides a mock function for the type Service
 func (_mock *Service) ListRules(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error) {
 	ret := _mock.Called(ctx, session, pm)
@@ -352,6 +576,53 @@ func (_c *Service_ListRules_Call) Return(page re.Page, err error) *Service_ListR
 }
 
 func (_c *Service_ListRules_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error)) *Service_ListRules_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveReportConfig provides a mock function for the type Service
+func (_mock *Service) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
+	ret := _mock.Called(ctx, session, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveReportConfig")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RemoveReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveReportConfig'
+type Service_RemoveReportConfig_Call struct {
+	*mock.Call
+}
+
+// RemoveReportConfig is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - id
+func (_e *Service_Expecter) RemoveReportConfig(ctx interface{}, session interface{}, id interface{}) *Service_RemoveReportConfig_Call {
+	return &Service_RemoveReportConfig_Call{Call: _e.mock.On("RemoveReportConfig", ctx, session, id)}
+}
+
+func (_c *Service_RemoveReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_RemoveReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *Service_RemoveReportConfig_Call) Return(err error) *Service_RemoveReportConfig_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RemoveReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) error) *Service_RemoveReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -444,6 +715,62 @@ func (_c *Service_StartScheduler_Call) Return(err error) *Service_StartScheduler
 }
 
 func (_c *Service_StartScheduler_Call) RunAndReturn(run func(ctx context.Context) error) *Service_StartScheduler_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateReportConfig provides a mock function for the type Service
+func (_mock *Service) UpdateReportConfig(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, session, cfg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportConfig")
+	}
+
+	var r0 re.ReportConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, session, cfg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, session, cfg)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.ReportConfig) error); ok {
+		r1 = returnFunc(ctx, session, cfg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_UpdateReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportConfig'
+type Service_UpdateReportConfig_Call struct {
+	*mock.Call
+}
+
+// UpdateReportConfig is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - cfg
+func (_e *Service_Expecter) UpdateReportConfig(ctx interface{}, session interface{}, cfg interface{}) *Service_UpdateReportConfig_Call {
+	return &Service_UpdateReportConfig_Call{Call: _e.mock.On("UpdateReportConfig", ctx, session, cfg)}
+}
+
+func (_c *Service_UpdateReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, cfg re.ReportConfig)) *Service_UpdateReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.ReportConfig))
+	})
+	return _c
+}
+
+func (_c *Service_UpdateReportConfig_Call) Return(reportConfig re.ReportConfig, err error) *Service_UpdateReportConfig_Call {
+	_c.Call.Return(reportConfig, err)
+	return _c
+}
+
+func (_c *Service_UpdateReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error)) *Service_UpdateReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

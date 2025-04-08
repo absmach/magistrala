@@ -29,6 +29,13 @@ type Repository interface {
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, id string, status Status) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
+
+	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, id string) error
+	UpdateReportConfigStatus(ctx context.Context, id string, status Status) (ReportConfig, error)
+	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
 }
 
 // PageMeta contains page metadata that helps navigation.
@@ -65,6 +72,15 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+
+	AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, session authn.Session, id string) error
+	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
+	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+
 	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/absmach/magistrala/re"
-	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
@@ -34,7 +33,7 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 `
 	dbr, err := ruleToDb(r)
 	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return re.Rule{}, err
 	}
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
@@ -326,7 +325,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	if pm.Offset != 0 {
 		pgData += " OFFSET :offset"
 	}
-	pq := pageQuery(pm)
+	pq := pageRulesQuery(pm)
 	q := fmt.Sprintf(`
 		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel, 
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
@@ -340,8 +339,8 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	defer rows.Close()
 
 	var rules []re.Rule
-	var r dbRule
 	for rows.Next() {
+		var r dbRule
 		if err := rows.StructScan(&r); err != nil {
 			return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
@@ -368,7 +367,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	return ret, nil
 }
 
-func pageQuery(pm re.PageMeta) string {
+func pageRulesQuery(pm re.PageMeta) string {
 	var query []string
 	if pm.InputChannel != "" {
 		query = append(query, "r.input_channel = :input_channel")
@@ -385,6 +384,168 @@ func pageQuery(pm re.PageMeta) string {
 
 	if pm.Domain != "" {
 		query = append(query, "r.domain_id = :domain_id")
+	}
+
+	var q string
+	if len(query) > 0 {
+		q = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	return q
+}
+
+func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	dbr, err := reportToDb(cfg)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+	row, err := repo.DB.NamedQueryContext(ctx, addReportQuery, dbr)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+	defer row.Close()
+
+	var dbReport dbReport
+	if row.Next() {
+		if err := row.StructScan(&dbReport); err != nil {
+			return re.ReportConfig{}, err
+		}
+	}
+
+	report, err := dbToReport(dbReport)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+
+	return report, nil
+}
+
+func (repo *PostgresRepository) ViewReportConfig(ctx context.Context, id string) (re.ReportConfig, error) {
+	row := repo.DB.QueryRowxContext(ctx, viewReportQuery, id)
+	if err := row.Err(); err != nil {
+		return re.ReportConfig{}, err
+	}
+	var dbr dbReport
+	if err := row.StructScan(&dbr); err != nil {
+		return re.ReportConfig{}, err
+	}
+	rpt, err := dbToReport(dbr)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+
+	return rpt, nil
+}
+
+func (repo *PostgresRepository) UpdateReportConfigStatus(ctx context.Context, id string, status re.Status) (re.ReportConfig, error) {
+	row := repo.DB.QueryRowxContext(ctx, updateReportStatusQuery, id, status)
+	if err := row.Err(); err != nil {
+		return re.ReportConfig{}, err
+	}
+
+	var dbr dbReport
+	if err := row.StructScan(&dbr); err != nil {
+		return re.ReportConfig{}, err
+	}
+
+	rpt, err := dbToReport(dbr)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+
+	return rpt, nil
+}
+
+func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	dbr, err := reportToDb(cfg)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+	row, err := repo.DB.NamedQueryContext(ctx, updateReportQuery, dbr)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+	defer row.Close()
+
+	var dbReport dbReport
+	if row.Next() {
+		if err := row.StructScan(&dbReport); err != nil {
+			return re.ReportConfig{}, err
+		}
+	}
+	rpt, err := dbToReport(dbReport)
+	if err != nil {
+		return re.ReportConfig{}, err
+	}
+
+	return rpt, nil
+}
+
+func (repo *PostgresRepository) RemoveReportConfig(ctx context.Context, id string) error {
+	result, err := repo.DB.ExecContext(ctx, removeReportQuery, id)
+	if err != nil {
+		return err
+	}
+
+	if _, err := result.RowsAffected(); err != nil {
+		return repoerr.ErrNotFound
+	}
+
+	return nil
+}
+
+func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm re.PageMeta) (re.ReportConfigPage, error) {
+	pgData := ""
+	if pm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if pm.Offset != 0 {
+		pgData += " OFFSET :offset"
+	}
+	pq := pageReportQuery(pm)
+	q := fmt.Sprintf(listRulesQuery, pq, pgData)
+	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
+	if err != nil {
+		return re.ReportConfigPage{}, err
+	}
+	defer rows.Close()
+
+	var cfgs []re.ReportConfig
+	for rows.Next() {
+		var r dbReport
+		if err := rows.StructScan(&r); err != nil {
+			return re.ReportConfigPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+		rpt, err := dbToReport(r)
+		if err != nil {
+			return re.ReportConfigPage{}, err
+		}
+		cfgs = append(cfgs, rpt)
+	}
+
+	cq := fmt.Sprintf(totalReportQuery, pq)
+
+	total, err := postgres.Total(ctx, repo.DB, cq, pm)
+	if err != nil {
+		return re.ReportConfigPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	pm.Total = total
+	ret := re.ReportConfigPage{
+		PageMeta:      pm,
+		ReportConfigs: cfgs,
+	}
+
+	return ret, nil
+}
+
+func pageReportQuery(pm re.PageMeta) string {
+	var query []string
+	if pm.Status != re.AllStatus {
+		query = append(query, "rc.status = :status")
+	}
+
+	if pm.Domain != "" {
+		query = append(query, "rc.domain_id = :domain_id")
 	}
 
 	var q string

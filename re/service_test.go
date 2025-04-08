@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/mocks"
+	readmocks "github.com/absmach/magistrala/readers/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
@@ -61,8 +62,9 @@ func newService(t *testing.T, errs chan error) (re.Service, *mocks.Repository, *
 	mockTicker := new(mocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
+	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(mocks.Emailer)
-	return re.NewService(repo, errs, idProvider, pubsub, pubsub, pubsub, mockTicker, e), repo, pubsub, mockTicker
+	return re.NewService(repo, errs, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker
 }
 
 func TestAddRule(t *testing.T) {

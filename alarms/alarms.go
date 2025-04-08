@@ -48,14 +48,13 @@ type PageMetadata struct {
 	Offset     uint64    `json:"offset"      db:"offset"`
 	Limit      uint64    `json:"limit"       db:"limit"`
 	DomainID   string    `json:"domain_id"   db:"domain_id"`
-	ChannelID  string    `json:"channel_id"  db:"channel_id"`
 	RuleID     string    `json:"rule_id"     db:"rule_id"`
 	Status     Status    `json:"status"      db:"status"`
 	AssigneeID string    `json:"assignee_id" db:"assignee_id"`
 	Severity   uint8     `json:"severity"    db:"severity"`
 	UpdatedBy  string    `json:"updated_by"  db:"updated_by"`
 	ResolvedBy string    `json:"resolved_by" db:"resolved_by"`
-	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+	UpdatedAt  time.Time `json:"updated_at"  db:"updated_at"`
 	ResolvedAt time.Time `json:"resolved_at" db:"resolved_at"`
 }
 

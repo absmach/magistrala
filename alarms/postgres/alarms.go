@@ -311,9 +311,6 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	if pm.DomainID != "" {
 		query = append(query, "domain_id = :domain_id")
 	}
-	if pm.ChannelID != "" {
-		query = append(query, "channel_id = :channel_id")
-	}
 	if pm.RuleID != "" {
 		query = append(query, "rule_id = :rule_id")
 	}

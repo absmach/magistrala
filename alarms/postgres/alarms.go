@@ -44,12 +44,12 @@ func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	defer row.Close()
 
 	if !row.Next() {
-		return alarms.Alarm{}, errors.Wrap(repoerr.ErrFailedOpDB, errors.New("no rows returned"))
+		return alarms.Alarm{}, repoerr.ErrNotFound
 	}
 
 	dba = dbAlarm{}
 	if err := row.StructScan(&dba); err != nil {
-		return alarms.Alarm{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
 	return toAlarm(dba)
@@ -97,12 +97,12 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	defer row.Close()
 
 	if !row.Next() {
-		return alarms.Alarm{}, errors.Wrap(repoerr.ErrFailedOpDB, repoerr.ErrNotFound)
+		return alarms.Alarm{}, repoerr.ErrNotFound
 	}
 
 	dba = dbAlarm{}
 	if err := row.StructScan(&dba); err != nil {
-		return alarms.Alarm{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		return alarms.Alarm{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
 	return toAlarm(dba)
@@ -119,17 +119,17 @@ func (r *repository) ViewAlarm(ctx context.Context, alarmID, domainID string) (a
 	defer row.Close()
 
 	if !row.Next() {
-		return alarms.Alarm{}, errors.Wrap(repoerr.ErrFailedOpDB, repoerr.ErrNotFound)
+		return alarms.Alarm{}, repoerr.ErrNotFound
 	}
 
 	dba := dbAlarm{}
 	if err := row.StructScan(&dba); err != nil {
-		return alarms.Alarm{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		return alarms.Alarm{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	alarm, err := toAlarm(dba)
 	if err != nil {
-		return alarms.Alarm{}, errors.Wrap(repoerr.ErrFailedOpDB, err)
+		return alarms.Alarm{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	return alarm, nil
@@ -144,7 +144,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 	q := fmt.Sprintf(`SELECT * FROM alarms %s ORDER BY created_at LIMIT :limit OFFSET :offset;`, query)
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {
-		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
+		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -181,16 +181,16 @@ func (r *repository) DeleteAlarm(ctx context.Context, id string) error {
 	query := `DELETE FROM alarms WHERE id = :id;`
 	result, err := r.db.NamedExecContext(ctx, query, map[string]interface{}{"id": id})
 	if err != nil {
-		return errors.Wrap(repoerr.ErrFailedOpDB, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return errors.Wrap(repoerr.ErrFailedOpDB, err)
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
 	if rowsAffected == 0 {
-		return errors.Wrap(repoerr.ErrFailedOpDB, repoerr.ErrNotFound)
+		return repoerr.ErrNotFound
 	}
 
 	return nil

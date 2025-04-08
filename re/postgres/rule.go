@@ -203,23 +203,3 @@ func fromNullString(nullString sql.NullString) string {
 	}
 	return nullString.String
 }
-
-func toNullStringSlice(value []string) []sql.NullString {
-	var slice []sql.NullString
-	for _, v := range value {
-		if v != "" {
-			slice = append(slice, sql.NullString{String: v, Valid: true})
-		}
-	}
-	return slice
-}
-
-func fromNullStringSlice(nullString []sql.NullString) []string {
-	var slice []string
-	for _, v := range nullString {
-		if v.Valid {
-			slice = append(slice, v.String)
-		}
-	}
-	return slice
-}

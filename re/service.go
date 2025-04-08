@@ -44,6 +44,10 @@ const (
 	monthsInYear = 12
 
 	publisher = "magistrala.re"
+
+	//January 1, 2025 at 00:00:00 UTC
+	from     = 1735689600
+	interval = "1s"
 )
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
@@ -656,9 +660,10 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 		}
 
 		msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
-			ChannelId:    ch,
-			DomainId:     cfg.DomainID,
-			PageMetadata: &grpcReadersV1.PageMetadata{Aggregation: agg},
+			ChannelId: ch,
+			DomainId:  cfg.DomainID,
+			PageMetadata: &grpcReadersV1.PageMetadata{Aggregation: agg, Limit: 10, Offset: 0, From: from, To: float64(time.Now().Unix()),
+				Interval: interval},
 		})
 
 		if err != nil {

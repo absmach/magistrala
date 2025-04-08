@@ -23,17 +23,25 @@ type ReportPage struct {
 }
 
 type ReportConfig struct {
-	Name            string    `json:"name"`
-	DomainID        string    `json:"domain_id"`
-	ChannelIDs      []string  `json:"channel_ids"`
-	ClientIDs       []string  `json:"client_ids"`
-	StartDateTime   time.Time `json:"start_datetime,omitempty"`
-	Time            time.Time `json:"time,omitempty"`
-	Recurring       Recurring `json:"recurring,omitempty"`
-	RecurringPeriod uint      `json:"recurring_period,omitempty"`
-	Aggregation     string    `json:"aggregation,omitempty"`
-	Email           *Email    `json:"email,omitempty"`
-	Metrics         []string    `json:"metrics,omitempty"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	DomainID    string    `json:"domain_id"`
+	ChannelIDs  []string  `json:"channel_ids"`
+	ClientIDs   []string  `json:"client_ids"`
+	Schedule    Schedule  `json:"schedule,omitempty"`
+	Aggregation string    `json:"aggregation,omitempty"`
+	Email       *Email    `json:"email,omitempty"`
+	Metrics     []string  `json:"metrics,omitempty"`
+	Status      Status    `json:"status"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	CreatedBy   string    `json:"created_by,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	UpdatedBy   string    `json:"updated_by,omitempty"`
+}
+
+type ReportConfigPage struct {
+	PageMeta
+	ReportConfigs []ReportConfig `json:"report_configs"`
 }
 
 type Email struct {

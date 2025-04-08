@@ -58,22 +58,21 @@ type (
 )
 
 type Rule struct {
-	ID            string        `json:"id"`
-	Name          string        `json:"name"`
-	DomainID      string        `json:"domain"`
-	Metadata      Metadata      `json:"metadata,omitempty"`
-	InputChannel  string        `json:"input_channel"`
-	InputTopic    string        `json:"input_topic"`
-	Logic         Script        `json:"logic"`
-	OutputChannel string        `json:"output_channel,omitempty"`
-	OutputTopic   string        `json:"output_topic,omitempty"`
-	Schedule      Schedule      `json:"schedule,omitempty"`
-	Status        Status        `json:"status"`
-	CreatedAt     time.Time     `json:"created_at,omitempty"`
-	CreatedBy     string        `json:"created_by,omitempty"`
-	UpdatedAt     time.Time     `json:"updated_at,omitempty"`
-	UpdatedBy     string        `json:"updated_by,omitempty"`
-	ReportConfig  *ReportConfig `json:"report_config,omitempty"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	DomainID      string    `json:"domain"`
+	Metadata      Metadata  `json:"metadata,omitempty"`
+	InputChannel  string    `json:"input_channel"`
+	InputTopic    string    `json:"input_topic"`
+	Logic         Script    `json:"logic"`
+	OutputChannel string    `json:"output_channel,omitempty"`
+	OutputTopic   string    `json:"output_topic,omitempty"`
+	Schedule      Schedule  `json:"schedule,omitempty"`
+	Status        Status    `json:"status"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
+	CreatedBy     string    `json:"created_by,omitempty"`
+	UpdatedAt     time.Time `json:"updated_at,omitempty"`
+	UpdatedBy     string    `json:"updated_by,omitempty"`
 }
 
 type Repository interface {
@@ -83,6 +82,13 @@ type Repository interface {
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, id string, status Status) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
+
+	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, id string) error
+	UpdateReportConfigStatus(ctx context.Context, id string, status Status) (ReportConfig, error)
+	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
 }
 
 // PageMeta contains page metadata that helps navigation.
@@ -115,6 +121,15 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+
+	AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, session authn.Session, id string) error
+	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
+	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+
 	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 }
@@ -254,10 +269,21 @@ func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
 		re.errors <- err
 		return
 	}
+	reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
+	if err != nil {
+		re.errors <- err
+		return
+	}
 	for _, r := range page.Rules {
-		go func(ctx context.Context) {
+		go func(ctx context.Context, rule Rule) {
 			re.errors <- re.process(ctx, r, msgs)
-		}(ctx)
+		}(ctx, r)
+	}
+
+	for _, cfg := range reportConfigs.ReportConfigs {
+		go func(ctx context.Context, config ReportConfig) {
+			re.errors <- re.processReportConfig(ctx, config)
+		}(ctx, cfg)
 	}
 }
 
@@ -266,10 +292,6 @@ func (re *re) Errors() <-chan error {
 }
 
 func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
-	if r.ReportConfig != nil {
-		return re.processReport(ctx, r)
-	}
-
 	l := lua.NewState()
 	defer l.Close()
 	preload(l)
@@ -338,6 +360,9 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 		if len(r.OutputChannel) == 0 {
 			return nil
 		}
+		if re.pubSub == nil {
+			return errors.New("message broker not initialized")
+		}
 		m := &messaging.Message{
 			Publisher: publisher,
 			Created:   time.Now().Unix(),
@@ -349,22 +374,22 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	}
 }
 
-func (re *re) processReport(ctx context.Context, r Rule) error {
-	reportPage, err := re.generateReport(ctx, *r.ReportConfig)
+func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
+	reportPage, err := re.generateReport(ctx, cfg)
 	if err != nil {
 		return err
 	}
 
-	if r.ReportConfig.Email != nil && len(r.ReportConfig.Email.To) > 0 {
+	if cfg.Email != nil && len(cfg.Email.To) > 0 {
 		reportContent, err := json.Marshal(reportPage)
 		if err != nil {
 			return err
 		}
 
 		err = re.email.SendEmailNotification(
-			r.ReportConfig.Email.To,
-			r.ReportConfig.Email.From,
-			r.ReportConfig.Email.Subject,
+			cfg.Email.To,
+			cfg.Email.From,
+			cfg.Email.Subject,
 			"",
 			"",
 			string(reportContent),
@@ -373,21 +398,6 @@ func (re *re) processReport(ctx context.Context, r Rule) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	if len(r.OutputChannel) > 0 {
-		reportData, err := json.Marshal(reportPage)
-		if err != nil {
-			return err
-		}
-
-		m := &messaging.Message{
-			Publisher: "magistrala.re",
-			Created:   time.Now().Unix(),
-			Payload:   reportData,
-			Channel:   r.OutputChannel,
-		}
-		return re.pubSub.Publish(ctx, m.Channel, m)
 	}
 
 	return nil
@@ -403,18 +413,18 @@ func (re *re) StartScheduler(ctx context.Context) error {
 		case <-re.ticker.Tick():
 			startTime := time.Now()
 
-			pm := PageMeta{
+			rulePM := PageMeta{
 				Status:          EnabledStatus,
 				ScheduledBefore: &startTime,
 			}
 
-			page, err := re.repo.ListRules(ctx, pm)
+			page, err := re.repo.ListRules(ctx, rulePM)
 			if err != nil {
 				return err
 			}
 
 			for _, rule := range page.Rules {
-				if rule.shouldRun(startTime) {
+				if rule.Schedule.ShouldRun(startTime) {
 					go func(r Rule) {
 						msg := &messaging.Message{
 							Channel: r.InputChannel,
@@ -424,48 +434,66 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					}(rule)
 				}
 			}
+
+			reportPM := PageMeta{
+				Status:          EnabledStatus,
+				ScheduledBefore: &startTime,
+			}
+
+			reportConfigs, err := re.repo.ListReportsConfig(ctx, reportPM)
+			if err != nil {
+				return err
+			}
+
+			for _, cfg := range reportConfigs.ReportConfigs {
+				if cfg.Schedule.ShouldRun(startTime) {
+					go func(config ReportConfig) {
+						re.errors <- re.processReportConfig(ctx, config)
+					}(cfg)
+				}
+			}
 		}
 	}
 }
 
-func (r Rule) shouldRun(startTime time.Time) bool {
+func (s Schedule) ShouldRun(startTime time.Time) bool {
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
-	if r.Schedule.StartDateTime.After(startTime) {
+	if s.StartDateTime.After(startTime) {
 		return false
 	}
 
-	t := r.Schedule.Time.Truncate(time.Minute).UTC()
+	t := s.Time.Truncate(time.Minute).UTC()
 	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
 	if t.Equal(startTimeOnly) {
 		return true
 	}
 
-	if r.Schedule.RecurringPeriod == 0 {
+	if s.RecurringPeriod == 0 {
 		return false
 	}
 
-	period := int(r.Schedule.RecurringPeriod)
+	period := int(s.RecurringPeriod)
 
-	switch r.Schedule.Recurring {
+	switch s.Recurring {
 	case Daily:
-		if r.Schedule.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / hoursInDay
+		if s.RecurringPeriod > 0 {
+			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / hoursInDay
 			if int(daysSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Weekly:
-		if r.Schedule.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / (hoursInDay * daysInWeek)
+		if s.RecurringPeriod > 0 {
+			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
 			if int(weeksSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Monthly:
-		if r.Schedule.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-r.Schedule.StartDateTime.Year())*monthsInYear +
-				int(startTime.Month()-r.Schedule.StartDateTime.Month())
+		if s.RecurringPeriod > 0 {
+			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*monthsInYear +
+				int(startTime.Month()-s.StartDateTime.Month())
 			if monthsSinceStart%period == 0 {
 				return true
 			}
@@ -508,20 +536,96 @@ func preload(l *lua.LState) {
 	filepath.Preload(l)
 }
 
+func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	id, err := re.idp.ID()
+	if err != nil {
+		return ReportConfig{}, err
+	}
+	now := time.Now()
+	cfg.ID = id
+	cfg.CreatedAt = now
+	cfg.CreatedBy = session.UserID
+	cfg.DomainID = session.DomainID
+	cfg.Status = EnabledStatus
+
+	reportConfig, err := re.repo.AddReportConfig(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	return reportConfig, nil
+}
+
+func (re *re) ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	cfg, err := re.repo.ViewReportConfig(ctx, id)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	return cfg, nil
+}
+
+func (re *re) UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	cfg.UpdatedAt = time.Now()
+	cfg.UpdatedBy = session.UserID
+	reportConfig, err := re.repo.UpdateReportConfig(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return reportConfig, nil
+}
+
+func (re *re) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
+	if err := re.repo.RemoveReportConfig(ctx, id); err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	return nil
+}
+
+func (re *re) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
+	pm.Domain = session.DomainID
+	page, err := re.repo.ListReportsConfig(ctx, pm)
+	if err != nil {
+		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	return page, nil
+}
+
+func (re *re) EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	status, err := ToStatus(Enabled)
+	if err != nil {
+		return ReportConfig{}, err
+	}
+	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return cfg, nil
+}
+
+func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	status, err := ToStatus(Disabled)
+	if err != nil {
+		return ReportConfig{}, err
+	}
+	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return cfg, nil
+}
+
 func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error) {
 	config.DomainID = session.DomainID
 
-	_, err := re.AddRule(ctx, session, Rule{ReportConfig: &config})
+	reportPage, err := re.generateReport(ctx, config)
 	if err != nil {
 		return ReportPage{}, err
 	}
 
-	page, err := re.generateReport(ctx, config)
-	if err != nil {
-		return ReportPage{}, err
-	}
-
-	return page, nil
+	return reportPage, nil
 }
 
 func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage, error) {
@@ -533,6 +637,9 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 		ClientMessages: make(map[string][]senml.Message),
 	}
 
+	if re.readers == nil {
+		return ReportPage{}, errors.New("readers service client not initialized")
+	}
 	for _, ch := range cfg.ChannelIDs {
 		agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
 		switch cfg.Aggregation {
@@ -553,6 +660,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 			DomainId:     cfg.DomainID,
 			PageMetadata: &grpcReadersV1.PageMetadata{Aggregation: agg},
 		})
+
 		if err != nil {
 			return ReportPage{}, err
 		}

@@ -122,17 +122,6 @@ func (req updateReportConfigReq) validate() error {
 	return nil
 }
 
-type downloadReportReq struct {
-	ReportConfig *re.ReportConfig `json:"report_config"`
-}
-
-func (req downloadReportReq) validate() error {
-	if req.ReportConfig == nil {
-		return svcerr.ErrMalformedEntity
-	}
-	return nil
-}
-
 type addReportConfigReq struct {
 	re.ReportConfig `json:",inline"`
 }

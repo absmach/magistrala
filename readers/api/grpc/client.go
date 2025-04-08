@@ -131,11 +131,12 @@ func fromResponseMessages(protoMessages []*grpcReadersV1.Message) []readers.Mess
 		switch msg := m.Payload.(type) {
 		case *grpcReadersV1.Message_Senml:
 			s := msg.Senml
+			base := s.GetBase()
 			typed := senml.Message{
-				Channel:     s.GetChannel(),
-				Subtopic:    s.GetSubtopic(),
-				Publisher:   s.GetPublisher(),
-				Protocol:    s.GetProtocol(),
+				Channel:     base.GetChannel(),
+				Subtopic:    base.GetSubtopic(),
+				Publisher:   base.GetPublisher(),
+				Protocol:    base.GetProtocol(),
 				Name:        s.GetName(),
 				Unit:        s.GetUnit(),
 				Time:        s.GetTime(),
@@ -149,16 +150,17 @@ func fromResponseMessages(protoMessages []*grpcReadersV1.Message) []readers.Mess
 			messages = append(messages, typed)
 		case *grpcReadersV1.Message_Json:
 			j := msg.Json
+			base := j.GetBase()
 			var p map[string]interface{}
 			if err := json.Unmarshal(j.GetPayload(), &p); err != nil {
 				continue
 			}
 			messages = append(messages, map[string]interface{}{
-				"channel":   j.GetChannel(),
+				"channel":   base.GetChannel(),
 				"created":   j.GetCreated(),
-				"subtopic":  j.GetSubtopic(),
-				"publisher": j.GetPublisher(),
-				"protocol":  j.GetProtocol(),
+				"subtopic":  base.GetSubtopic(),
+				"publisher": base.GetPublisher(),
+				"protocol":  base.GetProtocol(),
 				"payload":   p,
 			})
 		}

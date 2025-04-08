@@ -87,10 +87,12 @@ func toResponseMessages(messages []readers.Message) []*grpcReadersV1.Message {
 			res = append(res, &grpcReadersV1.Message{
 				Payload: &grpcReadersV1.Message_Senml{
 					Senml: &grpcReadersV1.SenMLMessage{
-						Channel:     typed.Channel,
-						Subtopic:    typed.Subtopic,
-						Publisher:   typed.Publisher,
-						Protocol:    typed.Protocol,
+						Base: &grpcReadersV1.BaseMessage{
+							Channel:   typed.Channel,
+							Subtopic:  typed.Subtopic,
+							Publisher: typed.Publisher,
+							Protocol:  typed.Protocol,
+						},
 						Name:        typed.Name,
 						Unit:        typed.Unit,
 						Time:        typed.Time,
@@ -111,13 +113,15 @@ func toResponseMessages(messages []readers.Message) []*grpcReadersV1.Message {
 			}
 			res = append(res, &grpcReadersV1.Message{
 				Payload: &grpcReadersV1.Message_Json{
-					Json: &grpcReadersV1.JsonStructuredMessage{
-						Channel:   safeString(typed["channel"]),
-						Created:   safeInt64(typed["created"]),
-						Subtopic:  safeString(typed["subtopic"]),
-						Publisher: safeString(typed["publisher"]),
-						Protocol:  safeString(typed["protocol"]),
-						Payload:   data,
+					Json: &grpcReadersV1.JsonMessage{
+						Base: &grpcReadersV1.BaseMessage{
+							Channel:   safeString(typed["channel"]),
+							Subtopic:  safeString(typed["subtopic"]),
+							Publisher: safeString(typed["publisher"]),
+							Protocol:  safeString(typed["protocol"]),
+						},
+						Created: safeInt64(typed["created"]),
+						Payload: data,
 					},
 				},
 			})

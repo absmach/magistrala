@@ -82,13 +82,15 @@ func TestReadMessages(t *testing.T) {
 		Messages: []*grpcReadersV1.Message{
 			{
 				Payload: &grpcReadersV1.Message_Json{
-					Json: &grpcReadersV1.JsonStructuredMessage{
-						Channel:   "testChannel",
-						Created:   123456789,
-						Subtopic:  "testSubtopic",
-						Publisher: "testPublisher",
-						Protocol:  "testProtocol",
-						Payload:   expectedPayload,
+					Json: &grpcReadersV1.JsonMessage{
+						Base: &grpcReadersV1.BaseMessage{
+							Channel:   "testChannel",
+							Subtopic:  "testSubtopic",
+							Publisher: "testPublisher",
+							Protocol:  "testProtocol",
+						},
+						Created: 123456789,
+						Payload: expectedPayload,
 					},
 				},
 			},
@@ -182,10 +184,12 @@ func TestReadMessages(t *testing.T) {
 					{
 						Payload: &grpcReadersV1.Message_Senml{
 							Senml: &grpcReadersV1.SenMLMessage{
-								Channel:     "senmlChannel",
-								Subtopic:    "senmlSub",
-								Publisher:   "senmlPublisher",
-								Protocol:    "mqtt",
+								Base: &grpcReadersV1.BaseMessage{
+									Channel:   "senmlChannel",
+									Subtopic:  "senmlSub",
+									Publisher: "senmlPublisher",
+									Protocol:  "mqtt",
+								},
 								Name:        "temperature",
 								Unit:        "C",
 								Time:        1672531200,

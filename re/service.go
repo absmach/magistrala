@@ -327,6 +327,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			Created:   time.Now().Unix(),
 			Payload:   []byte(result.String()),
 			Channel:   r.OutputChannel,
+			Subtopic:  r.OutputTopic,
 		}
 		return re.pubSub.Publish(ctx, m.Channel, m)
 	}

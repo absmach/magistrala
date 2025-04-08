@@ -34,6 +34,8 @@ const (
 	hoursInDay   = 24
 	daysInWeek   = 7
 	monthsInYear = 12
+
+	publisher = "magistrala.re"
 )
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
@@ -321,7 +323,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			return nil
 		}
 		m := &messaging.Message{
-			Publisher: "magistrala.re",
+			Publisher: publisher,
 			Created:   time.Now().Unix(),
 			Payload:   []byte(result.String()),
 			Channel:   r.OutputChannel,

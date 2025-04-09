@@ -678,7 +678,7 @@ func (re *re) generatePDFReport(report Report) ([]byte, error) {
 		pdf.SetFont("Arial", "B", 10)
 		pdf.SetFillColor(200, 200, 200)
 
-		headers := []string{"Metric Name", "Value", "Unit", "Time"}
+		headers := []string{"Time", "Metric Name", "Value", "Unit"}
 		widths := []float64{60, 40, 30, 40}
 
 		for i, header := range headers {
@@ -711,10 +711,10 @@ func (re *re) generatePDFReport(report Report) ([]byte, error) {
 				valueStr = "N/A"
 			}
 
-			pdf.Cell(widths[0], 8, msg.Name)
-			pdf.Cell(widths[1], 8, valueStr)
-			pdf.Cell(widths[2], 8, msg.Unit)
-			pdf.Cell(widths[3], 8, timeStr)
+			pdf.Cell(widths[0], 8, timeStr)
+			pdf.Cell(widths[1], 8, msg.Name)
+			pdf.Cell(widths[2], 8, valueStr)
+			pdf.Cell(widths[3], 8, msg.Unit)
 			pdf.Ln(-1)
 
 			fill = !fill
@@ -745,7 +745,7 @@ func (re *re) generateCSVReport(report Report) ([]byte, error) {
 			return nil, err
 		}
 
-		if err := writer.Write([]string{"Metric Name", "Value", "Unit", "Time", "Channel", "Subtopic"}); err != nil {
+		if err := writer.Write([]string{"Metric Name", "Value", "Unit", "Time", "Channel"}); err != nil {
 			return nil, err
 		}
 
@@ -770,12 +770,11 @@ func (re *re) generateCSVReport(report Report) ([]byte, error) {
 			}
 
 			row := []string{
+				timeStr,
 				msg.Name,
 				valueStr,
 				msg.Unit,
-				timeStr,
 				msg.Channel,
-				msg.Subtopic,
 			}
 
 			if err := writer.Write(row); err != nil {

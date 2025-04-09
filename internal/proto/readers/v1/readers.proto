@@ -76,8 +76,7 @@ message JsonMessage {
 message ReadMessagesReq {
   string channel_id                   = 1;
   string domain_id                    = 2;
-  repeated Message messages           = 3;
-  PageMetadata page_metadata          = 4;
+  PageMetadata page_metadata          = 3;
 }
 
 // Aggregation defines supported data aggregations.

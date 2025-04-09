@@ -645,8 +645,7 @@ type ReadMessagesReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ChannelId     string                 `protobuf:"bytes,1,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
 	DomainId      string                 `protobuf:"bytes,2,opt,name=domain_id,json=domainId,proto3" json:"domain_id,omitempty"`
-	Messages      []*Message             `protobuf:"bytes,3,rep,name=messages,proto3" json:"messages,omitempty"`
-	PageMetadata  *PageMetadata          `protobuf:"bytes,4,opt,name=page_metadata,json=pageMetadata,proto3" json:"page_metadata,omitempty"`
+	PageMetadata  *PageMetadata          `protobuf:"bytes,3,opt,name=page_metadata,json=pageMetadata,proto3" json:"page_metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -693,13 +692,6 @@ func (x *ReadMessagesReq) GetDomainId() string {
 		return x.DomainId
 	}
 	return ""
-}
-
-func (x *ReadMessagesReq) GetMessages() []*Message {
-	if x != nil {
-		return x.Messages
-	}
-	return nil
 }
 
 func (x *ReadMessagesReq) GetPageMetadata() *PageMetadata {
@@ -769,13 +761,12 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\vJsonMessage\x12+\n" +
 	"\x04base\x18\x01 \x01(\v2\x17.readers.v1.BaseMessageR\x04base\x12\x18\n" +
 	"\acreated\x18\x02 \x01(\x03R\acreated\x12\x18\n" +
-	"\apayload\x18\x03 \x01(\fR\apayload\"\xbd\x01\n" +
+	"\apayload\x18\x03 \x01(\fR\apayload\"\x8c\x01\n" +
 	"\x0fReadMessagesReq\x12\x1d\n" +
 	"\n" +
 	"channel_id\x18\x01 \x01(\tR\tchannelId\x12\x1b\n" +
-	"\tdomain_id\x18\x02 \x01(\tR\bdomainId\x12/\n" +
-	"\bmessages\x18\x03 \x03(\v2\x13.readers.v1.MessageR\bmessages\x12=\n" +
-	"\rpage_metadata\x18\x04 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata*Y\n" +
+	"\tdomain_id\x18\x02 \x01(\tR\bdomainId\x12=\n" +
+	"\rpage_metadata\x18\x03 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata*Y\n" +
 	"\vAggregation\x12\x1b\n" +
 	"\x17AGGREGATION_UNSPECIFIED\x10\x00\x12\a\n" +
 	"\x03MAX\x10\x01\x12\a\n" +
@@ -811,22 +802,21 @@ var file_readers_v1_readers_proto_goTypes = []any{
 	(*ReadMessagesReq)(nil), // 7: readers.v1.ReadMessagesReq
 }
 var file_readers_v1_readers_proto_depIdxs = []int32{
-	0,  // 0: readers.v1.PageMetadata.aggregation:type_name -> readers.v1.Aggregation
-	1,  // 1: readers.v1.ReadMessagesRes.page_metadata:type_name -> readers.v1.PageMetadata
-	3,  // 2: readers.v1.ReadMessagesRes.messages:type_name -> readers.v1.Message
-	5,  // 3: readers.v1.Message.senml:type_name -> readers.v1.SenMLMessage
-	6,  // 4: readers.v1.Message.json:type_name -> readers.v1.JsonMessage
-	4,  // 5: readers.v1.SenMLMessage.base:type_name -> readers.v1.BaseMessage
-	4,  // 6: readers.v1.JsonMessage.base:type_name -> readers.v1.BaseMessage
-	3,  // 7: readers.v1.ReadMessagesReq.messages:type_name -> readers.v1.Message
-	1,  // 8: readers.v1.ReadMessagesReq.page_metadata:type_name -> readers.v1.PageMetadata
-	7,  // 9: readers.v1.ReadersService.ReadMessages:input_type -> readers.v1.ReadMessagesReq
-	2,  // 10: readers.v1.ReadersService.ReadMessages:output_type -> readers.v1.ReadMessagesRes
-	10, // [10:11] is the sub-list for method output_type
-	9,  // [9:10] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	0, // 0: readers.v1.PageMetadata.aggregation:type_name -> readers.v1.Aggregation
+	1, // 1: readers.v1.ReadMessagesRes.page_metadata:type_name -> readers.v1.PageMetadata
+	3, // 2: readers.v1.ReadMessagesRes.messages:type_name -> readers.v1.Message
+	5, // 3: readers.v1.Message.senml:type_name -> readers.v1.SenMLMessage
+	6, // 4: readers.v1.Message.json:type_name -> readers.v1.JsonMessage
+	4, // 5: readers.v1.SenMLMessage.base:type_name -> readers.v1.BaseMessage
+	4, // 6: readers.v1.JsonMessage.base:type_name -> readers.v1.BaseMessage
+	1, // 7: readers.v1.ReadMessagesReq.page_metadata:type_name -> readers.v1.PageMetadata
+	7, // 8: readers.v1.ReadersService.ReadMessages:input_type -> readers.v1.ReadMessagesReq
+	2, // 9: readers.v1.ReadersService.ReadMessages:output_type -> readers.v1.ReadMessagesRes
+	9, // [9:10] is the sub-list for method output_type
+	8, // [8:9] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_readers_v1_readers_proto_init() }

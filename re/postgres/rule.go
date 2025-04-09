@@ -37,7 +37,7 @@ type dbRule struct {
 	UpdatedBy       string         `db:"updated_by"`
 }
 
-// dbReport represents the database structure for a Rule.
+// dbReport represents the database structure for a Report.
 type dbReport struct {
 	ID              string         `db:"id"`
 	Name            string         `db:"name"`
@@ -175,7 +175,7 @@ func dbToReport(dto dbReport) (re.ReportConfig, error) {
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
-		Email: &re.Email{
+		Email: re.Email{
 			To:      dto.To,
 			From:    fromNullString(dto.From),
 			Subject: fromNullString(dto.Subject),

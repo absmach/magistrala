@@ -30,7 +30,7 @@ type ReportConfig struct {
 	ClientIDs   []string  `json:"client_ids"`
 	Schedule    Schedule  `json:"schedule,omitempty"`
 	Aggregation string    `json:"aggregation,omitempty"`
-	Email       *Email    `json:"email,omitempty"`
+	Email       Email     `json:"email,omitempty"`
 	Metrics     []string  `json:"metrics,omitempty"`
 	Status      Status    `json:"status"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`

@@ -702,8 +702,6 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 
 	reportPage.Reports = append(reportPage.Reports, report)
 	reportPage.Total = uint64(len(reportPage.Reports))
-	reportPage.Offset = 0
-	reportPage.Limit = reportPage.Total
 
 	var err error
 	reportPage.PDF, err = re.generatePDFReport(report)

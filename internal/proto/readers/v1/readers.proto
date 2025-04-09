@@ -5,7 +5,7 @@ syntax = "proto3";
 
 package readers.v1;
 
-option go_package = "github.com/absmach/magistrala/internal/grpc/readers/v1";
+option go_package = "github.com/absmach/magistrala/api/grpc/readers/v1";
 
 // ReadersService is a service that provides access to
 // readers functionalities for Magistrala services.

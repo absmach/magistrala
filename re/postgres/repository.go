@@ -497,7 +497,7 @@ func (repo *PostgresRepository) RemoveReportConfig(ctx context.Context, id strin
 func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm re.PageMeta) (re.ReportConfigPage, error) {
 	listReportsQuery := `
 		SELECT id, name, domain_id, channel_ids, client_ids, aggregation, metrics, "to", "from", subject,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, limit
+			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, "limit"
 		FROM report_config rc %s %s;
 	`
 

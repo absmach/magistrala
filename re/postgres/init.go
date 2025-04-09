@@ -50,7 +50,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						id          	 	VARCHAR(36) PRIMARY KEY,
 						name				VARCHAR(1024),
 						domain_id         	VARCHAR(36) NOT NULL,
-						limit				BIGINT CHECK (limit >= 0),
+						"limit"				BIGINT CHECK ("limit" >= 0),
 						channel_ids 	  	TEXT[],
 						client_ids 		  	TEXT[],
 						aggregation			TEXT,

@@ -163,7 +163,6 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 					encodeFileDownloadResponse,
 					opts...,
 				), "download_report").ServeHTTP)
-
 			})
 		})
 	})

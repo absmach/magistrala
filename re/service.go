@@ -589,7 +589,8 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 				Offset:      0,
 				From:        from,
 				To:          float64(time.Now().Unix()),
-				Interval:    interval},
+				Interval:    interval,
+			},
 		})
 
 		if err != nil {

@@ -382,7 +382,7 @@ func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
 		return err
 	}
 
-	if cfg.Email != nil && len(cfg.Email.To) > 0 {
+	if len(cfg.Email.To) > 0 {
 		reportContent, err := json.Marshal(reportPage)
 		if err != nil {
 			return err
@@ -672,6 +672,8 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 		if err != nil {
 			return ReportPage{}, err
 		}
+
+		fmt.Printf("message is %+v\n", msgs)
 
 		for _, msg := range msgs.Messages {
 			var message senml.Message

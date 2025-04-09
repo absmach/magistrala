@@ -68,7 +68,7 @@ const (
 		INSERT INTO report_config (id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
 			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject)
 		VALUES (:id, :name, :domain_id, :channel_ids, :client_ids, :aggregation, :metrics,
-			:to, :"from", :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status, :subject)
+			:to, :from, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status, :subject)
 		RETURNING id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
 			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject;
 	`
@@ -81,16 +81,15 @@ const (
 	`
 
 	updateReportQuery = `
-		UPDATE report_config
-		SET name = :name, channel_ids = :channel_ids, client_ids = :client_ids, aggregation = :aggregation, metrics = :metrics, 
-			logic_value = :logic_value, output_channel = :output_channel, output_topic = :output_topic, 
-			start_datetime = :start_datetime, time = :time, recurring = :recurring, 
-			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by, status = :status,
-			"to" = :to, "from" = :from
-		WHERE id = :id
-		RETURNING id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
-			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
-	`
+    UPDATE report_config
+    SET name = :name, channel_ids = :channel_ids, client_ids = :client_ids, aggregation = :aggregation, metrics = :metrics,
+        start_datetime = :start_datetime, time = :time, recurring = :recurring, 
+        recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by, status = :status,
+        "to" = :to, "from" = :from, subject = :subject
+    WHERE id = :id
+    RETURNING id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
+        "to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject;
+`
 
 	removeReportQuery = `
 		DELETE FROM report_config

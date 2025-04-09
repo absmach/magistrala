@@ -133,6 +133,9 @@ func (req addReportConfigReq) validate() error {
 	if len(req.ChannelIDs) == 0 {
 		return svcerr.ErrMalformedEntity
 	}
+	if req.Limit == 0 {
+		return apiutil.ErrValidation
+	}
 	return nil
 }
 
@@ -170,11 +173,17 @@ func (req deleteReportConfigReq) validate() error {
 }
 
 type generateReportReq struct {
-	*re.ReportConfig
+	re.ReportConfig
 }
 
 func (req generateReportReq) validate() error {
-	if req.ReportConfig == nil {
+	if req.Name == "" {
+		return svcerr.ErrMalformedEntity
+	}
+	if len(req.ChannelIDs) == 0 {
+		return svcerr.ErrMalformedEntity
+	}
+	if req.Limit == 0 {
 		return apiutil.ErrValidation
 	}
 	return nil

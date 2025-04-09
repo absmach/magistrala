@@ -275,12 +275,12 @@ func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var config re.ReportConfig
-	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+	var req generateReportReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
 
-	return generateReportReq{ReportConfig: &config}, nil
+	return req, nil
 }
 
 func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {

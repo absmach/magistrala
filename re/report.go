@@ -24,6 +24,7 @@ type ReportConfig struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	DomainID    string    `json:"domain_id"`
+	Limit       uint64    `json:"limit"`
 	ChannelIDs  []string  `json:"channel_ids"`
 	ClientIDs   []string  `json:"client_ids"`
 	Schedule    Schedule  `json:"schedule,omitempty"`

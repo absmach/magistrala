@@ -30,9 +30,9 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, message, status, severity, domain_id, assignee_id, metadata, created_by, created_at)
-				VALUES (:id, :rule_id, :message, :status, :severity, :domain_id, :assignee_id, :metadata, :created_by, :created_at)
-				RETURNING id, rule_id, message, status, severity, domain_id, assignee_id, metadata, created_by, created_at;`
+	query := `INSERT INTO alarms (id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_by, created_at)
+				VALUES (:id, :rule_id, :measurement, :value, :unit, :cause, :status, :severity, :domain_id, :assignee_id, :metadata, :created_by, :created_at)
+				RETURNING id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_by, created_at;`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -58,9 +58,6 @@ func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
 	var query []string
 	var upq string
-	if alarm.Message != "" {
-		query = append(query, "message = :message,")
-	}
 	if alarm.Status != 0 {
 		query = append(query, "status = :status,")
 	}
@@ -87,7 +84,7 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	}
 
 	q := fmt.Sprintf(`UPDATE alarms SET %s updated_by = :updated_by, updated_at = :updated_at WHERE id = :id
-		RETURNING id, rule_id, message, status, domain_id, assignee_id, metadata, created_by, created_at, updated_by, updated_at, resolved_by, resolved_at;`, upq)
+		RETURNING id, rule_id, measurement, value, unit, cause, status, domain_id, assignee_id, metadata, created_by, created_at, updated_by, updated_at, resolved_by, resolved_at;`, upq)
 
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
@@ -200,22 +197,25 @@ func (r *repository) DeleteAlarm(ctx context.Context, id string) error {
 }
 
 type dbAlarm struct {
-	ID         string        `db:"id"`
-	RuleID     string        `db:"rule_id"`
-	Message    string        `db:"message"`
-	Status     alarms.Status `db:"status"`
-	Severity   uint8         `db:"severity"`
-	DomainID   string        `db:"domain_id"`
-	AssigneeID string        `db:"assignee_id"`
-	CreatedAt  time.Time     `db:"created_at"`
-	CreatedBy  string        `db:"created_by"`
-	UpdatedAt  sql.NullTime  `db:"updated_at,omitempty"`
-	UpdatedBy  *string       `db:"updated_by,omitempty"`
-	AssignedAt sql.NullTime  `db:"assigned_at,omitempty"`
-	AssignedBy *string       `db:"assigned_by,omitempty"`
-	ResolvedAt sql.NullTime  `db:"resolved_at,omitempty"`
-	ResolvedBy *string       `db:"resolved_by,omitempty"`
-	Metadata   []byte        `db:"metadata,omitempty"`
+	ID          string        `db:"id"`
+	RuleID      string        `db:"rule_id"`
+	Measurement string        `db:"measurement"`
+	Value       string        `db:"value"`
+	Unit        string        `db:"unit"`
+	Cause       string        `db:"cause"`
+	Status      alarms.Status `db:"status"`
+	Severity    uint8         `db:"severity"`
+	DomainID    string        `db:"domain_id"`
+	AssigneeID  string        `db:"assignee_id"`
+	CreatedAt   time.Time     `db:"created_at"`
+	CreatedBy   string        `db:"created_by"`
+	UpdatedAt   sql.NullTime  `db:"updated_at,omitempty"`
+	UpdatedBy   *string       `db:"updated_by,omitempty"`
+	AssignedAt  sql.NullTime  `db:"assigned_at,omitempty"`
+	AssignedBy  *string       `db:"assigned_by,omitempty"`
+	ResolvedAt  sql.NullTime  `db:"resolved_at,omitempty"`
+	ResolvedBy  *string       `db:"resolved_by,omitempty"`
+	Metadata    []byte        `db:"metadata,omitempty"`
 }
 
 func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
@@ -259,22 +259,25 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 	}
 
 	return dbAlarm{
-		ID:         a.ID,
-		RuleID:     a.RuleID,
-		Message:    a.Message,
-		Status:     a.Status,
-		Severity:   a.Severity,
-		DomainID:   a.DomainID,
-		AssigneeID: a.AssigneeID,
-		CreatedAt:  a.CreatedAt,
-		CreatedBy:  a.CreatedBy,
-		UpdatedAt:  updatedAt,
-		UpdatedBy:  updatedBy,
-		AssignedAt: assignedAt,
-		AssignedBy: assignedBy,
-		ResolvedAt: resolvedAt,
-		ResolvedBy: resolvedBy,
-		Metadata:   metadata,
+		ID:          a.ID,
+		RuleID:      a.RuleID,
+		Measurement: a.Measurement,
+		Value:       a.Value,
+		Unit:        a.Unit,
+		Cause:       a.Cause,
+		Status:      a.Status,
+		Severity:    a.Severity,
+		DomainID:    a.DomainID,
+		AssigneeID:  a.AssigneeID,
+		CreatedAt:   a.CreatedAt,
+		CreatedBy:   a.CreatedBy,
+		UpdatedAt:   updatedAt,
+		UpdatedBy:   updatedBy,
+		AssignedAt:  assignedAt,
+		AssignedBy:  assignedBy,
+		ResolvedAt:  resolvedAt,
+		ResolvedBy:  resolvedBy,
+		Metadata:    metadata,
 	}, nil
 }
 
@@ -315,21 +318,25 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 	}
 
 	return alarms.Alarm{
-		ID:         dbr.ID,
-		RuleID:     dbr.RuleID,
-		Message:    dbr.Message,
-		Status:     dbr.Status,
-		DomainID:   dbr.DomainID,
-		AssigneeID: dbr.AssigneeID,
-		CreatedAt:  dbr.CreatedAt,
-		CreatedBy:  dbr.CreatedBy,
-		UpdatedAt:  updatedAt,
-		UpdatedBy:  updatedBy,
-		AssignedAt: assignedAt,
-		AssignedBy: assignedBy,
-		ResolvedAt: resolvedAt,
-		ResolvedBy: resolvedBy,
-		Metadata:   metadata,
+		ID:          dbr.ID,
+		RuleID:      dbr.RuleID,
+		Measurement: dbr.Measurement,
+		Value:       dbr.Value,
+		Unit:        dbr.Unit,
+		Cause:       dbr.Cause,
+		Status:      dbr.Status,
+		Severity:    dbr.Severity,
+		DomainID:    dbr.DomainID,
+		AssigneeID:  dbr.AssigneeID,
+		CreatedAt:   dbr.CreatedAt,
+		CreatedBy:   dbr.CreatedBy,
+		UpdatedAt:   updatedAt,
+		UpdatedBy:   updatedBy,
+		AssignedAt:  assignedAt,
+		AssignedBy:  assignedBy,
+		ResolvedAt:  resolvedAt,
+		ResolvedBy:  resolvedBy,
+		Metadata:    metadata,
 	}, nil
 }
 

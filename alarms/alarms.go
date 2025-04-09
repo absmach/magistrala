@@ -21,22 +21,25 @@ type Metadata map[string]interface{}
 
 // Alarm represents an alarm instance.
 type Alarm struct {
-	ID         string    `json:"id"`
-	RuleID     string    `json:"rule_id"`
-	Message    string    `json:"message"`
-	Status     Status    `json:"status"`
-	Severity   uint8     `json:"severity"`
-	DomainID   string    `json:"domain_id"`
-	AssigneeID string    `json:"assignee_id"`
-	CreatedAt  time.Time `json:"created_at"`
-	CreatedBy  string    `json:"created_by"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	UpdatedBy  string    `json:"updated_by"`
-	AssignedAt time.Time `json:"assigned_at,omitempty"`
-	AssignedBy string    `json:"assigned_by,omitempty"`
-	ResolvedAt time.Time `json:"resolved_at,omitempty"`
-	ResolvedBy string    `json:"resolved_by,omitempty"`
-	Metadata   Metadata  `json:"metadata,omitempty"`
+	ID          string    `json:"id"`
+	RuleID      string    `json:"rule_id"`
+	Status      Status    `json:"status"`
+	Measurement string    `json:"measurement"`
+	Value       string    `json:"value"`
+	Unit        string    `json:"unit"`
+	Cause       string    `json:"cause"`
+	Severity    uint8     `json:"severity"`
+	DomainID    string    `json:"domain_id"`
+	AssigneeID  string    `json:"assignee_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	CreatedBy   string    `json:"created_by"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	UpdatedBy   string    `json:"updated_by"`
+	AssignedAt  time.Time `json:"assigned_at,omitempty"`
+	AssignedBy  string    `json:"assigned_by,omitempty"`
+	ResolvedAt  time.Time `json:"resolved_at,omitempty"`
+	ResolvedBy  string    `json:"resolved_by,omitempty"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
 }
 
 type AlarmsPage struct {

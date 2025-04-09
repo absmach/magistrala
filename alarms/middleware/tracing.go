@@ -30,7 +30,10 @@ func NewTracingMiddleware(tracer trace.Tracer, svc alarms.Service) alarms.Servic
 func (tm *tracingMiddleware) CreateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
 	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "create_alarm", trace.WithAttributes(
 		attribute.String("rule_id", alarm.RuleID),
-		attribute.String("message", alarm.Message),
+		attribute.String("measurement", alarm.Measurement),
+		attribute.String("value", alarm.Value),
+		attribute.String("unit", alarm.Unit),
+		attribute.String("cause", alarm.Cause),
 		attribute.String("status", alarm.Status.String()),
 	))
 	defer span.End()
@@ -41,7 +44,10 @@ func (tm *tracingMiddleware) CreateAlarm(ctx context.Context, session authn.Sess
 func (tm *tracingMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
 	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "update_alarm", trace.WithAttributes(
 		attribute.String("rule_id", alarm.RuleID),
-		attribute.String("message", alarm.Message),
+		attribute.String("measurement", alarm.Measurement),
+		attribute.String("value", alarm.Value),
+		attribute.String("unit", alarm.Unit),
+		attribute.String("cause", alarm.Cause),
 		attribute.String("status", alarm.Status.String()),
 	))
 	defer span.End()

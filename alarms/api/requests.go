@@ -31,8 +31,17 @@ func (req createAlarmReq) validate() error {
 	if req.Alarm.RuleID == "" {
 		return errors.New("missing rule id")
 	}
-	if req.Alarm.Message == "" {
-		return errors.New("missing message")
+	if req.Alarm.Measurement == "" {
+		return errors.New("missing measurement")
+	}
+	if req.Alarm.Value == "" {
+		return errors.New("missing measurement value")
+	}
+	if req.Alarm.Unit == "" {
+		return errors.New("missing measurement unit")
+	}
+	if req.Alarm.Cause == "" {
+		return errors.New("missing measurement cause")
 	}
 
 	return nil

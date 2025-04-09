@@ -562,9 +562,6 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 		ClientMessages: make(map[string][]senml.Message),
 	}
 
-	if re.readers == nil {
-		return ReportPage{}, errors.New("readers service client not initialized")
-	}
 	for _, ch := range cfg.ChannelIDs {
 		agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
 		switch cfg.Aggregation {
@@ -585,7 +582,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 			DomainId:  cfg.DomainID,
 			PageMetadata: &grpcReadersV1.PageMetadata{
 				Aggregation: agg,
-				Limit:       10,
+				Limit:       1000,
 				Offset:      0,
 				From:        from,
 				To:          float64(time.Now().Unix()),
@@ -595,6 +592,9 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 		if err != nil {
 			return ReportPage{}, err
 		}
+
+		fmt.Printf("messages are %+v\n", msgs)
+		fmt.Printf("messages senml are %+v\n", msgs.GetMessages())
 
 		for _, msg := range msgs.Messages {
 			message := msg.GetSenml()

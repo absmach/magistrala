@@ -673,19 +673,29 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 			return ReportPage{}, err
 		}
 
-		fmt.Printf("message is %+v\n", msgs)
-
 		for _, msg := range msgs.Messages {
-			var message senml.Message
-			err := json.Unmarshal(msg.Data, &message)
-			if err != nil {
-				return reportPage, err
-			}
+			message := msg.GetSenml()
 
-			publisher := message.Publisher
+			publisher := message.Base.Publisher
 
-			if contains(cfg.ClientIDs, publisher) && shouldIncludeMessage(message, cfg.Metrics) {
-				report.ClientMessages[publisher] = append(report.ClientMessages[publisher], message)
+			if contains(cfg.ClientIDs, publisher) && shouldIncludeMessage(message.Name, cfg.Metrics) {
+				report.ClientMessages[publisher] = append(report.ClientMessages[publisher],
+					senml.Message{
+						Channel:     message.Base.Channel,
+						Subtopic:    message.Base.Subtopic,
+						Publisher:   message.Base.Publisher,
+						Protocol:    message.Base.Protocol,
+						Name:        message.Name,
+						Unit:        message.Unit,
+						Time:        message.Time,
+						UpdateTime:  message.UpdateTime,
+						Value:       &message.Value,
+						StringValue: &message.StringValue,
+						DataValue:   &message.DataValue,
+						BoolValue:   &message.BoolValue,
+						Sum:         &message.Sum,
+					},
+				)
 			}
 		}
 	}
@@ -718,13 +728,13 @@ func contains(slice []string, str string) bool {
 	return false
 }
 
-func shouldIncludeMessage(message senml.Message, metrics []string) bool {
+func shouldIncludeMessage(name string, metrics []string) bool {
 	if len(metrics) == 0 {
 		return true
 	}
 
 	for _, metric := range metrics {
-		if strings.Contains(message.Name, metric) {
+		if strings.Contains(name, metric) {
 			return true
 		}
 	}

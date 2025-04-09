@@ -363,12 +363,17 @@ func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(generateReportReq)
+		req := request.(viewReportConfigReq)
 		if err := req.validate(); err != nil {
 			return downloadReportResp{}, err
 		}
 
-		page, err := svc.GenerateReport(ctx, session, *req.ReportConfig)
+		cfg, err := svc.ViewReportConfig(ctx, session, req.ID)
+		if err != nil {
+			return downloadReportResp{}, err
+		}
+
+		page, err := svc.GenerateReport(ctx, session, cfg)
 		if err != nil {
 			return downloadReportResp{}, err
 		}

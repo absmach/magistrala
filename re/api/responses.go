@@ -172,9 +172,7 @@ func (res addReportConfigRes) Code() int {
 
 func (res addReportConfigRes) Headers() map[string]string {
 	if res.created {
-		return map[string]string{
-			"Location": fmt.Sprintf("/reports/%s", res.ID),
-		}
+		return map[string]string{}
 	}
 	return map[string]string{}
 }
@@ -263,10 +261,7 @@ func (res downloadReportResp) Code() int {
 }
 
 func (res downloadReportResp) Headers() map[string]string {
-	return map[string]string{
-		"Content-Type":        res.ContentType,
-		"Content-Disposition": fmt.Sprintf("attachment; filename=%s", res.Filename),
-	}
+	return map[string]string{}
 }
 
 func (res downloadReportResp) Empty() bool {

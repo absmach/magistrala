@@ -58,6 +58,7 @@ type dbReport struct {
 	CreatedBy       string         `db:"created_by"`
 	UpdatedAt       time.Time      `db:"updated_at"`
 	UpdatedBy       string         `db:"updated_by"`
+	Limit           uint64         `db:"limit"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -157,6 +158,7 @@ func reportToDb(r re.ReportConfig) (dbReport, error) {
 		To:              r.Email.To,
 		From:            toNullString(r.Email.From),
 		Subject:         toNullString(r.Email.Subject),
+		Limit:           r.Limit,
 	}, nil
 }
 
@@ -185,6 +187,7 @@ func dbToReport(dto dbReport) (re.ReportConfig, error) {
 		CreatedBy: dto.CreatedBy,
 		UpdatedAt: dto.UpdatedAt,
 		UpdatedBy: dto.UpdatedBy,
+		Limit:     dto.Limit,
 	}
 
 	return rpt, nil

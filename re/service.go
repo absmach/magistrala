@@ -593,12 +593,8 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 			return ReportPage{}, err
 		}
 
-		fmt.Printf("messages are %+v\n", msgs)
-		fmt.Printf("messages senml are %+v\n", msgs.GetMessages())
-
 		for _, msg := range msgs.Messages {
 			message := msg.GetSenml()
-
 			publisher := message.Base.Publisher
 
 			if contains(cfg.ClientIDs, publisher) && shouldIncludeMessage(message.Name, cfg.Metrics) {

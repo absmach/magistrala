@@ -97,13 +97,6 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 					opts...,
 				), "generate_report").ServeHTTP)
 
-				r.Get("/download", otelhttp.NewHandler(kithttp.NewServer(
-					downloadReportEndpoint(svc),
-					decodeGenerateReportRequest,
-					encodeFileDownloadResponse,
-					opts...,
-				), "download_report").ServeHTTP)
-
 				r.Route("/configs", func(r chi.Router) {
 					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 						addReportConfigEndpoint(svc),
@@ -154,6 +147,14 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						opts...,
 					), "disable_report_config").ServeHTTP)
 				})
+
+				r.Get("/{id}/download", otelhttp.NewHandler(kithttp.NewServer(
+					downloadReportEndpoint(svc),
+					decodeViewReportConfigRequest,
+					encodeFileDownloadResponse,
+					opts...,
+				), "download_report").ServeHTTP)
+
 			})
 		})
 	})

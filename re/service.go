@@ -669,7 +669,6 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 				Interval:    interval,
 			},
 		})
-
 		if err != nil {
 			return ReportPage{}, err
 		}

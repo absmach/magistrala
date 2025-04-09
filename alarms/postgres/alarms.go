@@ -30,9 +30,9 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_by, created_at)
-				VALUES (:id, :rule_id, :measurement, :value, :unit, :cause, :status, :severity, :domain_id, :assignee_id, :metadata, :created_by, :created_at)
-				RETURNING id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_by, created_at;`
+	query := `INSERT INTO alarms (id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_at)
+				VALUES (:id, :rule_id, :measurement, :value, :unit, :cause, :status, :severity, :domain_id, :assignee_id, :metadata, :created_at)
+				RETURNING id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_at;`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -84,7 +84,7 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	}
 
 	q := fmt.Sprintf(`UPDATE alarms SET %s updated_by = :updated_by, updated_at = :updated_at WHERE id = :id
-		RETURNING id, rule_id, measurement, value, unit, cause, status, domain_id, assignee_id, metadata, created_by, created_at, updated_by, updated_at, resolved_by, resolved_at;`, upq)
+		RETURNING id, rule_id, measurement, value, unit, cause, status, domain_id, assignee_id, metadata, created_at, updated_by, updated_at, resolved_by, resolved_at;`, upq)
 
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
@@ -208,7 +208,6 @@ type dbAlarm struct {
 	DomainID    string        `db:"domain_id"`
 	AssigneeID  string        `db:"assignee_id"`
 	CreatedAt   time.Time     `db:"created_at"`
-	CreatedBy   string        `db:"created_by"`
 	UpdatedAt   sql.NullTime  `db:"updated_at,omitempty"`
 	UpdatedBy   *string       `db:"updated_by,omitempty"`
 	AssignedAt  sql.NullTime  `db:"assigned_at,omitempty"`
@@ -270,7 +269,6 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 		DomainID:    a.DomainID,
 		AssigneeID:  a.AssigneeID,
 		CreatedAt:   a.CreatedAt,
-		CreatedBy:   a.CreatedBy,
 		UpdatedAt:   updatedAt,
 		UpdatedBy:   updatedBy,
 		AssignedAt:  assignedAt,
@@ -329,7 +327,6 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		DomainID:    dbr.DomainID,
 		AssigneeID:  dbr.AssigneeID,
 		CreatedAt:   dbr.CreatedAt,
-		CreatedBy:   dbr.CreatedBy,
 		UpdatedAt:   updatedAt,
 		UpdatedBy:   updatedBy,
 		AssignedAt:  assignedAt,

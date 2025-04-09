@@ -1,0 +1,19 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# To listen all messsage broker subjects use default value "channels.>".
+# To subscribe to specific subjects use values starting by "channels." and
+# followed by a subtopic (e.g ["channels.<channel_id>.sub.topic.x", ...]).
+[subscriber]
+subjects = ["channels.>"]
+
+[transformer]
+# SenML or JSON
+format = "senml"
+# Used if format is SenML
+content_type = "application/senml+json"
+# Used as timestamp fields if format is JSON
+time_fields = [{ field_name = "seconds_key", field_format = "unix",    location = "UTC"},
+               { field_name = "millis_key",  field_format = "unix_ms", location = "UTC"},
+               { field_name = "micros_key",  field_format = "unix_us", location = "UTC"},
+               { field_name = "nanos_key",   field_format = "unix_ns", location = "UTC"}]

@@ -23,30 +23,6 @@ func (req alarmReq) validate() error {
 	return nil
 }
 
-type createAlarmReq struct {
-	alarms.Alarm `json:",inline"`
-}
-
-func (req createAlarmReq) validate() error {
-	if req.Alarm.RuleID == "" {
-		return errors.New("missing rule id")
-	}
-	if req.Alarm.Measurement == "" {
-		return errors.New("missing measurement")
-	}
-	if req.Alarm.Value == "" {
-		return errors.New("missing measurement value")
-	}
-	if req.Alarm.Unit == "" {
-		return errors.New("missing measurement unit")
-	}
-	if req.Alarm.Cause == "" {
-		return errors.New("missing measurement cause")
-	}
-
-	return nil
-}
-
 type listAlarmsReq struct {
 	alarms.PageMetadata
 }

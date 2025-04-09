@@ -34,12 +34,6 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 			r.Use(api.AuthenticateMiddleware(authn, true))
 			r.Use(api.RequestIDMiddleware(idp))
 
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				createAlarmEndpoint(svc),
-				decodeCreateAlarmReq,
-				api.EncodeResponse,
-				opts...,
-			), "create_alarm").ServeHTTP)
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				listAlarmsEndpoint(svc),
 				decodeListAlarmsReq,
@@ -70,19 +64,6 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 	})
 
 	return mux
-}
-
-func decodeCreateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
-	}
-
-	var req createAlarmReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return createAlarmReq{}, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
-	}
-
-	return req, nil
 }
 
 func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error) {

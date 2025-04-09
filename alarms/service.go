@@ -25,21 +25,21 @@ func NewService(idp supermq.IDProvider, repo Repository) Service {
 	}
 }
 
-func (s *service) CreateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error) {
+func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 	id, err := s.idp.ID()
 	if err != nil {
-		return Alarm{}, err
+		return err
 	}
 	alarm.ID = id
 	alarm.CreatedAt = time.Now()
-	alarm.CreatedBy = session.UserID
-	alarm.DomainID = session.DomainID
 
 	if err := alarm.Validate(); err != nil {
-		return Alarm{}, err
+		return err
 	}
 
-	return s.repo.CreateAlarm(ctx, alarm)
+	_, err = s.repo.CreateAlarm(ctx, alarm)
+
+	return err
 }
 
 func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID string) (Alarm, error) {

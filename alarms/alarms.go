@@ -32,7 +32,6 @@ type Alarm struct {
 	DomainID    string    `json:"domain_id"`
 	AssigneeID  string    `json:"assignee_id"`
 	CreatedAt   time.Time `json:"created_at"`
-	CreatedBy   string    `json:"created_by"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	UpdatedBy   string    `json:"updated_by"`
 	AssignedAt  time.Time `json:"assigned_at,omitempty"`
@@ -64,6 +63,24 @@ type PageMetadata struct {
 }
 
 func (a Alarm) Validate() error {
+	if a.RuleID == "" {
+		return errors.New("rule_id is required")
+	}
+	if a.Measurement == "" {
+		return errors.New("measurement is required")
+	}
+	if a.Value == "" {
+		return errors.New("value is required")
+	}
+	if a.Unit == "" {
+		return errors.New("unit is required")
+	}
+	if a.Cause == "" {
+		return errors.New("cause is required")
+	}
+	if a.DomainID == "" {
+		return errors.New("domain_id is required")
+	}
 	if a.Severity > SeverityMax {
 		return ErrInvalidSeverity
 	}
@@ -73,7 +90,7 @@ func (a Alarm) Validate() error {
 
 // Service specifies an API that must be fulfilled by the domain service.
 type Service interface {
-	CreateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error)
+	CreateAlarm(ctx context.Context, alarm Alarm) error
 	UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error)
 	ViewAlarm(ctx context.Context, session authn.Session, id string) (Alarm, error)
 	ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error)

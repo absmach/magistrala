@@ -1,0 +1,90 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package readers.v1;
+
+option go_package = "github.com/absmach/magistrala/api/grpc/readers/v1";
+
+// ReadersService is a service that provides access to
+// readers functionalities for Magistrala services.
+service ReadersService {
+  rpc ReadMessages(ReadMessagesReq)
+    returns (ReadMessagesRes) {}
+}
+
+message PageMetadata {
+  uint64 limit               = 1;
+  uint64 offset              = 2;
+  string protocol            = 3;
+  string name                = 4;
+  double value               = 5;
+  string publisher           = 6;
+  bool bool_value            = 7;
+  string string_value        = 8;
+  string data_value          = 9;
+  double from                = 10;
+  double to                  = 11;
+  string subtopic            = 12;
+  string interval            = 13;
+  bool read                  = 14;
+  Aggregation aggregation    = 15;
+  string comparator          = 16;
+  string format              = 17;
+}
+
+message ReadMessagesRes {
+  uint64 total                        = 1;
+  PageMetadata page_metadata          = 2;
+  repeated Message messages           = 3;
+}
+
+message Message {
+  oneof payload {
+    SenMLMessage senml = 1;
+    JsonMessage json = 2;
+  }
+}
+
+message BaseMessage {
+  string channel = 1;
+  string subtopic = 2;
+  string publisher = 3;
+  string protocol = 4;
+}
+
+message SenMLMessage {
+  BaseMessage base = 1;
+  string name = 2;
+  string unit = 3;
+  double time = 4;
+  double update_time = 5;
+  double value = 6;
+  string string_value = 7;
+  string data_value = 8;
+  bool bool_value = 9;
+  double sum = 10;
+}
+
+message JsonMessage {
+  BaseMessage base = 1;
+  int64 created = 2;
+  bytes payload = 3;
+}
+
+message ReadMessagesReq {
+  string channel_id                   = 1;
+  string domain_id                    = 2;
+  PageMetadata page_metadata          = 3;
+}
+
+// Aggregation defines supported data aggregations.
+enum Aggregation {
+  AGGREGATION_UNSPECIFIED = 0;
+  MAX                     = 1;
+  MIN                     = 2;
+  SUM                     = 3;
+  COUNT                   = 4;
+  AVG                     = 5;
+}

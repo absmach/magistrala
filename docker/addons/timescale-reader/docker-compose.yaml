@@ -9,6 +9,7 @@
 
 networks:
   magistrala-base-net:
+    driver: bridge
 
 services:
   timescale-reader:
@@ -40,6 +41,16 @@ services:
       SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
       SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
       SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_TIMESCALE_READER_GRPC_URL: ${MG_TIMESCALE_READER_GRPC__URL}
+      MG_TIMESCALE_READER_GRPC_PORT: ${MG_TIMESCALE_READER_GRPC_PORT}
+      MG_TIMESCALE_READER_GRPC_HOST: ${MG_TIMESCALE_READER_GRPC_HOST}
+      MG_TIMESCALE_READER_GRPC_TIMEOUT: ${MG_TIMESCALE_READER_GRPC_TIMEOUT}
+      MG_TIMESCALE_READER_GRPC_CLIENT_CERT: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+./ssl/certs/reader-grpc-client.crt}
+      MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS:+./ssl/certs/ca.crt}
+      MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+./ssl/certs/ca.crt}
+      MG_TIMESCALE_READER_GRPC_CLIENT_KEY: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+/readers-grpc-client.key}
+      MG_TIMESCALE_READER_GRPC_SERVER_CERT: ${MG_TIMESCALE_READER_GRPC_SERVER_CERT:+./ssl/certs/readers-grpc-server.crt}
+      MG_TIMESCALE_READER_GRPC_SERVER_KEY: ${MG_TIMESCALE_READER_GRPC_SERVER_KEY:+./ssl/certs/readers-grpc-server.key}
       SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
       SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
@@ -48,7 +59,8 @@ services:
       SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
       MG_TIMESCALE_READER_INSTANCE_ID: ${MG_TIMESCALE_READER_INSTANCE_ID}
     ports:
-      - ${MG_TIMESCALE_READER_HTTP_PORT}:${MG_TIMESCALE_READER_HTTP_PORT}
+      - ${MG_TIMESCALE_READER_HTTP_PORT}:${MG_TIMESCALE_READER_HTTP_PORT}  
+      - ${MG_TIMESCALE_READER_GRPC_PORT}:${MG_TIMESCALE_READER_GRPC_PORT}
     networks:
       - magistrala-base-net
     volumes:
@@ -81,5 +93,36 @@ services:
       - type: bind
         source: ${MG_ADDONS_CERTS_PATH_PREFIX}${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
         target: /things-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Reader gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /readers-grpc-server${MG_TIMESCALE_READER_GRPC_SERVER_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /readers-grpc-server${MG_TIMESCALE_READER_GRPC_SERVER_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /readers-grpc-server-ca${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /readers-grpc-server${MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true

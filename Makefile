@@ -20,6 +20,10 @@ DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
 MOCKERY_VERSION=v3.0.0-beta.6
+PKG_PROTO_GEN_OUT_DIR=api/grpc
+INTERNAL_PROTO_DIR=internal/proto
+INTERNAL_PROTO_FILES := $(shell find $(INTERNAL_PROTO_DIR) -name "*.proto" | sed 's|$(INTERNAL_PROTO_DIR)/||')
+
 ifneq ($(MG_MESSAGE_BROKER_TYPE),)
     MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
 else
@@ -174,8 +178,8 @@ $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))
 
 proto:
-	protoc -I. --go_out=. --go_opt=paths=source_relative pkg/messaging/*.proto
-	protoc -I. --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./*.proto
+	mkdir -p $(PKG_PROTO_GEN_OUT_DIR)
+	protoc -I $(INTERNAL_PROTO_DIR) --go_out=$(PKG_PROTO_GEN_OUT_DIR) --go_opt=paths=source_relative --go-grpc_out=$(PKG_PROTO_GEN_OUT_DIR) --go-grpc_opt=paths=source_relative $(INTERNAL_PROTO_FILES)
 
 $(FILTERED_SERVICES):
 	$(call compile_service,$(@))

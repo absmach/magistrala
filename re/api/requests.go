@@ -178,3 +178,15 @@ func (req generateReportReq) validate() error {
 	}
 	return nil
 }
+
+type updateReportStatusReq struct {
+	id string
+}
+
+func (req updateReportStatusReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}

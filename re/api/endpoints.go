@@ -301,7 +301,7 @@ func enableReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(updateRuleStatusReq)
+		req := request.(updateReportStatusReq)
 		if err := req.validate(); err != nil {
 			return updateRuleStatusRes{}, err
 		}
@@ -322,7 +322,7 @@ func disableReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(updateRuleStatusReq)
+		req := request.(updateReportStatusReq)
 		if err := req.validate(); err != nil {
 			return updateRuleStatusRes{}, err
 		}

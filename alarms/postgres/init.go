@@ -28,6 +28,8 @@ func Migration() *migrate.MemoryMigrationSource {
 						created_at	TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 						updated_at	TIMESTAMPTZ NULL,
 						updated_by	VARCHAR(36) NULL,
+						assigned_at	TIMESTAMPTZ NULL,
+						assigned_by	VARCHAR(36) NULL,
 						resolved_at	TIMESTAMPTZ NULL,
 						resolved_by	VARCHAR(36) NULL,
 						metadata	JSONB

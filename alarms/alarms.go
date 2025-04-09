@@ -32,6 +32,8 @@ type Alarm struct {
 	CreatedBy  string    `json:"created_by"`
 	UpdatedAt  time.Time `json:"updated_at"`
 	UpdatedBy  string    `json:"updated_by"`
+	AssignedAt time.Time `json:"assigned_at,omitempty"`
+	AssignedBy string    `json:"assigned_by,omitempty"`
 	ResolvedAt time.Time `json:"resolved_at,omitempty"`
 	ResolvedBy string    `json:"resolved_by,omitempty"`
 	Metadata   Metadata  `json:"metadata,omitempty"`

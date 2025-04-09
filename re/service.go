@@ -9,7 +9,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"time"
@@ -467,7 +466,6 @@ func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg Re
 	if err != nil {
 		return ReportConfig{}, err
 	}
-	log.Printf("am here")
 
 	now := time.Now()
 	cfg.ID = id

@@ -35,7 +35,10 @@ func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, session authn.Sess
 			slog.Group("alarm",
 				slog.String("id", dba.ID),
 				slog.String("rule_id", dba.RuleID),
-				slog.String("message", dba.Message),
+				slog.String("measurement", dba.Measurement),
+				slog.String("value", dba.Value),
+				slog.String("unit", dba.Unit),
+				slog.String("cause", dba.Cause),
 				slog.String("status", dba.Status.String()),
 			),
 		}
@@ -58,7 +61,10 @@ func (lm *loggingMiddleware) UpdateAlarm(ctx context.Context, session authn.Sess
 			slog.Group("alarm",
 				slog.String("id", dba.ID),
 				slog.String("rule_id", dba.RuleID),
-				slog.String("message", dba.Message),
+				slog.String("measurement", dba.Measurement),
+				slog.String("value", dba.Value),
+				slog.String("unit", dba.Unit),
+				slog.String("cause", dba.Cause),
 				slog.String("status", dba.Status.String()),
 			),
 		}

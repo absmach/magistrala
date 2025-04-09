@@ -19,7 +19,10 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS alarms (
 						id         	VARCHAR(36) PRIMARY KEY,
 						rule_id		VARCHAR(36) NOT NULL CHECK (length(rule_id) > 0),
-						message		TEXT NULL,
+						measurement	TEXT NOT NULL,
+						value		TEXT NOT NULL,
+						unit		TEXT NOT NULL,
+						cause		TEXT NOT NULL,
 						status      SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						severity    SMALLINT NOT NULL DEFAULT 0 CHECK (severity >= 0),
 						domain_id	VARCHAR(36) NOT NULL,

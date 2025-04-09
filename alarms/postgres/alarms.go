@@ -64,11 +64,14 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	if alarm.Status != 0 {
 		query = append(query, "status = :status,")
 	}
-	if alarm.Severity != 0 {
-		query = append(query, "severity = :severity,")
-	}
 	if alarm.AssigneeID != "" {
 		query = append(query, "assignee_id = :assignee_id,")
+	}
+	if !alarm.AssignedAt.IsZero() {
+		query = append(query, "assigned_at = :assigned_at,")
+	}
+	if alarm.AssignedBy != "" {
+		query = append(query, "assigned_by = :assigned_by,")
 	}
 	if alarm.ResolvedBy != "" {
 		query = append(query, "resolved_by = :resolved_by,")
@@ -208,6 +211,8 @@ type dbAlarm struct {
 	CreatedBy  string        `db:"created_by"`
 	UpdatedAt  sql.NullTime  `db:"updated_at,omitempty"`
 	UpdatedBy  *string       `db:"updated_by,omitempty"`
+	AssignedAt sql.NullTime  `db:"assigned_at,omitempty"`
+	AssignedBy *string       `db:"assigned_by,omitempty"`
 	ResolvedAt sql.NullTime  `db:"resolved_at,omitempty"`
 	ResolvedBy *string       `db:"resolved_by,omitempty"`
 	Metadata   []byte        `db:"metadata,omitempty"`
@@ -235,6 +240,15 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 		resolvedAt = sql.NullTime{Time: a.ResolvedAt, Valid: true}
 	}
 
+	var assignedBy *string
+	if a.AssignedBy != "" {
+		assignedBy = &a.AssignedBy
+	}
+	var assignedAt sql.NullTime
+	if a.AssignedAt != (time.Time{}) {
+		assignedAt = sql.NullTime{Time: a.AssignedAt, Valid: true}
+	}
+
 	metadata := []byte("{}")
 	if len(a.Metadata) > 0 {
 		b, err := json.Marshal(a.Metadata)
@@ -256,6 +270,8 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 		CreatedBy:  a.CreatedBy,
 		UpdatedAt:  updatedAt,
 		UpdatedBy:  updatedBy,
+		AssignedAt: assignedAt,
+		AssignedBy: assignedBy,
 		ResolvedAt: resolvedAt,
 		ResolvedBy: resolvedBy,
 		Metadata:   metadata,
@@ -270,6 +286,15 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 	var updatedAt time.Time
 	if dbr.UpdatedAt.Valid {
 		updatedAt = dbr.UpdatedAt.Time
+	}
+
+	var assignedBy string
+	if dbr.AssignedBy != nil {
+		assignedBy = *dbr.AssignedBy
+	}
+	var assignedAt time.Time
+	if dbr.AssignedAt.Valid {
+		assignedAt = dbr.AssignedAt.Time
 	}
 
 	var resolvedBy string
@@ -300,6 +325,8 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		CreatedBy:  dbr.CreatedBy,
 		UpdatedAt:  updatedAt,
 		UpdatedBy:  updatedBy,
+		AssignedAt: assignedAt,
+		AssignedBy: assignedBy,
 		ResolvedAt: resolvedAt,
 		ResolvedBy: resolvedBy,
 		Metadata:   metadata,

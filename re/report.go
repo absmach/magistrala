@@ -15,8 +15,6 @@ type Report struct {
 
 type ReportPage struct {
 	Total   uint64   `json:"total"`
-	Offset  uint64   `json:"offset"`
-	Limit   uint64   `json:"limit"`
 	Reports []Report `json:"reports"`
 	PDF     []byte
 	CSV     []byte

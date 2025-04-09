@@ -27,19 +27,17 @@ func NewLoggingMiddleware(logger *slog.Logger, service alarms.Service) alarms.Se
 	}
 }
 
-func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
+func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("request_id", middleware.GetReqID(ctx)),
 			slog.Group("alarm",
-				slog.String("id", dba.ID),
-				slog.String("rule_id", dba.RuleID),
-				slog.String("measurement", dba.Measurement),
-				slog.String("value", dba.Value),
-				slog.String("unit", dba.Unit),
-				slog.String("cause", dba.Cause),
-				slog.String("status", dba.Status.String()),
+				slog.String("rule_id", alarm.RuleID),
+				slog.String("measurement", alarm.Measurement),
+				slog.String("value", alarm.Value),
+				slog.String("unit", alarm.Unit),
+				slog.String("cause", alarm.Cause),
 			),
 		}
 		if err != nil {
@@ -50,7 +48,7 @@ func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, session authn.Sess
 		lm.logger.Info("Create alarm completed successfully", args...)
 	}(time.Now())
 
-	return lm.service.CreateAlarm(ctx, session, alarm)
+	return lm.service.CreateAlarm(ctx, alarm)
 }
 
 func (lm *loggingMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {

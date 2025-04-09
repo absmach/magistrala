@@ -12,15 +12,20 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	httpAPI "github.com/absmach/magistrala/alarms/api"
+	"github.com/absmach/magistrala/alarms/consumer"
 	"github.com/absmach/magistrala/alarms/middleware"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
+	consumertracing "github.com/absmach/magistrala/consumers/tracing"
 	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/supermq/consumers"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	"github.com/absmach/supermq/pkg/jaeger"
+	"github.com/absmach/supermq/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
@@ -41,6 +46,8 @@ const (
 
 type config struct {
 	LogLevel   string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
+	ConfigPath string  `env:"MG_ALARMS_CONFIG_PATH"  envDefault:"/config.toml"`
+	BrokerURL  string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
 	InstanceID string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
 	JaegerURL  url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
@@ -148,6 +155,23 @@ func main() {
 		return
 	}
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpAPI.MakeHandler(svc, logger, idp, cfg.InstanceID, authn), logger)
+
+	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
+	}
+	defer pubSub.Close()
+	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
+
+	consumer := consumer.NewConsumer(svc)
+	consumer = consumertracing.NewBlocking(tracer, consumer, httpServerConfig)
+	if err = consumers.Start(ctx, svcName, pubSub, consumer, cfg.ConfigPath, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to create alarms consumer: %s", err))
+		exitCode = 1
+		return
+	}
 
 	g.Go(func() error {
 		return hs.Start()

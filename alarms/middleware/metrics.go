@@ -28,13 +28,13 @@ func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, se
 	}
 }
 
-func (mm *metricsMiddleware) CreateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
+func (mm *metricsMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_alarm").Add(1)
 		mm.latency.With("method", "create_alarm").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.service.CreateAlarm(ctx, session, alarm)
+	return mm.service.CreateAlarm(ctx, alarm)
 }
 
 func (mm *metricsMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {

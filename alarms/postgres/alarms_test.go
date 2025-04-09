@@ -44,7 +44,6 @@ func TestCreateAlarm(t *testing.T) {
 		DomainID:    generateUUID(&testing.T{}),
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		CreatedBy:   generateUUID(&testing.T{}),
 		Metadata: map[string]interface{}{
 			"key": "value",
 		},
@@ -77,7 +76,7 @@ func TestCreateAlarm(t *testing.T) {
 				DomainID:    generateUUID(&testing.T{}),
 				AssigneeID:  generateUUID(&testing.T{}),
 				CreatedAt:   time.Now().Local(),
-				CreatedBy:   generateUUID(&testing.T{}),
+
 				Metadata: map[string]interface{}{
 					"key": "value",
 				},
@@ -96,7 +95,7 @@ func TestCreateAlarm(t *testing.T) {
 				DomainID:    generateUUID(&testing.T{}),
 				AssigneeID:  generateUUID(&testing.T{}),
 				CreatedAt:   time.Now().Local(),
-				CreatedBy:   generateUUID(&testing.T{}),
+
 				Metadata: map[string]interface{}{
 					"key": make(chan int),
 				},
@@ -128,7 +127,6 @@ func TestCreateAlarm(t *testing.T) {
 			require.Equal(t, tc.alarm.Status, alarm.Status)
 			require.Equal(t, tc.alarm.DomainID, alarm.DomainID)
 			require.Equal(t, tc.alarm.AssigneeID, alarm.AssigneeID)
-			require.Equal(t, tc.alarm.CreatedBy, alarm.CreatedBy)
 			require.Equal(t, tc.alarm.Metadata, alarm.Metadata)
 		})
 	}
@@ -153,7 +151,6 @@ func TestUpdateAlarm(t *testing.T) {
 		DomainID:    generateUUID(&testing.T{}),
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		CreatedBy:   generateUUID(&testing.T{}),
 		Metadata: map[string]interface{}{
 			"key": "value",
 		},
@@ -174,7 +171,6 @@ func TestUpdateAlarm(t *testing.T) {
 				DomainID:   alarm.DomainID,
 				AssigneeID: generateUUID(&testing.T{}),
 				CreatedAt:  alarm.CreatedAt,
-				CreatedBy:  alarm.CreatedBy,
 				UpdatedAt:  time.Now().Local(),
 				UpdatedBy:  generateUUID(&testing.T{}),
 				ResolvedAt: time.Now().Local(),
@@ -201,7 +197,6 @@ func TestUpdateAlarm(t *testing.T) {
 				DomainID:   generateUUID(&testing.T{}),
 				AssigneeID: strings.Repeat("a", 40),
 				CreatedAt:  time.Now().Local(),
-				CreatedBy:  generateUUID(&testing.T{}),
 				Metadata: map[string]interface{}{
 					"key": "value",
 				},
@@ -228,7 +223,6 @@ func TestUpdateAlarm(t *testing.T) {
 			require.Equal(t, tc.alarm.Status, alarm.Status)
 			require.Equal(t, tc.alarm.DomainID, alarm.DomainID)
 			require.Equal(t, tc.alarm.AssigneeID, alarm.AssigneeID)
-			require.Equal(t, tc.alarm.CreatedBy, alarm.CreatedBy)
 			require.Equal(t, tc.alarm.Metadata, alarm.Metadata)
 		})
 	}
@@ -253,7 +247,6 @@ func TestViewAlarm(t *testing.T) {
 		DomainID:    generateUUID(&testing.T{}),
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		CreatedBy:   generateUUID(&testing.T{}),
 		Metadata: map[string]interface{}{
 			"key": "value",
 		},
@@ -322,7 +315,6 @@ func TestListAlarms(t *testing.T) {
 			DomainID:   generateUUID(&testing.T{}),
 			AssigneeID: generateUUID(&testing.T{}),
 			CreatedAt:  time.Now().Local(),
-			CreatedBy:  generateUUID(&testing.T{}),
 			Metadata: map[string]interface{}{
 				"key": "value",
 			},
@@ -415,7 +407,6 @@ func TestDeleteAlarm(t *testing.T) {
 		DomainID:    generateUUID(&testing.T{}),
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		CreatedBy:   generateUUID(&testing.T{}),
 		Metadata: map[string]interface{}{
 			"key": "value",
 		},

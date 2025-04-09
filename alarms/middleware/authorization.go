@@ -27,8 +27,8 @@ func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization
 	}
 }
 
-func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
-	return am.svc.CreateAlarm(ctx, session, alarm)
+func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (err error) {
+	return am.svc.CreateAlarm(ctx, alarm)
 }
 
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {

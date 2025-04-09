@@ -15,30 +15,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func createAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(createAlarmReq)
-		if err := req.validate(); err != nil {
-			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
-		if !ok {
-			return alarmRes{}, svcerr.ErrAuthorization
-		}
-
-		alarm, err := svc.CreateAlarm(ctx, session, req.Alarm)
-		if err != nil {
-			return alarmRes{}, err
-		}
-
-		return alarmRes{
-			Alarm:   alarm,
-			created: true,
-		}, nil
-	}
-}
-
 func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(alarmReq)

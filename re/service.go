@@ -44,7 +44,7 @@ const (
 	monthsInYear = 12
 
 	publisher = "magistrala.re"
-	from      = 1735689600
+	from      = 173568960000000000
 	interval  = "1s"
 )
 
@@ -659,10 +659,10 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 			DomainId:  cfg.DomainID,
 			PageMetadata: &grpcReadersV1.PageMetadata{
 				Aggregation: agg,
-				Limit:       1000,
+				Limit:       cfg.Limit,
 				Offset:      0,
 				From:        from,
-				To:          float64(time.Now().Unix()),
+				To:          float64(time.Now().UnixNano()),
 				Interval:    interval,
 			},
 		})

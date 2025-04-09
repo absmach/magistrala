@@ -170,7 +170,7 @@ func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return generateReportResp{}, err
 		}
 
-		reportPage, err := svc.GenerateReport(ctx, session, *req.ReportConfig)
+		reportPage, err := svc.GenerateReport(ctx, session, req.ReportConfig)
 		if err != nil {
 			return generateReportResp{}, err
 		}
@@ -361,7 +361,7 @@ func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
 		return downloadReportResp{
 			PDF:         page.PDF,
 			CSV:         page.CSV,
-			Filename:    "Reports.zip",
+			Filename:    cfg.Name + ".zip",
 			ContentType: "application/zip",
 		}, nil
 	}

@@ -66,16 +66,16 @@ const (
 
 	addReportQuery = `
 		INSERT INTO report_config (id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
-			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject)
+			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject, limit)
 		VALUES (:id, :name, :domain_id, :channel_ids, :client_ids, :aggregation, :metrics,
-			:to, :from, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status, :subject)
+			:to, :from, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status, :subject, :limit)
 		RETURNING id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
-			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject;
+			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject, limit;
 	`
 
 	viewReportQuery = `
 		SELECT id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
-			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject
+			"to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject, limit
 		FROM report_config
 		WHERE id = $1;
 	`
@@ -85,10 +85,10 @@ const (
     SET name = :name, channel_ids = :channel_ids, client_ids = :client_ids, aggregation = :aggregation, metrics = :metrics,
         start_datetime = :start_datetime, time = :time, recurring = :recurring, 
         recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by, status = :status,
-        "to" = :to, "from" = :from, subject = :subject
+        "to" = :to, "from" = :from, subject = :subject, limit = :limit
     WHERE id = :id
     RETURNING id, name, domain_id, channel_ids, client_ids, aggregation, metrics,
-        "to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject;
+        "to", "from", start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, subject, limit;
 `
 
 	removeReportQuery = `
@@ -101,12 +101,12 @@ const (
 		SET status = $2
 		WHERE id = $1
 		RETURNING id, name, domain_id, channel_ids, client_ids, aggregation, metrics, "to", "from", subject,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status; 
+			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, limit; 
 	`
 
 	listReportsQuery = `
 		SELECT id, name, domain_id, channel_ids, client_ids, aggregation, metrics, "to", "from", subject,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
+			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, limit
 		FROM report_config rc %s %s;
 	`
 

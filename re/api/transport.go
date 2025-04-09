@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	idKey            = "ruleID"
+	ruleIdKey        = "ruleID"
+	reportIdKey      = "reportID"
 	inputChannelKey  = "input_channel"
 	outputChannelKey = "output_channel"
 	statusKey        = "status"
@@ -39,22 +40,30 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 	}
 	mux.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn, true))
-		r.Route("/{domainID}/rules", func(r chi.Router) {
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				addRuleEndpoint(svc),
-				decodeAddRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "create_rule").ServeHTTP)
+		r.Route("/{domainID}", func(r chi.Router) {
+			r.Route("/rules", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					addRuleEndpoint(svc),
+					decodeAddRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "create_rule").ServeHTTP)
 
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				listRulesEndpoint(svc),
-				decodeListRulesRequest,
-				api.EncodeResponse,
-				opts...,
-			), "list_rules").ServeHTTP)
+				r.Get("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
+					viewRuleEndpoint(svc),
+					decodeViewRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "view_rule").ServeHTTP)
 
-			r.Route("/{ruleID}", func(r chi.Router) {
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					listRulesEndpoint(svc),
+					decodeListRulesRequest,
+					api.EncodeResponse,
+					opts...,
+				), "list_rules").ServeHTTP)
+
+				r.Route("/{ruleID}", func(r chi.Router) {
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					viewRuleEndpoint(svc),
 					decodeViewRuleRequest,
@@ -63,11 +72,11 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 				), "view_rule").ServeHTTP)
 
 				r.Patch("/", otelhttp.NewHandler(kithttp.NewServer(
-					updateRuleEndpoint(svc),
-					decodeUpdateRuleRequest,
-					api.EncodeResponse,
-					opts...,
-				), "update_rule").ServeHTTP)
+						updateRuleEndpoint(svc),
+						decodeUpdateRuleRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_rule").ServeHTTP)
 
 				r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
 					updateRuleScheduleEndpoint(svc),
@@ -76,28 +85,28 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 					opts...,
 				), "update_rule_scheduler").ServeHTTP)
 
-				r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
-					deleteRuleEndpoint(svc),
-					decodeDeleteRuleRequest,
-					api.EncodeResponse,
-					opts...,
-				), "delete_rule").ServeHTTP)
+					r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+						deleteRuleEndpoint(svc),
+						decodeDeleteRuleRequest,
+						api.EncodeResponse,
+						opts...,
+					), "delete_rule").ServeHTTP)
 
-				r.Post("/enable", otelhttp.NewHandler(kithttp.NewServer(
-					enableRuleEndpoint(svc),
-					decodeUpdateRuleStatusRequest,
-					api.EncodeResponse,
-					opts...,
-				), "enable_rule").ServeHTTP)
+					r.Post("/enable", otelhttp.NewHandler(kithttp.NewServer(
+						enableRuleEndpoint(svc),
+						decodeUpdateRuleStatusRequest,
+						api.EncodeResponse,
+						opts...,
+					), "enable_rule").ServeHTTP)
 
-				r.Post("/disable", otelhttp.NewHandler(kithttp.NewServer(
-					disableRuleEndpoint(svc),
-					decodeUpdateRuleStatusRequest,
-					api.EncodeResponse,
-					opts...,
-				), "disable_rule").ServeHTTP)
+					r.Post("/disable", otelhttp.NewHandler(kithttp.NewServer(
+						disableRuleEndpoint(svc),
+						decodeUpdateRuleStatusRequest,
+						api.EncodeResponse,
+						opts...,
+					), "disable_rule").ServeHTTP)
 			})
-
+			})
 			r.Route("/reports", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					generateReportEndpoint(svc),
@@ -114,21 +123,21 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						opts...,
 					), "add_report_config").ServeHTTP)
 
-					r.Get("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+					r.Get("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
 						viewReportConfigEndpoint(svc),
 						decodeViewReportConfigRequest,
 						api.EncodeResponse,
 						opts...,
 					), "view_report_config").ServeHTTP)
 
-					r.Put("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+					r.Patch("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
 						updateReportConfigEndpoint(svc),
 						decodeUpdateReportConfigRequest,
 						api.EncodeResponse,
 						opts...,
 					), "update_report_config").ServeHTTP)
 
-					r.Delete("/{id}", otelhttp.NewHandler(kithttp.NewServer(
+					r.Delete("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
 						deleteReportConfigEndpoint(svc),
 						decodeDeleteReportConfigRequest,
 						api.EncodeResponse,
@@ -142,22 +151,22 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						opts...,
 					), "list_reports_config").ServeHTTP)
 
-					r.Post("/{id}/enable", otelhttp.NewHandler(kithttp.NewServer(
+					r.Post("/{reportID}/enable", otelhttp.NewHandler(kithttp.NewServer(
 						enableReportConfigEndpoint(svc),
-						decodeUpdateRuleStatusRequest,
+						decodeUpdateReportStatusRequest,
 						api.EncodeResponse,
 						opts...,
 					), "enable_report_config").ServeHTTP)
 
-					r.Post("/{id}/disable", otelhttp.NewHandler(kithttp.NewServer(
+					r.Post("/{reportID}/disable", otelhttp.NewHandler(kithttp.NewServer(
 						disableReportConfigEndpoint(svc),
-						decodeUpdateRuleStatusRequest,
+						decodeUpdateReportStatusRequest,
 						api.EncodeResponse,
 						opts...,
 					), "disable_report_config").ServeHTTP)
 				})
 
-				r.Get("/{id}/download", otelhttp.NewHandler(kithttp.NewServer(
+				r.Get("/{reportID}/download", otelhttp.NewHandler(kithttp.NewServer(
 					downloadReportEndpoint(svc),
 					decodeViewReportConfigRequest,
 					encodeFileDownloadResponse,
@@ -185,7 +194,7 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 }
 
 func decodeViewRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := chi.URLParam(r, idKey)
+	id := chi.URLParam(r, ruleIdKey)
 	return viewRuleReq{id: id}, nil
 }
 
@@ -197,7 +206,7 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
-	rule.ID = chi.URLParam(r, idKey)
+	rule.ID = chi.URLParam(r, ruleIdKey)
 	return updateRuleReq{Rule: rule}, nil
 }
 
@@ -218,7 +227,7 @@ func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interf
 
 func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := updateRuleStatusReq{
-		id: chi.URLParam(r, idKey),
+		id: chi.URLParam(r, ruleIdKey),
 	}
 	return req, nil
 }
@@ -265,7 +274,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 }
 
 func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := chi.URLParam(r, idKey)
+	id := chi.URLParam(r, ruleIdKey)
 
 	return deleteRuleReq{id: id}, nil
 }
@@ -295,7 +304,7 @@ func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (interface
 }
 
 func decodeViewReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := chi.URLParam(r, "id")
+	id := chi.URLParam(r, reportIdKey)
 	return viewReportConfigReq{ID: id}, nil
 }
 
@@ -307,12 +316,19 @@ func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (interf
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
 		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
-	config.ID = chi.URLParam(r, "id")
+	config.ID = chi.URLParam(r, reportIdKey)
 	return updateReportConfigReq{ReportConfig: config}, nil
 }
 
+func decodeUpdateReportStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := updateReportStatusReq{
+		id: chi.URLParam(r, reportIdKey),
+	}
+	return req, nil
+}
+
 func decodeDeleteReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := chi.URLParam(r, "id")
+	id := chi.URLParam(r, reportIdKey)
 	return deleteReportConfigReq{ID: id}, nil
 }
 

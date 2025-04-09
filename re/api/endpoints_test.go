@@ -72,12 +72,6 @@ var (
 			Subject: "Test Report",
 		},
 	}
-	reportPage = re.ReportPage{
-		Total:   1,
-		Reports: []re.Report{},
-		PDF:     []byte("test-pdf"),
-		CSV:     []byte("test-csv"),
-	}
 )
 
 type testRequest struct {

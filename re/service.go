@@ -623,6 +623,10 @@ func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id
 func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error) {
 	config.DomainID = session.DomainID
 
+	if config.Status != EnabledStatus {
+		return ReportPage{}, svcerr.ErrInvalidStatus
+	}
+
 	reportPage, err := re.generateReport(ctx, config)
 	if err != nil {
 		return ReportPage{}, err

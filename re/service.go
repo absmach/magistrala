@@ -5,6 +5,8 @@ package re
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -22,7 +24,7 @@ import (
 	"github.com/vadv/gopher-lua-libs/db"
 	"github.com/vadv/gopher-lua-libs/filepath"
 	"github.com/vadv/gopher-lua-libs/ioutil"
-	"github.com/vadv/gopher-lua-libs/json"
+	luajson "github.com/vadv/gopher-lua-libs/json"
 	"github.com/vadv/gopher-lua-libs/regexp"
 	"github.com/vadv/gopher-lua-libs/storage"
 	"github.com/vadv/gopher-lua-libs/strings"
@@ -243,6 +245,7 @@ func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
 		re.errors <- err
 		return
 	}
+
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
 			re.errors <- re.process(ctx, r, msgs)
@@ -260,6 +263,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	preload(l)
 
 	message := l.NewTable()
+	messages := l.NewTable()
 
 	switch m := msg.(type) {
 	case *messaging.Message:
@@ -278,35 +282,74 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 		}
 
 	case []mgsenml.Message:
-		msg := m[0]
-		l.RawSet(message, lua.LString("channel"), lua.LString(msg.Channel))
-		l.RawSet(message, lua.LString("subtopic"), lua.LString(msg.Subtopic))
-		l.RawSet(message, lua.LString("publisher"), lua.LString(msg.Publisher))
-		l.RawSet(message, lua.LString("protocol"), lua.LString(msg.Protocol))
-		l.RawSet(message, lua.LString("name"), lua.LString(msg.Name))
-		l.RawSet(message, lua.LString("unit"), lua.LString(msg.Unit))
-		l.RawSet(message, lua.LString("time"), lua.LNumber(msg.Time))
-		l.RawSet(message, lua.LString("update_time"), lua.LNumber(msg.UpdateTime))
+		for i, msg := range m {
+			insert := l.NewTable()
+			insert.RawSetString("channel", lua.LString(msg.Channel))
+			insert.RawSetString("subtopic", lua.LString(msg.Subtopic))
+			insert.RawSetString("publisher", lua.LString(msg.Publisher))
+			insert.RawSetString("protocol", lua.LString(msg.Protocol))
+			insert.RawSetString("name", lua.LString(msg.Name))
+			insert.RawSetString("unit", lua.LString(msg.Unit))
+			insert.RawSetString("time", lua.LNumber(msg.Time))
+			insert.RawSetString("update_time", lua.LNumber(msg.UpdateTime))
 
-		if msg.Value != nil {
-			l.RawSet(message, lua.LString("value"), lua.LNumber(*msg.Value))
+			if msg.Value != nil {
+				insert.RawSetString("value", lua.LNumber(*msg.Value))
+			}
+			if msg.StringValue != nil {
+				insert.RawSetString("string_value", lua.LString(*msg.StringValue))
+			}
+			if msg.DataValue != nil {
+				insert.RawSetString("data_value", lua.LString(*msg.DataValue))
+			}
+			if msg.BoolValue != nil {
+				insert.RawSetString("bool_value", lua.LBool(*msg.BoolValue))
+			}
+			if msg.Sum != nil {
+				insert.RawSetString("sum", lua.LNumber(*msg.Sum))
+			}
+			messages.RawSetInt(i, insert)
 		}
-		if msg.StringValue != nil {
-			l.RawSet(message, lua.LString("string_value"), lua.LString(*msg.StringValue))
+		if len(m) == 1 {
+			message = messages.RawGetInt(0).(*lua.LTable)
 		}
-		if msg.DataValue != nil {
-			l.RawSet(message, lua.LString("data_value"), lua.LString(*msg.DataValue))
+
+	case mgjson.Messages:
+		for i, msg := range m.Data {
+			insert := l.NewTable()
+			insert.RawSetString("channel", lua.LString(msg.Channel))
+			insert.RawSetString("subtopic", lua.LString(msg.Subtopic))
+			insert.RawSetString("publisher", lua.LString(msg.Publisher))
+			insert.RawSetString("protocol", lua.LString(msg.Protocol))
+			insert.RawSetString("foramt", lua.LString(m.Format))
+			for k, v := range msg.Payload {
+				var value lua.LValue
+				switch val := v.(type) {
+				case string:
+					value = lua.LString(val)
+				case float64:
+					value = lua.LNumber(val)
+				case json.Number:
+					if num, err := val.Float64(); err != nil {
+						value = lua.LNumber(num)
+					}
+				case bool:
+					value = lua.LBool(val)
+				}
+				insert.RawSetString("payload."+k, value)
+			}
+			fmt.Println("setting in", i, insert)
+			messages.RawSetInt(i, insert)
 		}
-		if msg.BoolValue != nil {
-			l.RawSet(message, lua.LString("bool_value"), lua.LBool(*msg.BoolValue))
-		}
-		if msg.Sum != nil {
-			l.RawSet(message, lua.LString("sum"), lua.LNumber(*msg.Sum))
+		if len(m.Data) == 1 {
+			fmt.Println("VALUE", messages.RawGetInt(0))
+			message = messages.RawGetInt(0).(*lua.LTable)
 		}
 	}
 
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
+	l.SetGlobal("messages", messages)
 
 	// set the email function as a Lua global function
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
@@ -437,7 +480,7 @@ func (re *re) sendEmail(L *lua.LState) int {
 func preload(l *lua.LState) {
 	db.Preload(l)
 	ioutil.Preload(l)
-	json.Preload(l)
+	luajson.Preload(l)
 	yaml.Preload(l)
 	crypto.Preload(l)
 	regexp.Preload(l)

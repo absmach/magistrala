@@ -322,24 +322,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			insert.RawSetString("protocol", lua.LString(msg.Protocol))
 			insert.RawSetString("format", lua.LString(m.Format))
 			pld := l.NewTable()
-			for k, v := range msg.Payload {
-				var value lua.LValue
-				switch val := v.(type) {
-				case string:
-					value = lua.LString(val)
-				case float64:
-					value = lua.LNumber(val)
-				case int:
-					value = lua.LNumber(float64(val))
-				case json.Number:
-					if num, err := val.Float64(); err != nil {
-						value = lua.LNumber(num)
-					}
-				case bool:
-					value = lua.LBool(val)
-				}
-				pld.RawSetString(k, value)
-			}
+			traverseJson(l, pld, "payload", msg.Payload)
 			insert.RawSetString("payload", pld)
 			messages.RawSetInt(i+1, insert) // Lua index starts at 1.
 		}
@@ -491,4 +474,35 @@ func preload(l *lua.LState) {
 	argparse.Preload(l)
 	strings.Preload(l)
 	filepath.Preload(l)
+}
+
+func traverseJson(l *lua.LState, parent *lua.LTable, key string, value interface{}) {
+	m, ok := value.(map[string]interface{})
+	if !ok {
+		return
+	}
+	child := l.NewTable()
+	for k, v := range m {
+		var lval lua.LValue
+		switch val := v.(type) {
+		case string:
+			lval = lua.LString(val)
+		case float64:
+			lval = lua.LNumber(val)
+		case int:
+			lval = lua.LNumber(float64(val))
+		case json.Number:
+			if num, err := val.Float64(); err != nil {
+				lval = lua.LNumber(num)
+			}
+		case bool:
+			lval = lua.LBool(val)
+		case map[string]interface{}:
+			traverseJson(l, child, k, val)
+		}
+		child.RawSetString(k, lval)
+	}
+
+	parent.RawSetString(key, child)
+	return
 }

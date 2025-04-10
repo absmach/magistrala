@@ -13,10 +13,8 @@ import (
 type Status uint8
 
 const (
-	ReportedStatus Status = iota
-	AssignedStatus
-	ResolvedStatus
-	IgnoredStatus
+	ActiveStatus Status = iota
+	ClearedStatus
 
 	// AllStatus is used for querying purposes to list alarms irrespective
 	// of their status. It is never stored in the database as the actual
@@ -25,25 +23,19 @@ const (
 )
 
 const (
-	Reported = "reported"
-	Assigned = "assigned"
-	Resolved = "resolved"
-	Ignored  = "ignored"
-	Unknown  = "unknown"
-	All      = "all"
+	Active  = "active"
+	Cleared = "cleared"
+	Unknown = "unknown"
+	All     = "all"
 )
 
 // String converts alarm status to string literal.
 func (s Status) String() string {
 	switch s {
-	case ReportedStatus:
-		return Reported
-	case AssignedStatus:
-		return Assigned
-	case ResolvedStatus:
-		return Resolved
-	case IgnoredStatus:
-		return Ignored
+	case ActiveStatus:
+		return Active
+	case ClearedStatus:
+		return Cleared
 	default:
 		return Unknown
 	}
@@ -52,14 +44,10 @@ func (s Status) String() string {
 // ToStatus converts string value to a valid Alarm status.
 func ToStatus(status string) (Status, error) {
 	switch status {
-	case Reported:
-		return ReportedStatus, nil
-	case Assigned:
-		return AssignedStatus, nil
-	case Resolved:
-		return ResolvedStatus, nil
-	case Ignored:
-		return IgnoredStatus, nil
+	case Active:
+		return ActiveStatus, nil
+	case Cleared:
+		return ClearedStatus, nil
 	case All:
 		return AllStatus, nil
 	default:

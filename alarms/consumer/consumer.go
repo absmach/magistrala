@@ -46,7 +46,7 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 	}
 
 	var (
-		ruleID, measurement, value, unit, threshold, cause, domainID, assigneeID string
+		ruleID, domainID, measurement, value, unit, threshold, cause, assigneeID string
 		severity                                                                 uint8
 		metadata                                                                 map[string]interface{}
 	)
@@ -55,6 +55,11 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 		if msg.Name == "rule_id" {
 			if msg.StringValue != nil {
 				ruleID = *msg.StringValue
+			}
+		}
+		if msg.Name == "domain_id" {
+			if msg.StringValue != nil {
+				domainID = *msg.StringValue
 			}
 		}
 		if msg.Name == "measurement" {
@@ -87,11 +92,6 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 				severity = uint8(*msg.Value)
 			}
 		}
-		if msg.Name == "domain_id" {
-			if msg.StringValue != nil {
-				domainID = *msg.StringValue
-			}
-		}
 		if msg.Name == "assignee_id" {
 			if msg.StringValue != nil {
 				assigneeID = *msg.StringValue
@@ -112,14 +112,17 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 
 	a := alarms.Alarm{
 		RuleID:      ruleID,
-		Status:      alarms.ReportedStatus,
+		DomainID:    domainID,
+		ChannelID:   msgs[0].Channel,
+		ThingID:     msgs[0].Publisher,
+		Subtopic:    msgs[0].Subtopic,
+		Status:      alarms.ActiveStatus,
 		Measurement: measurement,
 		Value:       value,
 		Unit:        unit,
 		Threshold:   threshold,
 		Cause:       cause,
 		Severity:    severity,
-		DomainID:    domainID,
 		AssigneeID:  assigneeID,
 		CreatedAt:   time.Now(),
 		Metadata:    metadata,
@@ -134,7 +137,7 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 
 func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 	var (
-		ruleID, measurement, value, unit, threshold, cause, domainID, assigneeID string
+		ruleID, domainID, measurement, value, unit, threshold, cause, assigneeID string
 		severity                                                                 uint8
 		metadata                                                                 map[string]interface{}
 	)
@@ -142,6 +145,9 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 	for _, msg := range msgs.Data {
 		if getString(msg.Payload, "rule_id") != "" {
 			ruleID = getString(msg.Payload, "rule_id")
+		}
+		if getString(msg.Payload, "domain_id") != "" {
+			domainID = getString(msg.Payload, "domain_id")
 		}
 		if getString(msg.Payload, "measurement") != "" {
 			measurement = getString(msg.Payload, "measurement")
@@ -162,9 +168,6 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 			s := getUint8(msg.Payload, "severity")
 			severity = *s
 		}
-		if getString(msg.Payload, "domain_id") != "" {
-			domainID = getString(msg.Payload, "domain_id")
-		}
 		if getString(msg.Payload, "assignee_id") != "" {
 			assigneeID = getString(msg.Payload, "assignee_id")
 		}
@@ -181,14 +184,17 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 
 	a := alarms.Alarm{
 		RuleID:      ruleID,
-		Status:      alarms.ReportedStatus,
+		DomainID:    domainID,
+		ChannelID:   msgs.Data[0].Channel,
+		ThingID:     msgs.Data[0].Publisher,
+		Subtopic:    msgs.Data[0].Subtopic,
+		Status:      alarms.ActiveStatus,
 		Measurement: measurement,
 		Value:       value,
 		Unit:        unit,
 		Threshold:   threshold,
 		Cause:       cause,
 		Severity:    severity,
-		DomainID:    domainID,
 		AssigneeID:  assigneeID,
 		CreatedAt:   time.Now(),
 		Metadata:    metadata,

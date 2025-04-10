@@ -7,5 +7,5 @@
 [subjects]
 filter = ["channels.>"]
 
-[transformers]
+[transformer]
 format = ""

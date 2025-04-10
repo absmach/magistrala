@@ -22,6 +22,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						measurement	    TEXT NOT NULL,
 						value		    TEXT NOT NULL,
 						unit		    TEXT NOT NULL,
+						threshold	    TEXT NOT NULL,
 						cause	    	TEXT NOT NULL,
 						status          SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						severity        SMALLINT NOT NULL DEFAULT 0 CHECK (severity >= 0),

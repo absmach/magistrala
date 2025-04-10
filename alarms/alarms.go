@@ -27,6 +27,7 @@ type Alarm struct {
 	Measurement    string    `json:"measurement"`
 	Value          string    `json:"value"`
 	Unit           string    `json:"unit"`
+	Threshold      string    `json:"threshold"`
 	Cause          string    `json:"cause"`
 	Severity       uint8     `json:"severity"`
 	DomainID       string    `json:"domain_id"`

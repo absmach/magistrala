@@ -30,9 +30,9 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_at)
-				VALUES (:id, :rule_id, :measurement, :value, :unit, :cause, :status, :severity, :domain_id, :assignee_id, :metadata, :created_at)
-				RETURNING id, rule_id, measurement, value, unit, cause, status, severity, domain_id, assignee_id, metadata, created_at;`
+	query := `INSERT INTO alarms (id, rule_id, measurement, value, unit, threshold, cause, status, severity, domain_id, assignee_id, metadata, created_at)
+				VALUES (:id, :rule_id, :measurement, :value, :unit, :threshold, :cause, :status, :severity, :domain_id, :assignee_id, :metadata, :created_at)
+				RETURNING id, rule_id, measurement, value, unit, threshold, cause, status, severity, domain_id, assignee_id, metadata, created_at;`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)

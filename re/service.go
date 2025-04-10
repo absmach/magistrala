@@ -320,7 +320,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			insert.RawSetString("subtopic", lua.LString(msg.Subtopic))
 			insert.RawSetString("publisher", lua.LString(msg.Publisher))
 			insert.RawSetString("protocol", lua.LString(msg.Protocol))
-			insert.RawSetString("foramt", lua.LString(m.Format))
+			insert.RawSetString("format", lua.LString(m.Format))
 			pld := l.NewTable()
 			for k, v := range msg.Payload {
 				var value lua.LValue
@@ -329,6 +329,8 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 					value = lua.LString(val)
 				case float64:
 					value = lua.LNumber(val)
+				case int:
+					value = lua.LNumber(float64(val))
 				case json.Number:
 					if num, err := val.Float64(); err != nil {
 						value = lua.LNumber(num)

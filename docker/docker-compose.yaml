@@ -213,4 +213,4 @@ services:
         target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
-      - ./config.toml:/config.toml
+      - ./re_config.toml:/config.toml

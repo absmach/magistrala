@@ -5,6 +5,7 @@ package consumer
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 	"time"
 
@@ -45,8 +46,9 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 	}
 
 	var (
-		ruleID, measurement, value, unit, cause, domainID string
-		severity                                          uint8
+		ruleID, measurement, value, unit, cause, domainID, assigneeID string
+		severity                                                      uint8
+		metadata                                                      map[string]interface{}
 	)
 
 	for _, msg := range msgs {
@@ -85,6 +87,22 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 				domainID = *msg.StringValue
 			}
 		}
+		if msg.Name == "assignee_id" {
+			if msg.StringValue != nil {
+				assigneeID = *msg.StringValue
+			}
+		}
+		if msg.Name == "metadata" {
+			if msg.DataValue != nil {
+				data, err := json.Marshal(msg.DataValue)
+				if err == nil {
+					var payload map[string]interface{}
+					if err := json.Unmarshal(data, &payload); err == nil {
+						metadata = payload
+					}
+				}
+			}
+		}
 	}
 
 	a := alarms.Alarm{
@@ -96,10 +114,9 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 		Cause:       cause,
 		Severity:    severity,
 		DomainID:    domainID,
+		AssigneeID:  assigneeID,
 		CreatedAt:   time.Now(),
-		Metadata: alarms.Metadata{
-			"payload": msgs,
-		},
+		Metadata:    metadata,
 	}
 
 	if err := a.Validate(); err != nil {
@@ -111,8 +128,9 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 
 func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 	var (
-		ruleID, measurement, value, unit, cause, domainID string
-		severity                                          uint8
+		ruleID, measurement, value, unit, cause, domainID, assigneeID string
+		severity                                                      uint8
+		metadata                                                      map[string]interface{}
 	)
 
 	for _, msg := range msgs.Data {
@@ -138,6 +156,18 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 		if getString(msg.Payload, "domain_id") != "" {
 			domainID = getString(msg.Payload, "domain_id")
 		}
+		if getString(msg.Payload, "assignee_id") != "" {
+			assigneeID = getString(msg.Payload, "assignee_id")
+		}
+		if getString(msg.Payload, "metadata") != "" {
+			data, err := json.Marshal(getString(msg.Payload, "metadata"))
+			if err == nil {
+				var payload map[string]interface{}
+				if err := json.Unmarshal(data, &payload); err == nil {
+					metadata = payload
+				}
+			}
+		}
 	}
 
 	a := alarms.Alarm{
@@ -149,10 +179,9 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 		Cause:       cause,
 		Severity:    severity,
 		DomainID:    domainID,
+		AssigneeID:  assigneeID,
 		CreatedAt:   time.Now(),
-		Metadata: alarms.Metadata{
-			"payload": msgs,
-		},
+		Metadata:    metadata,
 	}
 
 	if err := a.Validate(); err != nil {

@@ -27,7 +27,6 @@ func Migration() *migrate.MemoryMigrationSource {
 						severity    SMALLINT NOT NULL DEFAULT 0 CHECK (severity >= 0),
 						domain_id	VARCHAR(36) NOT NULL,
 						assignee_id	VARCHAR(36),
-						created_by	VARCHAR(36) NOT NULL,
 						created_at	TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 						updated_at	TIMESTAMPTZ NULL,
 						updated_by	VARCHAR(36) NULL,

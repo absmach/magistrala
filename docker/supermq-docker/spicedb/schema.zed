@@ -318,9 +318,9 @@ definition domain {
 	channel_update + channel_read + channel_delete + channel_set_parent_group + channel_connect_to_client + channel_publish + channel_subscribe +
 	channel_manage_role + channel_add_role_users + channel_remove_role_users + channel_view_role_users +
 	group_update + group_membership + group_read + group_delete + group_set_child + group_set_parent +
-	group_manage_role + group_add_role_users + group_remove_role_users + group_view_role_users
+	group_manage_role + group_add_role_users + group_remove_role_users + group_view_role_users + organization->admin
 
-	permission admin = read & update & enable & disable & delete & manage_role & add_role_users & remove_role_users & view_role_users
+	permission admin = (read & update & enable & disable & delete & manage_role & add_role_users & remove_role_users & view_role_users) + organization->admin
 
 	permission client_create_permission = client_create + team->client_create + organization->admin
 	permission channel_create_permission = channel_create + team->channel_create + organization->admin

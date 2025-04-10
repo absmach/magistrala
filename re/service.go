@@ -6,7 +6,6 @@ package re
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -308,10 +307,10 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			if msg.Sum != nil {
 				insert.RawSetString("sum", lua.LNumber(*msg.Sum))
 			}
-			messages.RawSetInt(i, insert)
+			messages.RawSetInt(i+1, insert) // Lua index starts at 1.
 		}
 		if len(m) == 1 {
-			message = messages.RawGetInt(0).(*lua.LTable)
+			message = messages.RawGetInt(1).(*lua.LTable)
 		}
 
 	case mgjson.Messages:
@@ -322,6 +321,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			insert.RawSetString("publisher", lua.LString(msg.Publisher))
 			insert.RawSetString("protocol", lua.LString(msg.Protocol))
 			insert.RawSetString("foramt", lua.LString(m.Format))
+			pld := l.NewTable()
 			for k, v := range msg.Payload {
 				var value lua.LValue
 				switch val := v.(type) {
@@ -336,14 +336,13 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 				case bool:
 					value = lua.LBool(val)
 				}
-				insert.RawSetString("payload."+k, value)
+				pld.RawSetString(k, value)
 			}
-			fmt.Println("setting in", i, insert)
-			messages.RawSetInt(i, insert)
+			insert.RawSetString("payload", pld)
+			messages.RawSetInt(i+1, insert) // Lua index starts at 1.
 		}
 		if len(m.Data) == 1 {
-			fmt.Println("VALUE", messages.RawGetInt(0))
-			message = messages.RawGetInt(0).(*lua.LTable)
+			message = messages.RawGetInt(1).(*lua.LTable)
 		}
 	}
 

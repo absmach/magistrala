@@ -13,8 +13,9 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/transformers"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
-	"github.com/absmach/supermq/pkg/transformers/senml"
+	mgsenml "github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/vadv/gopher-lua-libs/argparse"
 	"github.com/vadv/gopher-lua-libs/base64"
 	"github.com/vadv/gopher-lua-libs/crypto"
@@ -116,6 +117,7 @@ type re struct {
 	errors chan error
 	ticker Ticker
 	email  Emailer
+	ts     []transformers.Transformer
 }
 
 func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
@@ -126,6 +128,11 @@ func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub
 		errors: make(chan error),
 		ticker: tck,
 		email:  emailer,
+		// Transformers order is important since SenML is also JSON content type.
+		ts: []transformers.Transformer{
+			mgsenml.New(mgsenml.JSON),
+			mgjson.New(nil),
+		},
 	}
 }
 
@@ -215,22 +222,16 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 }
 
 func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
-	var inputChannel string
-
-	switch m := msgs.(type) {
-	case *messaging.Message:
-		inputChannel = m.Channel
-
-	case []senml.Message:
-		if len(m) == 0 {
-			return
+	m, ok := msgs.(*messaging.Message)
+	if !ok {
+		return
+	}
+	inputChannel := m.Channel
+	for _, t := range re.ts {
+		if v, err := t.Transform(m); err == nil {
+			msgs = v
+			break
 		}
-		message := m[0]
-		inputChannel = message.Channel
-	case mgjson.Message:
-		return
-	default:
-		return
 	}
 
 	pm := PageMeta{
@@ -261,7 +262,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	message := l.NewTable()
 
 	switch m := msg.(type) {
-	case messaging.Message:
+	case *messaging.Message:
 		{
 			l.RawSet(message, lua.LString("channel"), lua.LString(m.Channel))
 			l.RawSet(message, lua.LString("subtopic"), lua.LString(m.Subtopic))
@@ -276,7 +277,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			l.RawSet(message, lua.LString("payload"), pld)
 		}
 
-	case []senml.Message:
+	case []mgsenml.Message:
 		msg := m[0]
 		l.RawSet(message, lua.LString("channel"), lua.LString(msg.Channel))
 		l.RawSet(message, lua.LString("subtopic"), lua.LString(msg.Subtopic))

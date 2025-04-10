@@ -10,6 +10,7 @@ import (
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/lib/pq"
 )
 
 // dbRule represents the database structure for a Rule.
@@ -33,6 +34,30 @@ type dbRule struct {
 	CreatedBy       string         `db:"created_by"`
 	UpdatedAt       time.Time      `db:"updated_at"`
 	UpdatedBy       string         `db:"updated_by"`
+}
+
+// dbReport represents the database structure for a Report.
+type dbReport struct {
+	ID              string         `db:"id"`
+	Name            string         `db:"name"`
+	DomainID        string         `db:"domain_id"`
+	ChannelIDs      pq.StringArray `db:"channel_ids"`
+	ClientIDs       pq.StringArray `db:"client_ids"`
+	Aggregation     sql.NullString `db:"aggregation"`
+	Metrics         pq.StringArray `db:"metrics"`
+	To              pq.StringArray `db:"to"`
+	From            sql.NullString `db:"from"`
+	Subject         sql.NullString `db:"subject"`
+	StartDateTime   time.Time      `db:"start_datetime"`
+	Time            time.Time      `db:"time"`
+	Recurring       re.Recurring   `db:"recurring"`
+	RecurringPeriod uint           `db:"recurring_period"`
+	Status          re.Status      `db:"status"`
+	CreatedAt       time.Time      `db:"created_at"`
+	CreatedBy       string         `db:"created_by"`
+	UpdatedAt       time.Time      `db:"updated_at"`
+	UpdatedBy       string         `db:"updated_by"`
+	Limit           uint64         `db:"limit"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -99,6 +124,62 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		UpdatedAt: dto.UpdatedAt,
 		UpdatedBy: dto.UpdatedBy,
 	}, nil
+}
+
+func reportToDb(r re.ReportConfig) (dbReport, error) {
+	return dbReport{
+		ID:              r.ID,
+		Name:            r.Name,
+		DomainID:        r.DomainID,
+		StartDateTime:   r.Schedule.StartDateTime,
+		Time:            r.Schedule.Time,
+		Recurring:       r.Schedule.Recurring,
+		RecurringPeriod: r.Schedule.RecurringPeriod,
+		Status:          r.Status,
+		CreatedAt:       r.CreatedAt,
+		CreatedBy:       r.CreatedBy,
+		UpdatedAt:       r.UpdatedAt,
+		UpdatedBy:       r.UpdatedBy,
+		ChannelIDs:      r.ChannelIDs,
+		ClientIDs:       r.ClientIDs,
+		Metrics:         r.Metrics,
+		Aggregation:     toNullString(r.Aggregation),
+		To:              r.Email.To,
+		From:            toNullString(r.Email.From),
+		Subject:         toNullString(r.Email.Subject),
+		Limit:           r.Limit,
+	}, nil
+}
+
+func dbToReport(dto dbReport) (re.ReportConfig, error) {
+	rpt := re.ReportConfig{
+		ID:          dto.ID,
+		Name:        dto.Name,
+		DomainID:    dto.DomainID,
+		ChannelIDs:  dto.ChannelIDs,
+		ClientIDs:   dto.ClientIDs,
+		Aggregation: fromNullString(dto.Aggregation),
+		Metrics:     dto.Metrics,
+		Schedule: re.Schedule{
+			StartDateTime:   dto.StartDateTime,
+			Time:            dto.Time,
+			Recurring:       dto.Recurring,
+			RecurringPeriod: dto.RecurringPeriod,
+		},
+		Email: re.Email{
+			To:      dto.To,
+			From:    fromNullString(dto.From),
+			Subject: fromNullString(dto.Subject),
+		},
+		Status:    re.Status(dto.Status),
+		CreatedAt: dto.CreatedAt,
+		CreatedBy: dto.CreatedBy,
+		UpdatedAt: dto.UpdatedAt,
+		UpdatedBy: dto.UpdatedBy,
+		Limit:     dto.Limit,
+	}
+
+	return rpt, nil
 }
 
 func toNullString(value string) sql.NullString {

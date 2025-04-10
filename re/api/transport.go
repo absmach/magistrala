@@ -4,8 +4,11 @@
 package api
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -23,7 +26,8 @@ import (
 )
 
 const (
-	idKey            = "ruleID"
+	ruleIdKey        = "ruleID"
+	reportIdKey      = "reportID"
 	inputChannelKey  = "input_channel"
 	outputChannelKey = "output_channel"
 	statusKey        = "status"
@@ -36,55 +40,123 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 	}
 	mux.Group(func(r chi.Router) {
 		r.Use(api.AuthenticateMiddleware(authn, true))
-		r.Route("/{domainID}/rules", func(r chi.Router) {
-			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-				addRuleEndpoint(svc),
-				decodeAddRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "create_rule").ServeHTTP)
+		r.Route("/{domainID}", func(r chi.Router) {
+			r.Route("/rules", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					addRuleEndpoint(svc),
+					decodeAddRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "create_rule").ServeHTTP)
 
-			r.Get("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
-				viewRuleEndpoint(svc),
-				decodeViewRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "view_rule").ServeHTTP)
+				r.Get("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
+					viewRuleEndpoint(svc),
+					decodeViewRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "view_rule").ServeHTTP)
 
-			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-				listRulesEndpoint(svc),
-				decodeListRulesRequest,
-				api.EncodeResponse,
-				opts...,
-			), "list_rules").ServeHTTP)
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					listRulesEndpoint(svc),
+					decodeListRulesRequest,
+					api.EncodeResponse,
+					opts...,
+				), "list_rules").ServeHTTP)
 
-			r.Patch("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
-				updateRuleEndpoint(svc),
-				decodeUpdateRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "update_rule").ServeHTTP)
+				r.Patch("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
+					updateRuleEndpoint(svc),
+					decodeUpdateRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "update_rule").ServeHTTP)
 
-			r.Delete("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
-				deleteRuleEndpoint(svc),
-				decodeDeleteRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "delete_rule").ServeHTTP)
+				r.Delete("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
+					deleteRuleEndpoint(svc),
+					decodeDeleteRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "delete_rule").ServeHTTP)
 
-			r.Post("/{ruleID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-				enableRuleEndpoint(svc),
-				decodeUpdateRuleStatusRequest,
-				api.EncodeResponse,
-				opts...,
-			), "enable_rule").ServeHTTP)
+				r.Post("/{ruleID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+					enableRuleEndpoint(svc),
+					decodeUpdateRuleStatusRequest,
+					api.EncodeResponse,
+					opts...,
+				), "enable_rule").ServeHTTP)
 
-			r.Post("/{ruleID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-				disableRuleEndpoint(svc),
-				decodeUpdateRuleStatusRequest,
-				api.EncodeResponse,
-				opts...,
-			), "disable_rule").ServeHTTP)
+				r.Post("/{ruleID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+					disableRuleEndpoint(svc),
+					decodeUpdateRuleStatusRequest,
+					api.EncodeResponse,
+					opts...,
+				), "disable_rule").ServeHTTP)
+			})
+			r.Route("/reports", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					generateReportEndpoint(svc),
+					decodeGenerateReportRequest,
+					api.EncodeResponse,
+					opts...,
+				), "generate_report").ServeHTTP)
+
+				r.Route("/configs", func(r chi.Router) {
+					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+						addReportConfigEndpoint(svc),
+						decodeAddReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "add_report_config").ServeHTTP)
+
+					r.Get("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
+						viewReportConfigEndpoint(svc),
+						decodeViewReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "view_report_config").ServeHTTP)
+
+					r.Patch("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
+						updateReportConfigEndpoint(svc),
+						decodeUpdateReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_report_config").ServeHTTP)
+
+					r.Delete("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
+						deleteReportConfigEndpoint(svc),
+						decodeDeleteReportConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "delete_report_config").ServeHTTP)
+
+					r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+						listReportsConfigEndpoint(svc),
+						decodeListReportsConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "list_reports_config").ServeHTTP)
+
+					r.Post("/{reportID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+						enableReportConfigEndpoint(svc),
+						decodeUpdateReportStatusRequest,
+						api.EncodeResponse,
+						opts...,
+					), "enable_report_config").ServeHTTP)
+
+					r.Post("/{reportID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+						disableReportConfigEndpoint(svc),
+						decodeUpdateReportStatusRequest,
+						api.EncodeResponse,
+						opts...,
+					), "disable_report_config").ServeHTTP)
+				})
+
+				r.Get("/{reportID}/download", otelhttp.NewHandler(kithttp.NewServer(
+					downloadReportEndpoint(svc),
+					decodeViewReportConfigRequest,
+					encodeFileDownloadResponse,
+					opts...,
+				), "download_report").ServeHTTP)
+			})
 		})
 	})
 
@@ -106,7 +178,7 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 }
 
 func decodeViewRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := chi.URLParam(r, idKey)
+	id := chi.URLParam(r, ruleIdKey)
 	return viewRuleReq{id: id}, nil
 }
 
@@ -118,13 +190,13 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
 		return nil, err
 	}
-	rule.ID = chi.URLParam(r, idKey)
+	rule.ID = chi.URLParam(r, ruleIdKey)
 	return updateRuleReq{Rule: rule}, nil
 }
 
 func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := updateRuleStatusReq{
-		id: chi.URLParam(r, idKey),
+		id: chi.URLParam(r, ruleIdKey),
 	}
 	return req, nil
 }
@@ -171,7 +243,112 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 }
 
 func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	id := chi.URLParam(r, idKey)
+	id := chi.URLParam(r, ruleIdKey)
 
 	return deleteRuleReq{id: id}, nil
+}
+
+func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	var req generateReportReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+
+	return req, nil
+}
+
+func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+	var config re.ReportConfig
+	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+	return addReportConfigReq{ReportConfig: config}, nil
+}
+
+func decodeViewReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	id := chi.URLParam(r, reportIdKey)
+	return viewReportConfigReq{ID: id}, nil
+}
+
+func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+	var config re.ReportConfig
+	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+	config.ID = chi.URLParam(r, reportIdKey)
+	return updateReportConfigReq{ReportConfig: config}, nil
+}
+
+func decodeUpdateReportStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := updateReportStatusReq{
+		id: chi.URLParam(r, reportIdKey),
+	}
+	return req, nil
+}
+
+func decodeDeleteReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	id := chi.URLParam(r, reportIdKey)
+	return deleteReportConfigReq{ID: id}, nil
+}
+
+func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	limit, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	return listReportsConfigReq{
+		PageMeta: re.PageMeta{
+			Offset: offset,
+			Limit:  limit,
+		},
+	}, nil
+}
+
+func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	resp := response.(downloadReportResp)
+	var buffer bytes.Buffer
+	zw := zip.NewWriter(&buffer)
+
+	f, err := zw.Create("Report.pdf")
+	if err != nil {
+		return err
+	}
+
+	if _, err = f.Write(resp.PDF); err != nil {
+		return err
+	}
+
+	f, err = zw.Create("Report.csv")
+	if err != nil {
+		return err
+	}
+
+	if _, err = f.Write(resp.CSV); err != nil {
+		return err
+	}
+
+	if err := zw.Close(); err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", resp.Filename))
+	w.Header().Set("Content-Type", resp.ContentType)
+
+	_, err = w.Write(buffer.Bytes())
+
+	return err
 }

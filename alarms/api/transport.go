@@ -103,6 +103,14 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	assignedBy, err := apiutil.ReadStringQuery(r, "assigned_by", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	acknowledgedBy, err := apiutil.ReadStringQuery(r, "acknowledged_by", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	resolvedBy, err := apiutil.ReadStringQuery(r, "resolved_by", "")
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -110,15 +118,17 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 
 	return listAlarmsReq{
 		PageMetadata: alarms.PageMetadata{
-			Offset:     offset,
-			Limit:      limit,
-			DomainID:   domainID,
-			RuleID:     ruleID,
-			Status:     status,
-			AssigneeID: assigneeID,
-			ResolvedBy: resolvedBy,
-			Severity:   uint8(serverity),
-			UpdatedBy:  updatedBy,
+			Offset:         offset,
+			Limit:          limit,
+			DomainID:       domainID,
+			RuleID:         ruleID,
+			Status:         status,
+			AssigneeID:     assigneeID,
+			ResolvedBy:     resolvedBy,
+			Severity:       uint8(serverity),
+			UpdatedBy:      updatedBy,
+			AcknowledgedBy: acknowledgedBy,
+			AssignedBy:     assignedBy,
 		},
 	}, nil
 }

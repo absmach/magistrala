@@ -70,6 +70,12 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	if alarm.AssignedBy != "" {
 		query = append(query, "assigned_by = :assigned_by,")
 	}
+	if alarm.AcknowledgedBy != "" {
+		query = append(query, "acknowledged_by = :acknowledged_by,")
+	}
+	if !alarm.AcknowledgedAt.IsZero() {
+		query = append(query, "acknowledged_at = :acknowledged_at,")
+	}
 	if alarm.ResolvedBy != "" {
 		query = append(query, "resolved_by = :resolved_by,")
 	}
@@ -197,24 +203,26 @@ func (r *repository) DeleteAlarm(ctx context.Context, id string) error {
 }
 
 type dbAlarm struct {
-	ID          string        `db:"id"`
-	RuleID      string        `db:"rule_id"`
-	Measurement string        `db:"measurement"`
-	Value       string        `db:"value"`
-	Unit        string        `db:"unit"`
-	Cause       string        `db:"cause"`
-	Status      alarms.Status `db:"status"`
-	Severity    uint8         `db:"severity"`
-	DomainID    string        `db:"domain_id"`
-	AssigneeID  string        `db:"assignee_id"`
-	CreatedAt   time.Time     `db:"created_at"`
-	UpdatedAt   sql.NullTime  `db:"updated_at,omitempty"`
-	UpdatedBy   *string       `db:"updated_by,omitempty"`
-	AssignedAt  sql.NullTime  `db:"assigned_at,omitempty"`
-	AssignedBy  *string       `db:"assigned_by,omitempty"`
-	ResolvedAt  sql.NullTime  `db:"resolved_at,omitempty"`
-	ResolvedBy  *string       `db:"resolved_by,omitempty"`
-	Metadata    []byte        `db:"metadata,omitempty"`
+	ID             string        `db:"id"`
+	RuleID         string        `db:"rule_id"`
+	Measurement    string        `db:"measurement"`
+	Value          string        `db:"value"`
+	Unit           string        `db:"unit"`
+	Cause          string        `db:"cause"`
+	Status         alarms.Status `db:"status"`
+	Severity       uint8         `db:"severity"`
+	DomainID       string        `db:"domain_id"`
+	AssigneeID     string        `db:"assignee_id"`
+	CreatedAt      time.Time     `db:"created_at"`
+	UpdatedAt      sql.NullTime  `db:"updated_at,omitempty"`
+	UpdatedBy      *string       `db:"updated_by,omitempty"`
+	AssignedAt     sql.NullTime  `db:"assigned_at,omitempty"`
+	AssignedBy     *string       `db:"assigned_by,omitempty"`
+	AcknowledgedAt sql.NullTime  `db:"acknowledged_at,omitempty"`
+	AcknowledgedBy *string       `db:"acknowledged_by,omitempty"`
+	ResolvedAt     sql.NullTime  `db:"resolved_at,omitempty"`
+	ResolvedBy     *string       `db:"resolved_by,omitempty"`
+	Metadata       []byte        `db:"metadata,omitempty"`
 }
 
 func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
@@ -228,6 +236,15 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 	var updatedAt sql.NullTime
 	if a.UpdatedAt != (time.Time{}) {
 		updatedAt = sql.NullTime{Time: a.UpdatedAt, Valid: true}
+	}
+
+	var acknowledgedBy *string
+	if a.AcknowledgedBy != "" {
+		acknowledgedBy = &a.AcknowledgedBy
+	}
+	var acknowledgedAt sql.NullTime
+	if a.AcknowledgedAt != (time.Time{}) {
+		acknowledgedAt = sql.NullTime{Time: a.AcknowledgedAt, Valid: true}
 	}
 
 	var resolvedBy *string
@@ -258,24 +275,26 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 	}
 
 	return dbAlarm{
-		ID:          a.ID,
-		RuleID:      a.RuleID,
-		Measurement: a.Measurement,
-		Value:       a.Value,
-		Unit:        a.Unit,
-		Cause:       a.Cause,
-		Status:      a.Status,
-		Severity:    a.Severity,
-		DomainID:    a.DomainID,
-		AssigneeID:  a.AssigneeID,
-		CreatedAt:   a.CreatedAt,
-		UpdatedAt:   updatedAt,
-		UpdatedBy:   updatedBy,
-		AssignedAt:  assignedAt,
-		AssignedBy:  assignedBy,
-		ResolvedAt:  resolvedAt,
-		ResolvedBy:  resolvedBy,
-		Metadata:    metadata,
+		ID:             a.ID,
+		RuleID:         a.RuleID,
+		Measurement:    a.Measurement,
+		Value:          a.Value,
+		Unit:           a.Unit,
+		Cause:          a.Cause,
+		Status:         a.Status,
+		Severity:       a.Severity,
+		DomainID:       a.DomainID,
+		AssigneeID:     a.AssigneeID,
+		CreatedAt:      a.CreatedAt,
+		UpdatedAt:      updatedAt,
+		UpdatedBy:      updatedBy,
+		AssignedAt:     assignedAt,
+		AssignedBy:     assignedBy,
+		AcknowledgedAt: acknowledgedAt,
+		AcknowledgedBy: acknowledgedBy,
+		ResolvedAt:     resolvedAt,
+		ResolvedBy:     resolvedBy,
+		Metadata:       metadata,
 	}, nil
 }
 
@@ -298,6 +317,15 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		assignedAt = dbr.AssignedAt.Time
 	}
 
+	var acknowledgedBy string
+	if dbr.AcknowledgedBy != nil {
+		acknowledgedBy = *dbr.AcknowledgedBy
+	}
+	var acknowledgedAt time.Time
+	if dbr.AcknowledgedAt.Valid {
+		acknowledgedAt = dbr.AcknowledgedAt.Time
+	}
+
 	var resolvedBy string
 	if dbr.ResolvedBy != nil {
 		resolvedBy = *dbr.ResolvedBy
@@ -316,24 +344,26 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 	}
 
 	return alarms.Alarm{
-		ID:          dbr.ID,
-		RuleID:      dbr.RuleID,
-		Measurement: dbr.Measurement,
-		Value:       dbr.Value,
-		Unit:        dbr.Unit,
-		Cause:       dbr.Cause,
-		Status:      dbr.Status,
-		Severity:    dbr.Severity,
-		DomainID:    dbr.DomainID,
-		AssigneeID:  dbr.AssigneeID,
-		CreatedAt:   dbr.CreatedAt,
-		UpdatedAt:   updatedAt,
-		UpdatedBy:   updatedBy,
-		AssignedAt:  assignedAt,
-		AssignedBy:  assignedBy,
-		ResolvedAt:  resolvedAt,
-		ResolvedBy:  resolvedBy,
-		Metadata:    metadata,
+		ID:             dbr.ID,
+		RuleID:         dbr.RuleID,
+		Measurement:    dbr.Measurement,
+		Value:          dbr.Value,
+		Unit:           dbr.Unit,
+		Cause:          dbr.Cause,
+		Status:         dbr.Status,
+		Severity:       dbr.Severity,
+		DomainID:       dbr.DomainID,
+		AssigneeID:     dbr.AssigneeID,
+		CreatedAt:      dbr.CreatedAt,
+		UpdatedAt:      updatedAt,
+		UpdatedBy:      updatedBy,
+		AssignedAt:     assignedAt,
+		AssignedBy:     assignedBy,
+		AcknowledgedAt: acknowledgedAt,
+		AcknowledgedBy: acknowledgedBy,
+		ResolvedAt:     resolvedAt,
+		ResolvedBy:     resolvedBy,
+		Metadata:       metadata,
 	}, nil
 }
 
@@ -359,6 +389,12 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	}
 	if pm.ResolvedBy != "" {
 		query = append(query, "resolved_by = :resolved_by")
+	}
+	if pm.AcknowledgedBy != "" {
+		query = append(query, "acknowledged_by = :acknowledged_by")
+	}
+	if pm.AssignedBy != "" {
+		query = append(query, "assigned_by = :assigned_by")
 	}
 
 	var emq string

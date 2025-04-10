@@ -30,9 +30,9 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, measurement, value, unit, threshold, cause, status, severity, domain_id, assignee_id, metadata, created_at)
-				VALUES (:id, :rule_id, :measurement, :value, :unit, :threshold, :cause, :status, :severity, :domain_id, :assignee_id, :metadata, :created_at)
-				RETURNING id, rule_id, measurement, value, unit, threshold, cause, status, severity, domain_id, assignee_id, metadata, created_at;`
+	query := `INSERT INTO alarms (id, rule_id, domain_id, channel_id, thing_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at)
+				VALUES (:id, :rule_id, :domain_id, :channel_id, :thing_id, :subtopic, :measurement, :value, :unit, :threshold, :cause, :status, :severity, :assignee_id, :metadata, :created_at)
+				RETURNING id, rule_id, domain_id, channel_id, thing_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at;`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -147,7 +147,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	q := fmt.Sprintf(`SELECT * FROM alarms %s ORDER BY created_at LIMIT :limit OFFSET :offset;`, query)
+	q := fmt.Sprintf(`SELECT * FROM alarms %s ORDER BY created_at DESC LIMIT :limit OFFSET :offset;`, query)
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -205,13 +205,17 @@ func (r *repository) DeleteAlarm(ctx context.Context, id string) error {
 type dbAlarm struct {
 	ID             string        `db:"id"`
 	RuleID         string        `db:"rule_id"`
+	DomainID       string        `db:"domain_id"`
+	ChannelID      string        `db:"channel_id"`
+	ThingID        string        `db:"thing_id"`
+	Subtopic       string        `db:"subtopic"`
 	Measurement    string        `db:"measurement"`
 	Value          string        `db:"value"`
 	Unit           string        `db:"unit"`
 	Cause          string        `db:"cause"`
+	Threshold      string        `db:"threshold"`
 	Status         alarms.Status `db:"status"`
 	Severity       uint8         `db:"severity"`
-	DomainID       string        `db:"domain_id"`
 	AssigneeID     string        `db:"assignee_id"`
 	CreatedAt      time.Time     `db:"created_at"`
 	UpdatedAt      sql.NullTime  `db:"updated_at,omitempty"`
@@ -277,13 +281,17 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 	return dbAlarm{
 		ID:             a.ID,
 		RuleID:         a.RuleID,
+		DomainID:       a.DomainID,
+		ChannelID:      a.ChannelID,
+		ThingID:        a.ThingID,
+		Subtopic:       a.Subtopic,
 		Measurement:    a.Measurement,
 		Value:          a.Value,
 		Unit:           a.Unit,
 		Cause:          a.Cause,
+		Threshold:      a.Threshold,
 		Status:         a.Status,
 		Severity:       a.Severity,
-		DomainID:       a.DomainID,
 		AssigneeID:     a.AssigneeID,
 		CreatedAt:      a.CreatedAt,
 		UpdatedAt:      updatedAt,
@@ -346,13 +354,17 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 	return alarms.Alarm{
 		ID:             dbr.ID,
 		RuleID:         dbr.RuleID,
+		DomainID:       dbr.DomainID,
+		ChannelID:      dbr.ChannelID,
+		ThingID:        dbr.ThingID,
+		Subtopic:       dbr.Subtopic,
 		Measurement:    dbr.Measurement,
 		Value:          dbr.Value,
 		Unit:           dbr.Unit,
+		Threshold:      dbr.Threshold,
 		Cause:          dbr.Cause,
 		Status:         dbr.Status,
 		Severity:       dbr.Severity,
-		DomainID:       dbr.DomainID,
 		AssigneeID:     dbr.AssigneeID,
 		CreatedAt:      dbr.CreatedAt,
 		UpdatedAt:      updatedAt,
@@ -371,6 +383,15 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	var query []string
 	if pm.DomainID != "" {
 		query = append(query, "domain_id = :domain_id")
+	}
+	if pm.ChannelID != "" {
+		query = append(query, "channel_id = :channel_id")
+	}
+	if pm.ThingID != "" {
+		query = append(query, "thing_id = :thing_id")
+	}
+	if pm.Subtopic != "" {
+		query = append(query, "subtopic = :subtopic")
 	}
 	if pm.RuleID != "" {
 		query = append(query, "rule_id = :rule_id")

@@ -37,6 +37,18 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 		return err
 	}
 
+	lastAlarms, err := s.repo.ListAlarms(ctx, PageMetadata{Limit: 1, Offset: 0})
+	if err == nil {
+		return err
+	}
+
+	if len(lastAlarms.Alarms) > 0 {
+		lastAlarm := lastAlarms.Alarms[0]
+		if lastAlarm.Severity == alarm.Severity {
+			return nil
+		}
+	}
+
 	_, err = s.repo.CreateAlarm(ctx, alarm)
 
 	return err

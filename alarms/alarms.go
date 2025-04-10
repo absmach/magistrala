@@ -23,6 +23,10 @@ type Metadata map[string]interface{}
 type Alarm struct {
 	ID             string    `json:"id"`
 	RuleID         string    `json:"rule_id"`
+	DomainID       string    `json:"domain_id"`
+	ChannelID      string    `json:"channel_id"`
+	ThingID        string    `json:"thing_id"`
+	Subtopic       string    `json:"subtopic"`
 	Status         Status    `json:"status"`
 	Measurement    string    `json:"measurement"`
 	Value          string    `json:"value"`
@@ -30,7 +34,6 @@ type Alarm struct {
 	Threshold      string    `json:"threshold"`
 	Cause          string    `json:"cause"`
 	Severity       uint8     `json:"severity"`
-	DomainID       string    `json:"domain_id"`
 	AssigneeID     string    `json:"assignee_id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
@@ -55,6 +58,9 @@ type PageMetadata struct {
 	Offset         uint64 `json:"offset"          db:"offset"`
 	Limit          uint64 `json:"limit"           db:"limit"`
 	DomainID       string `json:"domain_id"       db:"domain_id"`
+	ChannelID      string `json:"channel_id"      db:"channel_id"`
+	ThingID        string `json:"thing_id"        db:"thing_id"`
+	Subtopic       string `json:"subtopic"        db:"subtopic"`
 	RuleID         string `json:"rule_id"         db:"rule_id"`
 	Status         Status `json:"status"          db:"status"`
 	AssigneeID     string `json:"assignee_id"     db:"assignee_id"`
@@ -69,6 +75,18 @@ func (a Alarm) Validate() error {
 	if a.RuleID == "" {
 		return errors.New("rule_id is required")
 	}
+	if a.DomainID == "" {
+		return errors.New("domain_id is required")
+	}
+	if a.ChannelID == "" {
+		return errors.New("channel_id is required")
+	}
+	if a.ThingID == "" {
+		return errors.New("thing_id is required")
+	}
+	if a.Subtopic == "" {
+		return errors.New("subtopic is required")
+	}
 	if a.Measurement == "" {
 		return errors.New("measurement is required")
 	}
@@ -80,9 +98,6 @@ func (a Alarm) Validate() error {
 	}
 	if a.Cause == "" {
 		return errors.New("cause is required")
-	}
-	if a.DomainID == "" {
-		return errors.New("domain_id is required")
 	}
 	if a.Severity > SeverityMax {
 		return ErrInvalidSeverity

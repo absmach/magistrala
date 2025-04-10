@@ -172,7 +172,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 		// If id is empty, then a new client has been created function - bs.client(id, token)
 		// So, on bootstrap config save error , delete the newly created client.
 		if id == "" {
-			if errT := bs.sdk.DeleteClient(cfg.ClientID, cfg.DomainID, token); errT != nil {
+			if errT := bs.sdk.DeleteClient(ctx, cfg.ClientID, cfg.DomainID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
@@ -237,7 +237,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqaut
 	}
 
 	for _, c := range disconnect {
-		if err := bs.sdk.DisconnectClients(c, []string{id}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
+		if err := bs.sdk.DisconnectClients(ctx, c, []string{id}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
 			if errors.Contains(err, repoerr.ErrNotFound) {
 				continue
 			}
@@ -251,7 +251,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqaut
 			ClientIDs:  []string{id},
 			Types:      []string{"Publish", "Subscribe"},
 		}
-		if err := bs.sdk.Connect(conIDs, session.DomainID, token); err != nil {
+		if err := bs.sdk.Connect(ctx, conIDs, session.DomainID, token); err != nil {
 			return ErrClients
 		}
 	}
@@ -336,7 +336,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session smqauthn.Ses
 	switch state {
 	case Active:
 		for _, c := range cfg.Channels {
-			if err := bs.sdk.ConnectClients(c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
+			if err := bs.sdk.ConnectClients(context.Background(), c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
 				// Ignore conflict errors as they indicate the connection already exists.
 				if errors.Contains(err, svcerr.ErrConflict) {
 					continue
@@ -346,7 +346,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session smqauthn.Ses
 		}
 	case Inactive:
 		for _, c := range cfg.Channels {
-			if err := bs.sdk.DisconnectClients(c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
+			if err := bs.sdk.DisconnectClients(context.Background(), c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
 				if errors.Contains(err, repoerr.ErrNotFound) {
 					continue
 				}
@@ -403,7 +403,7 @@ func (bs bootstrapService) client(domainID, id, token string) (mgsdk.Client, err
 		if err != nil {
 			return mgsdk.Client{}, errors.Wrap(errCreateClient, err)
 		}
-		client, sdkErr := bs.sdk.CreateClient(mgsdk.Client{ID: id, Name: "Bootstrapped Client " + id}, domainID, token)
+		client, sdkErr := bs.sdk.CreateClient(context.Background(), mgsdk.Client{ID: id, Name: "Bootstrapped Client " + id}, domainID, token)
 		if sdkErr != nil {
 			return mgsdk.Client{}, errors.Wrap(errCreateClient, sdkErr)
 		}
@@ -411,7 +411,7 @@ func (bs bootstrapService) client(domainID, id, token string) (mgsdk.Client, err
 	}
 
 	// If Client ID is provided, then retrieve client
-	client, sdkErr := bs.sdk.Client(id, domainID, token)
+	client, sdkErr := bs.sdk.Client(context.Background(), id, domainID, token)
 	if sdkErr != nil {
 		return mgsdk.Client{}, errors.Wrap(ErrClients, sdkErr)
 	}
@@ -432,7 +432,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, domai
 
 	var ret []Channel
 	for id := range add {
-		ch, err := bs.sdk.Channel(id, domainID, token)
+		ch, err := bs.sdk.Channel(context.Background(), id, domainID, token)
 		if err != nil {
 			return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 		}

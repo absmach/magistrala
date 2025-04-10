@@ -231,7 +231,7 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 
 	svc := bootstrap.New(policySvc, repoConfig, sdk, []byte(cfg.EncKey), idp)
 
-	publisher, err := store.NewPublisher(ctx, cfg.ESURL, streamID)
+	publisher, err := store.NewPublisher(ctx, cfg.ESURL)
 	if err != nil {
 		return nil, err
 	}

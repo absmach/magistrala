@@ -13,6 +13,25 @@ import (
 
 var _ bootstrap.Service = (*eventStore)(nil)
 
+const (
+	streamPrefix            = ".bootstrap"
+	addStream               = streamPrefix + "add"
+	viewStream              = streamPrefix + "view"
+	updateStream            = streamPrefix + "update"
+	listStream              = streamPrefix + "list"
+	bootstrapStream         = streamPrefix + "bootstrap"
+	removeStream            = streamPrefix + "remove"
+	updateCertStream        = streamPrefix + "update_cert"
+	updateConnectionsStream = streamPrefix + "update_connections"
+	changeStateStream       = streamPrefix + "change_state"
+
+	connectClientHandlerStream    = streamPrefix + "connect_client_handler"
+	disconnectClientHandlerStream = streamPrefix + "disconnect_client_handler"
+	removeConfigHandlerStream     = streamPrefix + "remove_config_handler"
+	removeChannelHandlerStream    = streamPrefix + "remove_channel_handler"
+	updateChannelHandlerStream    = streamPrefix + "update_channel_handler"
+)
+
 type eventStore struct {
 	events.Publisher
 	svc bootstrap.Service
@@ -37,7 +56,7 @@ func (es *eventStore) Add(ctx context.Context, session smqauthn.Session, token s
 		saved, configCreate,
 	}
 
-	if err := es.Publish(ctx, ev); err != nil {
+	if err := es.Publish(ctx, addStream, ev); err != nil {
 		return saved, err
 	}
 
@@ -53,7 +72,7 @@ func (es *eventStore) View(ctx context.Context, session smqauthn.Session, id str
 		cfg, configView,
 	}
 
-	if err := es.Publish(ctx, ev); err != nil {
+	if err := es.Publish(ctx, viewStream, ev); err != nil {
 		return cfg, err
 	}
 
@@ -69,7 +88,7 @@ func (es *eventStore) Update(ctx context.Context, session smqauthn.Session, cfg 
 		cfg, configUpdate,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, updateStream, ev)
 }
 
 func (es eventStore) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
@@ -85,7 +104,7 @@ func (es eventStore) UpdateCert(ctx context.Context, session smqauthn.Session, c
 		caCert:     caCert,
 	}
 
-	if err := es.Publish(ctx, ev); err != nil {
+	if err := es.Publish(ctx, updateCertStream, ev); err != nil {
 		return cfg, err
 	}
 
@@ -102,7 +121,7 @@ func (es *eventStore) UpdateConnections(ctx context.Context, session smqauthn.Se
 		mgChannels: connections,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, updateConnectionsStream, ev)
 }
 
 func (es *eventStore) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
@@ -118,7 +137,7 @@ func (es *eventStore) List(ctx context.Context, session smqauthn.Session, filter
 		partialMatch: filter.PartialMatch,
 	}
 
-	if err := es.Publish(ctx, ev); err != nil {
+	if err := es.Publish(ctx, listStream, ev); err != nil {
 		return bp, err
 	}
 
@@ -134,7 +153,7 @@ func (es *eventStore) Remove(ctx context.Context, session smqauthn.Session, id s
 		client: id,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, removeStream, ev)
 }
 
 func (es *eventStore) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (bootstrap.Config, error) {
@@ -150,7 +169,7 @@ func (es *eventStore) Bootstrap(ctx context.Context, externalKey, externalID str
 		ev.success = false
 	}
 
-	if err := es.Publish(ctx, ev); err != nil {
+	if err := es.Publish(ctx, bootstrapStream, ev); err != nil {
 		return cfg, err
 	}
 
@@ -167,7 +186,7 @@ func (es *eventStore) ChangeState(ctx context.Context, session smqauthn.Session,
 		state:    state,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, changeStateStream, ev)
 }
 
 func (es *eventStore) RemoveConfigHandler(ctx context.Context, id string) error {
@@ -180,7 +199,7 @@ func (es *eventStore) RemoveConfigHandler(ctx context.Context, id string) error 
 		operation: configHandlerRemove,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, removeConfigHandlerStream, ev)
 }
 
 func (es *eventStore) RemoveChannelHandler(ctx context.Context, id string) error {
@@ -193,7 +212,7 @@ func (es *eventStore) RemoveChannelHandler(ctx context.Context, id string) error
 		operation: channelHandlerRemove,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, removeChannelHandlerStream, ev)
 }
 
 func (es *eventStore) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) error {
@@ -205,7 +224,7 @@ func (es *eventStore) UpdateChannelHandler(ctx context.Context, channel bootstra
 		channel,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, updateChannelHandlerStream, ev)
 }
 
 func (es *eventStore) ConnectClientHandler(ctx context.Context, channelID, clientID string) error {
@@ -218,7 +237,7 @@ func (es *eventStore) ConnectClientHandler(ctx context.Context, channelID, clien
 		channelID: channelID,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, connectClientHandlerStream, ev)
 }
 
 func (es *eventStore) DisconnectClientHandler(ctx context.Context, channelID, clientID string) error {
@@ -231,5 +250,5 @@ func (es *eventStore) DisconnectClientHandler(ctx context.Context, channelID, cl
 		channelID: channelID,
 	}
 
-	return es.Publish(ctx, ev)
+	return es.Publish(ctx, disconnectClientHandlerStream, ev)
 }

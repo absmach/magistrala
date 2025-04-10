@@ -4,6 +4,7 @@
 package provision
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -102,7 +103,7 @@ func (ps *provisionService) Mapping(token string) (map[string]interface{}, error
 		Limit:  uint64(limit),
 	}
 
-	if _, err := ps.sdk.Users(pm, token); err != nil {
+	if _, err := ps.sdk.Users(context.Background(), pm, token); err != nil {
 		return map[string]interface{}{}, errors.Wrap(ErrUnauthorized, err)
 	}
 
@@ -141,14 +142,14 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			name = c.Name
 		}
 		cli.Name = name
-		cli, err := ps.sdk.CreateClient(cli, domainID, token)
+		cli, err := ps.sdk.CreateClient(context.Background(), cli, domainID, token)
 		if err != nil {
 			res.Error = err.Error()
 			return res, errors.Wrap(ErrFailedClientCreation, err)
 		}
 
 		// Get newly created client (in order to get the key).
-		cli, err = ps.sdk.Client(cli.ID, domainID, token)
+		cli, err = ps.sdk.Client(context.Background(), cli.ID, domainID, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("client id: %s", cli.ID))
 			return res, errors.Wrap(ErrFailedClientRetrieval, e)
@@ -161,11 +162,11 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			Name:     name + "_" + channel.Name,
 			Metadata: smqSDK.Metadata(channel.Metadata),
 		}
-		ch, err := ps.sdk.CreateChannel(ch, domainID, token)
+		ch, err := ps.sdk.CreateChannel(context.Background(), ch, domainID, token)
 		if err != nil {
 			return res, errors.Wrap(ErrFailedChannelCreation, err)
 		}
-		ch, err = ps.sdk.Channel(ch.ID, domainID, token)
+		ch, err = ps.sdk.Channel(context.Background(), ch.ID, domainID, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("channel id: %s", ch.ID))
 			return res, errors.Wrap(ErrFailedChannelRetrieval, e)
@@ -219,12 +220,12 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 		if ps.conf.Bootstrap.X509Provision {
 			var cert smqSDK.Cert
 
-			cert, err = ps.sdk.IssueCert(c.ID, ps.conf.Cert.TTL, domainID, token)
+			cert, err = ps.sdk.IssueCert(context.Background(), c.ID, ps.conf.Cert.TTL, domainID, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("client id: %s", c.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
-			cert, err := ps.sdk.ViewCert(cert.SerialNumber, domainID, token)
+			cert, err := ps.sdk.ViewCert(context.Background(), cert.SerialNumber, domainID, token)
 			if err != nil {
 				return res, errors.Wrap(ErrFailedCertView, err)
 			}
@@ -260,16 +261,17 @@ func (ps *provisionService) Cert(domainID, token, clientID, ttl string) (string,
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedToCreateToken, err)
 	}
+	ctx := context.Background()
 
-	th, err := ps.sdk.Client(clientID, domainID, token)
+	th, err := ps.sdk.Client(ctx, clientID, domainID, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrUnauthorized, err)
 	}
-	cert, err := ps.sdk.IssueCert(th.ID, ps.conf.Cert.TTL, domainID, token)
+	cert, err := ps.sdk.IssueCert(ctx, th.ID, ps.conf.Cert.TTL, domainID, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedCertCreation, err)
 	}
-	cert, err = ps.sdk.ViewCert(cert.SerialNumber, domainID, token)
+	cert, err = ps.sdk.ViewCert(ctx, cert.SerialNumber, domainID, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedCertView, err)
 	}
@@ -296,7 +298,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 		Username: ps.conf.Server.MgUsername,
 		Password: ps.conf.Server.MgPass,
 	}
-	tkn, err := ps.sdk.CreateToken(u)
+	tkn, err := ps.sdk.CreateToken(context.Background(), u)
 	if err != nil {
 		return token, errors.Wrap(ErrFailedToCreateToken, err)
 	}
@@ -321,7 +323,7 @@ func (ps *provisionService) updateGateway(domainID, token string, bs sdk.Bootstr
 	gw.CfgID = bs.ClientID
 	gw.Type = gateway
 
-	c, sdkerr := ps.sdk.Client(bs.ClientID, domainID, token)
+	c, sdkerr := ps.sdk.Client(context.Background(), bs.ClientID, domainID, token)
 	if sdkerr != nil {
 		return errors.Wrap(ErrGatewayUpdate, sdkerr)
 	}
@@ -332,7 +334,7 @@ func (ps *provisionService) updateGateway(domainID, token string, bs sdk.Bootstr
 	if err := json.Unmarshal(b, &c.Metadata); err != nil {
 		return errors.Wrap(ErrGatewayUpdate, err)
 	}
-	if _, err := ps.sdk.UpdateClient(c, domainID, token); err != nil {
+	if _, err := ps.sdk.UpdateClient(context.Background(), c, domainID, token); err != nil {
 		return errors.Wrap(ErrGatewayUpdate, err)
 	}
 	return nil
@@ -346,11 +348,11 @@ func (ps *provisionService) errLog(err error) {
 
 func clean(ps *provisionService, clients []smqSDK.Client, channels []smqSDK.Channel, domainID, token string) {
 	for _, t := range clients {
-		err := ps.sdk.DeleteClient(t.ID, domainID, token)
+		err := ps.sdk.DeleteClient(context.Background(), t.ID, domainID, token)
 		ps.errLog(err)
 	}
 	for _, c := range channels {
-		err := ps.sdk.DeleteChannel(c.ID, domainID, token)
+		err := ps.sdk.DeleteChannel(context.Background(), c.ID, domainID, token)
 		ps.errLog(err)
 	}
 }
@@ -363,7 +365,7 @@ func (ps *provisionService) recover(e *error, ths *[]smqSDK.Client, chs *[]smqSD
 
 	if errors.Contains(err, ErrFailedClientRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, c := range clients {
-			err := ps.sdk.DeleteClient(c.ID, domainID, token)
+			err := ps.sdk.DeleteClient(context.Background(), c.ID, domainID, token)
 			ps.errLog(err)
 		}
 		return
@@ -399,7 +401,7 @@ func (ps *provisionService) recover(e *error, ths *[]smqSDK.Client, chs *[]smqSD
 		clean(ps, clients, channels, domainID, token)
 		for _, th := range clients {
 			if ps.conf.Bootstrap.X509Provision && needsBootstrap(th) {
-				_, err := ps.sdk.RevokeCert(th.ID, domainID, token)
+				_, err := ps.sdk.RevokeCert(context.Background(), th.ID, domainID, token)
 				ps.errLog(err)
 			}
 			if needsBootstrap(th) {

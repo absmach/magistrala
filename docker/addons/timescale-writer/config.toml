@@ -5,4 +5,4 @@
 # To subscribe to specific subjects use values starting by "channels." and
 # followed by a subtopic (e.g ["channels.<channel_id>.sub.topic.x", ...]).
 [subjects]
-filter = ["channels.>"]
+filter = ["w.>"]

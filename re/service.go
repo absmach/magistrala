@@ -335,6 +335,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 
 	// set the email function as a Lua global function
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
+	l.SetGlobal("save_senml", l.NewFunction(re.saveSenml))
 
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err
@@ -455,6 +456,34 @@ func (re *re) sendEmail(L *lua.LState) int {
 	})
 
 	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, ""); err != nil {
+		return 0
+	}
+	return 1
+}
+
+func (re *re) saveSenml(L *lua.LState) int {
+	luaString := L.ToString(1)
+	var message senml.Message
+
+	if err := json.Unmarshal([]byte(luaString), &message); err != nil {
+		return 0
+	}
+
+	payload, err := json.Marshal(message)
+	if err != nil {
+		return 0
+	}
+
+	ctx := context.Background()
+	m := &messaging.Message{
+		Publisher: message.Publisher,
+		Created:   time.Now().Unix(),
+		Payload:   payload,
+		Channel:   message.Channel,
+		Subtopic:  message.Subtopic,
+	}
+
+	if err := re.pubSub.Publish(ctx, "w", m); err != nil {
 		return 0
 	}
 	return 1

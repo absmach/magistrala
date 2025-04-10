@@ -6,7 +6,6 @@ package re
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -322,12 +321,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			insert.RawSetString("publisher", lua.LString(msg.Publisher))
 			insert.RawSetString("protocol", lua.LString(msg.Protocol))
 			insert.RawSetString("format", lua.LString(m.Format))
-			pld := l.NewTable()
-
-			jsonBytes, _ := json.MarshalIndent(msg.Payload, "", "  ")
-			fmt.Println(string(jsonBytes))
-			traverseJson(l, pld, lua.LString("payload"), msg.Payload)
-			insert.RawSetString("payload", pld)
+			traverseJson(l, insert, lua.LString("payload"), map[string]interface{}(msg.Payload))
 			messages.RawSetInt(i+1, insert) // Lua index starts at 1.
 		}
 		if len(m.Data) == 1 {
@@ -481,68 +475,39 @@ func preload(l *lua.LState) {
 }
 
 func traverseJson(l *lua.LState, parent *lua.LTable, key lua.LValue, value interface{}) {
-	m, ok := value.(map[string]interface{})
-	if !ok {
-		return
-	}
-	child := l.NewTable()
-	for k, v := range m {
-		var lval lua.LValue
-		switch val := v.(type) {
-		case string:
-			lval = lua.LString(val)
-		case []string:
-			t := l.NewTable()
-			for i, j := range val {
-				t.RawSetInt(i+1, lua.LString(j))
-			}
-			lval = t
-		case float64:
-			lval = lua.LNumber(val)
-		case []float64:
-			t := l.NewTable()
-			for i, j := range val {
-				t.RawSetInt(i+1, lua.LNumber(j))
-			}
-			lval = t
-		case int:
-			lval = lua.LNumber(float64(val))
-		case []int:
-			t := l.NewTable()
-			for i, j := range val {
-				t.RawSetInt(i+1, lua.LNumber(j))
-			}
-			lval = t
-		case json.Number:
-			if num, err := val.Float64(); err != nil {
-				lval = lua.LNumber(num)
-			}
-		case []json.Number:
-			t := l.NewTable()
-			for i, j := range val {
-				if num, err := j.Float64(); err != nil {
-					t.RawSetInt(i+1, lua.LNumber(num))
-				}
-			}
-			lval = t
-		case bool:
-			lval = lua.LBool(val)
-		case []bool:
-			t := l.NewTable()
-			for i, j := range val {
-				t.RawSetInt(i+1, lua.LBool(j))
-			}
-			lval = t
-		case map[string]interface{}:
-			traverseJson(l, child, lua.LString(k), val)
-		case []map[string]interface{}:
-			for i, j := range val {
-				traverseJson(l, child, lua.LNumber(i+1), j)
-			}
+	var lval lua.LValue
+	switch val := value.(type) {
+	case string:
+		lval = lua.LString(val)
+	case float64:
+		lval = lua.LNumber(val)
+	case int:
+		lval = lua.LNumber(float64(val))
+	case json.Number:
+		if num, err := val.Float64(); err != nil {
+			lval = lua.LNumber(num)
 		}
-		child.RawSetString(k, lval)
+	case bool:
+		lval = lua.LBool(val)
+	case []interface{}:
+		t := l.NewTable()
+		for i, j := range val {
+			traverseJson(l, t, lua.LNumber(i+1), j)
+		}
+		lval = t
+	case map[string]interface{}:
+		t := l.NewTable()
+		for k, v := range val {
+			traverseJson(l, t, lua.LString(k), v)
+		}
+		lval = t
+	case []map[string]interface{}:
+		t := l.NewTable()
+		for i, j := range val {
+			traverseJson(l, t, lua.LNumber(i+1), j)
+		}
+		lval = t
 	}
-
-	parent.RawSet(key, child)
+	parent.RawSet(key, lval)
 	return
 }

@@ -46,9 +46,9 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 	}
 
 	var (
-		ruleID, measurement, value, unit, cause, domainID, assigneeID string
-		severity                                                      uint8
-		metadata                                                      map[string]interface{}
+		ruleID, measurement, value, unit, threshold, cause, domainID, assigneeID string
+		severity                                                                 uint8
+		metadata                                                                 map[string]interface{}
 	)
 
 	for _, msg := range msgs {
@@ -70,6 +70,11 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 		if msg.Name == "unit" {
 			if msg.StringValue != nil {
 				unit = *msg.StringValue
+			}
+		}
+		if msg.Name == "threshold" {
+			if msg.Value != nil {
+				threshold = strconv.FormatFloat(*msg.Value, 'f', 2, 64)
 			}
 		}
 		if msg.Name == "cause" {
@@ -111,6 +116,7 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 		Measurement: measurement,
 		Value:       value,
 		Unit:        unit,
+		Threshold:   threshold,
 		Cause:       cause,
 		Severity:    severity,
 		DomainID:    domainID,
@@ -128,9 +134,9 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 
 func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 	var (
-		ruleID, measurement, value, unit, cause, domainID, assigneeID string
-		severity                                                      uint8
-		metadata                                                      map[string]interface{}
+		ruleID, measurement, value, unit, threshold, cause, domainID, assigneeID string
+		severity                                                                 uint8
+		metadata                                                                 map[string]interface{}
 	)
 
 	for _, msg := range msgs.Data {
@@ -145,6 +151,9 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 		}
 		if getString(msg.Payload, "unit") != "" {
 			unit = getString(msg.Payload, "unit")
+		}
+		if getString(msg.Payload, "threshold") != "" {
+			threshold = getString(msg.Payload, "threshold")
 		}
 		if getString(msg.Payload, "cause") != "" {
 			cause = getString(msg.Payload, "cause")
@@ -176,6 +185,7 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 		Measurement: measurement,
 		Value:       value,
 		Unit:        unit,
+		Threshold:   threshold,
 		Cause:       cause,
 		Severity:    severity,
 		DomainID:    domainID,
